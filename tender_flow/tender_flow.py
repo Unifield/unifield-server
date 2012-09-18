@@ -24,11 +24,15 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from osv import osv, fields
 from osv.orm import browse_record, browse_null
 from tools.translate import _
+from lxml import etree
 
 import decimal_precision as dp
 import netsvc
 import pooler
 import time
+
+# xml parser
+from lxml import etree
 
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
@@ -551,6 +555,10 @@ class tender_line(osv.osv):
                  'state': lambda *a: 'draft',
                  }
     
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
+    
 tender_line()
 
 
@@ -860,9 +868,11 @@ class purchase_order(osv.osv):
         if view_type == 'form':
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
-                arch = result['arch']
-                arch = arch.replace('<form string="Purchase Order">', '<form string="Requests for Quotation">')
-                result['arch'] = arch
+                form = etree.fromstring(result['arch'])
+                fields = form.xpath('//form[@string="Purchase Order"]')
+                for field in fields:
+                    field.set('string', "Requests for Quotation")
+                result['arch'] = etree.tostring(form)
         
         return result
 

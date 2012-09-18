@@ -162,7 +162,7 @@ class shipment(osv.osv):
             
             for memory_family in shipment.pack_family_memory_ids:
                 # taken only into account if not done (done means returned packs)
-                if memory_family.state not in ('done',):
+                if shipment.state in ('delivered',) or memory_family.state not in ('done',) :
                     # num of packs
                     num_of_packs = memory_family.num_of_packs
                     values['num_of_packs'] += int(num_of_packs)
@@ -2202,6 +2202,9 @@ class stock_picking(osv.osv):
                     rts = rts.strftime(db_date_format)
                     vals.update({'date': rts, 'date_expected': rts, 'state': 'draft'})
                 move.write(vals, context=context)
+                if move.product_qty == 0.00:
+                    move.action_done(context=context)
+
 
             # trigger workflow (confirm picking)
             self.draft_force_assign(cr, uid, [obj.id])
@@ -2290,7 +2293,7 @@ class stock_picking(osv.osv):
                               'backmove_id': move.id}
                     #add hook
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                    new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                    new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                     
                 # decrement the initial move, cannot be less than zero
                 initial_qty = max(initial_qty - count, 0)
@@ -2398,7 +2401,7 @@ class stock_picking(osv.osv):
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
-                        new_move = move_obj.copy(cr, uid, move.id, values, context=context)
+                        new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the validation does not correspond to the picking ticket quantity
@@ -2406,14 +2409,8 @@ class stock_picking(osv.osv):
                 # is positive if some qty was removed during the validation -> draft qty is increased
                 # is negative if some qty was added during the validation -> draft qty is decreased
                 if diff_qty != 0:
-                    backorder_id = pick.backorder_id.id
-                    assert backorder_id, 'No backorder defined.'
-                    original_moves = move_obj.search(cr, uid, [('picking_id', '=', backorder_id),
-                                                               ('product_id', '=', move.product_id.id),
-                                                               ('product_uom', '=', move.product_uom.id)])
                     # original move from the draft picking ticket which will be updated
                     original_move = move.backmove_id
-                    assert len(original_moves) == 1, 'No corresponding stock_move have been found in draft picking ticket for product %s and UOM %s'%(move.product_id.name, move.product_uom.name)
                     backorder_qty = move_obj.read(cr, uid, [original_move.id], ['product_qty'], context=context)[0]['product_qty']
                     backorder_qty = max(backorder_qty + diff_qty, 0)
                     move_obj.write(cr, uid, [original_move.id], {'product_qty': backorder_qty}, context=context)
@@ -2424,7 +2421,7 @@ class stock_picking(osv.osv):
             new_ppl_id = self.copy(cr, uid, pick.id, {'name': 'PPL/' + ppl_number,
                                                       'subtype': 'ppl',
                                                       'previous_step_id': pick.id,
-                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+                                                      'backorder_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True, keepLineNumber=True))
             new_ppl = self.browse(cr, uid, new_ppl_id, context=context)
             # update locations of stock moves - if the move quantity is equal to zero, the stock move is removed
             for move in new_ppl.move_lines:
@@ -2435,7 +2432,7 @@ class stock_picking(osv.osv):
                                                         'date': today,
                                                         'date_expected': today,}, context=context)
                 else:
-                    move_obj.unlink(cr, uid, [move.id], context=context)
+                    move_obj.unlink(cr, uid, [move.id], context=dict(context, skipResequencing=True))
             
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', new_ppl_id, 'button_confirm', cr)
@@ -2659,7 +2656,7 @@ class stock_picking(osv.osv):
                 # the good location is stored in the 'initial_location' field
                 move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
                                                  'location_dest_id': move.initial_location.id,
-                                                 'state': 'done'})
+                                                 'state': 'done'}, context=dict(context, keepLineNumber=True))
                 
                 # increase the draft move with the move quantity
                 draft_move_id = move.backmove_id.id
@@ -3033,6 +3030,24 @@ class stock_move(osv.osv):
                 'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
                 }
 
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+            Confirm or check the procurement order associated to the stock move
+        '''
+        res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
+        
+        wf_service = netsvc.LocalService("workflow")
+
+        proc_obj = self.pool.get('procurement.order')
+        proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)
+        for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
+            if proc.state == 'draft':
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
+            else:
+                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+        
+        return res
+
 stock_move()
 
 
@@ -3121,6 +3136,7 @@ class sale_order(osv.osv):
                 move_data['location_dest_id'] = output_id
             else:
                 move_data['location_dest_id'] = packing_id
+
         move_data['state'] = 'confirmed'
         return move_data
     
@@ -3174,8 +3190,11 @@ class sale_order(osv.osv):
         - trigger the logging message for the created picking, as it stays in draft state and no call to action_confirm is performed
           for the moment within the msf_outgoing logic
         '''
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
-        cond = cond and False
+        # On Simple OUT configuration, the system should confirm the OUT and launch a first check availability
+        if setup.delivery_process != 'simple':
+            cond = cond and False
         
         # diplay creation message for draft picking ticket
         picking_id = kwargs['picking_id']

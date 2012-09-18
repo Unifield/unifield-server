@@ -33,7 +33,6 @@ class sale_price_setup(osv.osv_memory):
     _columns = {
         'sale_price': fields.float(digits=(16,2), string='Fields price percentage', required=True,
                                    help="""This percentage will be applied on field price from product form view.
-  You have to give a decimal value, i.e. 0.5 for 50% or 0.02 for 2%.
   The Field Price is computed as follow: [Standard Price * (1 + Fields price percentage)]"""),
     }
     
@@ -143,7 +142,7 @@ class product_template(osv.osv):
             res[obj.id] = False
             standard_price = obj.standard_price
             percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
-            list_price = standard_price * (1 + percentage)
+            list_price = standard_price * (1 + (percentage/100.00))
             res[obj.id] = list_price
         return res
     
@@ -179,7 +178,7 @@ class product_product(osv.osv):
                                       'list_price': self.onchange_sp(cr, uid, ids, standard_price=1, context=context).get('value').get('list_price')}})
             else:
                 percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
-                list_price = standard_price * (1 + percentage)
+                list_price = standard_price * (1 + (percentage/100.00))
                 if 'value' in res:
                     res['value'].update({'list_price': list_price})
                 else:

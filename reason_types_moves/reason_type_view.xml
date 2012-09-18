@@ -18,9 +18,13 @@
                     <field name="code" />
                     <field name="parent_id" />
                     <field name="level" />
-                    <group colspan="2" col="2">
-                    	<field name="inventory_ok" attrs="{'invisible': [('parent_id', '!=', False)]}" />
-                    	<field name="is_inventory" attrs="{'invisible': [('parent_id', '=', False)]}" />
+                   <separator colspan="4" string="Availability" />
+                   <field name="incoming_ok" />
+                   <field name="internal_ok" />
+                   <field name="outgoing_ok" />
+                   <group colspan="2" col="2">
+                        <field name="inventory_ok" attrs="{'invisible': [('parent_id', '!=', False)]}" />
+                        <field name="is_inventory" attrs="{'invisible': [('parent_id', '=', False)]}" />
                    </group>
                 </form>
             </field>

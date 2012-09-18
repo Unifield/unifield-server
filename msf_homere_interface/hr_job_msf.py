@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,19 +21,16 @@
 #
 ##############################################################################
 
-{
-    "name" : "Export Files in Excel Format",
-    "version" : "0.1",
-    "description" : "This module enables to export file in xls format",
-    "author" : "MSF - TeMPO Consulting",
-    "category" : "Sale",
-    "depends" : ["sale", "purchase"],
-    "init_xml" : [],
-    "update_xml" : [
-        'msf_export_report.xml',
-    ],
-    "demo_xml" : [],
-    "test": [],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
+
+class hr_job(osv.osv):
+    _inherit = 'hr.job'
+    _description = 'MSF Employee job from Homère'
+
+    _columns = {
+        'code': fields.char(string='Job code', size=6, readonly=True, required=False),
+    }
+
+hr_job()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

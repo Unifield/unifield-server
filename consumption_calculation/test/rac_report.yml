@@ -23,7 +23,6 @@
 -
   !assert {model: real.average.consumption, id: rac1}:
     - period_to == time.strftime('%Y-%m-%d'), "The default value of the field period_to not corresponding on today"
-    - valid_ok, "The checkbox valid_ok is not checked by default"
     - not created_ok, "The checkbox created_ok is checked by default"
 -
   I click on the button 'Save and Process'
@@ -48,7 +47,6 @@
     activity_id: activity1
     period_from: !eval time.strftime('%Y-%m-%d', time.strptime('2011-07-01', '%Y-%m-%d'))
     period_to: !eval time.strftime('%Y-%m-%d', time.strptime('2011-07-31', '%Y-%m-%d'))
-    valid_ok: false
     line_ids: 
       - product_id: product1
         uom_id: product.product_uom_unit
@@ -60,18 +58,14 @@
   I click on the button 'Save and Process'
 -
   !python {model: real.average.consumption}: |
-    try:
-      self.process_moves(cr, uid, ref('rac2'), context=context)
-      assert False, "Moves are processed when valid_ok is not true"
-    except:
-      pass
+    self.process_moves(cr, uid, ref('rac2'), context=context)
 -
   I check if stock moves hasnt been created
 -
   !python {model: real.average.consumption}: |
     rac = self.browse(cr, uid, ref('rac2'))
     for line in rac.line_ids:
-      assert not line.move_id, "Moves created for the %s" % line.product_id.name
+      assert line.move_id, "No moves created for the %s" % line.product_id.name
 -
   I create a third RAC report
 -
@@ -80,7 +74,6 @@
     activity_id: activity1
     period_from: !eval time.strftime('%Y-%m-%d', time.strptime('2011-06-01', '%Y-%m-%d'))
     period_to: !eval time.strftime('%Y-%m-%d', time.strptime('2011-06-10', '%Y-%m-%d'))
-    valid_ok: true
     line_ids: 
       - product_id: product1
         uom_id: product.product_uom_unit
@@ -104,7 +97,6 @@
     activity_id: activity1
     period_from: !eval time.strftime('%Y-%m-%d', time.strptime('2011-06-01', '%Y-%m-%d'))
     period_to: !eval time.strftime('%Y-%m-%d', time.strptime('2011-06-10', '%Y-%m-%d'))
-    valid_ok: true
     line_ids: 
       - product_id: product2
         uom_id: product_10_unit

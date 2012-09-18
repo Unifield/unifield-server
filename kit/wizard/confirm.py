@@ -32,9 +32,25 @@ class confirm(osv.osv_memory):
     '''
     _name = "confirm"
     _columns = {'question': fields.text(string='Question', readonly=True),
+                'display_close_confirm': fields.boolean(string='Display Close Button', readonly=True),
+                'display_back_confirm': fields.boolean(string='Display Back Button', readonly=True),
                 }
     
-    _defaults = {'question': lambda s, cr, uid, c: c.get('question', False)}
+    _defaults = {'question': lambda s, cr, uid, c: c.get('question', False),
+                 'display_close_confirm': lambda s, cr, uid, c: c.get('display_close_confirm', True), # by default, we display close
+                 'display_back_confirm': lambda s, cr, uid, c: c.get('display_back_confirm', False), # by default, we do not display back
+                 }
+
+    def back_step(self, cr, uid, ids, context=None):
+        '''
+        call back step wizard
+        '''
+        # we need the context for the wizard switch
+        assert context, 'no context defined'
+        
+        wiz_obj = self.pool.get('wizard')
+        # no data for type 'back'
+        return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
 
     def do_action(self, cr, uid, ids, context=None):
         # quick integrity check

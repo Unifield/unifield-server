@@ -296,10 +296,14 @@ class hr_payroll_employee_import(osv.osv_memory):
                 vals.update({'active': False})
             current_contract = False
             for contract in self.pool.get('hr.contract.msf').browse(cr, uid, contract_ids):
+                # Check current contract
                 if contract.current:
                     current_contract = True
                     if contract.date_end and contract.date_end < strftime('%Y-%m-%d'):
                         vals.update({'active': False})
+                # Check job
+                if contract.job_id:
+                    vals.update({'job_id': contract.job_id.id})
             # Desactivate employee if no current contract
             if not current_contract:
                 vals.update({'active': False})
@@ -351,10 +355,40 @@ class hr_payroll_employee_import(osv.osv_memory):
                         vals.update({field[1]: False})
                     else:
                         vals.update({field[1]: line.get(field[0])})
+            # Update values for job
+            if line.get('fonction'):
+                job_ids = self.pool.get('hr.job').search(cr, uid, [('code', '=', line.get('fonction'))])
+                if job_ids:
+                    vals.update({'job_id': job_ids[0]})
             # Add entry to database
             new_line = self.pool.get('hr.contract.msf').create(cr, uid, vals)
             if new_line:
                 res.append(new_line)
+        return res
+
+    def update_job(self, cr, uid, ids, reader, context=None):
+        """
+        Read lines from reader and update database
+        """
+        res = []
+        if not reader:
+            return res
+        for line in reader:
+            # Check that no line with same code exist
+            if line.get('code', False):
+                search_ids = self.pool.get('hr.job').search(cr, uid, [('code', '=', line.get('code'))])
+                if search_ids:
+                    continue
+                vals = {
+                    'homere_codeterrain': line.get('codeterrain') or False,
+                    'homere_id_unique': line.get('id_unique') or False,
+                    'code': line.get('code') or '',
+                    'name': line.get('libelle') or '',
+                }
+                # Add entry to database
+                new_line = self.pool.get('hr.job').create(cr, uid, vals)
+                if new_line:
+                    res.append(new_line)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -366,6 +400,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         # Prepare some values
         staff_file = 'staff.csv'
         contract_file = 'contrat.csv'
+        job_file = 'fonction.csv'
         res = False
         message = _("Employee import FAILED.")
         created = 0
@@ -387,6 +422,12 @@ class hr_payroll_employee_import(osv.osv_memory):
                 filename = wiz.filename or ""
             except:
                 raise osv.except_osv(_('Error'), _('Given file is not a zip file!'))
+            # read the staff's job file
+            job_ids = False
+            if zipobj.namelist() and job_file in zipobj.namelist():
+                job_reader = csv.DictReader(zipobj.open(job_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                job_ids = self.update_job(cr, uid, ids, job_reader, context=context)
+            # Do not raise error for job file because it's just a useful piece of data, but not more.
             # read the contract file
             contract_ids = False
             if zipobj.namelist() and contract_file in zipobj.namelist():
@@ -394,6 +435,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 contract_ids = self.update_contract(cr, uid, ids, contract_reader, context=context)
             else:
                 raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (contract_file,))
+            # read the staff file
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
                 reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
