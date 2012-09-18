@@ -346,7 +346,7 @@ class sale_order_line_followup(osv.osv_memory):
             # Set the available qty in stock
             # You may not have product with an Internal Request
             if line.line_id.product_id:
-                qty_available = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+                 res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             # Define if the line is sourced or not according to the state on the SO line
             if line.line_id.state == 'draft':
