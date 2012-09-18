@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_account(osv.osv):
     _name = "account.account"
@@ -43,6 +44,36 @@ class account_account(osv.osv):
 
 account_account()
 
+class account_journal(osv.osv):
+    _inherit = 'account.journal'
+
+    # @@@override account>account.py>account_journal>create_sequence
+    def create_sequence(self, cr, uid, vals, context=None):
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+
+        name = vals['name']
+        code = vals['code'].lower()
+
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+
+        seq = {
+            'name': name,
+            'code': code,
+            'active': True,
+            'prefix': '',
+            'padding': 6,
+            'number_increment': 1
+        }
+        return seq_pool.create(cr, uid, seq)
+    
+account_journal()
+
+
 class account_move(osv.osv):
     _inherit = 'account.move'
 
@@ -52,5 +83,57 @@ class account_move(osv.osv):
             string="Statement lines", help="This field give all statement lines linked to this move."),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        # Change the name for (instance_id.move_prefix) + (journal_id.code) + sequence number
+        instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'])
+        sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id)
+        if instance and journal and sequence_number:
+            if not instance.move_prefix:
+                raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
+            vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+        return super(account_move, self).create(cr, uid, vals, context=context)
+    
+    def name_get(self, cursor, user, ids, context=None):
+        # Override default name_get (since it displays "*12" names for unposted entries)
+        return super(osv.osv, self).name_get(cursor, user, ids, context=context)
+
 account_move()
+
+class account_move_line(osv.osv):
+    _inherit = 'account.move.line'
+    
+    # @@@override account>account_move_line.py>account_move_line>name_get
+    def name_get(self, cr, uid, ids, context=None):
+        # Override default name_get (since it displays the move line reference)
+        if not ids:
+            return []
+        result = []
+        for line in self.browse(cr, uid, ids, context=context):
+            result.append((line.id, line.move_id.name))
+        return result
+
+account_move_line()
+
+class account_move_reconcile(osv.osv):
+    _inherit = 'account.move.reconcile'
+    
+    def get_name(self, cr, uid, context=None):
+        instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        sequence_number = self.pool.get('ir.sequence').get(cr, uid, 'account.move.reconcile')
+        if instance and sequence_number:
+            return instance.reconcile_prefix + "-" + sequence_number
+        else:
+            return ''
+
+    _columns = {
+        'name': fields.char('Entry Sequence', size=64, required=True),
+        'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
+            string="Statement lines", help="This field give all statement lines linked to this move."),
+    }
+    _defaults = {
+        'name': lambda self,cr,uid,ctx={}: self.get_name(cr, uid, ctx),
+    }
+
+account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

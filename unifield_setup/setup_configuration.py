@@ -78,7 +78,7 @@ class unifield_setup_configuration(osv.osv):
     _defaults = {
         'name': lambda *a: 'Unifield setup',
         'delivery_process': lambda *a: 'complex',
-        'allocation_setup': lambda *a: 'allocated',
+        'allocation_setup': lambda *a: 'mixed',
         'sale_price': lambda *a: 0.00,
         'field_orders_ok': lambda *a: True,
         'lang_id': lambda *a: 'en_MF',
@@ -113,7 +113,7 @@ class unifield_setup_configuration(osv.osv):
             ids = [ids]
         if vals.get('sale_price', 0.0) or vals.get('sale_price') == 0.0:
             percentage = vals.get('sale_price', 0.0)
-            cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + percentage),))
+            cr.execute("UPDATE product_template SET list_price = standard_price * %s", ((1 + (percentage/100.00)),))
         return super(unifield_setup_configuration, self).write(cr, uid, ids, vals, context=context)
 
     

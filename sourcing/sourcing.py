@@ -212,10 +212,11 @@ class sourcing_line(osv.osv):
                 delay = self.onChangeSupplier(cr, uid, [line.id], line.supplier.id, context=context).get('value', {}).get('estimated_delivery_date', False)
                 res[line.id]['estimated_delivery_date'] = line.cf_estimated_delivery_date and line.state in ('done', 'confirmed') and line.cf_estimated_delivery_date or delay
             
-            tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
-            ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
-            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
-            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
+##            tr_lt = line.sale_order_id and line.sale_order_id.est_transport_lead_time or 0.00
+#            ship_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
+#            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
+#            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
+            res[line.id]['rts'] = line.sale_order_id.ready_to_ship_date
         
         return res
 
@@ -858,6 +859,8 @@ class sale_order_line(osv.osv):
                     vals.update({'supplier': False})
             if 'product_id' in vals:
                 values.update({'product_id': vals['product_id']})
+            if 'line_number' in vals:
+                values.update({'line_number': vals['line_number']})
                 
             # for each sale order line
             for sol in self.browse(cr, uid, ids, context):

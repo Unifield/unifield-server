@@ -45,11 +45,11 @@ class purchase_order(osv.osv):
         'cross_docking_ok': False,
     }
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         '''
         Changes destination location
         '''
-        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id)
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
         if order_type == 'direct':
             location_id = self.onchange_cross_docking_ok(cr, uid, ids, False, warehouse_id)['value']['location_id']
         

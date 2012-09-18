@@ -13,7 +13,8 @@
                     <xpath expr="/form" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
                     </xpath>
-                    <xpath expr="/form//button[@name='button_update_stock']" position="after" >
+                    <!-- Will be do later -->
+                    <!--<xpath expr="/form//button[@name='button_update_stock']" position="after" >
                         <button 
                         name="action_cancel"
                         string="Cancel" 
@@ -21,7 +22,7 @@
                         colspan="2" 
                         attrs="{'invisible': [('created_ok', '=', False)]}"
                         icon="gtk-cancel"/>
-                    </xpath>
+                    </xpath>-->
                 </data>
            </field>
         </record>

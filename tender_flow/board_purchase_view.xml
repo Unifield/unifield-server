@@ -13,7 +13,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','=','draft'), ('rfq_ok', '=', False)]</field>
+            <field name="domain">[('state','=','draft'), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.purchase_order_tree"/>
         </record>
         
@@ -23,7 +23,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('wait','confirmed')), ('rfq_ok', '=', False)]</field>
+            <field name="domain">[('state','in',('wait','confirmed')), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.purchase_order_tree"/>
         </record>
         
@@ -33,8 +33,9 @@
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','=','draft'), ('rfq_ok', '=', True)]</field>
-            <field name="search_view_id" ref="tender_flow.view_rfq_tree"/>
+            <field name="context">{'rfq_ok': True}</field>
+            <field name="domain">[('state','=','draft'), ('rfq_ok', '=', True)]</field>
+            <field name="view_id" ref="tender_flow.view_rfq_tree"/>
         </record>
         
         <record id="rfq_waiting" model="ir.actions.act_window">
@@ -43,8 +44,9 @@
             <field name="res_model">purchase.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('rfq_sent','rfq_updated')), ('rfq_ok', '=', True)]</field>
-            <field name="search_view_id" ref="tender_flow.view_rfq_tree"/>
+            <field name="context">{'rfq_ok': True}</field>
+            <field name="domain">[('state','in',('rfq_sent','rfq_updated')), ('rfq_ok', '=', True)]</field>
+            <field name="view_id" ref="tender_flow.view_rfq_tree"/>
         </record>
 
 		<record model="ir.ui.view" id="view_purchase_order_monthly_categ_tree">

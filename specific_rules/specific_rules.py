@@ -760,7 +760,7 @@ class stock_production_lot(osv.osv):
         if context is None:
             context = {}
         # warehouse wizards or inventory screen
-        if view_type == 'tree' and ((context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory')):
+        if view_type == 'tree' and ((context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory', False)):
             view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
             if view:
                 view_id = view[1]
@@ -1177,15 +1177,107 @@ class stock_inventory(osv.osv):
     override the action_confirm to create the production lot if needed
     '''
     _inherit = 'stock.inventory'
+
+    def _check_line_data(self, cr, uid, ids, context=None):
+        for inv in self.browse(cr, uid, ids, context=context):
+            if inv.state not in ('draft', 'cancel'):
+                for line in inv.inventory_line_id:
+                    if line.product_qty != 0.00 and not line.location_id:
+                        return False
+
+        return True
+        
+    _columns = {
+        'sublist_id': fields.many2one('product.list', string='List/Sublist'),
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+    }
+
+    _constraints = [
+        (_check_line_data, "You must define a stock location for each line", ['state']),
+    ]
+    
+    def onChangeSearchNomenclature(self, cr, uid, ids, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, n_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
+
+    def fill_lines(self, cr, uid, ids, context=None):
+        '''
+        Fill all lines according to defined nomenclature level and sublist
+        '''
+        line_obj = self.pool.get('stock.inventory.line')
+        product_obj = self.pool.get('product.product')
+        
+        if context is None:
+            context = {}
+
+        discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+            
+        for inv in self.browse(cr, uid, ids, context=context):
+            product_ids = []
+
+            nom = False
+            field = False
+            # Get all products for the defined nomenclature
+            if inv.nomen_manda_3:
+                nom = inv.nomen_manda_3.id
+                field = 'nomen_manda_3'
+            elif inv.nomen_manda_2:
+                nom = inv.nomen_manda_2.id
+                field = 'nomen_manda_2'
+            elif inv.nomen_manda_1:
+                nom = inv.nomen_manda_1.id
+                field = 'nomen_manda_1'
+            elif inv.nomen_manda_0:
+                nom = inv.nomen_manda_0.id
+                field = 'nomen_manda_0'
+            if nom:
+                product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
+
+            # Get all products for the defined list
+            if inv.sublist_id:
+                for line in inv.sublist_id.product_ids:
+                    product_ids.append(line.name.id)
+                    
+            for product in product_obj.browse(cr, uid, product_ids, context=context):
+                # Check if the product is not already in the list
+                if not line_obj.search(cr, uid, [('inventory_id', '=', inv.id), 
+                                                 ('product_id', '=', product.id),
+                                                 ('product_uom', '=', product.uom_id.id)], context=context):
+                    line_obj.create(cr, uid, {'inventory_id': inv.id,
+                                              'product_id': product.id,
+                                              'reason_type_id': discrepancy_id,
+                                              'product_uom': product.uom_id.id}, context=context)
+        
+        return True
+
+    def get_nomen(self, cr, uid, ids, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, ids, field, context={'withnum': 1})
+
+    def _hook_dont_move(self, cr, uid, *args, **kwargs):
+        res = super(stock_inventory, self)._hook_dont_move(cr, uid, *args, **kwargs)
+        if 'line' in kwargs:
+            return res and not kwargs['line'].dont_move
+
+        return res
     
     def action_confirm(self, cr, uid, ids, context=None):
         '''
         if the line is perishable without prodlot, we create the prodlot
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
+        product_obj = self.pool.get('product.product')
         # treat the needed production lot
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.inventory_line_id:
+                if self._name == 'initial.stock.inventory' and line.product_qty == 0.00:
+                    line.write({'dont_move': True})
+                    continue
+                if line.hidden_perishable_mandatory and not line.expiry_date:
+                    raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
+                if line.hidden_batch_management_mandatory and not line.prod_lot_id:
+                    raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
@@ -1407,6 +1499,14 @@ class stock_inventory_line(osv.osv):
             # expiry date management
             if obj.product_id.perishable:
                 result[obj.id]['exp_check'] = True
+
+            # has a problem
+            # Line will be displayed in red if it's not correct
+            result[obj.id]['has_problem'] = False
+            if not obj.location_id \
+               or not self._check_perishable(cr, uid, [obj.id]) \
+               or not self._check_batch_management(cr, uid, [obj.id]):
+                   result[obj.id]['has_problem'] = True
             
         return result
     
@@ -1415,7 +1515,7 @@ class stock_inventory_line(osv.osv):
         check for batch management
         '''
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.batch_management:
+            if obj.inventory_id.state not in ('draft', 'cancel') and obj.product_id.batch_management:
                 if not obj.prod_lot_id or obj.prod_lot_id.type != 'standard':
                     return False
         return True
@@ -1425,7 +1525,7 @@ class stock_inventory_line(osv.osv):
         check for perishable ONLY
         """
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.perishable and not obj.product_id.batch_management:
+            if obj.inventory_id.state not in ('draft', 'cancel') and obj.product_id.perishable and not obj.product_id.batch_management:
                 if (not obj.prod_lot_id and not obj.expiry_date) or (obj.prod_lot_id and obj.prod_lot_id.type != 'internal'):
                     return False
         return True
@@ -1443,6 +1543,9 @@ class stock_inventory_line(osv.osv):
     _columns = {
         'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
         'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
+        # Remove the 'required' attribute on location_id to allow the possiblity to fill lines with list or nomenclature
+        # The required attribute is True on the XML view
+        'location_id': fields.many2one('stock.location', 'Location'),
         'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
         'expiry_date': fields.date(string='Expiry Date'),
         'type_check': fields.char(string='Type Check', size=1024,),
@@ -1452,10 +1555,13 @@ class stock_inventory_line(osv.osv):
         'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
         'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
+        'has_problem': fields.function(_get_checks_all, method=True, string='Has problem', type='boolean', readonly=True, multi="m"),
+        'dont_move': fields.boolean(string='Don\'t create stock.move for this line'),
     }
     
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
+                 'dont_move': lambda *a: False,
                  }
     
     _constraints = [(_check_batch_management,

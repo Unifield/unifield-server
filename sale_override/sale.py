@@ -362,13 +362,14 @@ class sale_order(osv.osv):
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
                                                               'split_type_sale_order': fo_type,
+                                                              'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.')%(selec_name, fo_name))
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True))
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -615,6 +616,17 @@ class sale_order(osv.osv):
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
         return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
 
+    def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+
+        - allow to add more actions when the picking is confirmed
+        '''
+        picking_id = kwargs['pick_id']
+        res = super(sale_order, self)._hook_execute_action_assign(cr, uid, *args, **kwargs)
+        return self.pool.get('stock.picking').action_assign(cr, uid, [picking_id])
+
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''
         Set the sale order and all related documents to done state
@@ -691,8 +703,9 @@ class sale_order(osv.osv):
         line = kwargs['line']
         # call to super
         proc_data = super(sale_order, self)._hook_ship_create_procurement_order(cr, uid, ids, context=context, *args, **kwargs)
-        # update proc_data for link to destination purchase order during back update of sale order
-        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id})
+        # update proc_data for link to destination purchase order and purchase order line (for line number) during back update of sale order
+        proc_data.update({'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
+                          'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id})
         return proc_data
     
     def action_ship_proc_create(self, cr, uid, ids, context=None):
@@ -824,13 +837,19 @@ class sale_order(osv.osv):
         # Po is only treated if line is make_to_order
         # IN nor OUT are yet (or just) created, we theoretically wont have problem with backorders and co
         if order.state != 'shipping_except' and not order.procurement_request and line.procurement_id:
+            cancel_move_id = False
             # if the procurement already has a stock move linked to it (during action_confirm of procurement order), we cancel it
+            # UF-1155 : Divided the cancel of the move in two times to avoid the cancelation of the field order
             if line.procurement_id.move_id:
+                cancel_move_id = line.procurement_id.move_id.id
+            
+            # update corresponding procurement order with the new stock move
+            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
+
+            if cancel_move_id:
                 # use action_cancel actually, because there is not stock picking or related stock moves
                 move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
                 #move_obj.write(cr, uid, [line.procurement_id.move_id.id], {'state': 'cancel'}, context=context)
-            # corresponding procurement order
-            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
             # corresponding purchase order, if it exists (make_to_order)
             if line.type == 'make_to_order':
                 pol_update_ids = pol_obj.search(cr, uid, [('procurement_id', '=', line.procurement_id.id)], context=context)
@@ -908,6 +927,7 @@ class sale_order_line(osv.osv):
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
                 'so_back_update_dest_po_id_sale_order_line': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
+                'so_back_update_dest_pol_id_sale_order_line': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
                 'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                 help='* The \'Draft\' state is set when the related sales order in draft state. \
                     \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
@@ -916,18 +936,12 @@ class sale_order_line(osv.osv):
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
 
                 # these 2 columns are for the sync module
-                'sync_pol_db_id': fields.integer(string='PO line DB Id', required=False, readonly=True),
-                'sync_sol_db_id': fields.integer(string='SO line DB Id', required=False, readonly=True),
+                'sync_order_line_db_id': fields.integer(string='Sync order line DB Id', required=False, readonly=True),
                 }
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Add the database ID of the SO line to the value sync_sol_db_id
-        '''
-        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
-
-        super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_sol_db_id': so_line_ids,} , context=context)
-        return so_line_ids
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -956,9 +970,10 @@ class sale_order_line(osv.osv):
         '''
         if not default:
             default = {}
-        # if the po link is not in default, we set it to False
+        # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
-            default.update({'so_back_update_dest_po_id_sale_order_line': False})
+            default.update({'so_back_update_dest_po_id_sale_order_line': False,
+                            'so_back_update_dest_pol_id_sale_order_line': False,})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
@@ -995,7 +1010,7 @@ class sale_order_line(osv.osv):
         else:
             default_data.update({'type': 'make_to_order'})
         return default_data
-
+    
     def create(self, cr, uid, vals, context=None):
         """
         Override create method so that the procurement method is on order if no product is selected
@@ -1004,7 +1019,16 @@ class sale_order_line(osv.osv):
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
-        return super(sale_order_line, self).create(cr, uid, vals, context=context)
+            
+        '''
+        Add the database ID of the SO line to the value sync_order_line_db_id
+        '''
+            
+        so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
+        if 'sync_order_line_db_id' not in vals:
+            super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': so_line_ids,} , context=context)
+            
+        return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
         """

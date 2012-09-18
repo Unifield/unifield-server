@@ -34,6 +34,7 @@ class account_invoice(osv.osv):
         """
         res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
+        res.append('document_date')
         return res
 
     def _hook_fields_m2o_for_refund(self, cr, uid, *args):
@@ -93,8 +94,6 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'), _("Posting date for the refund is before the invoice's posting date!"))
             if document_date and document_date < inv.document_date:
                 raise osv.except_osv(_('Error'), _("Document date for the refund is before the invoice's document date!"))
-            ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', [x.id for x in inv.move_id.line_id])])
-            self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
         new_ids = super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
         # add document date
         if document_date:
