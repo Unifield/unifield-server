@@ -489,12 +489,18 @@ class stock_picking(osv.osv):
         """
         Attach an intermission journal to the Intermission Voucher IN/OUT if partner type is intermission from the picking.
         Prepare intermission voucher IN/OUT
+        Change invoice purchase_list field to TRUE if this picking come from a PO which is 'purchase_list'
         """
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')])
         company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
         intermission_default_account = company.intermission_default_counterpart
         for pick in self.browse(cr, uid, [x for x in res]):
+            # Check if PO and PO is purchase_list
+            if pick.purchase_id and pick.purchase_id.order_type and pick.purchase_id.order_type == 'purchase_list':
+                inv_id = res[pick.id]
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'purchase_list': True})
+            # Check intermission
             if pick.partner_id.partner_type == 'intermission':
                 inv_id = res[pick.id]
                 if not intermission_journal_ids:

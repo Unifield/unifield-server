@@ -200,7 +200,8 @@ class purchase_order(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
-        Check if the partner is correct
+        Check if the partner is correct.
+        # UTP-114 demand purchase_list PO to be "from picking" as invoice_method
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
@@ -208,7 +209,7 @@ class purchase_order(osv.osv):
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list']:
+            elif vals.get('order_type') in ['direct',]:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
@@ -243,10 +244,10 @@ class purchase_order(osv.osv):
         
         if order_type in ['donation_exp', 'donation_st', 'loan']:
             v['invoice_method'] = 'manual'
-        elif order_type in ['direct', 'purchase_list']:
+        elif order_type in ['direct']:
             v['invoice_method'] = 'order'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
-        elif order_type in ['in_kind']:
+        elif order_type in ['in_kind', 'purchase_list']:
             v['invoice_method'] = 'picking'
             d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
@@ -868,7 +869,8 @@ stock moves which are already processed : '''
 
         for order in self.browse(cr, uid, ids):
             # Create commitments for each PO only if po is "from picking"
-            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type != 'in_kind' and order.partner_id.partner_type != 'intermission':
+            # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
+            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission':
                 self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
@@ -1127,6 +1129,7 @@ stock moves which are already processed : '''
     def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
+        # UTP-114 demands purchase_list PO to be 'from picking'.
         """
         if not context:
             context = {}
@@ -1137,7 +1140,7 @@ stock moves which are already processed : '''
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                 vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct', 'purchase_list']:
+            elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
