@@ -782,6 +782,7 @@ class claim_event(osv.osv):
                                   'reason_type_id': context['common']['rt_goods_replacement'],
                                   'purchase_id': origin_picking.purchase_id.id,
                                   'sale_id': origin_picking.sale_id.id,
+                                  'invoice_state': '2binvoiced',
                                   }
             replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement']}
             

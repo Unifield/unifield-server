@@ -455,6 +455,26 @@ class stock_picking(osv.osv):
         return res
     # @@@override end
 
+    # @@@override stock>stock.py>stock_picking>_get_invoice_type
+    def _get_invoice_type(self, pick):
+        src_usage = dest_usage = None
+        inv_type = None
+        if pick.invoice_state == '2binvoiced':
+            if pick.move_lines:
+                src_usage = pick.move_lines[0].location_id.usage
+                dest_usage = pick.move_lines[0].location_dest_id.usage
+            if pick.type == 'out' and dest_usage == 'supplier':
+                inv_type = 'in_refund'
+            elif pick.type == 'out' and dest_usage == 'customer':
+                inv_type = 'out_invoice'
+            elif (pick.type == 'in' and src_usage == 'supplier') or (pick.type == 'internal'):
+                inv_type = 'in_invoice'
+            elif pick.type == 'in' and src_usage == 'customer':
+                inv_type = 'out_refund'
+            else:
+                inv_type = 'out_invoice'
+        return inv_type
+
     def action_done(self, cr, uid, ids, context=None):
         """
         Create automatically invoice
@@ -466,13 +486,17 @@ class stock_picking(osv.osv):
             for sp in self.browse(cr, uid, ids):
                 if sp.subtype == 'standard':
                     sp_type = False
-                    inv_type = False # by default action_invoice_create make an 'out_invoice'
+                    inv_type = self._get_invoice_type(sp)
                     if sp.type == 'in' or sp.type == 'internal':
-                        sp_type = 'purchase'
-                        inv_type = 'in_invoice'
+                        if inv_type == 'out_refund':
+                            sp_type = 'sale_refund'
+                        else:
+                            sp_type = 'purchase'
                     elif sp.type == 'out':
-                        sp_type = 'sale'
-                        inv_type = 'out_invoice'
+                        if inv_type == 'in_refund':
+                            sp_type = 'purchase_refund'
+                        else:
+                            sp_type = 'sale'
                     # Journal type
                     journal_type = sp_type
                     # Disturb journal for invoice only on intermission partner type
