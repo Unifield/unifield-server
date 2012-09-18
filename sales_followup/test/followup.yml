@@ -68,7 +68,7 @@
   !python {model: sale.order.followup}: |
     assert len(self.search(cr, uid, [])) == 1, "Wrong number of created wizard"
 -
-  I check if the wizard is related to the sale order and if the information is ok
+  (Step 1) I check if the wizard is related to the sale order and if the information is ok
 -
   !python {model: sale.order.followup}: |
     wiz_ids = self.search(cr, uid, [])
@@ -134,6 +134,7 @@
   I confirm the sale order
 -
   !workflow {model: sale.order, action: order_confirm, ref: so1}
+
 -
   I create again a wizard
 -
@@ -143,7 +144,7 @@
     res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
     assert res != False, "Error on ir.actions.server launching"
 -
-  I check if the wizard is related to the sale order and if the information is ok
+  (Step 2) I check if the wizard is related to the sale order and if the information is ok
 -
   !python {model: sale.order.followup}: |
     wiz_ids = self.search(cr, uid, [])
@@ -218,7 +219,7 @@
     res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
     assert res != False, "Error on ir.actions.server launching"
 -
-  I check if the wizard is related to the sale order and if the information is ok
+  (Step 3) I check if the wizard is related to the sale order and if the information is ok
 -
   !python {model: sale.order.followup}: |
     import netsvc
@@ -301,7 +302,7 @@
     res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
     assert res != False, "Error on ir.actions.server launching"
 -
-  I check if the wizard is related to the sale order and if the information is ok
+  (Step 4) I check if the wizard is related to the sale order and if the information is ok
 -
   !python {model: sale.order.followup}: |
     import netsvc
@@ -382,7 +383,7 @@
     res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
     assert res != False, "Error on ir.actions.server launching"
 -
-  I check if the wizard is related to the sale order and if the information is ok
+  (Step 5) I check if the wizard is related to the sale order and if the information is ok
 -
   !python {model: sale.order.followup}: |
     import netsvc
@@ -456,7 +457,7 @@
     res = self.run(cr, uid, [ref('sales_followup.action_sale_order_follow_up')], context)
     assert res != False, "Error on ir.actions.server launching"
 -
-  I check if the wizard is related to the sale order and if the information is ok
+  (Step 6 - Final) I check if the wizard is related to the sale order and if the information is ok
 -
   !python {model: sale.order.followup}: |
     import netsvc
