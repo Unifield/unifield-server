@@ -217,7 +217,7 @@ class sourcing_line(osv.osv):
 #            res[line.id]['rts'] = datetime.strptime(line.sale_order_line_id.date_planned, '%Y-%m-%d') - relativedelta(days=int(tr_lt)) - relativedelta(days=int(ship_lt))
 #            res[line.id]['rts'] = res[line.id]['rts'].strftime('%Y-%m-%d')
             res[line.id]['rts'] = line.sale_order_id.ready_to_ship_date
-        
+
         return res
 
     _columns = {
@@ -282,12 +282,7 @@ class sourcing_line(osv.osv):
         '''
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             delay = -1
-            if sourcing_line.product_id:
-                for suppinfo in sourcing_line.product_id.seller_ids:
-                    if suppinfo.name.id == partner_id:
-                        delay = suppinfo.delay
-                    
-            return delay
+            return sourcing_line.supplier and sourcing_line.supplier.supplier_lt or delay
     
     def write(self, cr, uid, ids, values, context=None):
         '''
@@ -400,13 +395,13 @@ class sourcing_line(osv.osv):
         # otherwise we take the default value from product form
         if delay < 0:
             delay = partner.default_delay
-        
+
         daysToAdd = delay
         estDeliveryDate = date.today()
         estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
         
         result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
-        
+
         return result
     
     def copy(self, cr, uid, id, default=None, context=None):
