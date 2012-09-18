@@ -3109,7 +3109,8 @@ class sale_order(osv.osv):
             # We also do a first 'check availability': cancel then check
             pick_obj.cancel_assign(cr, uid, [pick_id], context)
             pick_obj.action_assign(cr, uid, [pick_id], context)
-        return True
+            
+        return super(sale_order, self)._hook_ship_create_execute_specific_code_02(cr, uid, ids, context, *args, **kwargs)
     
     def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
