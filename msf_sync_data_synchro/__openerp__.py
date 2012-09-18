@@ -21,10 +21,10 @@
 
 
 {
-    'name': 'Synchronization Utility: Datas Synchro Server Side',
+    'name': 'Synchronization Utility: Datas Sync Server Side',
     'version': '0.1',
     'category': 'Tools',
-    'description': '',
+    'description': 'Data files for Sync Server',
     'author': 'MSF, OpenERP SA',
     'website': 'http://openerp.com',
     'depends': ['base', 'sync_server', 'account', 'account_analytic_plans'],
