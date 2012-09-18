@@ -32,6 +32,7 @@
     'data': [
         'data/account.account.type.csv',
         'data/account.analytic.account.csv',
+        'data/msf.instance.csv',
         'data/account.account.csv',
         'data/product.nomenclature.csv',
         'data/product.category.csv',
