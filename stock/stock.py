@@ -390,9 +390,13 @@ class stock_location(osv.osv):
         if context is None:
             context = {}
         pool_uom = self.pool.get('product.uom')
-        for id in self.search(cr, uid, [('location_id', 'child_of', ids)], order="parent_left"):
-            if id == location_dest_id:
-                continue
+
+        temp = self.search(cr, uid, [('location_id', 'child_of', ids)], order="parent_left")
+        if location_dest_id in temp:
+            temp.remove(location_dest_id)
+            temp.append(location_dest_id)
+
+        for id in temp:
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
