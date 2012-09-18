@@ -108,7 +108,12 @@ class kit_creation(osv.osv):
             if kit.internal_picking_id_kit_creation:
                 picking_id = kit.internal_picking_id_kit_creation.id
                 wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_cancel', cr)
-        
+
+            if kit.consumed_ids_kit_creation:
+                 move_ids = [x.id for x in kit.consumed_ids_kit_creation]
+                 # we set original_from_process_stock_move to False, so lines can be deleted when canceled
+                 move_obj.write(cr, uid, move_ids, {'original_from_process_stock_move': False}, context=context)
+
         # cancel the kit creation
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         return True
@@ -296,6 +301,29 @@ class kit_creation(osv.osv):
         
         return True
     
+    def assert_confirm_kitting(self, cr, uid, ids, context=None):
+        '''
+        if the returned value evaluates to True (True or text), the confirm kitting cannot be processed
+        '''
+        # objects
+        move_obj = self.pool.get('stock.move')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # all products to consume must have been consumed
+            for to_consume in obj.to_consume_ids_kit_creation:
+                if not to_consume.consumed_to_consume:
+                    return 'All products have not been consumed.'
+            # all moves must be done
+            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', obj.id),('state', '!=', 'done')], context=context)
+            if move_ids:
+                return 'All products consumed are not done.'
+            # all moves with perishable/batch management products must have been assigned totally
+            for move in obj.consumed_ids_kit_creation:
+                if move.product_id.perishable and move.assigned_qty_stock_move != move.product_qty:
+                    return 'All Products with Batch Number must be assigned manually to Kits.'
+        
+        return False
+    
     def confirm_kitting(self, cr, uid, ids, context=None):
         '''
         confirm the kitting, assign the production to kits
@@ -307,20 +335,14 @@ class kit_creation(osv.osv):
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
+        # validation of kitting order
+        assertion = self.assert_confirm_kitting(cr, uid, ids, context=context)
+        if assertion:
+            raise osv.except_osv(_(assertion), _(assertion))
         
         for obj in self.browse(cr, uid, ids, context=context):
-            # all products to consume must have been consumed
-            for to_consume in obj.to_consume_ids_kit_creation:
-                if not to_consume.consumed_to_consume:
-                    raise osv.except_osv(_('Warning !'), _('All products have not been consumed.'))
-            # all moves must be done
-            move_ids = move_obj.search(cr, uid, [('kit_creation_id_stock_move', '=', obj.id),('state', '!=', 'done')], context=context)
-            if move_ids:
-                raise osv.except_osv(_('Warning !'), _('All products consumed are not done.'))
-            # all moves with perishable/batch management products must have been assigned totally
-            for move in obj.consumed_ids_kit_creation:
-                if move.product_id.perishable and move.assigned_qty_stock_move != move.product_qty:
-                    raise osv.except_osv(_('Warning !'), _('All Products with Batch Number must be assigned manually to Kits.'))
+            # we copy the notes from kitting order to each kit
+            notes = obj.notes_kit_creation
             # assign products to kits TODO modify to many2many to keep stock move traceability?? needed?
             for kit in obj.kit_ids_kit_creation:
                 for item in obj.version_id_kit_creation.composition_item_ids:
@@ -360,6 +382,19 @@ class kit_creation(osv.osv):
                                'prodlot_id': kit.composition_lot_id.id,
                                }
                 new_move_id = move_obj.create(cr, uid, move_values, context=context)
+                # for all kit, we compute the expiry date if batch management will update corresponding lot, otherwise corresponding field
+                # we need to compute it for each kit, as the distribution of lots across kits is not homogeneous
+                expiry_date = kit_obj._compute_expiry_date(cr, uid, [kit.id], context=context)
+                kit_values = {'composition_exp': expiry_date}
+                # notes depend if notes exist already
+                if notes:
+                    if kit.composition_description:
+                        new_notes = notes + '\n' + kit.composition_description
+                    else:
+                        new_notes = notes
+                    kit_values.update({'composition_description': new_notes})
+                # update the kit
+                kit_obj.write(cr, uid, [kit.id], kit_values, context=context)
                 # all kits are completed
                 kit_obj.mark_as_completed(cr, uid, [kit.id], context=context)
             # state of kitting order is Done
@@ -373,8 +408,6 @@ class kit_creation(osv.osv):
         '''
         force assign moves in 'confirmed' (Not Available) state
         
-        the force_assign function is not called correctly
-        
         renamed because two buttons cannot have the same name in the view - force_assign already exist in stock moves
         '''
         # objects
@@ -384,6 +417,38 @@ class kit_creation(osv.osv):
             if obj.state != 'in_production':
                 raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
             return pick_obj.force_assign(cr, uid, [obj.internal_picking_id_kit_creation.id]) #original function does not support context
+        
+    def cancel_availability_all_lines(self, cr, uid, ids, context=None):
+        '''
+        cancel availability for moves in 'assigned' (Available) state
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
+            # concerned moves
+            move_ids = move_obj.search(cr, uid, [('state', '=', 'assigned'), ('kit_creation_id_stock_move', '=', obj.id)], context=context)
+            move_obj.write(cr, uid, move_ids, {'state': 'confirmed'}, context=context)
+        
+        return True
+        
+    def validate_assign_all_lines(self, cr, uid, ids, context=None):
+        '''
+        validate all lines in 'assigned' state
+        '''
+        # objects
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.state != 'in_production':
+                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
+            for line in obj.consumed_ids_kit_creation:
+                move_obj.validate_assign(cr, uid, [line.id], context=context)
+        return True
     
     def cancel_all_lines(self, cr, uid, ids, context=None):
         '''
@@ -397,12 +462,100 @@ class kit_creation(osv.osv):
         move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
         return True
     
+    def _consolidate_data(self, cr, uid, id, context=None):
+        '''
+        consolidate data from stock moves which are confirmed
+        '''
+        obj = self.browse(cr, uid, id, context=context)
+        if obj.state != 'in_production':
+            raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
+        # data
+        data = {}
+        # moves consolidated
+        move_list = []
+        
+        for move in obj.consumed_ids_kit_creation:
+            # the stock move should not be canceled, but... we recycle them in case.
+            if move.state in ['confirmed', 'cancel']:
+                move_list.append(move.id)
+                # consolidate the moves qty
+                qty = data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {}).setdefault('qty', 0.0)
+                # if we get an original move among the consolidated ones, we keep a flag to remember that
+                if not data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {}).get('original', False):
+                    data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {})['original'] = move.original_from_process_stock_move
+                # save the link to to_consume line - well if we get multiple times the same product in the to consume list, we'll get 1 move for both when consolidated
+                data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {})['to_consume_id'] = move.to_consume_id_stock_move.id
+                qty += move.product_qty
+                data.setdefault(move.product_id.id, {}).setdefault('uoms', {})[move.product_uom.id]['qty'] = qty
+                # save object for efficiency
+                data.setdefault(move.product_id.id, {}).setdefault('object', move.product_id)
+        
+        return data, move_list
+    
+    def consolidate_lines(self, cr, uid, ids, context=None):
+        '''
+        consolidate lines which are 'confirmed' (Not Available) considering product and uom
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # objects
+        move_obj = self.pool.get('stock.move')
+        data_tools_obj = self.pool.get('data.tools')
+        # load data into the context
+        data_tools_obj.load_common_data(cr, uid, ids, context=context)
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # consolidate data
+            data, move_list = self._consolidate_data(cr, uid, obj.id, context=context)
+            # delete stock moves
+            move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
+            # default location
+            default_location_id = obj.default_location_src_id_kit_creation.id
+            # create consolidated stock moves
+            for product_id in data.keys():
+                for uom_id in data[product_id]['uoms'].keys():
+                    # total qty needed for this product/uom
+                    needed_qty = data[product_id]['uoms'][uom_id]['qty']
+                    # the consolidated data contains a move which was original
+                    original_flag = data[product_id]['uoms'][uom_id].get('original', False)
+                    # true for both batch management and not batch management products
+                    values = {'kit_creation_id_stock_move': obj.id,
+                              'name': data[product_id]['object'].name,
+                              'picking_id': obj.internal_picking_id_kit_creation.id,
+                              'product_uom': uom_id,
+                              'product_id': product_id,
+                              'date_expected': context['common']['date'],
+                              'date': context['common']['date'],
+                              'product_qty': needed_qty,
+                              'prodlot_id': False, # the qty is not available
+                              'location_id': default_location_id,
+                              'location_dest_id': context['common']['kitting_id'],
+                              'state': 'confirmed', # not available
+                              'reason_type_id': context['common']['reason_type_id'],
+                              'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                              'original_from_process_stock_move': original_flag,
+                              }
+                    move_obj.create(cr, uid, values, context=context)
+                    # we reset original move flag
+                    original_flag = False
+        return True
+    
     def check_availability(self, cr, uid, ids, context=None):
         '''
         auto selection of location and lots for stock moves
         
         we treat ('confirmed', 'Not Available') moves
         '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
         # objects
         move_obj = self.pool.get('stock.move')
         loc_obj = self.pool.get('stock.location')
@@ -411,27 +564,12 @@ class kit_creation(osv.osv):
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
         
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.state != 'in_production':
-                raise osv.except_osv(_('Warning !'), _('Kitting Order must be In Production.'))
-            # data
-            data = {}
-            # moves consolidated
-            move_list = []
-            # default location
-            default_location_id = obj.default_location_src_id_kit_creation.id
-            for move in obj.consumed_ids_kit_creation:
-                if move.state == 'confirmed':
-                    move_list.append(move.id)
-                    # consolidate the moves qty
-                    qty = data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {}).setdefault('qty', 0.0)
-                    # save the link to to_consume line
-                    data.setdefault(move.product_id.id, {}).setdefault('uoms', {}).setdefault(move.product_uom.id, {})['to_consume_id'] = move.to_consume_id_stock_move.id
-                    qty += move.product_qty
-                    data.setdefault(move.product_id.id, {}).setdefault('uoms', {})[move.product_uom.id]['qty'] = qty
-                    # save object for efficiency
-                    data.setdefault(move.product_id.id, {}).setdefault('object', move.product_id)
+            # consolidate data
+            data, move_list = self._consolidate_data(cr, uid, obj.id, context=context)
             # delete stock moves
             move_obj.unlink(cr, uid, move_list, context=dict(context, call_unlink=True))
+            # default location
+            default_location_id = obj.default_location_src_id_kit_creation.id
             # create consolidated stock moves
             for product_id in data.keys():
                 for uom_id in data[product_id]['uoms'].keys():
@@ -439,27 +577,36 @@ class kit_creation(osv.osv):
                     res = loc_obj.compute_availability(cr, uid, [default_location_id], obj.consider_child_locations_kit_creation, product_id, uom_id, context=context)
                     # total qty needed for this product/uom
                     needed_qty = data[product_id]['uoms'][uom_id]['qty']
+                    # the consolidated data contains a move which was original
+                    original_flag = data[product_id]['uoms'][uom_id].get('original', False)
                     if res['total'] < needed_qty:
+                        if res['total'] <= 0:
+                            diff_qty = needed_qty
+                        else:
                             diff_qty = needed_qty - res['total']
-                            needed_qty -= diff_qty
-                            # we dont have enough availability, a first move 'confirmed' is created with missing qty
-                            # true for both batch management and not batch management products
-                            values = {'kit_creation_id_stock_move': obj.id,
-                                      'name': data[product_id]['object'].name,
-                                      'picking_id': obj.internal_picking_id_kit_creation.id,
-                                      'product_uom': uom_id,
-                                      'product_id': product_id,
-                                      'date_expected': context['common']['date'],
-                                      'date': context['common']['date'],
-                                      'product_qty': diff_qty,
-                                      'prodlot_id': False, # the qty is not available
-                                      'location_id': default_location_id,
-                                      'location_dest_id': context['common']['kitting_id'],
-                                      'state': 'confirmed', # not available
-                                      'reason_type_id': context['common']['reason_type_id'],
-                                      'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
-                                      }
-                            move_obj.create(cr, uid, values, context=context)
+                        needed_qty -= diff_qty
+                        # we don't have enough availability, a first move 'confirmed' is created with missing qty
+                        # true for both batch management and not batch management products
+                        values = {'kit_creation_id_stock_move': obj.id,
+                                  'name': data[product_id]['object'].name,
+                                  'picking_id': obj.internal_picking_id_kit_creation.id,
+                                  'product_uom': uom_id,
+                                  'product_id': product_id,
+                                  'date_expected': context['common']['date'],
+                                  'date': context['common']['date'],
+                                  'product_qty': diff_qty,
+                                  'prodlot_id': False, # the qty is not available
+                                  'location_id': default_location_id,
+                                  'location_dest_id': context['common']['kitting_id'],
+                                  'state': 'confirmed', # not available
+                                  'reason_type_id': context['common']['reason_type_id'],
+                                  'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                                  'original_from_process_stock_move': original_flag,
+                                  }
+                        move_obj.create(cr, uid, values, context=context)
+                        # we reset original move flag
+                        original_flag = False
+                                
                     if data[product_id]['object'].perishable: # perishable for perishable or batch management
                         # the product is batch management we use the FEFO list
                         for loc in res['fefo']:
@@ -489,8 +636,11 @@ class kit_creation(osv.osv):
                                           'state': 'assigned', # available
                                           'reason_type_id': context['common']['reason_type_id'],
                                           'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                                          'original_from_process_stock_move': original_flag,
                                           }
                                 move_obj.create(cr, uid, values, context=context)
+                                # we reset original move flag
+                                original_flag = False
                     else:
                         # the product is not batch management, we use locations in id order
                         for loc in sorted(res.keys()):
@@ -521,8 +671,11 @@ class kit_creation(osv.osv):
                                               'state': 'assigned',
                                               'reason_type_id': context['common']['reason_type_id'],
                                               'to_consume_id_stock_move': data[product_id]['uoms'][uom_id]['to_consume_id'],
+                                              'original_from_process_stock_move': original_flag,
                                               }
                                     move_obj.create(cr, uid, values, context=context)
+                                    # we reset original move flag
+                                    original_flag = False
         
         return True
         
@@ -606,12 +759,13 @@ class kit_creation(osv.osv):
                                    'company_id': context['common']['company_id'],
                                    'reason_type_id': context['common']['reason_type_id'],
                                    'prodlot_id': False,
+                                   'original_from_process_stock_move': True,
                                    }
                     move_id = move_obj.create(cr, uid, move_values, context=context)
-                
+                    
             # to_consume lines are consumed
             to_consume_obj.write(cr, uid, [x.id for x in to_consume_list], {'consumed_to_consume': True}, context=context)
-        
+            
             # update the view so the new move is displayed in the one2many
             return {'name':_("Kitting Order"),
                     'view_mode': 'form,tree',
@@ -648,10 +802,29 @@ class kit_creation(osv.osv):
         
         return result
     
+    def _vals_get_kit_creation(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # objects
+        loc_obj = self.pool.get('stock.location')
+        
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            # batch management
+            completed = not self.assert_confirm_kitting(cr, uid, [obj.id], context=context)
+            result.setdefault(obj.id, {}).update({'completed_kit_creation': completed})
+        return result
+    
     _columns = {'name': fields.char(string='Reference', size=1024, required=True),
                 'to_consume_sequence_id': fields.many2one('ir.sequence', 'To Consume Sequence', required=True, ondelete='cascade'),
                 'creation_date_kit_creation': fields.date(string='Creation Date', required=True),
-                'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit')]),
+                'product_id_kit_creation': fields.many2one('product.product', string='Product', required=True, domain=[('type', '=', 'product'), ('subtype', '=', 'kit'), ('has_active_completed_theo_kit_kit', '=', True)]),
                 'version_id_kit_creation': fields.many2one('composition.kit', string='Version', domain=[('composition_type', '=', 'theoretical'), ('state', '=', 'completed')], required=True),
                 'qty_kit_creation': fields.integer(string='Qty', required=True),
                 'uom_id_kit_creation': fields.many2one('product.uom', string='UoM', required=True),
@@ -668,13 +841,15 @@ class kit_creation(osv.osv):
                 'batch_check_kit_creation': fields.related('product_id_kit_creation', 'batch_management', type='boolean', string='Batch Number Mandatory', readonly=True, store=False),
                 # expiry is always true if batch_check is true. we therefore use expry_check for now in the code
                 'expiry_check_kit_creation': fields.related('product_id_kit_creation', 'perishable', type='boolean', string='Expiry Date Mandatory', readonly=True, store=False),
+                # function
+                'completed_kit_creation': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Kitting Order completed', multi='get_vals_kit_creation', store=False),
                 }
     
     _defaults = {'state': 'draft',
                  'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'kit.creation'),
                  'creation_date_kit_creation': lambda *a: time.strftime('%Y-%m-%d'),
-                 'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
-                 'location_dest_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+#                 'default_location_src_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+#                 'location_dest_id_kit_creation': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'consider_child_locations_kit_creation': True,
                  'qty_kit_creation': 1,
                  }
@@ -915,7 +1090,7 @@ class kit_creation_to_consume(osv.osv):
     _columns = {'kit_creation_id_to_consume': fields.many2one('kit.creation', string="Kitting Order", readonly=True, required=True, on_delete='cascade'),
                 'module_to_consume': fields.char(string='Module', size=1024, readonly=True),
                 'product_id_to_consume': fields.many2one('product.product', string='Product', readonly=True),
-                'qty_to_consume': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+                'qty_to_consume': fields.float(string='Qty per Kit', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 'uom_id_to_consume': fields.many2one('product.uom', string='UoM', readonly=True),
                 'location_src_id_to_consume': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'line_number_to_consume': fields.integer(string='Line', required=True, readonly=True),
@@ -924,7 +1099,7 @@ class kit_creation_to_consume(osv.osv):
                 'qty_consumed_to_consume': fields.float(string='Consumed Qty', digits_compute=dp.get_precision('Product UoM'), readonly=True),
                 # functions
                 # state is defined in children classes as the dynamic store does not seem to work properly with _name + _inherit
-                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Total Qty', multi='get_vals', store=False),
+                'total_qty_to_consume': fields.function(_vals_get, method=True, type='float', string='Qty', multi='get_vals', store=False),
                 'qty_available_to_consume': fields.function(_vals_get, method=True, type='float', string='Available Qty', multi='get_vals', store=False),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=KIT_CREATION_STATE, string='State', readonly=True, multi='get_vals',
                                          store= {'kit.creation.to.consume': (lambda self, cr, uid, ids, c=None: ids, ['kit_creation_id_to_consume'], 10),
@@ -996,11 +1171,17 @@ class stock_move(osv.osv):
             result[obj.id] = {}
             # assigned qty
             assigned_qty = 0.0
-            item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', obj.id)], context=context)
-            if item_ids:
-                data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
-                for value in data:
-                    assigned_qty += value['item_qty']
+            # if the product is perishable (or batch management), we gather assigned qty from kit items
+            if obj.product_id.perishable:
+                item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', obj.id)], context=context)
+                if item_ids:
+                    data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
+                    for value in data:
+                        assigned_qty += value['item_qty']
+            
+            # when the state is assigned or done, the assigned qty is set to product_qty
+            elif obj.state in ['assigned', 'done']:
+                assigned_qty = obj.product_qty
             result[obj.id].update({'assigned_qty_stock_move': assigned_qty})
             # hidden_state
             result[obj.id].update({'hidden_state': obj.state})
@@ -1008,21 +1189,38 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_prodlot_id': obj.prodlot_id.id})
             # hidden_exp_check
             result[obj.id].update({'hidden_exp_check': obj.exp_check})
+            # hidden_asset_check
+            hidden_asset_check = False
+            if obj.product_id.type == 'product' and obj.product_id.subtype == 'asset':
+                hidden_asset_check = True
+            result[obj.id].update({'hidden_asset_check': hidden_asset_check})
+            
+            hidden_creation_state = False
+            hidden_creation_qty_stock_move = 0.0
+            if obj.kit_creation_id_stock_move:
+                hidden_creation_state = obj.kit_creation_id_stock_move.state
+                hidden_creation_qty_stock_move = obj.kit_creation_id_stock_move.qty_kit_creation
             # hidden_creation_state
-            result[obj.id].update({'hidden_creation_state': obj.kit_creation_id_stock_move.state})
+            result[obj.id].update({'hidden_creation_state': hidden_creation_state})
+            # hidden_creation_qty_stock_move
+            result[obj.id].update({'hidden_creation_qty_stock_move': hidden_creation_qty_stock_move})
         return result
     
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
                 'to_consume_id_stock_move': fields.many2one('kit.creation.to.consume', string='To Consume Line', readonly=True),# link to to consume line - is not deleted anymore ! but colored
+                'original_from_process_stock_move': fields.boolean(string='Original', readonly=True),
                 # functions
                 'hidden_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=SELECTION, string='Hidden State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_prodlot_id': fields.function(_vals_get_kit_creation, method=True, type='many2one', relation='stock.production.lot', string='Hidden Prodlot', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_exp_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Expiry Check', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_asset_check': fields.function(_vals_get_kit_creation, method=True, type='boolean', string='Hidden Asset Check', multi='get_vals_kit_creation', store=False, readonly=True),
                 'hidden_creation_state': fields.function(_vals_get_kit_creation, method=True, type='selection', selection=KIT_CREATION_STATE, string='Hidden Creation State', multi='get_vals_kit_creation', store=False, readonly=True),
                 'assigned_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='float', string='Assigned Qty', multi='get_vals_kit_creation', store=False, readonly=True),
+                'hidden_creation_qty_stock_move': fields.function(_vals_get_kit_creation, method=True, type='integer', string='Hidden Creation Qty', multi='get_vals_kit_creation', store=False, readonly=True),
                 }
     
     _defaults = {'to_consume_id_stock_move': False,
+                 'original_from_process_stock_move': False,
                  }
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -1043,12 +1241,79 @@ class stock_move(osv.osv):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context))
         return res
     
+    def automatic_assignment(self, cr, uid, ids, context=None):
+        '''
+        automatic assignment of products to generated kits
+        
+        + a_sum = compute sum of assigned qty
+        + left = compute available qty not assigned (available - a_sum)
+        + for each line we update assigned qty if needed
+          + assigned < required
+            + needed = required - assigned
+            + needed <= left:
+              + assigned = assigned + needed
+              + left = left - needed
+            + needed > left:
+              + assigned = assigned + left
+              + left = 0.0
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # create corresponding wizard object (containing processing logic)
+        res = self.assign_to_kit(cr, uid, ids, context=context)
+        # objects
+        wiz_obj = self.pool.get(res['res_model'])
+        # perform auto assignment
+        wiz_obj.automatic_assignment(cr, uid, [res['res_id']], context=res['context'])
+        # process the wizard
+        return wiz_obj.do_assign_to_kit(cr, uid, [res['res_id']], context=res['context'])
+    
     def validate_assign(self, cr, uid, ids, context=None):
         '''
         set the state to done, so the move can be assigned to a kit
         '''
-        self.write(cr, uid, ids, {'state': 'done'}, context=context)
-        return True
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        kit_creation_id = False
+        for move in self.browse(cr, uid, ids, context=context):
+            kit_creation_id = move.kit_creation_id_stock_move.id
+            if move.state == 'assigned':
+                self.write(cr, uid, [move.id], {'state': 'done'}, context=context)
+            
+            # we assign automatically the lot to the kit only for products perishable at least (perishable and batch management)
+            if move.product_id.perishable:
+                # openERP bug -> fields.function integer returns a string
+                if move.hidden_creation_qty_stock_move in [1, '1']:
+                    # if only one kit, automatic assignement
+                    self.automatic_assignment(cr, uid, [move.id], context=context)
+                else:
+                    # multiple kit, we open the assignation wizard
+                    return self.assign_to_kit(cr, uid, ids, context=context)
+        
+        # refresh the vue so the completed flag is updated and Confirm Kitting button possibly appears
+        data_obj = self.pool.get('ir.model.data')
+        view_id = False
+        try:
+            view_id = data_obj.get_object_reference(cr, uid, 'kit', 'view_kit_creation_form')
+        except:
+            pass
+        view_id = view_id and view_id[1] or False
+        return {'view_mode': 'form,tree',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'kit.creation',
+                'res_id': kit_creation_id,
+                'type': 'ir.actions.act_window',
+                'target': 'crush',
+                }
     
     def check_assign_lot(self, cr, uid, ids, context=None):
         """
@@ -1094,6 +1359,47 @@ class stock_move(osv.osv):
                 wf_service = netsvc.LocalService("workflow")
                 wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
         return count
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        override the function so we prevent deletion of original_from_process_stock_move stock.moves
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.original_from_process_stock_move and not context.get('call_unlink', False):
+                raise osv.except_osv(_('Warning !'), _('Original Stock Move cannot be deleted.'))
+        
+        return super(stock_move, self).unlink(cr, uid, ids, context=context)
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        reset original_from_process_stock_move
+        '''
+        if not default:
+            default = {}
+        default.update({'original_from_process_stock_move': False})
+        return super(stock_move, self).copy_data(cr, uid, id, default, context=context)
+    
+    def split_stock_move(self, cr, uid, ids, context=None):
+        '''
+        open the wizard to split stock move
+        '''
+        # we need the context for the wizard switch
+        if context is None:
+            context = {}
+        
+        wiz_obj = self.pool.get('wizard')
+        # data
+        name = _("Split move")
+        model = 'split.move'
+        step = 'create'
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=context)
     
 stock_move()
 

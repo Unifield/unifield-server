@@ -14,8 +14,9 @@
 				<data>
 				
 					<field name="product_id" position="after">
+						<field name="location_supplier_customer_mem_out" invisible="True" />
 						<field name="asset_id" domain="[('product_id', '=', product_id)]"
-							attrs="{'readonly': [('asset_check', '=', False)]}" />
+							attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}" />
 						<field name="asset_check" invisible="True" />
 					</field>
 				
@@ -32,8 +33,9 @@
 				<data>
 				
 					<field name="product_id" position="after">
+						<field name="location_supplier_customer_mem_out" invisible="True" />
 						<field name="asset_id" domain="[('product_id', '=', product_id)]"
-							attrs="{'readonly': [('asset_check', '=', False)]}" />
+							attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}" />
 						<field name="asset_check" invisible="True" />
 					</field>
 				

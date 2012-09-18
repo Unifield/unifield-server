@@ -519,10 +519,11 @@ class stock_picking(osv.osv):
                                                                     'move_lines' : [],
                                                                     'state':'draft',
                                                                     })
-                    # create the corresponding move in the backorder - reset productionlot
+                    # create the corresponding move in the backorder - reset productionlot - reset asset_id
                     defaults = {'name': data_back['name'],
                                 'product_id': data_back['product_id'],
                                 'product_uom': data_back['product_uom'],
+                                'asset_id': False,
                                 'product_qty': diff_qty,
                                 'product_uos_qty': diff_qty,
                                 'picking_id': pick.id, # put in the current picking which will be the actual backorder (OpenERP logic)

@@ -29,6 +29,7 @@ import decimal_precision as dp
 import netsvc
 import pooler
 import time
+import logging
 
 from mx import DateTime
 
@@ -571,7 +572,7 @@ class stock_move(osv.osv):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.batch_management:
                     if not move.prodlot_id and move.product_qty:
-                        return False
+                        raise osv.except_osv(_('Error!'),  _('You must assign a Batch Number for this product (Batch Number Mandatory).'))
         return True
     
     def _check_perishable(self, cr, uid, ids, context=None):
@@ -583,7 +584,7 @@ class stock_move(osv.osv):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.perishable:
                     if not move.prodlot_id and move.product_qty:
-                        return False
+                        raise osv.except_osv(_('Error!'),  _('You must assign an Expiry Date for this product (Expiry Date Mandatory).'))
         return True
     
     def _check_prodlot_need(self, cr, uid, ids, context=None):
@@ -593,7 +594,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.prodlot_id:
                 if not move.product_id.perishable and not move.product_id.batch_management:
-                    return False
+                    raise osv.except_osv(_('Error!'),  _('The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory.'))
         return True
     
     def _check_prodlot_need_batch_management(self, cr, uid, ids, context=None):
@@ -603,7 +604,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.prodlot_id:
                 if move.prodlot_id.type == 'internal' and move.product_id.batch_management:
-                    return False
+                    raise osv.except_osv(_('Error!'),  _('The selected product is Batch Number Mandatory while the selected Batch number corresponds to Expiry Date Mandatory.'))
         return True
     
     def _check_prodlot_need_perishable(self, cr, uid, ids, context=None):
@@ -613,7 +614,7 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.prodlot_id:
                 if move.prodlot_id.type == 'standard' and not move.product_id.batch_management and move.product_id.perishable:
-                    return False
+                    raise osv.except_osv(_('Error!'),  _('The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.'))
         return True
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
@@ -706,7 +707,7 @@ class stock_move(osv.osv):
                    (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
                    (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
                )):
-                return False
+                raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
         return True
             
     _columns = {
@@ -725,13 +726,13 @@ class stock_move(osv.osv):
     }
     
     _constraints = [(_check_batch_management,
-                     'You must assign a Batch Number for this product (Batch Number Mandatory)',
+                     'You must assign a Batch Number for this product (Batch Number Mandatory).',
                      ['prodlot_id']),
                     (_check_perishable,
-                     'You must assign an Expiry Date for this product (Expiry Date Mandatory)',
+                     'You must assign an Expiry Date for this product (Expiry Date Mandatory).',
                      ['prodlot_id']),
                     (_check_prodlot_need,
-                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
+                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory.',
                      ['prodlot_id']),
                     (_check_prodlot_need_batch_management,
                      'The selected product is Batch Number Mandatory while the selected Batch number corresponds to Expiry Date Mandatory.',
@@ -740,7 +741,7 @@ class stock_move(osv.osv):
                      'The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.',
                      ['prodlot_id']),
                      (_check_tracking,
-                      'You must assign a batch number for this product',
+                      'You must assign a batch number for this product.',
                       ['prodlot_id']),
                     ]
 
@@ -759,12 +760,13 @@ class stock_production_lot(osv.osv):
         """
         if context is None:
             context = {}
+        
         # warehouse wizards or inventory screen
         if view_type == 'tree' and ((context.get('expiry_date_check', False) and not context.get('batch_number_check', False)) or context.get('hidden_perishable_mandatory', False)):
             view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'specific_rules', 'view_production_lot_expiry_date_tree')
             if view:
                 view_id = view[1]
-        result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        result = super(stock_production_lot, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
         return result
     
     def copy(self, cr, uid, id, default=None, context=None):
