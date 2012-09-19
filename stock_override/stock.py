@@ -740,7 +740,14 @@ class stock_move(osv.osv):
     def _hook_write_state_stock_move(self, cr, uid, done, notdone, count):
         if done:
             count += len(done)
-            self.write(cr, uid, done, {'state': 'assigned'})
+
+            #If source location == dest location THEN stock move is done.
+            for line in self.read(cr,uid,done,['location_id','location_dest_id']):
+                if line.get('location_id') and line.get('location_dest_id') and line.get('location_id') == line.get('location_dest_id'):
+                    self.write(cr, uid, [line['id']], {'state': 'done'})
+                else:
+                    self.write(cr, uid, [line['id']], {'state': 'assigned'})
+
         if notdone:
             self.write(cr, uid, notdone, {'state': 'confirmed'})
         return count
