@@ -288,8 +288,11 @@ class user_access_configurator(osv.osv_memory):
                 # log error and return
                 data_structure[obj.id]['errors'].append('The Administrator user does not exist.')
                 return
-            # group ids
+            # group ids - used to set all groups to admin user
             group_ids_list = []
+            # user ids - used to deactivate users for which group is not in the file
+            # we do not want to deactivate admin user (even if not in the file)
+            user_ids_list = [admin_ids[0]]
             for group_name in data_structure[obj.id]['group_name_list']:
                 # check if a user already exist
                 user_ids = user_obj.search(cr, uid, [('name', '=', group_name)], context=context)
@@ -299,13 +302,22 @@ class user_access_configurator(osv.osv_memory):
                                                                       'login': '_'.join(group_name.lower().split()),
                                                                       'password': 'temp',
                                                                       'date': False}, context=context)]
-                    
+                
                 # update the group of the user with (6, 0, 0) resetting the data
                 group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[group_name])
+                user_obj.write(cr, uid, user_ids, {'groups_id': [(6, 0, group_ids)]}, context=context)
                 # keep group_id for updating admin user
                 group_ids_list.extend(group_ids)
-                user_obj.write(cr, uid, user_ids, {'groups_id': [(6, 0, group_ids)]}, context=context)
+                # keep user_id for deactivate users not present in the file
+                user_ids_list.extend(user_ids)
                 
+            # get all users
+            all_user_ids = user_obj.search(cr, uid, [], context=context)
+            # deactivate user not present in the file and not ADMIN
+            deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
+            user_obj.write(cr, uid, deactivate_user_ids, {'active': False}, context=context)
+            # activate user from the file (could have been deactivate previously)
+            user_obj.write(cr, uid, user_ids_list, {'active': True}, context=context)
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, ids, context=context))
             # for admin user, set all unifield groups + admin group (only user to have this group)
@@ -387,7 +399,7 @@ class user_access_configurator(osv.osv_memory):
         model_obj = self.pool.get('ir.model')
         access_obj = self.pool.get('ir.model.access')
         # list all ids of objects from the database
-        model_ids = model_obj.search(cr, uid, [], context=context)
+        model_ids = model_obj.search(cr, uid, [('osv_memory', '=', False)], context=context)
         # list all ids of acl
         access_ids = access_obj.search(cr, uid, [], context=context)
         # admin user group id
