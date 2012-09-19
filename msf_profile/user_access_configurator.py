@@ -83,7 +83,21 @@ class user_access_configurator(osv.osv_memory):
         admin_group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[admin_group_name])
         return admin_group_ids[0]
     
-    def _get_immunity_groups(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _get_DNCGL(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return do not change groups
+        '''
+        group_immunity_list = [u'Useability / No One', u'Useability / Multi Companies']
+        return group_immunity_list
+    
+    def _get_DNCGL_ids(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return do not change groups ids
+        '''
+        group_names = self._get_DNCGL(cr, uid, ids, context=context)
+        return self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names)
+    
+    def _get_IGL(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return immunity groups
         '''
@@ -94,7 +108,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         return True if group is immune
         '''
-        group_immunity_list = self._get_immunity_groups(cr, uid, ids, context=context)
+        group_immunity_list = self._get_IGL(cr, uid, ids, context=context)
         group = kwargs['group']
         return group in group_immunity_list
         
@@ -185,7 +199,7 @@ class user_access_configurator(osv.osv_memory):
         # objects
         group_obj = self.pool.get('res.groups')
         
-        group_immunity_list = self._get_immunity_groups(cr, uid, ids, context=context)
+        group_immunity_list = self._get_IGL(cr, uid, ids, context=context)
         return self._activate_groups(cr, uid, ids, context=context, groups=group_immunity_list)
     
     def _activate_groups(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -288,7 +302,9 @@ class user_access_configurator(osv.osv_memory):
         # data structure
         data_structure = context['data_structure']
         # get all menus from database
-        db_menu_ids = menu_obj.search(cr, uid, [], context=context)
+        all_menus_context = dict(context)
+        all_menus_context.update({'ir.ui.menu.full_list': True})
+        db_menu_ids = menu_obj.search(cr, uid, [], context=all_menus_context)
         
         for obj in self.browse(cr, uid, ids, context=context):
             # check each menus from database
@@ -296,15 +312,24 @@ class user_access_configurator(osv.osv_memory):
                 # group ids to be linked to
                 group_ids = []
                 if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
+                    # we modify the groups to admin only if the menu is not linked one of the group of DNCGL
+                    skip_update = False
+                    db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
+                    dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
+                    for group in db_menu.groups_id:
+                        if group.id in dncgl_ids:
+                            skip_update = True
                     # the menu does not exist in the file OR the menu does not belong to any group
                     # link (6,0,[id]) to administration / access rights
-                    admin_group_id = self._get_admin_user_rights_group_id(cr, uid, ids, context=context)
-                    group_ids = [admin_group_id]
+                    if not skip_update:
+                        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, ids, context=context)
+                        group_ids = [admin_group_id]
                 else:
                     # find the id of corresponding groups, and write (6,0, ids) in groups_id
                     group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
                 # link the menu to selected group ids
-                menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, list(set(group_ids)))]}, context=context)
+                if group_ids:
+                    menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, list(set(group_ids)))]}, context=context)
         
         return True
     
