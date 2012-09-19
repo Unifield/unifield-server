@@ -66,6 +66,7 @@
                 <form string="Analytic Wizard Distribution">
                     <field colspan="2" name="amount" readonly="1"/>
                     <field name="invoice_id" invisible="1"/>
+                    <field name="direct_invoice_id" invisible="1"/>
                     <field name="commitment_id" invisible="1"/>
                     <field name="purchase_id" invisible="1"/>
                     <field name="purchase_line_id" invisible="1"/>
@@ -89,7 +90,7 @@
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
-                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode,'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <group colspan="2">
@@ -109,7 +110,7 @@
                     <field name="state" invisible="1"/>
                     <field name="is_writable" invisible="1"/>
                     <field name="account_id" invisible="1"/>
-                    <field name="total_amount" readonly="1" invisible="1"/>
+                    <field name="total_amount" invisible="1" readonly="1" />
                 </form>
             </field>
         </record>

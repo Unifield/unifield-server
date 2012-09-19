@@ -334,7 +334,7 @@ class account_bank_statement(osv.osv):
             id = self.pool.get('wizard.account.invoice').create(cr, uid, {'currency_id': currency, 'register_id': ids[0], 'type': 'in_invoice'}, 
                 context={'journal_type': 'purchase', 'type': 'in_invoice'})
         return {
-            'name': "Supplier Invoice",
+            'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.account.invoice',
             'target': 'new',
@@ -1589,7 +1589,7 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'wizard_supplier_invoice_form_view'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])
@@ -1597,7 +1597,7 @@ class account_bank_statement_line(osv.osv):
         else:
             raise osv.except_osv(_('Error'), _("View not found."))
         return {
-            'name': "Supplier Invoice",
+            'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',
