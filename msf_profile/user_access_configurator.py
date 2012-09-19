@@ -484,7 +484,7 @@ class user_access_configurator(osv.osv_memory):
         # process ACL
         self._process_objects_uac(cr, uid, ids, context=context)
         # process rules
-        self._process_record_rules_uac(cr, uid, ids, context=context)
+        #self._process_record_rules_uac(cr, uid, ids, context=context)
         # error/warning logging
         # TODO
         
