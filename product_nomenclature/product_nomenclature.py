@@ -255,6 +255,7 @@ class product_nomenclature(osv.osv):
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
     _columns = {
+        'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'name': fields.char('Name', size=64, required=True, select=True),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
         # technic fields - tree management
@@ -279,6 +280,7 @@ class product_nomenclature(osv.osv):
                  'type' : lambda *a : 'mandatory',
                  'sub_level': lambda *a : '0',
                  'sequence': _getDefaultSequence,
+                 'active': True,
     }
 
     _order = "sequence, id"
@@ -786,6 +788,7 @@ class product_category(osv.osv):
         '''
         if context is None:
             context = {}
+        nomen_obj = self.pool.get('product.nomenclature')
         if context.get('update_mode') in ['init', 'update']:
             required = ['family_id']
             has_required = False
@@ -795,17 +798,22 @@ class product_category(osv.osv):
                     break
             if not has_required:
                 logging.getLogger('init').info('Loading default values for product.category')
-                vals.update({'family_id': self.pool.get('product.nomenclature').search(cr, uid, [('level', '=', 2), ('type', '=', 'mandatory'), ('category_id', '=', False)], limit=1)[0]})
+                search_nomen_list = nomen_obj.search(cr, uid, [('level', '=', 2), ('type', '=', 'mandatory'), ('category_id', '=', False)], limit=1)
+                if search_nomen_list:
+                    vals.update({'family_id': search_nomen_list[0]})
 
         return super(product_category, self).create(cr, uid, vals, context)
 
     _columns = {
+        'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'family_id': fields.many2one('product.nomenclature', string='Family',
                                      domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '=', False)]",
                                      ),
     }
     
-    
+    _defaults = {
+                 'active': True,
+    }
 product_category()
 
 
@@ -821,3 +829,17 @@ class act_window(osv.osv):
     }
 
 act_window()
+
+class product_uom_categ(osv.osv):
+    _name = 'product.uom.categ'
+    _inherit = 'product.uom.categ'
+    
+    _columns = {
+        'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
+    }
+
+    _defaults = {
+                 'active': True,
+    }
+
+product_uom_categ()

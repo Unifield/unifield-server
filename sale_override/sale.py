@@ -308,7 +308,10 @@ class sale_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
         self.write(cr, uid, ids, {'state': 'validated', 'validated_date': time.strftime('%Y-%m-%d')}, context=context)
         for order in self.browse(cr, uid, ids, context=context):
-            self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
+            if not order.procurement_request:
+                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated.' % order.name, context=context)
+            else:
+                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated.' % order.name, context=context)
 
         return True
     
@@ -585,7 +588,7 @@ class sale_order(osv.osv):
         - allow to execute specific code at position 01
         '''
         super(sale_order, self)._hook_ship_create_execute_specific_code_01(cr, uid, ids, context=context, *args, **kwargs)
-        # Comment because the confirmation of the Internal Request confirmed automatically the associated procurement order
+        # DE-Comment because the confirmation of the Internal Request DOES NOT confirmed automatically the associated procurement order
 #        wf_service = netsvc.LocalService("workflow")
 #        order = kwargs['order']
 #        proc_id = kwargs['proc_id']
@@ -603,8 +606,10 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
-        
-        result = result and not line.order_id.procurement_request
+        if line.order_id.procurement_request:
+            if line.type == 'make_to_order':
+                result = False
+        # result = result and not line.order_id.procurement_request => the proc request can have pick and move
         return result
     
     def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -621,6 +626,39 @@ class sale_order(osv.osv):
         # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
         # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
         return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
+
+    def _hook_ship_create_product_id(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to modifiy product especially for internal request which type is "make_to_order"
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        result = super(sale_order, self)._hook_ship_create_product_id(cr, uid, ids, context=context, *args, **kwargs)
+        line = kwargs['line']
+        if line.product_id:
+            result = line.product_id.id
+        elif line.order_id.procurement_request and not line.product_id and line.comment:
+            result = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+        return result
+    
+    def _hook_ship_create_uom_id(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_ship_create method from sale>sale.py
+             
+        - allow to modifiy uom especially for internal request which type is "make_to_order"
+        '''
+        obj_data = self.pool.get('ir.model.data')
+        result = super(sale_order, self)._hook_ship_create_uom_id(cr, uid, ids, context=context, *args, **kwargs)
+        line = kwargs['line']
+        if line.product_id:
+            result = line.product_uom.id
+        elif line.order_id.procurement_request and not line.product_id and line.comment:
+            # do we need to have one product data per uom?
+            result = obj_data.get_object_reference(cr, uid, 'product', 'cat0')[1]
+        return result
 
     def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
         '''
@@ -645,6 +683,8 @@ class sale_order(osv.osv):
         if context is None:
             context = {}
         order_lines = []
+        procurement_ids = []
+        proc_move_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             # Done picking
             for pick in order.picking_ids:
@@ -654,9 +694,9 @@ class sale_order(osv.osv):
             for line in order.order_line:
                 order_lines.append(line.id)
                 if line.procurement_id:
-                    # Closed procurement
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'subflow.cancel', cr)
-                    wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
+                    procurement_ids.append(line.procurement_id.id)
+                    if line.procurement_id.move_id:
+                        proc_move_ids.append(line.procurement_id.move_id.id)
 
             # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
@@ -665,21 +705,28 @@ class sale_order(osv.osv):
                 self.pool.get('purchase.order').set_manually_done(cr, uid, order.loan_id.id, all_doc=all_doc, context=loan_context)
 
             # Closed invoices
-            invoice_error_ids = []
-            for invoice in order.invoice_ids:
-                if invoice.state == 'draft':
-                    wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
-                elif invoice.state not in ('cancel', 'done'):
-                    invoice_error_ids.append(invoice.id)
+            #invoice_error_ids = []
+            #for invoice in order.invoice_ids:
+            #    if invoice.state == 'draft':
+            #        wf_service.trg_validate(uid, 'account.invoice', invoice.id, 'invoice_cancel', cr)
+            #    elif invoice.state not in ('cancel', 'done'):
+            #        invoice_error_ids.append(invoice.id)
 
-            if invoice_error_ids:
-                invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
-                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
-                            'Invoices references : %s') % invoices_ref)            
+            #if invoice_error_ids:
+            #    invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
+            #    raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
+            #                'Invoices references : %s') % invoices_ref)            
 
         # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
+        self.pool.get('stock.move').set_manually_done(cr, uid, proc_move_ids, all_doc=all_doc, context=context)
+
+        for procurement in procurement_ids:
+            # Closed procurement
+            wf_service.trg_validate(uid, 'procurement.order', procurement, 'subflow.cancel', cr)
+            wf_service.trg_validate(uid, 'procurement.order', procurement, 'button_check', cr)
+
 
         if all_doc:
             # Detach the PO from his workflow and set the state to done
@@ -981,6 +1028,61 @@ class sale_order_line(osv.osv):
             default.update({'so_back_update_dest_po_id_sale_order_line': False,
                             'so_back_update_dest_pol_id_sale_order_line': False,})
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
+
+    def open_order_line_to_correct(self, cr, uid, ids, context=None):
+        '''
+        Open Order Line in form view
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        view_id = obj_data.get_object_reference(cr, uid, 'sale_override', 'view_order_line_to_correct_form')[1]
+        view_to_return = {
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'sale.order.line',
+            'type': 'ir.actions.act_window',
+            'res_id': ids[0],
+            'target': 'new',
+            'context': context,
+            'view_id': [view_id],
+        }
+        return view_to_return
+
+    def save_and_close(self, cr, uid, ids, context=None):
+        '''
+        Save and close the configuration window 
+        '''
+        uom_obj = self.pool.get('product.uom')
+        obj_data = self.pool.get('ir.model.data')
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+        obj_browse = self.browse(cr, uid, ids, context=context)
+        vals={}
+        message = ''
+        for var in obj_browse:
+            if var.product_uom.id == tbd_uom:
+                message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if var.nomen_manda_0.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if var.nomen_manda_1.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+            if var.nomen_manda_2.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+        # the 3rd level is not mandatory
+        if message:
+            raise osv.except_osv(_('Warning !'), _(message))
+        
+        self.write(cr, uid, ids, vals, context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
+        return {'type': 'ir.actions.act_window_close',
+                'res_model': 'sale.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'view_id': [view_id],
+                }
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,

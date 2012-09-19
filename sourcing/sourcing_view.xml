@@ -57,7 +57,7 @@
 					<field name="rts" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
 					<field name="po_cft"
-						on_change="onChangePoCft(po_cft, sale_order_id)" 
+					    on_change="onChangePoCft(po_cft, sale_order_id)" 
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
@@ -87,7 +87,8 @@
 				
 					<!-- <filter name="need_sourcing" string="Need Sourcing" icon="gtk-indent" domain="[('display_confirm_button', '=', True)]" /> -->
 					<filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
-					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="['&amp;', '|', ('state', '!=', 'draft'), ('procurement_request', '=', True), '|', ('sale_order_state', '!=', 'progress'), ('procurement_request', '=', False)]" />
+					<filter name="sourced" string="Sourced" icon="terp-camera_test" 
+					domain="[('sale_order_state', 'in', ['manual','progress', 'sourced', 'split_so'])]" />
 					<separator orientation="vertical"/>
 					<field name="sale_order_id" string="Order" />
 					<field name="priority" />

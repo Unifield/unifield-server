@@ -392,7 +392,7 @@
                                             />
                                        <field name="location_dest_id"
                                             domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view')]" 
-                                            on_change="location_dest_change(location_dest_id)"
+                                            on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     </group>
 
@@ -589,7 +589,7 @@
             							<field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
                                             domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id)]"
-                                            on_change="location_dest_change(location_dest_id)"
+                                            on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
                						</group>
@@ -857,7 +857,7 @@
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
                                         	domain="[('usage', '!=', 'view'), '|', ('output_ok', '=', True), ('usage', '=', 'customer')]"
-                                        	on_change="location_dest_change(location_dest_id)"
+                                        	on_change="location_dest_change(location_dest_id, location_id)"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	 />
                                     </group>

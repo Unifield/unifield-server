@@ -174,7 +174,6 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
-            
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -484,7 +483,8 @@ class stock_picking(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
-                if sp.subtype == 'standard':
+                # we do not create invoice for procurement_request (Internal Request)
+                if not sp.sale_id.procurement_request and sp.subtype == 'standard':
                     sp_type = False
                     inv_type = self._get_invoice_type(sp)
                     if sp.type == 'in' or sp.type == 'internal':

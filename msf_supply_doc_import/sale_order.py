@@ -454,6 +454,7 @@ class sale_order_line(osv.osv):
         message = ''
 
         if not context.get('import_in_progress') or not context.get('button') and context.get('button') == 'save_and_close':
+
             if vals.get('product_uom') or vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
                 if vals.get('product_uom') and vals.get('product_uom') == tbd_uom:
                     message += 'You have to define a valid UOM, i.e. not "To be define".'
@@ -466,19 +467,21 @@ class sale_order_line(osv.osv):
                 if vals.get('nomen_manda_2') and vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid,
                                                                                                             'msf_supply_doc_import', 'nomen_tbd2')[1]:
                     message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+
                 if vals.get('product_uom') and vals.get('product_id'):
                     product_id = vals.get('product_id')
                     uom_id = vals.get('product_uom')
                     res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context)
                     if res and res['warning']:
                         message += res['warning']['message']
-                if message:
+
+                if message and not context.get('procurement_request', False):
                     raise osv.except_osv(_('Warning !'), _(message))
                 else:
                     vals['show_msg_ok'] = False
                     vals['to_correct_ok'] = False
                     vals['text_error'] = False
-
+        
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()
