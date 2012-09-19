@@ -17,6 +17,11 @@
                          <field name="currency_id" />
                          <field name="date_planned" />
                          <field name="type" on_change="requested_type_change(product_id, type)"/>
+                         <field name="supplier"
+                                context="{'product_id': product_id, 'choose_supplier': True}"
+                                attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
+                                domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"
+                             />
                          <newline />
                          <field name="state"/>
                      </page>
