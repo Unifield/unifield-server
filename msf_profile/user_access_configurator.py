@@ -54,6 +54,35 @@ class user_access_configurator(osv.osv_memory):
             return True
         return False
     
+    def _get_ids_from_group_names(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return ids corresponding to group names
+        '''
+        # objects
+        group_obj = self.pool.get('res.groups')
+        # group names
+        group_names = kwargs['group_names']
+        if not isinstance(group_names, list):
+            group_names = [group_names]
+        
+        group_ids = group_obj.search(cr, uid, [('name', 'in', group_names)], context=context)
+        return group_ids
+    
+    def _get_admin_user_rights_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return admin_user_rights_group
+        '''
+        admin_user_rights_group = 'Administration / Access Rights'
+        return admin_user_rights_group
+    
+    def _get_admin_user_rights_group_id(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return admin_user_rights_group id
+        '''
+        admin_group_name = self._get_admin_user_rights_group_name(cr, uid, ids, context=context)
+        admin_group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[admin_group_name])
+        return admin_group_ids[0]
+    
     def _get_immunity_groups(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return immunity groups
@@ -75,7 +104,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         return [group for group in group_names if not self._group_is_immunity(cr, uid, ids, context=context, group=group)]
     
-    def import_data_uac(self, cr, uid, ids, context=None):
+    def _import_data_uac(self, cr, uid, ids, context=None):
         '''
         import data and generate data structure
         
@@ -132,7 +161,11 @@ class user_access_configurator(osv.osv_memory):
                         # menu is in the file but not in the database
                         data_structure[obj.id]['errors'].append('The menu %s (%s.%s) is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
                         continue
-                        
+                    
+                    # test if a menu is defined multiple times
+                    if menu_id in data_structure[obj.id]['menus_groups']:
+                        data_structure[obj.id]['warnings'].append('The menu %s (%s.%s) is defined multiple times. Groups from all rows are aggregated'%(row.cells[3], row.cells[0], row.cells[1]))
+                    
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
                         # group is true for this menu
@@ -169,9 +202,9 @@ class user_access_configurator(osv.osv_memory):
         group_obj.write(cr, uid, activate_ids, {'active': True}, context=context)
         return groups
     
-    def process_groups_uac(self, cr, uid, ids, context=None):
+    def _process_groups_uac(self, cr, uid, ids, context=None):
         '''
-        
+        create / active / deactivate groups according to policy defined in the file
         '''
         # Some verifications
         if context is None:
@@ -181,7 +214,6 @@ class user_access_configurator(osv.osv_memory):
         
         # objects
         group_obj = self.pool.get('res.groups')
-        
         # data structure
         data_structure = context['data_structure']
         # load all groups from database
@@ -216,11 +248,18 @@ class user_access_configurator(osv.osv_memory):
             assert len(deactivate_ids) == len(deactivate_group_names), 'some groups to deactivate where not found'
             group_obj.write(cr, uid, deactivate_ids, {'active': False}, context=context)
         
-        return False
+        return True
     
-    def process_users_uac(self, cr, uid, ids, context=None):
+    def _process_users_uac(self, cr, uid, ids, context=None):
         '''
         create user corresponding to file groups if not already present
+        
+        default values for users
+        
+        insert into res_users (name, login, password, company_id, context_lang, signature) values ('test', 'test_login2', 'test_password', 1, 'en_MF', 'test_signature')
+        
+        menu_id  ??
+        menu_tips
         '''
         # Some verifications
         if context is None:
@@ -232,9 +271,11 @@ class user_access_configurator(osv.osv_memory):
         
         return False
     
-    def process_menus_uac(self, cr, uid, ids, context=None):
+    def _process_menus_uac(self, cr, uid, ids, context=None):
         '''
+        set menus group relation as specified in file
         
+        ir.ui.menu: groups_id
         '''
         # Some verifications
         if context is None:
@@ -242,9 +283,30 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
+        # objects
+        menu_obj = self.pool.get('ir.ui.menu')
+        # data structure
+        data_structure = context['data_structure']
+        # get all menus from database
+        db_menu_ids = menu_obj.search(cr, uid, [], context=context)
         
+        for obj in self.browse(cr, uid, ids, context=context):
+            # check each menus from database
+            for db_menu_id in db_menu_ids:
+                # group ids to be linked to
+                group_ids = []
+                if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
+                    # the menu does not exist in the file OR the menu does not belong to any group
+                    # link (6,0,[id]) to administration / access rights
+                    admin_group_id = self._get_admin_user_rights_group_id(cr, uid, ids, context=context)
+                    group_ids = [admin_group_id]
+                else:
+                    # find the id of corresponding groups, and write (6,0, ids) in groups_id
+                    group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
+                # link the menu to selected group ids
+                menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, list(set(group_ids)))]}, context=context)
         
-        return False
+        return True
     
     def process_objects_uac(self, cr, uid, ids, context=None):
         '''
@@ -283,9 +345,11 @@ class user_access_configurator(osv.osv_memory):
         # we need to take inactive groups into acount, in order to reactivate them and avoid creation of the same group multiple time
         context=dict(context, active_test=False)
         # gather data structure corresponding to selected file
-        data_structure = self.import_data_uac(cr, uid, ids, context=context)
+        data_structure = self._import_data_uac(cr, uid, ids, context=context)
         # process the groups
-        self.process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
+        self._process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
+        # process menus - groups relation
+        self._process_menus_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         
         return {'type': 'ir.actions.act_window_close'}
 
