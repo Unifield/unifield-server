@@ -37,7 +37,7 @@
             <field name="model">res.partner</field>
             <field name="type">form</field>
             <field name="priority" eval="40" />
-            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="inherit_id" ref="partner_modification.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/group/field[@name='title']" position="replace">
@@ -46,6 +46,9 @@
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
+                    </xpath>
+                    <xpath expr="/form/group/group/field[@name='zone']" position="after">
+                        <field name="active"/>
                     </xpath>
                 </data>
             </field>
