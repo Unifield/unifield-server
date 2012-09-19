@@ -28,15 +28,12 @@ import tools
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from msf_supply_doc_import.check_line import *
 
-MAX_LINES_NB = 5000
-
 
 class user_access_configurator(osv.osv_memory):
     _name = 'user.access.configurator'
     _columns = {'file_to_import_uac': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity'),
                 'number_of_non_group_columns_uac': fields.integer(string='Number of columns not containing group name')}
-    _defaults = {#'file_to_import_uac': '/home/chloups208/Dropbox/patrick/unifield/wm/uf1334/merged.xml',
-                 'number_of_non_group_columns_uac': 4}
+    _defaults = {'number_of_non_group_columns_uac': 4}
     
     def _row_is_empty(self, cr, uid, ids, context=None, *args, **kwargs):
         """
@@ -270,10 +267,8 @@ class user_access_configurator(osv.osv_memory):
         
         default values for users
         
-        insert into res_users (name, login, password, company_id, context_lang, signature) values ('test', 'test_login2', 'test_password', 1, 'en_MF', 'test_signature')
-        
-        menu_id  ??
-        menu_tips
+        res_user:
+        'groups_id': fields.many2many('res.groups', 'res_groups_users_rel', 'uid', 'gid', 'Groups'),
         '''
         # Some verifications
         if context is None:
@@ -281,9 +276,42 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
+        # objects
+        user_obj = self.pool.get('res.users')
+        # data structure
+        data_structure = context['data_structure']
         
+        for obj in self.browse(cr, uid, ids, context=context):
+            # get admin user id
+            admin_ids = user_obj.search(cr, uid, [('login', '=', 'admin')], context=context)
+            if not admin_ids:
+                # log error and return
+                data_structure[obj.id]['errors'].append('The Administrator user does not exist.')
+                return
+            # group ids
+            group_ids_list = []
+            for group_name in data_structure[obj.id]['group_name_list']:
+                # check if a user already exist
+                user_ids = user_obj.search(cr, uid, [('name', '=', group_name)], context=context)
+                if not user_ids:
+                    # create a new user, copied from admin user
+                    user_ids = [user_obj.copy(cr, uid, admin_ids[0], {'name': group_name,
+                                                                      'login': '_'.join(group_name.lower().split()),
+                                                                      'password': 'temp',
+                                                                      'date': False}, context=context)]
+                    
+                # update the group of the user with (6, 0, 0) resetting the data
+                group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[group_name])
+                # keep group_id for updating admin user
+                group_ids_list.extend(group_ids)
+                user_obj.write(cr, uid, user_ids, {'groups_id': [(6, 0, group_ids)]}, context=context)
+                
+            # get admin group id
+            group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, ids, context=context))
+            # for admin user, set all unifield groups + admin group (only user to have this group)
+            user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
         
-        return False
+        return True
     
     def _process_menus_uac(self, cr, uid, ids, context=None):
         '''
@@ -437,12 +465,16 @@ class user_access_configurator(osv.osv_memory):
         data_structure = self._import_data_uac(cr, uid, ids, context=context)
         # process the groups
         self._process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
+        # process users
+        self._process_users_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process menus - groups relation
         self._process_menus_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process ACL
         self._process_objects_uac(cr, uid, ids, context=context)
         # process rules
         self._process_record_rules_uac(cr, uid, ids, context=context)
+        # error/warning logging
+        # TODO
         
         return {'type': 'ir.actions.act_window_close'}
 
