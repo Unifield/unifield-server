@@ -182,8 +182,8 @@ class purchase_order(osv.osv):
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id
-                account_id = pol.account_4_distribution and pol.account_4_distribution.id or False
-                if not account_id:
+                a = pol.account_4_distribution and pol.account_4_distribution.id or False
+                if not a:
                     raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
                 # Write
                 po_lines[a].append(pol)
