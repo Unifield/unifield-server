@@ -363,10 +363,10 @@ class procurement_request_line(osv.osv):
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
-    def requested_product_id_change(self, cr, uid, ids, product_id, type, context=None):
+    def requested_product_id_change(self, cr, uid, ids, product_id, context=None):
         '''
-        Fills automatically the product_uom_id field on the line when the 
-        product was changed.
+        Fills automatically the product_uom_id field and the name on the line when the 
+        product is changed.
         '''
         if context is None:
             context = {}
@@ -374,15 +374,30 @@ class procurement_request_line(osv.osv):
 
         v = {}
         if not product_id:
-            v.update({'product_uom': False, 'supplier': False, 'name': ''})
+            v.update({'product_uom': False, 'supplier': False, 'name': '', 'type': 'make_to_order'})
         else:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
-            if type != 'make_to_stock':
+            v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method})
+            if v['type'] != 'make_to_stock':
                 v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
 
         return {'value': v}
     
+    def requested_type_change(self, cr, uid, ids, product_id, type, context=None):
+        """
+        If there is a product, we check its type (procure_method) and update eventually the supplier.
+        """
+        if context is None:
+            context = {}
+        v = {}
+        product_obj = self.pool.get('product.product')
+        if product_id and type != 'make_to_stock':
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+        elif product_id and type == 'make_to_stock':
+            v.update({'supplier': False})
+        return {'value': v}
+
 procurement_request_line()
 
 class purchase_order(osv.osv):

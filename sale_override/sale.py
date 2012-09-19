@@ -986,16 +986,19 @@ class sale_order_line(osv.osv):
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
             lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         """
-        If we select product we change the procurment type to 'Stock'
+        If we select a product we change the procurement type to its own procurement method (procure_method).
+        If there isn't product, the default procurement method is 'From Order' (make_to_order).
+        Both remains changeable manually.
         """
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
         if product:
+            type = self.pool.get('product.product').read(cr, uid, [product], 'procure_method')[0]['procure_method']
             if 'value' in res:
-                res['value'].update({'type': 'make_to_stock'})
+                res['value'].update({'type': type})
             else:
-                res.update({'value':{'type': 'make_to_stock'}})
+                res.update({'value':{'type': type}})
         elif not product:
             if 'value' in res:
                 res['value'].update({'type': 'make_to_order'})
