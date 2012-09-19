@@ -98,7 +98,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         return immunity groups
         '''
-        group_immunity_list = [u'Administration / Access Rights']
+        group_immunity_list = [u'Administration / Access Rights', u'Useability / No One']
         return group_immunity_list
     
     def _group_is_immunity(self, cr, uid, ids, context=None, *args, **kwargs):
