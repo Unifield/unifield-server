@@ -231,6 +231,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         message = ''
         plural= ''
         obj_data = self.pool.get('ir.model.data')
+        
         for var in self.browse(cr, uid, ids, context=context):
             # we check the supplier and the address
             if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','supplier_tbd')[1] \

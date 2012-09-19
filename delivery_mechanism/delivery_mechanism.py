@@ -480,6 +480,9 @@ class stock_picking(osv.osv):
                         # line number does not need to be updated
                         # average computation - empty if not average
                         values.update(average_values)
+                        move_obj.write(cr, uid, [move.id], values, context=context)
+                        done_moves.append(move.id)
+
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
                             if update_out:

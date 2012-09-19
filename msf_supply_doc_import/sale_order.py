@@ -481,7 +481,6 @@ class sale_order_line(osv.osv):
                     vals['show_msg_ok'] = False
                     vals['to_correct_ok'] = False
                     vals['text_error'] = False
-
         
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
