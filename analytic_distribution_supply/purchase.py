@@ -182,17 +182,9 @@ class purchase_order(osv.osv):
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id
-                if pol.product_id:
-                    a = pol.product_id.product_tmpl_id.property_account_expense.id
-                    if not a:
-                        a = pol.product_id.categ_id.property_account_expense_categ.id
-                    if not a:
-                        raise osv.except_osv(_('Error !'), 
-                            _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id))
-                else:
-                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-                fpos = po.fiscal_position or False
-                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                a = pol.account_4_distribution and pol.account_4_distribution.id or False
+                if not a:
+                    raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
                 # Write
                 po_lines[a].append(pol)
             # Commitment lines process
