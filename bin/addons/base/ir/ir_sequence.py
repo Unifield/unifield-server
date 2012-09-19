@@ -58,7 +58,7 @@ class ir_sequence(osv.osv):
         'padding' : lambda *a : 0,
     }
 
-    def _process(self, s):
+    def _process(self, cr, uid, s):
         return (s or '') % {
             'year':time.strftime('%Y'),
             'month': time.strftime('%m'),
@@ -88,9 +88,9 @@ class ir_sequence(osv.osv):
         if res:
             cr.execute('UPDATE ir_sequence SET number_next=number_next+number_increment WHERE id=%s AND active=true', (res['id'],))
             if res['number_next']:
-                return self._process(res['prefix']) + '%%0%sd' % res['padding'] % res['number_next'] + self._process(res['suffix'])
+                return self._process(cr, uid, res['prefix']) + '%%0%sd' % res['padding'] % res['number_next'] + self._process(cr, uid, res['suffix'])
             else:
-                return self._process(res['prefix']) + self._process(res['suffix'])
+                return self._process(cr, uid, res['prefix']) + self._process(cr, uid, res['suffix'])
         return False
 
     def get(self, cr, uid, code):
