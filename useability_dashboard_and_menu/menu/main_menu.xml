@@ -52,6 +52,7 @@
                   name="Supply Configuration" 
                   web_icon="images/supply.png"
                   web_icon_hover="images/supply_hover.png"
+                  action="product_nomenclature.product_nomenclature_action_form"
                   sequence="7"
                   />
                   
@@ -74,6 +75,7 @@
                   icon="terp-hr" 
                   web_icon="images/hr.png"
                   web_icon_hover="images/hr-hover.png"
+                  action="hr.open_view_employee_list_my"
                   sequence="10"/>
                   
     </data>
