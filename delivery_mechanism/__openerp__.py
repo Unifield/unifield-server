@@ -53,7 +53,7 @@
              'test/delivery_mechanism-process-same-qty.yml', #A
              'test/delivery_mechanism-process-less.yml', #B
              'test/delivery_mechanism-process-split-same-qty.yml', #C
-             'test/delivery_mechanism-process-split-less.yml', #D
+#             'test/delivery_mechanism-process-split-less.yml', #D
              'test/delivery_mechanism-process-split-less-split-more-on-backorder.yml', #E
              'test/delivery_mechanism-process-change-product-same-qty.yml', #F
              'test/delivery_mechanism-process-split-less-split-more-on-backorder-NO-OUT.yml', # in A
