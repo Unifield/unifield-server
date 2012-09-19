@@ -54,6 +54,27 @@ class user_access_configurator(osv.osv_memory):
             return True
         return False
     
+    def _get_immunity_groups(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return immunity groups
+        '''
+        group_immunity_list = [u'Administration / Access Rights']
+        return group_immunity_list
+    
+    def _group_is_immunity(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return True if group is immune
+        '''
+        group_immunity_list = self._get_immunity_groups(cr, uid, ids, context=context)
+        group = kwargs['group']
+        return group in group_immunity_list
+        
+    def _remove_group_immune(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        clear groups of immune groups
+        '''
+        return [group for group in group_names if not self._group_is_immunity(cr, uid, ids, context=context, group=group)]
+    
     def import_data_uac(self, cr, uid, ids, context=None):
         '''
         import data and generate data structure
@@ -122,6 +143,32 @@ class user_access_configurator(osv.osv_memory):
                     
         return data_structure
     
+    def _activate_immunity_groups(self, cr, uid, ids, context=None):
+        '''
+        activate immunity groups
+        
+        return immunity group
+        '''
+        # objects
+        group_obj = self.pool.get('res.groups')
+        
+        group_immunity_list = self._get_immunity_groups(cr, uid, ids, context=context)
+        return self._activate_groups(cr, uid, ids, context=context, groups=group_immunity_list)
+    
+    def _activate_groups(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        activate groups
+        
+        return activated groups
+        '''
+        # objects
+        group_obj = self.pool.get('res.groups')
+        
+        groups = kwargs['groups']
+        activate_ids = group_obj.search(cr, uid, [('name', 'in', groups)], context=context)
+        group_obj.write(cr, uid, activate_ids, {'active': True}, context=context)
+        return groups
+    
     def process_groups_uac(self, cr, uid, ids, context=None):
         '''
         
@@ -132,23 +179,56 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
+        # objects
+        group_obj = self.pool.get('res.groups')
+        
         # data structure
         data_structure = context['data_structure']
-        # load the groups from file if not present
-        for group in data_structure[obj.id]['group_name_list']:
+        # load all groups from database
+        group_ids = group_obj.search(cr, uid, [], context=context)
+        group_names = group_obj.read(cr, uid, group_ids, ['name'], context=context)
+        group_names = [x['name'] for x in group_names]
+        
+        # IGL groups are activated
+        self._activate_immunity_groups(cr, uid, ids, context=context)
+        
+        for obj in self.browse(cr, uid, ids, context=context):
+            # work copy of groups present in the file - will represent the missing groups to be created
+            missing_group_names = list(data_structure[obj.id]['group_name_list'])
+            # all groups from file are activated (in case a new group in the file which was deactivated previously)
+            self._activate_groups(cr, uid, ids, context=context, groups=missing_group_names)
+            # will represent the groups present in the database but not in the file, to be deactivated
+            deactivate_group_names = []
+            # loop through groups in the database - pop from file list if already exist
+            for group_name in group_names:
+                if group_name in missing_group_names:
+                    # the group from file already exists
+                    missing_group_names.remove(group_name)
+                elif not self._group_is_immunity(cr, uid, ids, context=context, group=group_name):
+                    # the group from database is not immune and not in the file
+                    deactivate_group_names.append(group_name)
             
+            # create the new groups from the file
+            for missing_group_name in missing_group_names:
+                new_group_id = group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
+            # deactivate the groups not present in the file
+            deactivate_ids = group_obj.search(cr, uid, [('name', 'in', deactivate_group_names)], context=context)
+            assert len(deactivate_ids) == len(deactivate_group_names), 'some groups to deactivate where not found'
+            group_obj.write(cr, uid, deactivate_ids, {'active': False}, context=context)
         
         return False
     
     def process_users_uac(self, cr, uid, ids, context=None):
         '''
-        
+        create user corresponding to file groups if not already present
         '''
         # Some verifications
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        
         
         return False
     
@@ -161,6 +241,8 @@ class user_access_configurator(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        
         
         return False
     
@@ -198,10 +280,12 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
+        # we need to take inactive groups into acount, in order to reactivate them and avoid creation of the same group multiple time
+        context=dict(context, active_test=False)
         # gather data structure corresponding to selected file
         data_structure = self.import_data_uac(cr, uid, ids, context=context)
         # process the groups
-        self.process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure)
+        self.process_groups_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         
         return {'type': 'ir.actions.act_window_close'}
 
@@ -213,8 +297,12 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'active': fields.boolean('Active', readonly=True)}
-    _defaults = {'active': True}
+    _columns = {'active': fields.boolean('Active', readonly=True),
+                'from_file_import_res_groups': fields.boolean('Active', readonly=True),
+                }
+    _defaults = {'active': True,
+                 'from_file_import_res_groups': False,
+                 }
 
 res_groups()
 
