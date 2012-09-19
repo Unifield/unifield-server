@@ -463,7 +463,7 @@ class ir_sequence(osv.osv):
     override of ir_sequence from account as of a bug when the id is a list
     '''
     _inherit = 'ir.sequence'
-    
+
     def get_id(self, cr, uid, sequence_id, test='id', context=None):
         '''
         correct a bug as sequence_id is passed as an array, which
@@ -471,8 +471,41 @@ class ir_sequence(osv.osv):
         '''
         if isinstance(sequence_id, list):
             return super(ir_sequence, self).get_id(cr, uid, sequence_id[0], test, context=context)
-        
+
         return super(ir_sequence, self).get_id(cr, uid, sequence_id, test, context=context)
-        
+
+    def _get_instance(self, cr, uid):
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
+
+    def _get_hqcode(self, cr, uid):
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id
+        code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
+        while parent_id:
+            code = parent_id.code
+            parent_id = parent_id.parent_id or False
+        return code
+
+
+    def _process(self, cr, uid, s):
+        data = {
+            'year':time.strftime('%Y'),
+            'month': time.strftime('%m'),
+            'day':time.strftime('%d'),
+            'y': time.strftime('%y'),
+            'doy': time.strftime('%j'),
+            'woy': time.strftime('%W'),
+            'weekday': time.strftime('%w'),
+            'h24': time.strftime('%H'),
+            'h12': time.strftime('%I'),
+            'min': time.strftime('%M'),
+            'sec': time.strftime('%S'),
+        }
+        if s and '%(instance)s' in s:
+            data['instance'] = self._get_instance(cr, uid)
+        if s and '%(hqcode)s' in s:
+            data['hqcode'] =  self._get_hqcode(cr, uid)
+        return (s or '') % data
 ir_sequence()
 

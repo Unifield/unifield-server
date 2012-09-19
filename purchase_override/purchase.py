@@ -26,7 +26,6 @@ import netsvc
 from mx.DateTime import *
 import time
 from osv.orm import browse_record, browse_null
-
 from workflow.wkf_expr import _eval_expr
 import logging
 
@@ -181,13 +180,14 @@ class purchase_order(osv.osv):
         Fill the unallocated_ok field according to Unifield setup
         '''
         res = super(purchase_order, self).default_get(cr, uid, fields, context=context)
+
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
-        
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
         if setup.allocation_setup == 'unallocated':
             res.update({'unallocation_ok': True})
 
         return res
+
 
     def _check_user_company(self, cr, uid, company_id, context=None):
         '''
@@ -1134,6 +1134,7 @@ stock moves which are already processed : '''
         """
         if not context:
             context = {}
+
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PO: set from yml test to True')
             vals['from_yml_test'] = True

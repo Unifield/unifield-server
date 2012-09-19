@@ -44,5 +44,20 @@
             </field>
         </record>
 
+        <record id="ir_sequence_new_legend" model="ir.ui.view">
+            <field name="name">ir.sequence.form.legend</field>
+            <field name="model">ir.sequence</field>
+            <field name="type">form</field>
+            <field name="priority" eval="20" />
+            <field name="inherit_id" ref="base.sequence_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//label[@string='Day: %%(day)s']" position="after">
+                        <label colspan="4" string="Instance code: %%(instance)s" />
+                        <label colspan="4" string="Parent HQ code: %%(hqcode)s" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
     </data>
 </openerp>

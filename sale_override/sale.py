@@ -244,6 +244,7 @@ class sale_order(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
+
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
@@ -269,6 +270,7 @@ class sale_order(osv.osv):
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
     
     def change_currency(self, cr, uid, ids, context=None):
         '''
