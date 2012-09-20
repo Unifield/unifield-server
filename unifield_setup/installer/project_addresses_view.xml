@@ -69,9 +69,9 @@
         	        		</group>
             	    		<newline/>
                 			<group colspan="2">
-		            	        <field name="rml_header1" colspan="5" invisible="1" groups="base.group_extended"/>
-		                    	<field name="rml_footer1" colspan="5" invisible="1" groups="base.group_extended"/>
-		                	    <field name="rml_footer2" colspan="5" invisible="1" groups="base.group_extended"/>
+		            	        <field name="rml_header1" colspan="5" invisible="1" />
+		                    	<field name="rml_footer1" colspan="5" invisible="1" />
+		                	    <field name="rml_footer2" colspan="5" invisible="1" />
 	                    		<separator colspan="4"
     	                           string="Your Logo - Use a size of about 450x150 pixels."/>
         	            		<field colspan="5" name="logo" widget="image"

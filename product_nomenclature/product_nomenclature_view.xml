@@ -197,7 +197,7 @@
 				nomenclature.</field>
 		</record>
 		<menuitem action="product_nomenclature_action" id="menu_products_nomenclature_sales"
-			groups="base.group_extended" parent="base.menu_product" sequence="4" />-->
+			parent="base.menu_product" sequence="4" />-->
 		
 		<record id="product_nomenclature_action_form" model="ir.actions.act_window">
 			<field name="name">Products Nomenclature</field>
@@ -206,7 +206,7 @@
 			<field name="view_type">form</field>
 			<field name="view_id" ref="product_nomenclature_list_view" />
 		</record>
-		<menuitem action="product_nomenclature_action_form" groups="base.group_extended"
+		<menuitem action="product_nomenclature_action_form"
 			id="menu_product_nomenclature_action_form" parent="product.prod_config_main"
 			sequence="3" />
 
