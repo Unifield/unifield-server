@@ -144,7 +144,7 @@ class account_move_line_reconcile(osv.osv_memory):
                     # True + not (True + True) => False [NO error]
                     # False + anything => False [NO error]
                     if line.account_id.id != salary_account_id and not (line.partner_id.partner_type == 'intermission' and line.account_id.id != intermission_default_account_id):
-                        raise osv.except_osv(_('Error'), _('Third parties does not match or bad company configuration!'))
+                        raise osv.except_osv(_('Error'), _('Third parties do not match or bad company configuration!'))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
