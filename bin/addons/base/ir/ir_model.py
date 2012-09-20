@@ -411,7 +411,7 @@ class ir_model_access(osv.osv):
         'perm_unlink': fields.boolean('Delete Access'),
     }
     
-    def _ir_model_access_check_groups_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the check_groups method from server/bin/addons/base/ir>ir_model.py>ir_model_access
@@ -431,10 +431,11 @@ class ir_model_access(osv.osv):
         return res
 
     def check_groups(self, cr, uid, group):
+        context = {}
         # return False by default
         res = False
         # criteria for group display
-        res = self._ir_model_access_check_groups_hook(cr, uid, ids, context=context, res=res, group=group)
+        res = self._ir_model_access_check_groups_hook(cr, uid, context=context, res=res, group=group)
         return res
 
     def check_group(self, cr, uid, model, mode, group_ids):
