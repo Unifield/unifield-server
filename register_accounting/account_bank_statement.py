@@ -741,6 +741,15 @@ class account_bank_statement_line(osv.osv):
             if line.account_id and line.account_id.type_for_register and line.account_id.type_for_register == 'transfer':
                 res[line.id] = True
         return res
+    
+    def _get_sequence(self, cr, uid, ids, field_name=None, args=None, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids):
+            if len(line.move_ids) > 0:
+                res[line.id] = line.move_ids[0].name
+            else:
+                res[line.id] = ''
+        return res
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register"),
@@ -756,7 +765,7 @@ class account_bank_statement_line(osv.osv):
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
-        'sequence_for_reference': fields.integer(string="Sequence", readonly=True),
+        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char"),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
