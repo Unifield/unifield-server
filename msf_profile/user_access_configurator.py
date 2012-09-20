@@ -507,3 +507,35 @@ class res_groups(osv.osv):
 
 res_groups()
 
+
+class ir_model_access(osv.osv):
+    _inherit = 'ir.model.access'
+    
+    def _ir_model_access_check_groups_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the check_groups method from server/bin/addons/base/ir>ir_model.py>ir_model_access
+        
+        - allow to modify the criteria for group display
+        '''
+        if context is None:
+            context = {}
+        
+        never_displayed_groups = {'group_multi_company': 'base',
+                                  'group_no_one': 'base',
+                                  'group_product_variant': 'product'}
+        
+        # original criteria is not used at all -> no link with groups of the user as groups= stay in original openERP modules
+        #res = super(ir_model_access, self)._ir_model_access_check_groups_hook(cr, uid, ids, context=context, *args, **kwargs)
+        group = kwargs['group']
+        
+        grouparr  = group.split('.')
+        if not grouparr:
+            return False
+        # if the group belongs to group not to display, we return False
+        # we check module *and* group name
+        if grouparr[1] in never_displayed_groups.keys() and grouparr[0] == never_displayed_groups[grouparr[1]]:
+            return False
+        return True
+    
+ir_model_access()
