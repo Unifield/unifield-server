@@ -296,7 +296,7 @@ form: module.record_id""" % (xml_id,)
             ids = self.pool.get(d_model).search(cr, self.uid, unsafe_eval(d_search, idref))
         if d_id:
             try:
-                ids.append(self.id_get(cr, d_id))
+                ids.append(self.id_get(cr, d_id, model=d_model))
             except:
                 # d_id cannot be found. doesn't matter in this case
                 pass
@@ -841,11 +841,14 @@ form: module.record_id""" % (xml_id,)
             cr.commit()
         return rec_model, id
 
-    def id_get(self, cr, id_str):
+    def id_get(self, cr, id_str, model=False):
         if id_str in self.idref:
             return self.idref[id_str]
         res = self.model_id_get(cr, id_str)
-        if res and len(res)>1: res = res[1]
+        if res and len(res)>1:
+            if model:
+                assert model == res[0], "Wrong model/xmlid %s: %s (in your xml) != %s (in db), fix this asap !"%(id_str, model, res[0])
+            res = res[1]
         return res
 
     def model_id_get(self, cr, id_str):
