@@ -511,7 +511,7 @@ res_groups()
 class ir_model_access(osv.osv):
     _inherit = 'ir.model.access'
     
-    def _ir_model_access_check_groups_hook(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _ir_model_access_check_groups_hook(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the check_groups method from server/bin/addons/base/ir>ir_model.py>ir_model_access
@@ -526,7 +526,7 @@ class ir_model_access(osv.osv):
                                   'group_product_variant': 'product'}
         
         # original criteria is not used at all -> no link with groups of the user as groups= stay in original openERP modules - only call if some // modifications are executed by the hooks
-        super(ir_model_access, self)._ir_model_access_check_groups_hook(cr, uid, ids, context=context, *args, **kwargs)
+        super(ir_model_access, self)._ir_model_access_check_groups_hook(cr, uid, context=context, *args, **kwargs)
         group = kwargs['group']
         
         grouparr  = group.split('.')
