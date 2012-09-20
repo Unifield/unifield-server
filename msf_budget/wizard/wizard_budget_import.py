@@ -190,6 +190,8 @@ class wizard_budget_import(osv.osv_memory):
         budget_obj = self.pool.get('msf.budget')
         # read file
         for wizard in self.browse(cr, uid, ids, context=context):
+            if not wizard.import_file:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
             budget_line_vals = []
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)

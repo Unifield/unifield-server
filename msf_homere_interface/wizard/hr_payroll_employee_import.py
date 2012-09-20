@@ -412,6 +412,8 @@ class hr_payroll_employee_import(osv.osv_memory):
         if error_ids:
             self.pool.get('hr.payroll.employee.import.errors').unlink(cr, uid, error_ids)
         for wiz in self.browse(cr, uid, ids):
+            if not wiz.file:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
             fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
             # now we determine the file format

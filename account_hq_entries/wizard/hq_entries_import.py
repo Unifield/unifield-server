@@ -194,6 +194,8 @@ class hq_entries_import_wizard(osv.osv_memory):
         
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
+            if not wiz.file:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
             # Decode file string
             fileobj = NamedTemporaryFile('w+')
             fileobj.write(decodestring(wiz.file))

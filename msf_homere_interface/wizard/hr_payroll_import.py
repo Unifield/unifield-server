@@ -245,6 +245,8 @@ class hr_payroll_import(osv.osv_memory):
         filename = ""
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
+            if not wiz.file:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
             # Decode file string
             fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
