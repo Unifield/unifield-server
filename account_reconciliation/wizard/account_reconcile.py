@@ -79,14 +79,10 @@ class account_move_line_reconcile(osv.osv_memory):
         salary_account_id = False
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.salaries_default_account:
             salary_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.salaries_default_account.id
-        if not salary_account_id:
-            raise osv.except_osv(_('Warning'), _('No salary default account found!'))
         # Search intermission default account
         intermission_default_account_id = False
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart:
             intermission_default_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart.id
-        if not intermission_default_account_id:
-            raise osv.except_osv(_('Warning'), _('No intermission default account found!'))
         # Browse all lines
         for line in account_move_line_obj.browse(cr, uid, context['active_ids']):
             if line.move_id and line.move_id.state == 'posted':
@@ -148,7 +144,7 @@ class account_move_line_reconcile(osv.osv_memory):
                     # True + not (True + True) => False [NO error]
                     # False + anything => False [NO error]
                     if line.account_id.id != salary_account_id and not (line.partner_id.partner_type == 'intermission' and line.account_id.id != intermission_default_account_id):
-                        raise osv.except_osv(_('Error'), _('A third party is different from others: %s') % line.partner_txt)
+                        raise osv.except_osv(_('Error'), _('Third parties does not match or bad company configuration!'))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1
