@@ -525,8 +525,8 @@ class ir_model_access(osv.osv):
                                   'group_no_one': 'base',
                                   'group_product_variant': 'product'}
         
-        # original criteria is not used at all -> no link with groups of the user as groups= stay in original openERP modules
-        #res = super(ir_model_access, self)._ir_model_access_check_groups_hook(cr, uid, ids, context=context, *args, **kwargs)
+        # original criteria is not used at all -> no link with groups of the user as groups= stay in original openERP modules - only call if some // modifications are executed by the hooks
+        super(ir_model_access, self)._ir_model_access_check_groups_hook(cr, uid, ids, context=context, *args, **kwargs)
         group = kwargs['group']
         
         grouparr  = group.split('.')
