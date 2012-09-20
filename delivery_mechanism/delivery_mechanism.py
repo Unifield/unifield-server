@@ -188,7 +188,7 @@ class stock_move(osv.osv):
                         if so_line_ids:
                             # find the corresponding OUT move
                             # move_ids = self.search(cr, uid, [('product_id', '=', obj.product_id.id), ('product_qty', '=', obj.product_qty), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
-                            move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], context=context)
+                            move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']), ('state', 'in', ('assigned', 'confirmed')), ('sale_line_id', '=', so_line_ids[0])], order="state desc", context=context)
                             # list of matching out moves
                             integrity_check = []
                             for move in self.browse(cr, uid, move_ids, context=context):
