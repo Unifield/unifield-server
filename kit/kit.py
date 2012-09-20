@@ -1137,6 +1137,7 @@ class product_product(osv.osv):
             
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
             for f in fields:
                 result[obj.id].update({f:False})
         return result
