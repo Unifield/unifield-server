@@ -154,7 +154,7 @@ class tender(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
-                          'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
+                          'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
                           'rfq_ok': True,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
@@ -394,7 +394,7 @@ class tender(osv.osv):
                     price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
                     if price_ids:
                         pricelist = price_ids[0]
-                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '/' + tender.name,
+                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + ';' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,

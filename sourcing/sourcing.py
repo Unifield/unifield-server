@@ -1048,7 +1048,7 @@ class procurement_order(osv.osv):
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
             # Update the origin of the PO with the origin of the procurement
             if procurement.origin and po.origin and not re.search(procurement.origin, po.origin):
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s,%s' % (po.origin, procurement.origin)}, context=context)
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s;%s' % (po.origin, procurement.origin)}, context=context)
             elif not po.origin:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s' % (procurement.origin)}, context=context)
             
