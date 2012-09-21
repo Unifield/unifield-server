@@ -1,0 +1,4 @@
+type,property_account_expense_categ,property_account_income_categ,name,property_stock_journal,family_id
+Normal,6400 Medicines,6400 Medicines,Oral drugs,Stock,Oral drugs
+Normal,6400 Medicines,6400 Medicines,Injectable drugs,Stock,Injectable drugs
+Normal,"6303 Office : furniture, IT, energy equipment","6303 Office : furniture, IT, energy equipment",Data processing,Stock,Data processing

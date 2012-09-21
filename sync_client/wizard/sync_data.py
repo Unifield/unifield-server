@@ -343,7 +343,15 @@ class update_received(osv.osv):
         try:
             rollback = False
             run = True
-            res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
+            
+            try:
+                cr.rollback_org, cr.rollback = cr.rollback, lambda:None
+                cr.commit_org, cr.commit = cr.commit, lambda:None
+                res = self.pool.get(update.model.model).import_data(cr, uid, fields, [values], mode='update', current_module='sd', noupdate=True, context=context)
+            finally:
+                cr.rollback = cr.rollback_org
+                cr.commit = cr.commit_org
+            
             #check that the record is imported
             fields_ref = self.pool.get(update.model.model).fields_get(cr, uid, context=context)
             rec_id = self.pool.get('ir.model.data').get_record(cr, uid, values[fields.index('id')], context=context)
@@ -438,17 +446,18 @@ class update_received(osv.osv):
             if '/id' in fields[i] and values[i]:
                 xml_id_raw = values[i]
                 res_val = []
-                xml_ids = xml_id_raw.split(',')
-                for xml_id in xml_ids:
-                    if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
-                        fb = fallback.get(fields[i])
-                        if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
-                            message.append('Missing record %s replace by %s' % (fields[i], fb))
-                            res_val.append(fb)
+                if xml_id_raw:
+                    xml_ids = xml_id_raw.split(',')
+                    for xml_id in xml_ids:
+                        if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
+                            fb = fallback.get(fields[i])
+                            if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
+                                message.append('Missing record %s replace by %s' % (fields[i], fb))
+                                res_val.append(fb)
+                            else:
+                                message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
                         else:
-                            message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
-                    else:
-                        res_val.append(xml_id)
+                            res_val.append(xml_id)
                 if not res_val:
                     values[i] = False
                 else:

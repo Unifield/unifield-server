@@ -302,7 +302,7 @@ osv.osv._clean_included_fields = _clean_included_fields
 
     
 # we modify the create method such that it creates a line in ir_model_data for each creation
-old_create=osv.osv.create
+old_create=orm.create
 def create(model,cr,uid,values,context=None):
     if not context:
         context = {}
@@ -316,10 +316,10 @@ def create(model,cr,uid,values,context=None):
     
     return res_id
     
-osv.osv.create=create
+orm.create=create
 
 #to be sure to access last_modification for every record
-old_write=osv.osv.write
+old_write = orm.write
 def write(model,cr,uid,ids,values,context=None):
     if not context:
         context = {}
@@ -337,7 +337,7 @@ def write(model,cr,uid,ids,values,context=None):
     res = old_write(model, cr, uid, ids, values,context=context)
     return res
     
-osv.osv.write=write
+orm.write = write
 
 #record modification of m2o if the corresponding o2m is modified
 def modif_o2m(model,cr,uid,id,values,context=None):
@@ -394,7 +394,6 @@ def import_data(model, cr, uid, fields, datas, mode='init', current_module='', n
 osv.osv.import_data = import_data 
 
 
-
 def get_destination_name(self, cr, uid, ids, dest_field, context=None):
     """
         @param ids : ids of the record from which we need to find the destination
@@ -429,7 +428,7 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
             raise osv.except_osv(_('Error !'), _("%(method)s doesn't implement field of type %(type)s, please contact system administrator to upgrade.") % {'method':'get_destination_name()', 'type':field['type']})
 
     return result if issubclass(res_type, (list, tuple)) else result[0]
-    
+
 osv.osv.get_destination_name = get_destination_name
 
 
