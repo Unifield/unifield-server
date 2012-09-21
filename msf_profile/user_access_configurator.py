@@ -585,6 +585,15 @@ class user_access_configurator(osv.osv_memory):
 user_access_configurator()
 
 
+class user_access_results(osv.osv_memory):
+    _name = 'user.access.results'
+    _columns = {'file_to_import_uac': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity'),
+                'number_of_non_group_columns_uac': fields.integer(string='Number of columns not containing group name')}
+    _defaults = {'number_of_non_group_columns_uac': 4}
+
+user_access_results()
+
+
 class res_groups(osv.osv):
     '''
     add an active column
