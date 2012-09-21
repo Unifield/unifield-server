@@ -122,9 +122,10 @@ class user_access_configurator(osv.osv_memory):
         
         {id: {
               'group_name_list': [group_names],
-              'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True
-              'errors': ['list of errors'],
-              'warnings': ['list of warnings'],
+              'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True - if the same group is defined multiple times, it will be deleted at the end of import function
+              'groups_info': {'activated': [group_names], 'deactivated': [group_names], 'created': [group_names], 'warnings': [], 'errors': []},
+              'users_info': {'activated': [user_names], 'deactivated': [user_names], 'created': [user_names], 'updated': [(old_name, new_name)] 'warnings': [], 'errors': []},
+              'menus_info': {'warnings': [], 'errors': []},
               }
         '''
         # Some verifications
@@ -140,8 +141,10 @@ class user_access_configurator(osv.osv_memory):
             # data structure returned with processed data from file
             data_structure.update({obj.id: {'group_name_list': [],
                                             'menus_groups': {},
-                                            'errors': [],
-                                            'warnings': []}})
+                                            'groups_info': {'activated': [], 'deactivated': [], 'created': [], 'warnings': [], 'errors': []},
+                                            'users_info': {'activated': [], 'deactivated': [], 'created': [], 'warnings': [], 'errors': []},
+                                            'menus_info': {'warnings': [], 'errors': []},
+                                            }})
             # file to process
             file = obj.file_to_import_uac
             # file is mandatory for import process
@@ -173,7 +176,7 @@ class user_access_configurator(osv.osv_memory):
                         # if the same group is defined multiple times
                         if group_name in data_structure[obj.id]['group_name_list']:
                             # display a warning, the same group is displayed multiple times, columns values are aggregated (OR)
-                            data_structure[obj.id]['warnings'].append('The group %s is defined multiple times. Values from these groups are aggregated (OR function).'%group_name)
+                            data_structure[obj.id]['groups_info']['warnings'].append('The group %s is defined multiple times. Values from all these groups are aggregated (OR function).'%group_name)
                         # we add the column, even if defined multiple times, as we need it for name matching when setting menu rights
                         data_structure[obj.id]['group_name_list'].append(row.cells[i].data)
                 else:
@@ -182,12 +185,12 @@ class user_access_configurator(osv.osv_memory):
                         menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, row.cells[0], row.cells[1])[1]
                     except ValueError:
                         # menu is in the file but not in the database
-                        data_structure[obj.id]['errors'].append('The menu %s (%s.%s) is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
+                        data_structure[obj.id]['menus_info']['errors'].append('The menu %s (%s.%s) is defined in the file but is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
                         continue
                     
                     # test if a menu is defined multiple times
                     if menu_id in data_structure[obj.id]['menus_groups']:
-                        data_structure[obj.id]['warnings'].append('The menu %s (%s.%s) is defined multiple times. Groups from all rows are aggregated (OR function).'%(row.cells[3], row.cells[0], row.cells[1]))
+                        data_structure[obj.id]['menus_info']['warnings'].append('The menu %s (%s.%s) is defined multiple times. Groups from all these rows are aggregated (OR function).'%(row.cells[3], row.cells[0], row.cells[1]))
                     
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
@@ -332,7 +335,7 @@ class user_access_configurator(osv.osv_memory):
             admin_ids = user_obj.search(cr, uid, [('login', '=', 'admin')], context=context)
             if not admin_ids:
                 # log error and return
-                data_structure[obj.id]['errors'].append('The Administrator user does not exist. This is a big instance issue.')
+                data_structure[obj.id]['users_info']['errors'].append('The Administrator user does not exist. This is a big issue.')
                 return
             # group ids - used to set all groups to admin user
             group_ids_list = []
