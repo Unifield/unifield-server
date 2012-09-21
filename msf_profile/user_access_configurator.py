@@ -279,6 +279,32 @@ class user_access_configurator(osv.osv_memory):
         
         return True
     
+    def _activate_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        activate user ids
+        
+        return activated user ids
+        '''
+        # objects
+        user_obj = self.pool.get('res.users')
+        
+        user_ids = kwargs['user_ids']
+        user_obj.write(cr, uid, user_ids, {'active': True}, context=context)
+        return user_ids
+    
+    def _deactivate_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        activate user ids
+        
+        return activated user ids
+        '''
+        # objects
+        user_obj = self.pool.get('res.users')
+        
+        user_ids = kwargs['user_ids']
+        user_obj.write(cr, uid, user_ids, {'active': False}, context=context)
+        return user_ids
+    
     def _process_users_uac(self, cr, uid, ids, context=None):
         '''
         create user corresponding to file groups if not already present
@@ -339,9 +365,9 @@ class user_access_configurator(osv.osv_memory):
             all_user_ids = user_obj.search(cr, uid, [], context=context)
             # deactivate user not present in the file and not ADMIN
             deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
-            user_obj.write(cr, uid, deactivate_user_ids, {'active': False}, context=context) # move in function
+            self._deactivate_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids)
             # activate user from the file (could have been deactivate previously)
-            user_obj.write(cr, uid, user_ids_list, {'active': True}, context=context) # move in function
+            self._activate_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list)
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, ids, context=context))
             # for admin user, set all unifield groups + admin group (only user to have this group)
