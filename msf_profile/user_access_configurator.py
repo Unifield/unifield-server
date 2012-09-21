@@ -80,7 +80,7 @@ class user_access_configurator(osv.osv_memory):
         admin_group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[admin_group_name])
         return admin_group_ids[0]
     
-    def _get_DNCGL(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _get_DNCGL_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return do not change groups
         '''
@@ -91,29 +91,30 @@ class user_access_configurator(osv.osv_memory):
         '''
         return do not change groups ids
         '''
-        group_names = self._get_DNCGL(cr, uid, ids, context=context)
+        group_names = self._get_DNCGL_name(cr, uid, ids, context=context)
         return self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names)
     
-    def _get_IGL(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _get_IGL_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return immunity groups
         '''
         group_immunity_list = [u'Administration / Access Rights', u'Useability / No One']
         return group_immunity_list
     
-    def _group_is_immunity(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _group_name_is_immunity(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        return True if group is immune
+        return True if group_name is immune
         '''
-        group_immunity_list = self._get_IGL(cr, uid, ids, context=context)
-        group = kwargs['group']
-        return group in group_immunity_list
+        group_immunity_list = self._get_IGL_name(cr, uid, ids, context=context)
+        group_name = kwargs['group_name']
+        return group_name in group_immunity_list
         
     def _remove_group_immune(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         clear groups of immune groups
         '''
-        return [group for group in group_names if not self._group_is_immunity(cr, uid, ids, context=context, group=group)]
+        group_names = kwargs['group_names']
+        return [group_name for group_name in group_names if not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name)]
     
     def _import_data_uac(self, cr, uid, ids, context=None):
         '''
@@ -175,7 +176,7 @@ class user_access_configurator(osv.osv_memory):
                     
                     # test if a menu is defined multiple times
                     if menu_id in data_structure[obj.id]['menus_groups']:
-                        data_structure[obj.id]['warnings'].append('The menu %s (%s.%s) is defined multiple times. Groups from all rows are aggregated'%(row.cells[3], row.cells[0], row.cells[1]))
+                        data_structure[obj.id]['warnings'].append('The menu %s (%s.%s) is defined multiple times. Groups from all rows are aggregated (OR function).'%(row.cells[3], row.cells[0], row.cells[1]))
                     
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
@@ -196,22 +197,22 @@ class user_access_configurator(osv.osv_memory):
         # objects
         group_obj = self.pool.get('res.groups')
         
-        group_immunity_list = self._get_IGL(cr, uid, ids, context=context)
-        return self._activate_groups(cr, uid, ids, context=context, groups=group_immunity_list)
+        group_immunity_name_list = self._get_IGL_name(cr, uid, ids, context=context)
+        return self._activate_group_name(cr, uid, ids, context=context, group_names=group_immunity_name_list)
     
-    def _activate_groups(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _activate_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        activate groups
+        activate groups names
         
-        return activated groups
+        return activated groups names
         '''
         # objects
         group_obj = self.pool.get('res.groups')
         
-        groups = kwargs['groups']
-        activate_ids = group_obj.search(cr, uid, [('name', 'in', groups)], context=context)
+        group_names = kwargs['group_names']
+        activate_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names)
         group_obj.write(cr, uid, activate_ids, {'active': True}, context=context)
-        return groups
+        return group_names
     
     def _process_groups_uac(self, cr, uid, ids, context=None):
         '''
@@ -239,7 +240,7 @@ class user_access_configurator(osv.osv_memory):
             # work copy of groups present in the file - will represent the missing groups to be created
             missing_group_names = list(data_structure[obj.id]['group_name_list'])
             # all groups from file are activated (in case a new group in the file which was deactivated previously)
-            self._activate_groups(cr, uid, ids, context=context, groups=missing_group_names)
+            self._activate_group_name(cr, uid, ids, context=context, group_names=missing_group_names)
             # will represent the groups present in the database but not in the file, to be deactivated
             deactivate_group_names = []
             # loop through groups in the database - pop from file list if already exist
@@ -247,7 +248,7 @@ class user_access_configurator(osv.osv_memory):
                 if group_name in missing_group_names:
                     # the group from file already exists
                     missing_group_names.remove(group_name)
-                elif not self._group_is_immunity(cr, uid, ids, context=context, group=group_name):
+                elif not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name):
                     # the group from database is not immune and not in the file
                     deactivate_group_names.append(group_name)
             
