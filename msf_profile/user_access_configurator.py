@@ -164,6 +164,17 @@ class user_access_configurator(osv.osv_memory):
                     first_row = False
                     # skip information rows
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
+                        group_name = False
+                        # if no name of the group, create a new group No Name
+                        if not row.cells[i].data:
+                            group_name = 'No Name'
+                        else:
+                            group_name = row.cells[i].data
+                        # if the same group is defined multiple times
+                        if group_name in data_structure[obj.id]['group_name_list']:
+                            # display a warning, the same group is displayed multiple times, columns values are aggregated (OR)
+                            data_structure[obj.id]['warnings'].append('The group %s is defined multiple times. Values from these groups are aggregated (OR function).'%group_name)
+                        # we add the column, even if defined multiple times, as we need it for name matching when setting menu rights
                         data_structure[obj.id]['group_name_list'].append(row.cells[i].data)
                 else:
                     # information rows
@@ -184,7 +195,13 @@ class user_access_configurator(osv.osv_memory):
                         if self._cell_is_true(cr, uid, ids, context=context, cell=row.cells[i]):
                             # name of group
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
-                            data_structure[obj.id]['menus_groups'].setdefault(menu_id, []).append(group_name)
+                            menu_group_list = data_structure[obj.id]['menus_groups'].setdefault(menu_id, [])
+                            # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
+                            if group_name not in menu_group_list:
+                                menu_group_list.append(group_name)
+            
+            # all rows have been treated, the order of group_name_list is not important anymore, we can now exclude groups which are defined multiple times
+            data_structure[obj.id]['group_name_list'] = list(set(data_structure[obj.id]['group_name_list']))
                     
         return data_structure
     
@@ -257,7 +274,7 @@ class user_access_configurator(osv.osv_memory):
                 new_group_id = group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
             # deactivate the groups not present in the file
             deactivate_ids = group_obj.search(cr, uid, [('name', 'in', deactivate_group_names)], context=context)
-            assert len(deactivate_ids) == len(deactivate_group_names), 'some groups to deactivate where not found'
+            assert len(deactivate_ids) == len(deactivate_group_names), 'this line should be impossible to reach - some groups to deactivate where not found'
             group_obj.write(cr, uid, deactivate_ids, {'active': False}, context=context)
         
         return True
@@ -281,13 +298,15 @@ class user_access_configurator(osv.osv_memory):
         user_obj = self.pool.get('res.users')
         # data structure
         data_structure = context['data_structure']
+        # default password value
+        default_password_value = 'temp'
         
         for obj in self.browse(cr, uid, ids, context=context):
             # get admin user id
             admin_ids = user_obj.search(cr, uid, [('login', '=', 'admin')], context=context)
             if not admin_ids:
                 # log error and return
-                data_structure[obj.id]['errors'].append('The Administrator user does not exist.')
+                data_structure[obj.id]['errors'].append('The Administrator user does not exist. This is a big instance issue.')
                 return
             # group ids - used to set all groups to admin user
             group_ids_list = []
@@ -303,7 +322,7 @@ class user_access_configurator(osv.osv_memory):
                     # create a new user, copied from admin user
                     user_ids = [user_obj.copy(cr, uid, admin_ids[0], {'name': group_name,
                                                                       'login': login_name,
-                                                                      'password': 'temp',
+                                                                      'password': default_password_value,
                                                                       'date': False}, context=context)]
                 else:
                     # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
@@ -320,9 +339,9 @@ class user_access_configurator(osv.osv_memory):
             all_user_ids = user_obj.search(cr, uid, [], context=context)
             # deactivate user not present in the file and not ADMIN
             deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
-            user_obj.write(cr, uid, deactivate_user_ids, {'active': False}, context=context)
+            user_obj.write(cr, uid, deactivate_user_ids, {'active': False}, context=context) # move in function
             # activate user from the file (could have been deactivate previously)
-            user_obj.write(cr, uid, user_ids_list, {'active': True}, context=context)
+            user_obj.write(cr, uid, user_ids_list, {'active': True}, context=context) # move in function
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, ids, context=context))
             # for admin user, set all unifield groups + admin group (only user to have this group)
@@ -357,7 +376,7 @@ class user_access_configurator(osv.osv_memory):
                 # group ids to be linked to
                 group_ids = []
                 if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
-                    # we modify the groups to admin only if the menu is not linked one of the group of DNCGL
+                    # we modify the groups to admin only if the menu is not linked to one of the group of DNCGL
                     skip_update = False
                     db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
                     dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
@@ -374,7 +393,7 @@ class user_access_configurator(osv.osv_memory):
                     group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
                 # link the menu to selected group ids
                 if group_ids:
-                    menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, list(set(group_ids)))]}, context=context)
+                    menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, group_ids)]}, context=context)
         
         return True
     
