@@ -294,15 +294,19 @@ class user_access_configurator(osv.osv_memory):
             # we do not want to deactivate admin user (even if not in the file)
             user_ids_list = [admin_ids[0]]
             for group_name in data_structure[obj.id]['group_name_list']:
+                # login format from group_name
+                login_name = '_'.join(group_name.lower().split())
                 # check if a user already exist
-                user_ids = user_obj.search(cr, uid, [('name', '=', group_name)], context=context)
+                user_ids = user_obj.search(cr, uid, [('login', '=', login_name)], context=context)
                 if not user_ids:
                     # create a new user, copied from admin user
                     user_ids = [user_obj.copy(cr, uid, admin_ids[0], {'name': group_name,
-                                                                      'login': '_'.join(group_name.lower().split()),
+                                                                      'login': login_name,
                                                                       'password': 'temp',
                                                                       'date': False}, context=context)]
-                
+                else:
+                    # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
+                    user_obj.write(cr, uid, user_ids, {'name': group_name}, context=context)
                 # update the group of the user with (6, 0, 0) resetting the data
                 group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[group_name])
                 user_obj.write(cr, uid, user_ids, {'groups_id': [(6, 0, group_ids)]}, context=context)
