@@ -1041,14 +1041,14 @@ class procurement_order(osv.osv):
                     location_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
                 else:
                     location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
-            
+
         if purchase_ids:
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0],'origin': procurement.origin})
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
             # Update the origin of the PO with the origin of the procurement
             if procurement.origin and po.origin and not re.search(procurement.origin, po.origin):
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s/%s' % (po.origin, procurement.origin)}, context=context)
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s,%s' % (po.origin, procurement.origin)}, context=context)
             elif not po.origin:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s' % (procurement.origin)}, context=context)
             
