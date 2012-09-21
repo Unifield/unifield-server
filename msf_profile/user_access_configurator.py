@@ -239,14 +239,14 @@ class user_access_configurator(osv.osv_memory):
         # data structure
         data_structure = context['data_structure']
         
+        group_names = kwargs['group_names']
+        active_value = kwargs['active_value']
+        set_active_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('active', '=', not active_value)])
+        group_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
+        
+        # info logging - activated/deactivated groups
+        set_active_names = [x['name'] for x in group_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
         for id in ids:
-            group_names = kwargs['group_names']
-            active_value = kwargs['active_value']
-            set_active_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('active', '=', not active_value)])
-            group_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
-            
-            # info logging - activated groups
-            set_active_names = [x['name'] for x in group_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
             data_structure[id]['groups_info']['active'][active_value].extend(set_active_names)
         
         return group_names
@@ -292,7 +292,7 @@ class user_access_configurator(osv.osv_memory):
             # create the new groups from the file
             for missing_group_name in missing_group_names:
                 new_group_id = group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
-                # info logging - activated groups
+                # info logging - created groups
                 data_structure[obj.id]['groups_info']['created'].append(missing_group_name)
                 
             # deactivate the groups not present in the file
@@ -300,31 +300,29 @@ class user_access_configurator(osv.osv_memory):
         
         return True
     
-    def _activate_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _set_active_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
-        activate user ids
+        change active value of user ids
         
-        return activated user ids
+        return modified user ids
         '''
         # objects
         user_obj = self.pool.get('res.users')
-        
-        user_ids = kwargs['user_ids']
-        user_obj.write(cr, uid, user_ids, {'active': True}, context=context)
-        return user_ids
+        # data structure
+        data_structure = context['data_structure']
     
-    def _deactivate_user_ids(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        activate user ids
-        
-        return activated user ids
-        '''
-        # objects
-        user_obj = self.pool.get('res.users')
-        
         user_ids = kwargs['user_ids']
-        user_obj.write(cr, uid, user_ids, {'active': False}, context=context)
-        return user_ids
+        active_value = kwargs['active_value']
+        # only with active not active_value
+        set_active_ids = user_obj.search(cr, uid, [('id', 'in', user_ids), ('active', '=', not active_value)], context=context)
+        user_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
+        
+        # info logging - activated/deactivated users
+        set_active_names = [x['name'] for x in user_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
+        for id in ids:
+            data_structure[id]['users_info']['active'][active_value].extend(set_active_names)
+        
+        return set_active_ids
     
     def _process_users_uac(self, cr, uid, ids, context=None):
         '''
@@ -371,6 +369,9 @@ class user_access_configurator(osv.osv_memory):
                                                                       'login': login_name,
                                                                       'password': default_password_value,
                                                                       'date': False}, context=context)]
+                    # info logging - created users
+                    data_structure[id]['users_info']['created'].append(group_name)
+        
                 else:
                     # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
                     user_obj.write(cr, uid, user_ids, {'name': group_name}, context=context)
@@ -386,9 +387,9 @@ class user_access_configurator(osv.osv_memory):
             all_user_ids = user_obj.search(cr, uid, [], context=context)
             # deactivate user not present in the file and not ADMIN
             deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
-            self._deactivate_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids)
+            self._set_active_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids, active_value=False)
             # activate user from the file (could have been deactivate previously)
-            self._activate_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list)
+            self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, ids, context=context))
             # for admin user, set all unifield groups + admin group (only user to have this group)
@@ -564,8 +565,22 @@ class user_access_configurator(osv.osv_memory):
         '''
         main function called from wizard
         '''
-        self._do_process_uac(cr, uid, ids, context=context)
-        return {'type': 'ir.actions.act_window_close'}
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        data_structure = self._do_process_uac(cr, uid, ids, context=context)
+        # data
+        name = _("Results from User Rights Import")
+        model = 'user.access.results'
+        step = 'default'
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context,
+                                                                                                data_structure=data_structure))
+        return res
 
 user_access_configurator()
 
