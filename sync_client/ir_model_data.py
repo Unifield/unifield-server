@@ -234,6 +234,8 @@ class ir_model_data_sync(osv.osv):
         return False
     
     def need_to_push(self, cr, uid, ids, included_fields, context=None):
+        if not ids:
+            return ids
         get_last_modification = self.pool.get('sync.client.write_info').get_last_modification
         watch_fields = set(self._clean_included_fields(cr, uid, included_fields))
         res_type = type(ids)
@@ -241,7 +243,7 @@ class ir_model_data_sync(osv.osv):
         result = map(lambda rec:rec.id, filter(
             lambda rec: (not rec.sync_date or \
                          watch_fields & get_last_modification(cr, uid, rec.model, rec.res_id, rec.sync_date, context=context)), \
-            self.browse(cr, uid, ids, context=context)
+            self.browse(cr, uid, filter(lambda id:bool(id), ids), context=context)
         ))
         return result if issubclass(res_type, (list, tuple)) else bool(result)
            
