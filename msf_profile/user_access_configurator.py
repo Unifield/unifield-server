@@ -64,7 +64,10 @@ class user_access_configurator(osv.osv_memory):
         if not isinstance(group_names, list):
             group_names = [group_names]
         
-        group_ids = group_obj.search(cr, uid, [('name', 'in', group_names)].extend(additional_criterias), context=context)
+        # add additional criterias
+        criterias = [('name', 'in', group_names)]
+        criterias.extend(additional_criterias)
+        group_ids = group_obj.search(cr, uid, criterias, context=context)
         return group_ids
     
     def _get_admin_user_rights_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -128,8 +131,8 @@ class user_access_configurator(osv.osv_memory):
         {id: {
               'group_name_list': [group_names],
               'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True - if the same group is defined multiple times, it will be deleted at the end of import function
-              'groups_info': {'activated': [group_names], 'deactivated': [group_names], 'created': [group_names], 'warnings': [], 'errors': []},
-              'users_info': {'activated': [user_names], 'deactivated': [user_names], 'created': [user_names], 'updated': [(old_name, new_name)] 'warnings': [], 'errors': []},
+              'groups_info': {'active': {True: [group_names], False : [group_names]}, 'created': [group_names], 'warnings': [], 'errors': []},
+              'users_info': {'active': {True: [group_names], False : [group_names]}, 'created': [user_names], 'updated': [(old_name, new_name)] 'warnings': [], 'errors': []},
               'menus_info': {'warnings': [], 'errors': []},
               }
         '''
@@ -146,8 +149,8 @@ class user_access_configurator(osv.osv_memory):
             # data structure returned with processed data from file
             data_structure.update({obj.id: {'group_name_list': [],
                                             'menus_groups': {},
-                                            'groups_info': {'activated': [], 'deactivated': [], 'created': [], 'warnings': [], 'errors': []},
-                                            'users_info': {'activated': [], 'deactivated': [], 'created': [], 'warnings': [], 'errors': []},
+                                            'groups_info': {'active': {True: [], False : []}, 'created': [], 'warnings': [], 'errors': []},
+                                            'users_info': {'active': {True: [], False : []}, 'created': [], 'warnings': [], 'errors': []},
                                             'menus_info': {'warnings': [], 'errors': []},
                                             }})
             # file to process
@@ -223,9 +226,9 @@ class user_access_configurator(osv.osv_memory):
         group_obj = self.pool.get('res.groups')
         
         group_immunity_name_list = self._get_IGL_name(cr, uid, ids, context=context)
-        return self._activate_group_name(cr, uid, ids, context=context, group_names=group_immunity_name_list)
+        return self._set_active_group_name(cr, uid, ids, context=context, group_names=group_immunity_name_list, active_value=True)
     
-    def _activate_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _set_active_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         activate groups names
         
@@ -236,13 +239,15 @@ class user_access_configurator(osv.osv_memory):
         # data structure
         data_structure = context['data_structure']
         
-        group_names = kwargs['group_names']
-        activate_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('active', '=', False)])
-        group_obj.write(cr, uid, activate_ids, {'active': True}, context=context)
-        
-        # info logging - activated groups
-        activate_names = [x['name'] for x in group_obj.read(cr, uid, activate_ids, ['name'], context=context)]
-        data_structure[obj.id]['groups_info']['activated'].extend(activate_names)
+        for id in ids:
+            group_names = kwargs['group_names']
+            active_value = kwargs['active_value']
+            set_active_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('active', '=', not active_value)])
+            group_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
+            
+            # info logging - activated groups
+            set_active_names = [x['name'] for x in group_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
+            data_structure[id]['groups_info']['active'][active_value].extend(set_active_names)
         
         return group_names
     
@@ -272,7 +277,7 @@ class user_access_configurator(osv.osv_memory):
             # work copy of groups present in the file - will represent the missing groups to be created
             missing_group_names = list(data_structure[obj.id]['group_name_list'])
             # all groups from file are activated (in case a new group in the file which was deactivated previously)
-            self._activate_group_name(cr, uid, ids, context=context, group_names=missing_group_names)
+            self._set_active_group_name(cr, uid, ids, context=context, group_names=missing_group_names, active_value=True)
             # will represent the groups present in the database but not in the file, to be deactivated
             deactivate_group_names = []
             # loop through groups in the database - pop from file list if already exist
@@ -287,10 +292,11 @@ class user_access_configurator(osv.osv_memory):
             # create the new groups from the file
             for missing_group_name in missing_group_names:
                 new_group_id = group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
+                # info logging - activated groups
+                data_structure[obj.id]['groups_info']['created'].append(missing_group_name)
+                
             # deactivate the groups not present in the file
-            deactivate_ids = group_obj.search(cr, uid, [('name', 'in', deactivate_group_names)], context=context)
-            assert len(deactivate_ids) == len(deactivate_group_names), 'this line should be impossible to reach - some groups to deactivate where not found'
-            group_obj.write(cr, uid, deactivate_ids, {'active': False}, context=context)
+            self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
         
         return True
     
