@@ -59,10 +59,12 @@ class user_access_configurator(osv.osv_memory):
         group_obj = self.pool.get('res.groups')
         # group names
         group_names = kwargs['group_names']
+        # additional search criteria
+        additional_criterias = kwargs.get('additional_criterias', [])
         if not isinstance(group_names, list):
             group_names = [group_names]
         
-        group_ids = group_obj.search(cr, uid, [('name', 'in', group_names)], context=context)
+        group_ids = group_obj.search(cr, uid, [('name', 'in', group_names)].extend(additional_criterias), context=context)
         return group_ids
     
     def _get_admin_user_rights_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -98,7 +100,10 @@ class user_access_configurator(osv.osv_memory):
         '''
         return immunity groups
         '''
-        group_immunity_list = [u'Administration / Access Rights', u'Useability / No One']
+        group_immunity_list = [u'Administration / Access Rights']
+        # CNCGL names are temporarily added as non active groups are considered to be part of no groups, and therefore always displayed?
+        #group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
+        
         return group_immunity_list
     
     def _group_name_is_immunity(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -228,10 +233,17 @@ class user_access_configurator(osv.osv_memory):
         '''
         # objects
         group_obj = self.pool.get('res.groups')
+        # data structure
+        data_structure = context['data_structure']
         
         group_names = kwargs['group_names']
-        activate_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names)
+        activate_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('active', '=', False)])
         group_obj.write(cr, uid, activate_ids, {'active': True}, context=context)
+        
+        # info logging - activated groups
+        activate_names = [x['name'] for x in group_obj.read(cr, uid, activate_ids, ['name'], context=context)]
+        data_structure[obj.id]['groups_info']['activated'].extend(activate_names)
+        
         return group_names
     
     def _process_groups_uac(self, cr, uid, ids, context=None):
@@ -514,9 +526,9 @@ class user_access_configurator(osv.osv_memory):
         
         return False
     
-    def do_process_uac(self, cr, uid, ids, context=None):
+    def _do_process_uac(self, cr, uid, ids, context=None):
         '''
-        main function called from wizard
+        private method, used in the yaml tests to get data_structure
         '''
         # Some verifications
         if context is None:
@@ -540,7 +552,13 @@ class user_access_configurator(osv.osv_memory):
         self._process_record_rules_uac(cr, uid, ids, context=context)
         # error/warning logging
         # TODO
-        
+        return data_structure
+    
+    def do_process_uac(self, cr, uid, ids, context=None):
+        '''
+        main function called from wizard
+        '''
+        self._do_process_uac(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 user_access_configurator()
