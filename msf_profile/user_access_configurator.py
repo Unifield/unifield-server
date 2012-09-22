@@ -108,7 +108,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         group_immunity_list = [u'Administration / Access Rights']
         # CNCGL names are temporarily added as non active groups are considered to be part of no groups, and therefore always displayed?
-        #group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
+        group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
         
         return group_immunity_list
     
