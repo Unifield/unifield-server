@@ -28,6 +28,52 @@
 		    id="msf_profile.action_open_user_access_wizard" />
 		
 		<menuitem action="msf_profile.action_open_user_access_wizard" id="menu_user_access_wizard" parent="base.menu_security" sequence="20" />
+		
+		<record id="user_access_results_view" model="ir.ui.view">
+            <field name="name">user.access.results.view</field>
+            <field name="model">user.access.results</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Access Rights Results">
+                    <notebook colspan="4">
+                    	<page string="Groups">
+                    		<group col="4" colspan="4">
+			                    <field name="group_ids_user_access_results" nolabel="True">
+			                    	<tree hide_new_button="True" hide_delete_button="True" string="Groups" editable="top" noteditable="True" colors="red:type_user_access_results_line in ['error'];orange:type_user_access_results_line in ['warning']">
+			                    		<field name="type_user_access_results_line" invisible="True" />
+			                            <field name="name" />
+			                        </tree>
+			                    </field>
+		                    </group>
+	                    </page>
+	                    <page string="Users">
+                    		<group col="4" colspan="4">
+			                    <field name="user_ids_user_access_results" nolabel="True">
+			                    	<tree hide_new_button="True" hide_delete_button="True" string="Users" editable="top" noteditable="True" colors="red:type_user_access_results_line in ['error'];orange:type_user_access_results_line in ['warning']">
+			                    		<field name="type_user_access_results_line" invisible="True" />
+			                            <field name="name" />
+			                        </tree>
+			                    </field>
+		                    </group>
+	                    </page>
+	                    <page string="Menus">
+                    		<group col="4" colspan="4">
+			                    <field name="menu_ids_user_access_results" nolabel="True">
+			                    	<tree hide_new_button="True" hide_delete_button="True" string="Menus" editable="top" noteditable="True" colors="red:type_user_access_results_line in ['error'];orange:type_user_access_results_line in ['warning']">
+			                    		<field name="type_user_access_results_line" invisible="True" />
+			                            <field name="name" />
+			                        </tree>
+			                    </field>
+		                    </group>
+	                    </page>
+                    </notebook>
+                    <separator colspan="4" string="Actions" />
+                    <group col="4" colspan="4">
+                        <button special="cancel" string="Close" icon="gtk-close" />
+                    </group>
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>

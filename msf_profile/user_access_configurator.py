@@ -28,6 +28,9 @@ import tools
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from msf_supply_doc_import.check_line import *
 
+RESULT_MODELS_SELECTION = [('group', 'Group'), ('user', 'User'), ('menu', 'Menu')]
+RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated')]
+
 
 class user_access_configurator(osv.osv_memory):
     _name = 'user.access.configurator'
@@ -131,9 +134,9 @@ class user_access_configurator(osv.osv_memory):
         {id: {
               'group_name_list': [group_names],
               'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True - if the same group is defined multiple times, it will be deleted at the end of import function
-              'groups_info': {'active': {True: [group_names], False : [group_names]}, 'created': [group_names], 'warnings': [], 'errors': []},
-              'users_info': {'active': {True: [group_names], False : [group_names]}, 'created': [user_names], 'updated': [(old_name, new_name)] 'warnings': [], 'errors': []},
-              'menus_info': {'warnings': [], 'errors': []},
+              'group': {'activated': [group_names], 'deactivated': [group_names], 'created': [group_names], 'warning': [], 'error': []},
+              'user': {'activated': [user_names], 'deactivated': [user_names], 'created': [user_names], 'warning': [], 'error': []},
+              'menu': {'warning': [], 'error': []},
               }
         '''
         # Some verifications
@@ -149,9 +152,9 @@ class user_access_configurator(osv.osv_memory):
             # data structure returned with processed data from file
             data_structure.update({obj.id: {'group_name_list': [],
                                             'menus_groups': {},
-                                            'groups_info': {'active': {True: [], False : []}, 'created': [], 'warnings': [], 'errors': []},
-                                            'users_info': {'active': {True: [], False : []}, 'created': [], 'warnings': [], 'errors': []},
-                                            'menus_info': {'warnings': [], 'errors': []},
+                                            'group': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': []},
+                                            'user': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': []},
+                                            'menu': {'warning': [], 'error': []},
                                             }})
             # file to process
             file = obj.file_to_import_uac
@@ -177,28 +180,28 @@ class user_access_configurator(osv.osv_memory):
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
                         group_name = False
                         # if no name of the group, create a new group No Name
-                        if not row.cells[i].data:
+                        if not row.cells[i].data or row.cells[i].data == '':
                             group_name = 'No Name'
                         else:
                             group_name = row.cells[i].data
                         # if the same group is defined multiple times
                         if group_name in data_structure[obj.id]['group_name_list']:
                             # display a warning, the same group is displayed multiple times, columns values are aggregated (OR)
-                            data_structure[obj.id]['groups_info']['warnings'].append('The group %s is defined multiple times. Values from all these groups are aggregated (OR function).'%group_name)
+                            data_structure[obj.id]['group']['warning'].append('The group %s is defined multiple times. Values from all these groups are aggregated (OR function).'%group_name)
                         # we add the column, even if defined multiple times, as we need it for name matching when setting menu rights
-                        data_structure[obj.id]['group_name_list'].append(row.cells[i].data)
+                        data_structure[obj.id]['group_name_list'].append(group_name)
                 else:
                     # information rows
                     try:
                         menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, row.cells[0], row.cells[1])[1]
                     except ValueError:
                         # menu is in the file but not in the database
-                        data_structure[obj.id]['menus_info']['errors'].append('The menu %s (%s.%s) is defined in the file but is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
+                        data_structure[obj.id]['menu']['error'].append('The menu %s (%s.%s) is defined in the file but is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
                         continue
                     
                     # test if a menu is defined multiple times
                     if menu_id in data_structure[obj.id]['menus_groups']:
-                        data_structure[obj.id]['menus_info']['warnings'].append('The menu %s (%s.%s) is defined multiple times. Groups from all these rows are aggregated (OR function).'%(row.cells[3], row.cells[0], row.cells[1]))
+                        data_structure[obj.id]['menu']['warning'].append('The menu %s (%s.%s) is defined multiple times. Groups from all these rows are aggregated (OR function).'%(row.cells[3], row.cells[0], row.cells[1]))
                     
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
@@ -247,7 +250,10 @@ class user_access_configurator(osv.osv_memory):
         # info logging - activated/deactivated groups
         set_active_names = [x['name'] for x in group_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
         for id in ids:
-            data_structure[id]['groups_info']['active'][active_value].extend(set_active_names)
+            if active_value:
+                data_structure[id]['group']['activated'].extend(set_active_names)
+            else:
+                data_structure[id]['group']['deactivated'].extend(set_active_names)
         
         return group_names
     
@@ -293,7 +299,7 @@ class user_access_configurator(osv.osv_memory):
             for missing_group_name in missing_group_names:
                 new_group_id = group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
                 # info logging - created groups
-                data_structure[obj.id]['groups_info']['created'].append(missing_group_name)
+                data_structure[obj.id]['group']['created'].append(missing_group_name)
                 
             # deactivate the groups not present in the file
             self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
@@ -320,7 +326,10 @@ class user_access_configurator(osv.osv_memory):
         # info logging - activated/deactivated users
         set_active_names = [x['name'] for x in user_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
         for id in ids:
-            data_structure[id]['users_info']['active'][active_value].extend(set_active_names)
+            if active_value:
+                data_structure[id]['user']['activated'].extend(set_active_names)
+            else:
+                data_structure[id]['user']['deactivated'].extend(set_active_names)
         
         return set_active_ids
     
@@ -351,7 +360,7 @@ class user_access_configurator(osv.osv_memory):
             admin_ids = user_obj.search(cr, uid, [('login', '=', 'admin')], context=context)
             if not admin_ids:
                 # log error and return
-                data_structure[obj.id]['users_info']['errors'].append('The Administrator user does not exist. This is a big issue.')
+                data_structure[obj.id]['user']['error'].append('The Administrator user does not exist. This is a big issue.')
                 return
             # group ids - used to set all groups to admin user
             group_ids_list = []
@@ -370,7 +379,7 @@ class user_access_configurator(osv.osv_memory):
                                                                       'password': default_password_value,
                                                                       'date': False}, context=context)]
                     # info logging - created users
-                    data_structure[id]['users_info']['created'].append(group_name)
+                    data_structure[obj.id]['user']['created'].append(group_name)
         
                 else:
                     # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
@@ -587,11 +596,106 @@ user_access_configurator()
 
 class user_access_results(osv.osv_memory):
     _name = 'user.access.results'
-    _columns = {'file_to_import_uac': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity'),
-                'number_of_non_group_columns_uac': fields.integer(string='Number of columns not containing group name')}
-    _defaults = {'number_of_non_group_columns_uac': 4}
+    _columns = {'group_ids_user_access_results': fields.one2many('user.access.results.groups.line', 'wizard_id_user_access_results_line', string='Groups Info'),
+                'user_ids_user_access_results': fields.one2many('user.access.results.users.line', 'wizard_id_user_access_results_line', string='Users Info'),
+                'menu_ids_user_access_results': fields.one2many('user.access.results.menus.line', 'wizard_id_user_access_results_line', string='Menus Info'),
+                }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        fill the lines with default create_values
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        # objects
+        move_obj = self.pool.get('stock.move')
+        # data structure
+        data_structure = context['data_structure']
+        # super
+        res = super(user_access_results, self).default_get(cr, uid, fields, context=context)
+        # wizard id
+        wizard_id = context['active_ids'][0]
+        # model
+        for model_t in RESULT_MODELS_SELECTION:
+            # model
+            model = model_t[0]
+            # values
+            result = []
+            # type
+            for type_t in RESULT_TYPES_SELECTION:
+                # type
+                type = type_t[0]
+                # fill groups data
+                if type in data_structure[wizard_id][model]:
+                    datas = data_structure[wizard_id][model][type]
+                    # errors
+                    for value in datas:
+                        create_values  = {'model_user_access_results_line': model,
+                                          'type_user_access_results_line': type,
+                                          'value_user_access_results_line': value}
+                        result.append(create_values)
+            
+            # add to one2many
+            # kit list
+            if '%s_ids_user_access_results'%model in fields:
+                res.update({'%s_ids_user_access_results'%model: result})
+                     
+        return res
 
 user_access_results()
+
+
+class user_access_results_groups_line(osv.osv_memory):
+    _name = 'user.access.results.groups.line'
+    
+    def _vals_get_user_access_results_line(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
+            # name
+            string_value = False
+            if obj.type_user_access_results_line in ['created', 'activated', 'deactivated']:
+                string_value = 'The %s %s has been %s.'%(obj.model_user_access_results_line, obj.value_user_access_results_line, obj.type_user_access_results_line)
+            elif obj.type_user_access_results_line in ['warning', 'error']:
+                string_value = '%s.'%(obj.value_user_access_results_line)
+            result[obj.id].update({'name': string_value})
+            
+        return result
+    
+    _columns = {'wizard_id_user_access_results_line': fields.many2one('user.access.results', string='Wizard'),
+                'name': fields.function(_vals_get_user_access_results_line, method=True, type='char', size=1024, string='Name', multi='get_vals_user_access_results_line', readonly=True),
+                'model_user_access_results_line': fields.selection(RESULT_MODELS_SELECTION, string='Model', readonly=True),
+                'type_user_access_results_line': fields.selection(RESULT_TYPES_SELECTION, string='Type', readonly=True),
+                'value_user_access_results_line': fields.char(string='Value', size=1024, readonly=True),
+                }
+
+user_access_results_groups_line()
+
+
+class user_access_results_users_line(osv.osv_memory):
+    _name = 'user.access.results.users.line'
+    _inherit = 'user.access.results.groups.line'
+    
+user_access_results_users_line()
+
+
+class user_access_results_menus_line(osv.osv_memory):
+    _name = 'user.access.results.menus.line'
+    _inherit = 'user.access.results.groups.line'
+    
+user_access_results_menus_line()
 
 
 class res_groups(osv.osv):
