@@ -22,7 +22,8 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-              	<field name="functional_id" on_change="functional_on_change(functional_id)"  />
+              	<field name="functional_id" on_change="functional_on_change(functional_id)" attrs="{'readonly': [('second_time', '=', 'True')]}" />
+                <field name="second_time" invisible="1"/>
                 <separator colspan="5" string="ESC currency" />
                 <field name="esc_id" widget="selection" />
                 <separator colspan="5" string="Section currency" />
