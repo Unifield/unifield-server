@@ -769,7 +769,20 @@ stock moves which are already processed : '''
                                                    'ready_to_ship_date': so_rts}, context=context)
             
         return True
-    
+
+    def check_if_product(self, cr, uid, ids, context=None):
+        """
+        Check if all line have a product before confirming the Purchase Order
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.order_line:
+                for line in po.order_line:
+                    if not line.product_id:
+                        raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line without product.') )
+        return True
+
     def all_po_confirmed(self, cr, uid, ids, context=None):
         '''
         condition for the po to leave the act_confirmed_wait state
