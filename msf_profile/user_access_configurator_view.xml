@@ -248,6 +248,31 @@
             	</data>
            	</field>
        	</record>
+       	
+       	<record id="view_users_form" model="ir.ui.view">
+            <field name="name">res.users.form</field>
+            <field name="model">res.users</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_users_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="base.action_res_groups" model="ir.actions.act_window">
+            <field name="name">Groups</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.groups</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('visible_res_groups', '=', True)]</field>
+            <field name="help">A group is a set of functional areas that will be assigned to the user in order to give them access and rights to specific applications and tasks in the system. You can create custom groups or edit the ones existing by default in order to customize the view of the menu that users will be able to see. Whether they can have a read, write, create and delete access right can be managed from here.</field>
+        </record>
 
     </data>
 </openerp>
