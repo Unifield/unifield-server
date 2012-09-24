@@ -69,7 +69,7 @@
                     </notebook>
                     <separator colspan="4" string="Actions" />
                     <group col="4" colspan="4">
-                        <button special="cancel" string="Close" icon="gtk-close" />
+                        <button name="close_results_uar" string="Close" type="object" icon="gtk-close" />
                     </group>
                 </form>
             </field>
@@ -81,15 +81,173 @@
 		  <field name="name">workflow.transition.form</field>
 		  <field name="model">workflow.transition</field>
 		  <field name="type">form</field>
-		  <field name="inherit_id" ref="view_workflow_transition_form" />
+		  <field name="inherit_id" ref="base.view_workflow_transition_form" />
 		  <field name="arch" type="xml">
 		  	<data>
-		  		<xpath expr="/form/field[@name='group_id']" position="attributes">
+		  		<xpath expr="//field[@name='group_id']" position="attributes">
                     <attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
                 </xpath>
 		  	</data>
 		  </field>
 		</record>
+		
+        <record id="view_window_action_form" model="ir.ui.view">
+            <field name="name">ir.actions.windows.form</field>
+            <field name="model">ir.actions.act_window</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_window_action_form" />
+            <field name="arch" type="xml">
+            	<data>
+            		<xpath expr="//field[@name='groups_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	</data>
+           	</field>
+      	</record>
+      	
+      	<record id="act_wizard_view" model="ir.ui.view">
+            <field name="name">ir.actions.wizard</field>
+            <field name="model">ir.actions.wizard</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.act_wizard_view" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+                	
+            	</data>
+           	</field>
+      	</record>
+      	
+      	<record id="config_wizard_step_view_form" model="ir.ui.view">
+            <field name="model">ir.actions.todo</field>
+            <field name="name">Config Wizard Steps</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.config_wizard_step_view_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="view_model_fields_form" model="ir.ui.view">
+            <field name="name">ir.model.fields.form</field>
+            <field name="model">ir.model.fields</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_model_fields_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="ir_access_view_tree" model="ir.ui.view">
+            <field name="name">ir.model.access.tree</field>
+            <field name="model">ir.model.access</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.ir_access_view_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='group_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="ir_access_view_form" model="ir.ui.view">
+            <field name="name">ir.model.access.form</field>
+            <field name="model">ir.model.access</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.ir_access_view_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='group_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="ir_access_view_search" model="ir.ui.view">
+            <field name="name">ir.model.access.search</field>
+            <field name="model">ir.model.access</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="base.ir_access_view_search" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='group_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="view_rule_form" model="ir.ui.view">
+            <field name="name">Record rules</field>
+            <field name="model">ir.rule</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_rule_form" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="view_rule_search" model="ir.ui.view">
+            <field name="name">Record rules</field>
+            <field name="model">ir.rule</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="base.view_rule_search" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
+       	
+       	<record id="edit_menu_access" model="ir.ui.view">
+            <field name="name">ir.ui.menu.form2</field>
+            <field name="model">ir.ui.menu</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.edit_menu_access" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<xpath expr="//field[@name='groups_id']" position="attributes">
+                    	<attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                	</xpath>
+            	
+            	</data>
+           	</field>
+       	</record>
 
     </data>
 </openerp>

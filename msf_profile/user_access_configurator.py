@@ -108,7 +108,7 @@ class user_access_configurator(osv.osv_memory):
         '''
         group_immunity_list = [u'Administration / Access Rights']
         # CNCGL names are temporarily added as non active groups are considered to be part of no groups, and therefore always displayed?
-        group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
+#        group_immunity_list.extend(self._get_DNCGL_name(cr, uid, ids, context=context))
         
         return group_immunity_list
     
@@ -642,6 +642,12 @@ class user_access_results(osv.osv_memory):
                 res.update({'%s_ids_user_access_results'%model: result})
                      
         return res
+    
+    def close_results_uar(self, cr, uid, ids, context=None):
+        '''
+        close wizard
+        '''
+        return {'type' : 'ir.actions.act_window_close'}
 
 user_access_results()
 
