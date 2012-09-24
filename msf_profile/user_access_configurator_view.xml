@@ -74,6 +74,22 @@
                 </form>
             </field>
         </record>
+        
+        
+        <!-- MODIFICATION OF EXISTING VIEWS TO TAKE VISIBLE_RES_GROUPS INTO ACCOUNT -->
+        <record id="view_workflow_transition_form" model="ir.ui.view">
+		  <field name="name">workflow.transition.form</field>
+		  <field name="model">workflow.transition</field>
+		  <field name="type">form</field>
+		  <field name="inherit_id" ref="view_workflow_transition_form" />
+		  <field name="arch" type="xml">
+		  	<data>
+		  		<xpath expr="/form/field[@name='group_id']" position="attributes">
+                    <attribute name="domain">[('visible_res_groups', '=', True)]</attribute>
+                </xpath>
+		  	</data>
+		  </field>
+		</record>
 
     </data>
 </openerp>

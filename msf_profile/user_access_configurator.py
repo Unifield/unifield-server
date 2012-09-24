@@ -244,8 +244,8 @@ class user_access_configurator(osv.osv_memory):
         
         group_names = kwargs['group_names']
         active_value = kwargs['active_value']
-        set_active_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('active', '=', not active_value)])
-        group_obj.write(cr, uid, set_active_ids, {'active': active_value}, context=context)
+        set_active_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('visible_res_groups', '=', not active_value)])
+        group_obj.write(cr, uid, set_active_ids, {'visible_res_groups': active_value}, context=context)
         
         # info logging - activated/deactivated groups
         set_active_names = [x['name'] for x in group_obj.read(cr, uid, set_active_ids, ['name'], context=context)]
@@ -552,7 +552,7 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         
-        # we need to take inactive groups into acount, in order to reactivate them and avoid creation of the same group multiple time
+        # we need to take inactive groups and users into acount, in order to reactivate them and avoid creation of the same group multiple time
         context=dict(context, active_test=False)
         # gather data structure corresponding to selected file
         data_structure = self._import_data_uac(cr, uid, ids, context=context)
@@ -703,10 +703,10 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'active': fields.boolean('Active', readonly=True),
-                'from_file_import_res_groups': fields.boolean('Active', readonly=True),
+    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=True),
+                'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
                 }
-    _defaults = {'active': True,
+    _defaults = {'visible_res_groups': True,
                  'from_file_import_res_groups': False,
                  }
 
