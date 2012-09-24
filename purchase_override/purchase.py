@@ -780,7 +780,7 @@ stock moves which are already processed : '''
             if po.order_line:
                 for line in po.order_line:
                     if not line.product_id:
-                        raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line without product.') )
+                        raise osv.except_osv(_('Error !'), _('You should have a product on all Purchase Order lines to be able to confirm the Purchase Order.') )
         return True
 
     def all_po_confirmed(self, cr, uid, ids, context=None):
