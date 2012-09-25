@@ -105,6 +105,15 @@ class so_po_common(osv.osv_memory):
             header_result['notes'] = header_info.get('note')
             header_result['note'] = header_info.get('note')
             
+        if 'order_type' in header_info:
+            header_result['order_type'] = header_info.get('order_type')
+        if 'priority' in header_info:
+            header_result['priority'] = header_info.get('priority')
+        if 'categ' in header_info:
+            header_result['categ'] = header_info.get('categ')
+        if 'loan_duration' in header_info:
+            header_result['loan_duration'] = header_info.get('loan_duration')
+            
         if 'details' in header_info:
             header_result['details'] = header_info.get('details')
         if 'delivery_confirmed_date' in header_info:
@@ -144,16 +153,26 @@ class so_po_common(osv.osv_memory):
         return False 
 
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
-        if 'note' in header_info:
+        if 'notes' in header_info:
+            header_result['notes'] = header_info.get('notes')
+            header_result['note'] = header_info.get('notes')
+        elif 'note' in header_info:
+            header_result['notes'] = header_info.get('note')
             header_result['note'] = header_info.get('note')
-        if 'details' in header_info:
-            header_result['details'] = header_info.get('details')
-        if 'delivery_requested_date' in header_info:
-            header_result['delivery_requested_date'] = header_info.get('delivery_requested_date')
+
+        if 'order_type' in header_info:
+            header_result['order_type'] = header_info.get('order_type')
         if 'priority' in header_info:
             header_result['priority'] = header_info.get('priority')
         if 'categ' in header_info:
             header_result['categ'] = header_info.get('categ')
+        if 'loan_duration' in header_info:
+            header_result['loan_duration'] = header_info.get('loan_duration')
+            
+        if 'details' in header_info:
+            header_result['details'] = header_info.get('details')
+        if 'delivery_requested_date' in header_info:
+            header_result['delivery_requested_date'] = header_info.get('delivery_requested_date')
 
         analytic_id = header_info.get('analytic_distribution_id', False)
         if analytic_id:
