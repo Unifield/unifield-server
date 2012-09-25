@@ -29,7 +29,7 @@ function save_binary_data(src, filename) {
     prefix = prefix ? prefix + '/' : '';
 
     var fname = openobject.dom.get(prefix + filename) || openobject.dom.get(prefix + 'name');
-    ffname = fname ? fname.value.replace(/\//g,'_') || fname.innerHTML : null;
+    fname = fname ? fname.value.replace(/\//g,'_') || fname.innerHTML : null;
 
     var act = get_form_action('save_binary_data', undefined);
     act = fname ? act + '/' + fname : act;
