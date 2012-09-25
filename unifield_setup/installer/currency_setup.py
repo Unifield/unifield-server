@@ -67,6 +67,7 @@ class currency_setup(osv.osv_memory):
     def execute(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        context['from_setup'] = True
         '''
         Fill the delivery process field in company
         '''
