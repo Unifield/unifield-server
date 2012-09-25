@@ -53,7 +53,7 @@
 </Styles>
 ##  we loop over the sale_order so "objects" == sale_order
 % for o in objects:
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="Field Order">
 
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
