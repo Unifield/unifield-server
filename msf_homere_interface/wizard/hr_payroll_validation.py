@@ -131,7 +131,10 @@ class hr_payroll_validation(osv.osv_memory):
                 if m.groups() and m.groups()[0] and m.groups()[1]:
                     partner_id = vals.get(m.groups()[0])
                     newvals = {'partner_id': vals.get(m.groups()[0])}
-                    self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], newvals)
+                    hpm_id = m.groups()[1]
+                    if isinstance(hpm_id, str):
+                        hpm_id = int(hpm_id)
+                    self.pool.get('hr.payroll.msf').write(cr, uid, [hpm_id], newvals)
         for field in to_delete:
             del vals[field]
         # Return default behaviour
