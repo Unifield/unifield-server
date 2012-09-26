@@ -348,6 +348,7 @@ class update_received(osv.osv):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
                     message += self.log("Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
                     #TODO manage other conflict rules here
+                    continue
                         
                 row = eval(update.values)
 
@@ -373,7 +374,15 @@ class update_received(osv.osv):
                 cr.rollback = cr.rollback_org
                 cr.commit = cr.commit_org
             if res[0] == -1:
-                raise Warning(message+res[2])
+                line_error = re.match(r'^Line (\d+)', res[2])
+                import_message = res[2]
+                if line_error:
+                    try:
+                        data = dict(zip(fields, values[int(line_error.group(1))-1]))
+                        import_message += " Data concerned: %s in model %s" % (data, update.model.model)
+                    except:
+                        import_message += " But I can't reach the line %s, sorry!" % line_error.group(1)
+                raise Warning(message+import_message)
             elif res[0] != len(values):
                 raise Warning(message+"Wrong number of imported rows! Expected %s, but %s acquired" % (len(values),res[0]))
             #raise Exception('Happy Birthday')
@@ -459,17 +468,18 @@ class update_received(osv.osv):
             if '/id' in fields[i] and values[i]:
                 xml_id_raw = values[i]
                 res_val = []
-                xml_ids = xml_id_raw.split(',')
-                for xml_id in xml_ids:
-                    if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
-                        fb = fallback.get(fields[i])
-                        if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
-                            message.append('Missing record %s replace by %s' % (fields[i], fb))
-                            res_val.append(fb)
+                if xml_id_raw:
+                    xml_ids = xml_id_raw.split(',')
+                    for xml_id in xml_ids:
+                        if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
+                            fb = fallback.get(fields[i])
+                            if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
+                                message.append('Missing record %s replace by %s' % (fields[i], fb))
+                                res_val.append(fb)
+                            else:
+                                message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
                         else:
-                            message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
-                    else:
-                        res_val.append(xml_id)
+                            res_val.append(xml_id)
                 if not res_val:
                     values[i] = False
                 else:

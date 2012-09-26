@@ -63,10 +63,8 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search>
-                    <field name="start" filter_domain="[('start','&gt;=',self)]"/>
-                    <field name="start" filter_domain="[('start','&lt;=',self)]" string="Until:"/>
-                    <field name="end" filter_domain="[('start','&gt;=',self)]"/>
-                    <field name="end" filter_domain="[('start','&lt;=',self)]" string="Until:"/>
+                    <field name="start" />
+                    <field name="end" />
                     <newline/>
                     <field name="sequence_number"/>
                     <field name="status"/>

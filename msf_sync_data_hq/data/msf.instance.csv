@@ -1,0 +1,6 @@
+"id","code","name","level","mission","instance","parent_id","cost_center_id","state","reconcile_prefix","move_prefix"
+"uf1191_hq","UF1191_HQ","UF1191_HQ","Section","UF1191_MISSION","UF1191_HQ","","OC","Draft","HQ","HQ"
+"uf1191_c1","UF1191_COORDO","UF1191_COORDO","Coordo","UF1191_MISSION","UF1191_COORDO","UF1191_HQ","UF1191_COORDO","Draft","C1","C1"
+"uf1191_p1","UF1191_PROJECT","UF1191_PROJECT","Project","UF1191_MISSION","UF1191_PROJECT","UF1191_COORDO","UF1191_PROJECT","Draft","P1","P1"
+"uf1191_p2","UF1191_PROJECT2","UF1191_PROJECT2","Project","UF1191_MISSION","UF1191_PROJECT2","UF1191_COORDO","UF1191_PROJECT2","Draft","P2","P2"
+

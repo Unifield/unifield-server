@@ -599,11 +599,12 @@ class sync_server_connection(osv.osv):
     }
     
     _defaults = {
-        'host' : 'localhost',
+        'host' : 'sync.unifield.org',
         'port' : 8070,
         'protocol': 'netrpc_gzip',
         'login' : 'admin',
-        'max_size' : 1000,
+        'max_size' : 500,
+        'database' : 'SYNC_SERVER',
     }
     
     def _get_connection_manager(self, cr, uid, context=None):
