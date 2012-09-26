@@ -1,0 +1,22 @@
+name,code,category,parent_id,type,date_start
+OCA-MMR-COO,MM101,Cost Center,OC,Normal,18-Mar-2012
+OCA-MMR-PRJ,MM201,Cost Center,OC,Normal,18-Mar-2012
+OCA-UZB-COO,UZ101,Cost Center,OC,Normal,18-Mar-2012
+OCA-UZB-PRJ,UZ201,Cost Center,OC,Normal,18-Mar-2012
+OCG-KEN-COO,KE101,Cost Center,OC,Normal,18-Mar-2012
+OCG-KEN-PRJ,KE201,Cost Center,OC,Normal,18-Mar-2012
+OCG-GUI-COO,GU101,Cost Center,OC,Normal,18-Mar-2012
+OCG-GUI-PRJ,GU201,Cost Center,OC,Normal,18-Mar-2012
+OCB-BDI-COO,BD101,Cost Center,OC,Normal,18-Mar-2012
+OCB-BDI-PRJ,BD201,Cost Center,OC,Normal,18-Mar-2012
+OCB-MWI-COO,MW101,Cost Center,OC,Normal,18-Mar-2012
+OCB-MWI-PRJ,MW201,Cost Center,OC,Normal,18-Mar-2012
+SUP-OCA-UZB-COO,SP-UZ101,Cost Center,OC,Normal,18-Mar-2012
+SUP-OCA-UZB-PRJ,SP-UZ201,Cost Center,OC,Normal,18-Mar-2012
+SUP-OCG-GUI-COO,SP-GU101,Cost Center,OC,Normal,18-Mar-2012
+SUP-OCG-GUI-PRJ,SP-GU201,Cost Center,OC,Normal,18-Mar-2012
+SUP-OCB-MWI-COO,SP-MW101,Cost Center,OC,Normal,18-Mar-2012
+SUP-OCB-MWI-PRJ,SP-MW201,Cost Center,OC,Normal,18-Mar-2012
+UF1191_COORDO,UF11961_COORDO,Cost Center,OC,Normal,18-Sep-2012
+UF1191_PROJECT,UF11961_PROJECT,Cost Center,OC,Normal,18-Sep-2012
+UF1191_PROJECT2,UF11961_PROJECT2,Cost Center,OC,Normal,18-Sep-2012
