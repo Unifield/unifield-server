@@ -405,22 +405,26 @@ class procurement_request_line(osv.osv):
         '''
         Fills automatically the product_uom_id field and the name on the line when the 
         product is changed.
+        Add a domain on the product_uom when a product is selected.
         '''
         if context is None:
             context = {}
         product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
 
-        v = {}
-        if not product_id and not comment:
-            v.update({'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'})
-        elif comment and not product_id:
-            pass
+        value = {}
+        domain = {}
+        if not product_id:
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'}
+            domain = {'product_uom':[]}
         elif product_id:
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method})
-            if v['type'] != 'make_to_stock':
-                v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
-        return {'value': v}
+            product = product_obj.browse(cr, uid, product_id)
+            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method}
+            if value['type'] != 'make_to_stock':
+                value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
+            domain = {'product_uom':[('category_id','=',uom_val[0]['category_id'][0])]}
+        return {'value': value, 'domain': domain}
 
 
     def requested_type_change(self, cr, uid, ids, product_id, type, context=None):
@@ -444,7 +448,7 @@ class procurement_request_line(osv.osv):
         '''
         if context is None:
             context = {}
-        res = {}
+        value = {}
         obj_data = self.pool.get('ir.model.data')
         nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
         nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
@@ -452,12 +456,12 @@ class procurement_request_line(osv.osv):
         nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
         
         if comment and not product_id:
-            res.update({'nomen_manda_0': nomen_manda_0,
+            value.update({'nomen_manda_0': nomen_manda_0,
                         'nomen_manda_1': nomen_manda_1,
                         'nomen_manda_2': nomen_manda_2,
                         'nomen_manda_3': nomen_manda_3,
                         'name': 'To be defined',})
-        return {'value': res}
+        return {'value': value}
     
 procurement_request_line()
 
