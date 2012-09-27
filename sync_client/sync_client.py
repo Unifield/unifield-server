@@ -337,7 +337,7 @@ class entity(osv.osv, Thread):
                 self.set_last_sequence(cr, uid, context)
             self.retrieve_update(cr, uid, recover=recover, context=context)
             cr.commit()
-            self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
+            log['error'] += self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
         except BaseException, e:
             status = self.errorSync(e, log, 'data_pull')
         

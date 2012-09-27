@@ -81,7 +81,7 @@ def log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
     elif isinstance(message, BaseException):
         try:
             output += "".join(list(message))
-        except:
+        except BaseException, e:
             output += str(e)
         if output[-1] != "\n": output += "\n"
     else:

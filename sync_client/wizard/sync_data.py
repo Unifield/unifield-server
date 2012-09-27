@@ -28,6 +28,7 @@ import tools
 import time
 import StringIO
 import traceback
+import re
 from sync_client.ir_model_data import link_with_ir_model
 
 import logging
@@ -273,6 +274,8 @@ class update_received(osv.osv):
         'execution_date':fields.datetime('Execution date', readonly=True),
         'editable' : fields.boolean("Set editable"),
     }
+
+    line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)")
     
     def unfold_package(self, cr, uid, packet, context=None):
         if not packet:
@@ -310,12 +313,15 @@ class update_received(osv.osv):
     def execute_update(self, cr, uid, ids=None, context=None):
         context = dict(context or {})
         context['sync_data'] = True
+
         if ids is None:
             update_ids = self.search(cr, uid, [('run', '=', False)], context=context)
         else:
             update_ids = ids
         if not update_ids:
-            return
+            return ''
+
+        # Sort updates by rule_sequence
         whole = self.browse(cr, uid, update_ids, context=context)
         update_groups = dict()
         for update in whole:
@@ -325,18 +331,51 @@ class update_received(osv.osv):
                 update_groups[update.rule_sequence] = [update]
         self.log(data="received update ids = %s, models = %s" % (update_ids, map(lambda x:x[0].model.model, update_groups.values())))
         self.write(cr, uid, update_ids, {'execution_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
+        #import ipdb
+
+        def secure_import_data(obj, fields, values):
+            try:
+                cr.rollback_org, cr.rollback = cr.rollback, lambda:None
+                cr.commit_org, cr.commit = cr.commit, lambda:None
+                cr.execute("SAVEPOINT import_data")
+                res = obj.import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
+            except BaseException, e:
+                cr.execute("ROLLBACK TO SAVEPOINT import_data")
+                try:
+                    import_error = "".join(list(e))
+                except:
+                    import_error = str(e)
+                raise Exception(import_error)
+            else:
+                if res[0] == len(values):
+                    cr.execute("RELEASE SAVEPOINT import_data")
+                else:
+                    cr.execute("ROLLBACK TO SAVEPOINT import_data")
+            finally:
+                cr.rollback = cr.rollback_org
+                cr.commit = cr.commit_org
+            return res
 
         def group_update_execution(updates):
+            obj = self.pool.get(updates[0].model.model)
             fields = eval(updates[0].fields)
             fallback = eval(updates[0].fallback_values or '{}')
             message = ""
             values = []
-            versions = dict()
-            #fields_ref = self.pool.get(updates[0].model.model).fields_get(cr, uid, context=context)
+            update_ids = []
+            versions = []
+
+            def success(update_ids, versions):
+                self.write(cr, uid, update_ids, {
+                    'run' : True,
+                    'log' : '',
+                }, context=context)
+                for xml_id, version in versions.items():
+                    self.pool.get('ir.model.data').sync(cr, uid, xml_id, version=version, context=context)
 
             #3 check for missing field : report missing fields
             bad_fields = self._check_fields(cr, uid, updates[0].model.model, fields, context=context)
-            if bad_fields : 
+            if bad_fields: 
                 message += "Missing or unauthorized fields found : %s\n" % ", ".join(bad_fields)
                 bad_fields = [fields.index(x) for x in bad_fields]
 
@@ -347,7 +386,7 @@ class update_received(osv.osv):
                 if self._conflict(cr, uid, update, context):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
                     message += self.log("Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
-                    #TODO manage other conflict rules here
+                    #TODO manage other conflict rules here (tfr note)
                     continue
                         
                 row = eval(update.values)
@@ -357,66 +396,82 @@ class update_received(osv.osv):
                 xml_id = row[i_id]
 
                 if bad_fields : 
-                    row = [row[i] for i, x in enumerate(fields) if i not in bad_fields]
+                    row = [row[i] for i in range(len(fields)) if i not in bad_fields]
 
                 values.append(row)
-                versions[xml_id] = update.version
+                update_ids.append(update.id)
+                versions.append( (xml_id, update.version) )
 
             if bad_fields:
-                fields = [fields[i] for i, x in enumerate(fields) if i not in bad_fields]
+                fields = [fields[i] for i in range(len(fields)) if i not in bad_fields]
 
             #5 import data : report error
-            try:
-                cr.rollback_org, cr.rollback = cr.rollback, lambda:None
-                cr.commit_org, cr.commit = cr.commit, lambda:None
-                res = self.pool.get(update.model.model).import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
-            finally:
-                cr.rollback = cr.rollback_org
-                cr.commit = cr.commit_org
-            if res[0] == -1:
-                line_error = re.match(r'^Line (\d+)', res[2])
-                import_message = res[2]
-                if line_error:
-                    try:
-                        data = dict(zip(fields, values[int(line_error.group(1))-1]))
-                        import_message += " Data concerned: %s in model %s" % (data, update.model.model)
-                    except:
-                        import_message += " But I can't reach the line %s, sorry!" % line_error.group(1)
-                raise Warning(message+import_message)
-            elif res[0] != len(values):
-                raise Warning(message+"Wrong number of imported rows! Expected %s, but %s acquired" % (len(values),res[0]))
-            #raise Exception('Happy Birthday')
+            while values:
+                try:
+                    res = secure_import_data(obj, fields, values)
+                    #ipdb.set_trace()
+                    #pass
+                except Exception, import_error:
+                    # Rare Exception: import_data raised an Exception
+                    self.write(cr, uid, update_ids, {
+                        'run' : False,
+                        'log' : import_error.strip(),
+                    }, context=context)
+                    raise Exception(message+import_error)
+                if res[0] == len(values):
+                    success( update_ids, \
+                             dict(versions) )
+                    break
+                elif res[0] == -1:
+                    # Regular exception
+                    import_message = res[2]
+                    line_error = self.line_error_re.search(import_message)
+                    if line_error:
+                        # Extract the failed data
+                        value_index, import_message = int(line_error.group(1))-1, line_error.group(2)
+                        data = dict(zip(fields, values[value_index]))
+                        import_message = "Cannot import in model %s:\nData: %s\nReason: %s\n" % (obj._name, data, import_message)
+                        values.pop(value_index)
+                        versions.pop(value_index)
+                        self.write(cr, uid, [update_ids.pop(value_index)], {
+                            'run' : False,
+                            'log' : import_message.strip(),
+                        }, context=context)
+                    else:
+                        # Rare case where no line is given by import_data
+                        message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
+                        raise Exception(message)
+                    if value_index > 0:
+                        # Try to import the beginning of the values and permit the import of the rest
+                        try:
+                            res = secure_import_data(obj, fields, values[:value_index])
+                            assert res[0] == value_index, res[2]
+                        except Exception, import_error:
+                            raise Exception(message+import_error)
+                        success( update_ids[:value_index], \
+                                 dict(versions[:value_index]) )
+                        values = values[value_index:]
+                        update_ids = update_ids[value_index:]
+                        versions = versions[value_index:]
+                else:
+                    # Rare exception, should never occur
+                    raise Exception(message+"Wrong number of imported rows in model %s (expected %s, but %s imported)!\nUpdate ids: %s\n" % (updates[0].model.model, len(values), res[0], update_ids))
+                #raise Exception('Happy Birthday')
 
-            #6 set version and sync_date
-            for xml_id, version in versions.items():
-                self.pool.get('ir.model.data').sync(cr, uid, xml_id, version=version, context=context)
+            #if not( len(values) == len(update_ids) == len(versions) ):
+            #    ipdb.set_trace()
+            # Obvious
+            assert len(values) == len(update_ids) == len(versions), \
+                message+"""This error must never occur. Please contact the developper team of this module.\n"""
 
             return message
 
+        error_message = ""
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
-            message = ""
-            cr.execute("SAVEPOINT exec_update")
-            try:
-                message = group_update_execution(updates)
-            except BaseException, e:
-                cr.execute("ROLLBACK TO SAVEPOINT exec_update")
-                try:
-                    message = "".join(list(e))
-                except:
-                    message = str(e)
-                run = False
-                raise
-            else:
-                cr.execute("RELEASE SAVEPOINT exec_update")
-                run = True
-            finally:
-                self.write(cr, uid, [x.id for x in updates], {
-                    'run' : run,
-                    'log' : message.strip(),
-                }, context=context)
-            if not run:
-                break
+            error_message += group_update_execution(updates)
+        
+        return error_message
 
     def _check_fields(self, cr, uid, model, fields, context=None):
         """
