@@ -40,6 +40,30 @@ class account_cash_statement(osv.osv):
 #        bank = self.browse(cr, uid, res_id)
 #        return bank.name + '_' +bank.journal_id.code
 
+    def _get_starting_balance(self, cr, uid, ids, context=None):
+        """ Find starting balance
+        @param name: Names of fields.
+        @param arg: User defined arguments
+        @return: Dictionary of values.
+        """
+        res = {}
+        for statement in self.browse(cr, uid, ids, context=context):
+            amount_total = 0.0
+
+            if statement.journal_id.type not in('cash'):
+                continue
+
+            if not statement.prev_reg_id:
+                for line in statement.starting_details_ids:
+                    amount_total+= line.pieces * line.number
+            else:
+                amount_total = statement.prev_reg_id.msf_calculated_balance
+            
+            res[statement.id] = {
+                'balance_start': amount_total
+            }
+        return res
+
     def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
@@ -72,7 +96,7 @@ class account_cash_statement(osv.osv):
             # if previous register closing balance is freezed, then retrieving previous closing balance
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
-                    vals.update({'balance_start': prev_reg.balance_end_real})
+                    vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
