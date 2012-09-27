@@ -146,7 +146,7 @@
       
       sourcing.write({'type':'make_to_order', 'supplier':ref("res_partner_1"), 'po_cft':'cft',})
       
-      assert sol.supplier == False, 'sol supplier is wrong after update of sourcing line (%i, %i)'%(sol.supplier, False)
+      assert not sol.supplier, 'sol supplier is wrong after update of sourcing line (%s, %s)'%(sol.supplier, False)
       assert sol.type == 'make_to_order', 'sol type is wrong after update of sourcing line (%s, %s)'%(sol.type, 'make_to_order')
       assert sol.po_cft == 'cft', 'po_cft is wrong after update of sourcing line (%s, %s)'%(sol.po_cft, 'cft')
       
