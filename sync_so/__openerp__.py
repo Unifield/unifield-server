@@ -31,7 +31,7 @@
     'website': 'http://openerp.com',
     'depends': ['base', 'sale', 'sync_client', 'purchase', 'account'],
     'init_xml': [],
-    'update_xml' : ['view_inherit.xml'],
+    'update_xml' : [],
     'data': [
     ],
     'demo_xml': [
