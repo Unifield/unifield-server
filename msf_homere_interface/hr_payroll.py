@@ -75,6 +75,10 @@ class hr_payroll(osv.osv):
             if line.funding_pool_id and line.funding_pool_id.id == fp_id and not line.destination_id:
                 continue
             #### END OF CASES
+            # if no cost center, distro is invalid
+            if not line.cost_center_id:
+                    res[line.id] = 'invalid'
+                    continue
             if line.funding_pool_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
@@ -144,7 +148,7 @@ class hr_payroll(osv.osv):
         'amount': fields.float(string='Amount', digits_compute=get_precision('Account'), readonly=True),
         'currency_id': fields.many2one('res.currency', string="Currency", required=True, readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('valid', 'Validated')], string="State", required=True, readonly=True),
-        'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'funding_pool_id': fields.many2one('account.analytic.account', string="Funding Pool", domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free1_id': fields.many2one('account.analytic.account', string="Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -235,13 +239,13 @@ class hr_payroll(osv.osv):
             context = {}
         if not context.get('from', False) and not context.get('from') in ['yaml', 'csv_import']:
             raise osv.except_osv(_('Error'), _('You are not able to create payroll entries.'))
-        if not vals.get('cost_center_id', False):
-            try:
-                dummy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
-            except:
-                dummy_id = 0
-            if dummy_id:
-                vals.update({'cost_center_id': dummy_id,})
+#        if not vals.get('cost_center_id', False):
+#            try:
+#                dummy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
+#            except:
+#                dummy_id = 0
+#            if dummy_id:
+#                vals.update({'cost_center_id': dummy_id,})
         if not vals.get('funding_pool_id', False):
             try:
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

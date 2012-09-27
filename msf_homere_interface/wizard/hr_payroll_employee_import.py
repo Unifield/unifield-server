@@ -308,12 +308,12 @@ class hr_payroll_employee_import(osv.osv_memory):
             if not current_contract:
                 vals.update({'active': False})
             # Add an analytic distribution
-            try:
-                cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
-            except ValueError:
-                cc_id = 0
-            if cc_id and not e_ids:
-                vals.update({'cost_center_id': cc_id,})
+#            try:
+#                cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
+#            except ValueError:
+#                cc_id = 0
+#            if cc_id and not e_ids:
+#                vals.update({'cost_center_id': cc_id,})
             if not e_ids:
                 res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
                 if res:
