@@ -88,7 +88,7 @@ class account_move(osv.osv):
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
         journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'])
         sequence_number = self.pool.get('ir.sequence').get_id(cr, uid, journal.sequence_id.id)
-        if instance and journal and sequence_number:
+        if instance and journal and sequence_number and ('name' not in vals or vals['name'] == '/'):
             if not instance.move_prefix:
                 raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
             vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
