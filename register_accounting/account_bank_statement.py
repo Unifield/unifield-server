@@ -201,7 +201,7 @@ class account_bank_statement(osv.osv):
 
     def write(self, cr, uid, ids, values, context=None):
         """
-        Bypass disgusting default account_bank_statement write function
+        Bypass disgusting default account_bank_statement write function.
         """
         if values.get('open_advance_amount', False):
             values.update({'open_advance_amount': abs(values.get('open_advance_amount'))})

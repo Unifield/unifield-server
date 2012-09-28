@@ -40,6 +40,30 @@ class account_cash_statement(osv.osv):
 #        bank = self.browse(cr, uid, res_id)
 #        return bank.name + '_' +bank.journal_id.code
 
+    def _get_starting_balance(self, cr, uid, ids, context=None):
+        """ Find starting balance
+        @param name: Names of fields.
+        @param arg: User defined arguments
+        @return: Dictionary of values.
+        """
+        res = {}
+        for statement in self.browse(cr, uid, ids, context=context):
+            amount_total = 0.0
+
+            if statement.journal_id.type not in('cash'):
+                continue
+
+            if not statement.prev_reg_id:
+                for line in statement.starting_details_ids:
+                    amount_total+= line.pieces * line.number
+            else:
+                amount_total = statement.prev_reg_id.msf_calculated_balance
+            
+            res[statement.id] = {
+                'balance_start': amount_total
+            }
+        return res
+
     def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
@@ -72,7 +96,7 @@ class account_cash_statement(osv.osv):
             # if previous register closing balance is freezed, then retrieving previous closing balance
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
-                    vals.update({'balance_start': prev_reg.balance_end_real})
+                    vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
@@ -158,6 +182,9 @@ class account_cash_statement(osv.osv):
             # Verify that the closing balance have been freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
+            # Do not permit closing Cash Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
         # Then we open a wizard to permit the user to confirm that he want to close CashBox
         return {
             'name' : "Closing CashBox",
@@ -199,7 +226,14 @@ class account_cash_statement(osv.osv):
         # Prepare some values
         res = {}
         for st in self.browse(cr, uid, ids):
-            res[st.id] = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
+            amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
+            res[st.id] = amount
+            # Update next register opening balance
+            if st.journal_id and st.journal_id.type == 'cash':
+                next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
+                for next_st in self.browse(cr, uid, next_st_ids):
+                    if next_st.state != 'confirm':
+                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
         return res
 
     _columns = {
