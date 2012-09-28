@@ -226,7 +226,14 @@ class account_cash_statement(osv.osv):
         # Prepare some values
         res = {}
         for st in self.browse(cr, uid, ids):
-            res[st.id] = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
+            amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
+            res[st.id] = amount
+            # Update next register opening balance
+            if st.journal_id and st.journal_id.type == 'cash':
+                next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
+                for next_st in self.browse(cr, uid, next_st_ids):
+                    if next_st.state != 'confirm':
+                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
         return res
 
     _columns = {
