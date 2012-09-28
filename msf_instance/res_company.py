@@ -30,8 +30,13 @@ class res_company(osv.osv):
     _columns = {
         'instance_id': fields.many2one('msf.instance', string="Proprietary Instance", 
             help="Representation of the current instance"),
+        'second_time': fields.boolean('Config. Wizard launched for the second time'),
     }
     
+    _defaults = {
+        'second_time': lambda *a: False,
+    }
+
     def _refresh_objects(self, cr, uid, object_name, old_instance_id, new_instance_id, context=None):
         object_ids = self.pool.get(object_name).search(cr,
                                                        uid,
@@ -45,7 +50,6 @@ class res_company(osv.osv):
         return
     
     def write(self, cr, uid, ids, vals, context=None):
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -59,7 +63,7 @@ class res_company(osv.osv):
                 if purchase:
                     tmp_vals['property_product_pricelist_purchase'] = purchase[0]
                 if tmp_vals:
-                    self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], tmp_vals)
+                    self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], tmp_vals, context=context)
 
         instance_obj = self.pool.get('msf.instance')
         if 'instance_id' in vals:
