@@ -126,10 +126,11 @@ class hq_entries_import_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
         else:
-            try:
-                cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
-            except ValueError:
-                cc_id = 0
+            raise osv.except_osv(_('Error'), _('Cost Center is mandatory!'))
+#            try:
+#                cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
+#            except ValueError:
+#                cc_id = 0
         # Retrieve Funding Pool
         if funding_pool:
             fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
