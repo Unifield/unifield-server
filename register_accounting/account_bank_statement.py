@@ -441,7 +441,9 @@ class account_bank_statement(osv.osv):
             ids = [ids]
         for reg in self.browse(cr, uid, ids):
             # Verify that the closing balance (balance_end_real) correspond to the calculated balance (balance_end)
-            if reg.balance_end_real != reg.balance_end:
+            # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.
+            # Because of fields values with 2 digits, we compare the two fields difference with 0.001 (10**-3)
+            if (abs(round(reg.balance_end_real, 2) - round(reg.balance_end, 2))) > 10**-3:
                 raise osv.except_osv(_('Warning'), _('Bank register balance is not equal to Calculated balance.'))
         return self.button_confirm_closing_balance(cr, uid, ids, context=context)
 
