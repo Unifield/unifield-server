@@ -182,6 +182,9 @@ class account_cash_statement(osv.osv):
             # Verify that the closing balance have been freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
+            # Do not permit closing Cash Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
         # Then we open a wizard to permit the user to confirm that he want to close CashBox
         return {
             'name' : "Closing CashBox",
