@@ -108,7 +108,7 @@ class base_setup_company(osv.osv_memory):
             elif cur:
                 ret['currency'] = cur[0]
                 
-            fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'))
+            fp = tools.file_open(opj('msf_profile', 'data', 'msf.jpg'), 'rb')
             ret['logo'] = base64.encodestring(fp.read())
             fp.close()
         return ret
