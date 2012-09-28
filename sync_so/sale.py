@@ -89,9 +89,22 @@ class sale_order_sync(osv.osv):
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         
         ref = self.browse(cr, uid, so_id).client_order_ref
-        if not ref: # only issue a write if the client_order_reference is not yet set!
-            client_order_ref = source + "." + po_info.name
+        client_order_ref = source + "." + po_info.name
+        
+        if not ref or client_order_ref != ref: # only issue a write if the client_order_reference is not yet set!
             res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
+        
+        '''
+            Now search all sourced-FOs and update the reference if they have not been set at the moment of sourcing
+            The person at coordo just does the whole push flow FO process until the end (sourcing the FO without sync before and thus the client_ref 
+            of the sourced FO will have no client_ref)
+        '''    
+        line_ids = self.search(cr, uid, [('original_so_id_sale_order', '=', so_id)], context=context)
+        for line in line_ids:
+            temp = self.browse(cr, uid, line).client_order_ref
+            if not temp: # only issue a write if the client_order_reference is not yet set!
+                res_id = self.write(cr, uid, line, {'client_order_ref': ref} , context=context)
+            
         return True
 
 sale_order_sync()

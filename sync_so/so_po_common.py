@@ -66,7 +66,7 @@ class so_po_common(osv.osv_memory):
 
         if not context:
             context = {}
-        context={'active_test': False}
+        context.update({'active_test': False})
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_split[1])], context=context)
         if not po_ids:
             raise Exception, "The original PO does not exist! " + po_ref
@@ -91,7 +91,9 @@ class so_po_common(osv.osv_memory):
         if len(so_split) != 2:
             raise Exception, "The original sub-FO reference format/value is invalid! (correct format: instance_name.so_name) " + so_ref
 
-        context={'active_test': False}
+        if not context:
+            context = {}                
+        context.update({'active_test': False})
         so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', so_split[1])], context=context)
         if not so_ids:
             raise Exception, "The original sub-FO does not exist! " + so_split[1]
@@ -181,7 +183,6 @@ class so_po_common(osv.osv_memory):
         partner_id = self.get_partner_id(cr, uid, source, context)
         address_id = self.get_partner_address_id(cr, uid, partner_id, context)
         price_list = self.get_price_list_id(cr, uid, partner_id, context)
-        location_id = self.get_location(cr, uid, partner_id, context)
 
         header_result['client_order_ref'] = source + "." + header_info.get('name')
         header_result['partner_id'] = partner_id
@@ -189,7 +190,6 @@ class so_po_common(osv.osv_memory):
         header_result['partner_shipping_id'] = address_id
         header_result['partner_invoice_id'] = address_id
         header_result['pricelist_id'] = price_list
-        header_result['location_id'] = location_id
         
         return header_result
     
@@ -322,7 +322,17 @@ class so_po_common(osv.osv_memory):
         return self.pool.get('product.uom').create(cr, uid, {'name' : uom_name}, context=context)
 
     def get_location(self, cr, uid, partner_id, context=None):
-        return self.pool.get('res.partner').browse(cr, uid, partner_id, context=context).property_stock_customer.id
+        '''
+        For instance, the location ID for the PO created will be by default the Input Location of the default warehouse
+        Proper location should be taken when creating the PO from an SO 
+        
+        The location is mandatory in PO, so, if there is no location, an exception will be raised to stop creating the PO
+        '''
+        warehouse_obj = self.pool.get('stock.warehouse')
+        warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
+        if not warehouse_ids:
+            raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
+        return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
 so_po_common()
 
