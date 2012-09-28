@@ -19,9 +19,6 @@
 #
 ##############################################################################
 
-#TODO réécrire le create pour creer un nouveau ir.model.data si besoin
-#Dans auto-init : créer un méthode qui parse tout les ir.model.data existant 
-
 MODELS_TO_IGNORE=[
                     'ir.actions.wizard',
                     'ir.actions.act_window.view',
@@ -94,6 +91,7 @@ XML_ID_TO_IGNORE = [
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 import logging
 
 from osv.orm import *
@@ -196,11 +194,14 @@ class ir_model_data_sync(osv.osv):
     
         return res_id
 
-    def get(self, cr, uid, model, res_id, context=None):
-        ids = self.search(cr, uid, [('model', '=', model._name), ('res_id', '=', res_id), ('module', '=', 'sd')], context=context)
-        if ids:
-            return ids[0]
-        return False
+    def get(self, cr, uid, model, ids, context=None):
+        res_type = type(ids)
+        ids = ids if isinstance(ids, (tuple, list)) else [ids]
+        result = list()
+        for id in ids:
+            data_ids = self.search(cr, uid, [('model', '=', model._name), ('res_id', '=', id), ('module', '=', 'sd')], limit=1, context=context)
+            result.append(data_ids[0] if data_ids else False)
+        return result if issubclass(res_type, (list, tuple)) else result[0]
     
     def get_record(self, cr, uid, xml_id, context=None):
         ir_record = self.get_ir_record(cr, uid, xml_id, context=context)
@@ -229,25 +230,20 @@ class ir_model_data_sync(osv.osv):
             return self.browse(cr, uid, ids[0], context=context)
         return False
     
-    def need_to_push(self, cr ,uid, id, included_fields, context=None):
-        ir_model = self.browse(cr, uid, id, context=context)
-        
-        if not ir_model.sync_date:
-            return True
-        if not ir_model.last_modification:
-            return False
-        
-        if ir_model.last_modification >= ir_model.sync_date:
-            modif_field = self.pool.get('sync.client.write_info').get_last_modification(cr, uid, ir_model.model, ir_model.res_id, ir_model.sync_date, context=context)
-            res = set(self._clean_included_fields(included_fields)) & modif_field
-            if res:
-                return True
-            else:
-                return False
-            
-    def _clean_included_fields(self, included_fields):
-        return [field.split('/')[0] for field in included_fields]
-        
+    def need_to_push(self, cr, uid, ids, included_fields, context=None):
+        if not ids:
+            return ids
+        get_last_modification = self.pool.get('sync.client.write_info').get_last_modification
+        watch_fields = set(self._clean_included_fields(cr, uid, included_fields))
+        res_type = type(ids)
+        ids = ids if isinstance(ids, (tuple, list)) else [ids]
+        result = map(lambda rec:rec.id, filter(
+            lambda rec: (not rec.sync_date or \
+                         watch_fields & get_last_modification(cr, uid, rec.model, rec.res_id, rec.sync_date, context=context)), \
+            self.browse(cr, uid, filter(lambda id:bool(id), ids), context=context)
+        ))
+        return result if issubclass(res_type, (list, tuple)) else bool(result)
+           
     def sync(self, cr, uid, xml_id, date=False, version=False, context=None):
         ir_data = self.get_ir_record(cr, uid, xml_id, context=context)
         if not ir_data:
@@ -269,27 +265,38 @@ def sync_client_install(model):
     ir_model = model.pool.get('ir.model.data')
     return hasattr(ir_model, 'get')
     
-def version(self, cr, uid, id, context=None):
+def version(self, cr, uid, ids, context=None):
+    res_type = type(ids)
+    ids = ids if isinstance(ids, (tuple, list)) else [ids]
     model_data = self.pool.get('ir.model.data')
-    data_id = model_data.get(cr, uid, self, id, context=context)
-    if not data_id:
-        return 1
-    return model_data.browse(cr, uid, data_id, context=context).version
+    data_ids = model_data.get(cr, uid, self, ids, context=context)
+    if False in data_ids:
+        bad_ids = zip(ids, data_ids)
+        raise osv.except_osv(_('Error !'), _("In object %(object)s, ids %(ids)s: cannot get version of record where ir.model.data for that records doesn't exists!") % {'object':self._name,'ids':map(lambda x:x[0], filter(lambda x:x[1] is False, bad_ids))})
+    result = [(rec.version or 1) for rec in model_data.browse(cr, uid, data_ids, context=context)]
+    return result if issubclass(res_type, (list, tuple)) else result[0]
     
 osv.osv.version = version
 
 
-def need_to_push(self, cr, uid, res_id, included_fields, context=None):
+def need_to_push(self, cr, uid, ids, included_fields, context=None):
     """
         @return True if last modification date is greater than last sync date
     """
     
-    model_data_pool = self.pool.get('ir.model.data')
-    xml_id = model_data_pool.get(cr, uid, self, res_id, context=context)
-    return  model_data_pool.need_to_push(cr, uid, xml_id, included_fields, context=context)
+    model_data = self.pool.get('ir.model.data')
+    data_ids = model_data.get(cr, uid, self, ids, context=context)
+    rel_data = dict(zip(data_ids, ids))
+    return [rel_data[x] for x in model_data.need_to_push(cr, uid, data_ids, included_fields, context=context)]
     
 osv.osv.need_to_push = need_to_push    
 
+def _clean_included_fields(self, cr, uid, included_fields, context=None):
+    result = [field.split('/')[0] for field in included_fields]
+    result.pop(result.index('id'))
+    return result
+    
+osv.osv._clean_included_fields = _clean_included_fields    
 
 
     
@@ -352,7 +359,7 @@ def log_o2m_write(model, cr, uid, id, relation, parent_id, context=None):
     
 def link_with_ir_model(model, cr, uid, id, context=None):
     
-    model.get_xml_id(cr, uid, [id], context={'sync' : True})
+    #model.get_xml_id(cr, uid, [id], context={'sync' : True})
     model_data_pool = model.pool.get('ir.model.data')
     res_id = model_data_pool.get(cr, uid, model, id, context=context)
     if res_id:
@@ -420,7 +427,7 @@ def get_destination_name(self, cr, uid, ids, dest_field, context=None):
             raise osv.except_osv(_('Error !'), _("%(method)s doesn't implement field of type %(type)s, please contact system administrator to upgrade.") % {'method':'get_destination_name()', 'type':field['type']})
 
     return result if issubclass(res_type, (list, tuple)) else result[0]
- 
+
 osv.osv.get_destination_name = get_destination_name
 
 
