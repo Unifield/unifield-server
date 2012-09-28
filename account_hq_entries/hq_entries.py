@@ -299,7 +299,7 @@ class hq_entries(osv.osv):
             fp_id = 0
         # Browse all given lines to check analytic distribution validity
         ## TO CHECK:
-        # A/ if CC = dummy CC
+        # A/ 
         # B/ if FP = MSF Private FUND
         # C/ (account/DEST) in FP except B
         # D/ CC in FP except when B

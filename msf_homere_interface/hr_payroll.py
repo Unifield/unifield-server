@@ -50,7 +50,7 @@ class hr_payroll(osv.osv):
             fp_id = 0
         # Browse all given lines to check analytic distribution validity
         ## TO CHECK:
-        # A/ if CC = dummy CC
+        # A/ if no CC
         # B/ if FP = MSF Private FUND
         # C/ (account/DEST) in FP except B
         # D/ CC in FP except when B
@@ -75,7 +75,7 @@ class hr_payroll(osv.osv):
             if line.funding_pool_id and line.funding_pool_id.id == fp_id and not line.destination_id:
                 continue
             #### END OF CASES
-            # if no cost center, distro is invalid
+            # if no cost center, distro is invalid (CASE A/)
             if not line.cost_center_id:
                     res[line.id] = 'invalid'
                     continue
@@ -239,13 +239,6 @@ class hr_payroll(osv.osv):
             context = {}
         if not context.get('from', False) and not context.get('from') in ['yaml', 'csv_import']:
             raise osv.except_osv(_('Error'), _('You are not able to create payroll entries.'))
-#        if not vals.get('cost_center_id', False):
-#            try:
-#                dummy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
-#            except:
-#                dummy_id = 0
-#            if dummy_id:
-#                vals.update({'cost_center_id': dummy_id,})
         if not vals.get('funding_pool_id', False):
             try:
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

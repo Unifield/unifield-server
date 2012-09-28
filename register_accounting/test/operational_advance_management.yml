@@ -274,6 +274,16 @@
     self.write(cr, uid, [ref("wiz_advance1")], onchange_res.get('value'))
     assert self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance1")).total_amount == 100.0, "Error on dynamic change on the returned_amount field."
 -
+  I create a Dummy CC analytic account
+-
+  !record {model: account.analytic.account, id: analytic_account_project_dummy}
+    name: Dummy
+    type: normal
+    active: True
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    for_fx_gain_loss: True
+-
   I create a analytic distribution
 -
   !record {model: analytic.distribution, id: analytic_distrib1}:
@@ -285,7 +295,7 @@
     name: CC Line 1
     percentage: 100
     currency_id: 1
-    analytic_id: analytic_distribution.analytic_account_project_dummy
+    analytic_id: analytic_account_project_dummy
     distribution_id: analytic_distrib1
     destination_id: analytic_distribution.analytic_account_destination_operation
 -
@@ -297,7 +307,7 @@
     currency_id: 1
     analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: analytic_distrib1
-    cost_center_id: analytic_distribution.analytic_account_project_dummy
+    cost_center_id: analytic_account_project_dummy
     destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I register an expense of 400 EUR and select a Supplier as a Third Party

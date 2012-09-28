@@ -102,11 +102,6 @@ class hr_employee(osv.osv):
                 raise osv.except_osv(_('Error'), _('You are not allowed to change a local staff to expatriate!'))
             # Do some modifications for local employees
             if local or emp.employee_type == 'local':
-#                if (not emp.cost_center_id and not vals.get('cost_center_id', False)) or (vals.get('cost_center_id') is False):
-#                    cc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1] or False
-#                    if not cc_id:
-#                        raise osv.except_osv(_('Warning'), _('You should give a Cost Center (CC) for local staff! "%s" have no CC!') % (emp.name,))
-#                    new_vals.update({'cost_center_id': cc_id})
                 # Do not change any field except analytic distribution (if not allowed)
                 for el in vals:
                     if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
