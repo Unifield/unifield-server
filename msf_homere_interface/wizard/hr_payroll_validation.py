@@ -149,7 +149,8 @@ class hr_payroll_validation(osv.osv_memory):
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
         if not line_ids:
             raise osv.except_osv(_('Warning'), _('No draft line found!'))
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hr')])
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hr'),
+                                                                        ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         if not journal_ids:
             raise osv.except_osv(_('Warning'), _('No HR journal found!'))
         journal_id = journal_ids[0]

@@ -946,7 +946,8 @@ class shipment(osv.osv):
                 invoice_vals['is_intermission'] = True
                 invoice_vals['account_id'] = company.intermission_default_counterpart.id
                 journal_type = 'intermission'
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
+                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
             invoice_vals['journal_id'] = journal_ids[0]

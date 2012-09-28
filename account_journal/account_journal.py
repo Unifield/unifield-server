@@ -45,7 +45,8 @@ class account_journal(osv.osv):
 
         if demo:
             # Search if an engagement journal exists
-            eng_ids = self.pool.get('account.analytic.journal').search(cr, 1, [('type', '=', 'engagement')])
+            eng_ids = self.pool.get('account.analytic.journal').search(cr, 1, [('type', '=', 'engagement'),
+                                                                               ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
             if not len(eng_ids):
                 logging.getLogger('init').info('HOOK: module account_journal: loading account_journal_demo.xml')
                 pathname = path.join('account_journal', 'account_journal_demo.xml')
