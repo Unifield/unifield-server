@@ -46,6 +46,14 @@ class account_move_line(osv.osv):
         if context is None:
             context = {}
         res = {}
+        # Search all accounts that are used in bank, cheque and cash registers
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', 'in', ['bank', 'cheque', 'cash'])])
+        account_ids = []
+        for j in self.pool.get('account.journal').read(cr, uid, journal_ids, ['default_debit_account_id', 'default_credit_account_id']):
+            if j.get('default_debit_account_id', False) and j.get('default_debit_account_id')[0] not in account_ids:
+                account_ids.append(j.get('default_debit_account_id')[0])
+            if j.get('default_credit_account_id', False) and j.get('default_credit_account_id')[0] not in account_ids:
+                account_ids.append(j.get('default_credit_account_id')[0])
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = True
             # False if account type is transfer
@@ -82,6 +90,9 @@ class account_move_line(osv.osv):
                 res[ml.id] = False
             # False if this line come from an accrual
             if ml.accrual:
+                res[ml.id] = False
+            # False if the account is used in a cash/bank/cheque journal
+            if ml.account_id.id in account_ids:
                 res[ml.id] = False
         return res
 
