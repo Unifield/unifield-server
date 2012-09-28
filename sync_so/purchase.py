@@ -62,11 +62,13 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
+        
         header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, context)
         header_result['split_po'] = True
         
         po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
-
+        # Check if there is the location from the original PO
+        
         wf_service = netsvc.LocalService("workflow")
         if so_info.state == 'sourced':
             header_result['state'] = 'sourced'
