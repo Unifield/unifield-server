@@ -155,10 +155,9 @@
 -
   I create a Dummy CC analytic account
 -
-  !record {model: account.analytic.account, id: analytic_account_project_dummy}
+  !record {model: account.analytic.account, id: analytic_account_project_dummy}:
     name: Dummy
     type: normal
-    active: True
     category: OC
     parent_id: analytic_distribution.analytic_account_project
     for_fx_gain_loss: True

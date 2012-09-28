@@ -274,16 +274,6 @@
     self.write(cr, uid, [ref("wiz_advance1")], onchange_res.get('value'))
     assert self.pool.get('wizard.cash.return').browse(cr, uid, ref("wiz_advance1")).total_amount == 100.0, "Error on dynamic change on the returned_amount field."
 -
-  I create a Dummy CC analytic account
--
-  !record {model: account.analytic.account, id: analytic_account_project_dummy}
-    name: Dummy
-    type: normal
-    active: True
-    category: OC
-    parent_id: analytic_distribution.analytic_account_project
-    for_fx_gain_loss: True
--
   I create a analytic distribution
 -
   !record {model: analytic.distribution, id: analytic_distrib1}:
