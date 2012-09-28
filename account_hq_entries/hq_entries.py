@@ -180,7 +180,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
         # Search an analytic correction journal
         acor_journal_id = False
-        acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction')])
+        acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
+                                                                                      ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         if acor_journal_ids:
             acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated
