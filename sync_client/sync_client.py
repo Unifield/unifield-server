@@ -190,7 +190,8 @@ class entity(osv.osv, Thread):
                         'status' : 'failed',
                     })
                     log_id = self.pool.get('sync.monitor').create(cr, uid, log)
-                    return (None, log_id, log)
+                    cr.commit()
+                    raise osv.except_osv(_('Error!'), _(up_to_date[1]))
                 else:
                     log['error'] += "Revision Update Status: " + up_to_date[1]
         
@@ -511,7 +512,6 @@ class entity(osv.osv, Thread):
         context = context or {}
 
         (status, log_id, log) = self.startSync(cr, uid, context=context)
-        #if status is None: return False
         if status is None:
             raise osv.except_osv(_('Error!'), _('Unable to start the synchronization process now!'))
        
