@@ -120,13 +120,12 @@ class hq_entries_import_wizard(osv.osv_memory):
                 else:
                     raise osv.except_osv(_('Error'), _('Destination "%s" doesn\'t exist!') % (destination,))
         # Retrieve Cost Center and Funding Pool
+        cc_id = False
         if cost_center:
             cc_id = anacc_obj.search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
             if not cc_id:
                 raise osv.except_osv(_('Error'), _('Cost Center "%s" doesn\'t exist!') % (cost_center,))
             cc_id = cc_id[0]
-        else:
-            raise osv.except_osv(_('Error'), _('Cost Center is mandatory!'))
         # Retrieve Funding Pool
         if funding_pool:
             fp_id = anacc_obj.search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
@@ -161,7 +160,10 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Line creation
         res = hq_obj.create(cr, uid, vals)
         if res:
-            if hq_obj.browse(cr, uid, res).analytic_state == 'invalid':
+            hq_line = hq_obj.browse(cr, uid, res)
+            if not hq_line.cost_center_id_first_value:
+                return True
+            if hq_line.analytic_state == 'invalid':
                 raise osv.except_osv(_('Error'), _('Analytic distribution is invalid!'))
             return True
         return False
