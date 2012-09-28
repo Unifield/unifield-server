@@ -54,7 +54,7 @@ class user_access_configurator(osv.osv_memory):
             return True
         return False
     
-    def _get_ids_from_group_names(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _get_ids_from_group_names(self, cr, uid, context=None, *args, **kwargs):
         '''
         return ids corresponding to group names
         '''
@@ -73,19 +73,19 @@ class user_access_configurator(osv.osv_memory):
         group_ids = group_obj.search(cr, uid, criterias, context=context)
         return group_ids
     
-    def _get_admin_user_rights_group_name(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _get_admin_user_rights_group_name(self, cr, uid, context=None, *args, **kwargs):
         '''
         return admin_user_rights_group
         '''
         admin_user_rights_group = 'Administration / Access Rights'
         return admin_user_rights_group
     
-    def _get_admin_user_rights_group_id(self, cr, uid, ids, context=None, *args, **kwargs):
+    def _get_admin_user_rights_group_id(self, cr, uid, context=None, *args, **kwargs):
         '''
         return admin_user_rights_group id
         '''
-        admin_group_name = self._get_admin_user_rights_group_name(cr, uid, ids, context=context)
-        admin_group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[admin_group_name])
+        admin_group_name = self._get_admin_user_rights_group_name(cr, uid, context=context)
+        admin_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=[admin_group_name])
         return admin_group_ids[0]
     
     def _get_DNCGL_name(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -100,7 +100,7 @@ class user_access_configurator(osv.osv_memory):
         return do not change groups ids
         '''
         group_names = self._get_DNCGL_name(cr, uid, ids, context=context)
-        return self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names)
+        return self._get_ids_from_group_names(cr, uid, context=context, group_names=group_names)
     
     def _get_IGL_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -244,7 +244,7 @@ class user_access_configurator(osv.osv_memory):
         
         group_names = kwargs['group_names']
         active_value = kwargs['active_value']
-        set_active_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=group_names, additional_criterias=[('visible_res_groups', '=', not active_value)])
+        set_active_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=group_names, additional_criterias=[('visible_res_groups', '=', not active_value)])
         group_obj.write(cr, uid, set_active_ids, {'visible_res_groups': active_value}, context=context)
         
         # info logging - activated/deactivated groups
@@ -385,7 +385,7 @@ class user_access_configurator(osv.osv_memory):
                     # we make sure that the user name is up to date, as Manager gives the same login name as mAnAgER.
                     user_obj.write(cr, uid, user_ids, {'name': group_name}, context=context)
                 # update the group of the user with (6, 0, 0) resetting the data
-                group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=[group_name])
+                group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=[group_name])
                 user_obj.write(cr, uid, user_ids, {'groups_id': [(6, 0, group_ids)]}, context=context)
                 # keep group_id for updating admin user
                 group_ids_list.extend(group_ids)
@@ -400,7 +400,7 @@ class user_access_configurator(osv.osv_memory):
             # activate user from the file (could have been deactivate previously)
             self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
-            group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, ids, context=context))
+            group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
             # for admin user, set all unifield groups + admin group (only user to have this group)
             user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
         
@@ -443,18 +443,18 @@ class user_access_configurator(osv.osv_memory):
                     # the menu does not exist in the file OR the menu does not belong to any group
                     # link (6,0,[id]) to administration / access rights
                     if not skip_update:
-                        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, ids, context=context)
+                        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
                         group_ids = [admin_group_id]
                 else:
                     # find the id of corresponding groups, and write (6,0, ids) in groups_id
-                    group_ids = self._get_ids_from_group_names(cr, uid, ids, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
+                    group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
                 # link the menu to selected group ids
                 if group_ids:
                     menu_obj.write(cr, uid, [db_menu_id], {'groups_id': [(6, 0, group_ids)]}, context=context)
         
         return True
     
-    def _process_objects_uac(self, cr, uid, ids, context=None):
+    def _process_objects_uac(self, cr, uid, context=None):
         '''
         reset ACL lines
         
@@ -473,8 +473,6 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
             
         # objects
         model_obj = self.pool.get('ir.model')
@@ -484,7 +482,7 @@ class user_access_configurator(osv.osv_memory):
         # list all ids of acl
         access_ids = access_obj.search(cr, uid, [], context=context)
         # admin user group id
-        admin_group_user_rights_id = self._get_admin_user_rights_group_id(cr, uid, ids, context=context)
+        admin_group_user_rights_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
         # list of all acl linked to Administration / Access Rights -> two lines for those models
         admin_group_access_ids = access_obj.search(cr, uid, [('group_id', '=', admin_group_user_rights_id)], context=context)
         # get the list of corresponding model ids
@@ -525,15 +523,13 @@ class user_access_configurator(osv.osv_memory):
         
         return True
     
-    def _process_record_rules_uac(self, cr, uid, ids, context=None):
+    def _process_record_rules_uac(self, cr, uid, context=None):
         '''
         drop all
         '''
         # Some verifications
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         
         # objects
         rule_obj = self.pool.get('ir.rule')
@@ -563,11 +559,9 @@ class user_access_configurator(osv.osv_memory):
         # process menus - groups relation
         self._process_menus_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process ACL
-        self._process_objects_uac(cr, uid, ids, context=context)
+        self._process_objects_uac(cr, uid, context=context)
         # process rules
-        self._process_record_rules_uac(cr, uid, ids, context=context)
-        # error/warning logging
-        # TODO
+        self._process_record_rules_uac(cr, uid, context=context)
         return data_structure
     
     def do_process_uac(self, cr, uid, ids, context=None):
@@ -590,6 +584,19 @@ class user_access_configurator(osv.osv_memory):
         res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context,
                                                                                                 data_structure=data_structure))
         return res
+    
+    def do_update_after_module_install(self, cr, uid, context=None):
+        '''
+        special method called after module install
+        
+        reset data potentially reset to default values
+        '''
+        # process ACL
+        self._process_objects_uac(cr, uid, context=context)
+        # process rules
+        self._process_record_rules_uac(cr, uid, context=context)
+        
+        return True
 
 user_access_configurator()
 
