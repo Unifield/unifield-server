@@ -46,7 +46,6 @@
     "init_xml": [
     ],
     'update_xml': [
-                   "menu/delete_menu.xml",
                    "menu/main_menu.xml",
                    "menu/supply_config_menu.xml",
                    "menu/product_menu.xml",
