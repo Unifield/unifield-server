@@ -115,12 +115,15 @@
         "report.xml",
         "purchase_double_validation_workflow.xml",
         "usability.xml",
+        "user_access_configurator_view.xml",
     ],
     "demo_xml": [
     ],
+    "function": [('user.access.configurator', 'do_update_after_module_install')],
     "test": [
         'test/unique_fields_views.yml',
         'test/inherited_views.yml',
+        'test/user_rights.yml',
     ],
     "installable": True,
     "active": False,

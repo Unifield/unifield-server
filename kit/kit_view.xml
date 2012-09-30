@@ -144,7 +144,7 @@
 							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 					</group>
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10" >
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
 	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
@@ -195,7 +195,7 @@
 							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 					</group>
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
 	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
@@ -269,7 +269,7 @@
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
                   		<filter string="Kit" icon="gtk-dnd-multiple" domain="[]" context="{'group_by':'item_kit_id'}" />
                   		<separator orientation="vertical"/>
                   		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
@@ -292,7 +292,7 @@
                     <field name="item_lot" select="1" />
                     <field name="item_exp" select="1" />
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
                   		<filter string="Kit" icon="gtk-dnd-multiple" domain="[]" context="{'group_by':'item_kit_id'}" />
                   		<separator orientation="vertical"/>
                   		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />

@@ -58,7 +58,7 @@
 			<data>
 			
 	            <xpath expr="//separator[@string='Inventory Properties']" position="before">
-                   	<group colspan="4" col="4" groups="base.group_extended">
+                   	<group colspan="4" col="4">
 		            	<separator string="Default Lead Times (days)" colspan="4"/>
 		            	<field name="supplier_lt" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '=', True)]}" /><newline/>
 		            	<field name="transport_0" />

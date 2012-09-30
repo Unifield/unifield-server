@@ -3,8 +3,7 @@
     <data>
 
     <!-- Change Bank & Cash menu to 'Registers' -->
-    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1"
-                groups="account.group_account_user,account.group_account_manager"/>
+    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1" />
 
     <!-- Bank Register Form => Inheritance -->
         <record id="inherit_view_bank_statement_form" model="ir.ui.view">
@@ -69,7 +68,7 @@
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency}" />
-                                        <field name="analytic_account_id" groups="analytic.group_analytic_accounting" 
+                                        <field name="analytic_account_id"
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="display_analytic_button" invisible="1"/>

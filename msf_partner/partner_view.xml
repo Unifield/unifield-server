@@ -80,7 +80,7 @@
                             <field name="name" select="1"/>
                             <field name="address" select="1"/>
                             <field name="country" select="1"/>
-                            <field name="category_id" select="1" groups="base.group_extended"/>
+                            <field name="category_id" select="1" />
                             </group>
                             <newline />
                             <group expand="0" string="Group By...">
@@ -123,7 +123,6 @@
             context="{'search_default_partner_id': [active_id]}"
             id="act_res_partner_2_sale_order"
             name="Field Order"
-            groups="base.group_sale_salesman"
             res_model="sale.order"
             src_model="res.partner"/>
 
@@ -132,7 +131,6 @@
             context="{'search_default_partner_id': [active_id]}"
             id="act_res_partner_2_purchase_order"
             name="Purchase Orders"
-            groups="purchase.group_purchase_user"
             res_model="purchase.order"
             src_model="res.partner"/>
 
@@ -146,16 +144,16 @@
                 <data>
                     <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="replace">
                         <page string="Sales &amp; Purchases">
-                            <group colspan="2" col="2" groups="base.group_extended">
+                            <group colspan="2" col="2">
                                 <separator string="Purchase Properties" colspan="2"/>
                                <field name="property_product_pricelist_purchase" string="Purchase Default Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
                             </group>
-                            <group colspan="2" col="2" groups="base.group_extended">
+                            <group colspan="2" col="2">
                                 <separator string="Field Orders Properties" colspan="2"/>
                                 <field name="property_product_pricelist" string="Field Orders Default Currency" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
                             </group>
                             <newline />
-                            <group colspan="2" col="4" groups="base.group_extended">
+                            <group colspan="2" col="4">
                             <separator string="Default Lead Times (days)" colspan="4"/>
                             <field name="supplier_lt" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '=', True)]}" /><newline/>
                             <field name="transport_0" />
@@ -168,10 +166,10 @@
                             <field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
                             </group>
                             <newline />
-                            <group colspan="2" col="2" groups="base.group_extended">
+                            <group colspan="2" col="2">
                                 <separator string="Inventory Properties" colspan="2"/>
-                                <field name="property_stock_customer" domain="[('usage','=','customer')]" groups="base.group_extended" />
-                                <field name="property_stock_supplier" domain="[('usage','=','supplier')]" groups="base.group_extended"/>
+                                <field name="property_stock_customer" domain="[('usage','=','customer')]" />
+                                <field name="property_stock_supplier" domain="[('usage','=','supplier')]" />
                             </group>
                         </page>
                     </xpath>
@@ -226,7 +224,7 @@
                                     <field name="email"/>
                                 </tree>
                             </field>
-                            <group  groups="base.group_extended">
+                            <group>
                                     <separator colspan="4" string="Categories"/>
                                     <field  colspan="4" name="category_id" nolabel="1"/>
                             </group>

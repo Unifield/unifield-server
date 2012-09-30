@@ -146,8 +146,7 @@
                     
                     <newline />
 					
-                    <group expand="0" string="Group By..." colspan="11" col="11" 
-                           groups="base.group_extended">
+                    <group expand="0" string="Group By..." colspan="11" col="11">
                         <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
                         <separator orientation="vertical" />
                         <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
@@ -335,7 +334,7 @@
                         <newline />
                 </group>
                 <newline/>
-                <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                <group expand="0" string="Group By..." colspan="4" col="10">
                   <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
                   <separator orientation="vertical"/>
                   <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>

@@ -72,8 +72,8 @@
                             <field name="payment_term" widget="selection"/>
                             <field name="name"/>
                             <newline/>
-                            <field name="origin" groups="base.group_extended"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" groups="base.group_extended"/>
+                            <field name="origin" />
+                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
                             <field name="user_id"/>
                             <separator colspan="4" string="Additional Information"/>
                             <field colspan="4" name="comment" nolabel="1"/>
@@ -121,10 +121,10 @@
                     <field name="document_date"/>
                     <field name="date_invoice"/>
                     <field name="number"/>
-                    <field name="partner_id" groups="base.group_user"/>
+                    <field name="partner_id" />
                     <field name="name"/>
                     <field name="journal_id" invisible="1"/>
-                    <field name="period_id" invisible="1" groups="account.group_account_user"/>
+                    <field name="period_id" invisible="1" />
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                     <field name="user_id" invisible="1"/>
                     <field name="date_due"/>

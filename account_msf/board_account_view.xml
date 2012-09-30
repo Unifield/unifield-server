@@ -53,11 +53,11 @@
                             <child1>
                                 <action colspan="4" height="160" width="400" name="%(account.action_draft_customer_invoices_dashboard)d" string="Customer Invoices to Approve" />
                                 <action colspan="4" height="220" name="%(purchase_waiting_msf)d" string="Purchase Order Waiting Approval" width="400"/>
-                                <action colspan="4" height="160" width="400" name="%(account.action_company_analysis_tree)d" string="Company Analysis" groups="account.group_account_manager"/>
+                                <action colspan="4" height="160" width="400" name="%(account.action_company_analysis_tree)d" string="Company Analysis" />
                             </child1>
                             <child2>
-                                <action colspan="4" height="220" name="%(account.action_treasory_graph)d" string="Treasury" groups="account.group_account_manager,account.group_account_user"/>
-                                <action colspan="4" height="220" name="%(account.action_aged_receivable)d" string="Aged Receivables" groups="account.group_account_manager,account.group_account_user"/>
+                                <action colspan="4" height="220" name="%(account.action_treasory_graph)d" string="Treasury" />
+                                <action colspan="4" height="220" name="%(account.action_aged_receivable)d" string="Aged Receivables" />
                                 <!--  <action colspan="4" height="220" name="%(account.action_aged_income)d" string="Aged income"/> -->
                             </child2>
                         </hpaned>

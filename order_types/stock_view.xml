@@ -42,7 +42,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group[5]" position="after">
-                        <group colspan="2" col="2" groups="base.group_extended">
+                        <group colspan="2" col="2">
                             <separator string="Order Traceability" />
                             <field name="order_type" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
                             <field name="order_category" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />

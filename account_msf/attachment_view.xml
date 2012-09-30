@@ -34,7 +34,7 @@
                             <field name="res_id" invisible="1"/>
                             <field name="res_name"/>
                         </group>
-                    <group col="2" groups="base.group_extended">
+                    <group col="2">
                         <separator string="Created" colspan="2"/>
                         <field name="create_uid" select="2"/>
                         <field name="create_date" select="2"/>
@@ -95,7 +95,7 @@
                     <newline/>
                     <group expand="0" string="Group By...">
                         <filter string="Owner" icon="terp-personal" domain="[]" context="{'group_by':'create_uid'}"/>
-                        <filter string="Type" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'type'}"  groups="base.group_extended"/>
+                        <filter string="Type" icon="terp-stock_symbol-selection" domain="[]" context="{'group_by':'type'}" />
                         <filter string="Company" icon="terp-gtk-home" domain="[]" context="{'group_by':'company_id'}" groups="base.group_multi_company"/>
                         <separator orientation="vertical"/>
                         <filter string="Month" help="Creation Month" icon="terp-go-month" domain="[]" context="{'group_by':'create_date'}"/>

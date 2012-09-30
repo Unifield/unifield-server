@@ -50,7 +50,6 @@
                                     <field name="currency_id" />
                                     <field name="location_id" domain="[('usage', '=', 'internal')]" on_change="product_change(product_id, location_id, prod_lot_id)" required="True" />
                                     <field name="prodlot_name"
-                                        groups="base.group_extended"
                                         attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
                                     <field name="expiry_date"
                                         attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />

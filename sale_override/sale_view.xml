@@ -51,7 +51,7 @@
                     <button name="%(sale.action_view_sale_advance_payment_inv)d" position="replace">
                         <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
                             <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice"
-                                  type="action" icon="gtk-execute" states="draft,manual" groups="base.group_extended"/>
+                                  type="action" icon="gtk-execute" states="draft,manual" />
                         </group>
                     </button>
                     <button name="manual_invoice" position="replace">
@@ -65,7 +65,7 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//page[@string='History']" position="replace">
-                        <page string="History" groups="base.group_extended" attrs="{'invisible': [( 'intl_customer_ok', '=', False )]}">
+                        <page string="History" attrs="{'invisible': [( 'intl_customer_ok', '=', False )]}">
                             <separator colspan="4" string="Invoices"/>
                             <field colspan="4" name="invoice_ids" nolabel="1" context="{'form_view_ref':'account.invoice_form'}"/>
                         </page>
@@ -192,7 +192,7 @@
         <delete id="sale.menu_action_picking_list_to_invoice" model="ir.ui.menu" />
         <delete id="sale.menu_invoicing_sales_order_lines" model="ir.ui.menu" />
 
-        <menuitem action="sale.action_order_form" id="sale.menu_sale_order" parent="base.menu_sales" sequence="1" groups="base.group_sale_salesman,base.group_sale_manager"/>
+        <menuitem action="sale.action_order_form" id="sale.menu_sale_order" parent="base.menu_sales" sequence="1" />
 
         <menuitem action="base.action_partner_form"
                   id="base.menu_partner_form"
@@ -213,7 +213,6 @@
         <!-- Products -->
         <!--<menuitem action="product.product_category_action"
                   id="product.menu_products_category"
-                  groups="base.group_extended"
                   parent="base.menu_product"
                   sequence="5" />-->
 
