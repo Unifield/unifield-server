@@ -354,6 +354,7 @@ class sale_order(osv.osv):
                 elif line.supplier.partner_type == 'esc':
                     fo_type = 'esc_split_sale_order'
                 else:
+                    # default value is local purchase - same value if no supplier is defined (tender)
                     fo_type = 'local_purchase_split_sale_order'
                 # do we have already a link to Fo
                 if not split_fo_dic[fo_type]:

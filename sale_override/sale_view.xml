@@ -139,11 +139,11 @@
                     <xpath expr="/search//filter[@string='Quotations']" position="replace">
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
+                        <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
                     </xpath>
 
                     <xpath expr="/search//filter[@string='To Invoice']" position="after">
                         <separator orientation="vertical" />
-                      	<filter icon="gtk-missing-image" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
                         <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','done'), ('split_type_sale_order', '=', 'original_sale_order')]" context="{'active_test': False}" separator="1" />
                     </xpath>
 

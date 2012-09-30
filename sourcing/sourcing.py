@@ -321,6 +321,10 @@ class sourcing_line(osv.osv):
                     if 'po_cft' in values:
                         pocft = values['po_cft']
                         vals.update({'po_cft': pocft})
+                        if pocft == 'cft':
+                            # no supplier for tender
+                            values.update({'supplier': False})
+                            vals.update({'supplier': False})
                 else:
                     # if make to stock, reset anyway to False
                     pocft = False
@@ -367,7 +371,10 @@ class sourcing_line(osv.osv):
             if order.procurement_request and po_cft == 'dpo':
                 warning = {'title': 'DPO for IR',
                            'message': 'You cannot choose Direct Purchase Order as method to source an Internal Request line.'}
-                value = {'po_cft': 'po'} 
+                value = {'po_cft': 'po'}
+            if po_cft == 'cft':
+                # tender does not allow supplier selection
+                value = {'supplier': False}
         return {'warning': warning, 'value': value}
     
     def onChangeType(self, cr, uid, id, type, context=None):
@@ -448,7 +455,7 @@ class sourcing_line(osv.osv):
             state_to_use = sl.sale_order_id.procurement_request and 'confirmed' or 'sourced'
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
             
-            if sl.type == 'make_to_order' and sl.po_cft in ('po', 'dpo') and not sl.supplier:
+            if sl.type == 'make_to_order' and not sl.po_cft in ['cft'] and not sl.supplier:
                 raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
             
             if sl.po_cft == 'cft' and not sl.product_id:
@@ -610,29 +617,6 @@ class sale_order(osv.osv):
         
         # if make_to_stock and procurement_request, no procurement is created
         return result and not(line.type == 'make_to_stock' and line.order_id.procurement_request)
-        
-    def order_confirm_method(self, cr, uid, ids, context=None):
-        '''
-        wrapper for confirmation wizard
-        '''
-        # data
-        name = _("You are about to validate the FO without going through the sourcing tool. Are you sure?")
-        model = 'confirm'
-        step = 'default'
-        question = 'You are about to validate the FO without going through the sourcing tool. Are you sure?'
-        clazz = 'sale.order'
-        func = 'do_order_confirm_method'
-        args = [ids]
-        kwargs = {}
-        
-        wiz_obj = self.pool.get('wizard')
-        # open the selected wizard
-        res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
-                                                                                                callback={'clazz': clazz,
-                                                                                                          'func': func,
-                                                                                                          'args': args,
-                                                                                                          'kwargs': kwargs}))
-        return res
     
     def do_order_confirm_method(self, cr, uid, ids, context=None):
         '''
@@ -656,6 +640,7 @@ class sale_order(osv.osv):
             # trigger workflow signal
             wf_service.trg_validate(uid, 'sale.order', obj.id, 'order_confirm', cr)
         
+        return True
         return {'name':_("Field Orders"),
                 'view_mode': 'form,tree',
                 'view_type': 'form',

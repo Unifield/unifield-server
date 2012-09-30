@@ -283,7 +283,8 @@ class procurement_request(osv.osv):
             if len(request.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
             for line in request.order_line:
-                if line.type == 'make_to_order' and not line.supplier:
+                # for FO
+                if line.type == 'make_to_order' and not line.po_cft == 'cft' and not line.supplier:
                     line_number = line.line_number
                     request_name = request.name
                     raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !')%(line_number,request_name))
