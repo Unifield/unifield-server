@@ -426,9 +426,7 @@ class stock_picking(osv.osv):
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
-                    if first:
-                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
-                    
+
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
                         val_loc = self.pool.get('stock.location').browse(cr, uid, values.get('location_dest_id'), context=context)
@@ -480,8 +478,6 @@ class stock_picking(osv.osv):
                         # line number does not need to be updated
                         # average computation - empty if not average
                         values.update(average_values)
-                        #move_obj.write(cr, uid, [move.id], values, context=context)
-                        #done_moves.append(move.id)
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
@@ -492,10 +488,10 @@ class stock_picking(osv.osv):
                                 move_obj.write(cr, uid, [out_move_id], values, context=context)
                                 # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
                                 update_out = True
+                        # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
                         values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                         move_obj.write(cr, uid, [move.id], values, context=context)
                         done_moves.append(move.id)
-                        # we move the update of the OUT before because the updated "values" in "_do_incoming_shipment_first_hook" are interesting only for the incoming
 
                     else:
                         # split happened during the validation
