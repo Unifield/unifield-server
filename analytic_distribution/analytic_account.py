@@ -247,7 +247,7 @@ class analytic_account(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        Delete the dummy analytic account is forbidden!
+        Delete some analytic account is forbidden!
         """
         # Some verification
         if not context:
@@ -256,12 +256,6 @@ class analytic_account(osv.osv):
             ids = [ids]
         # Prepare some values
         analytic_accounts = []
-        # Search dummy CC that have xml_id: analytic_account_project_dummy
-        try:
-            dummy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_dummy')[1]
-        except ValueError:
-            dummy_id = 0
-        analytic_accounts.append(dummy_id)
         # Search OC CC
         try:
             oc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project')[1]

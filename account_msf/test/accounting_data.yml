@@ -153,6 +153,15 @@
     analytic_journal_id: account_analytic_extra_accounting_journal0
     allow_date: 0
 -
+  I create a Dummy CC analytic account
+-
+  !record {model: account.analytic.account, id: analytic_account_project_dummy}:
+    name: Dummy
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    for_fx_gain_loss: True
+-
   I create a analytic distribution
 -
   !record {model: analytic.distribution, id: analytic_distrib1}:
@@ -166,5 +175,5 @@
     currency_id: 1
     analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: analytic_distrib1
-    cost_center_id: analytic_distribution.analytic_account_project_dummy
+    cost_center_id: analytic_account_project_dummy
     destination_id: analytic_distribution.analytic_account_destination_expatriates

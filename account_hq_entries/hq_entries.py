@@ -76,7 +76,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 account = self.pool.get('account.account').browse(cr, uid, account_id)
                 # create new distribution (only for expense accounts)
                 distrib_id = False
-                cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
+                cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or (line.get('cost_center_id') and line.get('cost_center_id')[0]) or False
                 fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
                 if line['cost_center_id'] != line['cost_center_id_first_value'] or line['account_id_first_value'] != line['account_id']:
                     fp_id = private_fund_id
@@ -189,6 +189,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
         cc_account_change = []
         current_date = strftime('%Y-%m-%d')
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
+            if line.analytic_state != 'valid':
+                raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
             if not line.user_validated:
                 to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, []).append(line.id)
 
@@ -198,6 +200,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     else:
                         account_change.append(line)
                 elif line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
+                    if line.cost_center_id_first_value and line.cost_center_id_first_value.id:
                         cc_change.append(line)
         all_lines = {}
         for currency in to_write:
@@ -299,7 +302,7 @@ class hq_entries(osv.osv):
             fp_id = 0
         # Browse all given lines to check analytic distribution validity
         ## TO CHECK:
-        # A/ if CC = dummy CC
+        # A/ if no CC
         # B/ if FP = MSF Private FUND
         # C/ (account/DEST) in FP except B
         # D/ CC in FP except when B
@@ -324,6 +327,9 @@ class hq_entries(osv.osv):
             if line.analytic_id and line.analytic_id.id == fp_id and not line.destination_id:
                 continue
             #### END OF CASES
+            if not line.cost_center_id:
+                res[line.id] = 'invalid'
+                continue
             if line.analytic_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
@@ -354,7 +360,7 @@ class hq_entries(osv.osv):
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -368,7 +374,7 @@ class hq_entries(osv.osv):
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
         'amount': fields.float('Amount', readonly=True),
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
-        'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=True, readonly=True),
+        'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
