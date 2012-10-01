@@ -1343,6 +1343,11 @@ class res_partner(osv.osv):
         return result
         
     def _check_partner_type(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        active_id = context.get('active_id', False)
+        if isinstance(active_id, (int, long)):
+            active_id = [active_id]
         if not args:
             return []
         newargs = []
@@ -1352,8 +1357,11 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2])
+                    sl = self.pool.get('sourcing.line').browse(cr, uid, active_id)[0]
                     if not so.procurement_request:
                         newargs.append(('partner_type', 'in', ['external', 'esc']))
+                    elif so.procurement_request and not sl.product_id:
+                        newargs.append(('partner_type','in', ['internal', 'section', 'intermission']))
             else:
                 newargs.append(args)
         return newargs
