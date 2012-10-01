@@ -52,9 +52,8 @@
   </Style>
 </Styles>
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
-% import re
 % for o in objects:
-<ss:Worksheet ss:Name="re.sub("/", "-", o.name)">
+<ss:Worksheet ss:Name="${(o.name or '')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">
