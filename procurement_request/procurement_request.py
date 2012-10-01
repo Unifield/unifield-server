@@ -355,7 +355,8 @@ class procurement_request_line(osv.osv):
             else:
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
-                
+        if context.get('procurement_request') and not vals.get('product_id', False) and not vals.get('comment', False):
+            raise osv.except_osv(_('Warning !'), _('You should enter either a comment or a Product.'))
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
@@ -462,7 +463,8 @@ class procurement_request_line(osv.osv):
                         'nomen_manda_1': nomen_manda_1,
                         'nomen_manda_2': nomen_manda_2,
                         'nomen_manda_3': nomen_manda_3,
-                        'name': 'To be defined',})
+                        'name': 'To be defined',
+                        'supplier': False,})
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         if not comment:
             domain = {'product_uom':[], 'supplier': []}
