@@ -45,7 +45,7 @@ class message(osv.osv):
         'sequence' : lambda self, cr, uid, *a: int(self.pool.get('ir.sequence').get(cr, uid, 'sync.message')),
     }
 
-    _logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.server')
 
     def unfold_package(self, cr, uid, entity, package, context=None):
         for data in package:

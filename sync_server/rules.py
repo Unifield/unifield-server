@@ -54,7 +54,7 @@ class sync_rule(osv.osv):
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
     
-    _logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.server')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -368,7 +368,7 @@ class message_rule(osv.osv):
     _name = "sync_server.message_rule"
     _description = "Message Rule"
     
-    _logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.server')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
