@@ -52,15 +52,8 @@
   </Style>
 </Styles>
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
-<%!
-    import re
-    def filter(po_name):
-        return re.sub("/", "-", po_name)
-
-    for o in objects:
-    po_name = o.name
-%>
-<ss:Worksheet ss:Name="${(filter(po_name) or '')|x}">
+% for o in objects:
+<ss:Worksheet ss:Name="${(o.name or '')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">
