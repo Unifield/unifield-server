@@ -94,11 +94,6 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=Fa
     getattr(obj._logger, level)(output[:-1])
     return output
 
-def __init_logger__(obj, *a, **kw):
-    super(obj.__class__, obj).__init__(*a, **kw)
-    if not hasattr(obj, '_logger') and (obj._module.startswith('sync') or obj._module.startswith('update_')):
-        obj._logger = logging.getLogger(obj._module)
-
 def compile_models_to_ignore():
     global MODELS_TO_IGNORE
     MODELS_TO_IGNORE_PATTERNS = []

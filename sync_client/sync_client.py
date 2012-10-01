@@ -31,7 +31,8 @@ import time
 import sys
 import traceback
 
-from sync_common.common import __init_logger__, sync_log
+import logging
+from sync_common.common import sync_log
 
 from threading import Thread
 import pooler
@@ -42,7 +43,7 @@ class entity(osv.osv, Thread):
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
     
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def _auto_init(self,cr,context=None):
         res = super(entity,self)._auto_init(cr,context=context)

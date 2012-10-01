@@ -21,10 +21,11 @@
 
 from osv import osv
 from osv import fields
-import sync_common.common
-from sync_common.common import __init_logger__, sync_log
 from tools.translate import _
 from datetime import datetime
+
+import logging
+from sync_common.common import sync_log, MODELS_TO_IGNORE
 
 _field2type = {
     'text'      : 'str',
@@ -53,7 +54,7 @@ class sync_rule(osv.osv):
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
     
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -367,7 +368,7 @@ class message_rule(osv.osv):
     _name = "sync_server.message_rule"
     _description = "Message Rule"
     
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -549,7 +550,7 @@ class fallback_values(osv.osv):
 
     def _get_fallback_value(self, cr, uid, context=None):
         obj = self.pool.get('ir.model')
-        ids = obj.search(cr, uid, sync_common.common.MODELS_TO_IGNORE)
+        ids = obj.search(cr, uid, MODELS_TO_IGNORE)
         res = obj.read(cr, uid, ids, ['model'], context)
         return [(r['model'], r['model']) for r in res]
 

@@ -22,7 +22,8 @@
 from osv import osv
 from osv import fields
 
-from sync_common.common import __init_logger__, sync_log
+import logging
+from sync_common.common import sync_log
 
 class message(osv.osv):
     _name = "sync.server.message"
@@ -44,7 +45,7 @@ class message(osv.osv):
         'sequence' : lambda self, cr, uid, *a: int(self.pool.get('ir.sequence').get(cr, uid, 'sync.message')),
     }
 
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def unfold_package(self, cr, uid, entity, package, context=None):
         for data in package:

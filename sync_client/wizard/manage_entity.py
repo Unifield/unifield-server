@@ -23,14 +23,14 @@ from osv import osv
 from osv import fields
 from osv import orm
 from tools.translate import _
+
 import logging
-from sync_common.common import __init_logger__, sync_log
+from sync_common.common import sync_log
 
 class entity_manager(osv.osv_memory):
     _name = "sync.client.entity_manager"
     _description = "Wizard invalidate and more"
-    __init__ = __init_logger__
-    #_logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.client')
     
     _columns = {
         'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),

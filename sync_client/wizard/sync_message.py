@@ -29,7 +29,8 @@ import time
 import sync_data
 from sync_client.ir_model_data import link_with_ir_model, dict_to_obj
 
-from sync_common.common import __init_logger__, sync_log
+import logging
+from sync_common.common import sync_log
 
 from tools.safe_eval import safe_eval as eval
 
@@ -49,7 +50,7 @@ class local_message_rule(osv.osv):
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
     }
 
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
@@ -177,7 +178,7 @@ class message_received(osv.osv):
         'editable' : fields.boolean("Set editable"),
     }
 
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:

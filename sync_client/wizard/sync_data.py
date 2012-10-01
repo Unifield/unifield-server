@@ -31,7 +31,8 @@ import traceback
 import re
 from sync_client.ir_model_data import link_with_ir_model
 
-from sync_common.common import __init_logger__, sync_log
+import logging
+from sync_common.common import sync_log
 
 from tools.safe_eval import safe_eval as eval
 
@@ -81,7 +82,7 @@ class local_rule(osv.osv):
         'owner_field' : fields.char('Owner Field', size=128, readonly=True),
     }
     
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
@@ -131,7 +132,7 @@ class update_to_send(osv.osv):
         'sent' : False,
     }
 
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def create_update(self, cr, uid, rule_id, session_id, context=None):
         context = dict(context or {})
@@ -239,7 +240,7 @@ class update_received(osv.osv):
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)")
     
-    __init__ = __init_logger__
+    _logger = logging.getLogger('sync.client')
 
     def unfold_package(self, cr, uid, packet, context=None):
         if not packet:
