@@ -361,22 +361,11 @@ class procurement_request_line(osv.osv):
             else:
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
-        if context.get('procurement_request') and not vals.get('product_id', False) and not vals.get('comment', False) or not vals.get('name', False):
-            raise osv.except_osv(_('Warning !'), _('You should enter either a comment or a Product.'))
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
-    def write(self, cr, uid, ids, vals, context=None):
-        """
-        Add a more explicit message when no product neither comment have been defined
-        """
-        if context is None:
-            context = {}
-        sol_obj = self.pool.get('sale.order.line')
-        if context.get('procurement_request'):
-            for line in sol_obj.browse(cr, uid, ids, context):
-                if not line.product_id and not line.comment or not line.name:
-                    raise osv.except_osv(_('Warning !'), _('You should enter either a Comment or a Product on the line %s.') % line.line_num)
-        return super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
+    _sql_constraints = [
+        ('name_check', 'CHECK(name NOT NULL)', 'You should enter either a Comment or a Product.'),
+    ]
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):
