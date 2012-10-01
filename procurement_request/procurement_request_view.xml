@@ -69,7 +69,7 @@
                                     <field name="supplier"
                                         context="{'product_id': product_id, 'choose_supplier': True}"
                                         attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
-                                        domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"
+                                        domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1" />
                                     <button name="open_split_wizard"

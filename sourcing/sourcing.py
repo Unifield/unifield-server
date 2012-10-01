@@ -1382,11 +1382,33 @@ class res_partner(osv.osv):
                 newargs.append(args)
         return newargs
 
+    def _check_partner_type_ir(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        active_id = context.get('active_id', False)
+        if isinstance(active_id, (int, long)):
+            active_id = [active_id]
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner_ir':
+                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
+                if arg[2]:
+                    sol = self.pool.get('sale.order.line').browse(cr, uid, active_id)[0]
+                    if not context.get('product_id', False) and sol.order_id.procurement_request:
+                        newargs.append(('partner_type','in', ['internal', 'section', 'intermission']))
+            else:
+                newargs.append(args)
+        return newargs
+
     _columns = {
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
                                              method=True, type='boolean', string='Available for DPO', store=False),
         'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
         'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
+        'check_partner_ir': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On IR', fnct_search=_check_partner_type_ir),
     }
     
 res_partner()
