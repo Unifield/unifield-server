@@ -27,6 +27,7 @@
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
                                     <field name="product_id" on_change="on_product_change(product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="comment" />
                                     <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                     <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                     <field name="supplier_id" />
@@ -45,7 +46,7 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" >
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner', '=', sale_order_id )]">
                                 <tree string="Suppliers">
                                     <field name="name" />
                                     <field name="partner_type" />
@@ -145,8 +146,7 @@
                     
                     <newline />
 					
-                    <group expand="0" string="Group By..." colspan="11" col="11" 
-                           groups="base.group_extended">
+                    <group expand="0" string="Group By..." colspan="11" col="11">
                         <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
                         <separator orientation="vertical" />
                         <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
@@ -213,7 +213,8 @@
                         <attribute name="readonly">True</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='partner_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])],}</attribute>
+                        <attribute name="domain">[('check_partner_rfq', '=', tender_id)]</attribute>
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='partner_address_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
@@ -333,7 +334,7 @@
                         <newline />
                 </group>
                 <newline/>
-                <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                <group expand="0" string="Group By..." colspan="4" col="10">
                   <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
                   <separator orientation="vertical"/>
                   <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by':'priority'}"/>

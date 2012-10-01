@@ -675,15 +675,38 @@ class purchase_order(osv.osv):
         return {}
         return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
     
-    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, context=None):
+    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, order_type=False, context=None):
         '''
         Set the confirmed date with the requested date if the first is not fill
+        And the delivery_confirmed_date takes the value of the computed requested date by default only if order_type == 'purchase_list'
         '''
         if context is None:
             context = {}
         res = {}
+        res['value'] = {}
+        if order_type == 'purchase_list':
+            res['value'].update({'delivery_confirmed_date': requested_date})
+        else:
+            res['value'].update({'delivery_confirmed_date': False})
         # compute ready to ship date
         res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        return res
+    
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+        """
+        Set the delivery_confirmed_date if order_type == 'purchase_list'
+        """
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
+        if order_type == 'purchase_list' and delivery_requested_date:
+            if 'value' in res:
+                res['value'].update({'delivery_confirmed_date': delivery_requested_date})
+            else:
+                res.update({'value': {'delivery_confirmed_date': delivery_requested_date}})
+        else:
+            if 'value' in res:
+                res['value'].update({'delivery_confirmed_date': False})
+            else:
+                res.update({'value': {'delivery_confirmed_date': False}})
         return res
     
     def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
@@ -1087,6 +1110,19 @@ class sale_order(osv.osv):
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        
+        if res.get('value', {}).get('pricelist_id') and part:
+            if ids:
+                if isinstance(ids, (int, long)):
+                    ids = [ids]
+            
+                order = self.pool.get('sale.order').browse(cr, uid, ids[0])
+                partner = self.pool.get('res.partner').browse(cr, uid, part)
+                pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner.partner_type)])
+                pricelist_id = res['value'].pop('pricelist_id')
+                if order.pricelist_id.id not in pricelist_ids:
+                    res.update({'warning': {'title': 'Warning',
+                                            'message': 'The currency used currently on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
         return res
     
     def onchange_date_order(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
@@ -1244,17 +1280,16 @@ class sale_order_line(osv.osv):
         
         return False
 
-    def  _get_type_def(self, cr, uid, context=None):
-        if context is None:
-            context= {}
-        return 'make_to_order'
-
     def _get_uom_def(self, cr, uid, context=None):
         if context is None:
             context= {}
-        ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        try:
+            ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')
+        except ValueError:
+            return False
+
         if ids:
-            return ids[1] 
+            return ids[1]
         return False
 
     _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
@@ -1267,8 +1302,8 @@ class sale_order_line(osv.osv):
     _defaults = {'date_planned': _get_planned_date,
                  'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
-                 'type': _get_type_def,
-                 'product_uom': _get_uom_def,      
+                 'type': lambda *a: 'make_to_order',
+                 'product_uom': _get_uom_def,
                  }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -1418,7 +1453,7 @@ class stock_picking(osv.osv):
         so_obj = self.pool.get('sale.order')
 
         for picking in self.browse(cr, uid, ids, context=context):
-            if picking.sale_id and not picking.sale_id.shipment_date:
+            if picking.sale_id and not picking.sale_id.shipment_date and not picking.sale_id.procurement_request:
                 sale_id = picking.sale_id.id
                 date_format = date_tools.get_date_format(cr, uid, context=context)
                 db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
@@ -1426,7 +1461,6 @@ class stock_picking(osv.osv):
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
                 so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
-
         return res
 
 stock_picking()
@@ -1458,7 +1492,6 @@ class stock_move(osv.osv):
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
                 so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
-
         return res
     
 stock_move()

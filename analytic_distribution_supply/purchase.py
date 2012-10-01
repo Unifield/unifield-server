@@ -182,17 +182,9 @@ class purchase_order(osv.osv):
             # Browse purchase order lines and group by them by account_id
             for pol in po.order_line:
                 # Search product account_id
-                if pol.product_id:
-                    a = pol.product_id.product_tmpl_id.property_account_expense.id
-                    if not a:
-                        a = pol.product_id.categ_id.property_account_expense_categ.id
-                    if not a:
-                        raise osv.except_osv(_('Error !'), 
-                            _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id))
-                else:
-                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-                fpos = po.fiscal_position or False
-                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
+                a = pol.account_4_distribution and pol.account_4_distribution.id or False
+                if not a:
+                    raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
                 # Write
                 po_lines[a].append(pol)
             # Commitment lines process
@@ -259,7 +251,18 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Change commitments state
-        self._finish_commitment(cr, uid, ids, context=context)
+        # Sidestep UF-1183
+        # If ONE invoice is in draft state, raise an error!
+        to_process = []
+        for po in self.browse(cr, uid, ids):
+            have_draft_invoice = False
+            for inv in po.invoice_ids:
+                if inv.state == 'draft':
+                    have_draft_invoice = True
+                    break
+            if not have_draft_invoice or not po.invoice_ids:
+                to_process.append(po.id)
+        self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
 purchase_order()
@@ -324,34 +327,11 @@ class purchase_order_line(osv.osv):
             else:
                 po_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
                 distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
-                # Search product account_id
-                if line.product_id:
-                    a = line.product_id.product_tmpl_id.property_account_expense.id
-                    if not a:
-                        a = line.product_id.categ_id.property_account_expense_categ.id
-                    if not a:
-                        res[line.id] = 'invalid'
-                        continue
-#                        raise osv.except_osv(_('Error !'), 
-#                            _('There is no expense account defined for this product: "%s" (id:%d)') % (line.product_id.name, line.product_id.id))
-                else:
-                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-                fpos = line.order_id.fiscal_position or False
-                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
-                # Regarding inkind donation expense accounts
-                # NB: we consider that no in kind donation could be done with another thing that a line with a product.
-                # To support other cases, we need more information and a specification (for an example an In-kind donation PO with a nomenclature line)
-                if is_inkind:
-                    a = False
-                    if line.product_id:
-                        a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
-                        if not a:
-                            a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
-                    if not a:
-                        res[line.id] = 'invalid'
-                        continue
-#                        raise osv.except_osv(_('Error'), _('No donation account found for this line: %s.') % (line.name,))
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, a)
+                account_id = line.account_4_distribution and line.account_4_distribution.id or False
+                if not account_id:
+                    res[line.id] = 'invalid'
+                    continue
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -360,6 +340,48 @@ class purchase_order_line(osv.osv):
         res = {}
         for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
             res[pol['id']] = "%s%s"%(pol['analytic_distribution_state'].capitalize(), pol['have_analytic_distribution_from_header'] and " (from header)" or "")
+        return res
+
+    def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get account for given lines regarding:
+        - product expense account if product_id
+        - product category expense account if product_id but no product expense account
+        - product category expense account if no product_id (come from family's product category link)
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        for line in self.browse(cr, uid, ids):
+            # Prepare some values
+            res[line.id] = False
+            a = False
+            # Check if PO is inkind
+            is_inkind = False
+            if line.order_id and line.order_id.order_type == 'in_kind':
+                is_inkind = True
+            # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
+            # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
+            # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
+            # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
+            # - other case: take expense account on family that's attached to nomenclature
+            if line.product_id and is_inkind:
+                a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
+                if not a:
+                    a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
+            elif line.product_id:
+                a = line.product_id.product_tmpl_id.property_account_expense.id or False
+                if not a:
+                    a = line.product_id.categ_id.property_account_expense_categ.id or False
+##### Line delete because we decided that nomenclature is possible in Inkind donations
+#            elif is_inkind:
+#                a = False # Should be raise an error, but this block view display. So nothing happens.
+##### END of Line delete…
+            else:
+                a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_expense_categ and line.nomen_manda_2.category_id.property_account_expense_categ.id or False
+            res[line.id] = a
         return res
 
     _columns = {
@@ -371,6 +393,7 @@ class purchase_order_line(osv.osv):
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
+        'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
 
     _defaults = {
@@ -394,40 +417,24 @@ class purchase_order_line(osv.osv):
         currency = purchase_line.order_id.currency_id and purchase_line.order_id.currency_id.id or company_currency
         # Get analytic_distribution_id
         distrib_id = purchase_line.analytic_distribution_id and purchase_line.analytic_distribution_id.id
+        # Get default account
+        account_id = purchase_line.account_4_distribution and purchase_line.account_4_distribution.id or False
         # Check if PO is inkind
         is_inkind = False
         if purchase_line.order_id and purchase_line.order_id.order_type == 'in_kind':
             is_inkind = True
-        # Search product account_id
-        if purchase_line.product_id:
-            a = purchase_line.product_id.product_tmpl_id.property_account_expense.id
-            if not a:
-                a = purchase_line.product_id.categ_id.property_account_expense_categ.id
-            if not a:
-                raise osv.except_osv(_('Error !'), 
+        if is_inkind and not account_id:
+            raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
+        elif not account_id:
+            raise osv.except_osv(_('Error !'), 
                     _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
-        else:
-            a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-        # Regarding inkind donation expense accounts
-        # NB: we consider that no in kind donation could be done with another thing that a line with a product.
-        # To support other cases, we need more information and a specification (for an example an In-kind donation PO with a nomenclature line)
-        if is_inkind:
-            a = False
-            if purchase_line.product_id:
-                a = purchase_line.product_id.donation_expense_account and purchase_line.product_id.donation_expense_account.id or False
-                if not a:
-                    a = purchase_line.product_id.categ_id.donation_expense_account and purchase_line.product_id.categ_id.donation_expense_account.id or False
-            if not a:
-                raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
-        fpos = purchase_line.order_id.fiscal_position or False
-        a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'purchase_line_id': purchase_line.id,
             'currency_id': currency or False,
             'state': 'cc',
-            'account_id': a or False,
+            'account_id': account_id or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

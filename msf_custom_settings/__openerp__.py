@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile
+#    Copyright (C) 2012 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,7 @@
     'name': 'MSF Custom Settings',
     'version': '1.0',
     'category': 'Stock',
-    'author': 'MSF, TeMPO Consulting, Smile',
+    'author': 'MSF, TeMPO Consulting',
     'developer': 'Matthieu Choplin',
     'depends': ['msf_outgoing', 
                 'delivery_mechanism',
@@ -31,11 +31,12 @@
                 'stock',
                 'consumption_calculation',
                 'msf_cross_docking',
-                'kit',
                 'procurement',
                 'product',
+                'msf_supply_doc_import',
                 'msf_supply_doc_export',
-                'tender_flow',],
+                'tender_flow',
+                ],
     'description': '''
     ''',
     'init_xml': [],
@@ -46,9 +47,7 @@
         'view/stock_view.xml',
         'view/delivery_mecanism_view.xml',
         'view/batch_view.xml',
-        'view/kit_composition_view.xml',
         'view/consumption_calculation_view.xml',
-        'view/delivery_order_view.xml',
         'view/physical_inventories_view.xml',
         'view/last_product_invetories_view.xml',
         'view/procurement_exception_view.xml',
@@ -56,7 +55,6 @@
         'view/uom_categories_view.xml',
         'view/units_of_measure_view.xml',
         'view/pack_types_view.xml',
-        'view/kitting_view.xml',
     ],
     'test': [
     ],

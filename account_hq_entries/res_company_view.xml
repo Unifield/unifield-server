@@ -15,7 +15,6 @@
                 <page string="Configuration" position="inside">
                     <group col="2" colspan="2">
                         <separator string="HQ Entries" colspan="2"/>
-                        <field name="expat_salaries_default_account" domain="[('type', '!=', 'view')]" colspan="2"/>
                         <field name="counterpart_hq_entries_default_account" domain="[('type', '!=', 'view')]" colspan="2"/>
                     </group>
                 </page>

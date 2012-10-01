@@ -91,7 +91,6 @@
         <!-- PURCHASE CONFIG -->
         <menuitem id="purchase.menu_purchase_config_purchase" 
         name="Purchase Configuration" 
-        groups="purchase.group_purchase_manager"
         parent="menu_supply_config" 
         sequence="20" />
         
@@ -129,7 +128,6 @@
                   
                 <menuitem id="msf_outgoing.menu_action_pack_type_tree" 
                 action="msf_outgoing.action_pack_type_tree" 
-                groups="base.group_extended"
                 parent="menu_reg_wh_mngt"
                 sequence="12" />
                 

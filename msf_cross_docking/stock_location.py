@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    Copyright (C) 2012 MSF, TeMPO Consulting, Smile
+#    Copyright (C) 2012 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,17 +21,18 @@
 from osv import osv, fields
 from tools.translate import _
 
+
 class stock_location(osv.osv):
     '''
     override stock location to add:
     - cross_docking_location_ok (checkbox - boolean)
     '''
     _inherit = 'stock.location'
-    
+
     _columns = {
         'cross_docking_location_ok': fields.boolean(string='Cross Docking Location', readonly=True, help="There is only one Cross Docking Location"),
     }
-    
+
     def get_cross_docking_location(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('cross_docking_location_ok', '=', True)])
         if not ids:

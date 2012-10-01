@@ -34,9 +34,12 @@
     "description": """
     Specific Management Rules
     """,
-    'test': ['test/specific_rules.yml',],
+    'test': ['test/specific_rules.yml',
+             'test/cost_revaluation.yml',
+             'test/initial_inventory.yml',],
     'update_xml': ['security/ir.model.access.csv',
                    'specific_rules_view.xml',
+                   'stock_view.xml',
                    'wizard/stock_partial_move_view.xml',
                    'stock_sequence.xml',
                    ],

@@ -62,8 +62,13 @@ class account_move_compute_currency(osv.osv):
         'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
         'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
     }
-    
-    def validate(self, cr, uid, ids, context=None):
+
+    def balance_move(self, cr, uid, ids, context=None):
+        """
+        Balance move
+        """
+        if not context:
+            context = {}
         for move in self.browse(cr, uid, ids, context):
             amount = 0
             amount_currency = 0
@@ -105,8 +110,14 @@ class account_move_compute_currency(osv.osv):
                     cr.execute('update account_move_line set debit=%s, \
                                                              credit=%s where id=%s',
                               (debit, credit, line_to_be_balanced.id))
+        return True
+
+    def validate(self, cr, uid, ids, context=None):
+        """
+        Balance move before its validation
+        """
+        self.balance_move(cr, uid, ids, context=context)
         return super(account_move_compute_currency, self).validate(cr, uid, ids, context)
-        
-    
+
 account_move_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

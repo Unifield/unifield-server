@@ -76,8 +76,16 @@ class analytic_distribution1(osv.osv):
             'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
+        account = self.pool.get('account.account').browse(cr, uid, account_id)
+        # Check Cost Center lines with destination/account link
+        for cc_line in distrib.cost_center_lines:
+            if cc_line.destination_id.id not in [x.id for x in account.destination_ids]:
+                return 'invalid'
+        # Check Funding pool lines regarding:
+        # - destination / account
+        # - If analytic account is MSF Private funds
+        # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
-            account = self.pool.get('account.account').browse(cr, uid, account_id)
             if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
@@ -85,8 +93,8 @@ class analytic_distribution1(osv.osv):
                 continue
             if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
                 return 'invalid'
-            #if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
-            #    return 'invalid'
+            if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+                return 'invalid'
         return 'valid'
 
 analytic_distribution1()
@@ -111,7 +119,7 @@ class distribution_line(osv.osv):
         'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
 
-    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, source_date=False, name=False, context=None):
+    def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
         '''
         Creates an analytic lines from a distribution line and an account.move.line
         '''
@@ -134,6 +142,7 @@ class distribution_line(osv.osv):
                 'general_account_id': move_line.account_id.id,
                 'date': date,
                 'source_date': source_date,
+                'document_date': document_date,
                 'journal_id': move_line.journal_id and move_line.journal_id.analytic_journal_id and move_line.journal_id.analytic_journal_id.id or False,
                 'move_id': move_line.id,
                 'name': name or move_line.name,
@@ -207,6 +216,8 @@ class analytic_distribution(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        if not ids:
+            return res
         # Browse given invoices
         for distrib in self.browse(cr, uid, ids, context=context):
             txt = ''

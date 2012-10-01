@@ -119,7 +119,7 @@ class SpreadsheetXML(SpreadsheetTools):
                 self.xmlobj = etree.parse(xmlfile)
             else:
                 self.xmlobj = etree.XML(xmlstring)
-        except etree.XMLSyntaxError:
+        except etree.XMLSyntaxError as e:
             raise osv.except_osv(_('Error'), _('Wrong format: it should be in Spreadsheet XML 2003'))
 
     def getWorksheets(self):

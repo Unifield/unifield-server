@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF, Smile. All Rights Reserved
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -25,6 +25,8 @@
 from report import report_sxw
 from osv import osv
 from report_webkit.webkit_report import WebKitParser
+
+import pooler
 
 def getIds(self, cr, uid, ids, context):
     if not context:
@@ -121,6 +123,40 @@ class tender_report_xls(WebKitParser):
         return (a[0], 'xls')
 
 tender_report_xls('report.tender_xls','tender','addons/msf_supply_doc_export/report/report_tender_xls.mako')
+
+class stock_cost_reevaluation_report_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+    
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header= " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(stock_cost_reevaluation_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(stock_cost_reevaluation_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+stock_cost_reevaluation_report_xls('report.stock.cost.reevaluation_xls','stock.cost.reevaluation','addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako')
+
+class stock_initial_inventory_report_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header= " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(stock_initial_inventory_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(stock_initial_inventory_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+stock_initial_inventory_report_xls('report.initial.stock.inventory_xls','initial.stock.inventory','addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako')
 
 class ir_values(osv.osv):
     """

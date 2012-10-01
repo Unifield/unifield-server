@@ -49,6 +49,7 @@
     'demo_xml': [
     ],
     'test': ['test/data.yml',
+             'test/product_cost_valuation.yml',
              'test/delivery_mechanism-process-same-qty.yml', #A
              'test/delivery_mechanism-process-less.yml', #B
              'test/delivery_mechanism-process-split-same-qty.yml', #C

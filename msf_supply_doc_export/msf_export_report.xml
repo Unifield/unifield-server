@@ -28,7 +28,7 @@
     <!-- FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object-->
         <report
             id="report_sale_order_xls"
-            string="Sale Order Excel Export"
+            string="Field Order Excel Export"
             model="sale.order"
             name="sale.order_xls"
             file="msf_supply_doc_export/report/report_sale_order_xls.mako"
@@ -62,6 +62,32 @@
             auto="False"
             menu="True"
          />
+
+     <!-- STOCK INITIAL INVENTORY-->
+        <report
+            id="report_stock_initial_inventory_xls"
+            string="Stock Initial Excel Export"
+            model="initial.stock.inventory"
+            name="initial.stock.inventory_xls"
+            file="msf_supply_doc_export/report/stock_initial_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+     <!-- STOCK COST REEVALUATION-->
+        <report
+            id="report_stock_cost_reevaluation_xls"
+            string="Cost Reevaluation Excel Export"
+            model="stock.cost.reevaluation"
+            name="stock.cost.reevaluation_xls"
+            file="msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
 
     </data>
 </openerp>

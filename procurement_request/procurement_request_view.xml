@@ -14,15 +14,15 @@
                        <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_order_id']" position="replace">
-                        <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" groups="base.group_extended" required="1" />
+                        <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_shipping_id']" position="replace">
-                        <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" groups="base.group_extended" required="1" />
+                        <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1" />
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='pricelist_id']" position="replace">
                         <field domain="[('type','=','sale'), ('in_search', '=', partner_type)]" name="pricelist_id"
-                        	on_change="pricelist_id_change(pricelist_id)"
-                        	groups="base.group_extended" required="1" />
+                            on_change="pricelist_id_change(pricelist_id)"
+                            required="1" />
                     </xpath>
                 </data>
             </field>
@@ -35,27 +35,35 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
-                    <group col="6" colspan="4">
+                    <group col="6" colspan="4" name="header" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                         <field name="name"/>
-                        <field name="date_order" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1" string="Requested date" />
-                        <field name="origin" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="date_order" />
+                        <field name="warehouse_id" widget="selection"  />
+                        <field name="requestor" />
+                        <field name="location_requestor_id" required="1" />
+						<field name="delivery_requested_date" required="1" string="Requested date" />
+                        <field name="origin" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'in', ['done', 'validated'])]}">
-                                <tree editable="top" string="Products">
-                                    <field name="product_id" on_change="requested_product_id_change(product_id, type)" required="1" />
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
+                                <tree string="Products" editable="top" >
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment)" />
+                                    <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,type)"/>
                                     <field name="name" invisible="1" />
-                                    <button name="open_order_line_to_correct"
-                                        string="Configurator"
-                                        type="object" />
-                                    <field name="product_uom_qty" />
                                     <field name="product_uom" />
+                                    <field name="nomen_manda_0" invisible="1" />
+                                    <field name="nomen_manda_1" invisible="1" />
+                                    <field name="nomen_manda_2" invisible="1" />
+                                    <field name="nomen_manda_3" invisible="1" />
+                                    <field name="product_id_ok" invisible="1" />
+                                    <button name="open_order_line_to_correct" 
+                                    string="Configurator" 
+                                    type="object" 
+                                    attrs="{'invisible': [('product_id_ok', '=', True)]}"/>
+                                    <field name="product_uom_qty" />
                                     <field name="notes" />
-                                    <field name="type" on_change="requested_product_id_change(product_id, type)"/>
+                                    <field name="type" on_change="requested_type_change(product_id, type)"/>
                                     <field name="latest" />
                                     <field name="my_company_id" invisible="1" />
                                     <field name="supplier"
@@ -86,7 +94,7 @@
                                 <field name="state" />
                                 <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" />
                                 <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
-                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" />
+                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" confirm="You are about to confirm the Internal Request without going through the sourcing tool. Are you sure?" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">

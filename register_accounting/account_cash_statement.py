@@ -40,6 +40,30 @@ class account_cash_statement(osv.osv):
 #        bank = self.browse(cr, uid, res_id)
 #        return bank.name + '_' +bank.journal_id.code
 
+    def _get_starting_balance(self, cr, uid, ids, context=None):
+        """ Find starting balance
+        @param name: Names of fields.
+        @param arg: User defined arguments
+        @return: Dictionary of values.
+        """
+        res = {}
+        for statement in self.browse(cr, uid, ids, context=context):
+            amount_total = 0.0
+
+            if statement.journal_id.type not in('cash'):
+                continue
+
+            if not statement.prev_reg_id:
+                for line in statement.starting_details_ids:
+                    amount_total+= line.pieces * line.number
+            else:
+                amount_total = statement.prev_reg_id.msf_calculated_balance
+            
+            res[statement.id] = {
+                'balance_start': amount_total
+            }
+        return res
+
     def create(self, cr, uid, vals, context=None):
         """
         Create a Cash Register without an error overdue to having open two cash registers on the same journal
@@ -72,7 +96,7 @@ class account_cash_statement(osv.osv):
             # if previous register closing balance is freezed, then retrieving previous closing balance
             if prev_reg.closing_balance_frozen:
                 if journal.type == 'bank':
-                    vals.update({'balance_start': prev_reg.balance_end_real})
+                    vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists
         if prev_reg_id:
@@ -158,6 +182,9 @@ class account_cash_statement(osv.osv):
             # Verify that the closing balance have been freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')
+            # Do not permit closing Cash Register if previous register is not closed! (confirm state)
+            if st.prev_reg_id and st.prev_reg_id.state != 'confirm':
+                raise osv.except_osv(_('Error'), _('Please close previous register before closing this one!'))
         # Then we open a wizard to permit the user to confirm that he want to close CashBox
         return {
             'name' : "Closing CashBox",
@@ -179,9 +206,9 @@ class account_cash_statement(osv.osv):
         res = super(account_cash_statement, self)._end_balance(cr, uid, ids, field_name, arg, context)
         for statement in self.browse(cr, uid, ids, context):
             # UF-425: Add the Open Advances Amount when calculating the "Calculated Balance" value
-            res[statement.id] += statement.open_advance_amount or 0.0
+            res[statement.id] -= statement.open_advance_amount or 0.0
             # UF-810: Add a "Unrecorded Expenses" when calculating "Calculated Balance"
-            res[statement.id] += statement.unrecorded_expenses_amount or 0.0
+            res[statement.id] -= statement.unrecorded_expenses_amount or 0.0
         return res
 
     def _gap_compute(self, cursor, user, ids, name, attr, context=None):
@@ -192,8 +219,25 @@ class account_cash_statement(osv.osv):
             res[statement.id] = diff_amount
         return res
 
+    def _msf_calculated_balance_compute(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Sum of opening balance (balance_start) and sum of cash transaction (total_entry_encoding)
+        """
+        # Prepare some values
+        res = {}
+        for st in self.browse(cr, uid, ids):
+            amount = (st.balance_start or 0.0) + (st.total_entry_encoding or 0.0)
+            res[st.id] = amount
+            # Update next register opening balance
+            if st.journal_id and st.journal_id.type == 'cash':
+                next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
+                for next_st in self.browse(cr, uid, next_st_ids):
+                    if next_st.state != 'confirm':
+                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
+        return res
+
     _columns = {
-            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance', help="Closing balance"),
+            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
                 readonly="True", string='State'),
             'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
@@ -204,6 +248,8 @@ class account_cash_statement(osv.osv):
             'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
             'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
+            'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance', 
+                help="Opening balance + Cash Transaction"),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):

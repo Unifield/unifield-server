@@ -29,7 +29,7 @@
                                 <newline/>
                                 <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                                 <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
-                                    <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice" type="action" icon="gtk-execute" states="draft,manual" groups="base.group_extended"/>
+                                    <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice" type="action" icon="gtk-execute" states="draft,manual" />
                                 </group>
                             </group>
                             <group col="14" colspan="4">
@@ -40,15 +40,29 @@
                                 <button name="ship_recreate" states="shipping_except" string="Recreate Packing" icon="gtk-ok"/>
                                 <button name="ship_corrected" states="shipping_except" string="Ignore Exception" icon="gtk-apply"/>
                                 <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" icon="gtk-cancel"/>
-                                <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>
+                                <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" attrs="{'invisible': [('noinvoice', '=', True)]}"/>
                                 <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
                                 <button name="cancel" states="draft" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
-                                <button name="order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply"/>
+                                <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" />
                                 <button name="order_validated" string="Validate Order" icon="terp-check" states="draft" />
                             </group>
+                    </xpath>
+                    <xpath expr="/form//field[@name='pricelist_id']" position="replace">
+                        <group colspan="2" col="3">
+                            <field name="no_line" invisible="1" />
+                            <field name="pricelist_id" string="Currency" colspan="2" 
+                                   attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft', 'validated'])]}"
+                                   domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
+                            <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
+                                    attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'validated'])]}" />
+                        </group>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='order_line']" position="attributes">
+                        <attribute name="on_change">order_line_change(order_line)</attribute>
                     </xpath>
                 </data>
             </field>

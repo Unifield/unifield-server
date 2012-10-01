@@ -56,8 +56,12 @@ class procurement_request(osv.osv):
         '''
         if not context:
             context = {}
+        obj_data = self.pool.get('ir.model.data')
         if view_type == 'search' and context.get('procurement_request') and not view_id:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_search_view')[1]
+            
+        elif view_type == 'form' and context.get('procurement_request'):
+            view_id = obj_data.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
 
         return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
     
@@ -71,6 +75,8 @@ class procurement_request(osv.osv):
     #@@@end override
     
     _columns = {
+        'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
+        domain=[('usage', '=', 'internal')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
@@ -150,8 +156,6 @@ class procurement_request(osv.osv):
         '''
         Changes the state of the order to allow the deletion
         '''
-        line_obj = self.pool.get('sale.order.line')
-        
         del_ids = []
         normal_ids = []
         
@@ -240,11 +244,28 @@ class procurement_request(osv.osv):
 
     def validate_procurement(self, cr, uid, ids, context=None):
         '''
-        Validate the request
+        Validate the request (which is a the same object as a SO)
+        It is the action called on the activity of the workflow.
         '''
+        obj_data = self.pool.get('ir.model.data')
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        nb_lines = 0
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
+            for line in req.order_line:
+                if line.nomen_manda_0.id == nomen_manda_0 \
+                or line.nomen_manda_1.id == nomen_manda_1 \
+                or line.nomen_manda_2.id == nomen_manda_2 \
+                or line.nomen_manda_3.id == nomen_manda_3 \
+                or line.product_uom.id == uom_tbd:
+                    nb_lines += 1
+            if nb_lines:
+                raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !')%nb_lines)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
@@ -261,6 +282,12 @@ class procurement_request(osv.osv):
         for request in self.browse(cr, uid, ids, context=context):
             if len(request.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
+            for line in request.order_line:
+                # for FO
+                if line.type == 'make_to_order' and not line.po_cft == 'cft' and not line.supplier:
+                    line_number = line.line_number
+                    request_name = request.name
+                    raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !')%(line_number,request_name))
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
             context.update({'view_id': proc_view and proc_view[1] or False})
@@ -339,6 +366,17 @@ class procurement_request_line(osv.osv):
             ret[pol['id']] = pol['state']
         return ret
     
+    def _get_product_id_ok(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for pol in self.read(cr, uid, ids, ['product_id']):
+            if pol['product_id']:
+                res[pol['id']] = True
+            else:
+                res[pol['id']] = False
+        return res
+    
     _columns = {
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
@@ -347,6 +385,7 @@ class procurement_request_line(osv.osv):
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
+        'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
@@ -363,25 +402,67 @@ class procurement_request_line(osv.osv):
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
     
-    def requested_product_id_change(self, cr, uid, ids, product_id, type, context=None):
+    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
         '''
-        Fills automatically the product_uom_id field on the line when the 
-        product was changed.
+        Fills automatically the product_uom_id field and the name on the line when the 
+        product is changed.
+        Add a domain on the product_uom when a product is selected.
         '''
         if context is None:
             context = {}
         product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
 
-        v = {}
+        value = {}
+        domain = {}
         if not product_id:
-            v.update({'product_uom': False, 'supplier': False, 'name': ''})
-        else:
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            v.update({'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name)})
-            if type != 'make_to_stock':
-                v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'}
+            domain = {'product_uom':[]}
+        elif product_id:
+            product = product_obj.browse(cr, uid, product_id)
+            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method}
+            if value['type'] != 'make_to_stock':
+                value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
+            domain = {'product_uom':[('category_id','=',uom_val[0]['category_id'][0])]}
+        return {'value': value, 'domain': domain}
 
+
+    def requested_type_change(self, cr, uid, ids, product_id, type, context=None):
+        """
+        If there is a product, we check its type (procure_method) and update eventually the supplier.
+        """
+        if context is None:
+            context = {}
+        v = {}
+        product_obj = self.pool.get('product.product')
+        if product_id and type != 'make_to_stock':
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+        elif product_id and type == 'make_to_stock':
+            v.update({'supplier': False})
         return {'value': v}
+    
+    def comment_change(self, cr, uid, ids, comment, product_id, type, context=None):
+        '''
+        Fill the level of nomenclatures with tag "to be defined" if you have only comment
+        '''
+        if context is None:
+            context = {}
+        value = {}
+        obj_data = self.pool.get('ir.model.data')
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        
+        if comment and not product_id:
+            value.update({'nomen_manda_0': nomen_manda_0,
+                        'nomen_manda_1': nomen_manda_1,
+                        'nomen_manda_2': nomen_manda_2,
+                        'nomen_manda_3': nomen_manda_3,
+                        'name': 'To be defined',})
+        return {'value': value}
     
 procurement_request_line()
 

@@ -36,7 +36,14 @@
 					<field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
 					<field name="partner_id" readonly="1" />
 					<field name="active" />
-					<button name="catalogue_import_lines" type="object" string="Update/Import lines" icon="gtk-go-down" colspan="4" />
+                    <newline />
+
+                    <group name="import" string=" Import Lines " colspan="4"  >
+					    <field name="file_to_import" />
+					    <button name="catalogue_import_lines" type="object" string="Import the file" icon="gtk-execute" colspan="1" />
+                        <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" />
+                    </group>
+    
 					<notebook colspan="4">
 						<page string="Products">
 							<field name="line_ids" mode="tree" colspan="4" nolabel="1" />
@@ -45,6 +52,7 @@
 							<field name="comment" colspan="4" nolabel="1" />
 						</page>
 					</notebook>
+
 				</form>
 			</field>
 		</record>
@@ -83,7 +91,7 @@
                     <separator orientation="vertical"/>
                     <field name="default_code"/>
                     <field name="name"/>
-                    <field name="categ_id" widget="selection" operator="child_of" groups="base.group_extended"/>
+                    <field name="categ_id" widget="selection" operator="child_of" />
                     <newline/>
                     <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                     <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
@@ -153,7 +161,8 @@
 			<field name="type">tree</field>
 			<field name="priority" eval="16" />
 			<field name="arch" type="xml">
-				<tree string="Supplier catalogue lines" min_rows="20" editable="top">
+				<tree string="Supplier catalogue lines" min_rows="20" editable="top" colors="red: to_correct_ok == True">
+                    <field name="line_number" readonly="1"/>
 					<field name="product_id" on_change="product_change(product_id)" />
 					<field name="line_uom_id" />
 					<field name="min_qty" />
@@ -161,6 +170,7 @@
 					<field name="rounding" />
 					<field name="min_order_qty" />
 					<field name="comment" />
+					<field name="to_correct_ok" invisible="1"/>
 				</tree>
 			</field>
 		</record>

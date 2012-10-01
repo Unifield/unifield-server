@@ -2,10 +2,10 @@
 <openerp>
     <data>
         <!-- This first menu will be the parent of all the menu that we want to hide -->
-        <menuitem id="menu_hidden" 
-                  name="Hidden Menu" 
+        <menuitem id="menu_hidden"
+                  name="Hidden Menu"
                   sequence="1"
-                  groups= 'base.group_no_one' 
+                  groups='base.group_no_one'
                 />
     
         <menuitem id="product_nomenclature.menu_products_nomenclature_sales" 

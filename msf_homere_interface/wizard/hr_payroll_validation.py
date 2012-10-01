@@ -50,9 +50,19 @@ class hr_payroll_validation(osv.osv_memory):
             third_name = 'third%s' % line.get('id')
             account = self.pool.get('account.account').read(cr, uid, line.get('account_id')[0], ['type_for_register'])
             res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner'}})
+
+            # Add fourth party field
+            fourth_name = 'fourth%s' % line.get('id')
+            res.update({fourth_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.currency','string': 'Currency'}})
+
+            # Add fifth party field
+            fifth_name = 'fifth%s' % line.get('id')
+            res.update({fifth_name: {'selectable': True, 'type': 'float', 'string': 'Amount'}})
+
         return res
 
     def default_get(self, cr, uid, fields, context=None):
+        hrp = self.pool.get('hr.payroll.msf')
         """
         Fields ' value
         """
@@ -62,6 +72,16 @@ class hr_payroll_validation(osv.osv_memory):
         pattern = re.compile('^entry(.*)$')
         for field in fields:
             res[field] = ''
+            pattern = re.compile('^(fourth(.*))$')
+            m = re.match(pattern, field)
+            if m:
+                bro = hrp.browse(cr,uid,int(m.groups()[1]))
+                res[field] = bro.currency_id and bro.currency_id.id or False
+            pattern = re.compile('^(fifth(.*))$')
+            m = re.match(pattern, field)
+            if m:
+                bro = hrp.browse(cr,uid,int(m.groups()[1]))
+                res[field] = bro.amount or False
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -84,10 +104,12 @@ class hr_payroll_validation(osv.osv_memory):
             for el in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
                 if el.account_id and el.account_id.user_type.code != 'expense':
                     third = 'third' + str(el.id)
+                    fourth = 'fourth' + str(el.id)
+                    fifth = 'fifth' + str(el.id)
                     is_required = False
                     if el.account_id.type_for_register and el.account_id.type_for_register == 'payroll':
                         is_required = True
-                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><field name="%s" required="%s"/></group>' % (not is_required, ustr(el.name), third, is_required)))
+                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><group col="6" colspan="1"><field name="%s" readonly="1"/><field name="%s" readonly="1"/><field name="%s" required="%s"/></group></group>' % (not is_required, ustr(el.name) + ' - ' + ustr(el.ref), fourth, fifth, third, is_required)))
             res['arch'] = ET.tostring(form)
         return res
 
@@ -109,13 +131,10 @@ class hr_payroll_validation(osv.osv_memory):
                 if m.groups() and m.groups()[0] and m.groups()[1]:
                     partner_id = vals.get(m.groups()[0])
                     newvals = {'partner_id': vals.get(m.groups()[0])}
-                    if partner_id:
-                        partner = partner_obj.read(cr, uid, partner_id, ['property_account_payable', 'name'])
-                        if not partner['property_account_payable']:
-                                raise osv.except_osv(_('Error'), _('Partner %s has no Account Payable')%(partner['name'],))
-                        newvals['account_id'] =  partner['property_account_payable'][0]
-
-                    self.pool.get('hr.payroll.msf').write(cr, uid, [m.groups()[1]], newvals)
+                    hpm_id = m.groups()[1]
+                    if isinstance(hpm_id, str):
+                        hpm_id = int(hpm_id)
+                    self.pool.get('hr.payroll.msf').write(cr, uid, [hpm_id], newvals)
         for field in to_delete:
             del vals[field]
         # Return default behaviour
@@ -164,8 +183,9 @@ class hr_payroll_validation(osv.osv_memory):
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
         # Create lines into this move
-        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 
-            'free1_id', 'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id']):
+        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id', 
+            'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id', 
+            'destination_id']):
             line_vals = {}
             # fetch amounts
             amount = line.get('amount', 0.0)
@@ -174,9 +194,18 @@ class hr_payroll_validation(osv.osv_memory):
                 credit = abs(amount)
             else:
                 debit = amount
+            # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+            # fetch account
+            account_id = line.get('account_id', False) and line.get('account_id')[0] or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('No account found!'))
+            account = self.pool.get('account.account').browse(cr, uid, account_id)
+            # End of Note
             # create new distribution (only for expense accounts)
             distrib_id = False
-            if line.get('cost_center_id', False):
+            # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+            if account.user_type.code == 'expense':
+            # End of Note
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
                 fp_id = line.get('funding_pool_id', False) and line.get('funding_pool_id')[0] or False
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
@@ -184,6 +213,9 @@ class hr_payroll_validation(osv.osv_memory):
                 if not line.get('funding_pool_id', False):
                     fp_id = msf_fp_id
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+                dest_id = line.get('destination_id', False) and line.get('destination_id')[0] or (account.default_destination_id and account.default_destination_id.id) or False
+                # End of Note
                 if distrib_id:
                     common_vals = {
                         'distribution_id': distrib_id,
@@ -191,6 +223,9 @@ class hr_payroll_validation(osv.osv_memory):
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
+                        # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+                        'destination_id': dest_id,
+                        # End of Note
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
@@ -203,6 +238,14 @@ class hr_payroll_validation(osv.osv_memory):
                     if f2_id:
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+            elif account and account.type_for_register and account.type_for_register == 'payroll':
+                partner_id = line.get('partner_id', False) and line.get('partner_id')[0] or False
+                if not partner_id:
+                    raise osv.except_osv(_('Warning'), _('No partner filled in for this line: %s') % (line.get('name', ''),))
+                partner_data = self.pool.get('res.partner').read(cr, uid, partner_id, ['property_account_payable', 'property_account_receivable'])
+                account_id = partner_data.get('property_account_payable', account_id) and partner_data.get('property_account_payable')[0] or account_id
+#                if amount > 0.0:
+#                    account_id = partner_data.get('property_account_receivable', account_id) and partner_data.get('property_account_receivable')[0] or account_id
             # create move line values
             line_vals = {
                 'move_id': move_id,
@@ -213,7 +256,9 @@ class hr_payroll_validation(osv.osv_memory):
                 'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
                 'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
                 'transfer_journal_id': line.get('journal_id', False) and line.get('journal_id')[0] or False,
-                'account_id': line.get('account_id', False) and line.get('account_id')[0] or False,
+                # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
+                'account_id': account_id,
+                # End of Note
                 'debit_currency': debit,
                 'credit_currency': credit,
                 'journal_id': journal_id,

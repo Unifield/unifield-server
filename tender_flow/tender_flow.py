@@ -24,11 +24,15 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from osv import osv, fields
 from osv.orm import browse_record, browse_null
 from tools.translate import _
+from lxml import etree
 
 import decimal_precision as dp
 import netsvc
 import pooler
 import time
+
+# xml parser
+from lxml import etree
 
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
@@ -133,6 +137,7 @@ class tender(osv.osv):
         pol_obj = self.pool.get('purchase.order.line')
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
+        obj_data = self.pool.get('ir.model.data')
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
             # check some supplier have been selected
@@ -149,7 +154,7 @@ class tender(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
                 values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
-                          'origin': tender.sale_order_id and tender.sale_order_id.name + '/' + tender.name or tender.name,
+                          'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
                           'rfq_ok': True,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
@@ -168,6 +173,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id))
                 
                 for line in tender.tender_line_ids:
+                    if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_supply_doc_import', 'product_tbd')[1]:
+                        raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
                     # create an order line for each tender line
                     price = pricelist_obj.price_get(cr, uid, [pricelist_id], line.product_id.id, line.qty, supplier.id, {'uom': line.product_uom.id})[pricelist_id]
                     newdate = datetime.strptime(line.date_planned, '%Y-%m-%d')
@@ -387,7 +394,7 @@ class tender(osv.osv):
                     price_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', line.currency_id.id)], context=context)
                     if price_ids:
                         pricelist = price_ids[0]
-                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + '/' + tender.name,
+                po_values = {'origin': (tender.sale_order_id and tender.sale_order_id.name or "") + ';' + tender.name,
                              'partner_id': line.supplier_id.id,
                              'partner_address_id': address_id,
                              'location_id': tender.location_id.id,
@@ -527,7 +534,7 @@ class tender_line(osv.osv):
     
     _columns = {'product_id': fields.many2one('product.product', string="Product", required=True),
                 'qty': fields.float(string="Qty", required=True),
-                'tender_id': fields.many2one('tender', string="Tender", required=True),
+                'tender_id': fields.many2one('tender', string="Tender", required=True, ondelete='cascade'),
                 'purchase_order_line_id': fields.many2one('purchase.order.line', string="Related RfQ line", readonly=True),
                 'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
                 'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
@@ -542,10 +549,15 @@ class tender_line(osv.osv):
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
+                'comment': fields.char(size=128, string='Comment'),
                 }
     _defaults = {'qty': lambda *a: 1.0,
                  'state': lambda *a: 'draft',
                  }
+    
+    _sql_constraints = [
+        ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
+    ]
     
 tender_line()
 
@@ -658,6 +670,7 @@ class procurement_order(osv.osv):
                                                         }, context=context)
             # add a line to the tender
             tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,
+                                             'comment': sale_order_line.comment,
                                              'qty': proc.product_qty,
                                              'tender_id': tender_id,
                                              'sale_order_line_id': sale_order_line.id,
@@ -695,24 +708,7 @@ class procurement_order(osv.osv):
             data = self.read(cr, uid, ids, ['so_back_update_dest_po_id_procurement_order'], context=context)
             if not data[0]['so_back_update_dest_po_id_procurement_order']:
                 po_obj.log(cr, uid, result, "The Purchase Order '%s' has been created following 'on order' sourcing."%po_obj.browse(cr, uid, result, context=context).name)
-            if self.browse(cr, uid, ids[0], context=context).is_tender:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', result, 'purchase_confirm', cr)
         return result
-    
-    def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        if the procurement corresponds to a tender, the created po is confirmed but not validated
-        '''
-        po_obj = self.pool.get('purchase.order')
-        procurement = kwargs['procurement']
-        purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
-        if purchase_id:
-            # if tender
-            if procurement.is_tender:
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'purchase.order', purchase_id, 'purchase_confirm', cr)
-        return purchase_id
     
     def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -721,7 +717,19 @@ class procurement_order(osv.osv):
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
         
-        values['date_planned'] = procurement.date_planned 
+        values['date_planned'] = procurement.date_planned
+        
+        if procurement.product_id:
+            if procurement.product_id.type == 'consu':
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+            elif procurement.product_id.type == 'service_recep':
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
+            else:
+                wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
+                if wh_ids:
+                    values['location_id'] = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
+                else:
+                    values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
         
         return values
     
@@ -860,9 +868,11 @@ class purchase_order(osv.osv):
         if view_type == 'form':
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
-                arch = result['arch']
-                arch = arch.replace('<form string="Purchase Order">', '<form string="Requests for Quotation">')
-                result['arch'] = arch
+                form = etree.fromstring(result['arch'])
+                fields = form.xpath('//form[@string="Purchase Order"]')
+                for field in fields:
+                    field.set('string', "Requests for Quotation")
+                result['arch'] = etree.tostring(form)
         
         return result
 
