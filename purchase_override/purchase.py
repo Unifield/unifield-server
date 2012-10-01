@@ -288,7 +288,8 @@ class purchase_order(osv.osv):
                     v['partner_address_id'] = partner.address[0].id
                 if partner.property_product_pricelist_purchase:
                     v['pricelist_id'] = partner.property_product_pricelist_purchase.id
-            v.update({'delivery_requested_date': time.strftime('%Y-%m-%d')})
+            # Update delivery_requested_date to today()
+            v.update({'delivery_requested_date': time.strftime('%Y-%m-%d'), 'delivery_confirmed_date': time.strftime('%Y-%m-%d')})
         elif order_type == 'direct':
             v['cross_docking_ok'] = False
         
