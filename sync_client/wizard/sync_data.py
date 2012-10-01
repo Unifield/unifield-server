@@ -331,7 +331,6 @@ class update_received(osv.osv):
                 update_groups[update.rule_sequence] = [update]
         self.log(data="received update ids = %s, models = %s" % (update_ids, map(lambda x:x[0].model.model, update_groups.values())))
         self.write(cr, uid, update_ids, {'execution_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
-        #import ipdb
 
         def secure_import_data(obj, fields, values):
             try:
@@ -364,17 +363,22 @@ class update_received(osv.osv):
             values = []
             update_ids = []
             versions = []
+            logs = {}
 
             def success(update_ids, versions):
                 self.write(cr, uid, update_ids, {
                     'run' : True,
                     'log' : '',
                 }, context=context)
+                for update_id, log in logs.items():
+                    self.write(cr, uid, [update_id], {
+                        'log' : log,
+                    }, context=context)
                 for xml_id, version in versions.items():
                     self.pool.get('ir.model.data').sync(cr, uid, xml_id, version=version, context=context)
 
             #3 check for missing field : report missing fields
-            bad_fields = self._check_fields(cr, uid, updates[0].model.model, fields, context=context)
+            bad_fields = self._check_fields(cr, uid, obj._name, fields, context=context)
             if bad_fields: 
                 message += "Missing or unauthorized fields found : %s\n" % ", ".join(bad_fields)
                 bad_fields = [fields.index(x) for x in bad_fields]
@@ -382,13 +386,7 @@ class update_received(osv.osv):
             i_id = fields.index('id')
 
             for update in updates:
-                #1 conflict detection
-                if self._conflict(cr, uid, update, context):
-                    #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                    message += self.log("Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
-                    #TODO manage other conflict rules here (tfr note)
-                    continue
-                        
+                       
                 row = eval(update.values)
 
                 #4 check for fallback value : report missing fallback_value
@@ -402,6 +400,12 @@ class update_received(osv.osv):
                 update_ids.append(update.id)
                 versions.append( (xml_id, update.version) )
 
+                #1 conflict detection
+                if self._conflict(cr, uid, update, context):
+                    #2 if conflict => manage conflict according rules : report conflict and how it's solve
+                    logs[update.id] = self.log("Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
+                    #TODO manage other conflict rules here (tfr note)
+
             if bad_fields:
                 fields = [fields[i] for i in range(len(fields)) if i not in bad_fields]
 
@@ -409,8 +413,6 @@ class update_received(osv.osv):
             while values:
                 try:
                     res = secure_import_data(obj, fields, values)
-                    #ipdb.set_trace()
-                    #pass
                 except Exception, import_error:
                     # Rare Exception: import_data raised an Exception
                     self.write(cr, uid, update_ids, {
@@ -430,6 +432,8 @@ class update_received(osv.osv):
                         # Extract the failed data
                         value_index, import_message = int(line_error.group(1))-1, line_error.group(2)
                         data = dict(zip(fields, values[value_index]))
+                        if "('warning', 'Warning !')" == import_message:
+                            import_message = "Unknown! Please check the constraints of linked models. The use of raise Python's keyword in constraints typically give this message."
                         import_message = "Cannot import in model %s:\nData: %s\nReason: %s\n" % (obj._name, data, import_message)
                         values.pop(value_index)
                         versions.pop(value_index)
@@ -456,10 +460,7 @@ class update_received(osv.osv):
                 else:
                     # Rare exception, should never occur
                     raise Exception(message+"Wrong number of imported rows in model %s (expected %s, but %s imported)!\nUpdate ids: %s\n" % (updates[0].model.model, len(values), res[0], update_ids))
-                #raise Exception('Happy Birthday')
 
-            #if not( len(values) == len(update_ids) == len(versions) ):
-            #    ipdb.set_trace()
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
                 message+"""This error must never occur. Please contact the developper team of this module.\n"""
