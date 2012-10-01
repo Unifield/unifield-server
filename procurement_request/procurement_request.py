@@ -365,6 +365,16 @@ class procurement_request_line(osv.osv):
             raise osv.except_osv(_('Warning !'), _('You should enter either a comment or a Product.'))
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Add a more explicit message when no product neither comment have been defined
+        """
+        if context is None:
+            context = {}
+        if context.get('procurement_request') and not vals.get('product_id', False) and not vals.get('comment', False) or not vals.get('name', False):
+            raise osv.except_osv(_('Warning !'), _('You should enter either a comment or a Product.'))
+        return super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
+    
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
