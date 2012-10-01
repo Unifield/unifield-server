@@ -364,7 +364,7 @@ class procurement_request_line(osv.osv):
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     _sql_constraints = [
-        ('name_check', 'CHECK( name != False )', 'You should enter either a Comment or a Product.'),
+        ('name_check', 'CHECK(name NOT NULL)', 'You should enter either a Comment or a Product.'),
     ]
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
