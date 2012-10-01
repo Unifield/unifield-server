@@ -417,7 +417,7 @@ class procurement_request_line(osv.osv):
         domain = {}
         if not product_id:
             value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'}
-            domain = {'product_uom':[]}
+            domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method}
@@ -450,6 +450,7 @@ class procurement_request_line(osv.osv):
         if context is None:
             context = {}
         value = {}
+        domain = {}
         obj_data = self.pool.get('ir.model.data')
         nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
         nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
@@ -462,7 +463,10 @@ class procurement_request_line(osv.osv):
                         'nomen_manda_2': nomen_manda_2,
                         'nomen_manda_3': nomen_manda_3,
                         'name': 'To be defined',})
-        return {'value': value}
+            domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
+        if not comment:
+            domain = {'product_uom':[], 'supplier': []}
+        return {'value': value, 'domain': domain}
     
 procurement_request_line()
 

@@ -390,10 +390,14 @@ class sourcing_line(osv.osv):
     def onChangeSupplier(self, cr, uid, id, supplier, context=None):
         '''
         supplier changes, we update 'estimated_delivery_date' with corresponding delivery lead time
+        we add a domain for the IR line on the supplier
         '''
-        result = {'value':{}}
+        result = {'value':{}, 'domain':{}}
         
         if not supplier:
+            for sl in self.browse(cr, uid, id, context):
+                if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
+                    result['domain'].update({'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]})
             return result
         
         partner = self.pool.get('res.partner').browse(cr, uid, supplier, context)
@@ -451,12 +455,23 @@ class sourcing_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
+            # check if the line has a product for a Field Order (and not for an Internal Request)
+            if not sl.product_id and not sl.sale_order_id.procurement_request:
+                raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
+                Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
+                """))
             # corresponding state for the lines: IR: confirmed, FO: sourced
             state_to_use = sl.sale_order_id.procurement_request and 'confirmed' or 'sourced'
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
             
-            if sl.type == 'make_to_order' and not sl.po_cft in ['cft'] and not sl.supplier:
-                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
+            if sl.type == 'make_to_order' and not sl.po_cft in ['cft']:
+                if not sl.supplier:
+                    raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
+                # an Internal Request without product can only have Internal, Intersection or Intermission partners.
+                elif sl.supplier and not sl.product_id and sl.sale_order_id.procurement_request and sl.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                    raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
+                    the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
+                    """))
             
             if sl.po_cft == 'cft' and not sl.product_id:
                 raise osv.except_osv(_('Warning'), _("You can't Source with 'Tender' if you don't have product."))
