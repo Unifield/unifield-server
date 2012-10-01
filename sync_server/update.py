@@ -36,7 +36,7 @@ class update(osv.osv):
     _name = "sync.server.update"
     _rec_name = 'source'
     
-    __logger = logging.getLogger('sync.server')
+    _logger = logging.getLogger('sync.server')
 
     _columns = {
         'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
@@ -168,7 +168,7 @@ class update(osv.osv):
             offset += len(ids)
 
         if not update_to_send:
-            self.__logger.debug("No update to send to %s" % (entity.name,))
+            self._logger.debug("No update to send to %s" % (entity.name,))
             return None
 
         ## Prepare package
@@ -178,6 +178,7 @@ class update(osv.osv):
             'source_name' : update_master.source.name,
             'fields' : tools.ustr(complete_fields),
             'sequence' : update_master.sequence,
+            'rule' : update_master.rule_id.sequence_number,
             'fallback_values' : update_master.rule_id.fallback_values,
             'load' : list(),
             'offset' : offset,

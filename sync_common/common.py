@@ -1,8 +1,9 @@
 from osv import osv
 import tools
 import logging
-import StringIO
-import traceback
+import sys
+from traceback import format_exc
+from pprint import pformat
 
 MODELS_TO_IGNORE=[
         'ir.%',
@@ -68,6 +69,42 @@ XML_ID_TO_IGNORE = [
                     'main_company', 
                         ]
 
+def log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
+    if not hasattr(obj, '_logger'):
+        raise Exception("No _logger specified for object %s!" % obj._name)
+    output = ""
+    if traceback:
+        output += format_exc()
+    if message is None:
+        previous_frame = sys._getframe(1)
+        output += "%s.%s()" % (previous_frame.f_globals['__package__'], previous_frame.f_code.co_name)
+    elif isinstance(message, BaseException):
+        try:
+            output += "".join(list(message))
+        except BaseException, e:
+            output += str(e)
+        if output[-1] != "\n": output += "\n"
+    else:
+        output += "%s: %s" % (level.capitalize(), message)
+    if ids is not None:
+        output += " in model %s, ids %s\n" % (obj._name, ", ".join(ids))
+    if data is not None:
+        output += " in content: %s\n" % pformat(data)
+    if output[-1] != "\n": output += "\n"
+    getattr(obj._logger, level)(output[:-1])
+    return output
+
+osv.osv.log = log
+
+old__init__ = osv.osv.__init__
+
+def __mklogger__(obj, *a, **kw):
+    old__init__(obj, *a, **kw)
+    if not hasattr(obj, '_logger') and (obj._module.startswith('sync') or obj._module.startswith('update_')):
+        obj._logger = logging.getLogger(obj._module)
+
+osv.osv.__init__ = __mklogger__
+
 def compile_models_to_ignore():
     global MODELS_TO_IGNORE
     MODELS_TO_IGNORE_PATTERNS = []
@@ -129,7 +166,6 @@ class rules_checks(osv.osv):
             return True
         return False
  
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 def eval_poc_domain(obj, cr, uid, domain, context=None):
     if not context:
         context = {}
@@ -318,20 +354,5 @@ class check_common(osv.osv):
 
 check_common()
 
-def _handle_error(e):
-    try:
-        msg = list(e)
-        if e[-1] != "\n": 
-            e.append("\n")
-        return "".join(e)
-    except: 
-        return str(e) + "\n"
-
-def c_log_error(e, logger):
-    tb = StringIO.StringIO()
-    traceback.print_exc(file=tb)
-    error =  _handle_error(e) + tb.getvalue() 
-    logger.error(error)
-    return error
-            
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

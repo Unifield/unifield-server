@@ -104,7 +104,7 @@ from tools.safe_eval import safe_eval as eval
 
 class write_info(osv.osv):
     
-    __logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.client')
     
     _name = 'sync.client.write_info'
     
@@ -131,7 +131,7 @@ class write_info(osv.osv):
         field = [key for key in values.keys()]
         read_res = self.pool.get(model_name).read(cr, uid, res_id, field, context=context)
         if not read_res: 
-            self.__logger.warning("No read res found for model %s id %s" % (model_name, res_id))
+            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id))
             return
         real_modif_field = []
         for k, val in read_res.items():
@@ -225,7 +225,7 @@ class ir_model_data_sync(osv.osv):
             module = xml_id_split[0]
             name = xml_id_split[1]
          
-        ids = self.search(cr, uid, [('name', '=', name), ('module', '=', module)], context=context)
+        ids = self.search(cr, uid, [('name', '=', name), ('module', '=', module)], limit=1, context=context)
         if ids: 
             return self.browse(cr, uid, ids[0], context=context)
         return False

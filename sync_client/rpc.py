@@ -67,7 +67,7 @@ class Connector(object):
     Connector class
     """
 
-    __logger = logging.getLogger('connector')
+    _logger = logging.getLogger('connector')
 
     def __init__(self, hostname, port):
         """
@@ -85,7 +85,7 @@ class XmlRPCConnector(Connector):
 
     def __init__(self, hostname, port=8069):
         Connector.__init__(self, hostname, port)
-        self.__logger = logging.getLogger('connector.xmlrpc')
+        self._logger = logging.getLogger('connector.xmlrpc')
         self.url = 'http://%s:%s/xmlrpc' % (self.hostname, self.port)
 
     def send(self, service_name, method, *args):
@@ -166,7 +166,7 @@ class NetRPC:
             self.sock = sock
         self.sock.settimeout(TIMEOUT)
         self.is_gzip = is_gzip
-        self.__logger = logging.getLogger('netrpc')
+        self._logger = logging.getLogger('netrpc')
 
     def connect(self, host, port=False):
         if not port:
@@ -182,14 +182,14 @@ class NetRPC:
         self.sock.close()
 
     def mysend(self, msg, exception=False, traceback=None):
-        #self.__logger.debug("rpc message : %s", msg)
+        #self._logger.debug("rpc message : %s", msg)
         msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
             raw_size = len(msg)
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
             gzipped_size = len(msg)
             saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            #self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
+            #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         size = len(msg)
         self.sock.send('%8d' % size)
         self.sock.send(exception and "1" or "0")
@@ -224,7 +224,7 @@ class NetRPC:
             msg = zlib.decompress(msg)
             raw_size = len(msg)
             saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            #self.__logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
+            #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)
 
         if isinstance(res[0],Exception):
@@ -239,7 +239,7 @@ class NetRPCConnector(Connector):
 
     def __init__(self, hostname, port=8070, is_gzip=False):
         Connector.__init__(self, hostname, port)
-        self.__logger = logging.getLogger('connector.netrpc')
+        self._logger = logging.getLogger('connector.netrpc')
         self.is_gzip = is_gzip
 
     def send(self, service_name, method, *args):
@@ -258,7 +258,7 @@ class NetRPCConnector(Connector):
                 error = e
                 if i < NB_RETRY:
                     retry = True
-                    self.__logger.debug("retry to connect %s, error : %s" ,i, e)
+                    self._logger.debug("retry to connect %s, error : %s" ,i, e)
                 i += 1
                 
         socket.disconnect()
@@ -273,7 +273,7 @@ class GzipNetRPCConnector(NetRPCConnector):
         super(GzipNetRPCConnector, self).__init__(is_gzip=True, *args, **kwargs)
 
 class Common(object):
-    __logger = logging.getLogger('connection.common')
+    _logger = logging.getLogger('connection.common')
 
     def __init__(self, connector):
         self.connector = connector
@@ -282,21 +282,21 @@ class Common(object):
         """
         :param method: The method for the linked object (search, read, write, unlink, create, ...)
         """
-        #self.__logger.debug('method: %r', method)
+        #self._logger.debug('method: %r', method)
         def proxy(*args):
             """
             :param args: A list of values for the method
             """
-            #self.__logger.debug('args: %r', args)
+            #self._logger.debug('args: %r', args)
             result = self.connector.send('common', method, *args)
-            #self.__logger.debug('result: %r' % result)
+            #self._logger.debug('result: %r' % result)
             return result
         return proxy
     
 
 
 class Database(object):
-    __logger = logging.getLogger('connection.database')
+    _logger = logging.getLogger('connection.database')
 
     def __init__(self, connector):
         self.connector = connector
@@ -305,14 +305,14 @@ class Database(object):
         """
         :param method: The method for the linked object (search, read, write, unlink, create, ...)
         """
-        #self.__logger.debug('method: %r', method)
+        #self._logger.debug('method: %r', method)
         def proxy(*args):
             """
             :param args: A list of values for the method
             """
-            #self.__logger.debug('args: %r', args)
+            #self._logger.debug('args: %r', args)
             result = self.connector.send('db', method, *args)
-            #self.__logger.debug('result: %r' % result)
+            #self._logger.debug('result: %r' % result)
             return result
         return proxy
     
@@ -320,7 +320,7 @@ class Connection(object):
     """
     TODO: Document this class
     """
-    __logger = logging.getLogger('connection')
+    _logger = logging.getLogger('connection')
 
     def __init__(self, connector,
                  database,
@@ -341,7 +341,7 @@ class Connection(object):
             
         if self.user_id is False:
             raise osv.except_osv(_('Error!'), _('Unable to connect to the distant server with this user!'))
-        self.__logger.debug(self.user_id)
+        self._logger.debug(self.user_id)
 
     def __repr__(self):
         """
@@ -363,7 +363,7 @@ class Object(object):
     """
     TODO: Document this class
     """
-    __logger = logging.getLogger('object')
+    _logger = logging.getLogger('object')
 
     def __repr__(self):
         """
@@ -392,8 +392,8 @@ class Object(object):
         return proxy
 
     def __send__(self, method, *args):
-        #self.__logger.debug('method: %r', method)
-        #self.__logger.debug('args: %r', args)
+        #self._logger.debug('method: %r', method)
+        #self._logger.debug('args: %r', args)
         
         result = self.connection.connector.send('object', 'execute',
                                                 self.connection.database,
@@ -402,7 +402,7 @@ class Object(object):
                                                 self.model,
                                                 method,
                                                 *args)
-        #self.__logger.debug('result: %r', result)
+        #self._logger.debug('result: %r', result)
         return result
 
     def __add_context(self, arguments, context=None):

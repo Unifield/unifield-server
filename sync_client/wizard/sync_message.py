@@ -31,7 +31,6 @@ import sync_data
 from sync_client.ir_model_data import link_with_ir_model, dict_to_obj
 pp = pprint.PrettyPrinter(indent=4)
 import logging
-import sync_common.common
 
 from tools.safe_eval import safe_eval as eval
 
@@ -57,7 +56,7 @@ class local_message_rule(osv.osv):
             model_name = data.get('model')
             model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
             if not model_id:
-                sync_data.log(self, cr, uid, "Model %s does not exist" % model_name, data=data, context=context)
+                self.log("Model %s does not exist" % model_name, data=data)
                 continue #we do not save this rule
             data['model'] = model_id[0]
 
@@ -126,7 +125,7 @@ class message_to_send(osv.osv):
         if not res:
             self.create(cr, uid, data, context=context)
         #else:
-            #sync_data.log(self, cr, uid, "Message %s already exist" % identifier, context=context)
+            #self.log("Message %s already exist" % identifier)
 
 
 
@@ -164,7 +163,7 @@ message_to_send()
 class message_received(osv.osv):
     _name = "sync.client.message_received"
     _rec_name = 'identifier'
-    __logger = logging.getLogger('sync.client')
+    _logger = logging.getLogger('sync.client')
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sequence': fields.integer('Sequence', readonly = True),
@@ -182,7 +181,7 @@ class message_received(osv.osv):
         for data in package:
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
             if ids:
-                sync_data.log(self, cr, uid, 'Message %s already in the database' % data['id'])
+                self.log('Message %s already in the database' % data['id'])
                 continue
             self.create(cr, uid, {
                 'identifier' : data['id'],
@@ -228,8 +227,8 @@ class message_received(osv.osv):
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
                 log += tools.ustr(e)
-                self.__logger.error(log)
-                error = sync_common.common.c_log_error(e, self.__logger)
+                self._logger.error(log)
+                error = self.log(e, 'error')
                 log += tools.ustr(error)
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True

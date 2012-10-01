@@ -71,13 +71,14 @@
             <field name="arch" type="xml">
                 <form string="Update Received">
                     <group col="6" colspan="4">
+                        <field name="run"/>
                         <field name="source"/>
-                        <field name="model"/>
+                        <field name="version"/>
                         <field name="sequence"/>
+                        <field name="model"/>
+                        <field name="owner"/>
                         <field name="create_date"/>
                         <field name="execution_date"/>
-                        <field name="run"/>
-                        <field name="version"/>
                     </group>
                     <separator string="Execution Messages" colspan="4"/>
                     <field name="log" nolabel="1" colspan="4" attrs="{'readonly':[('editable','=',False)]}"/>
@@ -238,13 +239,14 @@
             <field name="arch" type="xml">
                 <form string="Instance Form">
                     <group col="6" colspan="4">
-                        <field name="model"/>
-                        <field name="rule_id"/>
-                        <field name="xml_id"/>
                         <field name="sent"/>
-                        <field name="sent_date"/>
-                        <field name="version"/>
                         <field name="session_id"/>
+                        <field name="rule_id"/>
+                        <field name="model"/>
+                        <field name="xml_id"/>
+                        <field name="version"/>
+                        <field name="sent_date"/>
+                        <field name="owner"/>
                         <group colspan="6" col="1">
                             <separator string="Fields"/>
                             <field name="fields" nolabel="1"/>
