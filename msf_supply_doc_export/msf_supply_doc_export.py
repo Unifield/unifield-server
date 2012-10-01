@@ -195,7 +195,8 @@ class ir_values(osv.osv):
             for v in values:
                 if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] == 'Picking Tickets' and context.get('picking_screen', False)\
                 or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] == 'Pre-Packing Lists' and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Tickets', 'Pre-Packing Lists'] :
+                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Tickets', 'Pre-Packing Lists']\
+                or context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models] and v[1] == 'Reception':
                     new_act.append(v)
                 values = new_act
                 
