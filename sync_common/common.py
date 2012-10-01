@@ -69,7 +69,7 @@ XML_ID_TO_IGNORE = [
                     'main_company', 
                         ]
 
-def log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
+def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
     if not hasattr(obj, '_logger'):
         raise Exception("No _logger specified for object %s!" % obj._name)
     output = ""
@@ -94,16 +94,10 @@ def log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
     getattr(obj._logger, level)(output[:-1])
     return output
 
-osv.osv.log = log
-
-old__init__ = osv.osv.__init__
-
-def __mklogger__(obj, *a, **kw):
-    old__init__(obj, *a, **kw)
+def __init_logger__(obj, *a, **kw):
+    super(obj.__class__, obj).__init__(obj, *a, **kw)
     if not hasattr(obj, '_logger') and (obj._module.startswith('sync') or obj._module.startswith('update_')):
         obj._logger = logging.getLogger(obj._module)
-
-osv.osv.__init__ = __mklogger__
 
 def compile_models_to_ignore():
     global MODELS_TO_IGNORE

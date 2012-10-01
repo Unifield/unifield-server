@@ -26,11 +26,10 @@ from tools.translate import _
 from datetime import datetime
 import tools
 import time
-import pprint
 import sync_data
 from sync_client.ir_model_data import link_with_ir_model, dict_to_obj
-pp = pprint.PrettyPrinter(indent=4)
-import logging
+
+from sync_common.common import __init_logger__, sync_log
 
 from tools.safe_eval import safe_eval as eval
 
@@ -50,13 +49,15 @@ class local_message_rule(osv.osv):
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
     }
 
+    __init__ = __init_logger__
+
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
         for data in data_list:
             model_name = data.get('model')
             model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
             if not model_id:
-                self.log("Model %s does not exist" % model_name, data=data)
+                sync_log(self, "Model %s does not exist" % model_name, data=data)
                 continue #we do not save this rule
             data['model'] = model_id[0]
 
@@ -125,7 +126,7 @@ class message_to_send(osv.osv):
         if not res:
             self.create(cr, uid, data, context=context)
         #else:
-            #self.log("Message %s already exist" % identifier)
+            #sync_log(self, "Message %s already exist" % identifier)
 
 
 
@@ -163,7 +164,6 @@ message_to_send()
 class message_received(osv.osv):
     _name = "sync.client.message_received"
     _rec_name = 'identifier'
-    _logger = logging.getLogger('sync.client')
     _columns = {
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sequence': fields.integer('Sequence', readonly = True),
@@ -177,11 +177,13 @@ class message_received(osv.osv):
         'editable' : fields.boolean("Set editable"),
     }
 
+    __init__ = __init_logger__
+
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
             if ids:
-                self.log('Message %s already in the database' % data['id'])
+                sync_log(self, 'Message %s already in the database' % data['id'])
                 continue
             self.create(cr, uid, {
                 'identifier' : data['id'],
@@ -228,7 +230,7 @@ class message_received(osv.osv):
                 log = "Something go wrong with the call %s \n" % message.remote_call
                 log += tools.ustr(e)
                 self._logger.error(log)
-                error = self.log(e, 'error')
+                error = sync_log(self, e, 'error')
                 log += tools.ustr(error)
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True

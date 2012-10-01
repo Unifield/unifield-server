@@ -21,15 +21,13 @@
 
 from osv import osv
 from osv import fields
-import pprint
-import logging
-pp = pprint.PrettyPrinter(indent=4)
+
+from sync_common.common import __init_logger__, sync_log
 
 class message(osv.osv):
     _name = "sync.server.message"
     _rec_name = 'identifier'
     
-    _logger = logging.getLogger('sync.server')
     _columns = {
         'identifier': fields.char('Identifier', size=128, select=True),
         'sent': fields.boolean('Sent to destination ?', select=True),
@@ -46,16 +44,18 @@ class message(osv.osv):
         'sequence' : lambda self, cr, uid, *a: int(self.pool.get('ir.sequence').get(cr, uid, 'sync.message')),
     }
 
+    __init__ = __init_logger__
+
     def unfold_package(self, cr, uid, entity, package, context=None):
         for data in package:
             
             destination = self._get_destination(cr, uid, data['dest'], context=context)
             if not destination:
-                self.log('destination %s does not exist' % data['dest'])
+                sync_log(self, 'destination %s does not exist' % data['dest'])
                 continue
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
             if ids: 
-                self.log('Message %s already in the server database' % data['id'])
+                sync_log(self, 'Message %s already in the server database' % data['id'])
                 continue
             self.create(cr, uid, {
                 'identifier': data['id'],

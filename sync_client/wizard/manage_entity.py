@@ -24,11 +24,13 @@ from osv import fields
 from osv import orm
 from tools.translate import _
 import logging
+from sync_common.common import __init_logger__, sync_log
 
 class entity_manager(osv.osv_memory):
     _name = "sync.client.entity_manager"
     _description = "Wizard invalidate and more"
-    _logger = logging.getLogger('sync.client')
+    __init__ = __init_logger__
+    #_logger = logging.getLogger('sync.client')
     
     _columns = {
         'entity_ids' : fields.one2many('sync.client.child_entity', 'manage_id', 'Children Instances'),
@@ -52,7 +54,7 @@ class entity_manager(osv.osv_memory):
             if res and not res[0]: raise StandardError, res[1]
             my_infos.update({'entity_ids' : [(0,0, data) for data in res[1]], 'state' : 'ready' })
         except StandardError, e:
-            self.log(e, 'error')
+            sync_log(self, e, 'error')
             raise osv.except_osv(_('Error !'), res[1])
         else:
             self.write(cr, uid, ids, my_infos, context=context)

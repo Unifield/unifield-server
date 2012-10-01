@@ -22,9 +22,9 @@
 from osv import osv
 from osv import fields
 import sync_common.common
+from sync_common.common import __init_logger__, sync_log
 from tools.translate import _
 from datetime import datetime
-import logging
 
 _field2type = {
     'text'      : 'str',
@@ -53,7 +53,7 @@ class sync_rule(osv.osv):
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
     
-    _logger = logging.getLogger('sync.server')
+    __init__ = __init_logger__
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -236,7 +236,7 @@ class sync_rule(osv.osv):
                         if field['ttype'] == 'date': datetime.strptime(value, '%Y-%m-%d')
                         if field['ttype'] == 'datetime': datetime.strptime(value, '%Y-%m-%d %H:%M')
                 except Exception, e:
-                    self.log(e, 'error')
+                    sync_log(self, e, 'error')
                     errors.append("%s: type %s incompatible with field of type %s" % (field['name'], type(value).__name__, field['ttype']))
                     continue
                 sel[str(field['name'])] = value
@@ -367,7 +367,7 @@ class message_rule(osv.osv):
     _name = "sync_server.message_rule"
     _description = "Message Rule"
     
-    _logger = logging.getLogger('sync.server')
+    __init__ = __init_logger__
 
     def _get_model_id(self, cr, uid, ids, field, args, context=None):
         res = {}
@@ -474,7 +474,7 @@ class message_rule(osv.osv):
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model','=',rec.model_id),('name','=',rec.destination_name)], context=context)
                 if not field_ids: raise StandardError
             except Exception, e:
-                self.log(e, 'error')
+                sync_log(self, e, 'error')
                 message.append("failed! Field %s doesn't exist\n" % rec.destination_name)
                 error = True
             else:

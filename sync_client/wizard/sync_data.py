@@ -31,7 +31,7 @@ import traceback
 import re
 from sync_client.ir_model_data import link_with_ir_model
 
-import logging
+from sync_common.common import __init_logger__, sync_log
 
 from tools.safe_eval import safe_eval as eval
 
@@ -69,9 +69,8 @@ def eval_poc_domain(obj, cr, uid, domain, context=None):
     return obj.search(cr, uid, domain_new, context=context)
 
 class local_rule(osv.osv):
-    
     _name = "sync.client.rule"
-    
+
     _columns = {
         'server_id' : fields.integer('Server ID', required=True, readonly=True),
         'name' : fields.char('Rule name', size=64, readonly=True),
@@ -82,13 +81,15 @@ class local_rule(osv.osv):
         'owner_field' : fields.char('Owner Field', size=128, readonly=True),
     }
     
+    __init__ = __init_logger__
+
     def save(self, cr, uid, data_list, context=None):
         self._delete_old_rules(cr, uid, context)
         for data in data_list:
             model_name = data.get('model')
             model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', model_name)], context=context)
             if not model_id:
-                self.log("Model %s does not exist" % model_name, data=data)
+                sync_log(self, "Model %s does not exist" % model_name, data=data)
                 continue #do not save the rule if there is no valid model
             data['model'] = model_id[0]
             
@@ -109,7 +110,6 @@ class update_to_send(osv.osv):
     """
     _name = "sync.client.update_to_send"
     _rec_name = 'values'
-    _logger = logging.getLogger('sync.client')
 
     _columns = {
         'values':fields.text('Values', size=128, readonly=True),
@@ -130,7 +130,9 @@ class update_to_send(osv.osv):
         'sync_date' : lambda *a : datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
         'sent' : False,
     }
-    
+
+    __init__ = __init_logger__
+
     def create_update(self, cr, uid, rule_id, session_id, context=None):
         context = dict(context or {})
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
@@ -237,12 +239,14 @@ class update_received(osv.osv):
 
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)")
     
+    __init__ = __init_logger__
+
     def unfold_package(self, cr, uid, packet, context=None):
         if not packet:
             return 0
         model_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', packet['model'])], context=context)
         if not model_id:
-            self.log("Model %s does not exist" % packet['model'], data=packet)
+            sync_log(self, "Model %s does not exist" % packet['model'], data=packet)
         data = {
             'source' : packet['source_name'],
             'model' : model_id[0],
@@ -267,7 +271,7 @@ class update_received(osv.osv):
         try:
             self.execute_update(cr, uid, ids, context=context)
         except BaseException, e:
-            self.log(e)
+            sync_log(self, e)
         return True
 
     def execute_update(self, cr, uid, ids=None, context=None):
@@ -289,7 +293,7 @@ class update_received(osv.osv):
                 update_groups[update.rule_sequence].append(update)
             except KeyError:
                 update_groups[update.rule_sequence] = [update]
-        self.log(data="received update ids = %s, models = %s" % (update_ids, map(lambda x:x[0].model.model, update_groups.values())))
+        sync_log(self, data="received update ids = %s, models = %s" % (update_ids, map(lambda x:x[0].model.model, update_groups.values())))
         self.write(cr, uid, update_ids, {'execution_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
         def secure_import_data(obj, fields, values):
@@ -363,7 +367,7 @@ class update_received(osv.osv):
                 #1 conflict detection
                 if self._conflict(cr, uid, update, context):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                    logs[update.id] = self.log("Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
+                    logs[update.id] = sync_log(self, "Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
                     #TODO manage other conflict rules here (tfr note)
 
             if bad_fields:

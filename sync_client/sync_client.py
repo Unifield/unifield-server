@@ -30,7 +30,8 @@ import tools
 import time
 import sys
 import traceback
-import logging
+
+from sync_common.common import __init_logger__, sync_log
 
 from threading import Thread
 import pooler
@@ -41,8 +42,7 @@ class entity(osv.osv, Thread):
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
     
-    _logger = logging.getLogger('sync.client')
-
+    __init__ = __init_logger__
 
     def _auto_init(self,cr,context=None):
         res = super(entity,self)._auto_init(cr,context=context)
@@ -152,7 +152,7 @@ class entity(osv.osv, Thread):
 
     #def _log_error(self, log, e):
     def errorSync(self, e, log, step):
-        error = self.log(e, 'error', traceback=True)
+        error = sync_log(self, e, 'error', traceback=True)
         log['error'] = log.get('error', '') + "%s: %s" % (self.state_prefix[step], error)
         log[step] = 'failed'
         return log[step]
