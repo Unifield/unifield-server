@@ -153,17 +153,16 @@ class wizard_account_invoice(osv.osv):
             'name': inv_number,
         })
         
-        # Hard post the line
-        absl_obj.button_hard_posting(cr, uid, [reg_line_id], context=context)
+        # Temp post the line
+        absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
         
         # Link invoice and register_line
         res_inv = inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
         
         # Do reconciliation
-        inv_obj.action_reconcile_direct_invoice(cr, uid, [inv_id], context=context)
+        # Moved since UF-1471. This is now down when you hard post the linked register line.
 
         # Delete the wizard
-        # TODO: correct this to work
         self.unlink(cr, uid, ids, context=context)
 
         return open_register_view(self, cr, uid,inv['register_id'][0])
