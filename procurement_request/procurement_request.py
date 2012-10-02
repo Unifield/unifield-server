@@ -361,6 +361,10 @@ class procurement_request_line(osv.osv):
             else:
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
+
+        if not vals.get('product_id', False):
+            if not vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
+                vals['to_correct_ok'] = True
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
