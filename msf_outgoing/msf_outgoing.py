@@ -2158,6 +2158,8 @@ class stock_picking(osv.osv):
         # if the picking is converted to standard, and state is confirmed
         if pick.converted_to_standard and pick.state == 'confirmed':
             return 'The Preparation Picking has been converted to simple Out. ' + message
+        if pick.type == 'out' and pick.subtype == 'picking':
+            kwargs['message'] = message.replace('Delivery Order', 'Picking Ticket')
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
     
     def convert_to_standard(self, cr, uid, ids, context=None):
@@ -2231,6 +2233,7 @@ class stock_picking(osv.osv):
                     'res_id': obj.id,
                     'type': 'ir.actions.act_window',
                     'target': 'crush',
+                    'context': context,
                     }
     
     def create_picking(self, cr, uid, ids, context=None):
@@ -2719,6 +2722,7 @@ class stock_picking(osv.osv):
             'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': context,
         }
     
     def action_cancel(self, cr, uid, ids, context=None):
