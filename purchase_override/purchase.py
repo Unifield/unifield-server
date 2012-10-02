@@ -491,7 +491,7 @@ class purchase_order(osv.osv):
         step = 'default'
         question = "You're about to confirm a PO that is synchronized and should be consequently confirmed by the supplier (automatically at his equivalent FO confirmation). Are you sure you want to force the confirmation at your level (you won't get the supplier's update)?"
         clazz = 'purchase.order'
-        func = 'purchase_approve'
+        func = '_purchase_approve'
         args = [ids]
         kwargs = {}
                 
@@ -505,13 +505,24 @@ class purchase_order(osv.osv):
                                                                                                                   'func': func,
                                                                                                                   'args': args,
                                                                                                                   'kwargs': kwargs}))
-                # if not a act_window dic, we close the wizard
-                if not isinstance(res, dict):
-                    return {'type': 'ir.actions.act_window_close'}
                 return res
             
         # otherwise call function directly
-        return getattr(self, func)(cr, uid, ids, context=context)
+        return self.purchase_approve(cr, uid, ids, context=context)
+    
+    def _purchase_approve(self, cr, uid, ids, context=None):
+        '''
+        interface for call from wizard
+        
+        if called from wizard without opening a new dic -> return close
+        if called from wizard with new dic -> open new wizard
+        
+        if called from button directly, this interface is not called
+        '''
+        res = self.purchase_approve(cr, uid, ids, context=context)
+        if not isinstance(res, dict):
+            return {'type': 'ir.actions.act_window_close'}
+        return res
     
     def purchase_approve(self, cr, uid, ids, context=None):
         '''
