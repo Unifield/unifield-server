@@ -470,10 +470,11 @@ class procurement_request_line(osv.osv):
             value.update({'name': 'To be defined',
                           'supplier': False,
                           'product_ok': True})
-            if not nomen_manda_0:
-                value.update({'nomen_manda_0': tbd_0,
-                              'nomen_manda_1': tbd_1,
-                              'nomen_manda_2': tbd_2,})
+            # it bugs with the To Be Defined => needs to be removed
+#            if not nomen_manda_0:
+#                value.update({'nomen_manda_0': tbd_0,
+#                              'nomen_manda_1': tbd_1,
+#                              'nomen_manda_2': tbd_2,})
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         if not comment:
             value.update({'product_ok': True})

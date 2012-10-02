@@ -244,7 +244,7 @@
                       <!-- EXACT COPY-PASTE FROM product_nomenclature_view.xml -->
                       <page string="Nomenclature Selection">
                       
-                          <group colspan="4" col="2" attrs="{'readonly': [('parent.state', 'not in', ['draft', 'validated'])]}">
+                          <group colspan="4" col="2">
                               
                               <field name="nomenclature_code" colspan="2" invisible="True" />
                               <field name="nomenclature_description" colspan="2" readonly="True" />
