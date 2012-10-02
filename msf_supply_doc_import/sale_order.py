@@ -402,28 +402,6 @@ class sale_order_line(osv.osv):
                 'view_id': [view_id],
                 }
 
-    def open_order_line_to_correct(self, cr, uid, ids, context=None):
-        '''
-        Open Order Line in form view for internal request
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
-        view_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'view_order_line_to_correct_form')[1]
-        view_to_return = {
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'sale.order.line',
-            'type': 'ir.actions.act_window',
-            'res_id': ids[0],
-            'target': 'new',
-            'context': context,
-            'view_id': [view_id],
-        }
-        return view_to_return
-
     def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
