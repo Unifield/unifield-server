@@ -119,7 +119,7 @@
                         <notebook colspan="4">
                             <page string="Journal Items">
                                 <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines':line_id , 'journal':journal_id, 'period_id':period_id}">
-                                    <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" hide_delete_button="1" string="Journal Items">
+                                    <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <field name="name"/>
                                         <field name="ref"/>
                                         <field name="document_date"/>
