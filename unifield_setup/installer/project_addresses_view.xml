@@ -34,7 +34,7 @@
                                         <field name="company_id" invisible="1"/>
                                         <field name="second_time" invisible="1" />
                                         <field name="name" attrs="{'readonly': [('second_time', '=', True)]}"/>
-                                        <field name="partner_name"/>
+                                        <field name="partner_name" attrs="{'readonly': [('second_time', '=', True)]}" />
 				        	            <field name="street" required="True"/>
 				            	        <field name="street2"/>
 				                	    <field name="zip" required="True"/>
