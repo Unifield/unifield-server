@@ -453,6 +453,10 @@ class sale_order_line(osv.osv):
                     vals['show_msg_ok'] = False
                     vals['to_correct_ok'] = False
                     vals['text_error'] = False
+
+        if not vals.get('product_id', False):
+            if not vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
+                vals['to_correct_ok'] = True
         
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
