@@ -72,6 +72,9 @@ class project_addresses(osv.osv_memory):
 
         res['partner_name'] = partner_name
         res['second_time'] = company.company_second_time
+
+        if not company.company_second_time:
+            res['partner_name'] = company.instance_id.name
         
         if default_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, default_id, context=context)
