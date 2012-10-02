@@ -50,7 +50,7 @@
                                 <tree string="Products" editable="top" >
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment)" 
                                     attrs="{'required': [('product_ok', '=', False)]}"/>
-                                    <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,type)"
+                                    <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,nomen_manda_0)"
                                     attrs="{'required': [('comment_ok', '=', False)]}"/>
                                     <field name="name" invisible="1" />
                                     <field name="product_ok" invisible="1" />

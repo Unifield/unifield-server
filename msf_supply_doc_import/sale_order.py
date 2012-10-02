@@ -387,21 +387,6 @@ class sale_order_line(osv.osv):
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def save_and_close(self, cr, uid, ids, context=None):
-        '''
-        Save and close the configuration window for internal request
-        '''
-        vals = {}
-        self.write(cr, uid, ids, vals, context=context)
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
-        return {'type': 'ir.actions.act_window_close',
-                'res_model': 'sale.order',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'view_id': [view_id],
-                }
-
     def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
         '''
         Check if the UoM is convertible to product standard UoM

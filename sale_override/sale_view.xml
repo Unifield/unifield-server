@@ -244,12 +244,12 @@
                       <!-- EXACT COPY-PASTE FROM product_nomenclature_view.xml -->
                       <page string="Nomenclature Selection">
                       
-                          <group colspan="4" col="2">
+                          <group colspan="4" col="2" attrs="{'readonly': [('parent.state', 'not in', ['draft', 'validated'])]}">
                               
                               <field name="nomenclature_code" colspan="2" invisible="True" />
                               <field name="nomenclature_description" colspan="2" readonly="True" />
                               <field name="comment" colspan="2" 
-                              on_change="comment_change(comment,product_id,type)"
+                              on_change="comment_change(comment,product_id,nomen_manda_0)"
                               attrs="{'required':[('product_id', '=', False)]}" />
                           
                           </group>

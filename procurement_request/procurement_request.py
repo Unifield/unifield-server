@@ -453,7 +453,7 @@ class procurement_request_line(osv.osv):
             v.update({'supplier': False})
         return {'value': v}
     
-    def comment_change(self, cr, uid, ids, comment, product_id, type, context=None):
+    def comment_change(self, cr, uid, ids, comment, product_id, nomen_manda_0, context=None):
         '''
         Fill the level of nomenclatures with tag "to be defined" if you have only comment
         '''
@@ -462,19 +462,18 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
         
         if comment and not product_id:
-            value.update({'nomen_manda_0': nomen_manda_0,
-                        'nomen_manda_1': nomen_manda_1,
-                        'nomen_manda_2': nomen_manda_2,
-                        'nomen_manda_3': nomen_manda_3,
-                        'name': 'To be defined',
-                        'supplier': False,
-                        'product_ok': True})
+            value.update({'name': 'To be defined',
+                          'supplier': False,
+                          'product_ok': True})
+            if not nomen_manda_0:
+                value.update({'nomen_manda_0': tbd_0,
+                              'nomen_manda_1': tbd_1,
+                              'nomen_manda_2': tbd_2,})
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         if not comment:
             value.update({'product_ok': True})
