@@ -193,18 +193,18 @@ class ir_values(osv.osv):
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:
-                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] == 'Picking Tickets' and context.get('picking_screen', False)\
-                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] == 'Pre-Packing Lists' and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Tickets', 'Pre-Packing Lists', 'Delivery Orders']:
+                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in ('Picking Tickets', 'Picking Ticket') and context.get('picking_screen', False)\
+                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in ('Pre-Packing Lists', 'Pre-Packing List') and context.get('ppl_screen', False)\
+                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Ticket', 'Picking Tickets', 'Pre-Packing List', 'Pre-Packing Lists', 'Delivery Orders', 'Delivery Order']:
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
             new_act = []
             for v in values:
 
-                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] == 'Packing Lists' :
+                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in ('Packing Lists', 'Packing List') :
                     new_act.append(v)
-                elif context['_terp_view_name'] == 'Shipment Lists':
+                elif context['_terp_view_name'] in ('Shipment Lists', 'Shipment List', 'Shipments', 'Shipment'):
                     new_act.append(v)
                 values = new_act
         elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':

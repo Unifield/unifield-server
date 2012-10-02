@@ -2323,7 +2323,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
-        context.update({'picking_type': 'picking_ticket'})
+        context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
@@ -2468,7 +2468,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
         view_id = view_id and view_id[1] or False
-        context.update({'picking_type': 'picking_ticket'})
+        context.update({'picking_type': 'picking_ticket', 'ppl_screen': True})
         return {'name':_("Pre-Packing List"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
