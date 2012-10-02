@@ -220,11 +220,13 @@ class res_partner(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if not context:
+            context = {}
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
         bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
-        if res and res in ids and 'name' in vals:
+        if not context.get('from_config') and res and res in ids and 'name' in vals:
                 del vals['name']
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
