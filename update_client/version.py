@@ -8,11 +8,15 @@ Created on 9 juil. 2012
 from osv import osv
 from osv import fields
 import tools
+from tools import config
+import os
 #import sync_server
 #import pprint
 #pp = pprint.PrettyPrinter(indent=4)
 #import logging
 
+update_directory = os.path.join(config['root_path'], ".update")
+lock_file = os.path.join(config['root_path'], "update.lock")
 
 class version(osv.osv):
     
@@ -35,12 +39,12 @@ class version(osv.osv):
     _sql_constraints = [('unique_sum', 'unique(sum)', 'Patches must be unique!')]
 
     def _need_restart(self, cr, uid, context=None):
-        return bool(self.search(cr, uid, [('state','=','need-restart')], context=context))
+        return os.path.isfile(lock_file) #or bool(self.search(cr, uid, [('state','=','need-restart')], context=context))
 
     def _update(self, cr, uid, revisions, context=None):
         res = []
         for rev in revisions:
-            ids = self.search(cr, uid, [('sum','=',rev['sum'])], context=context)
+            ids = self.search(cr, uid, [('sum','=',rev['sum'])], limit=1, context=context)
             if not ids:
                 res.append( self.create(cr, uid, rev, context=context) )
             elif self.browse(cr, uid, ids, context=context)[0].state == 'not-installed':
@@ -55,14 +59,14 @@ class version(osv.osv):
     def _get_next_revisions(self, cr, uid, context=None):
         current = self._get_last_revision(cr, uid, context=context)
         if current:
-            revisions = self.search(cr, uid, [('date','>',current.date),('state','=','not-installed')], order='date asc')
+            revisions = self.search(cr, uid, [('date','>',current.date),('state','!=','installed')], order='date asc')
         else:
-            revisions = self.search(cr, uid, [('state','=','not-installed')], order='date asc')
+            revisions = self.search(cr, uid, [('state','!=','installed')], order='date asc')
         return revisions
 
     def _is_outdated(self, cr, uid, context=None):
         current = self._get_last_revision(cr, uid, context=context)
-        where = [('state','=','not-installed'),('importance','=','required')]
+        where = [('state','!=','installed'),('importance','=','required')]
         if current:
             where.append(('date','>',current.date))
         return bool(self.search(cr, uid, where, limit=1))

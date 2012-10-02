@@ -7,6 +7,7 @@ from StringIO import StringIO
 from base64 import b64decode
 from hashlib import md5
 import logging
+from version import lock_file, update_directory
 
 if sys.version_info >= (2, 6, 6):
     from zipfile import ZipFile, ZipInfo
@@ -31,7 +32,7 @@ class upgrade(osv.osv_memory):
     def restart(self, cr, uid, ids, context=None):
         os.chdir( config['root_path'] )
         tools.restart_required = True
-        return  {'type': 'ir.actions.act_window_close'}
+        return {'type': 'ir.actions.act_window_close'}
 
     def download(self, cr, uid, ids, context=None):
         """Downlad the patch to fill the version record"""
@@ -70,7 +71,7 @@ class upgrade(osv.osv_memory):
         revisions = self.pool.get('sync_client.version')
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
         ## Make an update temporary path
-        path = os.path.join(config['root_path'], ".update")
+        path = update_directory
         if not os.path.exists(path):
             os.mkdir(path)
         else:
@@ -109,7 +110,7 @@ class upgrade(osv.osv_memory):
             ## Fix the flag of the pending revisions
             revisions.write(cr, uid, rev.id, {'state':'need-restart'}, context=context)
         ## Make a lock file to make OpenERP able to detect an update
-        f = open(os.path.join(config['root_path'], "update.lock"), "w")
+        f = open(lock_file, "w")
         f.write(str({
             'dbname' : cr.dbname,
             'revisions' : new_revisions,

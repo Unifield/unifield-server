@@ -135,7 +135,10 @@ class write_info(osv.osv):
             return
         real_modif_field = []
         for k, val in read_res.items():
-            if k in field and (not isinstance(values[k], list) or values[k]) and val != values[k]:
+            #TODO
+            #if k in field and (not isinstance(values[k], list) or values[k]):
+            #    print "####", val, '!=', values[k], type(val), type(values[k])
+            if k in field and (not isinstance(values[k], list) or values[k]) and val != tools.ustr(values[k]):
                 real_modif_field.append(k)
         if real_modif_field:
             self.create(cr, uid, {'model' : model_name, 'res_id' : res_id, 'fields_modif' : str(real_modif_field)}, context=context )
