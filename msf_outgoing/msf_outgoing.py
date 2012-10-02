@@ -2160,6 +2160,10 @@ class stock_picking(osv.osv):
             return 'The Preparation Picking has been converted to simple Out. ' + message
         if pick.type == 'out' and pick.subtype == 'picking':
             kwargs['message'] = message.replace('Delivery Order', 'Picking Ticket')
+        elif pick.type == 'out' and pick.subtype == 'packing':
+            kwargs['message'] = message.replace('Delivery Order', 'Packing List')
+        elif pick.type == 'out' and pick.subtype == 'ppl':
+            kwargs['message'] = message.replace('Delivery Order', 'Pre-Packing List')
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
     
     def convert_to_standard(self, cr, uid, ids, context=None):
