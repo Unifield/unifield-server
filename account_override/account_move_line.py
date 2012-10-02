@@ -28,6 +28,7 @@ import decimal_precision as dp
 from time import strftime
 import logging
 from tools.translate import _
+from time import strftime
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -139,6 +140,7 @@ class account_move_line(osv.osv):
     _defaults = {
         'is_addendum_line': lambda *a: False,
         'is_write_off': lambda *a: False,
+        'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
     }
 
     _order = 'move_id DESC'
@@ -185,6 +187,8 @@ class account_move_line(osv.osv):
             vals.update({'document_date': vals.get('date')})
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
             raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        if 'document_date' in vals:
+            context['document_date'] = vals['document_date']
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
