@@ -472,6 +472,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             # verify sale order line state
             if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
+            # verify move state
+            if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.state not in ['draft']:
+                res[el.id] = False
         return res
 
     def _have_header(self, cr, uid, ids, name, args, context=None):

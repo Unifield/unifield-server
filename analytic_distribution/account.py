@@ -20,9 +20,10 @@
 ##############################################################################
 
 from osv import fields, osv
-import tools
+from tools import drop_view_if_exists
 from lxml import etree
 from destination_tools import many2many_notlazy
+from tools.translate import _
 
 # here was destination_m2m, replaced by the generic many2many_notlazy
 
@@ -179,7 +180,7 @@ class account_destination_summary(osv.osv):
         if not cr.fetchall():
             cr.execute("ALTER TABLE funding_pool_associated_destinations ADD COLUMN id SERIAL")
 
-        tools.drop_view_if_exists(cr, 'account_destination_summary')
+        drop_view_if_exists(cr, 'account_destination_summary')
         cr.execute(""" 
             CREATE OR REPLACE view account_destination_summary AS (
                 SELECT
@@ -244,4 +245,23 @@ class account_account(osv.osv):
         return res
 
 account_account()
+
+class account_move(osv.osv):
+    _name = 'account.move'
+    _inherit = 'account.move'
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Check that analytic distribution is ok for all lines
+        """
+        if not context:
+           context = {}
+        for m in self.browse(cr, uid, ids):
+            for ml in m.line_id:
+                if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code == 'expense':
+                    if ml.analytic_distribution_state != 'valid':
+                        raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (ml.name or '',))
+        return super(account_move, self).button_validate(cr, uid, ids, context=context)
+
+account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

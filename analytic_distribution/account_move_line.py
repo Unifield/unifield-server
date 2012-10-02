@@ -26,9 +26,51 @@ from tools.translate import _
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
+    def _display_analytic_button(self, cr, uid, ids, name, args, context=None):
+        """
+        Return True for all element that correspond to some criteria:
+         - The journal entry state is draft (unposted)
+         - The account is an expense account
+        """
+        res = {}
+        for ml in self.browse(cr, uid, ids, context=context):
+            res[ml.id] = True
+            # False if journal entry is posted
+            if ml.move_id.state == 'posted':
+                res[ml.id] = False
+            # False if account not an expense account
+            if ml.account_id.user_type.code not in ['expense']:
+                res[ml.id] = False
+        return res
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the invoice line, then "valid"
+         - if no distribution, take a tour of invoice distribution, if compatible, then "valid"
+         - if no distribution on invoice line and invoice, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-    }
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+            help="This informs system that we can display or not an analytic button", store=False),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+   }
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
         """
@@ -93,6 +135,56 @@ class account_move_line(osv.osv):
         ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
         return super(account_move_line, self).unlink(cr, uid, ids)
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on an move line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No journal item given. Please save your line before.'))
+        # Prepare some values
+        ml = self.browse(cr, uid, ids[0], context=context)
+        distrib_id = False
+        amount = ml.debit_currency - ml.credit_currency
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = ml.currency_id and ml.currency_id.id or company_currency
+        # Get analytic distribution id from this line
+        distrib_id = ml and ml.analytic_distribution_id and ml.analytic_distribution_id.id or False
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'move_line_id': ml.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': ml.account_id and ml.account_id.id or False,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': 'Analytic distribution',
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
