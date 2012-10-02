@@ -391,6 +391,8 @@ class procurement_request_line(osv.osv):
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
+        'product_ok': fields.boolean('Product', store=False),
+        'comment_ok': fields.boolean('Product', store=False),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
@@ -405,6 +407,8 @@ class procurement_request_line(osv.osv):
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
         'date_planned': _get_planned_date,
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'product_ok': False,
+        'comment_ok': False,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
@@ -421,11 +425,12 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False}
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
-            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method}
+            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
+                     'type': product.procure_method, 'comment_ok': True}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
@@ -468,9 +473,11 @@ class procurement_request_line(osv.osv):
                         'nomen_manda_2': nomen_manda_2,
                         'nomen_manda_3': nomen_manda_3,
                         'name': 'To be defined',
-                        'supplier': False,})
+                        'supplier': False,
+                        'product_ok': True})
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         if not comment:
+            value.update({'product_ok': True})
             domain = {'product_uom':[], 'supplier': []}
         return {'value': value, 'domain': domain}
     
