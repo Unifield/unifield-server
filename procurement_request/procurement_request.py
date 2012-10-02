@@ -391,8 +391,8 @@ class procurement_request_line(osv.osv):
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
-        'product_ok': fields.boolean('Product', store=False),
-        'comment_ok': fields.boolean('Product', store=False),
+        'product_ok': fields.boolean('Product selected', store=False),
+        'comment_ok': fields.boolean('Comment written', store=False),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
