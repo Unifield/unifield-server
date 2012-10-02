@@ -349,11 +349,11 @@ class sale_order(osv.osv):
                     if not line.product_id:
                         raise osv.except_osv(_('Warning'), _("""You can't confirm a Sale Order that contains
                         lines with procurement method 'On Order' and without product. Please check the line %s
-                        """) % line.no_line)
+                        """) % line.line_number)
                     if not line.supplier and line.po_cft in ('po', 'dpo'):
                         raise osv.except_osv(_('Error'), _("""Supplier is not defined for all Field Order lines. 
                         Please check the line %s
-                        """) % line.no_line)
+                        """) % line.line_number)
                 fo_type = False
                 # get corresponding type
                 if line.type == 'make_to_stock':
