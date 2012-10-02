@@ -20,7 +20,7 @@
                          <field name="supplier"
                                 context="{'product_id': product_id, 'choose_supplier': True}"
                                 attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
-                                domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"
+                                domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                              />
                          <newline />
                          <field name="state"/>
@@ -33,7 +33,9 @@
                               
                               <field name="nomenclature_code" colspan="2" invisible="True" />
                               <field name="nomenclature_description" colspan="2" readonly="True" />
-                              <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}" />
+                              <field name="comment" colspan="2" 
+                              on_change="comment_change(comment,product_id,type)"
+                              attrs="{'required':[('product_id', '=', False)]}" />
                           
                           </group>
                           <newline />
