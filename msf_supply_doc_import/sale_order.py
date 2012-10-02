@@ -330,6 +330,14 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         message += str(line_num)
                         if len(message.split(',')) > 1:
                             plural = 's'
+                    elif not var.nomen_manda_0 or not var.nomen_manda_1 or not var.nomen_manda_2:
+                        line_num = var.line_number
+                        if message:
+                            message += ', '
+                        message += str(line_num)
+                        if len(message.split(',')) > 1:
+                            plural = 's'
+                        message += ". Please define the nomenclature levels."
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s: %s') % (plural, message))
         return True
