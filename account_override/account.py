@@ -81,6 +81,7 @@ class account_move(osv.osv):
         'name': fields.char('Entry Sequence', size=64, required=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
             string="Statement lines", help="This field give all statement lines linked to this move."),
+        'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
     }
 
     def create(self, cr, uid, vals, context=None):
