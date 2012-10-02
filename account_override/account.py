@@ -73,7 +73,6 @@ class account_journal(osv.osv):
     
 account_journal()
 
-
 class account_move(osv.osv):
     _inherit = 'account.move'
 
@@ -82,6 +81,11 @@ class account_move(osv.osv):
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
             string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
+        'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
+    }
+
+    _defaults = {
+        'status': lambda *a: 'sys',
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -93,11 +97,37 @@ class account_move(osv.osv):
             if not instance.move_prefix:
                 raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
             vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+        if 'from_web_menu' in context:
+            vals.update({'status': 'manu'})
         return super(account_move, self).create(cr, uid, vals, context=context)
     
     def name_get(self, cursor, user, ids, context=None):
         # Override default name_get (since it displays "*12" names for unposted entries)
         return super(osv.osv, self).name_get(cursor, user, ids, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check that we can write on this if we come from web menu
+        """
+        if not context:
+            context = None
+        if context.get('from_web_menu', False):
+            for m in self.browse(cr, uid, ids):
+                if m.status == 'sys':
+                    raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
+        return super(account_move, self).write(cr, uid, ids, vals, context=context)
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Check that user can approve the move by searching 'from_web_menu' in context. If present and set to True and move is manually created, so User have right to do this.
+        """
+        if not context:
+            context = {}
+        if context.get('from_web_menu', False):
+            for m in self.browse(cr, uid, ids):
+                if m.status == 'sys':
+                    raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
+        return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
 account_move()
 

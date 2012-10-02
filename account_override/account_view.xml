@@ -155,7 +155,10 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <tree string="Journal Entries" position="replace">
-                    <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="1" hide_delete_button="1">
+                  <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="1" hide_delete_button="1">
+                        <button string="Is manual" attrs="{'invisible': [('status', '=', 'sys')]}" 
+                            icon="gtk-color-picker" colspan="2"/>
+                        <field name="status" invisible="1"/>
                         <field name="name"/>
                         <field name="ref"/>
                         <field name="date"/>
@@ -186,6 +189,18 @@
                     <field name="partner_type"/>
                 </xpath>
             </field>
+        </record>
+
+    <!-- Redefine journal entries action -->
+        <record id="account.action_move_journal_line" model="ir.actions.act_window">
+            <field name="name">Journal Entries</field>
+            <field name="res_model">account.move</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,graph</field>
+            <field name="view_id" ref="account.view_move_tree"/>
+            <field name="search_view_id" ref="account.view_account_move_filter"/>
+            <field name="help">A journal entry consists of several journal items, each of which is either a debit or a credit transaction. OpenERP automatically creates one journal entry per accounting document: invoice, refund, supplier payment, bank statements, etc.</field>
+            <field name="context">{'from_web_menu': True}</field>
         </record>
 
     </data>

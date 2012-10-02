@@ -197,6 +197,10 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
+        if context.get('from_web_menu', False):
+            for ml in self.browse(cr, uid, ids):
+                if ml.move_id and ml.move_id.status == 'sys':
+                    raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         self._check_document_date(cr, uid, ids)
         return res
