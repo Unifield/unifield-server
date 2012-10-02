@@ -449,10 +449,7 @@ class sale_order_line(osv.osv):
 
                 if message and not context.get('procurement_request', False):
                     raise osv.except_osv(_('Warning !'), _(message))
-                
-                if not vals.get('product_id', False):
-                    if not vals.get('nomen_manda_0') or not vals.get('nomen_manda_1') or not vals.get('nomen_manda_2'):
-                        vals['to_correct_ok'] = True
+
                 else:
                     vals['show_msg_ok'] = False
                     vals['to_correct_ok'] = False
