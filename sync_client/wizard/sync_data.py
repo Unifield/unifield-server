@@ -305,11 +305,8 @@ class update_received(osv.osv):
                 res = obj.import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
             except BaseException, e:
                 cr.execute("ROLLBACK TO SAVEPOINT import_data")
-                try:
-                    import_error = "".join(list(e))
-                except:
-                    import_error = str(e)
-                raise Exception(import_error)
+                self._logger.exception("import failure")
+                raise Exception(tools.ustr(e))
             else:
                 if res[0] == len(values):
                     cr.execute("RELEASE SAVEPOINT import_data")
@@ -379,6 +376,7 @@ class update_received(osv.osv):
                 try:
                     res = secure_import_data(obj, fields, values)
                 except Exception, import_error:
+                    import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, str(import_error), "\n".join([str(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self.write(cr, uid, update_ids, {
                         'run' : False,

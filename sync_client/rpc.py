@@ -13,6 +13,7 @@ from timeout_transport import TimeoutTransport
 from gzip_xmlrpclib import GzipTransport
 from osv import osv
 from tools.translate import _
+import tools
 
 try:
     import cPickle as pickle
@@ -175,7 +176,7 @@ class NetRPC:
         try:
             self.sock.connect((host, int(port)))
         except Exception, e:
-            raise NetRPC_Exception(str(e), "Could not connect to %s:%s" % (host, port))
+            raise NetRPC_Exception(tools.ustr(e), "Could not connect to %s:%s" % (host, port))
 
     def disconnect(self):
         self.sock.shutdown(socket.SHUT_RDWR)

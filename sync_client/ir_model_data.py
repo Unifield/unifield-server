@@ -49,6 +49,7 @@ MODELS_TO_IGNORE=[
                     'ir.ui.view_sc', 
                     'ir.config_parameter',
                     
+                    'sync.monitor',
                     'sync.client.rule',
                     'sync.client.push.data.information',  
                     'sync.client.update_to_send', 
@@ -239,12 +240,12 @@ class ir_model_data_sync(osv.osv):
         get_last_modification = self.pool.get('sync.client.write_info').get_last_modification
         watch_fields = set(self._clean_included_fields(cr, uid, included_fields))
         res_type = type(ids)
-        ids = ids if isinstance(ids, (tuple, list)) else [ids]
-        result = map(lambda rec:rec.id, filter(
+        ids = filter(lambda id:bool(id), (ids if isinstance(ids, (tuple, list)) else [ids]))
+        result = filter(
             lambda rec: (not rec.sync_date or \
                          watch_fields & get_last_modification(cr, uid, rec.model, rec.res_id, rec.sync_date, context=context)), \
-            self.browse(cr, uid, filter(lambda id:bool(id), ids), context=context)
-        ))
+            self.browse(cr, uid, ids, context=context) )
+        result = [rec.id for rec in result]
         return result if issubclass(res_type, (list, tuple)) else bool(result)
            
     def sync(self, cr, uid, xml_id, date=False, version=False, context=None):
@@ -373,7 +374,7 @@ def link_with_ir_model(model, cr, uid, id, context=None):
         'noupdate' : False, # don't set to True otherwise import won't work
         'model' : model._name,
         'module' : 'sd',#model._module,
-        'name' : model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id),
+        'name' : model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id).replace('.', ''),
         'res_id' : id,
         'last_modification' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
