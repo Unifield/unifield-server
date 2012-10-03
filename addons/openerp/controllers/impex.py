@@ -388,15 +388,14 @@ class ImpEx(SecuredController):
             fields = fields.replace('/.id','.id')
             flds = [fields]
 
-        # UF-1257 Delete Real stock and Virtual stock from export
+        # UF-1257 Only use Code, Description and UoM for export due to timeout error from products with some fields:
+        # - qty_available
+        # - virtual_available
+        # - fmc
+        # - amc
         if params.model == 'product.product':
-            for el in ['qty_available', 'virtual_available']:
-                if el in flds:
-                    flds.remove(el)
-                if el in fields:
-                    fields.remove(el)
-            for fld_header in ['Real Stock', 'Virtual Stock']:
-                params.fields2.remove(fld_header)
+            flds = ['default_code', 'name', 'uom_id']
+            params.fields2 = ['Code', 'Description', 'UoM']
 
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
