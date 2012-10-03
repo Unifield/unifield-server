@@ -81,6 +81,10 @@ class purchase_order_sync(osv.osv):
             header_result['name'] = po_name + "-" + so_name_split[1]
             partner_ref = source + "." + so_name_split[0]
         
+        # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
+        origin = self.browse(cr, uid, po_id, context=context)['origin']
+        header_result['origin'] = origin
+        
         default = {}
         default.update(header_result)
         
