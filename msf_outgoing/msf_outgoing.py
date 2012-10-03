@@ -1081,7 +1081,7 @@ class shipment(osv.osv):
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
                 
             # log validate action
-            self.log(cr, uid, shipment.id, _('The Shipment %s has been validated.')%(shipment.name,))
+            self.log(cr, uid, shipment.id, _('The Shipment %s has been closed.')%(shipment.name,))
             
         result = self.complete_finished(cr, uid, ids, context=context)
         return True
