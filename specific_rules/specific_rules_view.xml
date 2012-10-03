@@ -29,7 +29,10 @@
             <field name="priority" eval="2"/>
             <field name="inherit_id" ref="stock.view_location_tree2" />
             <field name="arch" type="xml">
-            	<data>
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name="hide_new_button">not context.get('from_advanced_menu')</attribute>
+                    </xpath>
             	
 					<field name="stock_real" position="replace">
 						<field name="stock_real" invisible="'product_id' not in context or 'specific_rules_tree_view' in context"/>
