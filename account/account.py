@@ -1193,12 +1193,8 @@ class account_move(osv.osv):
                 if new_name:
                     self.write(cr, uid, [move.id], {'name':new_name})
 
-        cr.execute('UPDATE account_move '\
-                   'SET state=%s '\
-                   'WHERE id IN %s',
-                   ('posted', tuple(valid_moves),))
-
-        return True
+        return super(account_move, self).write(cr, uid, valid_moves,
+                                               {'state':'posted'})
 
     def button_validate(self, cursor, user, ids, context=None):
         for move in self.browse(cursor, user, ids, context=context):
@@ -1229,7 +1225,7 @@ class account_move(osv.osv):
             context = {}
         c = context.copy()
         c['novalidate'] = True
-        result = super(osv.osv, self).write(cr, uid, ids, vals, c)
+        result = super(account_move, self).write(cr, uid, ids, vals, c)
         self.validate(cr, uid, ids, context=context)
         return result
 
