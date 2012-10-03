@@ -48,9 +48,13 @@
                         <page string="Products">
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                                 <tree string="Products" editable="top" >
-                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment)" />
-                                    <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,type)"/>
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment)" 
+                                    attrs="{'required': [('product_ok', '=', False)]}"/>
+                                    <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,nomen_manda_0)"
+                                    attrs="{'required': [('comment_ok', '=', False)]}"/>
                                     <field name="name" invisible="1" />
+                                    <field name="product_ok" invisible="1" />
+                                    <field name="comment_ok" invisible="1" />
                                     <field name="product_uom" />
                                     <field name="nomen_manda_0" invisible="1" />
                                     <field name="nomen_manda_1" invisible="1" />
@@ -60,7 +64,7 @@
                                     <button name="open_order_line_to_correct" 
                                     string="Configurator" 
                                     type="object" 
-                                    attrs="{'invisible': [('product_id_ok', '=', True)]}"/>
+                                    attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
                                     <field name="product_uom_qty" />
                                     <field name="notes" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"/>
@@ -69,7 +73,7 @@
                                     <field name="supplier"
                                         context="{'product_id': product_id, 'choose_supplier': True}"
                                         attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
-                                        domain="[('supplier', '=', True), ('id', '!=', my_company_id)]"
+                                        domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1" />
                                     <button name="open_split_wizard"

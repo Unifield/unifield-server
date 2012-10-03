@@ -390,10 +390,14 @@ class sourcing_line(osv.osv):
     def onChangeSupplier(self, cr, uid, id, supplier, context=None):
         '''
         supplier changes, we update 'estimated_delivery_date' with corresponding delivery lead time
+        we add a domain for the IR line on the supplier
         '''
-        result = {'value':{}}
+        result = {'value':{}, 'domain':{}}
         
         if not supplier:
+            for sl in self.browse(cr, uid, id, context):
+                if not sl.product_id and sl.sale_order_id.procurement_request and sl.type == 'make_to_order':
+                    result['domain'].update({'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]})
             return result
         
         partner = self.pool.get('res.partner').browse(cr, uid, supplier, context)
@@ -451,12 +455,23 @@ class sourcing_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         result = []
         for sl in self.browse(cr, uid, ids, context):
+            # check if the line has a product for a Field Order (and not for an Internal Request)
+            if not sl.product_id and not sl.sale_order_id.procurement_request:
+                raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
+                Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
+                """))
             # corresponding state for the lines: IR: confirmed, FO: sourced
             state_to_use = sl.sale_order_id.procurement_request and 'confirmed' or 'sourced'
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
             
-            if sl.type == 'make_to_order' and not sl.po_cft in ['cft'] and not sl.supplier:
-                raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
+            if sl.type == 'make_to_order' and not sl.po_cft in ['cft']:
+                if not sl.supplier:
+                    raise osv.except_osv(_('Warning'), _("The supplier must be chosen before sourcing the line"))
+                # an Internal Request without product can only have Internal, Intersection or Intermission partners.
+                elif sl.supplier and not sl.product_id and sl.sale_order_id.procurement_request and sl.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                    raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
+                    the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
+                    """))
             
             if sl.po_cft == 'cft' and not sl.product_id:
                 raise osv.except_osv(_('Warning'), _("You can't Source with 'Tender' if you don't have product."))
@@ -1328,6 +1343,11 @@ class res_partner(osv.osv):
         return result
         
     def _check_partner_type(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        active_id = context.get('active_id', False)
+        if isinstance(active_id, (int, long)):
+            active_id = [active_id]
         if not args:
             return []
         newargs = []
@@ -1337,8 +1357,11 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     so = self.pool.get('sale.order').browse(cr, uid, arg[2])
+                    sl = self.pool.get('sourcing.line').browse(cr, uid, active_id)[0]
                     if not so.procurement_request:
                         newargs.append(('partner_type', 'in', ['external', 'esc']))
+                    elif so.procurement_request and not sl.product_id:
+                        newargs.append(('partner_type','in', ['internal', 'section', 'intermission']))
             else:
                 newargs.append(args)
         return newargs
@@ -1359,11 +1382,34 @@ class res_partner(osv.osv):
                 newargs.append(args)
         return newargs
 
+    def _check_partner_type_ir(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        active_ids = context.get('active_ids', False)
+        if isinstance(active_ids, (int, long)):
+            active_ids = [active_ids]
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_partner_ir':
+                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
+                if arg[2]:
+                    if active_ids:
+                        sol = self.pool.get('sale.order.line').browse(cr, uid, active_ids)[0]
+                        if not context.get('product_id', False) and sol.order_id.procurement_request:
+                            newargs.append(('partner_type','in', ['internal', 'section', 'intermission']))
+            else:
+                newargs.append(args)
+        return newargs
+
     _columns = {
         'available_for_dpo': fields.function(_get_available_for_dpo, fnct_search=_src_available_for_dpo,
                                              method=True, type='boolean', string='Available for DPO', store=False),
         'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
         'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
+        'check_partner_ir': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On IR', fnct_search=_check_partner_type_ir),
     }
     
 res_partner()

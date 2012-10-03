@@ -207,7 +207,7 @@ class stock_picking(osv.osv):
         if not partner_id:
             v.update({'address_id': False})
         else:
-            d.update({'address_id': [('partner_id2', '=', partner_id)]})
+            d.update({'address_id': [('partner_id', '=', partner_id)]})
             
 
         if address_id:

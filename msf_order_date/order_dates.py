@@ -697,16 +697,15 @@ class purchase_order(osv.osv):
         Set the delivery_confirmed_date if order_type == 'purchase_list'
         """
         res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
+        if not 'value' in res:
+            res['value'] = {}
         if order_type == 'purchase_list' and delivery_requested_date:
-            if 'value' in res:
-                res['value'].update({'delivery_confirmed_date': delivery_requested_date})
-            else:
-                res.update({'value': {'delivery_confirmed_date': delivery_requested_date}})
+            res['value'].update({'delivery_confirmed_date': delivery_requested_date})
+        # UF-1440: Add today's date if no date and you choose "purchase_list" PO
+        elif order_type == 'purchase_list' and not delivery_requested_date:
+            res['value'].update({'delivery_requested_date': time.strftime('%Y-%m-%d'), 'delivery_confirmed_date': time.strftime('%Y-%m-%d')})
         else:
-            if 'value' in res:
-                res['value'].update({'delivery_confirmed_date': False})
-            else:
-                res.update({'value': {'delivery_confirmed_date': False}})
+            res['value'].update({'delivery_confirmed_date': False})
         return res
     
     def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):

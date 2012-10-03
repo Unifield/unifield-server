@@ -330,6 +330,15 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                         message += str(line_num)
                         if len(message.split(',')) > 1:
                             plural = 's'
+                    elif not var.product_id:
+                        if not var.nomen_manda_0 or not var.nomen_manda_1 or not var.nomen_manda_2:
+                            line_num = var.line_number
+                            if message:
+                                message += ', '
+                            message += str(line_num)
+                            if len(message.split(',')) > 1:
+                                plural = 's'
+                            message += " Please define the nomenclature levels."
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s: %s') % (plural, message))
         return True
@@ -387,43 +396,6 @@ class sale_order_line(osv.osv):
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def save_and_close(self, cr, uid, ids, context=None):
-        '''
-        Save and close the configuration window for internal request
-        '''
-        vals = {}
-        self.write(cr, uid, ids, vals, context=context)
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
-        return {'type': 'ir.actions.act_window_close',
-                'res_model': 'sale.order',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'view_id': [view_id],
-                }
-
-    def open_order_line_to_correct(self, cr, uid, ids, context=None):
-        '''
-        Open Order Line in form view for internal request
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        obj_data = self.pool.get('ir.model.data')
-        view_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'view_order_line_to_correct_form')[1]
-        view_to_return = {
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'sale.order.line',
-            'type': 'ir.actions.act_window',
-            'res_id': ids[0],
-            'target': 'new',
-            'context': context,
-            'view_id': [view_id],
-        }
-        return view_to_return
-
     def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
@@ -477,11 +449,12 @@ class sale_order_line(osv.osv):
 
                 if message and not context.get('procurement_request', False):
                     raise osv.except_osv(_('Warning !'), _(message))
+
                 else:
                     vals['show_msg_ok'] = False
                     vals['to_correct_ok'] = False
                     vals['text_error'] = False
-        
+
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()
