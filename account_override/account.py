@@ -89,6 +89,11 @@ class account_move(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
+        """
+        Change move line's sequence (name) by using instance move prefix.
+        """
+        if not context:
+            context = {}
         # Change the name for (instance_id.move_prefix) + (journal_id.code) + sequence number
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
         journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'])
