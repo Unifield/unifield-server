@@ -71,10 +71,10 @@ class analytic_line(osv.osv):
 
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
         'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
     }
@@ -94,12 +94,13 @@ class analytic_line(osv.osv):
         if context.get('display_fp', False) and context.get('display_fp') is True:
             is_funding_pool_view = True
         view = super(analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type=='tree' and is_funding_pool_view:
+        if view_type in ('tree', 'search') and is_funding_pool_view:
             tree = etree.fromstring(view['arch'])
             # Change OC field
-            fields = tree.xpath('/tree/field[@name="account_id"]')
+            fields = tree.xpath('/' + view_type + '//field[@name="account_id"]')
             for field in fields:
                 field.set('string', _("Funding Pool"))
+                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
             view['arch'] = etree.tostring(tree)
         return view
 
