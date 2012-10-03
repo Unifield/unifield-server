@@ -284,10 +284,16 @@ class procurement_request(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
             for line in request.order_line:
                 # for FO
-                if line.type == 'make_to_order' and not line.po_cft == 'cft' and not line.supplier:
-                    line_number = line.line_number
-                    request_name = request.name
-                    raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !')%(line_number,request_name))
+                if line.type == 'make_to_order' and not line.po_cft == 'cft':
+                    if not line.supplier:
+                        line_number = line.line_number
+                        request_name = request.name
+                        raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !')%(line_number,request_name))
+                    # an Internal Request without product can only have Internal, Intersection or Intermission partners.
+                    elif line.supplier and not line.product_id and line.order_id.procurement_request and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                        raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
+                        the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
+                        """))
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
             context.update({'view_id': proc_view and proc_view[1] or False})
@@ -355,7 +361,7 @@ class procurement_request_line(osv.osv):
             else:
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
-                
+
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
@@ -386,6 +392,8 @@ class procurement_request_line(osv.osv):
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
+        'product_ok': fields.boolean('Product selected'),
+        'comment_ok': fields.boolean('Comment written'),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
@@ -400,6 +408,8 @@ class procurement_request_line(osv.osv):
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
         'date_planned': _get_planned_date,
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'product_ok': False,
+        'comment_ok': False,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
@@ -416,11 +426,12 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'}
-            domain = {'product_uom':[]}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False}
+            domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
-            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method}
+            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
+                     'type': product.procure_method, 'comment_ok': True}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
@@ -443,26 +454,33 @@ class procurement_request_line(osv.osv):
             v.update({'supplier': False})
         return {'value': v}
     
-    def comment_change(self, cr, uid, ids, comment, product_id, type, context=None):
+    def comment_change(self, cr, uid, ids, comment, product_id, nomen_manda_0, context=None):
         '''
         Fill the level of nomenclatures with tag "to be defined" if you have only comment
         '''
         if context is None:
             context = {}
         value = {}
+        domain = {}
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
         
         if comment and not product_id:
-            value.update({'nomen_manda_0': nomen_manda_0,
-                        'nomen_manda_1': nomen_manda_1,
-                        'nomen_manda_2': nomen_manda_2,
-                        'nomen_manda_3': nomen_manda_3,
-                        'name': 'To be defined',})
-        return {'value': value}
+            value.update({'name': 'To be defined',
+                          'supplier': False,
+                          'product_ok': True})
+            # it bugs with the To Be Defined => needs to be removed
+#            if not nomen_manda_0:
+#                value.update({'nomen_manda_0': tbd_0,
+#                              'nomen_manda_1': tbd_1,
+#                              'nomen_manda_2': tbd_2,})
+            domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
+        if not comment:
+            value.update({'product_ok': True})
+            domain = {'product_uom':[], 'supplier': []}
+        return {'value': value, 'domain': domain}
     
 procurement_request_line()
 
