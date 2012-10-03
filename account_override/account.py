@@ -110,7 +110,7 @@ class account_move(osv.osv):
         Check that we can write on this if we come from web menu
         """
         if not context:
-            context = None
+            context = {}
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
