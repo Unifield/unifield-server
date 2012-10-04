@@ -132,6 +132,13 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
+                prev_currency_id = False
+                for ml in m.line_id:
+                    if not prev_currency_id:
+                        prev_currency_id = ml.currency_id.id
+                        continue
+                    if ml.currency_id.id != prev_currency_id:
+                        raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
