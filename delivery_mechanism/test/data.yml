@@ -80,4 +80,12 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
-        
+-
+  I edit all the journals to include the proprietary instance
+-
+  !python {model: account.journal}: |
+    journal_ids = self.search(cr, uid, [])
+    company = self.pool.get('res.company').browse(cr, uid, uid, context=context)
+    if company and company.instance_id:
+      self.write(cr, uid, journal_ids, {'instance_id': company.instance_id.id})
+    
