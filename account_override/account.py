@@ -156,6 +156,8 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
+        search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'inherit_view_account_move_filter')
+        search_view_id = search_view_id and search_view_id[1] or False
         return {
             'name' : "Journal Entry",
             'type' : 'ir.actions.act_window',
@@ -164,6 +166,7 @@ class account_move(osv.osv):
             'view_mode': 'form,tree',
             'view_type': 'form',
             'res_id': [ids[0]],
+            'search_view_id': search_view_id,
             'context': context,
         }
 
