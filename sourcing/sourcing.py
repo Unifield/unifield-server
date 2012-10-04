@@ -1393,13 +1393,44 @@ class res_partner(osv.osv):
         newargs = []
         for arg in args:
             if arg[0] == 'check_partner_ir':
-                if arg[1] != '=' or not isinstance(arg[2], (int, long)):
-                    raise osv.except_osv(_('Error'), _('Filter check_partner different than (arg[0], =, id) not implemented.'))
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error'), _('Filter check_partner_ir different than (arg[0], =, id) not implemented.'))
                 if arg[2]:
                     if active_ids:
                         sol = self.pool.get('sale.order.line').browse(cr, uid, active_ids)[0]
                         if not context.get('product_id', False) and sol.order_id.procurement_request:
                             newargs.append(('partner_type','in', ['internal', 'section', 'intermission']))
+            else:
+                newargs.append(args)
+        return newargs
+
+    def _check_partner_type_po(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        newargs = []
+        partner_obj = self.pool.get('res.partner')
+        local_market = None
+        # Search the local market partner id
+        data_obj = self.pool.get('ir.model.data')
+        data_id = data_obj.search(cr, uid, [('module', '=', 'order_types'), ('model', '=', 'res.partner'), ('name', '=', 'res_partner_local_market')] )
+        if data_id:
+            local_market = data_obj.read(cr, uid, data_id, ['res_id'])[0]['res_id']
+        for arg in args:
+            if arg[0] == 'check_partner_po':
+                if arg[1] != '=' \
+                or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
+                or not isinstance(arg[2]['partner_id'], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
+                partner_id = arg[2]['partner_id']
+                order_type = arg[2]['order_type']
+                if order_type in ['direct', 'in_kind', 'purchase_list']:
+                    newargs.append(('partner_type', 'in', ['esc', 'external']))
+                elif partner_id and partner_id != local_market:
+                    partner = partner_obj.browse(cr, uid, partner_id)
+                    if partner.partner_type not in ('external', 'esc') and order_type == 'direct':
+                        newargs.append(('partner_type', 'in', ['esc', 'external']))
             else:
                 newargs.append(args)
         return newargs
@@ -1410,6 +1441,7 @@ class res_partner(osv.osv):
         'check_partner': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type),
         'check_partner_rfq': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type', fnct_search=_check_partner_type_rfq),
         'check_partner_ir': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On IR', fnct_search=_check_partner_type_ir),
+        'check_partner_po': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On PO', fnct_search=_check_partner_type_po),
     }
     
 res_partner()
