@@ -477,6 +477,53 @@ class purchase_order(osv.osv):
 
         return True
     
+    def confirm_button(self, cr, uid, ids, context=None):
+        '''
+        check the supplier partner type (partner_type)
+        
+        confirmation is needed for internal, inter-mission and inter-section
+        
+        ('internal', 'Internal'), ('section', 'Inter-section'), ('intermission', 'Intermission')
+        '''
+        # data
+        name = _("You're about to confirm a PO that is synchronized and should be consequently confirmed by the supplier (automatically at his equivalent FO confirmation). Are you sure you want to force the confirmation at your level (you won't get the supplier's update)?")
+        model = 'confirm'
+        step = 'default'
+        question = "You're about to confirm a PO that is synchronized and should be consequently confirmed by the supplier (automatically at his equivalent FO confirmation). Are you sure you want to force the confirmation at your level (you won't get the supplier's update)?"
+        clazz = 'purchase.order'
+        func = '_purchase_approve'
+        args = [ids]
+        kwargs = {}
+                
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.partner_id.partner_type in ('internal', 'section', 'intermission'):
+                # open the wizard
+                wiz_obj = self.pool.get('wizard')
+                # open the selected wizard
+                res = wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, step=step, context=dict(context, question=question,
+                                                                                                        callback={'clazz': clazz,
+                                                                                                                  'func': func,
+                                                                                                                  'args': args,
+                                                                                                                  'kwargs': kwargs}))
+                return res
+            
+        # otherwise call function directly
+        return self.purchase_approve(cr, uid, ids, context=context)
+    
+    def _purchase_approve(self, cr, uid, ids, context=None):
+        '''
+        interface for call from wizard
+        
+        if called from wizard without opening a new dic -> return close
+        if called from wizard with new dic -> open new wizard
+        
+        if called from button directly, this interface is not called
+        '''
+        res = self.purchase_approve(cr, uid, ids, context=context)
+        if not isinstance(res, dict):
+            return {'type': 'ir.actions.act_window_close'}
+        return res
+    
     def purchase_approve(self, cr, uid, ids, context=None):
         '''
         If the PO is a DPO, check the state of the stock moves
