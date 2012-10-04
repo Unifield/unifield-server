@@ -484,6 +484,9 @@ class update_received(osv.osv):
         return False
     
     def _check_and_replace_missing_id(self, cr, uid, values, fields, fallback, message, context=None):
+        if not isinstance(message, (list)):
+            message = [message]
+
         ir_model_data_obj = self.pool.get('ir.model.data')
         for i in xrange(0, len(fields)):
             if '/id' in fields[i] and values[i]:
