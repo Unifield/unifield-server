@@ -37,8 +37,8 @@ class purchase_order_line_allocation_report(osv.osv):
         res = {}
         
         for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
             if line.product_id:
-                res[line.id] = False
                 res[line.id] = line.product_id.product_tmpl_id.property_account_expense.id
                 if not res[line.id]:
                     res[line.id] = line.product_id.categ_id.property_account_expense_categ.id
