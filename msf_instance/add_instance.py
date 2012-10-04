@@ -113,6 +113,19 @@ class account_move(osv.osv):
             vals['instance_id'] = journal.instance_id.id
         return super(account_move, self).write(cr, uid, ids, vals, context=context)
 
+    def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
+        """
+        Change msf instance @journal_id change
+        """
+        res = super(account_move, self).onchange_journal_id(cr, uid, ids, journal_id, context)
+        if journal_id:
+            journal_data = self.pool.get('account.journal').read(cr, uid, [journal_id], ['instance_id'])
+            if journal_data and journal_data[0] and journal_data[0].get('instance_id', False):
+                if 'value' not in res:
+                    res['value'] = {}
+                res['value'].update({'instance_id': journal_data[0].get('instance_id')})
+        return res
+
 account_move()
 
 class account_move_line(osv.osv):

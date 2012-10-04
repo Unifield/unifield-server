@@ -109,7 +109,7 @@
                 <form string="Journal Entries" position="replace">
                     <form string="Journal Entries" hide_duplicate_button="1" hide_delete_button="1">
                         <group colspan="4" col="6">
-                            <field name="journal_id"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)"/>
                             <field name="name" readonly="1"/>
                             <field name="period_id"/>
                             <field name="ref"/>

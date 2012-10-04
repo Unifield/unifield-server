@@ -134,6 +134,15 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You are not able to approve a Journal Entry that comes from the system!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
+    def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
+        """
+        Change some fields when journal is changed.
+        """
+        res = {}
+        if not context:
+            context = {}
+        return res
+
 account_move()
 
 class account_move_reconcile(osv.osv):
