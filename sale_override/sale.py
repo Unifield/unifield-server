@@ -49,6 +49,7 @@ class sale_order(osv.osv):
             default = {}
 
         default.update({'loan_id': False,
+                        'order_policy': 'picking',
                         'active': True})
 
         if not context.get('keepClientOrder', False):
