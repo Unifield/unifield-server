@@ -1425,6 +1425,8 @@ class stock_picking(osv.osv):
         default.update(backorder_ids=[])
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
+        
+        context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result
