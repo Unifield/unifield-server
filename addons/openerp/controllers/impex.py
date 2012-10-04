@@ -388,6 +388,14 @@ class ImpEx(SecuredController):
             fields = fields.replace('/.id','.id')
             flds = [fields]
 
+        # UF-1257 Only use Code, Description and UoM for export due to timeout error from products with some fields:
+        # - qty_available
+        # - virtual_available
+        # - fmc
+        # - amc
+        if params.model == 'product.product':
+            flds = ['default_code', 'name', 'uom_id']
+            params.fields2 = ['Code', 'Description', 'UoM']
 
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
@@ -396,7 +404,10 @@ class ImpEx(SecuredController):
 
         if not params.ids or all_records:
             domain = params.search_domain or []
-            ids = proxy.search(domain, 0, 2000, 0, ctx)
+            if params.model == 'product.product':
+                ids = proxy.search(domain, 0, None, 0, ctx)
+            else:
+                ids = proxy.search(domain, 0, 2000, 0, ctx)
         else:
             ids = params.ids or []
         result = datas_read(ids, params.model, flds, context=ctx)

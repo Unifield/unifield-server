@@ -203,7 +203,11 @@
                             </select>
                         </td>
                         <td class="label">
+                            %if model == 'product.product':
+                            <label for="all_records">Export all query results (<span style="color: #ff0000;">WARNING: could break down machines</span>):</label>
+                            %else:
                             <label for="all_records">Export all query results (limited to 2000 records):</label>
+                            %endif
                         </td>
                         <td>
                             <input type="checkbox" id="all_records" name="all_records" value="1" 
