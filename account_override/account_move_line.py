@@ -177,6 +177,15 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
+    def _check_date_validity(self, cr, uid, ids):
+        """
+        Check that date is contained between period ' starting date and ending's date
+        """
+        for aml in self.browse(cr, uid, ids):
+            if aml.date < aml.move_id.period_id.date_start or aml.date > aml.move_id.period_id.date_stop:
+                raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (aml.date, aml.move_id and aml.move_id.period_id and aml.move_id.period_id.name or ''))
+        return True
+
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Filled in 'document_date' if we come from tests
@@ -201,6 +210,8 @@ class account_move_line(osv.osv):
             for ml in self.browse(cr, uid, ids):
                 if ml.move_id and ml.move_id.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
+            # Check date validity with period
+            self._check_date_validity(cr, uid, ids)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         self._check_document_date(cr, uid, ids)
         return res
