@@ -78,7 +78,7 @@ class currency_setup(osv.osv_memory):
             cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
         else:
             cur_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'CHF')[1]
-            
+
         if not self.pool.get('res.currency').read(cr, uid, cur_id, ['active'], context=context)['active']:
             self.pool.get('res.currency').write(cr, uid, cur_id, {'active': True}, context=context)
 
@@ -88,6 +88,30 @@ class currency_setup(osv.osv_memory):
             self.pool.get('res.company').write(cr, uid, [company_id], {'currency_id': cur_id, 'second_time': True}, context=context)
         else:
             self.pool.get('res.company').write(cr, uid, [company_id], {'currency_id': cur_id,}, context=context)
+        
+        # Modify the currency on some already created objects
+        # product_price_type
+        price_type_ids = self.pool.get('product.price.type').search(cr, uid, [('currency_id', '=', 1)])
+        self.pool.get('product.price.type').write(cr, uid, price_type_ids, {'currency_id': cur_id})
 
+        # account.analytic.account
+        analytic_ids = self.pool.get('account.analytic.account').search(cr, uid, [('currency_id', '=', 1)])
+        # use a for to avoid a recursive account error
+        for analytic_id in analytic_ids:
+            self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id})
+
+        # product.product
+        product_ids = self.pool.get('product.product').search(cr, uid, [('currency_id', '=', 1)])
+        product2_ids = self.pool.get('product.product').search(cr, uid, [('field_currency_id', '=', 1)])
+        self.pool.get('product.product').write(cr, uid, product_ids, {'currency_id': cur_id})
+        self.pool.get('product.product').write(cr, uid, product2_ids, {'field_currency_id': cur_id})
+
+        # account.model
+        model_ids = self.pool.get('account.model').search(cr, uid, [('currency_id', '=', 1)])
+        self.pool.get('account.model').write(cr, uid, model_ids, {'currency_id': cur_id})
+
+        # account.mcdb
+        mcdb_ids = self.pool.get('account.mcdb').search(cr, uid, [('currency_id', '=', 1)])
+        self.pool.get('account.mcdb').write(cr, uid, mcdb_ids, {'currency_id': cur_id})
 
 currency_setup()
