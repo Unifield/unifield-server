@@ -143,6 +143,23 @@ class account_move(osv.osv):
             context = {}
         return res
 
+    def button_edit_manual_entry(self, cr, uid, ids, context=None):
+        """
+        Open 
+        """
+        if not context:
+            context = {}
+        return {
+            'name' : "Journal Entry",
+            'type' : 'ir.actions.act_window',
+            'res_model' :"account.move",
+            'target': 'crush',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'res_id': [ids[0]],
+            'context': context,
+        }
+
 account_move()
 
 class account_move_reconcile(osv.osv):

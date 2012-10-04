@@ -156,7 +156,8 @@
             <field name="arch" type="xml">
                 <tree string="Journal Entries" position="replace">
                   <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="1" hide_delete_button="1">
-                        <button string="Is manual" attrs="{'invisible': [('status', '=', 'sys')]}" 
+                    <button string="Edit manual entry" attrs="{'invisible': [('status', '=', 'sys')]}" 
+                            name="button_edit_manual_entry" type="object" 
                             icon="gtk-color-picker" colspan="2"/>
                         <field name="status" invisible="1"/>
                         <field name="name"/>
