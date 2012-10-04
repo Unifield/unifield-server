@@ -605,7 +605,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for aal in self.pool.get('account.analytic.line').browse(cr, uid, aal_ids):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
                 if check_accounts and aal.account_id.id in check_accounts:
-                    raise osv.except_osv(_('Warning'), _('An analytic line have an open contract for this move line. You cannot change its G/L account.'))
+                    raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
             # Create a new move
             move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
             # Prepare default value for new line

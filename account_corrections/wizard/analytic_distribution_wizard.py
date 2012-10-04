@@ -88,7 +88,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     to_override[oline.id].append(('percentage', nline.percentage))
                 # Check that if old_component and new_component have changed we should find oline.id in to_reverse OR to_override
                 if oline.id not in to_override and oline.id not in to_reverse:
-                    raise osv.except_osv(_('Error'), _('Code error: A case have not been taken.'))
+                    raise osv.except_osv(_('Error'), _('Code error: A case has not been taken.'))
         else:
             old_component = [oline.analytic_id.id, oline.percentage]
             new_component = [nline.analytic_id.id, nline.percentage]
