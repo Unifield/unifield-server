@@ -1405,6 +1405,9 @@ class res_partner(osv.osv):
         return newargs
 
     def _check_partner_type_po(self, cr, uid, obj, name, args, context=None):
+        """
+        Create a domain on the field partner_id on the view id="purchase_move_buttons"
+        """
         if context is None:
             context = {}
         if not args:
@@ -1445,3 +1448,50 @@ class res_partner(osv.osv):
     }
     
 res_partner()
+
+
+class res_partner_address(osv.osv):
+    _name = 'res.partner.address'
+    _inherit = 'res.partner.address'
+
+    def _get_fake(self, cr, uid, ids, fields, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
+
+    def _check_address_po(self, cr, uid, obj, name, args, context=None):
+        """
+        This method is used in the view id="purchase_move_buttons" on the field "partner_address_id"
+        as a domain.
+        """
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[0] == 'check_address_po':
+                if arg[1] != '=' \
+                or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
+                or not isinstance(arg[2]['dest_partner_id'], (int, long)):
+                    raise osv.except_osv(_('Error'), _('Filter check_address_po different than (arg[0], =, %s) not implemented.') % arg[2])
+                dest_partner_id = arg[2]['dest_partner_id']
+                order_type = arg[2]['order_type']
+                if order_type == 'direct' and dest_partner_id:
+                    newargs.append(('partner_id', '=', dest_partner_id))
+                elif order_type == 'direct':
+                    newargs.append(('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id))
+                else:
+                    newargs.append(('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id))
+            else:
+                newargs.append(args)
+        return newargs
+
+    _columns = {
+        'check_address_po': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On PO', fnct_search=_check_address_po),
+    }
+
+res_partner_address()
