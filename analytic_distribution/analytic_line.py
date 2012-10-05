@@ -61,7 +61,7 @@ class analytic_line(osv.osv):
             for cc in cost_center_ids:
                 for t in tuple_list:
                     if res:
-                        res.append('|')
+                        res = ['|'] + res
                     res.append('&')
                     res.append('&')
                     res.append(('cost_center_id', '=', cc))

@@ -51,8 +51,14 @@ class mass_reallocation_search(osv.osv_memory):
             search.append(('date', '<=', account.date))
         if account.tuple_destination_account_ids:
             search.append(('is_fp_compat_with', '=', account.id))
+        else:
+            # trick to avoid problem with FP that have NO destination link. So we need to search a "False" Destination.
+            search.append(('destination_id', '=', 0))
         if account.cost_center_ids:
             search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
+        else:
+            # trick to avoid problem with FP that have NO CC.
+            search.append(('cost_center_id', '=', 0))
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
             search.append(criterium)
         search.append(('contract_open','=', True))
