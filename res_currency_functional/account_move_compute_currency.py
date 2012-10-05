@@ -174,11 +174,15 @@ class account_move_compute_currency(osv.osv):
             context = {}
         res = []
         for m in self.browse(cr, uid, ids):
-            if m.journal_id.currency:
-                vals.update({'manual_currency_id': m.journal_id.currency.id})
+            j_id = m.journal_id and m.journal_id.id or False
+            if 'journal_id' in vals:
+                j_id = vals.get('journal_id')
+            journal = self.pool.get('account.journal').browse(cr, uid, j_id)
+            if journal and journal.currency:
+                vals.update({'manual_currency_id': journal.currency.id, 'block_manual_currency_id': True,})
                 # Add currency to context for journal items lines
                 if not 'manual_currency_id' in context:
-                    context['manual_currency_id'] = m.journal_id.currency.id
+                    context['manual_currency_id'] = journal.currency.id
             tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.id], vals, context)
             res.append(tmp_res)
         return res
