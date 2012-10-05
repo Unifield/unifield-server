@@ -56,11 +56,13 @@ class mass_reallocation_search(osv.osv_memory):
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
             search.append(criterium)
         search.append(('contract_open','=', True))
+        search.append(('move_state', '!=', 'draft'))
         
         # Update context for Mass reallocation
         context['analytic_account_from'] = ids[0]
         # and for column
         context.update({'display_fp': True})
+
         return {
             'name': 'Mass reallocation search for' + ' ' + account.name,
             'type': 'ir.actions.act_window',
