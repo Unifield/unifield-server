@@ -59,20 +59,26 @@ class account_move_compute_currency(osv.osv):
 
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
         """
-        Change currency_id and its domain if a currency exists in journal
+        Change currency_id regarding journal.
+        If journal have a currency, set manual_currency_id to the journal's currency and change field to readonly.
+        If journal doesn't have any currency: Default company currency.
+
         """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(account_move_compute_currency, self).onchange_journal_id(cr, uid, ids, journal_id, context)
+        if 'value' not in res:
+            res['value'] = {}
         if not journal_id:
+            res['value'].update({'manual_currency_id': False, 'block_manual_currency_id': False,})
             return res
         j = self.pool.get('account.journal').read(cr, uid, journal_id, ['currency'])
         if j and j.get('currency', False):
-            if 'value' not in res:
-                res['value'] = {}
-            res['value'].update({'manual_currency_id': j.get('currency'), 'block_manual_currency_id': True})
+            res['value'].update({'manual_currency_id': j.get('currency'), 'block_manual_currency_id': True,})
+        else:
+            res['value'].update({'manual_currency_id': self.pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.id, 'block_manual_currency_id': False,})
         return res
 
     _columns = {
