@@ -225,7 +225,9 @@ class purchase_order(osv.osv):
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
-        d = {'partner_id': []}
+        # the domain on the onchange was replace by a several fields.function that you can retrieve in the 
+        # file msf_custom_settings/view/purchase_view.xml: domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', order_type),  ('check_partner_rfq', '=', tender_id)]"
+#        d = {'partner_id': []}
         w = {}
         local_market = None
         
@@ -247,24 +249,24 @@ class purchase_order(osv.osv):
             v['invoice_method'] = 'manual'
         elif order_type in ['direct']:
             v['invoice_method'] = 'order'
-            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+#            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         elif order_type in ['in_kind', 'purchase_list']:
             v['invoice_method'] = 'picking'
-            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+#            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
         
         if order_type == 'direct' and dest_partner_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
-            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         elif order_type == 'direct':
             v.update({'dest_address_id': False})
-            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
         else:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
-            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
@@ -272,7 +274,7 @@ class purchase_order(osv.osv):
                 v['invoice_method'] = 'manual'
             elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
-                d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+#                d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
                 w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
                           'title': 'An error has occured !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
@@ -291,7 +293,8 @@ class purchase_order(osv.osv):
         elif order_type == 'direct':
             v['cross_docking_ok'] = False
         
-        return {'value': v, 'domain': d, 'warning': w}
+#        return {'value': v, 'domain': d, 'warning': w}
+        return {'value': v, 'warning': w}
     
     def onchange_partner_id(self, cr, uid, ids, part, *a, **b):
         '''
@@ -1068,7 +1071,10 @@ stock moves which are already processed : '''
         '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
-        inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
+        inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [
+                    ("type", "=", "inkind"),
+                    ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)
+                ])
 
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':

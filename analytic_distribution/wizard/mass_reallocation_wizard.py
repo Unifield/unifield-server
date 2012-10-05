@@ -173,11 +173,12 @@ class mass_reallocation_wizard(osv.osv_memory):
             if wiz.account_id.category == 'OC':
                 account_field_name = 'cost_center_id'
             search_args = [
-                ('id', 'in', to_process), '|', '|', '|', '|', '|',
+                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|',
                 (account_field_name, '=', account_id),
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
-                ('from_write_off', '=', True)
+                ('from_write_off', '=', True),
+                ('move_state', '=', 'draft')
             ]
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
             if search_ns_ids:
