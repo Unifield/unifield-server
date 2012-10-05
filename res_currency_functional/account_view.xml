@@ -16,7 +16,7 @@
                     <xpath expr="/form//field[@name='ref']" position="after">
                       <field name="block_manual_currency_id" invisible="1"/>
                       <group colspan="2" col="2">
-                          <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True)], 'invisible': [('status', '=', 'sys')]}"/>
+                          <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': [('status', '=', 'sys')]}"/>
                           <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
                       </group>
                     </xpath>
