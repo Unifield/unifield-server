@@ -179,7 +179,8 @@ class account_move_compute_currency(osv.osv):
                 # Add currency to context for journal items lines
                 if not 'manual_currency_id' in context:
                     context['manual_currency_id'] = m.journal_id.currency.id
-                res.append(super(account_move_compute_currency, self).write(cr, uid, [m.id], vals, context))
+            tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.id], vals, context)
+            res.append(tmp_res)
         return res
 
 account_move_compute_currency()

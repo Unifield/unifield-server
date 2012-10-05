@@ -429,7 +429,6 @@ class account_move_line_compute_currency(osv.osv):
                 m_currency = self.pool.get('account.move').read(cr, uid, vals.get('move_id'), ['manual_currency_id'])
                 if m_currency and m_currency.get('manual_currency_id'):
                     vals.update({'currency_id': m_currency.get('manual_currency_id')[0]})
-
         
         account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
         curr_fun = account.company_id.currency_id.id
