@@ -191,7 +191,7 @@ class entity(osv.osv, Thread):
                     log_id = self.pool.get('sync.monitor').create(cr, uid, log)
                     cr.commit()
                     raise osv.except_osv(_('Error!'), _(up_to_date[1]))
-                else:
+                elif 'last' not in up_to_date[1]:
                     log['error'] += "Revision Update Status: " + up_to_date[1]
         
         if step is not None:
