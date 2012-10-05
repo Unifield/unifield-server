@@ -91,7 +91,6 @@ class manage_version(osv.osv):
         now = (datetime.now() + relativedelta(hours=-1)).strftime("%Y-%m-%d %H:%M:%S") 
         unlink_ids = self.search(cr, uid, [('create_date', '<', now)])
         if unlink_ids:
-            print "auto Vacuum", unlink_ids
             self.unlink(cr, uid, unlink_ids)
         return True
     

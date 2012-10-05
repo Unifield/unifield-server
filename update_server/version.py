@@ -19,12 +19,12 @@ class version(osv.osv):
     _name = "sync_server.version"
     
     _columns = {
-        'name' : fields.char(string='Revision', size=256),
-        'patch' : fields.binary('Patch'),
-        'sum' : fields.char(string="Check Sum", size=256),
-        'date' : fields.datetime(string="Revision Date"),
-        'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag"),
-        'state' : fields.selection([('draft','Draft'),('confirmed','Confirmed')], string="State"),
+        'name' : fields.char(string='Revision', size=256, readonly=True),
+        'patch' : fields.binary('Patch', readonly=True),
+        'sum' : fields.char(string="Check Sum", size=256, readonly=True),
+        'date' : fields.datetime(string="Revision Date", readonly=True),
+        'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
+        'state' : fields.selection([('draft','Draft'),('confirmed','Confirmed')], string="State", readonly=True),
     }
     
     _defaults = {
