@@ -189,7 +189,8 @@ class account_journal(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
         
         # if the journal can be linked to a register, the register is also created
-        if vals['type'] in ('cash','bank','cheque'):
+        # UTP-182: but not create if the journal came from another instance via the synchronization 
+        if vals['type'] in ('cash','bank','cheque') and not context.get('sync_data', False):
             # 'from_journal_creation' in context permits to pass register creation that have a
             #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
             context.update({'from_journal_creation': True})

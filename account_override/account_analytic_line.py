@@ -110,9 +110,11 @@ class account_analytic_line(osv.osv):
         """
         if not context:
             context = {}
+        # SP-50: If data is synchronized from another instance, just create it with the given document_date 
         if context.get('update_mode') in ['init', 'update']:
-            logging.getLogger('init').info('AAL: set document_date')
-            vals['document_date'] = strftime('%Y-%m-%d')
+            if not context.get('sync_data', False) or not vals.get('document_date', False):
+                logging.getLogger('init').info('AAL: set document_date')
+                vals['document_date'] = strftime('%Y-%m-%d')
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
             raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
