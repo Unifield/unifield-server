@@ -142,7 +142,7 @@
                         <field name="state"/>
                         <field name="status" invisible="0" readonly="1"/>
                         <!--button name="button_cancel" states="posted" string="Cancel" type="object" icon="gtk-cancel"/-->
-                        <button name="button_validate" states="draft" string="Approve" type="object" icon="terp-camera_test"/>
+                        <button name="button_validate" states="draft" string="Approve" type="object" icon="terp-camera_test" attrs="{'invisible': [('status', '=', 'sys')]}"/>
                     </form>
                 </form>
             </field>
