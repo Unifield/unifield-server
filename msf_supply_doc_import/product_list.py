@@ -109,7 +109,7 @@ Product Code*, Product Description*, Comment"""))
                 import_to_correct = True
                 if not product_code and not p_name:
                     raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of products') % (product_code or '', p_name or ''))
+                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of products') % (product_code or 'N/A', p_name or ''))
 
             # Comment
             comment = len(row) == 3 and row.cells[2].data or ''
