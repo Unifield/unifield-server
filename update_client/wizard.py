@@ -43,7 +43,8 @@ class upgrade(osv.osv_memory):
             raise osv.except_osv("Error!", "Nothing to do.")
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         uuid = self.pool.get('sync.client.entity').get_uuid(cr, uid)
-        text = "These patches has been downloaded and are ready to install:\n\n"
+        text = "These patches have been downloaded and are ready to install:\n\n" if len(next_revisions) > 1 \
+               else "This patch has been downloaded and is ready to install:\n\n"
         for rev in revisions.browse(cr, uid, next_revisions, context=context):
             text += "- [%s] %s (%s at %s)\n" % (rev.importance, rev.name, rev.sum, rev.date, )
             if not rev.patch:
