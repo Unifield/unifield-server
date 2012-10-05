@@ -24,6 +24,7 @@ from osv import fields
 from osv import orm
 from tools.translate import _
 
+import socket
 import rpc
 import uuid
 import tools
@@ -628,18 +629,19 @@ class sync_server_connection(osv.osv):
         return connector
  
     def connect(self, cr, uid, ids, context=None):
-        for con in self.browse(cr, uid, ids, context=context):
-            if not con.database:
-                raise osv.except_osv(_("Error"), _("Missing database name"))
-            connector = self.connector_factory(con)
-            #if not con.password or not con.database or not con.login:
-            #    raise osv.except_osv(_('Error !'), _('All the fields in this form are mandatory!'))
-            
-            cnx = rpc.Connection(connector, con.database, con.login, con.password)
-            if cnx.user_id:
-                self.write(cr, uid, con.id, {'uid' : cnx.user_id}, context=context)
-        self.pool.get('sync.client.entity').set_syncing(cr, uid, False)
-        return True
+        try:
+            for con in self.browse(cr, uid, ids, context=context):
+                if not con.database:
+                    raise osv.except_osv(_("Error"), _("Missing database name"))
+                connector = self.connector_factory(con)
+                
+                cnx = rpc.Connection(connector, con.database, con.login, con.password)
+                if cnx.user_id:
+                    self.write(cr, uid, con.id, {'uid' : cnx.user_id}, context=context)
+            self.pool.get('sync.client.entity').set_syncing(cr, uid, False)
+            return True
+        except socket.error, e:
+            raise osv.except_osv(_("Error"), _(e.strerror))
     
     def get_connection(self, cr, uid, model, context=None):
         """

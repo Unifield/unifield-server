@@ -264,7 +264,7 @@ class NetRPCConnector(Connector):
                 
         socket.disconnect()
         if error:
-            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % e.faultCode)
+            raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
         return result
 
 class GzipNetRPCConnector(NetRPCConnector):
