@@ -493,10 +493,10 @@ class update_received(osv.osv):
                         if xml_id and not ir_model_data_obj.get_record(cr, uid, xml_id, context=context):
                             fb = fallback.get(fields[i])
                             if fb and ir_model_data_obj.get_record(cr, uid, fb, context=context):
-                                message.append('Missing record %s replace by %s' % (fields[i], fb))
+                                message += 'Missing record %s replace by %s\n' % (fields[i], fb))
                                 res_val.append(fb)
                             else:
-                                message.append('Missing record %s and no fallback value defined or missing fallback value, set to False' % fields[i])
+                                message += 'Missing record %s and no fallback value defined or missing fallback value, set to False\n' % fields[i])
                         else:
                             res_val.append(xml_id)
                 if not res_val:
