@@ -33,8 +33,8 @@
     "init_xml": [
     ],
     'update_xml': [
-        'wizard/list_export_view.xml',
-        'wizard/list_import_view.xml',
+        #'wizard/list_export_view.xml',
+        #'wizard/list_import_view.xml',
         'wizard/product_to_list_view.xml',
         'wizard/add_products_view.xml',
         'product_list_view.xml',
