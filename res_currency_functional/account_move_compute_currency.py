@@ -56,11 +56,36 @@ class account_move_compute_currency(osv.osv):
                 else:
                     res[move.id] = False
         return res
-    
+
+    def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
+        """
+        Change currency_id and its domain if a currency exists in journal
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_move_compute_currency, self).onchange_journal_id(cr, uid, ids, journal_id, context)
+        if not journal_id:
+            return res
+        j = self.pool.get('account.journal').read(cr, uid, journal_id, ['currency'])
+        if j and j.get('currency', False):
+            if 'value' not in res:
+                res['value'] = {}
+            res['value'].update({'manual_currency_id': j.get('currency'), 'block_manual_currency_id': True})
+        return res
+
     _columns = {
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
         'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
+        'manual_currency_id': fields.many2one('res.currency', "Book. Currency"),
         'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
+        'block_manual_currency_id': fields.boolean("Block manual currency field", help="Block manual currency field if journal have a currency."),
+    }
+
+    _defaults = {
+        'manual_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'block_manual_currency_id': lambda *a: False,
     }
 
     def balance_move(self, cr, uid, ids, context=None):
@@ -118,6 +143,38 @@ class account_move_compute_currency(osv.osv):
         """
         self.balance_move(cr, uid, ids, context=context)
         return super(account_move_compute_currency, self).validate(cr, uid, ids, context)
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Add currency if none for manual entry
+        """
+        if not context:
+            context = {}
+        if not 'manual_currency_id' in vals or not vals.get('manual_currency_id'):
+            if 'journal_id' in vals:
+                j = self.pool.get('account.journal').read(cr, uid, vals.get('journal_id'), ['currency'])
+                if j and j.get('currency', False):
+                    vals.update({'manual_currency_id': j.get('currency')[0]})
+                    # Add currency to context for journal items lines
+                    if not 'manual_currency_id' in context:
+                        context['manual_currency_id'] = j.get('currency')[0]
+        return super(account_move_compute_currency, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Change manual currency regarding journal
+        """
+        if not context:
+            context = {}
+        res = []
+        for m in self.browse(cr, uid, ids):
+            if m.journal_id.currency:
+                vals.update({'manual_currency_id': m.journal_id.currency.id})
+                # Add currency to context for journal items lines
+                if not 'manual_currency_id' in context:
+                    context['manual_currency_id'] = m.journal_id.currency.id
+                res.append(super(account_move_compute_currency, self).write(cr, uid, [m.id], vals, context))
+        return res
 
 account_move_compute_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

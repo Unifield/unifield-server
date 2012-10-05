@@ -85,7 +85,7 @@ class account_move(osv.osv):
     }
 
     _defaults = {
-        'status': lambda *a: 'sys',
+        'status': lambda self, cr, uid, c: c.get('from_web_menu', False) and 'manu' or 'sys',
     }
 
     def create(self, cr, uid, vals, context=None):
