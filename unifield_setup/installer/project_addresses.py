@@ -64,18 +64,15 @@ class project_addresses(osv.osv_memory):
             return res
         company = self.pool.get('res.company').browse(cr, uid, res['company_id'], context=context)
         company_id = company.partner_id.id
-        partner_name = company.partner_id.name
         addresses = self.pool.get('res.partner').address_get(cr, uid, company_id, ['invoice', 'delivery', 'default'])
         default_id = addresses.get('default', False)
         delivery_id = addresses.get('delivery', False) != default_id and addresses.get('delivery', False)
         bill_id = addresses.get('invoice', False) != default_id and addresses.get('invoice', False)
 
-        res['partner_name'] = partner_name
-        res['second_time'] = company.company_second_time
+        res['partner_name'] = company.instance_id.instance
+        res['name'] = company.instance_id.instance
+        res['second_time'] = True
 
-        if not company.company_second_time:
-            res['partner_name'] = company.instance_id.name
-        
         if default_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, default_id, context=context)
             for field in ['street','street2','zip','city','email','phone']:
@@ -175,16 +172,11 @@ class project_addresses(osv.osv_memory):
             if bill_address:
                 address_obj.unlink(cr, uid, bill_address[0], context=context)
         
-        company_data = {'company_second_time': True}
-        if payload.name:
-            company_data.update({'name': payload.name})
-        
-        self.pool.get('res.company').write(cr, uid, [company.id], company_data, context=context)
+        self.pool.get('res.company').write(cr, uid, [company.id], {'name': company.instance_id.instance}, context=context)
 
-        if payload.partner_name:
-            c = context.copy()
-            c.update({'from_config': True})
-            self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': payload.partner_name}, context=c)
+        c = context.copy()
+        c.update({'from_config': True})
+        self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance}, context=c)
 
         return res
     
