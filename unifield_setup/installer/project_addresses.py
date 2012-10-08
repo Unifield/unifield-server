@@ -124,7 +124,7 @@ class project_addresses(osv.osv_memory):
            or payload.ship_email or payload.ship_phone or payload.ship_country_id:
             ship_address_data = {
                 'type': 'delivery',
-                'name':payload.partner_name or payload.name,
+                'name':company.instance_id.instance,
                 'street':payload.ship_street,
                 'street2':payload.ship_street2,
                 'zip':payload.ship_zip,
@@ -150,7 +150,7 @@ class project_addresses(osv.osv_memory):
            or payload.bill_email or payload.bill_phone or payload.bill_country_id:    
             bill_address_data = {
                 'type': 'invoice',
-                'name':payload.partner_name or payload.name,
+                'name':company.instance_id.instance,
                 'street':payload.bill_street,
                 'street2':payload.bill_street2,
                 'zip':payload.bill_zip,
