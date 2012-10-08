@@ -3,7 +3,7 @@
     <data>
         
     <!-- We move the buttons below the notebook -->
-        <record id="msf_cross_docking.purchase_move_buttons" model="ir.ui.view">
+        <record id="purchase_move_buttons" model="ir.ui.view">
             <field name="name">purchase.form.view</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
@@ -30,7 +30,8 @@
                     </xpath>
                     <xpath expr="/form//group[@name='import']" position="before" >
                         <group colspan="4" col="12">
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" 
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" 
+                            domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id}),  ('check_partner_rfq', '=', tender_id)]" 
                             colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                             <field name="partner_type" colspan="3" />
                             <field name="internal_type" string="Zone" colspan="3" />
@@ -82,7 +83,7 @@
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
                             <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                            <button name="purchase_approve" states="confirmed" string="Confirm" icon="gtk-go-forward" type="object" />
+                            <button name="confirm_button" states="confirmed" string="Confirm" icon="gtk-go-forward" type="object" />
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
                             <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />

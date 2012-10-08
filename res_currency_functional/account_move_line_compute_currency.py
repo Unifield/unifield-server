@@ -69,7 +69,8 @@ class account_move_line_compute_currency(osv.osv):
         j_obj = self.pool.get('account.journal')
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         # Search Miscellaneous Transactions journal
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], order='id', context=context)
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
+                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], order='id', context=context)
         if not j_ids:
             raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
         journal_id = j_ids[0]
@@ -203,7 +204,8 @@ class account_move_line_compute_currency(osv.osv):
         al_obj = self.pool.get('account.analytic.line')
         # Search Miscellaneous Transactions journal
         j_obj = self.pool.get('account.journal')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj')], order='id', context=context)
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
+                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], order='id', context=context)
         if not j_ids:
             raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
         journal_id = j_ids[0]

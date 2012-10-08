@@ -169,7 +169,7 @@ class account_bank_statement(osv.osv):
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
-        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
@@ -1280,6 +1280,24 @@ class account_bank_statement_line(osv.osv):
             move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
         return True
 
+    def do_direct_invoice_reconciliation(self, cr, uid, st_lines=None, context=None):
+        """
+        Do a reconciliation between given register lines and their Direct invoice.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not st_lines or isinstance(st_lines, (int, long)):
+            st_lines = []
+        # Parse register lines
+        for stl in self.browse(cr, uid, st_lines):
+            if stl.invoice_id:
+                # Hard post register line
+                self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
+                # Do reconciliation
+                self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, [stl.invoice_id.id], context=context)
+        return True
+
     def analytic_distribution_is_mandatory(self, cr, uid, id, context=None):
         """
         Verify that no analytic distribution is mandatory. It's not until one of test is true
@@ -1483,6 +1501,10 @@ class account_bank_statement_line(osv.osv):
                     self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
                 elif absl.from_import_cheque_id:
                     self.do_import_cheque_reconciliation(cr, uid, [absl.id], context=context)
+                elif absl.direct_invoice:
+                    if not absl.invoice_id:
+                        raise osv.except_osv(_('Error'), _('This line is linked to an unknown Direct Invoice.'))
+                    self.do_direct_invoice_reconciliation(cr, uid, [absl.id], context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up

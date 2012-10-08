@@ -953,7 +953,6 @@ class ir_values(osv.osv):
                                'client_action_relate': [],
                                'tree_but_action': [],
                                'tree_but_open': []}
-        
         if context.get('purchase_order', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
             for v in values:

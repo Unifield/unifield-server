@@ -2,6 +2,7 @@
 
 from osv import fields, osv
 import warnings
+import pooler
 
 class many2many_sorted(fields.many2many):
     def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
@@ -101,7 +102,12 @@ class many2many_notlazy(many2many_sorted):
 
                 for act_nbr in act[2]:
                     if act_nbr not in existing:
-                        cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, act_nbr))
+                        if self._rel == 'account_destination_link':
+                            link_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
+                            link_obj.create(cr, user, {self._id1: id, self._id2: act_nbr})
+                        else:
+                            cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, act_nbr))
+                        
             else:
                 newargs.append(act)
         if newargs:
