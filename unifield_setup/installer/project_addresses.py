@@ -176,7 +176,8 @@ class project_addresses(osv.osv_memory):
 
         c = context.copy()
         c.update({'from_config': True})
-        self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance}, context=c)
+        self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance,
+                                                                              'partner_type': 'internal'}, context=c)
 
         return res
     
