@@ -225,7 +225,7 @@ class stock_location(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     # Inventory, destruction and quarantine location
-                    res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
+                    res = [('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
                 else:
                     # All internal and virtual locations
                     res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]

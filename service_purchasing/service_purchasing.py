@@ -193,7 +193,7 @@ class stock_move(osv.osv):
             # Destination location
             if product_type == 'consu' and not (loc_dest_id and (location_dest_id.usage == 'inventory' or location_dest_id.destruction_location or location_dest_id.quarantine_location)):
                 vals.update(location_dest_id=False)
-            elif product_type == 'product' and not (loc_dest_id and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok)):
+            elif product_type == 'product' and not (loc_dest_id and (not location_dest_id.non_stockable_ok and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok))):
                 vals.update(location_dest_id=False)
         # Case when outgoing delivery or picking ticket
         elif product_type and parent_type == 'out':
