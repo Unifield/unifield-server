@@ -46,9 +46,9 @@ class account_move_line(osv.osv):
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
         Get state of distribution:
-         - if compatible with the invoice line, then "valid"
-         - if no distribution, take a tour of invoice distribution, if compatible, then "valid"
-         - if no distribution on invoice line and invoice, then "none"
+         - if compatible with the move line, then "valid"
+         - if no distribution, take a tour of move distribution, if compatible, then "valid"
+         - if no distribution on move line and move, then "none"
          - all other case are "invalid"
         """
         # Some verifications
@@ -60,7 +60,38 @@ class account_move_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.move_id and line.move_id.analytic_distribution_id and line.move_id.analytic_distribution_id.id or False, line.account_id.id)
+        return res
+
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
+        """
+        If move have an analytic distribution, return False, else return True
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for ml in self.browse(cr, uid, ids, context=context):
+            res[ml.id] = True
+            if ml.analytic_distribution_id:
+                res[ml.id] = False
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get a recap from analytic distribution state and if it come from header or not.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for ml in self.browse(cr, uid, ids):
+            res[ml.id] = ''
+            from_header = ''
+            if ml.have_analytic_distribution_from_header:
+                from_header = ' (from header)'
+            res[ml.id] = ml.analytic_distribution_state.capitalize() + from_header
         return res
 
     _columns = {
@@ -70,7 +101,12 @@ class account_move_line(osv.osv):
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
-   }
+         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+            string='Header Distrib.?'),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, 
+            string="Distribution", 
+            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+  }
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
         """

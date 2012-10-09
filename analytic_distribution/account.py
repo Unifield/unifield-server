@@ -250,6 +250,57 @@ class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
 
+    _columns = {
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', readonly=True),
+    }
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on a Journal Entry
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        move = self.browse(cr, uid, ids[0], context=context)
+        amount = 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = move.currency_id and move.currency_id.id or company_currency
+        amount = move.amount
+        # Get analytic_distribution_id
+        distrib_id = move.analytic_distribution_id and move.analytic_distribution_id.id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'move_id': move.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': 'Global analytic distribution',
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Check that analytic distribution is ok for all lines
@@ -261,6 +312,10 @@ class account_move(osv.osv):
                 if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code == 'expense':
                     if ml.analytic_distribution_state != 'valid':
                         raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (ml.name or '',))
+                    # Copy analytic distribution from header
+                    if not ml.analytic_distribution_id:
+                        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.move_id.analytic_distribution_id.id, {}, context=context)
+                        self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
 account_move()

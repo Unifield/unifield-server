@@ -181,7 +181,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in dest_fields:
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                         or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
-                        or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) :
+                        or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
+                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
@@ -203,7 +204,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
-                      or (context.get('from_model', False) and isinstance(context.get('from_model'), int)):
+                      or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
+                      or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
@@ -215,7 +217,9 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
                         or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
                         or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
-                        or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)):
+                        or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
+                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
+
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
@@ -473,6 +477,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
                 res[el.id] = False
             # verify move state
+            if el.move_id and el.move_id.state not in ['draft']:
+                res[el.id] = False
             if el.move_line_id and el.move_line_id.move_id and el.move_line_id.move_id.state not in ['draft']:
                 res[el.id] = False
         return res
@@ -530,6 +536,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'invoice_id': fields.many2one('account.invoice', string="Invoice"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice Line"),
         'register_line_id': fields.many2one('account.bank.statement.line', string="Register Line"),
+        'move_id': fields.many2one('account.move', string="Journal Entry"),
         'move_line_id': fields.many2one('account.move.line', string="Journal Item"),
         'commitment_id': fields.many2one('account.commitment', string="Commitment Voucher"),
         'commitment_line_id': fields.many2one('account.commitment.line', string="Commitment Voucher Line"),
@@ -692,7 +699,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that Funding Pool Lines are done if we come from an invoice, invoice line, direct invoice, direct invoice line, register line, 
             #+ move line, commitment, commitment line, model
-            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id']:
+            for obj in ['invoice_id', 'invoice_line_id', 'direct_invoice_id', 'direct_invoice_line_id', 'register_line_id', 'move_id', 'move_line_id', 'commitment_id', 'commitment_line_id', 'accrual_line_id', 'model_line_id']:
                 if getattr(wiz, obj, False) and not wiz.fp_line_ids:
                     raise osv.except_osv(_('Warning'), _('No Allocation done!'))
             # Verify that allocation is 100% on each type of distribution, but only if there some lines
@@ -898,7 +905,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'), 
                     ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'), 
                     ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
-                    ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line')]:
+                    ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move')]:
                     if getattr(wiz, el[0], False):
                         id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [id], {'analytic_distribution_id': distrib_id}, context=context)
