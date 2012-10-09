@@ -101,7 +101,6 @@ class hq_entries(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'cost_center_id':
             cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
-            print cost_center_data
             res = []
             for data in cost_center_data:
                 if data['cost_center_id']:
@@ -114,7 +113,6 @@ class hq_entries(osv.osv):
                         res.append(False)
                 else:
                     res.append(False)
-            print 'res', res
             return res
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
