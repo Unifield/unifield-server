@@ -281,6 +281,7 @@ class account_move_line(osv.osv):
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Add partner_txt to vals regarding partner_id, employee_id and register_id
+        Set partner_type from journal entry (account_move).
         """
         # Some verifications
         if not context:
@@ -289,11 +290,16 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        if context.get('from_web_menu') and 'move_id' in vals:
+            m = self.pool.get('account.move').read(cr, uid, vals.get('move_id'), ['set_partner_type'])
+            if m and m.get('set_partner_type', False):
+                vals.update({'partner_type': m.get('set_partner_type')})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
-        Add partner_txt to vals
+        Add partner_txt to vals.
+        Add default set_partner_type from journal entry to its journal items.
         """
         # Some verifications
         if not context:
@@ -304,6 +310,10 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        if context.get('from_web_menu'):
+            for ml in self.browse(cr, uid, ids):
+                if ml.move_id and ml.move_id.set_partner_type:
+                    vals.update({'partner_type': self.pool.get('account.move').read(cr, uid, ml.move_id.id, ['set_partner_type']).get('set_partner_type')})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()

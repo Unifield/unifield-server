@@ -126,7 +126,6 @@
                                         <field name="date"/>
                                         <field name="account_id"/>
                                         <field name="partner_id" invisible="1"/>
-                                        <field name="partner_type"/>
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
                                         <field name="credit_currency" sum="Total Booking Credit" string="Book. Credit"/>
                                         <field name="currency_id" string="Book. Currency"/>
