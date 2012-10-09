@@ -73,6 +73,25 @@ class user_access_configurator(osv.osv_memory):
         group_ids = group_obj.search(cr, uid, criterias, context=context)
         return group_ids
     
+    def _get_all_access_objects_ids(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        return ids of object which need full access even if originally admin rights only
+        '''
+        # objects
+        model_obj = self.pool.get('ir.model.data')
+        # group names
+        all_access_group_names = self._get_all_access_objects_name(cr, uid, context=context)
+        all_access_group_ids = model_obj.search(cr, uid, [('model', 'in', all_access_group_names)], context=context)
+        
+        return all_access_group_ids
+    
+    def _get_all_access_objects_name(self, cr, uid, context=None, *args, **kwargs):
+        '''
+        return names of object which need full access even if originally admin rights only
+        '''
+        all_access_object_names = ['ir.model.data']
+        return all_access_object_names
+    
     def _get_admin_user_rights_group_name(self, cr, uid, context=None, *args, **kwargs):
         '''
         return admin_user_rights_group
@@ -483,8 +502,11 @@ class user_access_configurator(osv.osv_memory):
         access_ids = access_obj.search(cr, uid, [], context=context)
         # admin user group id
         admin_group_user_rights_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
-        # list of all acl linked to Administration / Access Rights -> two lines for those models
-        admin_group_access_ids = access_obj.search(cr, uid, [('group_id', '=', admin_group_user_rights_id)], context=context)
+        # list of objects which have wild card for all access
+        all_access_object_ids = self._get_all_access_objects_ids(cr, uid, context=context)
+        # list of all acl linked to Administration / Access Rights -> two lines for those models - ONLY IF NOT PART OF ALL ACCESS OBJECTS
+        admin_group_access_ids = access_obj.search(cr, uid, [('group_id', '=', admin_group_user_rights_id),
+                                                             ('model_id', 'not in', all_access_object_ids)], context=context)
         # get the list of corresponding model ids
         data = access_obj.read(cr, uid, admin_group_access_ids, ['model_id'], context=context)
         # we only keep one ACL with link to admin for one model thanks to dictionary structure
