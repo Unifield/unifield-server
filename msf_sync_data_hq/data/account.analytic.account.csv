@@ -1,22 +1,51 @@
 name,code,category,parent_id,type,date_start
-OCA-MMR-COO,MM101,Cost Center,OC,Normal,18-Mar-2012
-OCA-MMR-PRJ,MM201,Cost Center,OC,Normal,18-Mar-2012
-OCA-UZB-COO,UZ101,Cost Center,OC,Normal,18-Mar-2012
-OCA-UZB-PRJ,UZ201,Cost Center,OC,Normal,18-Mar-2012
-OCG-KEN-COO,KE101,Cost Center,OC,Normal,18-Mar-2012
-OCG-KEN-PRJ,KE201,Cost Center,OC,Normal,18-Mar-2012
-OCG-GUI-COO,GU101,Cost Center,OC,Normal,18-Mar-2012
-OCG-GUI-PRJ,GU201,Cost Center,OC,Normal,18-Mar-2012
-OCB-BDI-COO,BD101,Cost Center,OC,Normal,18-Mar-2012
-OCB-BDI-PRJ,BD201,Cost Center,OC,Normal,18-Mar-2012
-OCB-MWI-COO,MW101,Cost Center,OC,Normal,18-Mar-2012
-OCB-MWI-PRJ,MW201,Cost Center,OC,Normal,18-Mar-2012
-SUP-OCA-UZB-COO,SP-UZ101,Cost Center,OC,Normal,18-Mar-2012
-SUP-OCA-UZB-PRJ,SP-UZ201,Cost Center,OC,Normal,18-Mar-2012
-SUP-OCG-GUI-COO,SP-GU101,Cost Center,OC,Normal,18-Mar-2012
-SUP-OCG-GUI-PRJ,SP-GU201,Cost Center,OC,Normal,18-Mar-2012
-SUP-OCB-MWI-COO,SP-MW101,Cost Center,OC,Normal,18-Mar-2012
-SUP-OCB-MWI-PRJ,SP-MW201,Cost Center,OC,Normal,18-Mar-2012
-UF1191_COORDO,UF11961_COORDO,Cost Center,OC,Normal,18-Sep-2012
-UF1191_PROJECT,UF11961_PROJECT,Cost Center,OC,Normal,18-Sep-2012
-UF1191_PROJECT2,UF11961_PROJECT2,Cost Center,OC,Normal,18-Sep-2012
+OCG,OCG,Cost Center,OC,View,01-Jan-12
+GUINEA MISSION,GN1,Cost Center,OCG,View,01-Jan-12
+Coordination Project,GN101,Cost Center,GUINEA MISSION,View,01-Jan-12
+C - Evaluation,GN101A,Cost Center,Coordination Project,Normal,01-Jan-12
+C - Support,GN101Z,Cost Center,Coordination Project,Normal,01-Jan-12
+C - Eprep,GN109A,Cost Center,GUINEA MISSION,Normal,01-Jan-12
+Guékédou Project,GN155,Cost Center,GUINEA MISSION,View,01-Jan-12
+G - Prévention,GN155C,Cost Center,Guékédou Project,Normal,01-Jan-12
+G - Etudes et monitoring,GN155D,Cost Center,Guékédou Project,Normal,01-Jan-12
+G - Palu zone renforcée,GN155F,Cost Center,Guékédou Project,Normal,01-Jan-12
+G - Palu zone non renforc,GN155G,Cost Center,Guékédou Project,Normal,01-Jan-12
+G - Support,GN155Z,Cost Center,Guékédou Project,Normal,01-Jan-12
+Matam Project,GN170,Cost Center,GUINEA MISSION,View,01-Jan-12
+M - OPD,GN170A,Cost Center,Matam Project,Normal,01-Jan-12
+M - IEC,GN170C,Cost Center,Matam Project,Normal,01-Jan-12
+M - IPD,GN170E,Cost Center,Matam Project,Normal,01-Jan-12
+M - Documentation,GN170G,Cost Center,Matam Project,Normal,01-Jan-12
+M - Désengagement,GN170I,Cost Center,Matam Project,Normal,01-Jan-12
+M - Support,GN170Z,Cost Center,Matam Project,Normal,01-Jan-12
+Cholera - Vacci Project,GN171,Cost Center,GUINEA MISSION,View,01-Jan-12
+V - Case Management BOFFA,GN171A,Cost Center,Cholera - Vacci Project,Normal,01-Jan-12
+V - Etude EPICENTRE BOFFA,GN171B,Cost Center,Cholera - Vacci Project,Normal,01-Jan-12
+V - VACCI BOFFA,GN171C,Cost Center,Cholera - Vacci Project,Normal,01-Jan-12
+V - VACCI FORECARIAH,GN171D,Cost Center,Cholera - Vacci Project,Normal,01-Jan-12
+V - Case management FORECARIAH,GN171E,Cost Center,Cholera - Vacci Project,Normal,01-Jan-12
+V - Etude Epicentre FORECARIAH,GN171F,Cost Center,Cholera - Vacci Project,Normal,01-Jan-12
+Cholera PEC Conakry,GN172,Cost Center,GUINEA MISSION,View,01-Jan-12
+D - Case management,GN172A,Cost Center,Cholera PEC Conakry,Normal,01-Jan-12
+D - ORS POINT,GN172B,Cost Center,Cholera PEC Conakry,Normal,01-Jan-12
+D - NETTOYAGE,GN172C,Cost Center,Cholera PEC Conakry,Normal,01-Jan-12
+D - Support,GN172Z,Cost Center,Cholera PEC Conakry,Normal,01-Jan-12
+D - UNIFIELD Support,GN177Z,Cost Center,GUINEA MISSION,Normal,01-Jan-12
+F - Formation TMT,GN193A,Cost Center,GUINEA MISSION,Normal,01-Jan-12
+F - Formation ToT,GN194A,Cost Center,GUINEA MISSION,Normal,01-Jan-12
+F - Formation Néonat,GN195A,Cost Center,GUINEA MISSION,Normal,01-Jan-12
+KYRGYZSTAN MISSION,KG1,Cost Center,OCG,View,01-Jan-12
+KG coordo Shared support costs,KG101Z,Cost Center,KYRGYZSTAN MISSION,Normal,01-Jan-12
+TB Prison,KG110,Cost Center,KYRGYZSTAN MISSION,View,01-Jan-12
+Detection and Identification,KG110A,Cost Center,TB Prison,Normal,01-Jan-12
+Treatment inside the prison,KG110B,Cost Center,TB Prison,Normal,01-Jan-12
+Treatment outside prison,KG110C,Cost Center,TB Prison,Normal,01-Jan-12
+Proper control of infection,KG110D,Cost Center,TB Prison,Normal,01-Jan-12
+Appropriation and awareness,KG110E,Cost Center,TB Prison,Normal,01-Jan-12
+TB Prison Shared support costs,KG110Z,Cost Center,TB Prison,Normal,01-Jan-12
+TB Kara Suu Project,KG130,Cost Center,KYRGYZSTAN MISSION,View,01-Jan-12
+Adherence follow up,KG130B,Cost Center,TB Kara Suu Project,Normal,01-Jan-12
+Infection control,KG130C,Cost Center,TB Kara Suu Project,Normal,01-Jan-12
+"Case detection, treatment",KG130D,Cost Center,TB Kara Suu Project,Normal,01-Jan-12
+Support costs,KG130Z,Cost Center,TB Kara Suu Project,Normal,01-Jan-12
+Unifield shared support costs,KG177Z,Cost Center,KYRGYZSTAN MISSION,Normal,01-Jan-12
