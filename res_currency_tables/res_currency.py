@@ -108,7 +108,7 @@ class res_currency(osv.osv):
         item_obj.create(cr, uid, {'price_version_id': sale_version_id,
                                   'name': 'Default Sale %s Line' % currency.name,
                                   'base': 1,
-                                  'min_qunatity': 0.00}, context=context)
+                                  'min_quantity': 0.00}, context=context)
         
         # Create the purchase pricelist
         purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency.id, 
@@ -126,7 +126,7 @@ class res_currency(osv.osv):
         item_obj.create(cr, uid, {'price_version_id': purchase_version_id,
                                   'name': 'Default Purchase %s Line' % currency.name,
                                   'base': -2,
-                                  'min_qunatity': 0.00}, context=context)
+                                  'min_quantity': 0.00}, context=context)
         
         return [sale_price_id, purchase_price_id]
     
