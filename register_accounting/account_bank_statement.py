@@ -352,7 +352,7 @@ class account_bank_statement(osv.osv):
 
     def button_wiz_import_invoices(self, cr, uid, ids, context=None):
         """
-        When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
+        When pressing 'Pending Payments' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
         """
         # statement_id is useful for making some line's registration.
         # currency_id is useful to filter invoices in the same currency
@@ -1467,7 +1467,7 @@ class account_bank_statement_line(osv.osv):
 
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
-                # Case where this line come from an "Import Invoices" Wizard
+                # Case where this line come from an "Pending Payments" Wizard
                 if absl.imported_invoice_line_ids:
                     self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
                 elif absl.from_import_cheque_id:
