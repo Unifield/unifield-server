@@ -946,7 +946,8 @@ class shipment(osv.osv):
                 invoice_vals['is_intermission'] = True
                 invoice_vals['account_id'] = company.intermission_default_counterpart.id
                 journal_type = 'intermission'
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type)])
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
+                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
             invoice_vals['journal_id'] = journal_ids[0]
@@ -1081,7 +1082,7 @@ class shipment(osv.osv):
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
                 
             # log validate action
-            self.log(cr, uid, shipment.id, _('The Shipment %s has been validated.')%(shipment.name,))
+            self.log(cr, uid, shipment.id, _('The Shipment %s has been closed.')%(shipment.name,))
             
         result = self.complete_finished(cr, uid, ids, context=context)
         return True
@@ -1342,11 +1343,16 @@ class stock_picking(osv.osv):
                      'packing': ('msf_outgoing', 'view_packing_form'),
                      }
         if pick.type == 'out':
+            context.update({'picking_type': pick.subtype == 'standard' and 'delivery_order' or 'picking_ticket'})
             module, view = view_list.get(pick.subtype,('msf_outgoing', 'view_picking_ticket_form'))
             try:
                 return obj_data.get_object_reference(cr, uid, module, view)
             except ValueError, e:
                 pass
+        elif pick.type == 'in':
+            context.update({'picking_type': 'incoming_shipment'})
+        else:
+            context.update({'picking_type': 'internal_move'})
         
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
@@ -2153,6 +2159,12 @@ class stock_picking(osv.osv):
         # if the picking is converted to standard, and state is confirmed
         if pick.converted_to_standard and pick.state == 'confirmed':
             return 'The Preparation Picking has been converted to simple Out. ' + message
+        if pick.type == 'out' and pick.subtype == 'picking':
+            kwargs['message'] = message.replace('Delivery Order', 'Picking Ticket')
+        elif pick.type == 'out' and pick.subtype == 'packing':
+            kwargs['message'] = message.replace('Delivery Order', 'Packing List')
+        elif pick.type == 'out' and pick.subtype == 'ppl':
+            kwargs['message'] = message.replace('Delivery Order', 'Pre-Packing List')
         return super(stock_picking, self)._hook_log_picking_modify_message(cr, uid, ids, context, *args, **kwargs)
     
     def convert_to_standard(self, cr, uid, ids, context=None):
@@ -2161,6 +2173,8 @@ class stock_picking(osv.osv):
         
         only one picking object at a time
         '''
+        if not context:
+            context = {}
         # objects
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
@@ -2215,6 +2229,7 @@ class stock_picking(osv.osv):
             data_obj = self.pool.get('ir.model.data')
             view_id = data_obj.get_object_reference(cr, uid, 'stock', 'view_picking_out_form')
             view_id = view_id and view_id[1] or False
+            context.update({'picking_type': 'delivery_order'})
             return {'name':_("Delivery Orders"),
                     'view_mode': 'form,tree',
                     'view_id': [view_id],
@@ -2223,6 +2238,7 @@ class stock_picking(osv.osv):
                     'res_id': obj.id,
                     'type': 'ir.actions.act_window',
                     'target': 'crush',
+                    'context': context,
                     }
     
     def create_picking(self, cr, uid, ids, context=None):
@@ -2254,6 +2270,8 @@ class stock_picking(osv.osv):
         '''
         create the picking ticket from selected stock moves
         '''
+        if not context:
+            context = {}
         assert context, 'context is not defined'
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
@@ -2310,6 +2328,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
+        context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
@@ -2318,6 +2337,7 @@ class stock_picking(osv.osv):
                 'res_id': new_pick_id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
+                'context': context,
                 }
         
     def validate_picking(self, cr, uid, ids, context=None):
@@ -2352,6 +2372,8 @@ class stock_picking(osv.osv):
         move here the logic of validate picking
         available for picking loop
         '''
+        if not context:
+            context = {}
         assert context, 'context is not defined'
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
@@ -2451,6 +2473,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')
         view_id = view_id and view_id[1] or False
+        context.update({'picking_type': 'picking_ticket', 'ppl_screen': True})
         return {'name':_("Pre-Packing List"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
@@ -2459,6 +2482,7 @@ class stock_picking(osv.osv):
                 'res_id': new_ppl and new_ppl.id or False,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
+                'context': context,
                 }
 
     def ppl(self, cr, uid, ids, context=None):
@@ -2596,6 +2620,7 @@ class stock_picking(osv.osv):
                 'res_id': new_packing.shipment_id.id,
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
+                'context': context,
                 }
     
     def return_products(self, cr, uid, ids, context=None):
@@ -2620,6 +2645,8 @@ class stock_picking(osv.osv):
         - update the draft picking ticket
         - create the back move
         '''
+        if not context:
+            context = {}
         # integrity check
         assert context, 'context not defined'
         assert 'partial_datas' in context, 'partial_datas no defined in context'
@@ -2690,6 +2717,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         view_id = view_id and view_id[1] or False
+        context.update({'picking_type': 'picking_ticket'})
         return {
             'name':_("Picking Ticket"),
             'view_mode': 'form,tree',
@@ -2699,6 +2727,7 @@ class stock_picking(osv.osv):
             'res_id': draft_picking_id ,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': context,
         }
     
     def action_cancel(self, cr, uid, ids, context=None):

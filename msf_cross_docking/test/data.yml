@@ -1,4 +1,11 @@
 - 
+  Create a puchase journal
+- 
+  !record {model: account.journal, id: purhcase_journal}:
+    name: Journal
+    code: CODE
+    type: purchase
+- 
   Partner A
 - 
   !record {model: res.partner, id: partner_A}:

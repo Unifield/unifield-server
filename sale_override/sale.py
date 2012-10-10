@@ -49,6 +49,7 @@ class sale_order(osv.osv):
             default = {}
 
         default.update({'loan_id': False,
+                        'order_policy': 'picking',
                         'active': True})
 
         if not context.get('keepClientOrder', False):
@@ -176,7 +177,7 @@ class sale_order(osv.osv):
     
     _columns = {
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('customer','=',True), ('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
@@ -345,8 +346,15 @@ class sale_order(osv.osv):
             # loop through lines
             for line in so.order_line:
                 # check that each line must have a supplier specified
-                if not line.supplier and line.type == 'make_to_order' and line.po_cft in ('po', 'dpo'):
-                    raise osv.except_osv(_('Error'), _('Supplier is not defined for all Field Order lines.'))
+                if  line.type == 'make_to_order':
+                    if not line.product_id:
+                        raise osv.except_osv(_('Warning'), _("""You can't confirm a Sale Order that contains
+                        lines with procurement method 'On Order' and without product. Please check the line %s
+                        """) % line.line_number)
+                    if not line.supplier and line.po_cft in ('po', 'dpo'):
+                        raise osv.except_osv(_('Error'), _("""Supplier is not defined for all Field Order lines. 
+                        Please check the line %s
+                        """) % line.line_number)
                 fo_type = False
                 # get corresponding type
                 if line.type == 'make_to_stock':

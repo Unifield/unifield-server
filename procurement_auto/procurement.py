@@ -60,7 +60,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         '''
         res = {}
         for proc in self.browse(cr, uid, ids):
-            res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
+            if proc.frequence_id:
+                res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
             
         return res
     
