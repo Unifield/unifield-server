@@ -220,6 +220,12 @@ class analytic_line(osv.osv):
         # Process regarding account_type
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
+                # Verify that:
+                # - the line doesn't have any draft/open contract
+                check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
+                if check_accounts and aline.account_id.id in check_accounts:
+                    continue
+
                 if aline.account_id and aline.account_id.id == msf_private_fund:
                     res.append(aline.id)
                 elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:
