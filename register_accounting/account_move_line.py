@@ -163,7 +163,7 @@ class account_move_line(osv.osv):
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
             help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
@@ -286,14 +286,14 @@ class account_move_line(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        # Retrieve third party name
-        res = _get_third_parties_name(self, cr, uid, vals, context=context)
-        if res:
-            vals.update({'partner_txt': res})
         if context.get('from_web_menu') and 'move_id' in vals:
             m = self.pool.get('account.move').read(cr, uid, vals.get('move_id'), ['set_partner_type'])
             if m and m.get('set_partner_type', False):
                 vals.update({'partner_type': m.get('set_partner_type')})
+        # Retrieve third party name
+        res = _get_third_parties_name(self, cr, uid, vals, context=context)
+        if res:
+            vals.update({'partner_txt': res})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -306,14 +306,14 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Get third_parties_name
-        res = _get_third_parties_name(self, cr, uid, vals, context=context)
-        if res:
-            vals.update({'partner_txt': res})
         if context.get('from_web_menu'):
             for ml in self.browse(cr, uid, ids):
                 if ml.move_id and ml.move_id.set_partner_type:
                     vals.update({'partner_type': self.pool.get('account.move').read(cr, uid, ml.move_id.id, ['set_partner_type']).get('set_partner_type')})
+        # Get third_parties_name
+        res = _get_third_parties_name(self, cr, uid, vals, context=context)
+        if res:
+            vals.update({'partner_txt': res})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
