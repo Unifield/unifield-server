@@ -78,7 +78,7 @@ class user_access_configurator(osv.osv_memory):
         return ids of object which need full access even if originally admin rights only
         '''
         # objects
-        model_obj = self.pool.get('ir.model.data')
+        model_obj = self.pool.get('ir.model')
         # group names
         all_access_group_names = self._get_all_access_objects_name(cr, uid, context=context)
         all_access_group_ids = model_obj.search(cr, uid, [('model', 'in', all_access_group_names)], context=context)
