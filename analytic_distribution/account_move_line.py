@@ -92,6 +92,8 @@ class account_move_line(osv.osv):
             if ml.have_analytic_distribution_from_header:
                 from_header = ' (from header)'
             res[ml.id] = ml.analytic_distribution_state.capitalize() + from_header
+            if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code != 'expense':
+                res[ml.id] = ''
         return res
 
     _columns = {
