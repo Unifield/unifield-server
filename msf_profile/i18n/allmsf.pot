@@ -16894,7 +16894,7 @@ msgstr ""
 
 #. module: register_accounting
 #: help:account.move.line,from_import_invoice_ml_id:0
-msgid "Move line that have been used for an Import Invoices Wizard in order to generate the present move line"
+msgid "Move line that have been used for an Pending Payments Wizard in order to generate the present move line"
 msgstr ""
 
 #. module: stock_schedule
@@ -28674,7 +28674,7 @@ msgstr ""
 #. modules: register_accounting, account_voucher
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
-msgid "Import Invoices"
+msgid "Pending Payments"
 msgstr ""
 
 #. module: stock_move_tracking
