@@ -45,3 +45,25 @@ def cgitb_traceback(ignore=None, severity=logging.DEBUG):
         return
     cherrypy.log(cgitb.text((typ, value, tb)), 'HTTP', severity=severity)
 cherrypy.tools.cgitb = cherrypy.Tool('before_error_response', cgitb_traceback)
+
+def cookie_secure_flag():
+    """Add the secure cookie attribute."""
+    name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
+    cherrypy.response.cookie[name]['secure'] = 1
+cherrypy.tools.secure_cookies = cherrypy.Tool('before_finalize', cookie_secure_flag)
+
+def cookie_httponly_flag():
+    """Add the HttpOnly cookie attribute."""
+    name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
+    cherrypy.response.cookie[name]['httponly'] = 1
+cherrypy.tools.httponly_cookies = cherrypy.Tool('before_finalize', cookie_httponly_flag)
+
+def cookie_fix_312_session_persistent_flag():
+    """Fix cherrypy 3.1.2 tools.session.persistant = False"""
+    if cherrypy.request.config.get('tools.sessions.persistent', True):
+        return True
+    name = cherrypy.request.config.get('tools.sessions.name', 'session_id')
+    if 'expires' in cherrypy.response.cookie[name]:
+        del cherrypy.response.cookie[name]['expires']
+    return True
+cherrypy.tools.fix_312_session_persistent = cherrypy.Tool('before_finalize', cookie_fix_312_session_persistent_flag)
