@@ -432,14 +432,17 @@ class stock_picking(osv.osv):
                         val_loc = self.pool.get('stock.location').browse(cr, uid, values.get('location_dest_id'), context=context)
                         compute_average = pick.type == 'in' and product.cost_method == 'average' and not val_loc.cross_docking_location_ok
                     
+                    # why do not used get_picking_type: original do_partial do not use it
+                    # when an incoming shipment has a avg product to Service, the average price computation is of no use
+                    
                     if compute_average:
                         move_currency_id = move.company_id.currency_id.id
                         context['currency_id'] = move_currency_id
                         # datas from partial
                         product_uom = partial['product_uom']
                         product_qty = partial['product_qty']
-                        product_currency = partial['product_currency']
-                        product_price = partial['product_price']
+                        product_currency = partial.get('product_currency', False)
+                        product_price = partial.get('product_price', 0.0)
                         qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
     
                         if product.id in product_avail:
