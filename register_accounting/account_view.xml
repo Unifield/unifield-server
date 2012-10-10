@@ -820,7 +820,7 @@
                 <data>
                     <xpath expr="/form//field[@name='amount']" position='after'>
                         <newline/>
-                        <field name="set_partner_type" colspan="2"/>
+                        <field name="set_partner_type" colspan="2" attrs="{'readonly': [('status', '=', 'sys')]}"/>
                     </xpath>
                     <xpath expr="/form//tree//field[@name='partner_id']" position="after">
                         <field name="third_parties" readonly="1"/>

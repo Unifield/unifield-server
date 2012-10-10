@@ -109,16 +109,16 @@
                 <form string="Journal Entries" position="replace">
                     <form string="Journal Entries" hide_duplicate_button="1" hide_delete_button="1">
                         <group colspan="4" col="6">
-                            <field name="journal_id" on_change="onchange_journal_id(journal_id)"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': [('status', '=', 'sys')]}"/>
                             <field name="name" readonly="1"/>
-                            <field name="period_id"/>
-                            <field name="ref"/>
+                            <field name="period_id" attrs="{'readonly': [('status', '=', 'sys')]}"/>
+                            <field name="ref" attrs="{'readonly': [('status', '=', 'sys')]}"/>
                             <field name="partner_id" invisible="1"/>
                             <field name="amount" invisible="1"/>
                         </group>
                         <notebook colspan="4">
                             <page string="Journal Items">
-                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines':line_id , 'journal':journal_id, 'period_id':period_id}">
+                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines':line_id , 'journal':journal_id, 'period_id':period_id}" attrs="{'readonly': [('status', '=', 'sys')]}">
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <field name="name"/>
                                         <field name="ref"/>
@@ -155,8 +155,8 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <tree string="Journal Entries" position="replace">
-                  <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="1" hide_delete_button="1">
-                    <button string="Edit manual entry" attrs="{'invisible': [('status', '=', 'sys')]}" 
+                    <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="1" hide_delete_button="1">
+                        <button string="Edit manual entry" attrs="{'invisible': [('status', '=', 'sys')]}" 
                             name="button_edit_manual_entry" type="object" 
                             icon="gtk-color-picker" colspan="2"/>
                         <field name="status" invisible="1"/>
