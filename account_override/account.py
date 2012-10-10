@@ -156,6 +156,20 @@ class account_move(osv.osv):
             context = {}
         return res
 
+    def button_delete(self, cr, uid, ids, context=None):
+        """
+        Delete manual and unposted journal entries if we come from web menu
+        """
+        if not context:
+            context = {}
+        to_delete = []
+        if context.get('from_web_menu', False):
+            for m in self.browse(cr, uid, ids):
+                if m.status == 'manu' and m.state == 'draft':
+                    to_delete.append(m.id)
+        self.unlink(cr, uid, to_delete, context)
+        return True
+
 account_move()
 
 class account_move_reconcile(osv.osv):

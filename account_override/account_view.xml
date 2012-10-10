@@ -169,6 +169,7 @@
                         <field name="amount" sum="Total Amount"/>
                         <field name="functional_currency_id" />
                         <field name="state"/>
+                        <button name="button_delete" states="draft" string="Delete" type="object" icon="gtk-cancel" attrs="{'invisible': [('status', '=', 'sys')]}" confirm="Are you sure you want to delete these line?"/>
                     </tree>
                 </tree>
             </field>
