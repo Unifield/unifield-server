@@ -56,20 +56,23 @@ class bank_statement(osv.osv):
         return True
 
     def button_open_bank(self, cr, uid, ids, context=None):
-        super(bank_statement, self).button_open_bank(cr, uid, ids, context=context)
-        return self.update_xml_id_register(cr, uid, ids[0], context)
+        res = super(bank_statement, self).button_open_bank(cr, uid, ids, context=context)
+        self.update_xml_id_register(cr, uid, ids[0], context)
+        return res
     
     def button_open_cheque(self, cr, uid, ids, context=None):
-        super(bank_statement, self).button_open_cheque(cr, uid, ids, context=context)
-        return self.update_xml_id_register(cr, uid, ids[0], context)
+        res = super(bank_statement, self).button_open_cheque(cr, uid, ids, context=context)
+        self.update_xml_id_register(cr, uid, ids[0], context)
+        return res
 
     def button_open_cash(self, cr, uid, ids, context=None):
         """
         The update of xml_id may be done when opening the register 
         --> set the value of xml_id based on the period as period is no more modifiable
         """
-        super(bank_statement, self).button_open_cash(cr, uid, ids, context=context)
-        return self.update_xml_id_register(cr, uid, ids[0], context)
+        res = super(bank_statement, self).button_open_cash(cr, uid, ids, context=context)
+        self.update_xml_id_register(cr, uid, ids[0], context)
+        return res
     
 bank_statement()
 
