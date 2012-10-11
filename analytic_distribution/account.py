@@ -327,7 +327,7 @@ class account_move(osv.osv):
         res = super(account_move, self).validate(cr, uid, ids, context)
         for m in self.browse(cr, uid, ids):
             for ml in m.line_id:
-                if ml.analytic_distribution_state == 'invalid':
+                if ml.analytic_distribution_state == 'invalid' or (ml.analytic_distribution_state == 'none' and ml.account_id.user_type.code == 'expense'):
                     self.pool.get('account.move.line').write(cr, uid, [x.id for x in m.line_id], {'state': 'draft'}, context, check=False, update_check=False)
         return res
 
