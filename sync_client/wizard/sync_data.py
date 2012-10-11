@@ -289,11 +289,13 @@ class update_received(osv.osv):
         # Sort updates by rule_sequence
         whole = self.browse(cr, uid, update_ids, context=context)
         update_groups = dict()
+        
         for update in whole:
+            group_key = (update.sequence, update.rule_sequence)
             try:
-                update_groups[update.rule_sequence].append(update)
+                update_groups[group_key].append(update)
             except KeyError:
-                update_groups[update.rule_sequence] = [update]
+                update_groups[group_key] = [update]
         sync_log(self, data="received update ids = %s, models = %s" % (update_ids, map(lambda x:x[0].model.model, update_groups.values())))
         self.write(cr, uid, update_ids, {'execution_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
