@@ -88,6 +88,27 @@ class currency_setup(osv.osv_memory):
             self.pool.get('res.company').write(cr, uid, [company_id], {'currency_id': cur_id, 'second_time': True}, context=context)
         else:
             self.pool.get('res.company').write(cr, uid, [company_id], {'currency_id': cur_id,}, context=context)
+
+        # Search the sale and purchase pricelists for this currency
+        sale_price_id = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'), ('currency_id', '=', cur_id)])
+        if not sale_price_id:
+            raise osv.except_osv(_('Error'), _('No pricelist found for this currency !'))
+
+        purchase_price_id = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('currency_id', '=', cur_id)])
+        if not purchase_price_id:
+            raise osv.except_osv(_('Error'), _('No pricelist found for this currency !'))
+
+        # Change the currencies on all internal partners
+        partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', '=', 'internal')])
+        self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
+                                                                  'property_product_pricelist_purchase': purchase_price_id[0]})
+
+        # Change the default value of the ir.property pricelist fields
+        sale_price_property_ids = self.pool.get('ir.property').search(cr, uid, [('res_id', '=', False), ('name', '=', 'property_product_pricelist')])
+        self.pool.get('ir.property').write(cr, uid, sale_price_property_ids, {'value': sale_price_id[0]})
+        purchase_price_property_ids = self.pool.get('ir.property').search(cr, uid, [('res_id', '=', False), ('name', '=', 'property_product_pricelist_purchase')])
+        self.pool.get('ir.property').write(cr, uid, purchase_price_property_ids, {'value': purchase_price_id[0]})
+
         
         # Modify the currency on some already created objects
         # product_price_type
