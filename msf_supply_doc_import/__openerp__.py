@@ -42,7 +42,14 @@
         'workflow/procurement_request_workflow.xml',
     ],
     "demo_xml": [],
-    "test": [],
+    "test": [
+        'test/data.yml',
+        'test/import_po.yml',
+        'test/import_so.yml',
+        'test/import_rfq.yml',
+        'test/import_ir.yml',
+        'test/import_tender.yml',
+    ],
     "installable": True,
     "active": False
 }
