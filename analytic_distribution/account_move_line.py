@@ -35,9 +35,9 @@ class account_move_line(osv.osv):
         res = {}
         for ml in self.browse(cr, uid, ids, context=context):
             res[ml.id] = True
-            # False if journal entry is posted
-            if ml.move_id.state == 'posted':
-                res[ml.id] = False
+#            # False if journal entry is posted
+#            if ml.move_id.state == 'posted':
+#                res[ml.id] = False
             # False if account not an expense account
             if ml.account_id.user_type.code not in ['expense']:
                 res[ml.id] = False
