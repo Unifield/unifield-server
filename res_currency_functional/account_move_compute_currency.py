@@ -185,6 +185,10 @@ class account_move_compute_currency(osv.osv):
                     context['manual_currency_id'] = journal.currency.id
             tmp_res = super(account_move_compute_currency, self).write(cr, uid, [m.id], vals, context)
             res.append(tmp_res)
+            # Recompute account move lines debit/credit
+            if 'manual_currency_id' in vals and m.status == 'manu':
+                for ml in m.line_id:
+                    self.pool.get('account.move.line').write(cr, uid, [ml.id], {'currency_id': vals.get('manual_currency_id'), 'debit_currency': ml.debit_currency, 'credit_currency': ml.credit_currency})
         return res
 
 account_move_compute_currency()
