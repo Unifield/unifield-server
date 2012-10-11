@@ -318,5 +318,18 @@ class account_move(osv.osv):
                         self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
+    def validate(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution state for all lines. If distribution is invalid, then line is also invalid! (draft state)
+        """
+        if not context:
+            context = {}
+        res = super(account_move, self).validate(cr, uid, ids, context)
+        for m in self.browse(cr, uid, ids):
+            for ml in m.line_id:
+                if ml.analytic_distribution_state == 'invalid':
+                    self.pool.get('account.move.line').write(cr, uid, [x.id for x in m.line_id], {'state': 'draft'}, context, check=False, update_check=False)
+        return res
+
 account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

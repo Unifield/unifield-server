@@ -948,6 +948,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                         'active_ids': register_id,
                     }
                 }
+        # Validate account_move if we come from a Journal Entry or a Journal Item
+        if wiz and (wiz.move_id or wiz.move_line_id):
+            move_id = False
+            if wiz.move_id:
+                move_id = wiz.move_id.id
+            elif wiz.move_line_id:
+                move_id = wiz.move_line_id.move_id.id
+            self.pool.get('account.move').validate(cr, uid, [move_id])
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         

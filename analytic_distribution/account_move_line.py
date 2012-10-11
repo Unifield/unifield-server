@@ -122,13 +122,28 @@ class account_move_line(osv.osv):
         for obj_line in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             amount = obj_line.debit_currency - obj_line.credit_currency
-            if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
-                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, obj_line.analytic_distribution_id.id, {}, obj_line.account_id.id)
-                if ana_state == 'invalid':
+            line_distrib_id = obj_line.analytic_distribution_id and obj_line.analytic_distribution_id.id or obj_line.move_id and obj_line.move_id.analytic_distribution_id and obj_line.move_id.analytic_distribution_id.id or False
+            # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
+            other_lines_are_ok = True
+            if obj_line.move_id and obj_line.move_id.status and obj_line.move_id.status == 'manu':
+                if obj_line.state != 'valid':
+                    other_lines_are_ok = False
+                for other_line in obj_line.move_id.line_id:
+                    if other_line.state != 'valid':
+                        other_lines_are_ok = False
+            # Check that line have expense account and have a distribution
+            if line_distrib_id and obj_line.account_id.user_type_code == 'expense' and other_lines_are_ok:
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, obj_line.account_id.id)
+                # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
+                if ana_state == 'invalid' and obj_line.move_id.status == 'manu':
+                    ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', [x.id for x in obj_line.move_id.line_id])])
+                    acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
+                    continue
+                elif ana_state == 'invalid':
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution.'))
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
-                distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
+                distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, line_distrib_id, context=context)
                 # create lines
                 for distrib_lines in [distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
@@ -167,11 +182,21 @@ class account_move_line(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        Delete analytic lines before unlink move lines
+        Delete analytic lines before unlink move lines.
+        Update Manual Journal Entries.
         """
+        if not context:
+            context = {}
+        # Search moves
+        move_ids = []
+        for ml in self.browse(cr, uid, ids):
+            if ml.move_id and ml.move_id.state == 'manu':
+                move_ids.append(ml.move_id.id)
         # Search analytic lines
         ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
+        # Revalidate move
+        self.pool.get('account.move').validate(cr, uid, move_ids)
         return super(account_move_line, self).unlink(cr, uid, ids)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):

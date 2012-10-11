@@ -135,6 +135,8 @@ class account_move_line(osv.osv):
             help="This inform that no correction is possible for a line that come from a write-off!"),
         'reference': fields.char(string='Reference', size=64),
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True),
+        'state': fields.selection([('draft','Invalid'), ('valid','Valid')], 'State', readonly=True,
+            help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
     }
 
     _defaults = {
