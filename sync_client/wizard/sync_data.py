@@ -365,7 +365,7 @@ class update_received(osv.osv):
                 #1 conflict detection
                 if self._conflict(cr, uid, update, context):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                    logs[update.id] = sync_log(self, "Conflict detected!", 'error', data=(update.id, update.fields, update.values)) + "\n"
+                    logs[update.id] = sync_log(self, "Conflict detected!", 'warning', data=(update.id, update.fields, update.values)) + "\n"
                     #TODO manage other conflict rules here (tfr note)
 
             if bad_fields:
