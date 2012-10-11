@@ -27,7 +27,7 @@ class version(osv.osv):
         'patch' : fields.binary('Patch', readonly=True),
         'sum' : fields.char(string="Commit Hash", size=256, required=True, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
-        'description' : fields.text("Description", readonly=True),
+        'comment' : fields.text("Comment", readonly=True),
         'state' : fields.selection([('not-installed','Not Installed'),('need-restart','Need Restart'),('installed','Installed')], string="State", readonly=True),
         'applied' : fields.datetime("Applied", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
