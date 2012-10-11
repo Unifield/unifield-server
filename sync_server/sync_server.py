@@ -37,7 +37,7 @@ def check_validated(f):
         if entity.state == 'updated':
             return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
         if not (entity.state == 'validated' and entity.user_id.id == int(uid)):
-            return (False, "Error: Instance has not been validated yet by the parent")
+            return (False, "The instance has not yet been validated by its parent")
         return f(self, cr, uid, entity, *args, **kargs)
         
     return check
