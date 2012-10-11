@@ -16,10 +16,12 @@
                             <field name="importance" attrs="{'required':[('name','!=','')]}" />
                             <field name="date" />
                         </group>
+                        <separator string="Description" colspan="4" />
+                        <field name="description" nolabel="1" colspan="4" attrs="{'required':[('importance','!=','')]}" />
                         <field name="patch" required="1" />
                         <label string="" colspan="1" />
                         <button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
-                        <separator string="History of Revision" />
+                        <separator string="History of Revision" colspan="4" />
                         <field name="version_ids" colspan="4" nolabel="1">
                             <tree>
                                 <field name="state" />

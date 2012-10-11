@@ -30,6 +30,7 @@ class manage_version(osv.osv):
         'name' : fields.char('Revision', size=256),
         'patch' : fields.binary('Patch'),
         'date' : fields.datetime('Date', readonly=True),
+        'description' : fields.text("Description"),
         'version_ids' : fields.many2many('sync_server.version', 'sync_server_version_rel', 'wiz_id', 'version_id', string="History of Revision", readonly=True, limit=10000),
         'create_date' : fields.datetime("Create Date"),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag"),
@@ -41,7 +42,7 @@ class manage_version(osv.osv):
         return self.pool.get("sync_server.version").search(cr, uid, [], context=context)
     
     _defaults = {
-        'date' : lambda *a : datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
+        'date' : fields.datetime.now,
         'version_ids' : _get_version,
         'state' : 'upload',
     }
@@ -73,8 +74,9 @@ class manage_version(osv.osv):
             data = {
                 'name' :  wiz.name,
                 'sum' : m.hexdigest(),
-                'date' : self._defaults['date'](),
+                'date' : fields.datetime.now(),
                 'patch' : wiz.patch,
+                'description' : wiz.description,
                 'importance' : wiz.importance,
             }
             res_id = self.pool.get("sync_server.version").create(cr, uid, data, context=context)
@@ -82,7 +84,8 @@ class manage_version(osv.osv):
                                            'name' : False, 
                                            'patch' : False,
                                            'importance' : False,
-                                           'date' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, 
+                                           'date' : fields.datetime.now(), 
+                                           'description' : False},
                        context=context)
         return True
             

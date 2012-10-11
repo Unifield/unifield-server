@@ -23,6 +23,7 @@ class version(osv.osv):
         'patch' : fields.binary('Patch', readonly=True),
         'sum' : fields.char(string="Check Sum", size=256, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
+        'description' : fields.text("Description", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
         'state' : fields.selection([('draft','Draft'),('confirmed','Confirmed')], string="State", readonly=True),
     }
@@ -66,7 +67,7 @@ class version(osv.osv):
             return {'status' : 'ok', 
                     'message' : "Last revision"}
         
-        revisions = self.read(cr, uid, revisions, ['name','sum','date','importance'], context=context)
+        revisions = self.read(cr, uid, revisions, ('name','sum','date','importance','description'), context=context)
         status = 'update'
         for rev in revisions:
             rev.pop('id')

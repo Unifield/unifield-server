@@ -46,7 +46,8 @@ class upgrade(osv.osv_memory):
         text = "These patches have been downloaded and are ready to install:\n\n" if len(next_revisions) > 1 \
                else "This patch has been downloaded and is ready to install:\n\n"
         for rev in revisions.browse(cr, uid, next_revisions, context=context):
-            text += "- [%s] %s (%s at %s)\n" % (rev.importance, rev.name, rev.sum, rev.date, )
+            text += " - [%s] %s (%s)\n   Description: %s (sum is %s)\n\n" \
+                    % (rev.importance, rev.name, rev.date, rev.description, rev.sum)
             if not rev.patch:
                 patch = proxy.get_zip( uuid, rev.sum )
                 if not patch[0]:
@@ -153,7 +154,8 @@ class upgrade(osv.osv_memory):
             else:
                 text += "There are %s revisions available.\n" % len(next_revisions)
             for rev in revisions.browse(cr, uid, next_revisions):
-                text += "- [%s] %s (%s at %s)\n" % (rev.importance, rev.name, rev.sum, rev.date, )
+                text += " - [%s] %s (%s)\n   Description: %s (sum is %s)\n\n" \
+                        % (rev.importance, rev.name, rev.date, rev.description, rev.sum)
         else:
             text += "\nYour OpenERP version is up-to-date.\n"
         return text
