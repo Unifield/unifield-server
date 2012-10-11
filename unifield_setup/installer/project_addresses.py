@@ -34,6 +34,8 @@ class project_addresses(osv.osv_memory):
         return super(project_addresses, self)._get_all_countries(cr, uid, context=context)
     
     _columns = {
+        'second_time': fields.boolean('Config. Wizard launched for the second time'),
+        'partner_name': fields.char(size=64, string='Partner name'),
         'ship_street':fields.char('Street', size=128),
         'ship_street2':fields.char('Street 2', size=128),
         'ship_zip':fields.char('Zip Code', size=24),
@@ -60,12 +62,17 @@ class project_addresses(osv.osv_memory):
         
         if not 'company_id' in res:
             return res
-        company_id = self.pool.get('res.company').browse(cr, uid, res['company_id'], context=context).partner_id.id
+        company = self.pool.get('res.company').browse(cr, uid, res['company_id'], context=context)
+        company_id = company.partner_id.id
         addresses = self.pool.get('res.partner').address_get(cr, uid, company_id, ['invoice', 'delivery', 'default'])
         default_id = addresses.get('default', False)
         delivery_id = addresses.get('delivery', False) != default_id and addresses.get('delivery', False)
         bill_id = addresses.get('invoice', False) != default_id and addresses.get('invoice', False)
-        
+
+        res['partner_name'] = company.instance_id.instance
+        res['name'] = company.instance_id.instance
+        res['second_time'] = True
+
         if default_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, default_id, context=context)
             for field in ['street','street2','zip','city','email','phone']:
@@ -96,6 +103,9 @@ class project_addresses(osv.osv_memory):
         '''
         Create project's addresses
         '''
+        if not context:
+            context = {}
+
         res = super(project_addresses, self).execute(cr, uid, ids, context=context)
         
         assert len(ids) == 1, "We should only get one object from the form"
@@ -107,14 +117,14 @@ class project_addresses(osv.osv_memory):
         # TODO: quick fix
         self.pool.get('res.users').write(cr, uid, [uid], {'view': 'extended'}, context=context)
 
-        company = payload.company_id
+        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         address_obj = self.pool.get('res.partner.address')
-        
+
         if payload.ship_street or payload.ship_street2 or payload.ship_zip or payload.ship_city \
            or payload.ship_email or payload.ship_phone or payload.ship_country_id:
             ship_address_data = {
                 'type': 'delivery',
-                'name':payload.name,
+                'name':company.instance_id.instance,
                 'street':payload.ship_street,
                 'street2':payload.ship_street2,
                 'zip':payload.ship_zip,
@@ -140,7 +150,7 @@ class project_addresses(osv.osv_memory):
            or payload.bill_email or payload.bill_phone or payload.bill_country_id:    
             bill_address_data = {
                 'type': 'invoice',
-                'name':payload.name,
+                'name':company.instance_id.instance,
                 'street':payload.bill_street,
                 'street2':payload.bill_street2,
                 'zip':payload.bill_zip,
@@ -161,7 +171,14 @@ class project_addresses(osv.osv_memory):
             bill_address = address_obj.search(cr, uid, [('type', '=', 'invoice'), ('partner_id', '=', company.partner_id.id)], context=context)
             if bill_address:
                 address_obj.unlink(cr, uid, bill_address[0], context=context)
-            
+        
+        self.pool.get('res.company').write(cr, uid, [company.id], {'name': company.instance_id.instance}, context=context)
+
+        c = context.copy()
+        c.update({'from_config': True})
+        self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance,
+                                                                              'partner_type': 'internal'}, context=c)
+
         return res
     
 project_addresses()
