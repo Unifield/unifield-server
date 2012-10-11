@@ -180,8 +180,8 @@ class entity(osv.osv, Thread):
             if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
                 log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
                 log['status'] = 'failed'
-            # Check for update
-            if hasattr(self, 'upgrade'):
+            # Check for update (if connection is up)
+            elif hasattr(self, 'upgrade'):
                 up_to_date = self.upgrade(cr, uid, context=context)
                 if not up_to_date[0]:
                     log.update({
@@ -501,8 +501,15 @@ class entity(osv.osv, Thread):
         SYNC process : usefull for scheduling 
     """
     def sync_threaded(self, cr, uid, context=None):
+        # Check if connection is up
+        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+            raise osv.except_osv(_('Error!'), _("Not connected to server. Please check password and connection status in the Connection Manager"))
+        # Check for update (if connection is up)
+        elif hasattr(self, 'upgrade'):
+            up_to_date = self.upgrade(cr, uid, context=context)
+            if not up_to_date[0]:
+                raise osv.except_osv(_('Error!'), _(up_to_date[1]))
         context = context or {}
-        #TODO thread
         self.data = [cr, uid, context]
         Thread.__init__(self)
         self.start()
@@ -515,7 +522,6 @@ class entity(osv.osv, Thread):
         if status is None:
             raise osv.except_osv(_('Error!'), _('Unable to start the synchronization process now!'))
        
-        #self.sync_core(cr, uid, log_id, log, context=context)
         self.pull_update(cr, uid, log=log, log_id=log_id, context=context)
         self.pull_message(cr, uid, log=log, log_id=log_id, context=context)
         self.push_update(cr, uid, log=log, log_id=log_id, context=context)
