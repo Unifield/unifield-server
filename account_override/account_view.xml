@@ -182,10 +182,25 @@
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_move_filter" />
             <field name="arch" type="xml">
-                <xpath expr="//filter[@string='To Review']" position="replace"/>
-                <xpath expr="//field[@name='partner_id']" position="replace">
-                    <field name="partner_id" invisible="1"/>
-                    <field name="partner_type"/>
+                <data>
+                    <xpath expr="//filter[@string='To Review']" position="replace"/>
+                    <xpath expr="//field[@name='partner_id']" position="replace">
+                        <field name="partner_id" invisible="1"/>
+                        <field name="partner_type"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- Journal Entries Search (filter) -->
+        <record model="ir.ui.view" id="inherit_view_account_move_line_filter">
+            <field name="name">inherit.view.account.move.line.filter</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@string='Unbalanced']" position="replace">
+                    <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
                 </xpath>
             </field>
         </record>
