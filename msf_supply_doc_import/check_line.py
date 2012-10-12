@@ -159,7 +159,8 @@ def compute_uom_value(cr, uid, **kwargs):
     obj_data = kwargs['obj_data']
     msg = None
     try:
-        if row.cells[3]:
+        # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
+        if row.cells[3] and str(row.cells[3]) != str(None):
             try:
                 uom_name = row.cells[3].data.strip()
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
@@ -167,12 +168,18 @@ def compute_uom_value(cr, uid, **kwargs):
                     uom_id = uom_ids[0]
             except Exception:
                 msg = 'The UOM Name has to be a string.'
-        if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
-            error_list.append(msg or 'The UOM Name was not valid.')
-            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+                error_list.append(msg or 'The UOM Name was not valid.')
+                uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        else:
+            error_list.append(msg or 'The UOM Name was empty.')
+            if default_code:
+                uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
+            else:
+                uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
     # if the cell is empty
     except IndexError:
-        error_list.append(msg or 'The UOM Name was not valid.')
+        error_list.append(msg or 'The UOM Name was empty.')
         if default_code:
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
         else:
