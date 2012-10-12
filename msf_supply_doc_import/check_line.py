@@ -151,6 +151,8 @@ def compute_uom_value(cr, uid, **kwargs):
     """
     row = kwargs['row']
     uom_obj = kwargs['uom_obj']
+    product_obj = kwargs['product_obj']
+    default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
@@ -171,7 +173,10 @@ def compute_uom_value(cr, uid, **kwargs):
     # if the cell is empty
     except IndexError:
         error_list.append(msg or 'The UOM Name was not valid.')
-        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        if default_code:
+            uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
+        else:
+            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
     return {'uom_id': uom_id, 'error_list': error_list}
 
 
