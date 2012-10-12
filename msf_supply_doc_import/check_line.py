@@ -187,9 +187,9 @@ def compute_price_value(**kwargs):
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
+    price_unit_defined = False
     try:
         if not row.cells[4] or not row.cells[4].data:
-            price_unit_defined = False
             if default_code:
                 warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
             else:
@@ -203,7 +203,6 @@ def compute_price_value(**kwargs):
             error_list.append('The Price Unit was not defined properly.')
     # if nothing is found at the line index (empty cell)
     except IndexError:
-        price_unit_defined = False
         if default_code:
             warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
         else:
