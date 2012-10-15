@@ -476,12 +476,12 @@ class ir_sequence(osv.osv):
 
     def _get_instance(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
-        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
+        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.cost_center_id and company.instance_id.cost_center_id.code or ''
 
     def _get_hqcode(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id
-        code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
+        code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.cost_center_id and company.instance_id.cost_center_id.code or ''
         while parent_id:
             code = parent_id.code
             parent_id = parent_id.parent_id or False
