@@ -483,7 +483,7 @@ class ir_sequence(osv.osv):
         parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id
         code = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.cost_center_id and company.instance_id.cost_center_id.code or ''
         while parent_id:
-            code = parent_id.code
+            code = parent_id.cost_center_id and parent.cost_center_id.code or ''
             parent_id = parent_id.parent_id or False
         return code
 
