@@ -233,6 +233,10 @@ class product_product(osv.osv):
         'default_code' : fields.char('CODE', size=14),
     }
 
+    _sql_constraints = [
+        ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+    ]
+
 product_product()
 
 class product_template(osv.osv):
