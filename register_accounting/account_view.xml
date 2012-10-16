@@ -47,7 +47,7 @@
                         <group col="4" colspan="4">
                             <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
                             <button name="button_wiz_import_cheques" states="open" string="Import Cheques" type="object" icon="gtk-dnd"/>
-                            <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
+                            <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
                             <label string="" colspan="1"/>
                         </group>
                         <notebook colspan="4">
@@ -178,7 +178,7 @@
                             <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                                 context="context"/>
                             <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
-                            <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
+                            <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
                         </group>
                         <group col="4" colspan="4">
                             <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill" colspan="2"/>
@@ -615,7 +615,7 @@
                         <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" 
                             context="context"/>
                         <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
-                        <button name="button_wiz_import_invoices" states="open" string="Import Invoices" type="object" icon="gtk-save"/>
+                        <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
                     </group>
                     <group col="4" colspan="2">
                         <field name="display_type"/>
