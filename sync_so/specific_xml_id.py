@@ -103,6 +103,6 @@ class product_product(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         product = self.browse(cr, uid, res_id)
-        return product.default_code
+        return product.default_code + table_name
     
 product_product()
