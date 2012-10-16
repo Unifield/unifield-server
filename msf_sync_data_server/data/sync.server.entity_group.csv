@@ -1,6 +1,6 @@
-id,name,type_id
-group_oc,OC,OC
-group_coordo,Coordinations,COORDINATIONS
-group_mission1,Mission1,MISSION
-group_mission2,Mission2,MISSION
-
+"id","name","type_id"
+"group_oc","OC","OC"
+"group_coordo","Coordinations","COORDINATIONS"
+"group_mission1","Mission1","MISSION"
+"group_mission2","Mission2","MISSION"
+"group_section","Section","SECTION"
