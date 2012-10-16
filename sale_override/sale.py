@@ -184,7 +184,8 @@ class sale_order(osv.osv):
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'details': fields.char(size=30, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        # we increase the size of the 'details' field from 30 to 86
+        'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
