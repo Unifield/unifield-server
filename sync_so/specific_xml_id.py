@@ -97,3 +97,12 @@ class res_currency_sync(osv.osv):
     
 res_currency_sync()
 
+class product_product(osv.osv):
+    
+    _inherit = 'product.product'
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        product = self.browse(cr, uid, res_id)
+        return product.default_code
+    
+product_product()
