@@ -41,7 +41,7 @@
   Creating a product.product record stockable
 - 
   !record {model: product.product, id: product_stockable_p2}:
-    default_code: P1
+    default_code: P11
     name: product 1 test
     type: product
   
