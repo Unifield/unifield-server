@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from time import strftime
 
 class account_account(osv.osv):
     _name = "account.account"
@@ -84,11 +85,25 @@ class account_move(osv.osv):
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj'])]"),
+        'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
     }
 
     _defaults = {
         'status': lambda self, cr, uid, c: c.get('from_web_menu', False) and 'manu' or 'sys',
+        'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
+
     }
+
+    def _check_document_date(self, cr, uid, ids):
+        """
+        Check that document's date is done BEFORE posting date
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for m in self.browse(cr, uid, ids):
+            if m.document_date and m.date and m.date < m.document_date:
+                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        return True
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -106,8 +121,15 @@ class account_move(osv.osv):
             vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
         if 'from_web_menu' in context:
             vals.update({'status': 'manu'})
-        return super(account_move, self).create(cr, uid, vals, context=context)
-    
+            # Update context in order journal item could retrieve this @creation
+            if 'document_date' in vals:
+                context['document_date'] = vals.get('document_date')
+            if 'date' in vals:
+                context['date'] = vals.get('date')
+        res = super(account_move, self).create(cr, uid, vals, context=context)
+        self._check_document_date(cr, uid, res)
+        return res
+
     def name_get(self, cursor, user, ids, context=None):
         # Override default name_get (since it displays "*12" names for unposted entries)
         return super(osv.osv, self).name_get(cursor, user, ids, context=context)
@@ -122,7 +144,18 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
-        return super(account_move, self).write(cr, uid, ids, vals, context=context)
+                # Update context in order journal item could retrieve this @creation
+                if 'document_date' in vals:
+                    context['document_date'] = vals.get('document_date')
+                    for ml in m.line_id:
+                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'document_date': vals.get('document_date')}, context, False, False)
+                if 'date' in vals:
+                    context['date'] = vals.get('date')
+                    for ml in m.line_id:
+                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'date': vals.get('date'), 'account_id': ml.account_id.id}, context, False, False)
+        res = super(account_move, self).write(cr, uid, ids, vals, context=context)
+        self._check_document_date(cr, uid, ids)
+        return res
 
     def button_validate(self, cr, uid, ids, context=None):
         """
