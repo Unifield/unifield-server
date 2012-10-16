@@ -281,15 +281,10 @@ class account_move_line(osv.osv):
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Add partner_txt to vals regarding partner_id, employee_id and register_id
-        Set partner_type from journal entry (account_move).
         """
         # Some verifications
         if not context:
             context = {}
-        if context.get('from_web_menu') and 'move_id' in vals:
-            m = self.pool.get('account.move').read(cr, uid, vals.get('move_id'), ['set_partner_type'])
-            if m and m.get('set_partner_type', False):
-                vals.update({'partner_type': m.get('set_partner_type')})
         # Retrieve third party name
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
@@ -299,17 +294,12 @@ class account_move_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
         Add partner_txt to vals.
-        Add default set_partner_type from journal entry to its journal items.
         """
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if context.get('from_web_menu'):
-            for ml in self.browse(cr, uid, ids):
-                if ml.move_id and ml.move_id.set_partner_type:
-                    vals.update({'partner_type': self.pool.get('account.move').read(cr, uid, ml.move_id.id, ['set_partner_type']).get('set_partner_type')})
         # Get third_parties_name
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
@@ -317,5 +307,4 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
