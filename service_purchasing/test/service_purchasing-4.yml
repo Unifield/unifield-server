@@ -25,7 +25,7 @@
   Creating a product.product record service with reception
 - 
   !record {model: product.product, id: product_service_recep_p1}:
-    default_code: P0
+    default_code: P8
     name: product 0 test
     type: service_recep
     procure_method: make_to_order

@@ -25,7 +25,7 @@
   Creating a product.product record service with reception
 - 
   !record {model: product.product, id: product_service_recep_p1}:
-    default_code: P0
+    default_code: P6
     name: product 0 test
     type: service_recep
     procure_method: make_to_order
@@ -34,7 +34,7 @@
   Creating a product.product record stockable
 - 
   !record {model: product.product, id: product_stockable_p2}:
-    default_code: P1
+    default_code: P7
     name: product 1 test
     type: product
   
