@@ -508,6 +508,7 @@ class entity(osv.osv, Thread):
         elif hasattr(self, 'upgrade'):
             up_to_date = self.upgrade(cr, uid, context=context)
             if not up_to_date[0]:
+                cr.commit()
                 raise osv.except_osv(_('Error!'), _(up_to_date[1]))
         context = context or {}
         self.data = [cr, uid, context]

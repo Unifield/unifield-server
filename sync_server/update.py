@@ -107,7 +107,7 @@ class update(osv.osv):
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
                 if not update.owner:
-                    privates = [entity.id]
+                    privates = []
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
                                [update.owner.id]
