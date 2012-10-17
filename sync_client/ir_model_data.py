@@ -410,12 +410,18 @@ def message_unlink(model, cr, uid, source, unlink_info, context=None):
     
 orm.message_unlink = message_unlink
 
+"""
+How to activate deletion on the branch. 
+Need to specify field to extract the final destination of the delete. 
+All record that are on the path of the current instance to destination will be deleted 
+(only if destination is lower in the instance tree then the current instance)
+
 class partner(osv.osv):
     _inherit = 'res.partner'
     _delete_owner_field = 'ref'
 
 partner()
-
+"""
 #record modification of m2o if the corresponding o2m is modified
 def modif_o2m(model,cr,uid,id,values,context=None):
     fields_ref = model.fields_get(cr, uid, context=context)
