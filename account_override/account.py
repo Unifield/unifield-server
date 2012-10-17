@@ -94,15 +94,18 @@ class account_move(osv.osv):
 
     }
 
-    def _check_document_date(self, cr, uid, ids):
+    def _check_document_date(self, cr, uid, ids, context=None):
         """
         Check that document's date is done BEFORE posting date
         """
+        if not context:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for m in self.browse(cr, uid, ids):
-            if m.document_date and m.date and m.date < m.document_date:
-                raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
+        if context.get('from_web_menu', False):
+            for m in self.browse(cr, uid, ids):
+                if m.document_date and m.date and m.date < m.document_date:
+                    raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
     def create(self, cr, uid, vals, context=None):
@@ -127,7 +130,7 @@ class account_move(osv.osv):
             if 'date' in vals:
                 context['date'] = vals.get('date')
         res = super(account_move, self).create(cr, uid, vals, context=context)
-        self._check_document_date(cr, uid, res)
+        self._check_document_date(cr, uid, res, context)
         return res
 
     def name_get(self, cursor, user, ids, context=None):
@@ -154,7 +157,7 @@ class account_move(osv.osv):
                     for ml in m.line_id:
                         self.pool.get('account.move.line').write(cr, uid, ml.id, {'date': vals.get('date'), 'account_id': ml.account_id.id}, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
-        self._check_document_date(cr, uid, ids)
+        self._check_document_date(cr, uid, ids, context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
