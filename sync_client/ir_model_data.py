@@ -342,6 +342,36 @@ def write(model,cr,uid,ids,values,context=None):
     
 orm.write = write
 
+old_unlink = orm.unlink
+
+def unlink(self, cr, uid, ids, context=None):
+    def format_data_per_id(data):
+        new_data = {}
+        for d in data:
+            new_data[d['id']] = d
+        return new_data
+    
+    if hasattr(self, '_delete_owner_field'):
+        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
+        data = self.read(cr, uid, ids, [self._delete_owner_field], context=context)
+        data = format_data_per_id(data)
+        print 'Sync delete', xml_ids
+        import pprint
+        pprint.pprint(data)
+        for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
+            print "message" , ids[i], xml_id_record.module,xml_id_record.name, data[ids[i]][self._delete_owner_field] 
+            #self.pool.get("sync.client.message_to_send").create(cr, uid, {}, context=context)
+    #raise osv.except_osv(_('Error !'), "Cannot Delete")
+    old_unlink(self, cr, uid, ids, context=None)
+    
+orm.unlink = unlink
+
+class partner(osv.osv):
+    _inherit = 'res.partner'
+    _delete_owner_field = 'ref'
+
+partner()
+
 #record modification of m2o if the corresponding o2m is modified
 def modif_o2m(model,cr,uid,id,values,context=None):
     fields_ref = model.fields_get(cr, uid, context=context)
