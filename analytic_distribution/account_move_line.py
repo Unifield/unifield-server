@@ -249,5 +249,24 @@ class account_move_line(osv.osv):
                 'context': context,
         }
 
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        """
+        Check line if we come from web (from_web_menu)
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context.get('from_web_menu', False):
+            res = []
+            for ml in self.browse(cr, uid, ids):
+                distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id, ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False, vals.get('account_id') or ml.account_id.id)
+                if distrib_state in ['invalid', 'none']:
+                    vals.update({'state': 'draft'})
+                tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
+                res.append(tmp_res)
+            return res
+        return super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
