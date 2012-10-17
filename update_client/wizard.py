@@ -114,6 +114,7 @@ class upgrade(osv.osv_memory):
         ## Make a lock file to make OpenERP able to detect an update
         f = open(lock_file, "w")
         f.write(str({
+            'conf' : config.rcfile,
             'dbname' : cr.dbname,
             'revisions' : new_revisions,
             'db_user' : config['db_user'] or None, ## Note that False values are not acceptable for psycopg
