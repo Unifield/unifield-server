@@ -110,8 +110,8 @@ class hq_entries(osv.osv):
                     cost_center_name = data['cost_center_id'][1][:3]
                     instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', 'like', cost_center_name), ('level', '=', 'coordo')], context=context)
                     if instance_ids:
-                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['name'], context=context)
-                        res.append(instance_data['name'])
+                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+                        res.append(instance_data['instance'])
                     else:
                         res.append(False)
                 else:
