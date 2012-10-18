@@ -164,23 +164,12 @@ class account_move(osv.osv):
                 if m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                 # Update context in order journal item could retrieve this @creation
-                if 'document_date' in vals:
-                    context['document_date'] = vals.get('document_date')
-                    for ml in m.line_id:
-                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'document_date': vals.get('document_date')}, context, False, False)
-                if 'date' in vals:
-                    context['date'] = vals.get('date')
-                    for ml in m.line_id:
-                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'date': vals.get('date'), 'account_id': ml.account_id.id}, context, False, False)
-                # Update move lines regarding journal_id and period_id
-                if 'journal_id' in vals:
-                    context['journal_id'] = vals.get('journal_id')
-                    for ml in m.line_id:
-                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'journal_id': vals.get('journal_id')}, context, False, False)
-                if 'period_id' in vals:
-                    context['period_id'] = vals.get('period_id')
-                    for ml in m.line_id:
-                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'period_id': vals.get('period_id')}, context, False, False)
+                # Also update some other fields
+                for el in ['document_date', 'date', 'journal_id', 'period_id']:
+                    if el in vals:
+                        context[el] = vals.get(el)
+                        for ml in m.line_id:
+                            self.pool.get('account.move.line').write(cr, uid, ml.id, {el: vals.get(el)}, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)

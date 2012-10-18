@@ -263,6 +263,9 @@ class account_move_line(osv.osv):
                 distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id, ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False, vals.get('account_id') or ml.account_id.id)
                 if distrib_state in ['invalid', 'none']:
                     vals.update({'state': 'draft'})
+                # Add account_id because of an error with account_activable module for checking date
+                if not 'account_id' in vals and 'date' in vals:
+                    vals.update({'account_id': ml.account_id and ml.account_id.id or False})
                 tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
                 res.append(tmp_res)
             return res
