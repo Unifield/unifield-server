@@ -122,20 +122,23 @@ class purchase_order_followup(osv.osv_memory):
                 move_ids3 = []
                 move_ids4 = []
                 move_ids5 = []
+                move_ids6 = []
                 for move in line.move_ids:
                     if move.type == 'internal':
                         continue
                     elif move.type == 'out':
-                        move_ids5.append(move)
-                    elif move.product_id.id == line.product_id.id:
+                        move_ids6.append(move)
+                    elif move.state == 'done':
                         move_ids1.append(move)
-                    elif move.product_uom.id == line.product_uom.id:
+                    elif move.product_id.id == line.product_id.id:
                         move_ids2.append(move)
-                    elif move.date_expected == line.confirmed_delivery_date:
+                    elif move.product_uom.id == line.product_uom.id:
                         move_ids3.append(move)
+                    elif move.date_expected == line.confirmed_delivery_date:
+                        move_ids4.append(move)
                     else:
                         move_ids4.append(move)
-                for move_ids in [move_ids1, move_ids2, move_ids3, move_ids4, move_ids5]:
+                for move_ids in [move_ids1, move_ids2, move_ids3, move_ids4, move_ids5, move_ids6]:
                     for move in move_ids:
                         line_shipped_rate = "no-progressbar"
                         if first_move:
