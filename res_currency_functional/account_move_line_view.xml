@@ -53,7 +53,7 @@
                         <field name="name" select="1"/>
                         <field name="ref"/>
                         <newline/>
-                        <field name="journal_id"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                         <field name="period_id"/>
                         <newline />
                         <field name="document_date"/>
@@ -100,7 +100,7 @@
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom" noteditable="1">
-                    <field name="journal_id"/>
+                    <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="name"/>
                     <field name="ref"/>

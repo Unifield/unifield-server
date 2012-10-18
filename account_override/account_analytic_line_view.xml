@@ -10,7 +10,7 @@
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
                 <tree editable="top" string="Analytic Journal Items">
-                    <field name="journal_id"/>
+                    <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>

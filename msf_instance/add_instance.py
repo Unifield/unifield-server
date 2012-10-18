@@ -31,7 +31,7 @@ class account_analytic_journal(osv.osv):
         NOT TO BE SYNCHRONIZED!!!
         """
         res = {}
-        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         for journal in self.browse(cr, uid, ids, context=context):
             res[journal.id] = (current_instance_id == journal.instance_id.id)
         return res
@@ -74,7 +74,7 @@ class account_journal(osv.osv):
         NOT TO BE SYNCHRONIZED!!!
         """
         res = {}
-        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
         for journal in self.browse(cr, uid, ids, context=context):
             res[journal.id] = (current_instance_id == journal.instance_id.id)
         return res
