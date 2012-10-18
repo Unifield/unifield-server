@@ -27,7 +27,6 @@ from tools.translate import _
 from datetime import datetime
 import decimal_precision as dp
 import time
-import netsvc
 from ..register_tools import open_register_view
 from ..register_tools import _get_date_in_period
 
@@ -133,12 +132,6 @@ class wizard_account_invoice(osv.osv):
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
         
-        # Approve invoice
-        netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', inv_id, 'invoice_open', cr)
-       
-        # Make an invoice number
-        inv_number = inv_obj.read(cr, uid, inv_id, ['number'])['number']
-        
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {
             'account_id': vals['account_id'],
@@ -150,7 +143,7 @@ class wizard_account_invoice(osv.osv):
             'invoice_id': inv_id,
             'partner_type': 'res.partner,%d'%(vals['partner_id'], ),
             'statement_id': inv['register_id'][0],
-            'name': inv_number,
+            'name': 'Direct Invoice',
         })
         
         # Temp post the line

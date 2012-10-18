@@ -34,6 +34,7 @@ import time
 from datetime import datetime
 import decimal_precision as dp
 from tools.misc import flatten
+import netsvc
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -1292,6 +1293,11 @@ class account_bank_statement_line(osv.osv):
         # Parse register lines
         for stl in self.browse(cr, uid, st_lines):
             if stl.invoice_id:
+                # Approve invoice
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', stl.invoice_id.id, 'invoice_open', cr)
+                # Add name to the register line
+                inv_number = self.pool.get('account.invoice').read(cr, uid, stl.invoice_id.id, ['number'])['number']
+                self.write(cr, uid, [stl.id], {'name': inv_number})
                 # Hard post register line
                 self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
                 # Do reconciliation
