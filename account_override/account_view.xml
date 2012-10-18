@@ -111,7 +111,7 @@
                         <group colspan="4" col="6">
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': [('status', '=', 'sys')]}"/>
                             <field name="name" readonly="1"/>
-                            <field name="period_id" attrs="{'readonly': [('status', '=', 'sys')]}"/>
+                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': [('status', '=', 'sys')]}"/>
                             <field name="ref" attrs="{'readonly': [('status', '=', 'sys')]}"/>
                             <field name="partner_id" invisible="1"/>
                             <field name="document_date"/>
