@@ -198,7 +198,7 @@ class stock_picking(osv.osv):
 
         certif = False
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type in ['in','internal','out']:
+            if pick.type in ['in','out']:
                 if not context.get('yesorno',False) :
                     for move in pick.move_lines:
                         if move.state == 'confirmed':
