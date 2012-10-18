@@ -1031,6 +1031,19 @@ class stock_production_lot(osv.osv):
                 return False
 
         return True
+
+    def _get_delete_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns if the batch is deletable
+        '''
+        res = {}
+        for batch_id in ids:
+            res[batch_id] = True
+            move_ids = self.pool.get('stock.move').search(cr, uid, [('prodlot_id', '=', batch_id)], context=context)
+            if move_ids:
+                res[batch_id] = False
+
+        return res
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
@@ -1052,6 +1065,7 @@ class stock_production_lot(osv.osv):
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
                 'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
+                'delete_ok': fields.function(_get_delete_ok, method=True, string='Possible deletion ?', type='boolean', readonly=True),
                 }
     
     _defaults = {'type': 'standard',
@@ -1102,6 +1116,18 @@ class stock_production_lot(osv.osv):
                 name = record['name']
             res.append((record['id'], name))
         return res
+
+    def remove_batch(self, cr, uid, ids, context=None):
+        '''
+        Remove the batch
+        '''
+        for batch in self.browse(cr, uid, ids, context=context):
+            if batch.stock_available != 0.00:
+                raise osv.except_osv(_('Error'), _('You cannot remove a batch number which has stock !'))
+            else:
+                super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
+
+        return True
     
 stock_production_lot()
 
