@@ -342,37 +342,35 @@ def write(model,cr,uid,ids,values,context=None):
     
 orm.write = write
 
+def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name):
+    if destination_name == instance_name or not destination_name:
+        print "destination name", destination_name
+        return
+        
+    message_data = {
+            'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
+            'sent' : False,
+            'remote_call': self._name + ".message_unlink",
+            'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
+            'destination_name': destination_name
+    }
+    print "message_data", message_data
+    self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
+    instance_obj = self.pool.get('msf.instance')
+    instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
+    if instance_ids:
+        instance_record = instance_obj.browse(cr, uid, instance_ids[0])
+        parent = instance_record.parent_id and instance_record.parent_id.instance or False
+        if parent:
+            generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name)
+
 old_unlink = orm.unlink
 
+from sync_common.common import format_data_per_id 
+
 def unlink(self, cr, uid, ids, context=None):
-    def format_data_per_id(data):
-        new_data = {}
-        for d in data:
-            new_data[d['id']] = d
-        return new_data
-        
-    def generate_message_for_destination(destination_name, xml_id, instance_name):
-        if destination_name == instance_name:
-            return
-            
-        message_data = {
-                        'identifier' : 'delete_' + xml_id + "_to_" + destination_name,
-                        'sent' : False,
-                        'remote_call': self._name + ".message_unlink",
-                        'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
-                        'destination_name': destination_name
-                    }
-        self.pool.get("sync.client.message_to_send").create(cr, uid, message_data, context=context)
-            
-            
-        instance_obj = self.pool.get('msf.instance')
-        instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)], context=context)
-        if instance_ids:
-            instance_record = instance_obj.browse(cr, uid, instance_ids[0], context=context)
-            parent = instance_record.parent_id and instance_record.parent_id.instance or False
-            if parent:
-                generate_message_for_destination(parent, xml_id, instance_name)
-        
+    if isinstance(ids, (int, long)):
+        ids = [ids]
     old_uid = uid
     uid = 1
     if hasattr(self, '_delete_owner_field'):
@@ -386,7 +384,7 @@ def unlink(self, cr, uid, ids, context=None):
         pprint.pprint(data)
         for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
             xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-            generate_message_for_destination(destination_names[i], xml_id, instance_name)
+            generate_message_for_destination(self, cr, uid, destination_names[i], xml_id, instance_name)
             
     #raise osv.except_osv(_('Error !'), "Cannot Delete")
     uid = old_uid

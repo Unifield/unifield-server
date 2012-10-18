@@ -121,28 +121,60 @@ class hq_entries(osv.osv):
 
 hq_entries()
 
+from sync_common.common import format_data_per_id 
+from sync_client.ir_model_data import generate_message_for_destination
+
+
 class account_analytic_line(osv.osv):
     
     _inherit = 'account.analytic.line'
     _delete_owner_field = 'cost_center_id'
     
+    def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
+        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', '=', cost_center_id)], context=context)
+        if instance_ids:
+            instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+            return instance_data['instance']
+        else:
+            return False
+    
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
-        if dest_field == 'cost_center_id':
-            cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
-            res = []
-            for data in cost_center_data:
-                if data['cost_center_id']:
-                    cost_center_id = data['cost_center_id'][0]
-                    instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', '=', cost_center_id)], context=context)
-                    if instance_ids:
-                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-                        res.append(instance_data['instance'])
-                    else:
-                        res.append(False)
-                else:
-                    res.append(False)
-            return res
-        return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+        if not dest_field == 'cost_center_id':
+            return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+        
+        cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
+        res = []
+        for data in cost_center_data:
+            if data['cost_center_id']:
+                cost_center_id = data['cost_center_id'][0]
+                print cost_center_id
+                res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center_id, context))
+            else:
+                res.append(False)
+        print res
+        return res
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if not 'cost_center_id' in vals:
+            return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+        
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+            
+        instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
+        new_cost_center_id = vals['cost_center_id']
+        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
+        line_data = format_data_per_id(self.read(cr, uid, ids, ['cost_center_id'], context=context))
+        for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
+            xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
+            old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
+            if not old_cost_center_id == new_cost_center_id:
+                destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+                generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name)
+
+        
+        return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+        
 
 account_analytic_line()
 

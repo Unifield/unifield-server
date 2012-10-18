@@ -340,5 +340,11 @@ class check_common(osv.osv):
 
 check_common()
 
+def format_data_per_id(data):
+    new_data = {}
+    for d in data:
+        new_data[d['id']] = d
+    return new_data
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
