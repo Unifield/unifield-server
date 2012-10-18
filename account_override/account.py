@@ -108,6 +108,21 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
+    def _check_date_in_period(self, cr, uid, ids, context=None):
+        """
+        Check that date is inside defined period
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context.get('from_web_menu', False):
+            for m in self.browse(cr, uid, ids):
+                if m.date and m.period_id and m.period_id.date_start and m.date >= m.period_id.date_start and m.period_id.date_stop and m.date <= m.period_id.date_stop:
+                    continue
+                raise osv.except_osv(_('Error'), _('Posting date should be include in defined Period%s.') % (m.period_id and ': ' + m.period_id.name or '',))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Change move line's sequence (name) by using instance move prefix.
@@ -131,6 +146,7 @@ class account_move(osv.osv):
                 context['date'] = vals.get('date')
         res = super(account_move, self).create(cr, uid, vals, context=context)
         self._check_document_date(cr, uid, res, context)
+        self._check_date_in_period(cr, uid, res, context)
         return res
 
     def name_get(self, cursor, user, ids, context=None):
@@ -156,8 +172,18 @@ class account_move(osv.osv):
                     context['date'] = vals.get('date')
                     for ml in m.line_id:
                         self.pool.get('account.move.line').write(cr, uid, ml.id, {'date': vals.get('date'), 'account_id': ml.account_id.id}, context, False, False)
+                # Update move lines regarding journal_id and period_id
+                if 'journal_id' in vals:
+                    context['journal_id'] = vals.get('journal_id')
+                    for ml in m.line_id:
+                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'journal_id': vals.get('journal_id')}, context, False, False)
+                if 'period_id' in vals:
+                    context['period_id'] = vals.get('period_id')
+                    for ml in m.line_id:
+                        self.pool.get('account.move.line').write(cr, uid, ml.id, {'period_id': vals.get('period_id')}, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
+        self._check_date_in_period(cr, uid, ids, context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
