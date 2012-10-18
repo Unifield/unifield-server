@@ -55,7 +55,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             # prepare some values
             current_date = strftime('%Y-%m-%d')
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
-                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                            ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]
@@ -181,7 +181,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
         # Search an analytic correction journal
         acor_journal_id = False
         acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
-                                                                                      ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                                      ('is_current_instance', '=', True)])
         if acor_journal_ids:
             acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated
