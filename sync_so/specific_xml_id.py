@@ -110,8 +110,8 @@ class hq_entries(osv.osv):
                     cost_center_name = data['cost_center_id'][1][:3]
                     instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', 'like', cost_center_name), ('level', '=', 'coordo')], context=context)
                     if instance_ids:
-                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['name'], context=context)
-                        res.append(instance_data['name'])
+                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+                        res.append(instance_data['instance'])
                     else:
                         res.append(False)
                 else:
@@ -120,3 +120,29 @@ class hq_entries(osv.osv):
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
 hq_entries()
+
+class account_analytic_line(osv.osv):
+    
+    _inherit = 'account.analytic.line'
+    _delete_owner_field = 'cost_center_id'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if dest_field == 'cost_center_id':
+            cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
+            res = []
+            for data in cost_center_data:
+                if data['cost_center_id']:
+                    cost_center_id = data['cost_center_id'][0]
+                    instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', '=', cost_center_id)], context=context)
+                    if instance_ids:
+                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+                        res.append(instance_data['instance'])
+                    else:
+                        res.append(False)
+                else:
+                    res.append(False)
+            return res
+        return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+account_analytic_line()
+
