@@ -164,12 +164,12 @@ expiry_quantity_report()
 class expiry_quantity_report_line(osv.osv_memory):
     _name = 'expiry.quantity.report.line'
     _description = 'Products expired line'
-    _order = 'expiry_date, location_id, product_id asc'
+    _order = 'expiry_date, location_id, product_code asc'
     
     _columns = {
         'report_id': fields.many2one('expiry.quantity.report', string='Report', required=True),
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'product_code': fields.related('product_id', 'default_code', string='Ref.', type='char'),
+        'product_code': fields.related('product_id', 'default_code', string='Ref.', type='char', store=True),
         'product_name': fields.related('product_id', 'name', string='Name', type='char'),
         'uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'real_stock': fields.float(digits=(16, 2), string='Real stock'),
@@ -479,6 +479,7 @@ class product_likely_expire_report_line(osv.osv_memory):
     _columns = {
             'report_id': fields.many2one('product.likely.expire.report', string='Report', required=True, ondelete='cascade'),
             'product_id': fields.many2one('product.product', string='Product', required=True),
+            'ref': fields.related('product_id', 'default_code', readonly=True, type='char', size=64, store=True),
             'consumption': fields.float(digits=(16,2), string='Monthly Consumption', required=True),
             'in_stock': fields.float(digits=(16,2), string='In stock'),
             'total_expired': fields.float(digits=(16,2), string='Total expired'),
