@@ -37,6 +37,10 @@ class account_invoice_line(osv.osv):
         'move_lines': fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
     }
 
+    #_defaults = {
+        'price_unit': lambda *a: 0.00,
+    }
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy an invoice line without its move lines
