@@ -139,7 +139,7 @@
     for wiz in self.browse(cr, uid, wiz_ids):
       assert len(wiz.line_ids) == 2, "Number of lines in the follow-up not corresponding to the number of lines in the purchase order (2 :: %s)" % len(wiz.line_ids)
       for line in wiz.line_ids:
-        if line.move_id.product_qty == 7.00:
+        if line.move_id.state == 'done':
           assert line.line_name == 1, "Line name is not equal to the name of the PO line"
           assert line.line_product_id.id == ref('product_split_flow'), "Product on the line isn't the product in the PO line"
           assert line.line_product_qty == 10.0, "The product qty of the line is different than the qty in the PO line"
@@ -148,9 +148,9 @@
           #assert line.line_confirmed_date == 1, ""
           assert line.line_shipped_rate == 30.00, "Shipped rate on the followup is different than the shipped rate of the PO"
           assert not line.move_product_id, "Product of the move is displayed"
-          assert line.move_product_qty == '7.00', "Product qty is not equal to 7.00"
+          assert line.move_product_qty == '3.00', "Product qty is not equal to 3.00"
           assert not line.move_uom_id, "Product of the move is displayed"
-          assert line.move_state == 'Available', 'State of the move is incorrect in the followup line'
+          assert line.move_state == 'Closed', 'State of the move is incorrect in the followup line'
         else:
           assert line.line_name == 1, "Line name is not equal to the name of the PO line"
           assert not line.line_product_id.id, "Product of PO line is displayed in follow-up"
@@ -160,7 +160,7 @@
           #assert line.line_confirmed_date == 1, ""
           assert line.line_shipped_rate == 'no-progressbar', "Shipped rate is displayed"
           assert not line.move_product_id, "Product of the move is displayed"
-          assert line.move_product_qty == '3.00', "Product qty is not equal to 3.00"
+          assert line.move_product_qty == '7.00', "Product qty is not equal to 7.00"
           assert not line.move_uom_id, "Product of the move is displayed"
-          assert line.move_state == 'Closed', 'State of the move is incorrect in the followup line (Closed :: %s)' % line.move_state
+          assert line.move_state == 'Available', 'State of the move is incorrect in the followup line (Available :: %s)' % line.move_state
     self.unlink(cr, uid, wiz_ids, context=context)
