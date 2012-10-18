@@ -159,11 +159,13 @@ class entity(osv.osv, Thread):
         log[step] = 'failed'
         return log[step]
        
-    def startSync(self, cr, uid, log=None, log_id=None, step='status', context=None):
+    def startSync(self, cr, uid, log=None, step='status', context=None):
+        assert log.has_key('log_id') if log else True, \
+               "Inconsistent state! Please report it to the developper team."
         # Prevent synchronization to be started multiple times
         me = self.get_entity(cr, uid, context)
-        if me.is_syncing and log is None:
-            return (None, log_id, log)
+        if me.is_syncing:
+            return (None, log)
 
         # First time we run into startSync()
         if log is None:
@@ -175,58 +177,66 @@ class entity(osv.osv, Thread):
                 'msg_pull' : 'null',
                 'data_push' : 'null',
                 'msg_push' : 'null',
+                'standalone' : (step != 'status'),
             }
             # Check if connection is up
             if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
-                log['error'] += "Not connected to server. Please check password and connection status in the Connection Manager"
-                log['status'] = 'failed'
+                log.update({
+                    'end' : fields.datetime.now(),
+                    'error' : log['error'] + "Not connected to server. Please check password and connection status in the Connection Manager",
+                    'status' : 'failed',
+                })
             # Check for update (if connection is up)
             elif hasattr(self, 'upgrade'):
                 up_to_date = self.upgrade(cr, uid, context=context)
                 if not up_to_date[0]:
                     log.update({
-                        'end' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'end' : fields.datetime.now(),
                         'error' : log['error'] + "Revision Update failed: " + up_to_date[1],
                         'status' : 'failed',
                     })
-                    log_id = self.pool.get('sync.monitor').create(cr, uid, log)
-                    cr.commit()
-                    raise osv.except_osv(_('Error!'), _(up_to_date[1]))
                 elif 'last' not in up_to_date[1].lower():
                     log['error'] += "Revision Update Status: " + up_to_date[1]
+            # Raise when error occure
+            if log['status'] == 'failed':
+                self.pool.get('sync.monitor').create(cr, uid, log)
+                cr.commit()
+                raise osv.except_osv(_('Error!'), _(log['error']))
+        # The log exists and its global status is not in-progress, exiting...
+        elif log['status'] != 'in-progress':
+            return (None, log)
         
-        if step is not None:
-            log[step] = 'in-progress'
+        log[step] = 'in-progress'
+        if step != 'status':
+            self.set_syncing(cr, uid, True)
 
-        if log_id is None:
-            log_id = self.pool.get('sync.monitor').create(cr, uid, log, context=context)
+        # Write on the log or create a new one
+        if log.has_key('log_id'):
+            self.pool.get('sync.monitor').write(cr, uid, [log['log_id']], log, context=context)
         else:
-            self.pool.get('sync.monitor').write(cr, uid, [log_id], log, context=context)
-        if log[step] == 'failed':
-            return (None, log_id, log)
-        self.set_syncing(cr, uid, True)
+            log['log_id'] = self.pool.get('sync.monitor').create(cr, uid, log, context=context)
         cr.commit()
-        return ('ok', log_id, log)
+
+        return ('ok', log)
  
-    def stopSync(self, cr, uid, log_id, log, step='status', status=None, context=None):
-        if status is not None:
-            log[step] = status
-        statuses = [log[k] for k in ('data_push', 'msg_push', 'data_pull', 'msg_pull','status')]
-        if 'failed' in statuses or 'in-progress' not in statuses[:-1]:
-            # Determine final status
-            log.update({'end':datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        'status': 'ok' if 'failed' not in statuses  else 'failed'})
+    def stopSync(self, cr, uid, log, step='status', status=None, context=None):
+        if log[step] == 'in-progress':
+            log[step] = status or 'ok'
+        if step != 'status':
             self.set_syncing(cr, uid, False)
+            if status == 'failed' or log['standalone']:
+                log['status'] = status
         # Update log
-        self.pool.get('sync.monitor').write(cr, uid, [log_id], log, context=context)
+        log['end'] = fields.datetime.now()
+        self.pool.get('sync.monitor').write(cr, uid, [log['log_id']], log, context=context)
         cr.commit()
         return log[step] == 'ok'
 
     """
         Push Update
     """
-    def push_update(self, cr, uid, log=None, log_id=None, context=None):
-        (status, log_id, log) = self.startSync(cr, uid, log=log, log_id=log_id, step='data_push', context=context)
+    def push_update(self, cr, uid, log=None, context=None):
+        (status, log) = self.startSync(cr, uid, log=log, step='data_push', context=context)
         if status is None: return False
 
         context = context or {}
@@ -252,7 +262,8 @@ class entity(osv.osv, Thread):
         except BaseException, e:
             status = self.errorSync(e, log, 'data_push')
 
-        return self.stopSync(cr, uid, log_id, log, step='data_push', status=status, context=None)
+        self.stopSync(cr, uid, log, step='data_push', status=status, context=None)
+        return True
     
     def create_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -325,8 +336,8 @@ class entity(osv.osv, Thread):
     """
         Pull update
     """
-    def pull_update(self, cr, uid, recover=False, log=None, log_id=None, context=None):
-        (status, log_id, log) = self.startSync(cr, uid, log=log, log_id=log_id, step='data_pull', context=context)
+    def pull_update(self, cr, uid, recover=False, log=None, context=None):
+        (status, log) = self.startSync(cr, uid, log=log, step='data_pull', context=context)
         if status is None: return False
 
         context = context or {}
@@ -344,7 +355,8 @@ class entity(osv.osv, Thread):
         except BaseException, e:
             status = self.errorSync(e, log, 'data_pull')
         
-        return self.stopSync(cr, uid, log_id, log, step='data_pull', status=status, context=None)
+        self.stopSync(cr, uid, log, step='data_pull', status=status, context=None)
+        return True
     
 
     def set_last_sequence(self, cr, uid, context=None):
@@ -387,8 +399,8 @@ class entity(osv.osv, Thread):
     """
         Push message
     """
-    def push_message(self, cr, uid, log=None, log_id=None, context=None):
-        (status, log_id, log) = self.startSync(cr, uid, log=log, log_id=log_id, step='msg_push', context=context)
+    def push_message(self, cr, uid, log=None, context=None):
+        (status, log) = self.startSync(cr, uid, log=log, step='msg_push', context=context)
         if status is None: return False
 
         context = context or {}
@@ -405,7 +417,8 @@ class entity(osv.osv, Thread):
         except BaseException, e:
             status = self.errorSync(e, log, 'msg_push')
         
-        return self.stopSync(cr, uid, log_id, log, step='msg_push', status=status, context=None)
+        self.stopSync(cr, uid, log, step='msg_push', status=status, context=None)
+        return True
         
     def create_message(self, cr, uid, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
@@ -440,8 +453,8 @@ class entity(osv.osv, Thread):
     """ 
         Pull message
     """
-    def pull_message(self, cr, uid, log=None, log_id=None, context=None):
-        (status, log_id, log) = self.startSync(cr, uid, log=log, log_id=log_id, step='msg_pull', context=context)
+    def pull_message(self, cr, uid, log=None, context=None):
+        (status, log) = self.startSync(cr, uid, log=log, step='msg_pull', context=context)
         if status is None: return False
 
         context = context or {}
@@ -457,7 +470,8 @@ class entity(osv.osv, Thread):
         except BaseException, e:
             status = self.errorSync(e, log, 'msg_pull')
         
-        return self.stopSync(cr, uid, log_id, log, step='msg_pull', status=status, context=None)
+        self.stopSync(cr, uid, log, step='msg_pull', status=status, context=None)
+        return True
         
     def get_message(self, cr, uid, context):
         def _ack_message(proxy, uuid, message_uuid):
@@ -519,16 +533,16 @@ class entity(osv.osv, Thread):
     def sync(self, cr, uid, context=None):
         context = context or {}
 
-        (status, log_id, log) = self.startSync(cr, uid, context=context)
+        (status, log) = self.startSync(cr, uid, context=context)
         if status is None:
             raise osv.except_osv(_('Error!'), _('Unable to start the synchronization process now!'))
        
-        self.pull_update(cr, uid, log=log, log_id=log_id, context=context)
-        self.pull_message(cr, uid, log=log, log_id=log_id, context=context)
-        self.push_update(cr, uid, log=log, log_id=log_id, context=context)
-        self.push_message(cr, uid, log=log, log_id=log_id, context=context)
+        self.pull_update(cr, uid, log=log, context=context)
+        self.pull_message(cr, uid, log=log, context=context)
+        self.push_update(cr, uid, log=log, context=context)
+        self.push_message(cr, uid, log=log, context=context)
             
-        return self.stopSync(cr, uid, log_id, log)
+        return self.stopSync(cr, uid, log)
         
     def run(self):
         cr = self.data[0]
