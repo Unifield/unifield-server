@@ -96,7 +96,11 @@ def do_update():
                 % ( datetime.today().strftime("%Y-%m-%d %H:%M:%S"), revisions ))
             warn("Update successful.")
             warn("Revisions added: ", ", ".join( infos['revisions'] ))
-            args.extend(['-d', infos['dbname'], '-u', 'all', '-c', infos['conf']])
+            args.extend(['-d', infos['dbname'], '-u', 'all'])
+            if os.name == 'nt':
+                args.extend(['-c', '"%s"' % infos['conf']])
+            else:
+                args.extend(['-c', infos['conf']])
         except:
             warn("Update failure!")
             ## Update DB to mark revisions as not-installed
