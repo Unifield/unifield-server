@@ -39,7 +39,7 @@
     assert line_id.state == 'temp', "Direct Invoice: statement is not temp posted!"
     assert line_id.direct_invoice, "Direct Invoice: statement not direct"
     inv = line_id.invoice_id
-    assert inv.state == 'open', "Direct invoice not open"
+    assert inv.state == 'draft', "Direct invoice not draft"
     assert not inv.reconciled, "Direct invoice should not be reconciled!"
 -
   I hard post the register line and check that all is reconciled
