@@ -45,6 +45,20 @@ class account_invoice(osv.osv):
             'virtual_partner_id': inv.partner_id.id or False}
         return res
 
+    def _is_direct_invoice(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        If this invoice is linked to a register line with "register_line_ids", so this is a direct invoice.
+        Otherwise return False
+        """
+        if not context:
+            context = {}
+        res = {}
+        for inv in self.browse(cr, uid, ids):
+            res[inv.id] = False
+            if inv.register_line_ids:
+                res[inv.id] = True
+        return res
+
     _columns = {
         'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, 
@@ -55,6 +69,7 @@ class account_invoice(osv.osv):
             type='many2one', relation="account.account", readonly=True),
         'virtual_partner_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Supplier",
             type='many2one', relation="res.partner", readonly=True),
+        'is_direct_invoice': fields.function(_is_direct_invoice, method=True, store=False, type='boolean', readonly=True, string="Is direct invoice?"),
     }
 
     def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):
