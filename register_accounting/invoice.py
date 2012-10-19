@@ -298,6 +298,8 @@ class account_invoice_line(osv.osv):
         """
         if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(account_invoice_line, self).write(cr, uid, ids, vals, context)
         for invl in self.browse(cr, uid, ids):
             if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
