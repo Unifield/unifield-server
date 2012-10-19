@@ -290,5 +290,23 @@ class account_invoice_line(osv.osv):
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='string'),
     }
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        If invoice is a Direct Invoice and is in draft state:
+         - compute total amount (check_total field)
+         - write total to the register line
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context)
+        for invl in self.browse(cr, uid, ids):
+            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
+                amount = 0.0
+                for l in invl.invoice_id.invoice_line:
+                    amount += l.price_subtotal
+                self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
+                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
+        return res
+
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

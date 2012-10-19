@@ -1637,7 +1637,7 @@ class account_bank_statement_line(osv.osv):
             'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
-            'target': 'new',
+            'target': 'current',
             'view_mode': 'form',
             'view_type': 'form',
             'view_id': view_id,
