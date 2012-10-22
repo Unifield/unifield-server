@@ -55,7 +55,7 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="password">${_("Password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" value="${password}" id="password" name="password" class="db_user_pass"/></td>
+                                    <td style="padding: 3px;"><input type="password" value="${password}" id="password" name="password" class="db_user_pass" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
                                     <td></td>

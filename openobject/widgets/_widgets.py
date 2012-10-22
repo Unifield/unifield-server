@@ -95,7 +95,14 @@ class TextField(Input):
 
 class PasswordField(Input):
     type = "password"
+    params = {
+        'autocomplete': 'Autocomplete field',
+    }
+    autocomplete = 'off'
 
+    def update_params(self, params):
+        super(PasswordField, self).update_params(params)
+        self.update_attrs(params, 'autocomplete')
 
 class HiddenField(Input):
     type = "hidden"

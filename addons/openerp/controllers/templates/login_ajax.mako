@@ -78,7 +78,7 @@
                     <td><strong><label for="password">${_("Password:")}</label></strong></td>
                 </tr>
                 <tr>
-                    <td><input type="password" value="${password}" id="password" name="password" class="user_pass"/></td>
+                    <td><input type="password" value="${password}" id="password" name="password" class="user_pass" autocomplete="off"/></td>
                 </tr>
                 <tr>
                     <td>
@@ -96,7 +96,7 @@
                 </tr>
                 <tr>
                     <td class="label"><label for="password">${_("Password:")}</label></td>
-                    <td><input type="password" value="${password}" id="password" name="password" class="user_pass"/></td>
+                    <td><input type="password" value="${password}" id="password" name="password" class="user_pass" autocomplete="off"/></td>
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
