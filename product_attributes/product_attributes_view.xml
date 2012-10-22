@@ -58,7 +58,7 @@
                    <group colspan="4" col="6">
                         <group colspan="1" col="2">
                             <separator string="Codes" colspan="2"/>
-                            <field name="default_code" required="1" string="Code"/>
+                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" />
                             <field name="old_code"/>
                         </group>
                         <group colspan="4" col="2">

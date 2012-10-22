@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import re
+from tools.translate import _
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -270,6 +271,30 @@ class product_attributes(osv.osv):
         if batch_management:
             return {'value': {'perishable': True}}
         return {}
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
+        if default is None:
+            default = {}
+        copy_pattern = _("%s (copy)")
+        copydef = dict(name=(copy_pattern % product2copy['name']),
+                       default_code=False,
+                       )
+        copydef.update(default)
+        return super(product_attributes, self).copy(cr, uid, id, copydef, context)
+    
+    def onchange_code(self, cr, uid, ids, default_code):
+        '''
+        Check if the code already exists
+        '''
+        res = {}
+        if default_code:
+            cr.execute("SELECT pp.id FROM product_product pp")
+            ids = cr.fetchall()
+            if any(product['default_code'] == default_code for product in self.read(cr, uid, ids, ['default_code'])):
+                res.update({'value': {'default_code': False},
+                            'warning': {'title': 'Warning', 'message':'The Code already exists'}})
+        return res
     
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
