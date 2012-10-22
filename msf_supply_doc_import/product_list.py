@@ -74,36 +74,22 @@ Product Code*, Product Description*, Comment""" % line_num))
             # default values
             product_id = False
             comment = ''
-            error_list = []
 
             # Product code
             product_code = row.cells[0].data
-            if not product_code:
-                default_code = False
-                error_list.append(_('Line %s - No Product Code.') % line_num)
-            else:
-                try:
-                    product_code = product_code.strip()
-                    product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
-                    if product_ids:
-                        product_id = product_ids[0]
-                except Exception:
-                    error_list.append(_('Line %s - The Product Code has to be a string.') % line_num)
+            if product_code:
+                product_code = product_code.strip()
+                product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
+                if product_ids:
+                    product_id = product_ids[0]
 
             # Product name
             p_name = row.cells[1].data
-            if not product_id and not p_name:
-                error_list.append(_('Line %s - No Product Description') % line_num)
-            elif not product_id:
-                try:
-                    p_name = p_name.strip()
-                    product_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
-                    if not product_ids:
-                        error_list.append(_('Line %s - The Product [%s] %s was not found in the list of the products.') % (line_num, product_code or 'N/A', p_name or ''))
-                    else:
-                        product_id = product_ids[0]
-                except Exception:
-                     error_list.append(_('Line %s - The Product Description has to be a string.') % line_num)
+            if not product_id and p_name:
+                p_name = p_name.strip()
+                product_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
+                if product_ids:
+                    product_id = product_ids[0]
 
             if not product_id:
                 import_to_correct = True
