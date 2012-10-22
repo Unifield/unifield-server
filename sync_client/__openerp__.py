@@ -40,7 +40,6 @@
         'security/ir.model.access.csv'
     ],
     'demo_xml': [
-        'fallback_values/demo.xml',
     ],
     'test':[
     ],
