@@ -51,8 +51,12 @@ class account_move(osv.osv):
         return res
 
     _columns = {
-        'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('account.bank.statement', 'Register'), ('hr.employee', 'Employee'), 
+        'partner_type': fields.function(_get_third_parties_from_move_line, string="Third Parties", selection=[('hr.employee', 'Employee'), 
             ('res.partner', 'Partner'), ('account.journal', 'Journal')], size=128, readonly="1", type="reference", method=True),
+        'register_id': fields.many2one("account.bank.statement", "Register"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
+        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'partner_id2': fields.many2one("res.partner", "Partner"),
     }
 
 account_move()
