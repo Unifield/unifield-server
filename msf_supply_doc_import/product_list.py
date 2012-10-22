@@ -67,9 +67,9 @@ class product_list(osv.osv):
         for row in reader:
             line_num += 1
             # Check length of the row
-            if len(row) < 2 and len(row) > 3:
-                raise osv.except_osv(_('Error'), _("""You should have at least 2 columns (max. 3) in this order:
-Product Code*, Product Description*, Comment"""))
+            if len(row) < 2 or len(row) > 3:
+                raise osv.except_osv(_('Error'), _("""Line %s - You should have at least 2 columns (max. 3) in this order:
+Product Code*, Product Description*, Comment""" % line_num))
 
             # default values
             product_id = False
@@ -80,7 +80,7 @@ Product Code*, Product Description*, Comment"""))
             product_code = row.cells[0].data
             if not product_code:
                 default_code = False
-                error_list.append('No Product Code.')
+                error_list.append(_('Line %s - No Product Code.') % line_num)
             else:
                 try:
                     product_code = product_code.strip()
@@ -88,28 +88,28 @@ Product Code*, Product Description*, Comment"""))
                     if product_ids:
                         product_id = product_ids[0]
                 except Exception:
-                    error_list.append('The Product Code has to be a string.')
+                    error_list.append(_('Line %s - The Product Code has to be a string.') % line_num)
 
             # Product name
             p_name = row.cells[1].data
             if not product_id and not p_name:
-                error_list.append('No Product Description')
+                error_list.append(_('Line %s - No Product Description') % line_num)
             elif not product_id:
                 try:
                     p_name = p_name.strip()
                     product_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
                     if not product_ids:
-                        error_list.append('The Product was not found in the list of the products.')
+                        error_list.append(_('Line %s - The Product [%s] %s was not found in the list of the products.') % (line_num, product_code or 'N/A', p_name or ''))
                     else:
                         product_id = product_ids[0]
                 except Exception:
-                     error_list.append('The Product Description has to be a string.')
+                     error_list.append(_('Line %s - The Product Description has to be a string.') % line_num)
 
             if not product_id:
                 import_to_correct = True
                 if not product_code and not p_name:
-                    raise osv.except_osv(_('Error'), _('You have to fill at least the product code or the product name on each line'))
-                raise osv.except_osv(_('Error'), _('The Product [%s] %s was not found in the list of products') % (product_code or 'N/A', p_name or ''))
+                    raise osv.except_osv(_('Error'), _('Line %s - You have to fill at least the product code or the product name !') % line_num)
+                raise osv.except_osv(_('Error'), _('Line %s - The Product [%s] %s was not found in the list of products') % (line_num, product_code or 'N/A', p_name or ''))
 
             # Comment
             comment = len(row) == 3 and row.cells[2].data or ''
