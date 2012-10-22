@@ -99,26 +99,25 @@ def product_value(cr, uid, **kwargs):
     try:
         if row.cells[0] and row.cells[0].data:
             product_code = row.cells[0].data
-            if product_code:
-                try:
-                    product_code = product_code.strip()
-                    p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-                    if not p_ids:
-                        comment += ' Code: %s' % (product_code)
-                        msg = 'The Product\'s Code is not found in the database.'
-                    else:
-                        default_code = p_ids[0]
-                        proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
-                        price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
-                except Exception:
-                    msg = 'The Product Code has to be a string.'
+            if product_code and row.cells[0].type == 'str':
+                product_code = product_code.strip()
+                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                if not p_ids:
+                    comment += ' Code: %s' % (product_code)
+                    msg = 'The Product\'s Code is not found in the database.'
+                else:
+                    default_code = p_ids[0]
+                    proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
+                    price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
+            else:
+                msg = 'The Product Code has to be a string.'
         if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]:
             comment += ' Product Code to be defined'
             error_list.append(msg or 'The Product\'s Code has to be defined')
     # if the cell is empty
     except IndexError:
         comment += ' Product Code to be defined'
-        error_list.append(msg or 'The Product\'s Code has to be defined')
+        error_list.append('The Product\'s Code has to be defined')
     return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit}
 
 
@@ -157,16 +156,16 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
-    msg = None
+    msg = ''
     try:
         # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
         if row.cells[3] and str(row.cells[3]) != str(None):
-            try:
+            if row.cells[3].type == 'str':
                 uom_name = row.cells[3].data.strip()
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
                 if uom_ids:
                     uom_id = uom_ids[0]
-            except Exception:
+            else:
                 msg = 'The UOM Name has to be a string.'
             if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
                 error_list.append(msg or 'The UOM Name was not valid.')
@@ -179,7 +178,7 @@ def compute_uom_value(cr, uid, **kwargs):
                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
     # if the cell is empty
     except IndexError:
-        error_list.append(msg or 'The UOM Name was empty.')
+        error_list.append('The UOM Name was empty.')
         if default_code:
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
         else:
@@ -255,12 +254,12 @@ def compute_currency_value(cr, uid, **kwargs):
     # the cell number change between Internal Request and Sale Order
     cell_nb = kwargs['cell']
     fc_id = False
-    msg = None
+    msg = ''
     try:
         if row.cells[cell_nb]:
             curr = row.cells[cell_nb].data
             if curr:
-                try:
+                if row.cells[cell_nb].type == 'str':
                     curr_name = curr.strip().upper()
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
                     if currency_ids and browse_sale:
@@ -279,15 +278,15 @@ def compute_currency_value(cr, uid, **kwargs):
                             default_curr_name = browse_purchase.pricelist_id.currency_id.name
                             msg = "The imported currency '%s' was not consistent and has been replaced by the \
                                 currency '%s' of the order, please check the price." % (imported_curr_name, default_curr_name)
-                except Exception:
-                    msg = 'The Currency Name was not valid.'
+                else:
+                    msg = 'The Currency Name was not valid, it has to be a string.'
         if fc_id:
             functional_currency_id = fc_id
         else:
             warning_list.append(msg or 'The Currency Name was not found.')
     # if the cell is empty
     except IndexError:
-        warning_list.append(msg or 'The Currency Name was not found.')
+        warning_list.append('The Currency Name was not found.')
     return {'functional_currency_id': functional_currency_id, 'warning_list': warning_list}
 
 
