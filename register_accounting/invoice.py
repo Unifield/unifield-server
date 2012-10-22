@@ -290,6 +290,26 @@ class account_invoice_line(osv.osv):
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='string'),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        If invoice is a Direct Invoice and is in draft state:
+         - compute total amount (check_total field)
+         - write total to the register line
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice_line, self).create(cr, uid, vals, context)
+        if 'invoice_id' in vals:
+            invoice = self.pool.get('account.invoice').browse(cr, uid, vals.get('invoice_id'))
+            if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
+                amount = 0.0
+                for l in invoice.invoice_line:
+                    amount += l.price_subtotal
+                amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
+                self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
+                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         If invoice is a Direct Invoice and is in draft state:
@@ -308,6 +328,32 @@ class account_invoice_line(osv.osv):
                     amount += l.price_subtotal
                 self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
                 self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        If invoice is a Direct Invoice and is in draft state:
+         - compute total amount (check_total field)
+         - write total to the register line
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Fetch all invoice_id to check
+        direct_invoice_ids = []
+        for invl in self.browse(cr, uid, ids):
+            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
+                direct_invoice_ids.append(invl.invoice_id.id)
+        # Normal behaviour
+        res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
+        # See all direct invoice
+        for inv in self.pool.get('account.invoice').browse(cr, uid, direct_invoice_ids):
+            amount = 0.0
+            for l in inv.invoice_line:
+                amount += l.price_subtotal
+            self.pool.get('account.invoice').write(cr, uid, [inv.id], {'check_total': amount}, context)
+            self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in inv.register_line_ids], {'amount': -1 * amount}, context)
         return res
 
 account_invoice_line()
