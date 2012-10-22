@@ -50,7 +50,7 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Ref.', 'Posting Date', 'Document Date', 'Period', 'G/L Account', 'Ana. Account', 'Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency', 'Out. Amount', 'Out. Currency', 'Reversal Origin']:
+% for header in ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Ref.', 'Document Date', 'Posting Date', 'Period', 'G/L Account', 'Ana. Account', 'Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency', 'Out. Amount', 'Out. Currency', 'Reversal Origin']:
     % if header == 'Ana. Account' and data.get('context') and data.get('context').get('display_fp'):
         <Cell ss:StyleID="ssH"><Data ss:Type="String">Destination</Data></Cell>
         <Cell ss:StyleID="ssH"><Data ss:Type="String">Cost Center</Data></Cell>
@@ -77,18 +77,18 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.ref or '')|x}</Data>
 </Cell>
-% if o.date and o.date != 'False':
+% if o.document_date and o.document_date != 'False':
 <Cell ss:StyleID="ssBorderDate">
-        <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
+        <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
 </Cell>
 % else:
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">  </Data>
 </Cell>
 % endif
-% if o.document_date and o.document_date != 'False':
+% if o.date and o.date != 'False':
 <Cell ss:StyleID="ssBorderDate">
-        <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
+        <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
 </Cell>
 % else:
 <Cell ss:StyleID="ssBorder">

@@ -72,15 +72,11 @@ product_attributes_template()
 
 
 class product_country_restriction(osv.osv):
-    _name = 'res.country'
-    _inherit = 'res.country'
+    _name = 'res.country.restriction'
     
     _columns = {
-        'is_restrictive': fields.boolean(string='Is restrictive ?'),
-    }
-    
-    _defaults = {
-        'is_restrictive': lambda *a: False,
+        'name': fields.char(size=128, string='Restriction'),
+        'product_ids': fields.one2many('product.product', 'country_restriction', string='Products'),
     }
     
 product_country_restriction()
@@ -148,6 +144,7 @@ class product_attributes(osv.osv):
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
+        'new_code' : fields.char('New code', size=64),
         'international_status': fields.selection([('',''),('itc','Approved (ITC)'),('esc', 'Approved (ESC)'),('temp','Temporary'),('local','Not approved (Local)')], 'International Status'),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
@@ -208,7 +205,7 @@ class product_attributes(osv.osv):
         'closed_article': fields.boolean('Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
-        'country_restriction': fields.many2one('res.country', 'Country Restriction', domain=[('is_restrictive', '=', True)]),
+        'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),

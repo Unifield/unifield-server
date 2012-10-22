@@ -460,6 +460,7 @@ class return_claim(osv.osv):
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {'contains_event_return_claim': len(obj.event_ids_return_claim) > 0}
+            result[obj.id] = {'fake_state_return_claim': obj.state}
             
         return result
     
@@ -484,12 +485,14 @@ class return_claim(osv.osv):
                 'product_line_ids_return_claim': fields.one2many('claim.product.line', 'claim_id_claim_product_line', string='Products'),
                 # functions
                 'contains_event_return_claim': fields.function(_vals_get_claim, method=True, string='Contains Events', type='boolean', readonly=True, multi='get_vals_claim'),
+                'fake_state_return_claim': fields.function(_vals_get_claim, method=True, string='Fake State', type='selection', selection=CLAIM_STATE, readonly=True, multi='get_vals_claim'),
                 }
     
     _defaults = {'creation_date_return_claim': lambda *a: time.strftime('%Y-%m-%d'),
                  'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'return.claim'),
                  'default_src_location_id_return_claim': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  'state': 'draft',
+                 'fake_state_return_claim': 'draft',
                  'po_id_return_claim': False,
                  'so_id_return_claim': False,
                  }
@@ -721,6 +724,9 @@ class claim_event(osv.osv):
         - (is not set to done - defined in _picking_done_cond)
         - if replacement is needed, we create a new picking
         '''
+        context = context.copy()
+        context.update({'from_claim': True})
+        
         # objects
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
@@ -741,7 +747,7 @@ class claim_event(osv.osv):
                           'partner_id': claim.partner_id_return_claim.id, # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
                           'reason_type_id': context['common']['rt_goods_return']}
-        move_values = {}
+        move_values = {'reason_type_id': context['common']['rt_goods_return']}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
             # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
@@ -776,8 +782,9 @@ class claim_event(osv.osv):
                                   'reason_type_id': context['common']['rt_goods_replacement'],
                                   'purchase_id': origin_picking.purchase_id.id,
                                   'sale_id': origin_picking.sale_id.id,
+                                  'invoice_state': '2binvoiced',
                                   }
-            replacement_move_values = {}
+            replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement']}
             
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
@@ -790,7 +797,7 @@ class claim_event(osv.osv):
                 replacement_move_values.update({'location_id': context['common']['stock_id'],
                                                 'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id})
             # we copy the event return picking
-            replacement_id = pick_obj.copy(cr, uid, event_picking.id, replacement_values, context=context)
+            replacement_id = pick_obj.copy(cr, uid, event_picking.id, replacement_values, context=dict(context, keepLineNumber=True))
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # get the move values according to claim type

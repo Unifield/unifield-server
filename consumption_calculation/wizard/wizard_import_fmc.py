@@ -44,8 +44,8 @@ class wizard_import_fmc(osv.osv_memory):
         
         The file should be in CSV format (with ',' character as delimiter).
         The columns should be in this order :
-          * Product code
-          * Product name
+          * Product Code
+          * Product Description
           * FMC
           * Valid until (DD-MMM-YYYY)
         """

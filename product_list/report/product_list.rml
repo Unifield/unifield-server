@@ -111,10 +111,10 @@
     <blockTable colWidths="100.0,185.0,280.0" style="ProductList">
         <tr>
             <td>
-                <para style="InformationHeader">Product Reference</para>
+                <para style="InformationHeader">Product Code</para>
             </td>
             <td>
-                <para style="InformationHeader">Product Name</para>
+                <para style="InformationHeader">Product Description</para>
             </td>
             <td>
                 <para style="InformationHeader">Comment</para>

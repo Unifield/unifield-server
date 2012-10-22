@@ -108,7 +108,7 @@ class res_currency(osv.osv):
         item_obj.create(cr, uid, {'price_version_id': sale_version_id,
                                   'name': 'Default Sale %s Line' % currency.name,
                                   'base': 1,
-                                  'min_qunatity': 0.00}, context=context)
+                                  'min_quantity': 0.00}, context=context)
         
         # Create the purchase pricelist
         purchase_price_id = pricelist_obj.create(cr, uid, {'currency_id': currency.id, 
@@ -126,7 +126,7 @@ class res_currency(osv.osv):
         item_obj.create(cr, uid, {'price_version_id': purchase_version_id,
                                   'name': 'Default Purchase %s Line' % currency.name,
                                   'base': -2,
-                                  'min_qunatity': 0.00}, context=context)
+                                  'min_quantity': 0.00}, context=context)
         
         return [sale_price_id, purchase_price_id]
     
@@ -224,10 +224,11 @@ class res_currency(osv.osv):
             
         return res   
 
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        currency = self.browse(cr, uid, res_id)
-        table_name = currency.currency_table_id and currency.currency_table_id.name or ''
-        return currency.name + table_name
+#        remove this block because it has been moved to the sync module
+#    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+#        currency = self.browse(cr, uid, res_id)
+#        table_name = currency.currency_table_id and currency.currency_table_id.name or ''
+#        return currency.name + table_name
             
 res_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

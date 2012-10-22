@@ -21,7 +21,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </ExcelWorkbook>
 <Styles>
 <Style ss:ID="ssBoldLeft">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
 <Font ss:Bold="1" />
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -89,12 +89,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="240" />
 % for x in range(2,nb_of_columns):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 % if data.get('form').get('header'):
 % for line in data.get('form').get('header'):
+## HEADER +++++++++++++++++++++++++++++++++++
 <Row>
 % for value in line:
 <Cell ss:StyleID="ssBoldLeft">
@@ -105,33 +106,72 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 % endfor
 <Row/>
 % endif
+
+## LINES +++++++++++++++++++++++++++++++++++
+## HEADER OF LINES -------------------------
 <Row>
 <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account code</Data></Cell>
-<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account name</Data></Cell>
+<Cell ss:StyleID="ssBoldLeft"><Data ss:Type="String">Account name</Data></Cell>
 % for month in month_list:
     <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">${month}</Data></Cell>
 % endfor
 <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Total</Data></Cell>
 </Row>
+
+## CONTENT OF LINES -------------------------
 % if data.get('form').get('report_lines'):
 % for line in data.get('form').get('report_lines'):
 <Row>
-% for value in line[0:2]:
+## Account code
+% for code in line[0:1]:
+% if code in ['61','62','63','64','65','66','67','68','69']:
+<Cell ss:StyleID="ssBoldCenter">
+   <Data ss:Type="String">${code}</Data>
+</Cell>
+% else:
 <Cell ss:StyleID="ssBorderCenter">
-   <Data ss:Type="String">${value}</Data>
+   <Data ss:Type="String">${code}</Data>
 </Cell>
+% endif
+## Account name
+% for name in line[1:2]:
+% if code in ['61','62','63','64','65','66','67','68','69']:
+<Cell ss:StyleID="ssBoldLeft">
+   <Data ss:Type="String">${name}</Data>
+</Cell>
+% else:
+<Cell ss:StyleID="ssBorderLeft">
+   <Data ss:Type="String">${name}</Data>
+</Cell>
+% endif
 % endfor
-% for value in line[2:-1]:
+## Total
+% for total in line[2:-1]:
+% if code in ['61','62','63','64','65','66','67','68','69']:
+<Cell ss:StyleID="ssBoldRight">
+   <Data ss:Type="Number">${total}</Data>
+</Cell>
+% else:
 <Cell ss:StyleID="ssBorderRight">
-   <Data ss:Type="Number">${value}</Data>
+   <Data ss:Type="Number">${total}</Data>
 </Cell>
+% endif
 % endfor
+% if code in ['61','62','63','64','65','66','67','68','69']:
 <Cell ss:StyleID="ssBoldRight">
    <Data ss:Type="Number">${line[-1]}</Data>
 </Cell>
+% else:
+<Cell ss:StyleID="ssBorderRight">
+   <Data ss:Type="Number">${line[-1]}</Data>
+</Cell>
+%endif
 </Row>
 % endfor
+% endfor
 % endif
+
+## FOOTER +++++++++++++++++++++++++++++++++++
 % if data.get('form').get('total_line'):
 <Row>
 % for total_value in data.get('form').get('total_line')[0:2]:

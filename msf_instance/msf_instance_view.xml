@@ -21,6 +21,9 @@
                     <newline/>
                     <field name="cost_center_id"/>
                     <field name="state" readonly="1"/>
+                    <newline/>
+                    <field name="move_prefix"/>
+                    <field name="reconcile_prefix"/>
                     <button name="button_deactivate" string="Deactivate" type="object"
                             attrs="{'invisible': [('state', '!=', 'active')]}" icon="terp-check"/>
                 </form>
@@ -159,8 +162,8 @@
 	                                <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" hide_new_button="1" hide_delete_button="1" noteditable="1" string="Journal Items">
                                         <field name="name"/>
 	                                    <field name="ref"/>
-                                        <field name="date"/>
                                         <field name="document_date"/>
+                                        <field name="date"/>
 	                                    <field name="account_id"/>
 				                        <field name="partner_id" invisible="1"/>
 				                        <field name="partner_type"/>
@@ -170,7 +173,7 @@
 				                        <field name="debit" sum="Total Functional Debit" string="Func. Debit" readonly="1"/>
 				                        <field name="credit" sum="Total Functional Credit" string="Func. Credit" readonly="1"/>
 				                        <field name="functional_currency_id" readonly="1"/>
-                                        <field name="reconcile_partial_id" string="Reconcile"/>
+                                        <field name="reconcile_total_partial_id" string="Reconcile"/>
 	                                    <field name="state"/>
 	                                </tree>
 	                            </field>
@@ -197,7 +200,10 @@
                         <field name="journal_id"/>
                         <field name="partner_id" invisible="1"/>
                         <field name="partner_type"/>
+                        <field name="book_amount" sum="Booking Amount"/>
+                        <field name="currency_id" />
                         <field name="amount" sum="Total Amount"/>
+                        <field name="functional_currency_id" />
                         <field name="state"/>
                     </tree>
                 </tree>

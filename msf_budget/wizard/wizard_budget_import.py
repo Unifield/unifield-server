@@ -103,7 +103,8 @@ class wizard_budget_import(osv.osv_memory):
     def fill_budget_line_data(self, cr, uid, import_data, context=None):
         # Create a "tracker" for lines to create
         created_lines = {}
-        destination_link_ids = self.pool.get('account.destination.link').search(cr, uid, [], context=context)
+        account_ids = [x[0] for x in self.pool.get('msf.budget.tools')._get_expense_accounts(cr, uid, context=context)]
+        destination_link_ids = self.pool.get('account.destination.link').search(cr, uid, [('account_id', 'in', account_ids)], context=context)
         for destination_link_id in destination_link_ids:
             created_lines[destination_link_id] = False
         result = []
@@ -189,6 +190,8 @@ class wizard_budget_import(osv.osv_memory):
         budget_obj = self.pool.get('msf.budget')
         # read file
         for wizard in self.browse(cr, uid, ids, context=context):
+            if not wizard.import_file:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
             budget_line_vals = []
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)

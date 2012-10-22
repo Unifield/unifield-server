@@ -38,7 +38,7 @@
         'wizard/product_to_list_view.xml',
         'wizard/add_products_view.xml',
         'product_list_view.xml',
-        'product_list_report.xml',
+#        'product_list_report.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [

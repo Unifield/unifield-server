@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+import time
 
 class sale_order_followup_test(osv.osv_memory):
     _name = 'sale.order.followup.test'
@@ -344,7 +345,9 @@ class sale_order_line_followup(osv.osv_memory):
                             'available_qty': 0.00}
 
             # Set the available qty in stock
-            res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+            # You may not have product with an Internal Request
+            if line.line_id.product_id:
+                 res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             # Define if the line is sourced or not according to the state on the SO line
             if line.line_id.state == 'draft':
@@ -672,7 +675,7 @@ class sale_order_line_followup(osv.osv_memory):
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),
-        'product_id': fields.related('line_id', 'product_id', string='Product reference', readondy=True, 
+        'product_id': fields.related('line_id', 'product_id', string='Product Code', readondy=True, 
                                      type='many2one', relation='product.product'),
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
@@ -804,7 +807,7 @@ class request_for_quotation(osv.osv):
                 'view_mode': 'form',
                 'view_id': [view_id],
                 'res_id': ids[0],}
-    
+
 request_for_quotation()
 
 

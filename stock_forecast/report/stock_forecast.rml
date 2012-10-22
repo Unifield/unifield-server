@@ -139,7 +139,7 @@
           <para style="terp_default_8">[[ data['form']['product_code'] ]]</para>
         </td>
         <td>
-          <para style="P5">Product Name</para>
+          <para style="P5">Product Description</para>
         </td>
         <td>
           <para style="terp_default_8">[[ data['form']['product_name'] ]]</para>

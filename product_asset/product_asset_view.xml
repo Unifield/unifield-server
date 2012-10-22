@@ -146,8 +146,7 @@
 					<field name="type" />
 					<field name="model" />
 					<newline />
-					<group expand="0" string="Group By..." colspan="11" col="11"
-						groups="base.group_extended">
+					<group expand="0" string="Group By..." colspan="11" col="11">
 						<filter string="Product" icon="terp-product" domain="[]"
 							context="{'group_by':'product_id'}" />
 						<filter string="Asset Type" icon="terp-stock_symbol-selection"
@@ -241,8 +240,7 @@
 					<field name="product_id" domain="[('subtype', '=', 'asset')]" />
 					<field name="event_type" />
 					<newline />
-					<group expand="0" string="Group By..." colspan="11" col="11"
-						groups="base.group_extended">
+					<group expand="0" string="Group By..." colspan="11" col="11">
 						<filter string="Asset Form" icon="terp-accessories-archiver"
 							domain="[]" context="{'group_by':'asset_id'}" />
 						<filter string="Asset Type" icon="terp-stock_symbol-selection"

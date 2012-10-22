@@ -14,8 +14,8 @@
                     <field name="move_id"/>
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="date"/>
                     <field name="document_date"/>
+                    <field name="date"/>
                     <field name="period_id"/>
                     <field name="general_account_id"/>
                     <field name="account_id"/>

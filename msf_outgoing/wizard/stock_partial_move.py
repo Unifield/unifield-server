@@ -24,6 +24,9 @@ from tools.translate import _
 import time
 import decimal_precision as dp
 
+# xml parser
+from lxml import etree
+
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 
@@ -79,21 +82,28 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         change the function name to do_incoming_shipment
         '''
-        res = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        result = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
             picking_obj = self.pool.get('stock.picking')
-            picking_id = context.get('active_ids')
-            if picking_id:
-                picking_id = picking_id[0]
-                picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
+            picking_ids = context.get('active_ids')
+            if picking_ids:
+                picking_type = picking_obj.read(cr, uid, picking_ids, ['type'], context=context)[0]['type']
                 if picking_type == 'in':
                     # remove the kit column for memory moves
-                    # the creation of composition list (if needed) is performed after the processing wizard
-                    list = ['<field name="composition_list_id"']
-                    replace_text = res['arch']
-                    replace_text = reduce(lambda x, y: x.replace(y, y+ ' invisible="True" '), [replace_text] + list)
-                    res['arch'] = replace_text
-        return res
+                    # the creation of composition list (if needed) is performed after the IN processing wizard
+                    # load the xml tree
+                    root = etree.fromstring(result['arch'])
+                    # xpath of fields to be modified
+                    list = ['//field[@name="composition_list_id"]']
+                    for xpath in list:
+                        fields = root.xpath(xpath)
+                        if not fields:
+                            raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                        for field in fields:
+                            field.set('invisible', 'True')
+                    result['arch'] = etree.tostring(root)
+                    
+        return result
     
 #    update code to allow delete lines (or not but must be consistent in all wizards)
 #    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
@@ -286,6 +296,21 @@ class stock_partial_move_memory_families(osv.osv_memory):
     
     _defaults = {'integrity_status': 'empty',
                  }
+    
+    def onchange_pack_type(self, cr, uid, ids, pack_type, context=None):
+        '''
+        Update values of stock.move.memory.families from the stock_pack selected
+        '''
+        res = {}
+        p_type_obj = self.pool.get('pack.type')
+        if pack_type :
+            # if 'pack_type' is not a list, turn it into list
+            if isinstance(pack_type,(int,long)):
+                pack_type = [pack_type]
+            p_type_read = p_type_obj.read(cr, uid, pack_type, ['length', 'width', 'height'], context=context)[0]
+            length, width, height = p_type_read['length'], p_type_read['width'], p_type_read['height']
+            res.update({'value': {'length': length, 'width': width, 'height': height}})
+        return res
     
 stock_partial_move_memory_families()
 

@@ -23,7 +23,7 @@
                     <field name="log_workflow"/>
                     <separator string="Fields to trace"  colspan="4" />
                     <field name="field_ids" select="1" colspan="4" nolabel="1" domain="[('model_id', '=', object_id)]" />
-                    <field name="action_id" colspan="4" readonly="1" groups="base.group_extended"/>
+                    <field name="action_id" colspan="4" readonly="1" />
                     <field name="state" select="1" readonly="1" />
                     <group colspan="2" col="2">
                         <button string="_Subscribe" name="subscribe" icon="gtk-ok"
@@ -67,7 +67,7 @@
                     <field name="object_id"/>
                 </group>
                 <newline/>
-                  <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  <group expand="0" string="Group By..." colspan="4" col="10">
                     <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
                 </group>
                 </search>

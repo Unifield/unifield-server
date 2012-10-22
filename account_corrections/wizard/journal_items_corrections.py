@@ -26,10 +26,32 @@ from osv import fields
 from tools.translate import _
 from time import strftime
 from register_accounting.register_tools import _get_third_parties, _set_third_parties
+from lxml import etree
 
 class journal_items_corrections_lines(osv.osv_memory):
     _name = 'wizard.journal.items.corrections.lines'
     _description = 'Journal items corrections lines'
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the line, then "valid"
+         - if no distribution on line, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = 'none'
+            if line.analytic_distribution_id:
+                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, False, line.account_id.id)
+        return res
 
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
@@ -40,23 +62,36 @@ class journal_items_corrections_lines(osv.osv_memory):
         'journal_id': fields.many2one('account.journal', string="Journal Code", readonly=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'date': fields.date('Posting date', readonly=True),
-        # Third Parties Fields - BEGIN
         'partner_id': fields.many2one('res.partner', 'Partner'),
         'register_id': fields.many2one("account.bank.statement", "Register"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
-#        'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-#            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
-#            multi="third_parties_key"),
-#        'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
-#        'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-#            string="Third Parties", selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
-#            help="To use for python code when registering", multi="third_parties_key"),
-        # Third Parties fields - END
         'debit_currency': fields.float('Book. Debit', readonly=True),
         'credit_currency': fields.float('Book. Credit', readonly=True),
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
     }
+
+    _defaults = {
+        'from_donation': lambda *a: False,
+    }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change account_id domain if account is donation expense
+        """
+        if not context:
+            context = {}
+        view = super(journal_items_corrections_lines, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if context and context.get('from_donation_account', False):
+            tree = etree.fromstring(view['arch'])
+            fields = tree.xpath('//field[@name="account_id"]')
+            for field in fields:
+                field.set('domain', "[('type', '!=', 'view'), ('type_for_register', '=', 'donation'), ('user_type.code', '=', 'expense'), ('user_type.report_type', '=', 'none')]")
+            view['arch'] = etree.tostring(tree)
+        return view
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -125,6 +160,7 @@ class journal_items_corrections(osv.osv_memory):
         'move_line_id': fields.many2one('account.move.line', string="Move Line", required=True, readonly=True),
         'to_be_corrected_ids': fields.one2many('wizard.journal.items.corrections.lines', 'wizard_id', string='', help='Line to be corrected'),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
+        'from_donation': fields.boolean('From Donation account?'),
     }
 
     _defaults = {
@@ -263,8 +299,6 @@ class journal_items_corrections(osv.osv_memory):
         res = [] # no result yet
         # Correct account
         if comparison == 1:
-#            if not old_line.statement_id:
-#                raise osv.except_osv(_('Error'), _('Account correction is only possible on move line that come from a register!'))
             res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
@@ -275,8 +309,6 @@ class journal_items_corrections(osv.osv_memory):
                 if not res:
                     raise osv.except_osv(_('Error'), 
                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
-#        elif old_line.partner_id and old_line.partner_id.id != new_lines[0].partner_id.id:
-#            raise osv.except_osv('Information', 'Entering third parties change')
         elif comparison == 4:
             raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
         elif comparison in [3, 5, 7]:

@@ -51,7 +51,13 @@
     parent_id: product_nomenclature_test2
     
     
-- 
+-
+  Creating a product.category record
+-
+  !record {model: product.category, id: product_category_test1}:
+    name: Test 1
+    family_id: product_nomenclature_test2
+-
   Creating a product.product record
 - 
   !record {model: product.product, id: product_product_testproduct0}:

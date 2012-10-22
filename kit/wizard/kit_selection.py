@@ -27,6 +27,7 @@ import netsvc
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
+
 class kit_selection(osv.osv_memory):
     '''
     kit selection
@@ -203,7 +204,8 @@ class kit_selection(osv.osv_memory):
                           'default_name': data['value']['default_name'],
                           }
                 # if we are treating a line with link to so
-                if obj.corresponding_so_line_id_kit_selection and obj.impact_so_kit_selection:
+                # if Internal Request, we do not update corresponding Internal Request
+                if obj.corresponding_so_line_id_kit_selection and obj.impact_so_kit_selection and not obj.corresponding_so_id_kit_selection.procurement_request:
                     # if we have already update the existing pol, we create a new sol
                     # an go through the whole process
                     # if not, we simply update the pol, corresponding sol will be updated
@@ -212,12 +214,14 @@ class kit_selection(osv.osv_memory):
                         # we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
                         # the merge into the actual Po is forced
                         # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
-                        values.update({'po_cft': 'po',
+                        values.update({'line_number': obj.corresponding_so_line_id_kit_selection.line_number, # the Fo is not draft anyway (sourced), following sequencing policy, split Fo line maintains original one
+                                       'po_cft': 'po',
                                        'product_uom_qty': pol.product_qty*qty,
                                        'product_uom': uom_id,
                                        'product_uos_qty': pol.product_qty*qty,
                                        'product_uos': uom_id,
                                        'so_back_update_dest_po_id_sale_order_line': obj.order_line_id_kit_selection.order_id.id,
+                                       'so_back_update_dest_pol_id_sale_order_line': obj.order_line_id_kit_selection.id,
                                        })
                         # copy existing sol
                         last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
@@ -230,6 +234,7 @@ class kit_selection(osv.osv_memory):
                         wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
                         # if original po line is confirmed, we action_confirm new line
                         if obj.order_line_id_kit_selection.state == 'confirmed':
+                            # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
                             new_po_ids = pol_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                             pol_obj.action_confirm(cr, uid, new_po_ids, context=context)
                     else:
@@ -244,6 +249,11 @@ class kit_selection(osv.osv_memory):
                     # create a new pol
                     # update values for pol structure
                     values.update({'product_qty': pol.product_qty*qty})
+                    # following new sequencing policy, we check if resequencing occur (behavior 1).
+                    # if not (behavior 2), the split line keeps the same line number as original line
+                    if not pol_obj.allow_resequencing(cr, uid, [obj.order_line_id_kit_selection.id], context=context):
+                        # set default value for line_number as the same as original line
+                        values.update({'line_number': obj.order_line_id_kit_selection.line_number})
                     
                     if last_line_id:
                         # the existing purchase order line has already been updated, we create a new one

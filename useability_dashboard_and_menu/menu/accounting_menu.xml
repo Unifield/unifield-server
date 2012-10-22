@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <menuitem 
+                id="stock.menu_product_category_config_stock" 
+                parent="account.menu_configuration_misc" />
+    </data>
+</openerp>

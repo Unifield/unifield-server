@@ -22,50 +22,9 @@
 from osv import fields, osv
 import tools
 from lxml import etree
+from destination_tools import many2many_notlazy
 
-class destination_m2m(fields.many2many):
-
-    def set(self, cr, obj, id, name, values, user=None, context=None):
-        """
-        Compare written object and given objects. If new object, create them. If one of them disappears, delete it.
-        """
-        if not context:
-            context = {}
-        if not values:
-            return
-        obj = obj.pool.get(self._obj)
-        for act in values:
-            if not (isinstance(act, list) or isinstance(act, tuple)) or not act:
-                continue
-            if act[0] == 6:
-                # search current destination
-                destination_sql = """
-                SELECT destination_id FROM %s
-                WHERE account_id = %%s
-                """ % self._rel
-                cr.execute(destination_sql, (id,))
-                destination_ids = cr.fetchall()
-                old_list = [x[0] for x in destination_ids if x and x[0]]
-                # delete useless destination
-                if act[2]:
-                    delete_sql = """
-                    DELETE FROM %s
-                    WHERE account_id = %%s
-                    AND destination_id NOT IN %%s
-                    """ % self._rel
-                    query_sql = (id, tuple(act[2]))
-                else:
-                    delete_sql = """
-                    DELETE FROM %s
-                    WHERE account_id = %%s
-                    """ % self._rel
-                    query_sql = (id,)
-                cr.execute(delete_sql, query_sql)
-                # insert new destination
-                for new_id in list(set(act[2]) - set(old_list)):
-                    cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, new_id))
-            else:
-                return super(destination_m2m, self).set(cr, obj, id, name, values, user, context)
+# here was destination_m2m, replaced by the generic many2many_notlazy
 
 class account_destination_link(osv.osv):
     _name = 'account.destination.link'
@@ -239,17 +198,17 @@ class account_destination_summary(osv.osv):
     _order = 'account_id'
 account_destination_summary()
 
-
 class account_account(osv.osv):
     _name = 'account.account'
     _inherit = 'account.account'
 
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
+        'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id', 
             string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
-        'destination_ids': destination_m2m('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
+        'destination_ids': many2many_notlazy('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -279,9 +238,9 @@ class account_account(osv.osv):
         res = {}
         if not user_type_id:
             return res
-        data = self.pool.get('account.account.type').read(cr, uid, user_type_id, ['code']).get('code', False)
+        data = self.pool.get('account.account.type').read(cr, uid, user_type_id, ['code', 'report_type'])
         if data:
-            res.setdefault('value', {}).update({'user_type_code': data})
+            res.setdefault('value', {}).update({'user_type_code': data.get('code', False), 'user_type_report_type': data.get('report_type', False)})
         return res
 
 account_account()

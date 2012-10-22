@@ -39,7 +39,7 @@ class msf_budget_summary(osv.osv_memory):
                 #  Budget Amount, normal budget
                 budget_amount = summary_line.budget_id.total_budget_amount
                 # Actual amount, normal budget
-                actual_domain = [('account_id', '=', summary_line.budget_id.cost_center_id.id)]
+                actual_domain = [('cost_center_id', '=', summary_line.budget_id.cost_center_id.id)]
                 actual_domain.append(('date', '>=', summary_line.budget_id.fiscalyear_id.date_start))
                 actual_domain.append(('date', '<=', summary_line.budget_id.fiscalyear_id.date_stop))
                 analytic_line_obj = self.pool.get('account.analytic.line')

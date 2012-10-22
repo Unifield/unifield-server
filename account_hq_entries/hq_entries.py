@@ -54,7 +54,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
         if ids:
             # prepare some values
             current_date = strftime('%Y-%m-%d')
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq')])
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
+                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]
@@ -68,20 +69,21 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_credit = 0
             
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
-                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date']):
+                'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
+                'destination_id_first_value']):
                 account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
                 account = self.pool.get('account.account').browse(cr, uid, account_id)
                 # create new distribution (only for expense accounts)
                 distrib_id = False
-                cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or False
+                cc_id = line.get('cost_center_id_first_value', False) and line.get('cost_center_id_first_value')[0] or (line.get('cost_center_id') and line.get('cost_center_id')[0]) or False
                 fp_id = line.get('analytic_id', False) and line.get('analytic_id')[0] or False
                 if line['cost_center_id'] != line['cost_center_id_first_value'] or line['account_id_first_value'] != line['account_id']:
                     fp_id = private_fund_id
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
                 f2_id = line.get('free2_id', False) and line.get('free2_id')[0] or False
-                destination_id = (line.get('destination_id') and line.get('destination_id')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
+                destination_id = (line.get('destination_id_first_value') and line.get('destination_id_first_value')[0]) or (account.default_destination_id and account.default_destination_id.id) or False
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
                 if distrib_id:
                     common_vals = {
@@ -90,10 +92,11 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         'percentage': 100.0,
                         'date': line.get('date', False) or current_date,
                         'source_date': line.get('date', False) or current_date,
+                        'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id, 'destination_id': destination_id})
+                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     del common_vals['destination_id']
@@ -170,10 +173,17 @@ class hq_entries_validation_wizard(osv.osv_memory):
         active_ids = context.get('active_ids')
         if isinstance(active_ids, (int, long)):
             active_ids = [active_ids]
+        # Fetch some data
         ana_line_obj = self.pool.get('account.analytic.line')
         distrib_obj = self.pool.get('account.analytic.distribution')
         distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
+        # Search an analytic correction journal
+        acor_journal_id = False
+        acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
+                                                                                      ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+        if acor_journal_ids:
+            acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated
         to_write = {}
         account_change = []
@@ -181,15 +191,18 @@ class hq_entries_validation_wizard(osv.osv_memory):
         cc_account_change = []
         current_date = strftime('%Y-%m-%d')
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
+            if line.analytic_state != 'valid':
+                raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
             if not line.user_validated:
                 to_write.setdefault(line.currency_id.id, {}).setdefault(line.period_id.id, []).append(line.id)
 
                 if line.account_id.id != line.account_id_first_value.id:
-                    if line.cost_center_id.id != line.cost_center_id_first_value.id:
+                    if line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
                         cc_account_change.append(line)
                     else:
                         account_change.append(line)
-                elif line.cost_center_id.id != line.cost_center_id_first_value.id:
+                elif line.cost_center_id.id != line.cost_center_id_first_value.id or line.destination_id.id != line.destination_id_first_value.id:
+                    if line.cost_center_id_first_value and line.cost_center_id_first_value.id:
                         cc_change.append(line)
         all_lines = {}
         for currency in to_write:
@@ -201,48 +214,53 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     self.pool.get('hq.entries').write(cr, uid, write.keys(), {'user_validated': True}, context=context)
 
         for line in account_change:
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
-                corrected_distrib={
+            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'funding_pool_lines': [(0, 0, {
                             'percentage': 100,
                             'analytic_id': line.analytic_id.id,
                             'cost_center_id': line.cost_center_id.id,
                             'currency_id': line.currency_id.id,
                             'source_date': line.date,
+                            'destination_id': line.destination_id.id,
                         })]
-                    }
-                )
+                    })
+            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
 
         for line in cc_change:
             # actual distrib_id
             distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
             # update the distribution
             distrib_fp_lines = distrib_fp_line_obj.search(cr, uid, [('cost_center_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date})
+            distrib_fp_line_obj.write(cr, uid, distrib_fp_lines, {'cost_center_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
             distrib_cc_lines = distrib_cc_line_obj.search(cr, uid, [('analytic_id', '=', line.cost_center_id_first_value.id), ('distribution_id', '=', distrib_id)])
-            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date})
-
+            distrib_cc_line_obj.write(cr, uid, distrib_cc_lines, {'analytic_id': line.cost_center_id.id, 'source_date': line.date, 'destination_id': line.destination_id.id})
 
             # reverse ana lines
             fp_old_lines = ana_line_obj.search(cr, uid, [
                 ('cost_center_id', '=', line.cost_center_id_first_value.id),
+                ('destination_id', '=', line.destination_id_first_value.id),
                 ('move_id', '=', all_lines[line.id])
                 ])
-            ana_line_obj.reverse(cr, uid, fp_old_lines)
+            res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines)
+            # Give them analytic correction journal (UF-1385 in comments)
+            if not acor_journal_id:
+                raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
+            ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
             # create new lines
-            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 'account_id': line.analytic_id.id})
+            ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
+                'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
             # update old ana lines
             ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
 
         for line in cc_account_change:
             # call correct_account with a new arg: new_distrib
-            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id,
-                corrected_distrib={
+            corrected_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {
                     'cost_center_lines': [(0, 0, {
                             'percentage': 100, 
                             'analytic_id': line.cost_center_id.id,
                             'currency_id': line.currency_id.id,
                             'source_date': line.date,
+                            'destination_id': line.destination_id.id,
                         })],
                     'funding_pool_lines': [(0, 0, {
                             'percentage': 100,
@@ -250,8 +268,10 @@ class hq_entries_validation_wizard(osv.osv_memory):
                             'cost_center_id': line.cost_center_id.id,
                             'currency_id': line.currency_id.id,
                             'source_date': line.date,
+                            'destination_id': line.destination_id.id,
                         })]
                 })
+            self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], current_date, line.account_id.id, corrected_distrib_id)
 
         # Write lines and validate them
         # Return HQ Entries Tree View in current view
@@ -284,7 +304,7 @@ class hq_entries(osv.osv):
             fp_id = 0
         # Browse all given lines to check analytic distribution validity
         ## TO CHECK:
-        # A/ if CC = dummy CC
+        # A/ if no CC
         # B/ if FP = MSF Private FUND
         # C/ (account/DEST) in FP except B
         # D/ CC in FP except when B
@@ -309,6 +329,9 @@ class hq_entries(osv.osv):
             if line.analytic_id and line.analytic_id.id == fp_id and not line.destination_id:
                 continue
             #### END OF CASES
+            if not line.cost_center_id:
+                res[line.id] = 'invalid'
+                continue
             if line.analytic_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.analytic_id.cost_center_ids] and line.analytic_id.id != fp_id:
@@ -339,7 +362,7 @@ class hq_entries(osv.osv):
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
-        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=True, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_id': fields.many2one('account.analytic.account', "Funding Pool", required=True, domain="[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_1_id': fields.many2one('account.analytic.account', "Free 1", domain="[('category', '=', 'FREE1'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'free_2_id': fields.many2one('account.analytic.account', "Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -353,8 +376,9 @@ class hq_entries(osv.osv):
         'currency_id': fields.many2one('res.currency', "Book. Currency", required=True, readonly=True),
         'amount': fields.float('Amount', readonly=True),
         'account_id_first_value': fields.many2one('account.account', "Account @import", required=True, readonly=True),
-        'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=True, readonly=True),
+        'cost_center_id_first_value': fields.many2one('account.analytic.account', "Cost Center @import", required=False, readonly=False),
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
+        'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
     }
@@ -423,12 +447,8 @@ class hq_entries(osv.osv):
             context={}
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
-            expat_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account and \
-                self.pool.get('res.users').browse(cr, uid, uid).company_id.expat_salaries_default_account.id or False
-            if not expat_account_id:
-                raise osv.except_osv(_('Warning'), _('Expat Salaries account is not set. Please configure it to Company Settings.'))
             for line in self.browse(cr, uid, ids):
-                if line.account_id_first_value and line.account_id_first_value.code and line.account_id_first_value.id == expat_account_id and account.id != expat_account_id:
+                if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
         return super(hq_entries, self).write(cr, uid, ids, vals, context)
 

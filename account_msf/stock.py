@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+import time
 from tools.translate import _
 
 class stock_picking(osv.osv):
@@ -30,6 +31,7 @@ class stock_picking(osv.osv):
 
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
         """
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
@@ -46,9 +48,13 @@ class stock_picking(osv.osv):
         """
         Update journal by an inkind journal if we come from an inkind donation PO.
         Update partner account
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
+        if not invoice_vals.get('date_invoice',False):
+            invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())  
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'),
+                                                                        ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind":
             if not journal_ids:
                 raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
@@ -62,24 +68,13 @@ class stock_picking(osv.osv):
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
         """
-        Fetch old analytic distribution on each purchase line (if exists)
+        Add a link between stock picking and invoice
         """
-        distrib_obj = self.pool.get('analytic.distribution')
-        res = {}
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
-        for sp in self.browse(cr, uid, ids):
-            if res.get(sp.id):
-                inv = res[sp.id] or False
-                if inv:
-                    if sp.purchase_id and sp.purchase_id.analytic_distribution_id:
-                        new_distrib_id = distrib_obj.copy(cr, uid, sp.purchase_id.analytic_distribution_id.id)
-                        distrib_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
-                        self.pool.get('account.invoice').write(cr, uid, [inv], {'analytic_distribution_id': new_distrib_id or False,})
-                    for invl in self.pool.get('account.invoice').browse(cr, uid, inv).invoice_line:
-                        if invl.order_line_id and invl.order_line_id.analytic_distribution_id:
-                            new_distrib_id = distrib_obj.copy(cr, uid, invl.order_line_id.analytic_distribution_id.id)
-                            distrib_obj.create_funding_pool_lines(cr, uid, [new_distrib_id], account_id=invl.account_id.id)
-                            self.pool.get('account.invoice.line').write(cr, uid, invl.id, {'analytic_distribution_id': new_distrib_id or False})
+        for pick in self.browse(cr, uid, [x for x in res]):
+            inv_id = res[pick.id]
+            if inv_id:
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'picking_id': pick.id})
         return res
 
 stock_picking()

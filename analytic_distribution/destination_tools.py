@@ -2,7 +2,7 @@
 
 from osv import fields, osv
 import warnings
-
+import pooler
 
 class many2many_sorted(fields.many2many):
     def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
@@ -35,11 +35,10 @@ class many2many_sorted(fields.many2many):
             where_c = ' AND ' + where_c
 
         order_by = ''
-        rel_obj = obj.pool.get('account.destination.link')
-        if rel_obj._order:
+        if obj._order:
             order_by = ' ORDER BY '
             order_tab = []
-            for order in rel_obj._order.split(','):
+            for order in obj._order.split(','):
                 order_tab.append('%s.%s' %(from_c, order.strip()))
             order_by += ','.join(order_tab)
 
@@ -69,3 +68,49 @@ class many2many_sorted(fields.many2many):
         for r in cr.fetchall():
             res[r[1]].append(r[0])
         return res
+
+
+class many2many_notlazy(many2many_sorted):
+    def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
+        super(many2many_notlazy, self).__init__(obj, rel, id1, id2, string, limit, **args)
+
+    def set(self, cr, obj, id, name, values, user=None, context=None):
+        if context is None:
+            context = {}
+        if not values:
+            return
+        obj = obj.pool.get(self._obj)
+        newargs = []
+        for act in values:
+            if not (isinstance(act, list) or isinstance(act, tuple)) or not act:
+                continue
+            if act[0] == 6:
+                d1, d2,tables = obj.pool.get('ir.rule').domain_get(cr, user, obj._name, context=context)
+                if d1:
+                    d1 = ' and ' + ' and '.join(d1)
+                else:
+                    d1 = ''
+                args = [id, id]+d2
+                if not act[2]:
+                    args.append((0,))
+                else:
+                    args.append(tuple(act[2]))
+                cr.execute('delete from '+self._rel+' where '+self._id1+'=%s AND '+self._id2+' IN (SELECT '+self._rel+'.'+self._id2+' FROM '+self._rel+', '+','.join(tables)+' WHERE '+self._rel+'.'+self._id1+'=%s AND '+self._rel+'.'+self._id2+' = '+obj._table+'.id '+ d1 +' and '+self._rel+'.'+self._id2+' not in %s)', args)
+
+                cr.execute('select '+self._id2+' from '+self._rel+' where '+self._id1+'=%s', [id, ])
+                existing = [x[0] for x in cr.fetchall()]
+
+                for act_nbr in act[2]:
+                    if act_nbr not in existing:
+                        if self._rel == 'account_destination_link':
+                            link_obj = pooler.get_pool(cr.dbname).get('account.destination.link')
+                            link_obj.create(cr, user, {self._id1: id, self._id2: act_nbr})
+                        else:
+                            cr.execute('insert into '+self._rel+' ('+self._id1+','+self._id2+') values (%s, %s)', (id, act_nbr))
+                        
+            else:
+                newargs.append(act)
+        if newargs:
+            return super(many2many_notlazy, self).set(cr, obj, id, name, newargs, user=user, context=context)
+
+

@@ -35,6 +35,7 @@
                 "supplier_catalogue",
                 "procurement_request",
                 "procurement",
+                "mission_stock",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -46,15 +47,18 @@
     ],
     'update_xml': [
                    "menu/main_menu.xml",
+                   "menu/supply_config_menu.xml",
                    "menu/product_menu.xml",
                    "menu/purchase_menu.xml",
-                   "menu/supply_config_menu.xml",
                    "menu/warehouse_menu.xml",
                    "menu/partner_menu.xml",
                    "menu/sale_menu.xml",
                    "menu/hidden_menu.xml",
+                   "menu/accounting_menu.xml",
                    
                    "view/purchase_view.xml",
+                   "view/sale_view.xml",
+                   "view/shop_view.xml",
                    
                    "dashboard/board_purchase_view.xml",
                    "dashboard/board_sale_view.xml",

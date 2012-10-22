@@ -130,7 +130,21 @@ class stock_reason_type(osv.osv):
         'is_inventory': fields.function(_get_inventory, fnct_search=_search_inventory, 
                                         method=True, type='boolean', string='Inventory type', 
                                         readonly=True, help='If checked, this reason type will be available in inventory line'),
+        'incoming_ok': fields.boolean(string='Available for incoming shipment ?'),
+        'internal_ok': fields.boolean(string='Available for internal picking ?'),
+        'outgoing_ok': fields.boolean(string='Available for outgoing movements ?'),
     }
+    
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Prevent the deletion of standard reason types
+        '''
+        data_ids = self.pool.get('ir.model.data').search(cr, uid, [('model', '=', 'stock.reason.type'), ('res_id', 'in', ids)])
+        if data_ids:
+            raise osv.except_osv(_('Error'), _('You cannot delete a standard reason type move'))
+        
+        return super(stock_reason_type, self).unlink(cr, uid, ids, context=context)
+            
     
 stock_reason_type()
 
@@ -180,6 +194,7 @@ class stock_inventory(osv.osv):
         move_vals.update({
             'comment': inventory_line.comment,
             'reason_type_id': inventory_line.reason_type_id.id,
+            'not_chained': True,
         })
 
         return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals) 
@@ -279,6 +294,25 @@ class stock_picking(osv.osv):
                 logging.getLogger('init').info('Loading default values for stock.picking')
                 vals.update(self._get_default_reason(cr, uid, context))
         return super(stock_picking, self).create(cr, uid, vals, context)
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set the reason type according to the picking type
+        '''
+        if not context:
+            context = {}
+            
+        res = super(stock_picking, self).default_get(cr, uid, fields, context=context)
+        
+        if 'picking_type' in context:
+            if context.get('picking_type') == 'incoming_shipment':
+                res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+            elif context.get('picking_type') == 'internal_move':
+                res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+            elif context.get('picking_type') in ('delivery_order', 'picking_ticket'):
+                res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        
+        return res
     
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
@@ -291,9 +325,14 @@ class stock_move(osv.osv):
     _name = 'stock.move'
     _inherit = 'stock.move'
     
-    def hook__create_chained_picking(self, cr, uid, pick_values, picking):
+    def hook__create_chained_picking(self, cr, uid, pick_values, picking, context=None):
+        if not context:
+            context = {}
+            
+        context.update({'from_chaining': True})
         if not 'reason_type_id' in pick_values:
-            pick_values.update({'reason_type_id': picking.reason_type_id.id})
+            reason_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1]
+            pick_values.update({'reason_type_id': reason_type_id})
             
         return pick_values
     
@@ -325,19 +364,33 @@ class stock_move(osv.osv):
 
         if 'location_dest_id' in vals:
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory':
+            if dest_id.usage == 'inventory'  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location:
+            if dest_id.scrap_location  and not dest_id.virtual_location :
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-                
+            # if the source location and the destination location are the same, the state is closed
+            if 'location_id' in vals:
+                if vals['location_dest_id'] == vals['location_id']:
+                    vals['state'] = 'done'
         # Change the reason type of the picking if it is not the same
         if vals.get('picking_id'):
             pick_id = self.pool.get('stock.picking').browse(cr, uid, vals['picking_id'], context=context)
-            if pick_id.reason_type_id.id != vals['reason_type_id']:
+            if pick_id.reason_type_id.id != vals['reason_type_id'] and not context.get('from_claim') and not context.get('from_chaining'):
                 other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                 self.pool.get('stock.picking').write(cr, uid, vals['picking_id'], {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
+    
+    def copy(self, cr, uid, ids, default, context=None):
+        '''
+        If the picking is in default value, copy the reason type of the picking to the new moves
+        '''
+        if 'picking_id' in default and 'reason_type_id' not in default:
+            pick = self.pool.get('stock.picking').browse(cr, uid, default.get('picking_id'), context=context)
+            default['reason_type_id'] = pick.reason_type_id.id
+            
+        return super(stock_move, self).copy(cr, uid, ids, default, context=context)
+        
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -345,11 +398,14 @@ class stock_move(osv.osv):
         '''
         if 'location_dest_id' in vals:
             dest_id = self.pool.get('stock.location').browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory':
+            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location:
+            if dest_id.scrap_location and not dest_id.virtual_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-                
+            # if the source location and the destination location are the same, the state is done
+            if 'location_id' in vals:
+                if vals['location_dest_id'] == vals['location_id']:
+                    vals['state'] = 'done'
         # Change the reason type of the picking if it is not the same
         if 'reason_type_id' in vals:
             for pick_id in self.browse(cr, uid, ids, context=context):
@@ -384,17 +440,36 @@ class stock_move(osv.osv):
         
         return res
     
+    def _get_product_type_selection(self, cr, uid, context=None):
+        return self.pool.get('product.template').PRODUCT_TYPE
+    
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
         'comment': fields.char(size=128, string='Comment'),
-        'product_type': fields.function(_get_product_type, method=True, type='char', string='Product type', store=False),
+        'product_type': fields.function(_get_product_type, method=True, type='selection', selection=_get_product_type_selection, string='Product type', 
+                                        store={'stock.move': (lambda self, cr, uid, ids, c={}: ids, ['product_id'], 20),}),
+        'not_chained': fields.boolean(string='Not chained', help='If checked, the chaining move will not be run.'),
     }
     
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context={}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
+        'not_chained': lambda *a: False,
     }
+    
+    def location_src_change(self, cr, uid, ids, location_id, context=None):
+        '''
+        Tries to define a reason type for the move according to the source location
+        '''
+        vals = {}
+        
+        if location_id:
+            loc_id = self.pool.get('stock.location').browse(cr, uid, location_id, context=context)
+            if loc_id.usage == 'inventory':
+                vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+                
+        return {'value': vals}
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
@@ -406,9 +481,18 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+        # if the source and the destination locations are the same the state is done
+        if location_dest_id and location_id:
+            if location_dest_id == location_id:
+                vals['state'] = 'done'
 
 
         return {'value': vals}
+    
+    def _hook_dest(self, cr, uid, *args, **kwargs):
+        move = kwargs['m']
+        res = super(stock_move, self)._hook_dest(cr, uid, *args, **kwargs)
+        return res and not move.not_chained
     
 stock_move()
 
@@ -480,13 +564,10 @@ class stock_location(osv.osv):
                 if arg[1] != '=':
                     raise osv.except_osv(_('Error !'), _('Bad operator !'))
                 if arg[2] == 'dest':
-                    virtual_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
-                    virtual_loc_ids = loc_obj.search(cr, uid, [('location_id', 'child_of', virtual_loc_id)], context=context)
-                    
                     customer_loc_ids = loc_obj.search(cr, uid, [('usage', '=', 'customer')], context=context)
                     output_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_output')[1]
                     
-                    loc_ids = virtual_loc_ids
+                    loc_ids = []
                     loc_ids.extend(customer_loc_ids)
                     loc_ids.append(output_loc_id)
                     res.append(('id', 'in', loc_ids))

@@ -24,6 +24,9 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
+# xml parser
+from lxml import etree
+
 class stock_partial_picking(osv.osv_memory):
     _inherit = "stock.partial.picking"
     
@@ -138,7 +141,7 @@ class stock_partial_picking(osv.osv_memory):
                           'change_reason': False,
                           }
                 # average computation from original openerp
-                if (picking_type == 'in') and (missing_move.product_id.cost_method == 'average'):
+                if (picking_type == 'in') and (missing_move.product_id.cost_method == 'average') and not missing_move.location_dest_id.cross_docking_location_ok:
                     values.update({'product_price' : missing_move.product_id.standard_price,
                                    'product_currency': missing_move.product_id.company_id and missing_move.product_id.company_id.currency_id and missing_move.product_id.company_id.currency_id.id or False,
                                    })
@@ -155,16 +158,25 @@ class stock_partial_picking(osv.osv_memory):
         '''
         change the function name to do_incoming_shipment
         '''
-        res = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         picking_obj = self.pool.get('stock.picking')
-        picking_id = context.get('active_ids')
-        if picking_id:
-            picking_id = picking_id[0]
-            picking_type = picking_obj.read(cr, uid, [picking_id], ['type'], context=context)[0]['type']
-            if picking_type == 'in':
-                # replace call to do_partial by do_incoming_shipment
-                res['arch'] = res['arch'].replace('do_partial', 'do_incoming_shipment')
-        return res
+        picking_ids = context.get('active_ids')
+        if picking_ids:
+            picking_type = picking_obj.read(cr, uid, picking_ids, ['type'], context=context)[0]['type']
+            if picking_type == 'in' and view_type == 'form':
+                # load the xml tree
+                root = etree.fromstring(result['arch'])
+                list = ['//button[@name="do_partial"]']
+                for xpath in list:
+                    fields = root.xpath(xpath)
+                    if not fields:
+                        raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                    for field in fields:
+                        # replace call to do_partial by do_incoming_shipment
+                        field.set('name', 'do_incoming_shipment')
+                result['arch'] = etree.tostring(root)
+                
+        return result
     
     def __create_partial_picking_memory(self, picking, pick_type):
         '''

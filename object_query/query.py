@@ -217,7 +217,7 @@ class object_query(osv.osv):
             search_arch = '''<search string='%s'>
             %s
             <newline/>
-            <group expand="1" string="Group By..." groups="base.group_extended">
+            <group expand="1" string="Group By...">
             %s
             </group>
             </search>

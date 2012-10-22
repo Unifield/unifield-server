@@ -293,7 +293,7 @@
                 <para style="P7">Product Code: [[ product['obj'].default_code ]]</para>
               </td>
               <td>
-                <para style="P7">Product Name: [[ product['obj'].name ]]</para>
+                <para style="P7">Product Description: [[ product['obj'].name ]]</para>
               </td>
               <td>
                 <para style="P7">UoM: [[ uom['obj'].name ]]</para>

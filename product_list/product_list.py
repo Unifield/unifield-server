@@ -133,9 +133,9 @@ class product_list_line(osv.osv):
     _description = 'Line of product list'
     
     _columns = {
-        'name': fields.many2one('product.product', string='Product name', required=True),
+        'name': fields.many2one('product.product', string='Product Description', required=True),
         'list_id': fields.many2one('product.list', string='List', ondelete='cascade'),
-        'ref': fields.related('name', 'default_code', string='Product reference', readonly=True, type='char'),
+        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char'),
         'comment': fields.char(size=256, string='Comment'),
     }
 

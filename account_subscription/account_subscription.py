@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF, Smile. All Rights Reserved
-#    All Rigts Reserved
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,18 +19,24 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+from osv import fields, osv
+import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+from tools.translate import _
 
-from osv import osv
-from osv import fields
-
-class composition_kit(osv.osv):
-    _inherit = 'composition.kit'
-    _name = 'composition.kit'
+class account_subscription(osv.osv):
+    _name = "account.subscription"
+    _inherit = "account.subscription" 
     
-    def action_cancel(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
-        return True
-
-composition_kit()
+    _columns = {
+        'period_nbr': fields.integer('Periodicity', required=True, help="This field will determine how often entries will be generated: if the period type is 'month' and the periodicity '2' then entries will be generated every 2 months"),
+    }
+    
+    _defaults = {
+        'period_total': 0,
+    }
+    
+account_subscription()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+ 

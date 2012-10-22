@@ -88,7 +88,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     to_override[oline.id].append(('percentage', nline.percentage))
                 # Check that if old_component and new_component have changed we should find oline.id in to_reverse OR to_override
                 if oline.id not in to_override and oline.id not in to_reverse:
-                    raise osv.except_osv(_('Error'), _('Code error: A case have not been taken.'))
+                    raise osv.except_osv(_('Error'), _('Code error: A case has not been taken.'))
         else:
             old_component = [oline.analytic_id.id, oline.percentage]
             new_component = [nline.analytic_id.id, nline.percentage]
@@ -124,6 +124,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
 
         orig_date = ml.source_date or ml.date
+        orig_document_date = ml.document_date
         # OK let's go on funding pool lines
         # Search old line and new lines
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
@@ -133,7 +134,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         to_delete = []
         to_reverse = []
         old_line_ok = []
-        period_closed = ml.period_id.state == 'done'
+        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state == 'done' or False
 
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
@@ -144,8 +145,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             else:
                 old_line = self.pool.get('funding.pool.distribution.line').browse(cr, uid, wiz_line.distribution_line_id.id)
                 # existing line, test modifications
+                # for FP, percentage, CC or destination changes regarding contracts
                 if old_line.analytic_id.id != wiz_line.analytic_id.id \
-                    or old_line.percentage != wiz_line.percentage:
+                    or old_line.percentage != wiz_line.percentage \
+                    or old_line.cost_center_id.id != wiz_line.cost_center_id.id \
+                    or old_line.destination_id.id != wiz_line.destination_id.id:
                     # FP account changed or % modified
                     if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [old_line.analytic_id.id]):
                         raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(old_line.analytic_id.code))
@@ -183,10 +187,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'percentage': line.percentage,
                     'destination_id': line.destination_id.id,
                     'distribution_id': distrib_id,
-                    'currency_id': ml.currency_id.id,
+                    'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
             # create the ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, source_date=orig_date)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date)
 
         for line in to_delete:
             # delete distrib line
@@ -213,7 +217,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'destination_id': line.destination_id.id,
                 })
             # Create the new ana line
-            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, source_date=orig_date, name=name)
+            self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, line.distribution_line_id.id, ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, name=name)
 
         for line in to_override:
             # update the ana line
@@ -229,6 +233,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'amount': amount,
                     'date': wizard.date,
                     'source_date': orig_date,
+                    'document_date': orig_document_date,
                 })
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {
@@ -272,10 +277,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.state == 'correction':
                 self.write(cr, uid, ids, {'state': 'dispatch'}, context=context)
-            if 'from' in context and 'wiz_id' in context:
+            if context.get('from', False) == 'wizard.journal.items.corrections' and 'wiz_id' in context:
                 # Update cost center lines
-                if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-                    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+                #if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+                #    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
                 # Do some verifications before writing elements
                 self.wizard_verifications(cr, uid, wiz.id, context=context)
                 # Verify old account and new account
@@ -289,7 +294,10 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if account_changed:
                     # Create new distribution
                     new_distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                    # Write current distribution to the new one
                     self.write(cr, uid, [wiz.id], {'distribution_id': new_distrib_id})
+                    super(analytic_distribution_wizard, self).button_confirm(cr, uid, ids, context=context)
+                    # Return to the default corrections wizard
                     self.pool.get('wizard.journal.items.corrections').write(cr, uid, [context.get('wiz_id')], {'date': wiz.date})
                     return self.pool.get('wizard.journal.items.corrections').action_confirm(cr, uid, context.get('wiz_id'), distrib_id=new_distrib_id)
                 # JUST Distribution have changed

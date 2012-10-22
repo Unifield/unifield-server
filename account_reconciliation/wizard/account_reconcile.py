@@ -139,8 +139,12 @@ class account_move_line_reconcile(osv.osv_memory):
                     prev_third_party = third_party
                 if prev_third_party != third_party:
                     # Do not raise an exception if salary_default_account is configured and this line account is equal to default salary account
-                    if line.account_id.id != salary_account_id and (line.partner_id.partner_type == 'intermission' and line.account_id.id != intermission_default_account_id):
-                        raise osv.except_osv(_('Error'), _('A third party is different from others: %s') % line.partner_txt)
+                    # True + not (False + False) => True [ERROR message]
+                    # True + not (True + False) or True + not (False + True) => True [ERROR message]
+                    # True + not (True + True) => False [NO error]
+                    # False + anything => False [NO error]
+                    if line.account_id.id != salary_account_id and not (line.partner_id.partner_type == 'intermission' and line.account_id.id != intermission_default_account_id):
+                        raise osv.except_osv(_('Error'), _('Third parties do not match or bad company configuration!'))
             # process necessary elements
             if not line.reconcile_id and not line.reconcile_id.id:
                 count += 1

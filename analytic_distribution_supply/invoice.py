@@ -64,7 +64,22 @@ class account_invoice(osv.osv):
         ana_obj = self.pool.get('analytic.distribution')
         # Browse all invoices
         for inv in self.browse(cr, uid, ids, context=context):
-            # Code to retrieve DISTRO from PO have been removed because of impossibility to retrieve some DESTINATION AXIS from PO
+            # Set analytic distribution from purchase order to invoice
+            for po in inv.purchase_ids:
+                # First set invoice global distribution
+                if not inv.analytic_distribution_id and po.analytic_distribution_id:
+                    # Fetch PO analytic distribution
+                    distrib_id = po.analytic_distribution_id and po.analytic_distribution_id.id or False
+                    # If commitment for this PO, fetch analytic distribution. Else take default distrib_id
+                    if po.commitment_ids:
+                        distrib_id = po.commitment_ids[0].analytic_distribution_id and po.commitment_ids[0].analytic_distribution_id.id or distrib_id
+                    if distrib_id:
+                        new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
+                        if not new_distrib_id:
+                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                        # create default funding pool lines
+                        ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
+                        self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
             # Then set distribution on invoice line regarding purchase order line distribution
             for invl in inv.invoice_line:
                 if invl.order_line_id:
@@ -236,6 +251,40 @@ class account_invoice(osv.osv):
         # Process invoices
         res = self.update_commitments(cr, uid, to_process, context=context)
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context=context)
+
+    def check_po_link(self, cr, uid, ids, context=None):
+        """
+        Check that invoice (only supplier invoices) has no link with a PO. This is because of commitments presence.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids):
+            if inv.type == 'in_invoice' and not inv.is_inkind_donation and not inv.is_debit_note:
+                if inv.purchase_ids:
+                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
+        return True
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Don't delete an invoice that is linked to a PO.
+        This is only for supplier invoices.
+        """
+        if not context:
+            context = {}
+        self.check_po_link(cr, uid, ids)
+        return super(account_invoice, self).unlink(cr, uid, ids, context)
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        """
+        Don't delete an invoice that is linked to a PO.
+        This is only for supplier invoices.
+        """
+        if not context:
+            context = {}
+        self.check_po_link(cr, uid, ids)
+        return super(account_invoice, self).action_cancel(cr, uid, ids, context)
 
 account_invoice()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

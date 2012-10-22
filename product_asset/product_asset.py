@@ -184,7 +184,7 @@ class product_asset(osv.osv):
                 'product_id': fields.many2one('product.product', 'Product', domain="[('subtype','=','asset')]", required=True, ondelete='cascade'),
                 # msf codification
                 'prod_int_code': fields.char('Product Code', size=128, readonly=True), # from product
-                'prod_int_name': fields.char('Product Name', size=128, readonly=True), # from product
+                'prod_int_name': fields.char('Product Description', size=128, readonly=True), # from product
                 'nomenclature_description': fields.char('Product Nomenclature', size=128, readonly=True), # from product when merged - to be added in _getRelatedProductFields and add dependency to module product_nomenclature
                 'hq_ref': fields.char('HQ Reference', size=128),
                 'local_ref': fields.char('Local Reference', size=128),
@@ -220,9 +220,8 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [
-                        ('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
-    ]
+    _sql_constraints = [('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
+                        ]
     _order = 'name desc'
     
 product_asset()
@@ -381,9 +380,12 @@ class product_product(osv.osv):
         if a product is not of type product, it is set to single subtype
         '''
         # fetch the product
-        if 'type' in vals and vals['type'] != 'product':
+#        if 'type' in vals and vals['type'] != 'product':
+        if vals.get('type') != 'product':
             vals.update(subtype='single')
-            
+#        if 'type' in vals and vals['type'] == 'consu':
+        if vals.get('type') == 'consu':
+            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).create(cr, uid, vals, context=context)
     
@@ -392,15 +394,31 @@ class product_product(osv.osv):
         if a product is not of type product, it is set to single subtype
         '''
         # fetch the product
-        if 'type' in vals and vals['type'] != 'product':
+#        if 'type' in vals and vals['type'] != 'product':
+        if vals.get('type') != 'product':
             vals.update(subtype='single')
-            
+#        if 'type' in vals and vals['type'] == 'consu':
+        if vals.get('type') == 'consu':
+            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
+
+    def _constaints_product_consu(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            if obj.type == 'consu' and obj.procure_method != 'make_to_order':
+                return False
+        return True
+
     
     _columns = {
         'asset_ids': fields.one2many('product.asset', 'product_id', 'Assets')
     }
+
+    _constraints = [
+        (_constaints_product_consu, 'If you select "Non-stockable" as product type then you have to select "Make to order" as procurement method', []),
+    ]
 
 product_product()
 
@@ -438,9 +456,11 @@ class stock_move(osv.osv):
         """
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
-                if move.product_id.subtype == 'asset':
-                    if not move.asset_id and move.product_qty:
-                        return False
+                # either the asset comes from a supplier or the asset goes to a customer
+                if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer' or (move.picking_id and move.picking_id.type == 'out' and move.picking_id.subtype == 'picking'):
+                    if move.product_id.subtype == 'asset':
+                        if not move.asset_id and move.product_qty:
+                            raise osv.except_osv(_('Error!'),  _('You must assign an asset for this product.'))
         return True
     
     def create(self, cr, uid, vals, context=None):
@@ -456,14 +476,14 @@ class stock_move(osv.osv):
         result = super(stock_move, self).create(cr, uid, vals, context=context)
         
         return result
-    
+
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False,
-                            loc_dest_id=False, address_id=False):
+                            loc_dest_id=False, address_id=False,parent_type=False,purchase_line_id=False,out=False):
         '''
         override to clear asset_id
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                            loc_dest_id, address_id)
+                            loc_dest_id, address_id, parent_type, purchase_line_id,out)
         
         if 'value' not in result:
             result['value'] = {}
@@ -472,12 +492,10 @@ class stock_move(osv.osv):
             prod = self.pool.get('product.product').browse(cr, uid, prod_id)
             result['value'].update({'subtype': prod.product_tmpl_id.subtype})
             
-            
         result['value'].update({'asset_id': False})
         
         return result
-    
-    
+        
     _columns = {
         'asset_id': fields.many2one('product.asset', 'Asset'),
         'subtype': fields.char(string='Product Subtype', size=128),
@@ -485,7 +503,7 @@ class stock_move(osv.osv):
     
     _constraints = [
         (_check_asset,
-            'You must assign an asset for this product',
+            'You must assign an asset for this product.',
             ['asset_id']),]
     
 stock_move()
@@ -510,7 +528,7 @@ class stock_picking(osv.osv):
         
         # calling super method
         defaults = super(stock_picking, self)._do_partial_hook(cr, uid, ids, context, *args, **kwargs)
-        assetId = partial_datas.get('move%s'%(move.id), False).get('asset_id')
+        assetId = partial_datas.get('move%s'%(move.id), {}).get('asset_id')
         if assetId:
             defaults.update({'asset_id': assetId})
         

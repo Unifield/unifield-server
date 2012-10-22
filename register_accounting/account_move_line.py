@@ -69,7 +69,7 @@ class account_move_line(osv.osv):
             ('account_id.type','in',['receivable','payable']),
             ('reconcile_id','=',False), 
             ('state', '=', 'valid'), 
-            ('journal_id.type', 'in', ['purchase', 'sale']), 
+            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr']), 
             ('account_id.type_for_register', 'not in', ['down_payment']) 
         ]
         return dom1+[('amount_residual_import_inv', '>', 0)]
@@ -169,7 +169,7 @@ class account_move_line(osv.osv):
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
             string="Imported Invoices", required=False, readonly=True),
         'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
-            help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
+            help="Move line that have been used for an Pending Payments Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
         'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 

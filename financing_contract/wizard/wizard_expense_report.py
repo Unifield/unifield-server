@@ -103,7 +103,7 @@ class wizard_expense_report(osv.osv_memory):
         formatted_amount_sum = locale.format("%.2f", amount_sum, grouping=True)
         formatted_amount_currency_sum = locale.format("%.2f", amount_currency_sum, grouping=True)
         
-        analytic_data.append(['','','','','','','',formatted_amount_sum,'', formatted_amount_currency_sum])
+        analytic_data.append(['','','','','','','','',formatted_amount_sum,'', formatted_amount_currency_sum])
         
         data = header_data + [[]] + analytic_data + [[]] + footer_data
         

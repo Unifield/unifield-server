@@ -590,7 +590,7 @@ msgstr "Our Responsible"
 #: view:sale.order:0
 #: view:sale.report:0
 msgid "Sales"
-msgstr "Order"
+msgstr "Orders"
 
 #. module: sale
 #: model:process.transition,note:sale.process_transition_invoice0

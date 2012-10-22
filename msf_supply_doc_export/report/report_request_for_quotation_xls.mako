@@ -21,16 +21,7 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
 <Styles>
-    <Style ss:ID="so_header_data">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Borders>
-          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-        </Borders>
-    </Style>
-    <Style ss:ID="line">
+    <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
         <Borders>
@@ -40,41 +31,65 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="line">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
+  <Style ss:ID="short_date">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
 </Styles>
-<ss:Worksheet ss:Name="Request For Quotation">
-<Table>
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 ## we loop over the purchase_order so "objects" == purchase_order 
 % for o in objects:
-
 ## we loop over the purchase_order_line
-
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+## definition of the columns' size
+<% nb_of_columns = 8 %>
+<Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="300" />
+% for x in range(2,nb_of_columns - 1):
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+% endfor
+<Column ss:AutoFitWidth="1" ss:Width="250" />
     
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Product Reference</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Product Name</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Price</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Delivery requested date</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Currency</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Comment</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">UoM</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Price</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Delivery requested date</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Currency</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
         % if line.date_planned :
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.date_planned or '')|x}</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
         % elif o.delivery_requested_date:
         ## if the date does not exist in the line we take the one from the header
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(o.delivery_requested_date or '')|x}</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % endif
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="so_header_data" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
 % endfor

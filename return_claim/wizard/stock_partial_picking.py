@@ -23,6 +23,9 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
+# xml parser
+from lxml import etree
+
 class stock_partial_picking(osv.osv_memory):
     '''
     new field for claim selection
@@ -149,24 +152,41 @@ class stock_partial_picking(osv.osv_memory):
             register_ok = pick.chained_from_in_stock_picking
         
         if register_ok:
-            arch = result['arch']
-            arch = arch.replace('<separator string="" colspan="4" />',
-                                '''
-                                <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
-                                <notebook colspan="4">
-                                <page string="Claim">
-                                <field name="register_a_claim_partial_picking"/><field name="in_has_partner_id_partial_picking" invisible="True" />
-                                <field name="partner_id_partial_picking" attrs="{\'readonly\': ['|', (\'register_a_claim_partial_picking\', \'=\', False), (\'in_has_partner_id_partial_picking\', \'=\', True)]}"
-                                        context="{'search_default_supplier': True}"/>
-                                <field name="claim_type_partial_picking" attrs="{\'readonly\': [(\'register_a_claim_partial_picking\', \'=\', False)]}"/>
-                                <field name="replacement_picking_expected_partial_picking" attrs="{\'invisible\': [(\'claim_type_partial_picking\', \'!=\', 'return')]}"/>
-                                </page>
-                                <page string="Claim Description">
-                                <field name="description_partial_picking" colspan="4" nolabel="True"/>
-                                </page>
-                                </notebook>
-                                <separator string="" colspan="4"/>''')
-            result['arch'] = arch
+            # load the xml tree
+            root = etree.fromstring(result['arch'])
+            # get the original empty separator ref and hide it 
+            # set the separator as invisible
+            list = ['//separator[@string=""]']
+            fields = []
+            for xpath in list:
+                fields = root.xpath(xpath)
+                if not fields:
+                    raise osv.except_osv(_('Warning !'), _('Element %s not found.')%xpath)
+                for field in fields:
+                    field.set('string', 'Register a Claim to the Supplier for selected products.')
+            # get separator index within xml tree
+            separator_index = root.index(fields[0])
+            # new view structure
+            new_tree_txt = '''
+                            <notebook colspan="4">
+                            <page string="Claim">
+                            <field name="register_a_claim_partial_picking"/><field name="in_has_partner_id_partial_picking" invisible="True" />
+                            <field name="partner_id_partial_picking" attrs="{\'readonly\': ['|', (\'register_a_claim_partial_picking\', \'=\', False), (\'in_has_partner_id_partial_picking\', \'=\', True)]}"
+                                    context="{'search_default_supplier': True}"/>
+                            <field name="claim_type_partial_picking" attrs="{\'readonly\': [(\'register_a_claim_partial_picking\', \'=\', False)]}"/>
+                            <field name="replacement_picking_expected_partial_picking" attrs="{\'invisible\': [(\'claim_type_partial_picking\', \'!=\', 'return')]}"/>
+                            </page>
+                            <page string="Claim Description">
+                            <field name="description_partial_picking" colspan="4" nolabel="True"/>
+                            </page>
+                            </notebook>
+                            '''
+            # generate xml tree
+            new_tree = etree.fromstring(new_tree_txt)
+            # insert new tree just after separator index position
+            root.insert(separator_index+1, new_tree)
+            # generate xml back to string
+            result['arch'] = etree.tostring(root)
         
         return result
     
