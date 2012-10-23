@@ -74,7 +74,7 @@ class entity(osv.osv, Thread):
         return res
     
     def _get_nb_message_send(self, cr, uid, ids, name, arg, context=None):
-        nb = self.pool.get('sync.client.message_to_send').search_count(cr, uid, [('sent', '=', False)], context=context)
+        nb = self.pool.get('sync.client.message_to_send').search_count(cr, uid, [('sent', '=', False), ('generate_message', '=', False)], context=context)
         return self._encapsulate_in_dict(nb, ids)
     
     def _get_nb_update_send(self, cr, uid, ids, name, arg, context=None):

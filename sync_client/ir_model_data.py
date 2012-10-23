@@ -350,6 +350,7 @@ def generate_message_for_destination(self, cr, uid, destination_name, xml_id, in
     message_data = {
             'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
             'sent' : False,
+            'generate_message' : True,
             'remote_call': self._name + ".message_unlink",
             'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
             'destination_name': destination_name
