@@ -155,7 +155,7 @@ That means Not price, Neither Delivery requested date. """))
 
                 # Cell 3: UoM
                 uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                 # Cell 4: Currency
@@ -267,7 +267,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 # Cell 3: UOM
                 uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                 # Cell 4: Price
