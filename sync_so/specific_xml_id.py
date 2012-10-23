@@ -103,7 +103,9 @@ class product_product(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         product = self.browse(cr, uid, res_id)
-        return product.default_code + table_name
+        if product.id:
+            # the xml_id is based on the id because at the creation of a product we don't have product_code
+            return str(product.id) + table_name
     
 product_product()
 
