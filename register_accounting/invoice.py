@@ -300,7 +300,7 @@ class account_invoice_line(osv.osv):
         if not context:
             context = {}
         res = super(account_invoice_line, self).create(cr, uid, vals, context)
-        if 'invoice_id' in vals:
+        if vals.get('invoice_id', False):
             invoice = self.pool.get('account.invoice').browse(cr, uid, vals.get('invoice_id'))
             if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
                 amount = 0.0
