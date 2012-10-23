@@ -748,9 +748,11 @@ class account_invoice(osv.osv):
                 total += i['price']
                 total_currency += i['amount_currency'] or i['price']
                 i['price'] = - i['price']
+                i['change_sign'] = True
             else:
                 total -= i['price']
                 total_currency -= i['amount_currency'] or i['price']
+                i['change_sign'] = False
         return total, total_currency, invoice_move_lines
 
     def inv_line_characteristic_hashcode(self, invoice, invoice_line):
@@ -957,7 +959,7 @@ class account_invoice(osv.osv):
             'credit': x['price']<0 and -x['price'],
             'account_id': x['account_id'],
             'analytic_lines': x.get('analytic_lines', []),
-            'amount_currency': x['price']>0 and abs(x.get('amount_currency', False)) or -abs(x.get('amount_currency', False)),
+            'amount_currency': x.get('change_sign', False) and -x.get('amount_currency', False) or x.get('amount_currency', False),
             'currency_id': x.get('currency_id', False),
             'tax_code_id': x.get('tax_code_id', False),
             'tax_amount': x.get('tax_amount', False),
