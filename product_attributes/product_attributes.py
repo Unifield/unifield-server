@@ -289,9 +289,9 @@ class product_attributes(osv.osv):
         '''
         res = {}
         if default_code:
-            cr.execute("SELECT pp.id FROM product_product pp")
-            ids = cr.fetchall()
-            if any(product['default_code'] == default_code for product in self.read(cr, uid, ids, ['default_code'])):
+            cr.execute("SELECT * FROM product_product pp where pp.default_code = '%s'" % default_code)
+            duplicate = cr.fetchall()
+            if duplicate:
                 res.update({'value': {'default_code': False},
                             'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
