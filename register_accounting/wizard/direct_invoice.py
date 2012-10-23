@@ -128,6 +128,7 @@ class wizard_account_invoice(osv.osv):
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id'][0]], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
         vals.update({'date_invoice': vals['date_invoice'] or time.strftime('%Y-%m-%d')})
+        vals.update({'register_posting_date': vals['register_posting_date'] or time.strftime('%Y-%m-%d')})
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
