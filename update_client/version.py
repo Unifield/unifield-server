@@ -90,7 +90,7 @@ class entity(osv.osv):
         if revisions._need_restart(cr, uid, context=context):
             return "OpenERP is restarting<br/>to finish upgrade..."
         if revisions._is_outdated(cr, uid, context=context):
-            return "Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded."
+            return "Major upgrade is available. The synchronization process<br />is disabled while the instance is not upgraded."
         return ""
 
     def upgrade(self, cr, uid, context=None):
