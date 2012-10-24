@@ -1196,7 +1196,7 @@ class stock_inventory(osv.osv):
         if not defaults:
             defaults = {}
 
-        defaults.update({'date': time.strftime('%Y-%m-%d %H:%M:%S')})
+        defaults.update({'date': time.strftime('%Y-%m-%d %H:%M:%S'), 'move_ids': False})
         return super(stock_inventory, self).copy(cr, uid, inventory_id, defaults, context=context)
         
     _columns = {
