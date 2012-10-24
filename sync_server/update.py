@@ -19,13 +19,52 @@
 #
 ##############################################################################
 
-from osv import osv
+from __future__ import with_statement
+
+from osv import orm, osv
 from osv import fields
 import tools
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 import logging
 from tools.safe_eval import safe_eval as eval
+import threading
+
+class SavePullerCache(object):
+    def __init__(self, model):
+        self.__model__ = model
+        self.__cache__ = []
+        self.__lock__ = threading.Lock()
+
+    def add(self, entity, updates):
+        if not updates:
+            return
+        if isinstance(updates[0], orm.browse_record):
+            update_ids = (x.id for x in updates)
+        else:
+            update_ids = tuple(updates)
+        if isinstance(entity, orm.browse_record):
+            entity_id = entity.id
+        else:
+            entity_id = entity
+        with self.__lock__:
+            self.__cache__.append( (entity_id, update_ids) )
+
+    def merge(self, cr, uid, context=None):
+        if not self.__cache__:
+            return
+        with self.__lock__:
+            cache, self.__cache__ = self.__cache__, type(self.__cache__)()
+        todo = {}
+        for entity_id, updates in cache:
+            for update_id in updates:
+                try:
+                    todo[update_id].add( entity_id )
+                except KeyError:
+                    todo[update_id] = set([entity_id])
+        for id, entity_ids in todo.items():
+            puller_ids = [(4, x) for x in entity_ids]
+            self.__model__.write(cr, uid, [id], {'puller_ids': puller_ids}, context)
 
 class update(osv.osv):
     """
@@ -54,6 +93,13 @@ class update(osv.osv):
 
     _order = 'sequence, create_date desc'
     
+    def __init__(self, pool, cr):
+        self._cache_pullers = SavePullerCache(self)
+        super(update, self).__init__(pool, cr)
+
+    def _save_puller(self, cr, uid, context=None):
+        return self._cache_pullers.merge(cr, uid, context)
+
     def unfold_package(self, cr, uid, entity, packet, context=None):
         data = {
             'source': entity.id,
@@ -126,10 +172,6 @@ class update(osv.osv):
                         update_to_send.append(update)
         return update_to_send
 
-    def _save_puller(self, cr, uid, ids, context, entity_id):
-        return self.write(cr, 1, ids, {'puller_ids': [(4, entity_id)]}, context)
-
-    
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:
@@ -170,6 +212,9 @@ class update(osv.osv):
         if not update_to_send:
             self._logger.debug("No update to send to %s" % (entity.name,))
             return None
+
+        # Point of no return
+        self._cache_pullers.add(entity, update_to_send)
 
         ## Prepare package
         complete_fields, forced_values = self.get_additional_forced_field(update_master) 
