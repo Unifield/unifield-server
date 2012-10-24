@@ -273,12 +273,15 @@ class product_attributes(osv.osv):
         return {}
     
     def copy(self, cr, uid, id, default=None, context=None):
+        product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
+        if product_xxx:
+            raise osv.except_osv(_('Warning'), _('A product with a code "XXX" already exists please edit this product to change its Code.'))
         product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
         if default is None:
             default = {}
         copy_pattern = _("%s (copy)")
         copydef = dict(name=(copy_pattern % product2copy['name']),
-                       default_code=False,
+                       default_code="XXX",
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
@@ -292,8 +295,7 @@ class product_attributes(osv.osv):
             cr.execute("SELECT * FROM product_product pp where pp.default_code = '%s'" % default_code)
             duplicate = cr.fetchall()
             if duplicate:
-                res.update({'value': {'default_code': False},
-                            'warning': {'title': 'Warning', 'message':'The Code already exists'}})
+                res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
     
     _constraints = [
