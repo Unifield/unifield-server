@@ -369,7 +369,7 @@ class stock_mission_report_line(osv.osv):
         return res
     
     _columns = {
-        'product_id': fields.many2one('product.product', string='Name', required=True),
+        'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade"),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
