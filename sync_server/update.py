@@ -91,7 +91,7 @@ class update(osv.osv):
         return (True, "Push session validated")
         
     def _get_next_sequence(self, cr, uid, context=None):
-        return self.get_last_sequence(cr, uid, context) + 1
+        return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.server.update'))
     
     def get_last_sequence(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('sequence', '!=', 0)], order="sequence desc, id desc", limit=1, context=context)
