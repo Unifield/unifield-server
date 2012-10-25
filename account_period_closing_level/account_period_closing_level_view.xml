@@ -24,7 +24,8 @@
             <field name="arch" type="xml">
                 <data>
                     <form position="attributes">
-                       <attribute name="hide_duplicate_button">1</attribute>
+                        <attribute name="hide_duplicate_button">1</attribute>
+                        <attribute name="hide_new_button">1</attribute>
                     </form>
                     <field name="code" position="replace"/>
                     <field name="company_id" position="replace"/>
@@ -62,7 +63,7 @@
             <field name="inherit_id" ref="account.view_account_period_tree"/>
             <field name="arch" type="xml">
                 <tree string="Period" position="replace">
-                    <tree colors="blue:state in ('created');gray:state in ('done') " string="Period">
+                    <tree colors="blue:state in ('created');gray:state in ('done')" hide_new_button="1" string="Period">
                         <field name="name"/>
                         <field name="date_start"/>
                         <field name="date_stop"/>
