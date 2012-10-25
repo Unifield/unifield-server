@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <tree editable="top" string="Analytic Journal Items">
+                <tree editable="top" string="Analytic Journal Items" hide_delete_button="1">
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
