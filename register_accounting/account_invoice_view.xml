@@ -189,7 +189,7 @@
                 <data>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
-                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward" attrs="{'invisible': [('is_direct_invoice', '=', True)]}"/>
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                         <field name="is_direct_invoice" invisible="1"/>
                     </button>
                 </data>
