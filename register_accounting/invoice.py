@@ -274,6 +274,20 @@ class account_invoice(osv.osv):
                 self.check_down_payments(cr, uid, inv.id)
         return res
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Delete register line if this invoice is a Direct Invoice
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids):
+            if inv.is_direct_invoice and inv.register_line_ids:
+                if not context.get('from_register', False):
+                    self.pool.get('account.bank.statement.line').unlink(cr, uid, [x.id for x in inv.register_line_ids], {'from_direct_invoice': True})
+        return super(account_invoice, self).unlink(cr, uid, ids, context)
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
