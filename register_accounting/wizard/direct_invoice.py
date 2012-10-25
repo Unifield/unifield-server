@@ -57,6 +57,18 @@ class wizard_account_invoice(osv.osv):
         'state': lambda *a: 'draft',
     }
 
+    def check_analytic_distribution(self, cr, uid, ids):
+        """
+        Check that all line have a valid analytic distribution state
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for w in self.browse(cr, uid, ids):
+            for l in w.invoice_line:
+                if l.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is not valid for this line: %s') % (l.name or '',))
+        return True
+
     def compute_wizard(self, cr, uid, ids, context=None):
         """
         Check invoice lines and compute the total invoice amount
@@ -88,6 +100,7 @@ class wizard_account_invoice(osv.osv):
         """
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
+        self.check_analytic_distribution(cr, uid, ids)
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
         for val in inv:

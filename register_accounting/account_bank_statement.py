@@ -1648,6 +1648,7 @@ class account_bank_statement_line(osv.osv):
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
                 'active_ids': ids,
+                'from_register': True,
             }
         }
 

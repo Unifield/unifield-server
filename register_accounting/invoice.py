@@ -32,6 +32,9 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def button_dummy_compute_total(self, cr, uid, ids, context=None):
+        return True
+
     def _get_virtual_fields(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get fields in order to transform them into 'virtual fields" (kind of field duplicity):

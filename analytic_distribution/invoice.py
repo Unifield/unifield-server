@@ -30,12 +30,6 @@ class account_invoice(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
 
-    def button_dummy_compute_total(self, cr, uid, ids, context=None):
-        return True
-
-    def button_close_direct_invoice(self, cr, uid, ids, context=None):
-        return {'type': 'ir.actions.act_window_close'}
-
     def line_get_convert(self, cr, uid, x, part, date, context=None):
         res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)
         res['analytic_distribution_id'] = x.get('analytic_distribution_id', False)
