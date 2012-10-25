@@ -193,7 +193,7 @@ class so_po_common(osv.osv_memory):
         
         return header_result
     
-    def get_lines(self, cr, uid, line_values, po_id, so_id, for_update, context):
+    def get_lines(self, cr, uid, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
         
@@ -213,9 +213,6 @@ class so_po_common(osv.osv_memory):
                 
             if 'line_number' in line_dict:
                 values['line_number'] = line.line_number
-                
-            if 'price_unit' in line_dict:
-                values['price_unit'] = line.price_unit
                 
             if 'notes' in line_dict:
                 values['notes'] = line.notes
@@ -238,13 +235,22 @@ class so_po_common(osv.osv_memory):
             if 'nomenclature_description' in line_dict:
                 values['nomenclature_description'] = line.nomenclature_description 
 
+            if 'price_unit' in line_dict:
+                values['price_unit'] = line.price_unit
+                
             if 'product_id' in line_dict:
                 rec_id = self.get_record_id(cr, uid, context, line.product_id)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
+                    
                     product_obj = self.pool.get('product.product')
-                    procure_method = product_obj.browse(cr, uid, [rec_id], context=context)[0].procure_method
+                    product = product_obj.browse(cr, uid, [rec_id], context=context)[0]
+                    procure_method = product.procure_method
+                    # UF-1534: use the cost price of the product, not the one from PO line
+                    if so_called and not so_id:
+                        values['price_unit'] = product.list_price
+                        
                     values['type'] = procure_method
                 else:
                     values['name'] = line.comment

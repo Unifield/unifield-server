@@ -63,7 +63,7 @@ class purchase_order_sync(osv.osv):
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, False, context)
         header_result['split_po'] = True
         
         po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
@@ -114,7 +114,7 @@ class purchase_order_sync(osv.osv):
         
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
         po_id = self.check_existing_po(cr, uid, source, so_dict)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, False, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, False, False, context)
         header_result['push_fo'] = True
 
         default = {}
@@ -177,7 +177,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, False, context)
 
         default = {}
         default.update(header_result)
@@ -205,7 +205,7 @@ class purchase_order_sync(osv.osv):
         
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, False, context)
         
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref
