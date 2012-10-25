@@ -164,7 +164,7 @@ expiry_quantity_report()
 class expiry_quantity_report_line(osv.osv_memory):
     _name = 'expiry.quantity.report.line'
     _description = 'Products expired line'
-    _order = 'expiry_date, location_id, product_code asc'
+    _order = 'expiry_date, location_id'
     
     _columns = {
         'report_id': fields.many2one('expiry.quantity.report', string='Report', required=True),
