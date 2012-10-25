@@ -140,7 +140,8 @@ class product_list_line(osv.osv):
         'name': fields.many2one('product.product', string='Product Description', required=True),
         'list_id': fields.many2one('product.list', string='List', ondelete='cascade'),
         'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char', size=64, 
-                              store={'product.product': (_get_product, ['default_code'], 10)}),
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'product.list.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
         'comment': fields.char(size=256, string='Comment'),
     }
 

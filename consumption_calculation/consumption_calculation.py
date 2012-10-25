@@ -448,7 +448,8 @@ class real_average_consumption_line(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True, 
-                              store={'product.product': (_get_product, ['default_code'], 10)}),
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
@@ -902,7 +903,8 @@ class monthly_review_consumption_line(osv.osv):
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('name', 'default_code', type='char', size=64, readonly=True,
-                              store={'product.product': (_get_product, ['default_code'], 10)}),
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, 
                                store={'monthly.review.consumption': (_get_mrc_change, ['period_from', 'period_to'], 20),
                                       'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
