@@ -370,13 +370,15 @@ def link_with_ir_model(model, cr, uid, id, context=None):
         return res_id
     
     entity_uuid = model.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+    xml_name = model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id)
+    assert '.' not in xml_name, "The unique xml name must not contains dots: "+xml_name
     args = {
         'noupdate' : False, # don't set to True otherwise import won't work
         'model' : model._name,
         'module' : 'sd',#model._module,
-        'name' : model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id).replace('.', ''),
+        'name' : xml_name,
         'res_id' : id,
-        'last_modification' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'last_modification' : fields.datetime.now(),
     }
     return model_data_pool.create(cr,uid,args,context=context)
 
