@@ -79,7 +79,7 @@ class purchase_order(osv.osv):
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
         for purchase in self.browse(cursor, user, ids, context=context):
-            if ((purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
+            if ((purchase.order_type == 'regular' and purchase.partner_id.partner_type in ('internal', 'esc')) or \
                 purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
@@ -271,7 +271,7 @@ class purchase_order(osv.osv):
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
-            if partner.partner_type == 'internal' and order_type == 'regular':
+            if partner.partner_type in ('internal', 'esc') and order_type == 'regular':
                 v['invoice_method'] = 'manual'
             elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
@@ -309,7 +309,7 @@ class purchase_order(osv.osv):
         if part:
             partner_obj = self.pool.get('res.partner')
             partner = partner_obj.browse(cr, uid, part)
-            if partner.partner_type == 'internal':
+            if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
         
         return res
@@ -951,7 +951,7 @@ stock moves which are already processed : '''
             todo = []
             todo2 = []
             todo3 = []
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
+            if order.partner_id.partner_type in ('internal', 'esc') and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
                 line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
