@@ -187,14 +187,21 @@ class ir_model_data_sync(osv.osv):
         res_id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
         if values.get('module') and values.get('module') != 'sd':
             name = "%s_%s" % (values.get('module'), values.get('name'))
+            duplicate_ids  = super(ir_model_data_sync, self).search(cr, uid, [('module', '=', 'sd'), ('name', '=', name)], context=context)
+            if duplicate_ids:
+                record = self.get_record(cr, uid, 'sd.' + name, context)
             args = {
                     'noupdate' : False, # don't set to True otherwise import won't work
                     'model' : values.get('model'),
                     'module' : 'sd',#model._module,
                     'name' : name,
-                    'res_id' : values.get('res_id'),
+                    'res_id' : duplicate_ids and record or values.get('res_id'),
                     }
-            super(ir_model_data_sync, self).create(cr, uid, args, context=context)
+            
+            if duplicate_ids:
+                super(ir_model_data_sync, self).write(cr, uid, duplicate_ids, args, context=context)
+            else:
+                super(ir_model_data_sync, self).create(cr, uid, args, context=context)
     
         return res_id
 
