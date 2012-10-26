@@ -147,7 +147,7 @@ class product_attributes(osv.osv):
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
-        'international_status': fields.selection([('',''),('itc','Approved (ITC)'),('esc', 'Approved (ESC)'),('temp','Temporary'),('local','Not approved (Local)')], 'International Status'),
+        'international_status': fields.selection(required=True, [('',''),('itc','Approved (ITC)'),('esc', 'Approved (ESC)'),('hq', 'HQ'),('local','Not approved (Local)'),('temp','Temporary')], 'International Status'),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
             ('sellable','Normal'),
