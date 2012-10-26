@@ -255,7 +255,7 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
-        if vals['default_code'] == 'XXX':
+        if 'default_code' in vals and vals['default_code'] == 'XXX':
             vals.update({'duplicate_ok': True})
         else:
             vals.update({'duplicate_ok': False})
@@ -268,7 +268,7 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
-        if vals['default_code'] == 'XXX':
+        if 'default_code' in vals and vals['default_code'] == 'XXX':
             vals.update({'duplicate_ok': True})
         else:
             vals.update({'duplicate_ok': False})
