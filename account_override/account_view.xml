@@ -138,10 +138,15 @@
                                 </field>
                             </page>
                         </notebook>
-                        <field name="state"/>
-                        <field name="status" invisible="0" readonly="1"/>
-                        <!--button name="button_cancel" states="posted" string="Cancel" type="object" icon="gtk-cancel"/-->
-                        <button name="button_validate" states="draft" string="Approve" type="object" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('status', '=', 'sys')]}"/>
+                        <group colspan="4" col="4">
+                            <field name="state" colspan="2"/>
+                            <field name="status" invisible="0" readonly="1" colspan="2"/>
+                        </group>
+                        <group colspan="6" col="4">
+                            <!--button name="button_cancel" states="posted" string="Cancel" type="object" icon="gtk-cancel"/-->
+                            <label string="" colspan="2"/>
+                            <button name="button_validate" states="draft" string="Approve" type="object" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('status', '=', 'sys')]}" colspan="2"/>
+                        </group>
                     </form>
                 </form>
             </field>
