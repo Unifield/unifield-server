@@ -201,18 +201,11 @@ Created documents : \n'''
 
         
         # Get the delivery lead time
-        delivery_leadtime = product.seller_delay and product.seller_delay != 'N/A' and round(int(product.seller_delay)/30.0, 2) or 1
+        delivery_leadtime = product.procure_delay and round(int(product.seller_delay)/30.0, 2) or 1
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
-        else:
-            sequence = False
-            for supplier_info in product.seller_ids:
-                if sequence and supplier_info.sequence < sequence:
-                    sequence = supplier_info.sequence
-                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
-                elif not sequence:
-                    sequence = supplier_info.sequence
-                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
+        elif product.seller_ids:
+            delivery_leadtime = product.seller_delay
                 
         # Get the monthly consumption
         monthly_consumption = 0.00
@@ -225,7 +218,7 @@ Created documents : \n'''
             monthly_consumption = d_values.get('manual_consumption', 0.00)
             
         # Get the order coverage
-        order_coverage = d_values.get('coverage', 3)
+        order_coverage = d_values.get('coverage', 0.00)
         
         # Get the projected available quantity
         available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
