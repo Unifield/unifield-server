@@ -58,8 +58,10 @@
                    <group colspan="4" col="6">
                         <group colspan="1" col="2">
                             <separator string="Codes" colspan="2"/>
-                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" />
+                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" 
+                            attrs="{'readonly':[('duplicate_ok','=',False)]}" invisible="1"/>
                             <field name="old_code"/>
+                            <field name="duplicate_ok"/>
                         </group>
                         <group colspan="4" col="2">
                             <separator string="Description" colspan="2"/>

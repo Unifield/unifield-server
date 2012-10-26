@@ -142,6 +142,7 @@ class product_attributes(osv.osv):
         return [('id', 'in', ids)] 
     
     _columns = {
+        'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
@@ -225,6 +226,7 @@ class product_attributes(osv.osv):
     }
     
     _defaults = {
+        'duplicate_ok': False,
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,
@@ -253,6 +255,10 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
+        if vals['default_code'] == 'XXX':
+            vals.update({'duplicate_ok': True})
+        else:
+            vals.update({'duplicate_ok': False})
         return super(product_attributes, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -262,6 +268,10 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
+        if vals['default_code'] == 'XXX':
+            vals.update({'duplicate_ok': True})
+        else:
+            vals.update({'duplicate_ok': False})
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
     
     def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
