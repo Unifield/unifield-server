@@ -337,7 +337,7 @@ class List(TinyWidget):
             values = dict(proxy.default_get(fields, ctx))
 
             # update values according to domain
-            list_of_tuple = [x for x in self.domain if type(x)==tuple]
+            list_of_tuple = [x for x in self.domain if isinstance(x, tuple)]
             for (field, operator, value) in list_of_tuple:
                 if field in fields:
                     if operator == '=':
