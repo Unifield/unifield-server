@@ -201,7 +201,7 @@ Created documents : \n'''
 
         
         # Get the delivery lead time
-        delivery_leadtime = product.procure_delay and round(int(product.seller_delay)/30.0, 2) or 1
+        delivery_leadtime = product.procure_delay and round(int(product.procure_delay)/30.0, 2) or 1
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
         elif product.seller_ids:
