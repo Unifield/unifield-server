@@ -205,7 +205,8 @@ Created documents : \n'''
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
         elif product.seller_ids:
-            delivery_leadtime = product.seller_delay
+            # The seller delay is defined in days, so divide it by 30.0 to have a LT in months
+            delivery_leadtime = product.seller_delay and round(int(product.seller_delay)/30.0, 2) or 1
                 
         # Get the monthly consumption
         monthly_consumption = 0.00
