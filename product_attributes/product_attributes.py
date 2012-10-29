@@ -264,7 +264,7 @@ class product_attributes(osv.osv):
         if context is None:
             context = {}
         res = {}
-        default_code = datetime.now().strftime('%m%d%H%M%S') + 1
+        default_code = int(datetime.now().strftime('%m%d%H%M%S')) + 1
         res= {'default_code': default_code,
               'international_status': 'itc'}
         return res
