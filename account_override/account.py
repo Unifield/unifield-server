@@ -90,7 +90,8 @@ class account_move(osv.osv):
 
     _defaults = {
         'status': lambda self, cr, uid, c: c.get('from_web_menu', False) and 'manu' or 'sys',
-        'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
+        'document_date': lambda *a: False,
+        'date': lambda *a: False,
         'period_id': lambda *a: '',
     }
 
@@ -210,7 +211,6 @@ class account_move(osv.osv):
     def onchange_period_id(self, cr, uid, ids, period_id=False, date=False, context=None):
         """
         Check that given period is open.
-        If date outside given period, change it
         """
         res = {}
         if not context:
@@ -219,9 +219,6 @@ class account_move(osv.osv):
             data = self.pool.get('account.period').read(cr, uid, period_id, ['state', 'date_start', 'date_stop'])
             if data.get('state', False) != 'draft':
                 raise osv.except_osv(_('Error'), _('Period is not open!'))
-            if date and data.get('date_start') and data.get('date_stop'):
-                if date > data.get('date_stop') or date < data.get('date_start'):
-                    res['value'] = {'date': data.get('date_start')}
         return res
 
     def button_delete(self, cr, uid, ids, context=None):
