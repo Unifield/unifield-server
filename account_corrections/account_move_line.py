@@ -327,12 +327,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
         move_obj = self.pool.get('account.move')
         aal_obj = self.pool.get('account.analytic.line')
         j_obj = self.pool.get('account.journal')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra accounting journal
-        ej_ids = j_obj.search(cr, uid, [('type', '=', 'extra')])
+        ej_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
+                                        ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         j_extra_id = ej_ids and ej_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
@@ -408,12 +411,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
         move_obj = self.pool.get('account.move')
         j_obj = self.pool.get('account.journal')
         aal_obj = self.pool.get('account.analytic.line')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra')])
+        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
+                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
@@ -572,10 +578,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
         al_obj = self.pool.get('account.analytic.line')
         success_move_line_ids = []
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra')])
+        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
+                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 
@@ -605,7 +613,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             for aal in self.pool.get('account.analytic.line').browse(cr, uid, aal_ids):
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
                 if check_accounts and aal.account_id.id in check_accounts:
-                    raise osv.except_osv(_('Warning'), _('An analytic line have an open contract for this move line. You cannot change its G/L account.'))
+                    raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
             # Create a new move
             move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
             # Prepare default value for new line
@@ -699,10 +707,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
         move_obj = self.pool.get('account.move')
         success_move_line_ids = []
         # Search correction journal
-        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction')], context=context)
+        j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
+                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra-accounting journal
-        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra')])
+        j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
+                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 

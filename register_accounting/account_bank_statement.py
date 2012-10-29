@@ -30,6 +30,7 @@ from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
 from register_tools import create_cashbox_lines
 from register_tools import totally_or_partial_reconciled
+from register_tools import open_register_view
 import time
 from datetime import datetime
 import decimal_precision as dp
@@ -169,7 +170,7 @@ class account_bank_statement(osv.osv):
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
-        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
@@ -352,7 +353,7 @@ class account_bank_statement(osv.osv):
 
     def button_wiz_import_invoices(self, cr, uid, ids, context=None):
         """
-        When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
+        When pressing 'Pending Payments' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
         """
         # statement_id is useful for making some line's registration.
         # currency_id is useful to filter invoices in the same currency
@@ -797,6 +798,15 @@ class account_bank_statement_line(osv.osv):
         'direct_invoice': lambda *a: 0,
         'transfer_amount': lambda *a: 0,
     }
+
+    def return_to_register(self, cr, uid, ids, context=None):
+        """
+        Return to register from which lines come from
+        """
+        st_line = self.browse(cr, uid, ids[0])
+        if st_line and st_line.statement_id:
+            return open_register_view(self, cr, uid, st_line.statement_id.id)
+        raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
 
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
@@ -1496,7 +1506,7 @@ class account_bank_statement_line(osv.osv):
 
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
-                # Case where this line come from an "Import Invoices" Wizard
+                # Case where this line come from an "Pending Payments" Wizard
                 if absl.imported_invoice_line_ids:
                     self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
                 elif absl.from_import_cheque_id:

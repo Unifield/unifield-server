@@ -437,5 +437,14 @@
         <field name="lot_output_id" ref="stock.stock_location_output"/>
     </record>
     
+    
+    <!-- -->
+    
+    <record id="base.main_partner" model="res.partner">
+        <field name="property_stock_customer" ref="stock.stock_location_internal_customers" />
+        <field name="property_stock_supplier" ref="stock.stock_location_internal_suppliers" />
+    </record>
+    
+    
     </data>
 </openerp>

@@ -61,7 +61,7 @@ class analytic_line(osv.osv):
             for cc in cost_center_ids:
                 for t in tuple_list:
                     if res:
-                        res.append('|')
+                        res = ['|'] + res
                     res.append('&')
                     res.append('&')
                     res.append(('cost_center_id', '=', cc))
@@ -77,6 +77,7 @@ class analytic_line(osv.osv):
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
+        'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
     }
 
     _defaults = {
@@ -219,6 +220,12 @@ class analytic_line(osv.osv):
         # Process regarding account_type
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
+                # Verify that:
+                # - the line doesn't have any draft/open contract
+                check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
+                if check_accounts and aline.account_id.id in check_accounts:
+                    continue
+
                 if aline.account_id and aline.account_id.id == msf_private_fund:
                     res.append(aline.id)
                 elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:

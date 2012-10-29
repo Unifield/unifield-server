@@ -176,14 +176,14 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 # Cell 3: UOM
                 uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                 # Cell 4: Price
                 price_value = {}
                 price_value = compute_price_value(row=row, to_write=to_write, price='Cost Price', context=context)
                 to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
-                                 'warning_list': price_value['warning_list']})
+                                 'warning_list': price_value['warning_list'], 'price_unit_defined': price_value['price_unit_defined']})
 
                 # Cell 5: Delivery Request Date
                 date_value = {}
@@ -280,6 +280,7 @@ class purchase_order_line(osv.osv):
         to_write = kwargs['to_write']
         order_id = to_write['order_id']
         text_error = to_write['text_error']
+        price_unit_defined = to_write['price_unit_defined']
         po_obj = self.pool.get('purchase.order')
         po = po_obj.browse(cr, uid, order_id, context=context)
         # on_change functions to call for updating values
@@ -292,7 +293,7 @@ class purchase_order_line(osv.osv):
         qty = to_write['product_qty']
         price_unit = to_write['price_unit']
         uom = to_write['product_uom']
-        if product and qty and not price_unit:
+        if product and qty and not price_unit_defined:
             res = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
                                             partner_id, date_order, fiscal_position, date_planned=False,
                                             name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,

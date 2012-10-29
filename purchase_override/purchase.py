@@ -79,7 +79,7 @@ class purchase_order(osv.osv):
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
         for purchase in self.browse(cursor, user, ids, context=context):
-            if ((purchase.order_type == 'regular' and purchase.partner_id.partner_type == 'internal') or \
+            if ((purchase.order_type == 'regular' and purchase.partner_id.partner_type in ('internal', 'esc')) or \
                 purchase.order_type in ['donation_exp', 'donation_st', 'loan', 'in_kind']):
                 res[purchase.id] = purchase.shipped_rate
             else:
@@ -156,7 +156,8 @@ class purchase_order(osv.osv):
                                                        ('unallocated', 'Unallocated'),
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
-        'partner_ref': fields.char('Supplier Reference', size=64),
+        # we increase the size of the partner_ref field from 64 to 128
+        'partner_ref': fields.char('Supplier Reference', size=128),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
@@ -168,9 +169,9 @@ class purchase_order(osv.osv):
         'categ': lambda *a: 'other',
         'loan_duration': 2,
         'from_yml_test': lambda *a: False,
-        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['invoice'])['invoice'],
+        'invoice_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['invoice'])['invoice'],
         'invoice_method': lambda *a: 'picking',
-        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.id, ['delivery'])['delivery'],
+        'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['delivery'])['delivery'],
         'no_line': lambda *a: True,
         'active': True,
     }
@@ -225,7 +226,9 @@ class purchase_order(osv.osv):
         '''
         partner_obj = self.pool.get('res.partner')
         v = {}
-        d = {'partner_id': []}
+        # the domain on the onchange was replace by a several fields.function that you can retrieve in the 
+        # file msf_custom_settings/view/purchase_view.xml: domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', order_type),  ('check_partner_rfq', '=', tender_id)]"
+#        d = {'partner_id': []}
         w = {}
         local_market = None
         
@@ -247,32 +250,32 @@ class purchase_order(osv.osv):
             v['invoice_method'] = 'manual'
         elif order_type in ['direct']:
             v['invoice_method'] = 'order'
-            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+#            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         elif order_type in ['in_kind', 'purchase_list']:
             v['invoice_method'] = 'picking'
-            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+#            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
         
         if order_type == 'direct' and dest_partner_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
-            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         elif order_type == 'direct':
             v.update({'dest_address_id': False})
-            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
         else:
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id, ['delivery'])['delivery']
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
-            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
+#            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
-            if partner.partner_type == 'internal' and order_type == 'regular':
+            if partner.partner_type in ('internal', 'esc') and order_type == 'regular':
                 v['invoice_method'] = 'manual'
             elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
-                d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
+#                d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
                 w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
                           'title': 'An error has occured !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
@@ -291,7 +294,8 @@ class purchase_order(osv.osv):
         elif order_type == 'direct':
             v['cross_docking_ok'] = False
         
-        return {'value': v, 'domain': d, 'warning': w}
+#        return {'value': v, 'domain': d, 'warning': w}
+        return {'value': v, 'warning': w}
     
     def onchange_partner_id(self, cr, uid, ids, part, *a, **b):
         '''
@@ -305,7 +309,7 @@ class purchase_order(osv.osv):
         if part:
             partner_obj = self.pool.get('res.partner')
             partner = partner_obj.browse(cr, uid, part)
-            if partner.partner_type == 'internal':
+            if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
         
         return res
@@ -318,7 +322,7 @@ class purchase_order(osv.osv):
         res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids, warehouse_id)
         
         if not res.get('value', {}).get('dest_address_id') and order_type!='direct':
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.id, ['delivery'])['delivery']
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
             if 'value' in res:
                 res['value'].update({'dest_address_id': cp_address_id})
             else:
@@ -947,7 +951,7 @@ stock moves which are already processed : '''
             todo = []
             todo2 = []
             todo3 = []
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular' or \
+            if order.partner_id.partner_type in ('internal', 'esc') and order.order_type == 'regular' or \
                          order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
                 line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
@@ -1068,7 +1072,10 @@ stock moves which are already processed : '''
         '''
         invoice_id = super(purchase_order, self).action_invoice_create(cr, uid, ids, args)
         invoice_obj = self.pool.get('account.invoice')
-        inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [("type", "=", "inkind")])
+        inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [
+                    ("type", "=", "inkind"),
+                    ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)
+                ])
 
         for order in self.browse(cr, uid, ids):
             if order.order_type == 'purchase_list':

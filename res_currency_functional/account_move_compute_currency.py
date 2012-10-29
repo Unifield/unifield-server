@@ -78,7 +78,7 @@ class account_move_compute_currency(osv.osv):
                 amount += line.debit - line.credit
                 amount_currency += line.amount_currency
             
-            if len(sorted_line_ids) >= 2:
+            if len(sorted_line_ids) > 2:
                 if abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
                     # The move is balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly

@@ -1042,5 +1042,17 @@
             </field>
         </record>
 
+        <!-- Remove 'Update' button on product form -->
+        <record id="product_form_remove_update_button" model="ir.ui.view">
+            <field name="name">product.form.remove.update.button</field>
+            <field name="model">product.product</field>
+            <field name="priority">2</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_product_standard_price_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//button[@string='Update']" position="replace" />
+            </field>
+        </record>
+
     </data>
 </openerp>

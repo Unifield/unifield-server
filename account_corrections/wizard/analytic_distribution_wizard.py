@@ -88,7 +88,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     to_override[oline.id].append(('percentage', nline.percentage))
                 # Check that if old_component and new_component have changed we should find oline.id in to_reverse OR to_override
                 if oline.id not in to_override and oline.id not in to_reverse:
-                    raise osv.except_osv(_('Error'), _('Code error: A case have not been taken.'))
+                    raise osv.except_osv(_('Error'), _('Code error: A case has not been taken.'))
         else:
             old_component = [oline.analytic_id.id, oline.percentage]
             new_component = [nline.analytic_id.id, nline.percentage]
@@ -145,8 +145,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             else:
                 old_line = self.pool.get('funding.pool.distribution.line').browse(cr, uid, wiz_line.distribution_line_id.id)
                 # existing line, test modifications
+                # for FP, percentage, CC or destination changes regarding contracts
                 if old_line.analytic_id.id != wiz_line.analytic_id.id \
-                    or old_line.percentage != wiz_line.percentage:
+                    or old_line.percentage != wiz_line.percentage \
+                    or old_line.cost_center_id.id != wiz_line.cost_center_id.id \
+                    or old_line.destination_id.id != wiz_line.destination_id.id:
                     # FP account changed or % modified
                     if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [old_line.analytic_id.id]):
                         raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(old_line.analytic_id.code))

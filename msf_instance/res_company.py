@@ -31,10 +31,12 @@ class res_company(osv.osv):
         'instance_id': fields.many2one('msf.instance', string="Proprietary Instance", 
             help="Representation of the current instance"),
         'second_time': fields.boolean('Config. Wizard launched for the second time'),
+        'company_second_time': fields.boolean('Company Config. Wizard launched for the second time'),
     }
     
     _defaults = {
         'second_time': lambda *a: False,
+        'company_second_time': lambda *a: False,
     }
 
     def _refresh_objects(self, cr, uid, object_name, old_instance_id, new_instance_id, context=None):
