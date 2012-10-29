@@ -251,34 +251,6 @@ class product_attributes(osv.osv):
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
     ]
 
-    def _get_default_req(self, cr, uid, context=None):
-        # Some verifications
-        if context is None:
-            context = {}
-        res = {}
-        res= {'default_code': datetime.now().strftime('%m%d%H%M%S'),
-              'international_status': 'itc'}
-        return res
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Set default values for datas.xml and tests.yml
-        '''
-        if context is None:
-            context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['default_code', 'international_status']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for product.product')
-                vals.update(self._get_default_req(cr, uid, context))
-        logging.getLogger('init').info('Value of %s' % vals)
-        return super(product_attributes, self).create(cr, uid, vals, context)
-
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
