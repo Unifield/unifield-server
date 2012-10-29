@@ -22,7 +22,7 @@
 from osv import osv, fields
 
 import time
-
+import logging
 
 class product_list(osv.osv):
     _name = 'product.list'
@@ -269,6 +269,7 @@ class product_template(osv.osv):
                 vals.update(self._get_default_req(cr, uid, context))
         logging.getLogger('init').info('Value of %s' % vals)
         return super(product_template, self).create(cr, uid, vals, context)
+
 product_template()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
