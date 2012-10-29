@@ -19,7 +19,6 @@
 #
 ##############################################################################
 
-from datetime import datetime
 from osv import fields, osv
 import re
 from tools.translate import _
@@ -275,8 +274,8 @@ class product_attributes(osv.osv):
                     break
             if not has_required:
                 logging.getLogger('init').info('Loading default values for product.product')
-                default_code = int(datetime.now().strftime('%m%d%H%M%S')) + 1
-                vals.update({'default_code': default_code, 'international_status': 'itc'})
+                vals.update({'default_code': lambda obj, cr, uid, context: self.pool.get('ir.sequence').get(cr, uid, 'product.product'),
+                             'international_status': 'itc'})
         logging.getLogger('init').info('Value of %s' % vals)
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
