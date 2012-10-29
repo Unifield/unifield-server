@@ -90,7 +90,9 @@ class product_supplierinfo(osv.osv):
         '''
         res = {}
         for price in self.browse(cr, uid, ids, context=context):
-            res[price.id] = price.name and price.name.supplier_lt or price.product_id.procure_delay
+            product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
+            product = self.pool.get('product.product').browse(cr, uid, product_id)
+            res[price.id] = »price.name and price.name.supplier_lt) or (product_id and product_id[0].procure_delay) or 1
 
         return res
     
