@@ -274,8 +274,9 @@ class product_attributes(osv.osv):
                     has_required = True
                     break
             if not has_required:
-                logging.getLogger('init').info('Loading default values for product.template')
+                logging.getLogger('init').info('Loading default values for product.product')
                 vals.update(self._get_default_req(cr, uid, context))
+        logging.getLogger('init').info('Value of %s' % vals)
         return super(product_attributes, self).create(cr, uid, vals, context)
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
