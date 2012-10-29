@@ -182,6 +182,8 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res

@@ -35,6 +35,7 @@ import time
 from datetime import datetime
 import decimal_precision as dp
 from tools.misc import flatten
+import netsvc
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -1303,6 +1304,11 @@ class account_bank_statement_line(osv.osv):
         # Parse register lines
         for stl in self.browse(cr, uid, st_lines):
             if stl.invoice_id:
+                # Approve invoice
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', stl.invoice_id.id, 'invoice_open', cr)
+                # Add name to the register line
+                inv_number = self.pool.get('account.invoice').read(cr, uid, stl.invoice_id.id, ['number'])['number']
+                self.write(cr, uid, [stl.id], {'name': inv_number})
                 # Hard post register line
                 self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
                 # Do reconciliation
@@ -1552,6 +1558,9 @@ class account_bank_statement_line(osv.osv):
                     #    self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
                     #        {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
+            # Delete direct invoice if exists
+            if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
+                self.pool.get('account.invoice').unlink(cr, uid, [st_line.invoice_id.id], {'from_register': True})
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
     def button_advance(self, cr, uid, ids, context=None):
@@ -1631,7 +1640,7 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'direct_supplier_invoice_form'), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])
@@ -1651,7 +1660,9 @@ class account_bank_statement_line(osv.osv):
             {
                 'active_id': ids[0],
                 'type': 'in_invoice',
+                'journal_type': 'purchase',
                 'active_ids': ids,
+                'from_register': True,
             }
         }
 

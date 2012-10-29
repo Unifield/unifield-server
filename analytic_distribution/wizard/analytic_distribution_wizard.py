@@ -544,12 +544,14 @@ class analytic_distribution_wizard(osv.osv_memory):
         'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
         'sale_order_id': fields.many2one('sale.order', string="Sale Order"),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
-        'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True)
+        'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
+        'from_direct_inv': fields.many2one('account.bank.statement.line', string="Register Line For Direct Invoice"),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
         'entry_mode': lambda *a: 'percentage',
+        'from_direct_inv': lambda *a: False,
     }
 
     def dummy(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -963,6 +965,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'res_id': wizard_id,
                     'context': context,
                  }
+        elif wiz.from_direct_inv:
+            return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
 
         return return_wiz
 
@@ -1095,6 +1099,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                         'active_ids': register_id,
                     }
                 }
+        elif wiz.from_direct_inv:
+            return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
+
         return {'type' : 'ir.actions.act_window_close'}
 
     def update_analytic_lines(self, cr, uid, ids, context=None):
