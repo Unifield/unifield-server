@@ -30,6 +30,7 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_a0
+    international_status: itc
 -
     I create the product P2
 -
@@ -57,6 +58,7 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_a0
+    international_status: itc
 -
     I create the product P3
 -
@@ -84,6 +86,7 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_b0
+    international_status: itc
 -
     I create the product P4
 -
@@ -107,6 +110,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
   I create a sale order for this 4 products
 -

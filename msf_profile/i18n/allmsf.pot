@@ -1620,7 +1620,7 @@ msgstr ""
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
-msgid "Approved (ITC)"
+msgid "ITC"
 msgstr ""
 
 #. module: base
@@ -12690,7 +12690,7 @@ msgstr ""
 
 #. module: product_attributes
 #: field:product.product,international_status:0
-msgid "International Status"
+msgid "Product Creator"
 msgstr ""
 
 #. module: account
@@ -19823,7 +19823,7 @@ msgstr ""
 
 #. module: product_attributes
 #: field:product.product,heat_sensitive_item:0
-msgid "Heat-sensitive item"
+msgid "Temperature sensitive item"
 msgstr ""
 
 #. module: account
@@ -23076,7 +23076,7 @@ msgstr ""
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
-msgid "Approved (ESC)"
+msgid "ESC"
 msgstr ""
 
 #. modules: purchase, product, base, stock
@@ -23534,7 +23534,7 @@ msgstr ""
 
 #. module: product_attributes
 #: field:product.product,criticism:0
-msgid "Criticism"
+msgid "Criticality"
 msgstr ""
 
 #. module: analytic_distribution
@@ -28832,7 +28832,7 @@ msgstr ""
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
-msgid "Not approved (Local)"
+msgid "Local"
 msgstr ""
 
 #. module: analytic_distribution

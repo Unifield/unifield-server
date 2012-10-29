@@ -54,6 +54,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
+    international_status: itc
 - 
   I create a customer
 -

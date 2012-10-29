@@ -71,6 +71,7 @@
         <field name="uom_po_id" ref="product.product_uom_unit"/>
         <field name="categ_id" ref="product.cat0"/>
         <field name="active" eval="False" />
+        <field name="international_status">temp</field>
     </record>
     
     <!-- Partner to be defined -->

@@ -29,6 +29,7 @@
     name: product 0 test
     type: service_recep
     procure_method: make_to_order
+    international_status: itc
     
 - 
   Creating a product.product record stockable
@@ -37,6 +38,7 @@
     default_code: P7
     name: product 1 test
     type: product
+    international_status: itc
   
     
 - 

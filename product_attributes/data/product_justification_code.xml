@@ -1,22 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
-    <data noupdate="1">
+    <data noupdate="0">
         
-        <record id="justification_code_narcotic" model="product.justification.code">
-            <field name="code">!</field>
-            <field name="description">This drug might require an authorisation for importation and/or exportation. Refer to the MSF Medical Catalog or to the introduction of Medical Order Lists.</field>
-        </record>
         <record id="justification_code_ja" model="product.justification.code">
             <field name="code">J(A)</field>
             <field name="description">This kind of article needs a more detailed description of the context in which it will be used.</field>
-        </record>
-        <record id="justification_code_jarc" model="product.justification.code">
-            <field name="code">J(ARC)</field>
-            <field name="description">Article out of production. Can be available only in a warehouse or in headquarters (refurbished).</field>
-        </record>
-        <record id="justification_code_jc" model="product.justification.code">
-            <field name="code">J(C)</field>
-            <field name="description">The article is potentially subject to important modifications (supply sources, better alternatives).</field>
         </record>
         <record id="justification_code_je" model="product.justification.code">
             <field name="code">J(E)</field>
@@ -32,67 +20,39 @@
         </record>
         <record id="justification_code_jme" model="product.justification.code">
             <field name="code">J(ME)</field>
-            <field name="description">The article may imply medical risks if misused by persons with insufficient training. Expensive.</field>
+            <field name="description">The article may imply medical risks if misused by persons with insufficient training, Expensive.</field>
         </record>
         <record id="justification_code_jmf" model="product.justification.code">
             <field name="code">J(MF)</field>
-            <field name="description">The article may imply medical risks if misused + monitor the use, efficacy at least one year.</field>
-        </record>
-        <record id="justification_code_jn" model="product.justification.code">
-            <field name="code">J(N)</field>
-            <field name="description">No need of justification.</field>
+            <field name="description">The article may imply medical risks if misused + Monitor the use, efficacy at least one year.</field>
         </record>
         <record id="justification_code_jo" model="product.justification.code">
             <field name="code">J(O)</field>
             <field name="description">The article and its specifications are obsolete or are no longer the international standard.</field>
         </record>
-        <record id="justification_code_jom" model="product.justification.code">
-            <field name="code">J(OM)</field>
-            <field name="description">The article and its specifications are obsolete, it may imply a medical risk if misused.</field>
-        </record>
-        <record id="justification_code_jop" model="product.justification.code">
-            <field name="code">J(OP)</field>
-            <field name="description">The article and its specifications are obsolete, it has to be used only in a specific program.</field>
-        </record>
         <record id="justification_code_jp" model="product.justification.code">
             <field name="code">J(P)</field>
-            <field name="description">The article must be used only in a properly designed program.</field>
+            <field name="description">The article must be used only in a properly designed programme.</field>
         </record>
         <record id="justification_code_jpa" model="product.justification.code">
             <field name="code">J(PA)</field>
-            <field name="description">Article must be used only in a properly designed program, needs a more detailed description.</field>
-        </record>
-        <record id="justification_code_jpc" model="product.justification.code">
-            <field name="code">J(PC)</field>
-            <field name="description">Article must be used only in a properly designed program, potentially subject to modifications.</field>
-        </record>
-        <record id="justification_code_jpce" model="product.justification.code">
-            <field name="code">J(PCE)</field>
-            <field name="description">Article must be used only in a properly designed program, potentially subject to modificat., exp.</field>
-        </record>
-        <record id="justification_code_jpcme" model="product.justification.code">
-            <field name="code">J(PCME)</field>
-            <field name="description">See respective single code description: P, C, M and E.</field>
+            <field name="description">Article must be used only in a properly designed programme, need a more detailed description.</field>
         </record>
         <record id="justification_code_jpe" model="product.justification.code">
             <field name="code">J(PE)</field>
-            <field name="description">Article must be used only in a properly designed program. Expensive, cheaper alternatives exist.</field>
+            <field name="description">Article must be used only in a properly designed programme, Expensive, cheaper alternatives exist.</field>
         </record>
         <record id="justification_code_jpf" model="product.justification.code">
             <field name="code">J(PF)</field>
-            <field name="description">Article must be used only in a properly designed program + monitor the use, efficacy.</field>
+            <field name="description">The article must be used only in a properly designed programme + monitor the use, efficacy.</field>
         </record>
         <record id="justification_code_jpm" model="product.justification.code">
             <field name="code">J(PM)</field>
-            <field name="description">Article must be used only in a properly designed program, it may imply a medical risk if misused.</field>
+            <field name="description">Article must be used only in a properly designed programme, it may imply a medical risk if misused.</field>
         </record>
         <record id="justification_code_jpme" model="product.justification.code">
             <field name="code">J(PME)</field>
-            <field name="description">Article must be used only in a properly designed program, it may imply a medical risk if misused. Expensive.</field>
-        </record>
-        <record id="justification_code_jy" model="product.justification.code">
-            <field name="code">J(Y)</field>
-            <field name="description">To be justified.</field>
+            <field name="description">Article only for a properly designed Programme, it may imply a Medical risk if misused, Expensive.</field>
         </record>
         
     </data>

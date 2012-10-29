@@ -24,6 +24,7 @@
       - sequence: 10
         min_qty: 0.00
         name: claim_partner_A
+    international_status: itc
 -
   Product B
 -
@@ -37,6 +38,7 @@
       - sequence: 10
         min_qty: 0.00
         name: claim_partner_A
+    international_status: itc
 -
   Product C
 -
@@ -50,6 +52,7 @@
       - sequence: 10
         min_qty: 0.00
         name: claim_partner_A
+    international_status: itc
 -
   Production Lot As (s stands for standard)
 -

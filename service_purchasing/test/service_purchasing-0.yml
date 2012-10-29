@@ -27,7 +27,7 @@
     default_code: P0
     name: product 0 test
     type: service
-    
+    international_status: itc
 - 
   Creating a product.product record service with reception
 - 
@@ -36,7 +36,7 @@
     name: product 0 test
     type: service_recep
     procure_method: make_to_order
-    
+    international_status: itc
 - 
   Creating a product.product record stockable
 - 
@@ -44,7 +44,7 @@
     default_code: P11
     name: product 1 test
     type: product
-  
+    international_status: itc
     
 - 
   0. I create a purchase order with service category.

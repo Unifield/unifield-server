@@ -66,6 +66,7 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
     I create a second product, P2
 -
@@ -89,6 +90,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
     I create the product P3
 -
@@ -112,6 +114,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
     I create the product P4
 -
@@ -139,6 +142,7 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
     I create the product P5
 -
@@ -167,6 +171,7 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
     I create the product P6
 -
@@ -195,6 +200,7 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
     I create the product P7
 -
@@ -223,6 +229,7 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
   I create an activity on customer location
 -

@@ -65,6 +65,7 @@
     weight: 0.0
     weight_net: 0.0
     perishable: True
+    international_status: itc
 -
   Creating a new revaluation doc
 -
