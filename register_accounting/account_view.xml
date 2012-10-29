@@ -434,7 +434,7 @@
                         <separator orientation="vertical"/>
                         <field name="date"/>
                         <field name="name"/>
-                        <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')" />
+                        <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By...">
