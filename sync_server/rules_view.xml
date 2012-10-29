@@ -30,6 +30,9 @@
                    	<filter string="Active" domain="[('active','=', True)]" />
                  	<filter string="Inactive" domain="[('active','=', False)]"  />
                  	<filter string="All" name="all" domain="['|', ('active','=', False), ('active','=', True)]"  />
+                 	<field name="name" />
+                 	<field name="model_id" />
+                 	<field name="type_id" />
                 </search>
             </field>
         </record>
