@@ -474,7 +474,6 @@ class stock_move(osv.osv):
         Tries to define a reason type for the move according to the destination location
         '''
         vals = {}
-        warning = {}
 
         if location_dest_id:
             dest_id = self.pool.get('stock.location').browse(cr, uid, location_dest_id, context=context)
@@ -482,14 +481,7 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-        # if the source and the destination locations are the same the state is done
-        if location_dest_id and location_id:
-            if location_dest_id == location_id:
-                warning = {'title': 'Warning',
-                           'message': """If the Source Location and the Destination Location are the same then the stock move will be close, because there
-                           won't be any stock move.
-                           """}
-        return {'value': vals, 'warning': warning}
+        return {'value': vals}
     
     def _hook_dest(self, cr, uid, *args, **kwargs):
         move = kwargs['m']
