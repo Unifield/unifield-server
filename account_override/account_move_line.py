@@ -233,5 +233,20 @@ class account_move_line(osv.osv):
         self._check_document_date(cr, uid, ids)
         return res
 
+    def button_duplicate(self, cr, uid, ids, context=None):
+        """
+        Copy given lines for manual unposted entries
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ml_copied_ids = []
+        for ml in self.browse(cr, uid, ids):
+            if ml.move_id and ml.move_id.state == 'draft' and ml.move_id.status == 'manu':
+                self.copy(cr, uid, ml.id, {'move_id': ml.move_id.id, 'name': '(copy) ' + ml.name or '', 'document_date': ml.move_id.document_date, 'date': ml.move_id.date}, context)
+                ml_copied_ids.append(ml.id)
+        return ml_copied_ids
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

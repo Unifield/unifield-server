@@ -271,5 +271,25 @@ class account_move_line(osv.osv):
             return res
         return super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
 
+    def copy(self, cr, uid, id, default=None, context=None):
+        """
+        Copy analytic_distribution
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+        # Default method
+        res = super(account_move_line, self).copy(cr, uid, id, default, context)
+        # Update analytic distribution
+        if res:
+            c = self.browse(cr, uid, res, context=context)
+        if res and c.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, c.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
+        return res
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

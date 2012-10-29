@@ -90,7 +90,7 @@ class account_move_compute_currency(osv.osv):
     }
 
     _defaults = {
-        'manual_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
+        'manual_currency_id': lambda *a: False,
         'block_manual_currency_id': lambda *a: False,
     }
 
