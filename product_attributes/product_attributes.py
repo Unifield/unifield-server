@@ -23,6 +23,7 @@ from datetime import datetime
 from osv import fields, osv
 import re
 from tools.translate import _
+import logging
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -328,4 +329,36 @@ class product_attributes(osv.osv):
 
 product_attributes()
 
+class product_template(osv.osv):
+    _inherit = "product.template"
+    
+    def _get_default_req(self, cr, uid, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        res = {}
+        res= {'default_code': datetime.now().strftime('%m%d%H%M%S'),
+              'international_status': 'itc'}
+        return res
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+        if context is None:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            required = ['default_code', 'international_status']
+            has_required = False
+            for req in required:
+                if  req in vals:
+                    has_required = True
+                    break
+            if not has_required:
+                logging.getLogger('init').info('Loading default values for product.product')
+                vals.update(self._get_default_req(cr, uid, context))
+        logging.getLogger('init').info('Value of %s' % vals)
+        return super(product_template, self).create(cr, uid, vals, context)
+
+product_template()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
