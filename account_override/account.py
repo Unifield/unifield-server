@@ -90,7 +90,8 @@ class account_move(osv.osv):
 
     _defaults = {
         'status': lambda self, cr, uid, c: c.get('from_web_menu', False) and 'manu' or 'sys',
-        'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
+        'document_date': lambda *a: False,
+        'date': lambda *a: False,
         'period_id': lambda *a: '',
     }
 
@@ -126,6 +127,7 @@ class account_move(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Change move line's sequence (name) by using instance move prefix.
+        Add default document date and posting date if none.
         """
         if not context:
             context = {}
@@ -137,6 +139,11 @@ class account_move(osv.osv):
             if not instance.move_prefix:
                 raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
             vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+        # Add default date and document date if none
+        if not vals.get('date', False):
+            vals.update({'date': self.pool.get('account.period').get_date_in_period(cr, uid, strftime('%Y-%m-%d'), vals.get('period_id'))})
+        if not vals.get('document_date', False):
+            vals.update({'document_date': vals.get('date')})
         if 'from_web_menu' in context:
             vals.update({'status': 'manu'})
             # Update context in order journal item could retrieve this @creation
@@ -210,7 +217,6 @@ class account_move(osv.osv):
     def onchange_period_id(self, cr, uid, ids, period_id=False, date=False, context=None):
         """
         Check that given period is open.
-        If date outside given period, change it
         """
         res = {}
         if not context:
@@ -219,9 +225,6 @@ class account_move(osv.osv):
             data = self.pool.get('account.period').read(cr, uid, period_id, ['state', 'date_start', 'date_stop'])
             if data.get('state', False) != 'draft':
                 raise osv.except_osv(_('Error'), _('Period is not open!'))
-            if date and data.get('date_start') and data.get('date_stop'):
-                if date > data.get('date_stop') or date < data.get('date_start'):
-                    res['value'] = {'date': data.get('date_start')}
         return res
 
     def button_delete(self, cr, uid, ids, context=None):

@@ -61,7 +61,7 @@ class account_move_compute_currency(osv.osv):
         """
         Change currency_id regarding journal.
         If journal have a currency, set manual_currency_id to the journal's currency and change field to readonly.
-        If journal doesn't have any currency: Default company currency.
+        If journal doesn't have any currency: No changes on currency.
 
         """
         if not context:
@@ -72,13 +72,13 @@ class account_move_compute_currency(osv.osv):
         if 'value' not in res:
             res['value'] = {}
         if not journal_id:
-            res['value'].update({'manual_currency_id': False, 'block_manual_currency_id': False,})
+            res['value'].update({'block_manual_currency_id': False,})
             return res
         j = self.pool.get('account.journal').read(cr, uid, journal_id, ['currency'])
         if j and j.get('currency', False):
             res['value'].update({'manual_currency_id': j.get('currency'), 'block_manual_currency_id': True,})
         else:
-            res['value'].update({'manual_currency_id': self.pool.get('res.users').browse(cr, uid, uid, context).company_id.currency_id.id, 'block_manual_currency_id': False,})
+            res['value'].update({'block_manual_currency_id': False,})
         return res
 
     _columns = {
