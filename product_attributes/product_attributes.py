@@ -237,6 +237,7 @@ class product_attributes(osv.osv):
     
     _defaults = {
         'duplicate_ok': True,
+        'international_status':'itc',
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,
@@ -259,16 +260,6 @@ class product_attributes(osv.osv):
                 return False
         return True
 
-    def _get_default_req(self, cr, uid, context=None):
-        # Some verifications
-        if context is None:
-            context = {}
-        res = {}
-        default_code = int(datetime.now().strftime('%m%d%H%M%S')) + 1
-        res= {'default_code': default_code,
-              'international_status': 'itc'}
-        return res
-
     def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
@@ -284,7 +275,8 @@ class product_attributes(osv.osv):
                     break
             if not has_required:
                 logging.getLogger('init').info('Loading default values for product.product')
-                vals.update(self._get_default_req(cr, uid, context))
+                default_code = int(datetime.now().strftime('%m%d%H%M%S')) + 1
+                vals.update({'default_code': default_code, 'international_status': 'itc'})
         logging.getLogger('init').info('Value of %s' % vals)
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
