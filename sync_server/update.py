@@ -202,7 +202,8 @@ class update(osv.osv):
         if forced_values:
             fields += list(set(forced_values.keys()) - set(fields))
             obj = self.pool.get(update.model)
-            columns = dict(obj._inherit_fields.items() + \
+            inherit_fields = [(item[0], item[1][2]) for item in obj._inherit_fields.items()]
+            columns = dict(inherit_fields + \
                            obj._columns.items())
             for k, v in forced_values.items():
                 if columns[k]._type == 'boolean':

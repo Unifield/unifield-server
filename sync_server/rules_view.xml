@@ -94,7 +94,7 @@
                         <separator string="Values to be forced" colspan="2"/>
                         <field name="forced_values_sel" nolabel="1">
                             <tree editable="bottom">
-                                <field name="name" domain="[('model','=',parent.model_id),('ttype','not in',['one2many','many2one','many2many'])]"/>
+                                <field name="name" domain="[('model_id','in',parent.model_ids),('ttype','not in',['one2many','many2one','many2many'])]"/>
                                 <field name="value"/>
                             </tree>
                         </field>
