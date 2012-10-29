@@ -274,7 +274,7 @@ class product_attributes(osv.osv):
                     break
             if not has_required:
                 logging.getLogger('init').info('Loading default values for product.product')
-                vals.update({'default_code': lambda obj, cr, uid, context: self.pool.get('ir.sequence').get(cr, uid, 'product.product'),
+                vals.update({'default_code': lambda self, cr, uid, context: self.pool.get('ir.sequence').get(cr, uid, 'product.product'),
                              'international_status': 'itc'})
         logging.getLogger('init').info('Value of %s' % vals)
         if 'batch_management' in vals:
