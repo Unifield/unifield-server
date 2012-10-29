@@ -387,11 +387,11 @@
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id" 
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
-                                            domain="[('internal_src', '=', product_id), ('usage', '!=', 'view')]"
+                                            domain="[('internal_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id)]"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
-                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view')]" 
+                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id)]" 
                                             on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     </group>
@@ -582,13 +582,13 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id"
-                                        	domain="[('usage', '!=', 'view'), ('usage', '=', 'supplier')]"
+                                        	domain="[('usage', '!=', 'view'), ('usage', '=', 'supplier'), ('id', '!=', location_dest_id)]"
                                         	context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	 />
             							<field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
-                                            domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id)]"
+                                            domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
                                             on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
@@ -850,12 +850,12 @@
                                         <field name="location_virtual_id" invisible="1"/>
                                         <field name="location_output_id" invisible="1"/>
                                         <field name="location_id"
-                                            domain="[('outgoing_src', '=', product_id), ('usage', '!=', 'view')]"
+                                            domain="[('outgoing_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id)]"
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"/>
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
-                                        	domain="[('usage', '!=', 'view'), '|', ('output_ok', '=', True), ('usage', '=', 'customer')]"
+                                        	domain="[('usage', '!=', 'view'), '|', ('output_ok', '=', True), ('usage', '=', 'customer'), ('id', '!=', location_id)]"
                                         	on_change="location_dest_change(location_dest_id, location_id)"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	 />
