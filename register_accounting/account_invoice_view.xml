@@ -10,24 +10,27 @@
             <field name="priority">200</field>
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
+                    <group colspan="4" col="6">
                         <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection"/>
-                        <field name="number" readonly="1" invisible="1"/>
+                        <field name="number" readonly="1"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
                         <newline/>
                         <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
                         <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
                         <newline/>
-                        <field name="date_invoice" required="1"/>
                         <field name="document_date" required="1"/>
+                        <field name="date_invoice" required="1"/>
                         <field name="register_posting_date" />
                         <field name="state" invisible="1"/>
-                        <field name="amount_total"/>
                         <newline/>
-                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                        <field name="analytic_distribution_id" invisible="1"/>
-                        <group colspan="2"/>
+                        <label string="" colspan="4"/>
+                        <field name="amount_total"/>
+                    </group>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <group colspan="2"/>
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field name="account_id" domain="[('company_id', '=', company_id), ('type', '=', 'payable')]" required="1"/>
