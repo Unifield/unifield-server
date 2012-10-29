@@ -65,7 +65,7 @@ class report_liquidity_position(report_sxw.report_sxw):
                                                                      uid,
                                                                      register.journal_id.currency.id,
                                                                      functional_currency.id, 
-                                                                     register.balance_end or 0.0,
+                                                                     register.msf_calculated_balance or 0.0,
                                                                      round=True,
                                                                      context=date_context)
                 
@@ -83,7 +83,7 @@ class report_liquidity_position(report_sxw.report_sxw):
             
             register_values = [[register.journal_id.code,
                                 register.journal_id.name,
-                                int(round(register.balance_end)),
+                                int(round(register.msf_calculated_balance)),
                                 int(round(real_end_balance)),
                                 register.journal_id.currency.name,
                                 int(round(converted_end_balance)),
