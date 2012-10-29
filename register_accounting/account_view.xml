@@ -834,7 +834,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="1"/>
             <field name="arch" type="xml">
-                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')">
+                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
