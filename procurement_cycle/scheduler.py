@@ -200,11 +200,13 @@ Created documents : \n'''
         product = product_obj.browse(cr, uid, product_id, context=context)
 
         
-        # Get the delivery lead time
+        # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
         delivery_leadtime = product.procure_delay and round(int(product.procure_delay)/30.0, 2) or 1
+        # Get the leadtime of the rule if defined
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
         elif product.seller_ids:
+            # Get the supplier lead time if supplier is defined
             # The seller delay is defined in days, so divide it by 30.0 to have a LT in months
             delivery_leadtime = product.seller_delay and round(int(product.seller_delay)/30.0, 2) or 1
                 
