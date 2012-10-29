@@ -23,6 +23,7 @@ from osv import osv, fields
 
 import time
 
+
 class product_list(osv.osv):
     _name = 'product.list'
     _description = 'Products list'
@@ -229,7 +230,13 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
+        # we can't write the default_code required because it is used in the product addons
+        'default_code' : fields.char('CODE', size=14, select=True),
     }
+
+    _sql_constraints = [
+        ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+    ]
 
 product_product()
 
@@ -240,7 +247,6 @@ class product_template(osv.osv):
     _columns = {
         'name': fields.char(size=60, string='DESCRIPTION', required=True),
     }
-
 product_template()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

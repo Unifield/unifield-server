@@ -22,7 +22,6 @@
 from osv import fields, osv
 import re
 from tools.translate import _
-import logging
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -143,14 +142,13 @@ class product_attributes(osv.osv):
         return [('id', 'in', ids)] 
     
     _columns = {
-        'default_code' : fields.char('CODE', size=14, required=True, select=True),
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
         'international_status': fields.selection([('',''),('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
-                                                 string='Product Creator', required=True),
+                                                 string='Product Creator'),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
             ('sellable','Normal'),
@@ -236,7 +234,6 @@ class product_attributes(osv.osv):
     
     _defaults = {
         'duplicate_ok': True,
-        'international_status':'itc',
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,
@@ -247,36 +244,15 @@ class product_attributes(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
-
-    _sql_constraints = [
-        ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
-    ]
-
+    
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
             if product.gmdn_code and not int_pattern.match(product.gmdn_code):
                 return False
         return True
-
+    
     def create(self, cr, uid, vals, context=None):
-        '''
-        Set default values for datas.xml and tests.yml
-        '''
-        if context is None:
-            context = {}
-        if context.get('update_mode') in ['init', 'update']:
-            required = ['default_code', 'international_status']
-            has_required = False
-            for req in required:
-                if  req in vals:
-                    has_required = True
-                    break
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for product.product')
-                vals.update({'default_code': self.pool.get('ir.sequence').get(cr, uid, 'product.product'),
-                             'international_status': 'itc'})
-        logging.getLogger('init').info('Value of %s' % vals)
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']

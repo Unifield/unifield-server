@@ -90,5 +90,17 @@
         <field name="active" eval="False" />
     </record>
     
+    <!-- SupplierInfo to be defined -->
+    <record id="supplierinfo_tbd" model="product.supplierinfo">
+        <field name="name" ref="supplier_tbd"/>
+        <field name="product_id" ref="product_tbd"/>
+        <field name="active" eval="False" />
+        <!-- 
+        <field name="uom_id" ref="uom_tbd"/>
+        <field name="uom_po_id" ref="uom_tbd"/>
+        <field name="categ_id" ref="cat_tbd"/>
+         -->
+    </record>
+    
     </data>
 </openerp>
