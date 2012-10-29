@@ -100,7 +100,7 @@
                             <group colspan="2" col="2" name="status">
                                 <separator string="Status" colspan="2"/>
                                 <field name="categ_id" readonly="1"/>
-                                <field name="international_status"/>
+                                <field name="international_status" required="1"/>
                                 <field name="state"/>
                                 <field name="active"/>
                             </group>
