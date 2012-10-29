@@ -127,6 +127,7 @@ class account_move(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Change move line's sequence (name) by using instance move prefix.
+        Add default document date and posting date if none.
         """
         if not context:
             context = {}
@@ -138,6 +139,11 @@ class account_move(osv.osv):
             if not instance.move_prefix:
                 raise osv.except_osv(_('Warning'), _('No move prefix found for this instance! Please configure it on Company view.'))
             vals['name'] = "%s-%s-%s" % (instance.move_prefix, journal.code, sequence_number)
+        # Add default date and document date if none
+        if not vals.get('date', False):
+            vals.update({'date': self.pool.get('account.period').get_date_in_period(cr, uid, strftime('%Y-%m-%d'), vals.get('period_id'))})
+        if not vals.get('document_date', False):
+            vals.update({'document_date': vals.get('date')})
         if 'from_web_menu' in context:
             vals.update({'status': 'manu'})
             # Update context in order journal item could retrieve this @creation
