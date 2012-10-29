@@ -35,7 +35,6 @@
         'sync_client_view.xml',
         'wizard/sync_wiz_view.xml',
         'wizard/monitoring_view.xml',
-        'fallback_values/demo.xml',
         'monitor_view.xml',
         'data/cron.xml',
         'security/ir.model.access.csv'
