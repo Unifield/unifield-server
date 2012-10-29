@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+from datetime import datetime
 from osv import fields, osv
 import re
 from tools.translate import _
@@ -142,13 +143,14 @@ class product_attributes(osv.osv):
         return [('id', 'in', ids)] 
     
     _columns = {
+        'default_code' : fields.char('CODE', size=14, required=True, select=True),
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
         'international_status': fields.selection([('',''),('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
-                                                 string='Product Creator'),
+                                                 string='Product Creator', required=True),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
             ('sellable','Normal'),
@@ -244,7 +246,38 @@ class product_attributes(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
-    
+
+    _sql_constraints = [
+        ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+    ]
+
+    def _get_default_req(self, cr, uid, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        res = {}
+        res= {'default_code': datetime.now().strftime('%m%d%H%M%S'),
+              'international_status': 'itc'}
+        return res
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set default values for datas.xml and tests.yml
+        '''
+        if context is None:
+            context = {}
+        if context.get('update_mode') in ['init', 'update']:
+            required = ['default_code', 'international_status']
+            has_required = False
+            for req in required:
+                if  req in vals:
+                    has_required = True
+                    break
+            if not has_required:
+                logging.getLogger('init').info('Loading default values for product.template')
+                vals.update(self._get_default_req(cr, uid, context))
+        return super(product_attributes, self).create(cr, uid, vals, context)
+
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
