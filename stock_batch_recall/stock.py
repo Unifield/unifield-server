@@ -111,8 +111,8 @@ class report_batch_recall(osv.osv):
                 rec.prodlot_id AS prodlot_id,
                 rec.expired_date AS expired_date,
                 rec.location_id AS location_id,
+                rec.usage AS location_type,
                 addr.partner_id AS partner_id,
-                loc.usage AS location_type,
                 sum(rec.product_qty) AS product_qty
             FROM
                 (
@@ -121,7 +121,13 @@ class report_batch_recall(osv.osv):
                         m.prodlot_id AS prodlot_id,
                         m.expired_date AS expired_date,
                         m.location_dest_id AS location_id,
-                        p.address_id AS partner_id,
+                        CASE WHEN loc.usage = 'internal'
+                        THEN
+                            NULL
+                        ELSE
+                            p.address_id 
+                        END AS partner_id,
+                        loc.usage AS usage,
                         CASE when pt.uom_id = m.product_uom
                         THEN
                             sum(m.product_qty)
@@ -148,6 +154,9 @@ class report_batch_recall(osv.osv):
                       LEFT JOIN
                         product_uom mu
                           ON m.product_uom = mu.id
+                      LEFT JOIN
+                        stock_location loc
+                          ON m.location_dest_id = loc.id
                     WHERE
                         m.state = 'done'
                     GROUP BY
@@ -157,14 +166,21 @@ class report_batch_recall(osv.osv):
                         m.location_dest_id,
                         pt.uom_id,
                         m.product_uom,
-                        p.address_id)
+                        p.address_id,
+                        loc.usage)
                 UNION ALL
                     (SELECT
                         m.product_id AS product_id,
                         m.prodlot_id AS prodlot_id,
                         m.expired_date AS expired_date,
                         m.location_id AS location_id,
-                        NULL AS partner_id,
+                        CASE WHEN loc.usage = 'internal'
+                        THEN
+                            NULL
+                        ELSE
+                            p.address_id 
+                        END AS partner_id,
+                        loc.usage AS usage,
                         CASE when pt.uom_id = m.product_uom
                         THEN
                             -sum(m.product_qty)
@@ -191,6 +207,9 @@ class report_batch_recall(osv.osv):
                       LEFT JOIN
                         product_uom mu
                           ON m.product_uom = mu.id
+                      LEFT JOIN
+                        stock_location loc
+                          ON m.location_id = loc.id
                     WHERE
                         m.state = 'done'
                     GROUP BY
@@ -200,19 +219,17 @@ class report_batch_recall(osv.osv):
                         m.location_id,
                         pt.uom_id,
                         m.product_uom,
+                        loc.usage,
                         p.address_id)
             ) AS rec
               LEFT JOIN
                 res_partner_address addr
                   ON rec.partner_id = addr.id
               LEFT JOIN
-                stock_location loc
-                  ON rec.location_id = loc.id
-              LEFT JOIN
                 stock_production_lot lot
                   ON rec.prodlot_id = lot.id
             WHERE
-              loc.usage IN ('customer', 'supplier', 'internal')
+              rec.usage IN ('customer', 'supplier', 'internal')
             GROUP BY
               rec.product_id,
               rec.expired_date,
@@ -220,7 +237,7 @@ class report_batch_recall(osv.osv):
               lot.name,
               rec.location_id,
               addr.partner_id,
-              loc.usage
+              rec.usage
             ORDER BY
               rec.product_id,
               lot.name,
