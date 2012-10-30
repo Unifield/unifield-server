@@ -1589,6 +1589,7 @@ class report_stock_inventory(osv.osv):
         tools.drop_view_if_exists(cr, 'report_stock_inventory')
         cr.execute("""
 CREATE OR REPLACE view report_stock_inventory AS (
+(
     (SELECT
         min(m.id) as id, m.date as date,
         m.expired_date as expired_date,
