@@ -14,7 +14,7 @@ use warnings;
 ##   - "value1","value2","value3"
 sub csv_split {
     local $_ = @_ ? shift() : $_;
-    chomp;
+    s/\v+$//;
     $_ .= ',';
     my @r;
     while( s/^([^",][^,]*),|"((?:[^"]*|"")*)",|^,// ) {
