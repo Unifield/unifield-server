@@ -22,6 +22,7 @@
 from osv import osv, fields
 
 import time
+import logging
 
 
 class product_list(osv.osv):
