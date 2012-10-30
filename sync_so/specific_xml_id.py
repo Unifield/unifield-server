@@ -13,13 +13,20 @@ from osv import fields
 #     * Beware to check that many2one fields exists before using their property
 #
 
+# !! Please always use this method before returning an xml_name
+#    It will automatically convert arguments to strings, remove False args
+#    and finally remove all dots (unexpected dots appears when the system
+#    language is not english)
+def get_valid_xml_name(*args):
+    return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
+
 class fiscal_year(osv.osv):
     
     _inherit = 'account.fiscalyear'
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         fiscalyear = self.browse(cr, uid, res_id)
-        return fiscalyear.code
+        return get_valid_xml_name(fiscalyear.code)
     
 fiscal_year()
 
@@ -29,7 +36,7 @@ class account_journal(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         journal = self.browse(cr, uid, res_id)
-        return 'journal_' + (journal.instance_id.code or 'noinstance') + "_" + (journal.code or 'nocode') + "_" + (journal.name or 'noname')
+        return get_valid_xml_name('journal', (journal.instance_id.code or 'noinstance'), (journal.code or 'nocode'), (journal.name or 'noname'))
     
 account_journal()
 
@@ -41,7 +48,7 @@ class bank_statement(osv.osv):
         bank = self.browse(cr, uid, res_id)
         # to be unique, the journal xml_id must include also the period, otherwise no same name journal cannot be inserted for different periods! 
         unique_journal = (bank.journal_id.code or 'nojournal') + '_' + (bank.period_id.name or 'noperiod')
-        return 'bank_statement_' + (bank.instance_id.code or 'noinstance') + '_' + (bank.name or 'nobank') + '_' + unique_journal 
+        return get_valid_xml_name('bank_statement', (bank.instance_id.code or 'noinstance'), (bank.name or 'nobank'), unique_journal)
     
     def update_xml_id_register(self, cr, uid, res_id, context):
         """
@@ -82,7 +89,7 @@ class account_period_sync(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         period = self.browse(cr, uid, res_id)
-        return period.fiscalyear_id.code + "/" + period.name + "_" + period.date_start
+        return get_valid_xml_name(period.fiscalyear_id.code+"/"+period.name, period.date_start)
     
 account_period_sync()
 
@@ -92,22 +99,10 @@ class res_currency_sync(osv.osv):
     
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         currency = self.browse(cr, uid, res_id)
-        table_name = currency.currency_table_id and currency.currency_table_id.name or ''
-        return currency.name + table_name
+        return get_valid_xml_name(currency.name, (currency.currency_table_id and currency.currency_table_id.name))
     
 res_currency_sync()
 
-class product_product(osv.osv):
-    
-    _inherit = 'product.product'
-    
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        product = self.browse(cr, uid, res_id)
-        if product.id:
-            # the xml_id is based on the id because at the creation of a product we don't have product_code
-            return str(product.id) + table_name
-    
-product_product()
 
 class hq_entries(osv.osv):
     
@@ -132,3 +127,35 @@ class hq_entries(osv.osv):
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
 hq_entries()
+
+
+class product_product(osv.osv):
+    _inherit = 'product.product'
+
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        product = self.browse(cr, uid, res_id)
+        return get_valid_xml_name('product', product.default_code) if product.default_code else \
+               super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(product_product, self).write(cr, uid, ids, vals, context=context)
+        if 'default_code' in vals.keys():
+            list_ids = (ids if hasattr(ids, '__iter__') else [ids])
+            entity_uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+            model_data = self.pool.get('ir.model.data')
+            data_ids = model_data.search(cr, uid, [('module','=','sd'),('model','=',self._name),('res_id','in',list_ids)], context=context)
+            model_data.unlink(cr, uid, data_ids)
+            now = fields.datetime.now()
+            for id in list_ids:
+                xml_name = self.get_unique_xml_name(cr, uid, entity_uuid, self._table, id)
+                model_data.create(cr, uid, {
+                    'module' : 'sd',
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'name' : xml_name,
+                    'model' : self._name,
+                    'res_id' : id,
+                    'last_modification' : now,
+                })
+        return res
+
+product_product()

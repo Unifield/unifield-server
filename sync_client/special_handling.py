@@ -116,3 +116,4 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=sync_check_update)
 
 account_move_line()
+

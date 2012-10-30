@@ -147,7 +147,7 @@ class update(osv.osv):
         ids = []
         update_to_send = []
         update_master = None
-        while not ids:
+        while not ids or not update_to_send:
             query = base_query % (offset, max_size)
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
