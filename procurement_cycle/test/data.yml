@@ -20,6 +20,7 @@
   !record {model: res.partner, id: supplier1}:
     name: S1
     supplier: True
+    supplier_lt: 12
 -
     I create the address for S1
 -
@@ -32,6 +33,7 @@
   !record {model: res.partner, id: supplier2}:
     name: S2
     supplier: True
+    supplier_lt: 45
 -
     I create the address for S2
 -
@@ -88,11 +90,9 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier1
-        delay: 12
       - sequence: 20
         min_qty: 0.00
         name: supplier2
-        delay: 45
 -
     I create a second product, P2
 -
@@ -121,11 +121,9 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier2
-        delay: 25
       - sequence: 20
         min_qty: 0.00
         name: supplier1
-        delay: 20
 -
     I create the product P3
 -
