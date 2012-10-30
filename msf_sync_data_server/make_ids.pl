@@ -31,7 +31,7 @@ while( $_ = shift @ARGV ) {
     my $cols = $#{$f{header}};
     while( <IN> ) {
         my @line = csv_split;
-        push $f{datas}, {map {$f{header}->[$_], $line[$_]} 0..$cols};
+        push @{$f{datas}}, {map {$f{header}->[$_], $line[$_]} 0..$cols};
         #warn join('###', @line)."\n";
     }
     push @files, \%f;
