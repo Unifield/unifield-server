@@ -232,29 +232,29 @@ class product_product(osv.osv):
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
         # we can't write the default_code required because it is used in the product addons
-        'default_code' : fields.char('CODE', size=14, select=True, required=True),
+        'default_code' : fields.char('CODE', size=14, select=True),
     }
 
     _sql_constraints = [
         ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
     ]
 
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Set default values for datas.xml and tests.yml
-        '''
-        if context is None:
-            context = {}
-        if vals is None:
-            vals = {}
-        if context.get('update_mode') in ['init', 'update']:
-            has_required = False
-            if  'default_code' in vals:
-                has_required = True
-            if not has_required:
-                logging.getLogger('init').info('Loading default values for product.product')
-                vals.update({'default_code': str(time.time())})
-        return super(product_product, self).create(cr, uid, vals, context)
+#    def create(self, cr, uid, vals, context=None):
+#        '''
+#        Set default values for datas.xml and tests.yml
+#        '''
+#        if context is None:
+#            context = {}
+#        if vals is None:
+#            vals = {}
+#        if context.get('update_mode') in ['init', 'update']:
+#            has_required = False
+#            if  'default_code' in vals:
+#                has_required = True
+#            if not has_required:
+#                logging.getLogger('init').info('Loading default values for product.product')
+#                vals.update({'default_code': str(time.time()), 'type':'product'})
+#        return super(product_product, self).create(cr, uid, vals, context)
 
 product_product()
 
