@@ -147,8 +147,8 @@ class product_attributes(osv.osv):
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
-        'international_status': fields.selection([('',''),('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
-                                                 string='Product Creator'),
+        'international_status': fields.selection([('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
+                                                 string='Product Creator', required=True),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
             ('sellable','Normal'),
@@ -233,6 +233,7 @@ class product_attributes(osv.osv):
     }
     
     _defaults = {
+        'international_status': 'itc',
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
