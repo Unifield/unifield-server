@@ -34,7 +34,7 @@
                     <field name="prodlot_id"/>
 	                <field name="expired_date"/>
 	                <field name="location_id"/>
-                    <field name="partner_id" context="{'contact_display':'partner'}"/>
+                    <!--field name="partner_id" context="{'contact_display':'partner'}"/>-->
 	                <field name="product_qty" />
 	           </tree>
 	        </field>

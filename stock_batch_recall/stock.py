@@ -89,7 +89,6 @@ class report_batch_recall(osv.osv):
     _description = 'Batch Recall'
     _auto = False
     _columns = {
-        'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'location_id': fields.many2one('stock.location', 'Location', readonly=True),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch Number', readonly=True),
@@ -105,14 +104,12 @@ class report_batch_recall(osv.osv):
             SELECT
                 row_number() OVER(ORDER BY rec.product_id,
                                            lot.name,
-                                           rec.location_id,
-                                           addr.partner_id) AS id,
+                                           rec.location_id) AS id,
                 rec.product_id AS product_id,
                 rec.prodlot_id AS prodlot_id,
                 rec.expired_date AS expired_date,
                 rec.location_id AS location_id,
                 rec.usage AS location_type,
-                addr.partner_id AS partner_id,
                 sum(rec.product_qty) AS product_qty
             FROM
                 (
@@ -121,12 +118,6 @@ class report_batch_recall(osv.osv):
                         m.prodlot_id AS prodlot_id,
                         m.expired_date AS expired_date,
                         m.location_dest_id AS location_id,
-                        CASE WHEN loc.usage = 'internal'
-                        THEN
-                            NULL
-                        ELSE
-                            p.address_id 
-                        END AS partner_id,
                         loc.usage AS usage,
                         CASE when pt.uom_id = m.product_uom
                         THEN
@@ -159,6 +150,8 @@ class report_batch_recall(osv.osv):
                           ON m.location_dest_id = loc.id
                     WHERE
                         m.state = 'done'
+                        AND
+                        loc.usage = 'internal'
                     GROUP BY
                         m.product_id,
                         m.prodlot_id,
@@ -174,12 +167,6 @@ class report_batch_recall(osv.osv):
                         m.prodlot_id AS prodlot_id,
                         m.expired_date AS expired_date,
                         m.location_id AS location_id,
-                        CASE WHEN loc.usage = 'internal'
-                        THEN
-                            NULL
-                        ELSE
-                            p.address_id 
-                        END AS partner_id,
                         loc.usage AS usage,
                         CASE when pt.uom_id = m.product_uom
                         THEN
@@ -212,6 +199,8 @@ class report_batch_recall(osv.osv):
                           ON m.location_id = loc.id
                     WHERE
                         m.state = 'done'
+                        AND
+                        loc.usage = 'internal'
                     GROUP BY
                         m.product_id,
                         m.prodlot_id,
@@ -223,26 +212,19 @@ class report_batch_recall(osv.osv):
                         p.address_id)
             ) AS rec
               LEFT JOIN
-                res_partner_address addr
-                  ON rec.partner_id = addr.id
-              LEFT JOIN
                 stock_production_lot lot
                   ON rec.prodlot_id = lot.id
-            WHERE
-              rec.usage IN ('customer', 'supplier', 'internal')
             GROUP BY
               rec.product_id,
               rec.expired_date,
               rec.prodlot_id,
               lot.name,
               rec.location_id,
-              addr.partner_id,
               rec.usage
             ORDER BY
               rec.product_id,
               lot.name,
-              rec.location_id,
-              addr.partner_id
+              rec.location_id
         );""")
         
     def unlink(self, cr, uid, ids, context=None):
