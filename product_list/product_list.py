@@ -252,8 +252,8 @@ class product_product(osv.osv):
             if  'default_code' in vals:
                 has_required = True
             if not has_required:
-                logging.getLogger('init').info('Loading default values for product.template')
-                vals.update({'default_code': 'TEST'})
+                logging.getLogger('init').info('Loading default values for product.product')
+                vals.update({'default_code': str(time.time())})
         return super(product_product, self).create(cr, uid, vals, context)
 
 product_product()
