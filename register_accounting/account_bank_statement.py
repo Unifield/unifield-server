@@ -1617,19 +1617,43 @@ class account_bank_statement_line(osv.osv):
             return False
 
     def button_open_invoices(self, cr, uid, ids, context=None):
+        """
+        Open invoices linked to the register given register lines.
+        To find them, search invoice that move_id is the same as move_line's move_id
+        """
+        # Checks
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
         if not l['imported_invoice_line_ids']:
             raise osv.except_osv(_('Error'), _("No related invoice line"))
+        # Fetch invoices
+        move_ids = []
+        for regl in self.browse(cr, uid, ids):
+            for ml in regl.imported_invoice_line_ids:
+                if ml.move_id:
+                    move_ids.append(ml.move_id.id)
+        inv_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id', 'in', move_ids)])
+        if not inv_ids:
+            raise osv.except_osv(_('Error'), _("No related invoice line"))
+        # Search journal type in order journal_id field not blank @invoice display
+        journal_type = []
+        for inv in self.pool.get('account.invoice').browse(cr, uid, inv_ids):
+            if inv.journal_id and inv.journal_id.type not in journal_type:
+                journal_type.append(inv.journal_id.type)
+        print journal_type
         return {
             'name': "Invoice Lines",
             'type': 'ir.actions.act_window',
-            'res_model': 'account.move.line',
+            'res_model': 'account.invoice',
             'target': 'new',
             'view_mode': 'tree,form',
             'view_type': 'form',
-            'domain': [('id', 'in', l['imported_invoice_line_ids'])]
+            'domain': [('id', 'in', inv_ids)],
+            'context': {'journal_type': journal_type}
         }
-        
 
     def button_open_invoice(self, cr, uid, ids, context=None):
         """
@@ -1871,3 +1895,4 @@ class ir_values(osv.osv):
         return values
 
 ir_values()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
