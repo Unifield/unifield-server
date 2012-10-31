@@ -12,16 +12,6 @@ from osv import fields, osv
 import netsvc
 import tools
 
-# NOTE: Deprecated since the use of msf_instance
-#       instance_id already exists for this model
-#class account_analytic_line(osv.osv):
-#    _inherit = 'account.analytic.line'
-#
-#    _columns = {
-#        #'owner' : fields.char('Instance Owner', size=64),
-#    }
-#
-#account_analytic_line()
 
 class account_installer(osv.osv_memory):
     _inherit = 'account.installer'
