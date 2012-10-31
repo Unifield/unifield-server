@@ -10,13 +10,15 @@
 
 #client_string_two {
     margin: 0;
+    padding: 0;
     position: absolute;
-    right: 40%;
-    padding: 20px 0 0 0;
+    right: 10px;
+    top: 35px;
     background: none;
-    color: red;
-    font-size: 1.1em;
+    color: yellow;
     font-weight: bold;
     text-align: center;
+    font-size: 10px;
+    line-height: 12px;
 }
 
