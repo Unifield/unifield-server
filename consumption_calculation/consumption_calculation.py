@@ -371,7 +371,7 @@ class real_average_consumption_line(osv.osv):
     _name = 'real.average.consumption.line'
     _description = 'Real average consumption line'
     _rec_name = 'product_id'
-    _order = 'id desc'
+    _order = 'ref'
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
@@ -442,8 +442,14 @@ class real_average_consumption_line(osv.osv):
 
         return True
 
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
+        'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True, 
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
@@ -814,6 +820,7 @@ monthly_review_consumption()
 class monthly_review_consumption_line(osv.osv):
     _name = 'monthly.review.consumption.line'
     _description = 'Monthly review consumption line'
+    _order = 'ref'
     
     def _get_amc(self, cr, uid, ids, field_name, arg, ctx=None):
         '''
@@ -890,8 +897,14 @@ class monthly_review_consumption_line(osv.osv):
                 
         return result.keys()
     
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('monthly.review.consumption.line').search(cr, uid, [('name', 'in', ids)], context=context)
+    
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
+        'ref': fields.related('name', 'default_code', type='char', size=64, readonly=True,
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, 
                                store={'monthly.review.consumption': (_get_mrc_change, ['period_from', 'period_to'], 20),
                                       'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
