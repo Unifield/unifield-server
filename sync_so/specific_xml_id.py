@@ -138,10 +138,12 @@ class product_product(osv.osv):
                super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
     def write(self, cr, uid, ids, vals, context=None):
-        list_ids = (ids if hasattr(ids, '__iter__') else [ids])
-        browse_list = self.browse(cr, uid, list_ids, context=context)
-        browse_list = filter(lambda x:x.default_code != vals['default_code'], browse_list)
-        list_ids = [x.id for x in browse_list]
+        list_ids = []
+        if 'default_code' in vals:
+            list_ids = (ids if hasattr(ids, '__iter__') else [ids])
+            browse_list = self.browse(cr, uid, list_ids, context=context)
+            browse_list = filter(lambda x:x.default_code != vals['default_code'], browse_list)
+            list_ids = [x.id for x in browse_list]
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)
         if list_ids:
             entity_uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
