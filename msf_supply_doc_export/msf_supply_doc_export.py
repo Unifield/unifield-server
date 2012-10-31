@@ -206,7 +206,23 @@ class ir_values(osv.osv):
                 or v[2]['report_name'] == 'sale.order_xls' and context['_terp_view_name'] == 'Field Orders' :
                     new_act.append(v)
                 values = new_act
-                
+        
+        # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+        elif context.get('_terp_view_name') and context['_terp_view_name'] == 'Internal Requests' and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[2]['name'] == 'Import lines':
+                    new_act.append(v)
+            values = new_act
+        
+        # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+        elif context.get('_terp_view_name') and context['_terp_view_name'] == 'Field Orders' and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[2]['name'] == 'Order Follow Up':
+                    new_act.append(v)
+            values = new_act
+            
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:

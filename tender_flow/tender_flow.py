@@ -936,7 +936,7 @@ class ir_values(osv.osv):
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
         new_values = values
         
-        po_accepted_values = {'client_action_multi': ['ir_open_purchase_order_follow_up', 
+        po_accepted_values = {'client_action_multi': ['Order Follow Up',
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)', 
                                                      'Purchase Order',
