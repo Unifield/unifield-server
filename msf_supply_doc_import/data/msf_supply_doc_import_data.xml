@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
+    <!-- We deactivate the cat_tbd in the file msf_supply_doc_import/inactive_categ.xml -->
      <record id="cat_tbd" model="product.category">
         <field name="name">Product Categ to be defined</field>
-        <field name="active">False</field>
     </record>
 
     <!-- 'tbd' stands for 'to be defined' -->

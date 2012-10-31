@@ -194,6 +194,8 @@ That means Not price, Neither Delivery requested date. """))
         '''
         if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         if context.get('_terp_view_name', False) == 'Internal Requests':
             return self.import_internal_req(cr, uid, ids, context=context)

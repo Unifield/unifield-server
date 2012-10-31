@@ -36,13 +36,21 @@
         'view/stock_cost_reevaluation_view.xml',
         'view/product_list_view.xml',
         'data/msf_supply_doc_import_data.xml',
+        'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',
         'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
         'workflow/procurement_request_workflow.xml',
     ],
     "demo_xml": [],
-    "test": [],
+    "test": [
+        'test/data.yml',
+        'test/import_po.yml',
+        'test/import_so.yml',
+        'test/import_rfq.yml',
+        'test/import_ir.yml',
+        'test/import_tender.yml',
+    ],
     "installable": True,
     "active": False
 }
