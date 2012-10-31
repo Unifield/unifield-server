@@ -67,6 +67,7 @@ class product_attributes_template(osv.osv):
     
     _defaults = {
         'type': 'product',
+        'cost_method': lambda *a: 'average',
     }
     
 product_attributes_template()

@@ -242,7 +242,8 @@
                         </page>
                         <page string="Descriptions">
                             <separator string="Description"/>
-                            <field name="product_catalog_page"/>
+                            <!-- uf-1544 invisible-->
+                            <field name="product_catalog_page" invisible="1"/>
                             <field name="product_catalog_path"/>
                             <separator string="Description"/>
                             <field colspan="4" name="description" nolabel="1"/>
