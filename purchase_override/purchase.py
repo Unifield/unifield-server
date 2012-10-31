@@ -1074,7 +1074,7 @@ stock moves which are already processed : '''
         invoice_obj = self.pool.get('account.invoice')
         inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [
                     ("type", "=", "inkind"),
-                    ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)
+                    ('is_current_instance', '=', True)
                 ])
 
         for order in self.browse(cr, uid, ids):

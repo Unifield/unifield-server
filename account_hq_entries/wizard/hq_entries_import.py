@@ -178,7 +178,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         
         # Verify that an HQ journal exists
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
-                                                                        ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                        ('is_current_instance', '=', True)])
         if not journal_ids:
             raise osv.except_osv(_('Error'), _('You cannot import HQ entries because no HQ Journal exists.'))
         

@@ -25,8 +25,20 @@ class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
     _inherit = 'account.analytic.journal'
     
+    def _get_current_instance(self, cr, uid, ids, name, args, context=None):
+        """
+        Get True if the journal was created by this instance.
+        NOT TO BE SYNCHRONIZED!!!
+        """
+        res = {}
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        for journal in self.browse(cr, uid, ids, context=context):
+            res[journal.id] = (current_instance_id == journal.instance_id.id)
+        return res
+    
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
     
     _defaults = {
@@ -56,8 +68,20 @@ class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = 'account.journal'
     
+    def _get_current_instance(self, cr, uid, ids, name, args, context=None):
+        """
+        Get True if the journal was created by this instance.
+        NOT TO BE SYNCHRONIZED!!!
+        """
+        res = {}
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        for journal in self.browse(cr, uid, ids, context=context):
+            res[journal.id] = (current_instance_id == journal.instance_id.id)
+        return res
+    
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
     
     _defaults = {

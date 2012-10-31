@@ -503,7 +503,7 @@ class stock_picking(osv.osv):
                     if sp.partner_id.partner_type == 'intermission':
                         journal_type = 'intermission'
                     journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
-                                                                                    ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                                    ('is_current_instance', '=', True)])
                     if not journal_ids:
                         raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
                     # Create invoice
@@ -518,7 +518,7 @@ class stock_picking(osv.osv):
         """
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission'),
-                                                                                     ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                                     ('is_current_instance', '=', True)])
         company = self.pool.get('res.users').browse(cr, uid, uid, context).company_id
         intermission_default_account = company.intermission_default_counterpart
         for pick in self.browse(cr, uid, [x for x in res]):

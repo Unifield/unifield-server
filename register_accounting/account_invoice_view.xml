@@ -11,8 +11,8 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6">
-                        <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection"/>
-                        <field name="number" readonly="1"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)" widget="selection"/>
+                        <field name="number" readonly="1" />
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
                         <newline/>
@@ -262,6 +262,9 @@
             <field name="priority">50</field>
             <field name="arch" type="xml">
                 <data>
+                    <field name="journal_id" position="replace">
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
+                    </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
@@ -278,6 +281,9 @@
             <field name="priority">55</field>
             <field name="arch" type="xml">
                 <data>
+                    <field name="journal_id" position="replace">
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
+                    </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
