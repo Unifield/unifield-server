@@ -170,7 +170,7 @@
                         <page string="Suppliers">
                             <field colspan="4" name="seller_ids" nolabel="1">
                                 <form>
-                                    <field name="name"/>
+                                    <field name="name" on_change="onchange_supplier(name)" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <field name="sequence"/>
                                     <field name="product_code" />
                                     <field name="product_name" />

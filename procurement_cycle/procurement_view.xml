@@ -33,7 +33,7 @@
                     <group colspan="4" col="6" >
                         <separator colspan="6" string="Parameter for quantity calculation" />
                         <field name="leadtime" />
-                        <label string="If blank, will take the supplier lead time from the product form" colspan="4" align="0.0"/>
+                        <label string="If null, will take the supplier lead time from the product form" colspan="4" align="0.0"/>
                         <field name="order_coverage" />
                         <label string="In months" colspan="4" align="0.0"/>
                         <field name="safety_stock_time" />
