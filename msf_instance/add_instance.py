@@ -68,6 +68,52 @@ class account_journal(osv.osv):
         ('code_company_uniq', 'unique (code, company_id, instance_id)', 'The code of the journal must be unique per company and instance !'),
         ('name_company_uniq', 'unique (name, company_id, instance_id)', 'The name of the journal must be unique per company and instance !'),
     ]
+    
+    # SP-72: in order to always get an analytic journal with the same instance, 
+    # the create and write check and replace with the "good" journal if necessary.
+    def create(self, cr, uid, vals, context=None):
+        analytic_obj = self.pool.get('account.analytic.journal')
+        if 'analytic_journal_id' in vals:
+            analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
+            
+            instance_id = False
+            if 'instance_id' in vals:
+                instance_id = vals['instance_id']
+            else:
+                instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
+            
+            if analytic_journal and \
+               analytic_journal.name and \
+               analytic_journal.instance_id and \
+               analytic_journal.instance_id.id != instance_id:
+                # replace the journal with the one with the same name, and the wanted instance
+                new_journal_ids = analytic_obj.search(cr, uid, [('name','=', analytic_journal.name),
+                                                                ('instance_id','=',instance_id)], context=context)
+                if len(new_journal_ids) > 0:
+                    vals['analytic_journal_id'] = new_journal_ids[0]
+        return super(account_journal, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        analytic_obj = self.pool.get('account.analytic.journal')
+        if 'analytic_journal_id' in vals:
+            analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
+            
+            instance_id = False
+            if 'instance_id' in vals:
+                instance_id = vals['instance_id']
+            else:
+                instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
+            
+            if analytic_journal and \
+               analytic_journal.name and \
+               analytic_journal.instance_id and \
+               analytic_journal.instance_id.id != instance_id:
+                # replace the journal with the one with the same name, and the wanted instance
+                new_journal_ids = analytic_obj.search(cr, uid, [('name','=', analytic_journal.name),
+                                                                ('instance_id','=',instance_id)], context=context)
+                if len(new_journal_ids) > 0:
+                    vals['analytic_journal_id'] = new_journal_ids[0]
+        return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_journal()
 
