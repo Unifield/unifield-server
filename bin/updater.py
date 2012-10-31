@@ -53,7 +53,7 @@ def do_update():
         files = None
         args = list(sys.argv)
         for i, x in enumerate(args):
-            if x in ('-d', '-u'):
+            if x in ('-d', '-u', '-c'):
                 args[i] = None
                 args[i+1] = None
         args = filter(lambda x:x is not None, args)
@@ -97,6 +97,10 @@ def do_update():
             warn("Update successful.")
             warn("Revisions added: ", ", ".join( infos['revisions'] ))
             args.extend(['-d', infos['dbname'], '-u', 'all'])
+            if os.name == 'nt':
+                args.extend(['-c', '"%s"' % infos['conf']])
+            else:
+                args.extend(['-c', infos['conf']])
         except:
             warn("Update failure!")
             ## Update DB to mark revisions as not-installed
