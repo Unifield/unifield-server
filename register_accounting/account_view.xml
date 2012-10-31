@@ -808,5 +808,65 @@
     <!-- UF-426: remove Journal Items in Cash and Bank -->
         <delete model="ir.ui.menu" id="account.menu_action_account_moves_bank"/>
 
+    <!--
+      Add onchange on account_id for Journal items (account.move.line)
+    -->
+        <record id="inherit_view_move_form" model="ir.ui.view">
+            <field name="name">inherit.view.move.form</field>
+            <field name="model">account.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//tree//field[@name='partner_id']" position="after">
+                        <field name="partner_type"/>
+                    </xpath>
+                    <xpath expr="/form//tree//field[@name='account_id']" position="replace">
+                        <field name="account_id" on_change="onchange_account_id(account_id, partner_type)"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="view_move_line_tree_from_move">
+            <field name="name">account.move.line.tree.from.move</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="1"/>
+            <field name="arch" type="xml">
+                <tree string="Journal Items" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="account_id"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
+                    <field name="debit_currency" sum="Total Book. Debit"/>
+                    <field name="credit_currency" sum="Total Book. Credit"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Func. Debit"/>
+                    <field name="credit" sum="Total Func. Credit"/>
+                    <field name="functional_currency_id"/>
+                    <field name="reconcile_total_partial_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <act_window
+            id="account.act_account_move_to_account_move_line_open"
+            name="Journal Items"
+            context="{'search_default_move_id':[active_id]}"
+            res_model="account.move.line"
+            src_model="account.move"
+            view_id="view_move_line_tree_from_move"/>
+
     </data>
 </openerp>

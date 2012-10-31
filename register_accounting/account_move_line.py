@@ -163,7 +163,7 @@ class account_move_line(osv.osv):
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
             help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
@@ -293,7 +293,7 @@ class account_move_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
-        Add partner_txt to vals
+        Add partner_txt to vals.
         """
         # Some verifications
         if not context:
@@ -307,5 +307,4 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

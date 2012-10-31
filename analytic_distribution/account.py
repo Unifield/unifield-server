@@ -20,9 +20,10 @@
 ##############################################################################
 
 from osv import fields, osv
-import tools
+from tools import drop_view_if_exists
 from lxml import etree
 from destination_tools import many2many_notlazy
+from tools.translate import _
 
 # here was destination_m2m, replaced by the generic many2many_notlazy
 
@@ -179,7 +180,7 @@ class account_destination_summary(osv.osv):
         if not cr.fetchall():
             cr.execute("ALTER TABLE funding_pool_associated_destinations ADD COLUMN id SERIAL")
 
-        tools.drop_view_if_exists(cr, 'account_destination_summary')
+        drop_view_if_exists(cr, 'account_destination_summary')
         cr.execute(""" 
             CREATE OR REPLACE view account_destination_summary AS (
                 SELECT
@@ -244,4 +245,108 @@ class account_account(osv.osv):
         return res
 
 account_account()
+
+class account_move(osv.osv):
+    _name = 'account.move'
+    _inherit = 'account.move'
+
+    _columns = {
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', readonly=True),
+    }
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on a Journal Entry
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        move = self.browse(cr, uid, ids[0], context=context)
+        amount = 0.0
+        total_debit = 0.0
+        total_credit = 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = move.currency_id and move.currency_id.id or company_currency
+        # Search amount for this Journal Entry
+        # We take the biggest amount (debit OR credit)
+        # If debit > credit, then amount = debit
+        # If credit > debit, them amount = credit
+        # If debit = credit and debit != 0.0, then amount = debit = credit (here we take debit)
+        # Else, amount is 0.0
+        for ml in move.line_id:
+            total_debit += ml.debit_currency
+            total_credit += ml.credit_currency
+        if total_debit > total_credit:
+            amount = total_debit
+        elif total_credit > total_debit:
+            amount = total_credit
+        elif total_credit == total_debit and total_debit <> 0.0:
+            amount = total_debit
+        # Get analytic_distribution_id
+        distrib_id = move.analytic_distribution_id and move.analytic_distribution_id.id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'move_id': move.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': 'Global analytic distribution',
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Check that analytic distribution is ok for all lines
+        """
+        if not context:
+           context = {}
+        for m in self.browse(cr, uid, ids):
+            for ml in m.line_id:
+                if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code == 'expense':
+                    if ml.analytic_distribution_state != 'valid':
+                        raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (ml.name or '',))
+                    # Copy analytic distribution from header
+                    if not ml.analytic_distribution_id:
+                        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, ml.move_id.analytic_distribution_id.id, {}, context=context)
+                        self.pool.get('account.move.line').write(cr, uid, [ml.id], {'analytic_distribution_id': new_distrib_id})
+        return super(account_move, self).button_validate(cr, uid, ids, context=context)
+
+    def validate(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution state for all lines that comes from a manual entry. If distribution is invalid, then line is also invalid! (draft state)
+        """
+        if not context:
+            context = {}
+        res = super(account_move, self).validate(cr, uid, ids, context)
+        for m in self.browse(cr, uid, ids):
+            if m.status and m.status == 'manual':
+                for ml in m.line_id:
+                    if ml.analytic_distribution_state == 'invalid' or (ml.analytic_distribution_state == 'none' and ml.account_id.user_type.code == 'expense'):
+                        self.pool.get('account.move.line').write(cr, uid, [x.id for x in m.line_id], {'state': 'draft'}, context, check=False, update_check=False)
+        return res
+
+account_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

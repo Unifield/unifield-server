@@ -26,9 +26,89 @@ from tools.translate import _
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
+    def _display_analytic_button(self, cr, uid, ids, name, args, context=None):
+        """
+        Return True for all element that correspond to some criteria:
+         - The journal entry state is draft (unposted)
+         - The account is an expense account
+        """
+        res = {}
+        for ml in self.browse(cr, uid, ids, context=context):
+            res[ml.id] = True
+#            # False if journal entry is posted
+#            if ml.move_id.state == 'posted':
+#                res[ml.id] = False
+            # False if account not an expense account
+            if ml.account_id.user_type.code not in ['expense']:
+                res[ml.id] = False
+        return res
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the move line, then "valid"
+         - if no distribution, take a tour of move distribution, if compatible, then "valid"
+         - if no distribution on move line and move, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        # Browse all given lines
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.move_id and line.move_id.analytic_distribution_id and line.move_id.analytic_distribution_id.id or False, line.account_id.id)
+        return res
+
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
+        """
+        If move have an analytic distribution, return False, else return True
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for ml in self.browse(cr, uid, ids, context=context):
+            res[ml.id] = True
+            if ml.analytic_distribution_id:
+                res[ml.id] = False
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get a recap from analytic distribution state and if it come from header or not.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for ml in self.browse(cr, uid, ids):
+            res[ml.id] = ''
+            from_header = ''
+            if ml.have_analytic_distribution_from_header:
+                from_header = ' (from header)'
+            res[ml.id] = ml.analytic_distribution_state.capitalize() + from_header
+            if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code != 'expense':
+                res[ml.id] = ''
+        return res
+
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
-    }
+        'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
+            help="This informs system that we can display or not an analytic button", store=False),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection', 
+            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], 
+            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', 
+            string='Header Distrib.?'),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, 
+            string="Distribution", 
+            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+  }
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
         """
@@ -42,13 +122,28 @@ class account_move_line(osv.osv):
         for obj_line in self.browse(cr, uid, ids, context=context):
             # Prepare some values
             amount = obj_line.debit_currency - obj_line.credit_currency
-            if obj_line.analytic_distribution_id and obj_line.account_id.user_type_code == 'expense':
-                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, obj_line.analytic_distribution_id.id, {}, obj_line.account_id.id)
-                if ana_state == 'invalid':
+            line_distrib_id = obj_line.analytic_distribution_id and obj_line.analytic_distribution_id.id or obj_line.move_id and obj_line.move_id.analytic_distribution_id and obj_line.move_id.analytic_distribution_id.id or False
+            # When you create a journal entry manually, we should not have analytic lines if ONE line is invalid!
+            other_lines_are_ok = True
+            if obj_line.move_id and obj_line.move_id.status and obj_line.move_id.status == 'manu':
+                if obj_line.state != 'valid':
+                    other_lines_are_ok = False
+                for other_line in obj_line.move_id.line_id:
+                    if other_line.state != 'valid':
+                        other_lines_are_ok = False
+            # Check that line have expense account and have a distribution
+            if line_distrib_id and obj_line.account_id.user_type_code == 'expense' and other_lines_are_ok:
+                ana_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distrib_id, {}, obj_line.account_id.id)
+                # For manual journal entries, do not raise an error. But delete all analytic distribution linked to other_lines because if one line is invalid, all lines should not create analytic lines
+                if ana_state == 'invalid' and obj_line.move_id.status == 'manu':
+                    ana_line_ids = acc_ana_line_obj.search(cr, uid, [('move_id', 'in', [x.id for x in obj_line.move_id.line_id])])
+                    acc_ana_line_obj.unlink(cr, uid, ana_line_ids)
+                    continue
+                elif ana_state == 'invalid':
                     raise osv.except_osv(_('Warning'), _('Invalid analytic distribution.'))
                 if not obj_line.journal_id.analytic_journal_id:
                     raise osv.except_osv(_('Warning'),_("No Analytic Journal! You have to define an analytic journal on the '%s' journal!") % (obj_line.journal_id.name, ))
-                distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, obj_line.analytic_distribution_id.id, context=context)
+                distrib_obj = self.pool.get('analytic.distribution').browse(cr, uid, line_distrib_id, context=context)
                 # create lines
                 for distrib_lines in [distrib_obj.funding_pool_lines, distrib_obj.free_1_lines, distrib_obj.free_2_lines]:
                     for distrib_line in distrib_lines:
@@ -87,12 +182,114 @@ class account_move_line(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        Delete analytic lines before unlink move lines
+        Delete analytic lines before unlink move lines.
+        Update Manual Journal Entries.
         """
+        if not context:
+            context = {}
+        # Search moves
+        move_ids = []
+        for ml in self.browse(cr, uid, ids):
+            if ml.move_id and ml.move_id.state == 'manu':
+                move_ids.append(ml.move_id.id)
         # Search analytic lines
         ana_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', ids)])
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
+        # Revalidate move
+        self.pool.get('account.move').validate(cr, uid, move_ids)
         return super(account_move_line, self).unlink(cr, uid, ids)
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on an move line
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            raise osv.except_osv(_('Error'), _('No journal item given. Please save your line before.'))
+        # Prepare some values
+        ml = self.browse(cr, uid, ids[0], context=context)
+        distrib_id = False
+        amount = ml.debit_currency - ml.credit_currency
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = ml.currency_id and ml.currency_id.id or company_currency
+        # Get analytic distribution id from this line
+        distrib_id = ml and ml.analytic_distribution_id and ml.analytic_distribution_id.id or False
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'move_line_id': ml.id,
+            'currency_id': currency or False,
+            'state': 'dispatch',
+            'account_id': ml.account_id and ml.account_id.id or False,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+                'name': 'Analytic distribution',
+                'type': 'ir.actions.act_window',
+                'res_model': 'analytic.distribution.wizard',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        """
+        Check line if we come from web (from_web_menu)
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context.get('from_web_menu', False):
+            res = []
+            for ml in self.browse(cr, uid, ids):
+                distrib_state = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, ml.analytic_distribution_id.id, ml.move_id and ml.move_id.analytic_distribution_id and ml.move_id.analytic_distribution_id.id or False, vals.get('account_id') or ml.account_id.id)
+                if distrib_state in ['invalid', 'none']:
+                    vals.update({'state': 'draft'})
+                # Add account_id because of an error with account_activable module for checking date
+                if not 'account_id' in vals and 'date' in vals:
+                    vals.update({'account_id': ml.account_id and ml.account_id.id or False})
+                tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
+                res.append(tmp_res)
+            return res
+        return super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        """
+        Copy analytic_distribution
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not default:
+            default = {}
+        # Default method
+        res = super(account_move_line, self).copy(cr, uid, id, default, context)
+        # Update analytic distribution
+        if res:
+            c = self.browse(cr, uid, res, context=context)
+        if res and c.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, c.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
+        return res
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
