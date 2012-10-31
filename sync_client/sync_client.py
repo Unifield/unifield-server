@@ -273,7 +273,7 @@ class entity(osv.osv):
             else:
                 self.log_info = {}
         return self.log_info
-       
+
     """
         Push Update
     """
