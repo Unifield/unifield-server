@@ -7,23 +7,18 @@ Created on 9 juil. 2012
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 import tools
 from tools import config
 import os
-#import sync_server
-#import pprint
-#pp = pprint.PrettyPrinter(indent=4)
-#import logging
-
-update_directory = os.path.join(config['root_path'], ".update")
-lock_file = os.path.join(config['root_path'], "update.lock")
+from updater import lock_file, server_version, base_version
 
 class version(osv.osv):
     
     _name = "sync_client.version"
     
     _columns = {
-        'name' : fields.char(string='Tag', size=256, required=True, readonly=True),
+        'name' : fields.char(string='Tag', size=256, readonly=True),
         'patch' : fields.binary('Patch', readonly=True),
         'sum' : fields.char(string="Commit Hash", size=256, required=True, readonly=True),
         'date' : fields.datetime(string="Revision Date", readonly=True),
@@ -38,6 +33,17 @@ class version(osv.osv):
     }
     
     _sql_constraints = [('unique_sum', 'unique(sum)', 'Patches must be unique!')]
+
+    def init(self, cr):
+        current_versions = self.read(cr, 1, self.search(cr, 1, []), ['id','sum','state']) + \
+                           [{'sum':base_version,'state':'installed'}]
+        # Create non-existing versions in db
+        for rev in set(server_version) - set([x['sum'] for x in current_versions]):
+            self.create(cr, 1, {'sum':rev, 'state':'installed'})
+        # Update existing ones
+        self.write(cr, 1, [x['id'] for x in current_versions \
+                           if x['sum'] in server_version and not x['state'] == 'installed'], \
+                          {'state' : 'installed'})
 
     def _need_restart(self, cr, uid, context=None):
         return os.path.isfile(lock_file) #or bool(self.search(cr, uid, [('state','=','need-restart')], context=context))
@@ -91,9 +97,9 @@ class entity(osv.osv):
     def get_upgrade_status(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
-            return "OpenERP is restarting<br/>to finish upgrade..."
+            return _("OpenERP is restarting<br/>to finish upgrade...")
         if revisions._is_outdated(cr, uid, context=context):
-            return "Major upgrade is available. The synchronization process<br />is disabled while the instance is not upgraded."
+            return _("Major upgrade is available.<br/>The synchronization process is disabled<br/>while the instance is not upgraded.")
         return ""
 
     def upgrade(self, cr, uid, context=None):
@@ -101,8 +107,11 @@ class entity(osv.osv):
         if revisions._need_restart(cr, uid, context=context):
             return (False, "Need restart")
         current_revision = revisions._get_last_revision(cr, uid, context=context)
+        if current_revision: current_revision = current_revision.sum
+        if not (current_revision == server_version[-1] or (current_revision is False and server_version[-1] == base_version)):
+            return (False, (_("Cannot continue while OpenERP Server version is different than database %s version! Try to login/logout again.") % cr.dbname))
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision.sum if current_revision else False)
+        res = proxy.get_next_revisions(self.get_uuid(cr, uid, context=context), current_revision)
         if res[0]:
             revisions._update(cr, uid, res[1].get('revisions', []), context=context)
             return ((res[1]['status'] != 'failed'), res[1]['message'])

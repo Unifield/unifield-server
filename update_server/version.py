@@ -12,6 +12,7 @@ import tools
 import sync_server
 #pp = pprint.PrettyPrinter(indent=4)
 import logging
+from updater import base_version
 
 
 class version(osv.osv):
@@ -48,7 +49,7 @@ class version(osv.osv):
 
     def _compare_with_last_rev(self, cr, uid, entity, rev_sum, context=None):
         # Search the client's revision when exists
-        if rev_sum:
+        if rev_sum and rev_sum != base_version:
             rev_client = self.search(cr, uid, [('sum', '=', rev_sum), ('state', '=', 'confirmed')], limit=1, context=context)
             if not rev_client:
                 return {'status' : 'failed',
