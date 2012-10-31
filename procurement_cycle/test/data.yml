@@ -93,6 +93,7 @@
       - sequence: 20
         min_qty: 0.00
         name: supplier2
+    international_status: itc
 -
     I create a second product, P2
 -
@@ -124,6 +125,7 @@
       - sequence: 20
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
     I create the product P3
 -
@@ -154,6 +156,7 @@
         min_qty: 0.00
         delay: 30
         name: supplier1
+    international_status: itc
 -
     I create the product P4
 -
@@ -183,6 +186,7 @@
         min_qty: 0.00
         delay: 60
         name: supplier1
+    international_status: itc
 -
   In order to check the real stock, I will create four SLoc with Sloc3 and Sloc4 which are children of Sloc2
 -

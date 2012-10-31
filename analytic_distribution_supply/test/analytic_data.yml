@@ -92,6 +92,7 @@
     weight: 0.0
     weight_net: 0.0
     property_account_expense: account_account_expense0
+    international_status: itc
 -
   I create a second product
 -
@@ -123,6 +124,7 @@
     weight: 0.0
     weight_net: 0.0
     property_account_expense: account_account_expense0
+    
 -
   I create a link between 6101 expense account and Operation destination
 -

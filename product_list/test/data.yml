@@ -29,6 +29,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
     I create a second product, P2
 -
@@ -52,6 +53,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
     I create the product P3
 -
@@ -75,6 +77,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
     I create the product P4
 -
@@ -98,6 +101,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
     I create the product P5
 -
@@ -121,6 +125,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
   I create a product list
 -

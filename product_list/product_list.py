@@ -22,6 +22,7 @@
 from osv import osv, fields
 
 import time
+import logging
 
 
 class product_list(osv.osv):
@@ -236,8 +237,13 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
-        'default_code' : fields.char('CODE', size=14),
+        # we can't write the default_code required because it is used in the product addons
+        'default_code' : fields.char('CODE', size=14, select=True),
     }
+
+    _sql_constraints = [
+        ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+    ]
 
 product_product()
 
