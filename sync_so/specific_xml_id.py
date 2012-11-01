@@ -158,7 +158,7 @@ class account_analytic_line(osv.osv):
                 res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center_id, context))
             else:
                 res.append(False)
-        print res
+        return res
         
 account_analytic_line()
 
