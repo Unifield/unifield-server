@@ -216,4 +216,34 @@ class purchase_order_sync(osv.osv):
         res_id = self.write(cr, uid, po_id, default, context=context)
         return True
 
+
+    def out_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
+        if not context:
+            context = {}
+        print "call update in in PO from out in FO", source
+        
+        so_dict = out_info.to_dict()
+        so_po_common = self.pool.get('so.po.common')
+                
+        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
+        so_ref = source + "." + out_info.origin
+        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        po_name = self.browse(cr, uid, po_id, context=context)['name']
+        
+        # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+        in_id = so_po_common.get_in_id(cr, uid, po_name, context)
+        
+        header_result = {}
+        header_result['note'] = out_info.note
+        header_result['min_date'] = out_info.min_date
+
+        #header_result['move_lines'] = so_po_common.get_stock_move_lines(cr, uid, out_info, context)
+        
+        default = {}
+        default.update(header_result)
+        
+        # Update the Incoming Shipment
+        res_id = self.pool.get('stock.picking').write(cr, uid, in_id, default, context=context)
+        return res_id
+
 purchase_order_sync()

@@ -72,6 +72,28 @@ class so_po_common(osv.osv_memory):
             raise Exception, "The original PO does not exist! " + po_ref
         return po_ids[0]
 
+    def get_po_id_by_so_ref(self, cr, uid, so_ref, context):
+        # Get the Id of the original PO to update these info back 
+        if not so_ref:
+            return False
+        if not context:
+            context = {}
+        context.update({'active_test': False})
+        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', so_ref)], context=context)
+        if not po_ids:
+            raise Exception, "The PO is not found for the given FO Ref: " + so_ref
+        return po_ids[0]
+
+    def get_in_id(self, cr, uid, po_ref, context):
+        # Get the Id of the original PO to update these info back 
+        if not po_ref:
+            return False
+
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', po_ref)], context)
+        if not in_ids:
+            raise Exception, "The IN of the PO not found! " + po_ref
+        return in_ids[0]
+
     # Update the next line number for the FO, PO that have been created by the synchro
     def update_next_line_number_fo_po(self, cr, uid, order_id, fo_po_obj, order_line_object, context):
         sequence_id = fo_po_obj.read(cr, uid, [order_id], ['sequence_id'], context=context)[0]['sequence_id'][0]
@@ -319,6 +341,60 @@ class so_po_common(osv.osv_memory):
                     if existing_line not in update_lines:
                         line_result.append((2, existing_line))
                 
+        return line_result 
+
+    def get_stock_move_lines(self, cr, uid, line_values, context):
+        line_result = []
+        update_lines = []
+        
+        line_vals_dict = line_values.to_dict()
+        if 'move_lines' not in line_vals_dict:
+            return []
+        
+        for line in line_values.move_lines:
+            values = {}
+            line_dict = line.to_dict()
+
+            if 'product_uom' in line_dict:
+                values['product_uom'] = self.get_uom_id(cr, uid, line.product_uom, context=context)
+
+            if 'line_number' in line_dict:
+                values['line_number'] = line.line_number
+                
+            if 'product_qty' in line_dict: # come from the PO
+                values['product_qty'] = line.product_qty
+            
+            if 'expired_date' in line_dict:
+                values['expired_date'] = line.expired_date 
+
+            if 'asset_id' in line_dict:
+                values['asset_id'] = line.asset_id
+                 
+            if 'date_expected' in line_dict:
+                values['date_expected'] = line.date_expected
+                
+            if 'product_id' in line_dict:
+                rec_id = self.get_record_id(cr, uid, context, line.product_id)
+                if rec_id:
+                    values['product_id'] = rec_id
+                    values['name'] = line.product_id.name
+
+            '''
+            TO DO: The update or create of Stock moves for the IN must be discussed carefully, because the stock move lines in an IN at Project
+            have no direct mapping with the OUT from Coordo, so the changes in OUT make it difficult to find the corresponding moves in IN at Project
+            in order to update or create new moves (in case of split), but also in case of back orders!
+            So the following block needs to be reviewed and checked for the case of update/create of the move lines.
+            '''
+#            line_ids = False
+#            if line_ids and line_ids[0]:
+#                if for_update: # add this value to the list of update, then remove
+#                    update_lines.append(line_ids[0])
+#                    
+#                line_result.append((1, line_ids[0], values))
+#            else:     
+#                line_result.append((0, 0, values))
+            
+        # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!    
         return line_result 
 
     def get_uom_id(self, cr, uid, uom_name, context=None):
