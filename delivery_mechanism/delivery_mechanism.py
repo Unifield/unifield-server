@@ -194,10 +194,10 @@ class stock_move(osv.osv):
                             for move in self.browse(cr, uid, move_ids, context=context):
                                 # move from draft picking or standard picking
                                 if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
-                                    integrity_check.append(move.id)
+                                    integrity_check.append(move)
                             # return the first one matching
-                            if integrity_check:
-                                res[obj.id] = integrity_check[0]
+                            if integrity_check and all([not move.processed_stock_move for move in integrity_check]):
+                                res[obj.id] = integrity_check[0].id
             else:
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'
@@ -493,7 +493,8 @@ class stock_picking(osv.osv):
                                 update_out = True
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
                         values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
-                        move_obj.write(cr, uid, [move.id], values, context=context)
+                        # mark the done IN stock as processed
+                        move_obj.write(cr, uid, [move.id], dict(values, processed_stock_move=True), context=context)
                         done_moves.append(move.id)
 
                     else:
@@ -503,7 +504,8 @@ class stock_picking(osv.osv):
                         values.update({'state': 'assigned'})
                         # average computation - empty if not average
                         values.update(average_values)
-                        new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
+                        # mark the done IN stock as processed
+                        new_move = move_obj.copy(cr, uid, move.id, dict(values, processed_stock_move=True), context=dict(context, keepLineNumber=True))
                         done_moves.append(new_move)
                         if out_move_id:
                             new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=dict(context, keepLineNumber=True))
@@ -534,6 +536,7 @@ class stock_picking(osv.osv):
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
+                                'processed_stock_move': True, # will not be updated by the synchro anymore if already completely or partially processed
                                 }
                     # average computation - empty if not average
                     defaults.update(average_values)

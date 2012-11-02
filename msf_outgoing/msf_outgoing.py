@@ -2305,6 +2305,7 @@ class stock_picking(osv.osv):
                     # copy the stock move and set the quantity
                     values = {'picking_id': new_pick_id,
                               'product_qty': partial['product_qty'],
+                              'product_uos_qty': partial['product_qty'],
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
@@ -2313,9 +2314,9 @@ class stock_picking(osv.osv):
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
                     new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                     
-                # decrement the initial move, cannot be less than zero
+                # decrement the initial move, cannot be less than zero and mark the stock move as processed - will not be updated by delivery_mech anymore
                 initial_qty = max(initial_qty - count, 0)
-                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty}, context=context)
+                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty, 'product_uos_qty': initial_qty, 'processed_stock_move': True}, context=context)
                 
             # confirm the new picking ticket
             wf_service = netsvc.LocalService("workflow")
@@ -2409,6 +2410,7 @@ class stock_picking(osv.osv):
                         first = False
                         # update existing move
                         values = {'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2419,6 +2421,7 @@ class stock_picking(osv.osv):
                         # copy the stock move and set the quantity
                         values = {'state': 'assigned',
                                   'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}

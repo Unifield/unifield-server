@@ -386,6 +386,7 @@ class stock_picking(osv.osv):
                             'state': 'assigned',
                             'move_dest_id': False,
                             'price_unit': move.price_unit,
+                            'processed_stock_move': True,
                     }
                     prodlot_id = prodlot_ids[move.id]
                     if prodlot_id:
@@ -398,6 +399,7 @@ class stock_picking(osv.osv):
                         {
                             'product_qty' : move.product_qty - product_qty,
                             'product_uos_qty':move.product_qty - product_qty, #TODO: put correct uos_qty
+                            'processed_stock_move': True,
                         })
 
             if new_picking:
@@ -627,10 +629,12 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
+        'processed_stock_move': fields.boolean(string='Processed Stock Move'),
     }
     
     _defaults = {
         'location_dest_id': _default_location_destination,
+        'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
     }
     
     def create(self, cr, uid, vals, context=None):
