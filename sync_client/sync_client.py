@@ -453,12 +453,15 @@ class entity(osv.osv, Thread):
     """ 
         Pull message
     """
-    def pull_message(self, cr, uid, log=None, context=None):
+    def pull_message(self, cr, uid, recover=False, log=None, context=None):
         (status, log) = self.startSync(cr, uid, log=log, step='msg_pull', context=context)
         if status is None: return False
 
         context = context or {}
         entity = self.get_entity(cr, uid, context)
+        if recover:
+            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+            proxy.message_recover_from_seq(entity.identifier, entity.message_last, context)
 
         if not entity.state in ['init']:
             self.stateSync('null', log, 'msg_pull', message="Not valid state: " + entity.state)
@@ -501,15 +504,7 @@ class entity(osv.osv, Thread):
             
     def execute_message(self, cr, uid, context):
         return self.pool.get('sync.client.message_received').execute(cr, uid, context=context)
-      
-    """
-        Backup after recovery : set all message after seq as not send, then pull message
-    """
-    def recover_message(self, cr, uid, context=None):
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        entity = self.get_entity(cr, uid, context)
-        proxy.message_recover_from_seq(entity.identifier, entity.message_last, context)
-        return self.pull_message(cr, uid, context=context)
+
 
     """
         SYNC process : usefull for scheduling 
