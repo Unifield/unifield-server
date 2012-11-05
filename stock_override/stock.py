@@ -144,10 +144,12 @@ class stock_picking(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'from_wkf': fields.boolean('From wkf'),
+        'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
-                'from_wkf': lambda *a: False,
+                 'from_wkf': lambda *a: False,
+                 'update_version_from_in_stock_picking': 0,
                  }
     
     def create(self, cr, uid, vals, context=None):
