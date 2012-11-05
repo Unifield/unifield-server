@@ -173,7 +173,7 @@ class stock_move(osv.osv):
             
         res = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = False
+            res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
                 if obj.purchase_line_id:
@@ -199,7 +199,9 @@ class stock_move(osv.osv):
                             if integrity_check:
                                 if all([not move.processed_stock_move for move in integrity_check]):
                                     # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
-                                    res[obj.id] = integrity_check[0].id
+                                    res[obj.id]['move_id'] = integrity_check[0].id
+                                    res[obj.id]['picking_id'] = integrity_check[0].picking_id.id
+                                    res[obj.id]['picking_version'] = integrity_check[0].picking_id.update_version_from_in_stock_picking
                                 else:
                                     # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
                                     self.log(cr, uid, integrity_check[0].id, _('The Stock Move %s from %s has already been processed and is therefore not updated.')%(integrity_check[0].name, integrity_check[0].picking_id.name))
@@ -323,7 +325,7 @@ class stock_picking(osv.osv):
         product_obj = self.pool.get('product.product')
         # first look for a move - we search even if we get out_move because out_move
         # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
-        out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]
+        out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]['move_id']
         if not out_move_id and out_move:
             # copy existing out_move with move properties: - update the name of the stock move
             # the state is confirmed, we dont know if available yet - should be in input location before stock
@@ -399,6 +401,8 @@ class stock_picking(osv.osv):
             done_moves = []
             # average price computation
             product_avail = {}
+            # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
+            update_pick_version = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
@@ -411,7 +415,8 @@ class stock_picking(osv.osv):
                 # initial qty
                 initial_qty = move.product_qty
                 # corresponding out move
-                out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                out_move_id = mirror_data['move_id']
                 # update out flag
                 update_out = (len(partial_datas[pick.id][move.id]) > 1)
                 # average price computation, new values - should be the same for every partial
@@ -558,6 +563,12 @@ class stock_picking(osv.osv):
                     if not update_out:
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
+                        # no split nor product change but out is updated (qty increased), force update out for update out picking
+                        update_out = True
+                
+                # we got an update_out, we set the flag
+                update_pick_version = update_pick_version or (update_out and mirror_data['picking_id'])
+                
             # clean the picking object - removing lines with 0 qty - force unlink
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             # no need of skipResequencing as the picking cannot be draft
@@ -578,6 +589,10 @@ class stock_picking(osv.osv):
             else:
                 self.action_move(cr, uid, [pick.id])
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+            
+            # update the out version
+            if update_pick_version:
+                self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
     
