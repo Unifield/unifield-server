@@ -57,9 +57,18 @@ class bank_statement(osv.osv):
         """
         bank = self.browse(cr, uid, res_id) # search the fake xml_id
         model_data_obj = self.pool.get('ir.model.data')
-        data_ids = model_data_obj.search(cr, uid, [('model', '=', self._name), ('res_id', '=', res_id), ('module', '=', 'sd')], limit=1, context=context)
+        
+        # This one is to get the prefix of the bank_statement for retrieval of the correct xml_id       
+        prefix = get_valid_xml_name('bank_statement', (bank.instance_id.code or 'noinstance'), (bank.name or 'nobank'))
+        
+        data_ids = model_data_obj.search(cr, uid, [('model', '=', self._name), ('res_id', '=', res_id), ('name', 'like', prefix), ('module', '=', 'sd')], limit=1, context=context)
         xml_id = self.get_unique_xml_name(cr, uid, False, self._table, res_id)
-        model_data_obj.write(cr, uid, data_ids, {'name': xml_id}, context=context)
+        
+        existing_xml_id = False
+        if data_ids:
+            existing_xml_id = model_data_obj.read(cr, uid, data_ids[0], ['name'])['name']
+        if xml_id != existing_xml_id:
+            model_data_obj.write(cr, uid, data_ids, {'name': xml_id}, context=context)
         return True
 
     def button_open_bank(self, cr, uid, ids, context=None):
