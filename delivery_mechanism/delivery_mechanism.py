@@ -196,8 +196,14 @@ class stock_move(osv.osv):
                                 if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
                                     integrity_check.append(move)
                             # return the first one matching
-                            if integrity_check and all([not move.processed_stock_move for move in integrity_check]):
-                                res[obj.id] = integrity_check[0].id
+                            if integrity_check:
+                                if all([not move.processed_stock_move for move in integrity_check]):
+                                    # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
+                                    res[obj.id] = integrity_check[0].id
+                                else:
+                                    # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
+                                    self.log(cr, uid, integrity_check[0].id, _('The Stock Move %s from %s has already been processed and is therefore not updated.')%(integrity_check[0].name, integrity_check[0].picking_id.name))
+                                    
             else:
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'
