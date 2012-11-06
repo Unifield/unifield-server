@@ -32,6 +32,7 @@ import decimal_precision as dp
 import logging
 from os import path
 
+from msf_partner import PARTNER_TYPE
 
 #----------------------------------------------------------
 # Procurement Order
@@ -124,6 +125,44 @@ class stock_picking(osv.osv):
         state_list['done'] = _('is closed.')
         
         return state_list
+    
+    def _get_stock_picking_from_partner_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of res.partner objects for which values have changed
+        
+        return the list of ids of stock.picking objects which need to get their fields updated
+        
+        self is res.partner object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        pick_obj = self.pool.get('stock.picking')
+        result = pick_obj.search(cr, uid, [('partner_id2', 'in', ids)], context=context)
+        return result
+    
+    def _vals_get_stock_ov(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
+            if obj.partner_id2:
+                result[obj.id].update({'partner_type_stock_picking': obj.partner_id2.partner_type})
+            
+        return result
 
     _columns = {
         'state': fields.selection([
@@ -145,6 +184,9 @@ class stock_picking(osv.osv):
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'from_wkf': fields.boolean('From wkf'),
         'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
+        'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
+                                                      store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
+                                                              'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
