@@ -332,31 +332,8 @@
         <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
 
         <!-- Invoice control -->
-        <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
-        <delete id="purchase.menu_procurement_management_pending_invoice" model="ir.ui.menu" />
-        <delete id="purchase.menu_purchase_line_order_draft" model="ir.ui.menu" />
-
-        <!-- Products -->
-        <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
-        <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
-        <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
-
-        <!-- Picking on Purchase menu -->
-        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
-        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
-<!--        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" /> -->
-
-        <!-- Purchase configuration menu -->
-<!--
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
--->
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
+        
 <!--
         <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
         <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
