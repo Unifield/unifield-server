@@ -1,6 +1,6 @@
 default_code,name,type,subtype,procure_method,supply_method,categ_id,international_status,active,batch_management,perishable,uom_id,nomen_manda_0,nomen_manda_1,nomen_manda_2,nomen_manda_3
-DORADIDA15T,"DIDANOSINE (ddI), 150 mg, chewable dispersable tab.",Stockable Product,Single Item,Make to Order,Buy,Oral drugs,Approved (ITC),TRUE,FALSE,TRUE,PCE,MED,Drugs,Oral drugs,Didanosine
-DINJCEFA1V-,"CEFAZOLIN, 1 g, (IV), powder, vial",Stockable Product,Single Item,Make to Order,Buy,Injectable drugs,Approved (ITC),TRUE,TRUE,TRUE,PCE,MED,Drugs,Injectable drugs,Cefazolin
-ADAPCABL1S-,"(computer) CABLE, SERIAL interface for two PC (fem/fem)",Stockable Product,Single Item,Make to Order,Buy,Data processing,Approved (ITC),TRUE,FALSE,FALSE,PCE,LOG,Administration,Data processing,"Cable, dataprocessing"
-ADAPCABL2S-,"(computer) CABLE, SERIAL interface PC/Mini-M, female/male",Stockable Product,Single Item,Make to Order,Buy,Data processing,Approved (ITC),TRUE,FALSE,FALSE,PCE,LOG,Administration,Data processing,"Cable, dataprocessing"
-ADAPCART02-,(printer Laserwriter ) CARTRIDGE INKING,Stockable Product,Single Item,Make to Order,Buy,Data processing,Approved (ITC),TRUE,FALSE,FALSE,PCE,LOG,Administration,Data processing,Cartridge
+DORADIDA15T,"DIDANOSINE (ddI), 150 mg, chewable dispersable tab.",Stockable Product,Single Item,Make to Order,Buy,Oral drugs,ITC,TRUE,FALSE,TRUE,PCE,MED,Drugs,Oral drugs,Didanosine
+DINJCEFA1V-,"CEFAZOLIN, 1 g, (IV), powder, vial",Stockable Product,Single Item,Make to Order,Buy,Injectable drugs,ITC,TRUE,TRUE,TRUE,PCE,MED,Drugs,Injectable drugs,Cefazolin
+ADAPCABL1S-,"(computer) CABLE, SERIAL interface for two PC (fem/fem)",Stockable Product,Single Item,Make to Order,Buy,Data processing,ITC,TRUE,FALSE,FALSE,PCE,LOG,Administration,Data processing,"Cable, dataprocessing"
+ADAPCABL2S-,"(computer) CABLE, SERIAL interface PC/Mini-M, female/male",Stockable Product,Single Item,Make to Order,Buy,Data processing,ITC,TRUE,FALSE,FALSE,PCE,LOG,Administration,Data processing,"Cable, dataprocessing"
+ADAPCART02-,(printer Laserwriter ) CARTRIDGE INKING,Stockable Product,Single Item,Make to Order,Buy,Data processing,ITC,TRUE,FALSE,FALSE,PCE,LOG,Administration,Data processing,Cartridge

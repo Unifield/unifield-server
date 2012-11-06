@@ -80,10 +80,15 @@ class message_to_send(osv.osv):
 
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sent' : fields.boolean('Sent ?', readonly=True),
+        'generate_message' : fields.boolean("Generate By system", readonly=True),
         'remote_call':fields.text('Method to call', required = True,readonly=True),
         'arguments':fields.text('Arguments of the method', required = True, readonly=True),
         'destination_name':fields.char('Destination Name', size=256, required = True, readonly=True),
         'sent_date' : fields.datetime('Sent Date', readonly=True),
+    }
+    
+    _defaults = {
+        'generate_message' : False,
     }
 
 

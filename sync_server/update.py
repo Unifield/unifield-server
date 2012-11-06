@@ -91,7 +91,7 @@ class update(osv.osv):
         return (True, "Push session validated")
         
     def _get_next_sequence(self, cr, uid, context=None):
-        return self.get_last_sequence(cr, uid, context) + 1
+        return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.server.update'))
     
     def get_last_sequence(self, cr, uid, context=None):
         ids = self.search(cr, uid, [('sequence', '!=', 0)], order="sequence desc, id desc", limit=1, context=context)
@@ -202,7 +202,8 @@ class update(osv.osv):
         if forced_values:
             fields += list(set(forced_values.keys()) - set(fields))
             obj = self.pool.get(update.model)
-            columns = dict(obj._inherit_fields.items() + \
+            inherit_fields = [(item[0], item[1][2]) for item in obj._inherit_fields.items()]
+            columns = dict(inherit_fields + \
                            obj._columns.items())
             for k, v in forced_values.items():
                 if columns[k]._type == 'boolean':

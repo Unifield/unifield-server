@@ -187,14 +187,21 @@ class ir_model_data_sync(osv.osv):
         res_id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
         if values.get('module') and values.get('module') != 'sd':
             name = "%s_%s" % (values.get('module'), values.get('name'))
+            duplicate_ids  = super(ir_model_data_sync, self).search(cr, uid, [('module', '=', 'sd'), ('name', '=', name)], context=context)
+            if duplicate_ids:
+                record = self.get_record(cr, uid, 'sd.' + name, context)
             args = {
                     'noupdate' : False, # don't set to True otherwise import won't work
                     'model' : values.get('model'),
                     'module' : 'sd',#model._module,
                     'name' : name,
-                    'res_id' : values.get('res_id'),
+                    'res_id' : duplicate_ids and record or values.get('res_id'),
                     }
-            super(ir_model_data_sync, self).create(cr, uid, args, context=context)
+            
+            if duplicate_ids:
+                super(ir_model_data_sync, self).write(cr, uid, duplicate_ids, args, context=context)
+            else:
+                super(ir_model_data_sync, self).create(cr, uid, args, context=context)
     
         return res_id
 
@@ -342,6 +349,85 @@ def write(model,cr,uid,ids,values,context=None):
     
 orm.write = write
 
+def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name):
+    if destination_name == instance_name or not destination_name:
+        print "destination name", destination_name
+        return
+        
+    message_data = {
+            'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
+            'sent' : False,
+            'generate_message' : True,
+            'remote_call': self._name + ".message_unlink",
+            'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
+            'destination_name': destination_name
+    }
+    print "message_data", message_data
+    self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
+    instance_obj = self.pool.get('msf.instance')
+    instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
+    if instance_ids:
+        instance_record = instance_obj.browse(cr, uid, instance_ids[0])
+        parent = instance_record.parent_id and instance_record.parent_id.instance or False
+        if parent:
+            generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name)
+
+old_unlink = orm.unlink
+
+from sync_common.common import format_data_per_id 
+
+def unlink(self, cr, uid, ids, context=None):
+    if isinstance(ids, (int, long)):
+        ids = [ids]
+    old_uid = uid
+    uid = 1
+    if hasattr(self, '_delete_owner_field'):
+        instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
+        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
+        data = self.read(cr, uid, ids, [self._delete_owner_field], context=context)
+        data = format_data_per_id(data)
+        destination_names = self.get_destination_name(cr, uid, ids, self._delete_owner_field, context=context)
+        print 'Sync delete', xml_ids
+        import pprint
+        pprint.pprint(data)
+        for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
+            xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
+            generate_message_for_destination(self, cr, uid, destination_names[i], xml_id, instance_name)
+            
+    #raise osv.except_osv(_('Error !'), "Cannot Delete")
+    uid = old_uid
+    old_unlink(self, cr, uid, ids, context=None)
+    return True
+    
+orm.unlink = unlink
+
+def message_unlink(model, cr, uid, source, unlink_info, context=None):
+    model_name = unlink_info.model
+    xml_id =  unlink_info.xml_id
+    if model_name != model._name:
+        return "Model not consistant"
+        
+    res_id = model.pool.get("ir.model.data").get_record(cr, uid, xml_id, context=context)
+    if not res_id:
+        return "Object %s %s does not exist in destination" % (model_name, xml_id)
+    
+    return old_unlink(model, cr, uid, [res_id], context=context)
+    
+    
+orm.message_unlink = message_unlink
+
+"""
+How to activate deletion on the branch. 
+Need to specify field to extract the final destination of the delete. 
+All record that are on the path of the current instance to destination will be deleted 
+(only if destination is lower in the instance tree then the current instance)
+
+class partner(osv.osv):
+    _inherit = 'res.partner'
+    _delete_owner_field = 'ref'
+
+partner()
+"""
 #record modification of m2o if the corresponding o2m is modified
 def modif_o2m(model,cr,uid,id,values,context=None):
     fields_ref = model.fields_get(cr, uid, context=context)
@@ -370,13 +456,15 @@ def link_with_ir_model(model, cr, uid, id, context=None):
         return res_id
     
     entity_uuid = model.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+    xml_name = model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id)
+    assert '.' not in xml_name, "The unique xml name must not contains dots: "+xml_name
     args = {
         'noupdate' : False, # don't set to True otherwise import won't work
         'model' : model._name,
         'module' : 'sd',#model._module,
-        'name' : model.get_unique_xml_name(cr, uid, entity_uuid, model._table, id).replace('.', ''),
+        'name' : xml_name,
         'res_id' : id,
-        'last_modification' : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'last_modification' : fields.datetime.now(),
     }
     return model_data_pool.create(cr,uid,args,context=context)
 
@@ -395,6 +483,7 @@ def import_data(model, cr, uid, fields, datas, mode='init', current_module='', n
     return res
     
 osv.osv.import_data = import_data 
+
 
 
 def get_destination_name(self, cr, uid, ids, dest_field, context=None):

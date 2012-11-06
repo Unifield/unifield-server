@@ -94,7 +94,7 @@ class sync_manager(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
     def recover_message(self, cr, uid, ids, context=None):
-        res = self.pool.get('sync.client.entity').recover_message(cr, uid, context=context)
+        res = self.pool.get('sync.client.entity').pull_message(cr, uid, recover=True, context=context)
         if not res:
             raise osv.except_osv(_('Error !'), 'You cannot perform this action now.')
         return {'type': 'ir.actions.act_window_close'}
