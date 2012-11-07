@@ -21,7 +21,6 @@
 
 import pooler
 import tools
-from updater import do_upgrade
 
 # When rejecting a password, hide the traceback
 class ExceptionNoTb(Exception):
@@ -32,12 +31,7 @@ class ExceptionNoTb(Exception):
 def login(db, login, password):
     pool = pooler.get_pool(db)
     user_obj = pool.get('res.users')
-    res = user_obj.login(db, login, password)
-    if not res:
-        return res
-    if not do_upgrade(db):
-        return False
-    return res
+    return user_obj.login(db, login, password)
 
 def check_super(passwd):
     if passwd == tools.config['admin_passwd']:
@@ -49,4 +43,3 @@ def check(db, uid, passwd):
     pool = pooler.get_pool(db)
     user_obj = pool.get('res.users')
     return user_obj.check(db, uid, passwd)
-

@@ -249,7 +249,7 @@ def quit(restart=False):
     if not restart:
         sys.exit(0)
     else:
-	os.execv(sys.executable, [sys.executable] + sys.argv)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')

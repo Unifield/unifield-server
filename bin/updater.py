@@ -1,3 +1,7 @@
+"""
+Unifield module to upgrade the instance to a next version of Unifield
+Beware that we expect to be in the bin/ directory to proceed!!
+"""
 from __future__ import with_statement
 import re
 import os
@@ -13,11 +17,9 @@ if sys.version_info >= (2, 6, 6):
 else:
     from zipfile266 import ZipFile, ZipInfo
 
-__all__ = ['server_version', 'server_version_file', 'parse_version_file', 'get_server_version', 'add_versions', 'new_version_file', \
-           'do_update', 'update_path', 'lock_file', 'update_dir', 'log_file', 'base_version', 'do_upgrade', 'restart_required']
+__all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
 restart_required = False
-## Warning: we expect to be in the bin/ directory to proceed!!
 log_file = 'updater.log'
 lock_file = 'update.lock'
 update_dir = '.update'
@@ -27,24 +29,36 @@ new_version_file = os.path.join(update_dir, 'update-list.txt')
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
 re_version = re.compile(r'^\s*([a-fA-F0-9]{'+str(md5hex_size)+r'}\b)')
+logger = logging.getLogger('updater')
 
-## Set the lock file to make OpenERP run into do_update method against normal execution
+def restart_server():
+    """Restart OpenERP server"""
+    global restart_required
+    logger.info("Restaring OpenERP Server...")
+    restart_required = True
+
+def isset_lock(file=None):
+    """Check if server lock file is set"""
+    if file is None: file = lock_file
+    return os.path.isfile(lock_file)
+
 def set_lock(file=None):
+    """Set the lock file to make OpenERP run into do_update method against normal execution"""
     if file is None: file = lock_file
     with open(file, "w") as f:
         f.write(os.getcwd())
 
-## Remove the lock
 def unset_lock(file=None):
+    """Remove the lock"""
     global exec_path
     if file is None: file = lock_file
     with open(file, "r") as f:
         exec_path = f.read().strip()
     os.unlink(file)
 
-## Short method to parse a "version file"
-## Basically, a file where each line starts with the sum of a patch
 def parse_version_file(filepath):
+    """Short method to parse a "version file"
+    Basically, a file where each line starts with the sum of a patch"""
     assert os.path.isfile(filepath), "The file `%s' must be a file!" % filepath
     versions = []
     with open(filepath, 'r') as f:
@@ -58,23 +72,23 @@ def parse_version_file(filepath):
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
     return versions
 
-## Autocmatically get the current versions of the server
 def get_server_version():
-    ## Get a special key 88888888888888888888888888888888 for default value if no server version can be found
+    """Autocratically get the current versions of the server
+    Get a special key 88888888888888888888888888888888 for default value if no server version can be found"""
     if not os.path.exists(server_version_file):
         return [base_version]
     return parse_version_file(server_version_file)
 
-## Set server version with new versions
 def add_versions(versions, filepath=server_version_file):
+    """Set server version with new versions"""
     if not versions:
         return
     with open(filepath, 'a') as f:
         for ver in versions:
             f.write((" ".join([unicode(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+"\n")
 
-## Unix-like find
 def find(path):
+    """Unix-like find"""
     files = os.listdir(path)
     for name in iter(files):
         abspath = path+os.path.sep+name
@@ -82,8 +96,8 @@ def find(path):
             files.extend( map(lambda x:name+os.path.sep+x, os.listdir(abspath)) )
     return files
 
-## Python free rmtree
 def rmtree(files, path=None, verbose=False):
+    """Python free rmtree"""
     if path is None and isinstance(files, str):
         path, files = files, find(files)
     for f in reversed(files):
@@ -100,13 +114,13 @@ def now():
 
 log = sys.stderr
 
-## Define way to forward logs
 def warn(*args):
+    """Define way to forward logs"""
     global log
     log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+"\n")
 
-## Try...Resume...
 def Try(command):
+    """Try...Resume..."""
     try:
         command()
     except BaseException, e:
@@ -116,17 +130,33 @@ def Try(command):
         return True
 
 
-## Just like -u base / -u all
+
+##############################################################################
+##                                                                          ##
+##  Main methods of updater modules                                         ##
+##                                                                          ##
+##############################################################################
+
+
 def base_module_upgrade(cr, pool, upgrade_now=False):
+    """Just like -u base / -u all.
+    Arguments are:
+     * cr: cursor to the database
+     * pool: pool of the same db
+     * (optional) upgrade_now: False by default, on True, it will launch the process right now"""
     modules = pool.get('ir.module.module')
     base_ids = modules.search(cr, 1, [('name', '=', 'base')])
+    #base_ids = modules.search(cr, 1, [('name', '=', 'sync_client')]) #for tests
     modules.button_upgrade(cr, 1, base_ids)
     if upgrade_now:
+        logger.info("Starting base upgrade process")
         pool.get('base.module.upgrade').upgrade_module(cr, 1, [])
 
 
-## Real update of the server (before normal OpenERP execution)
 def do_update():
+    """Real update of the server (before normal OpenERP execution).
+    This function is triggered when OpenERP starts. When it finishes, it restart OpenERP automatically.
+    On failure, the lock file is deleted and OpenERP files are rollbacked to their previous state."""
     if os.path.exists(lock_file) and Try(unset_lock):
         global log
         ## Move logs log file
@@ -177,7 +207,7 @@ def do_update():
             add_versions([(x, application_time) for x in revisions])
             warn("Update successful.")
             warn("Revisions added: ", ", ".join(revisions))
-            ## No database update here. I prefered to set modules to update just after the preparation
+            ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
         except BaseException, e:
             warn("Update failure!")
@@ -200,8 +230,8 @@ def do_update():
         os.execv(sys.executable, [sys.executable] + args)
 
 
-## If server starts normally, this step will fix the paths with the configured path in config rc
 def update_path():
+    """If server starts normally, this step will fix the paths with the configured path in config rc"""
     from tools import config
     for v in ('log_file', 'lock_file', 'update_dir', 'server_version_file', 'new_version_file'):
         globals()[v] = os.path.join(config['root_path'], globals()[v])
@@ -209,14 +239,13 @@ def update_path():
     server_version = get_server_version()
 
 
-## Prepare patches for an upgrade of the server
 def do_prepare(cr, revision_ids):
+    """Prepare patches for an upgrade of the server and set the lock file"""
     if not revision_ids:
         return ('failure', 'Nothing to do.', {})
     import pooler
     pool = pooler.get_pool(cr.dbname)
     version = pool.get('sync_client.version')
-    logger = logging.getLogger('updater')
 
     # Make an update temporary path
     path = update_dir
@@ -239,6 +268,7 @@ def do_prepare(cr, revision_ids):
     new_revisions = []
     corrupt = []
     missing = []
+    need_restart = []
     for rev in version.browse(cr, 1, revision_ids):
         # Check presence of the patch
         if not rev.patch:
@@ -259,11 +289,19 @@ def do_prepare(cr, revision_ids):
                 f.close()
             # Store to list of updates
             new_revisions.append( (rev.sum, ("[%s] %s - %s" % (rev.importance, rev.date, rev.name))) )
-            # Fix the flag of the pending patches
-            version.write(cr, 1, rev.id, {'state':'need-restart','applied':now()})
-    # Restore patch states when error occurs
-    if missing or corrupt:
-        version.write(cr, 1, revision_ids, {'state':'not-installed'})
+            if rev.state == 'not-installed':
+                need_restart.append(rev.id)
+    # Remove corrupted patches
+    if corrupt:
+        corrupt_ids = [x.id for x in corrupt]
+        version.write(cr, 1, corrupt_ids, {'patch':False})
+        if len(corrupt) == 1: message = "One file you downloaded seems to be corrupt:\n\n%s"
+        else: message = "Some files you downloaded seem to be corrupt:\n\n%s"
+        values = ""
+        for rev in corrupt:
+            values += " - %s (sum expected: %s)\n" % ((rev.name or 'unknown'), rev.sum)
+        logger.error(message % values)
+        return ('corrupt', message, values)
     # Complaints about missing patches
     if missing:
         if len(missing) == 1:
@@ -279,31 +317,17 @@ def do_prepare(cr, revision_ids):
                 values += " - %s (check sum: %s)\n" % ((rev.name or 'unknown'), rev.sum)
         logger.error(message % values)
         return ('missing', message, values)
-    # Remove corrupted patches
-    if corrupt:
-        corrupt_ids = [x.id for x in corrupt]
-        version.write(cr, 1, corrupt_ids, {'patch':False})
-        if len(corrupt) == 1: message = "One file you downloaded seems to be corrupt:\n\n%s"
-        else: message = "Some files you downloaded seem to be corrupt:\n\n%s"
-        values = ""
-        for rev in corrupt:
-            values += " - %s (sum expected: %s)\n" % ((rev.name or 'unknown'), rev.sum)
-        logger.error(message % values)
-        return ('corrupt', message, values)
+    # Fix the flag of the pending patches
+    version.write(cr, 1, need_restart, {'state':'need-restart'})
     # Make a lock file to make OpenERP able to detect an update
     set_lock()
     add_versions(new_revisions, new_version_file)
-    message = "Server update prepared. Need to restart to complete the upgrade."
-    logger.info(message)
-    return ('success', message, {})
+    logger.info("Server update prepared. Need to restart to complete the upgrade.")
+    return ('success', 'Restart required', {})
 
 
-## Start upgrade process (typically called by login method and restore)
-def do_upgrade(dbname):
-    import tools
-    import pooler
-    cr = pooler.get_db(dbname).cursor()
-    pool = pooler.get_pool(dbname)
+def do_upgrade(cr, pool):
+    """Start upgrade process (called by login method and restore)"""
     versions = pool.get('sync_client.version')
     if versions is None:
         return True
@@ -314,18 +338,17 @@ def do_upgrade(dbname):
     db_lack_versions = set(server_version) - set(db_versions) - set([base_version])
 
     if server_lack_versions:
-        revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))])
+        revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
+            import tools
             os.chdir( tools.config['root_path'] )
-            global restart_required
-            restart_required = True
-        return False
+            restart_server()
+        else:
+            return False
 
     elif db_lack_versions:
         base_module_upgrade(cr, pool, upgrade_now=True)
-        cr.commit()
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
     return True
-

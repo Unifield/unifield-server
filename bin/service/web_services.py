@@ -253,8 +253,6 @@ class db(netsvc.ExportService):
 
         self._unset_pg_psw_env_var()
 
-        updater.do_upgrade(db_name)
-
         return True
 
     def exp_rename(self, old_name, new_name):
