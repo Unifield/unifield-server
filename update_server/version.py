@@ -7,12 +7,13 @@ Created on 9 juil. 2012
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 import tools
 #import pprint
 import sync_server
 #pp = pprint.PrettyPrinter(indent=4)
 import logging
-from updater import base_version
+from updater import *
 
 
 class version(osv.osv):
@@ -75,8 +76,13 @@ class version(osv.osv):
             if rev['importance'] == 'required':
                 status = 'failed'
 
+        if len(revisions) == 1:
+            message = _("There is one revision available.")
+        else:
+            message = _("There are %d revisions available.") % len(revisions)
+
         return {'status' : status,
-                'message' : "There is %s update(s) available" % len(revisions),
+                'message' : message,
                 'revisions' : revisions}
         
     def _get_zip(self, cr, uid, sum, context=None):

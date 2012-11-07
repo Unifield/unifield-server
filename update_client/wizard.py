@@ -6,7 +6,7 @@ from tools.translate import _
 import tools
 from tools import config
 import logging
-import updater
+from updater import *
 
 class upgrade(osv.osv_memory):
     _name = 'sync_client.upgrade'
@@ -16,7 +16,7 @@ class upgrade(osv.osv_memory):
 
     def restart(self, cr, uid, ids, context=None):
         os.chdir( config['root_path'] )
-        updater.restart_required = True
+        restart_server()
         return {'type': 'ir.actions.act_window_close'}
 
     def download(self, cr, uid, ids, context=None):
@@ -56,7 +56,7 @@ class upgrade(osv.osv_memory):
             }, context=context)
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
         ## Prepare
-        (status, message, values) = updater.do_prepare(cr, next_revisions)
+        (status, message, values) = do_prepare(cr, next_revisions)
         wiz_value = {'message':_(message)}
         if status in ('corrupt','missing'):
             wiz_value['state'] = 'need-download'
@@ -68,7 +68,7 @@ class upgrade(osv.osv_memory):
         res = self.write(cr, uid, ids, wiz_value, context=context)
         if status != 'success':
             return res
-        updater.base_module_upgrade(cr, self.pool)
+        base_module_upgrade(cr, self.pool)
         cr.commit()
         ## Restart automatically
         return self.restart(cr, uid, ids, context=context)
