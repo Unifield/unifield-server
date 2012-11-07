@@ -103,7 +103,10 @@ class sale_order_sync(osv.osv):
         for line in line_ids:
             temp = self.browse(cr, uid, line).client_order_ref
             if not temp: # only issue a write if the client_order_reference is not yet set!
-                res_id = self.write(cr, uid, line, {'client_order_ref': ref} , context=context)
+                if ref:
+                    res_id = self.write(cr, uid, line, {'client_order_ref': ref} , context=context)
+                elif client_order_ref:
+                    res_id = self.write(cr, uid, line, {'client_order_ref': client_order_ref} , context=context)
             
         return True
 
