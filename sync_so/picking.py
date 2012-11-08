@@ -40,16 +40,44 @@ class stock_picking(osv.osv):
     def out_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
         '''
         method called when the OUT at coordo level updates the corresponding IN at project level
+        
+        
+        fields used for info and consistency check only:
+        'update_version_from_in_stock_picking': 
+        'partner_type_stock_picking'
+        
+        fields used for update:
+        'move_lines/product_qty' -> used for update product_qty AND product_uos_qty
+        
+        dates:
+        - we update both date and date_expected at line level. date_expected is sychronized because is the expected date
+          and date is also synchronized for consistency. Date is updated with actual date when the picking is processed to done (action_done@stock_move) 
+        
+        rules:
+        - we do not updated objects with state 'done'
+        - 
         '''
         if context is None:
             context = {}
         print "call update In in PO from Out in FO", source
         
-        so_dict = out_info.to_dict()
+        pick_dict = out_info.to_dict()
+        
         # objects
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
+        
+        # update header
+        
+        
+        # update lines
+        if 'move_lines' in pick_dict:
+            for line in pick_dict['move_lines']:
                 
+                pass
+        
+        pp.pprint(pick_dict)
+        return True
         # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
         so_ref = source + "." + out_info.origin
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
