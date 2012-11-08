@@ -163,12 +163,32 @@ class account_analytic_line(osv.osv):
         for data in cost_center_data:
             if data['cost_center_id']:
                 cost_center_id = data['cost_center_id'][0]
-                print cost_center_id
                 res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center_id, context))
             else:
                 res.append(False)
         return res
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if not 'cost_center_id' in vals:
+            return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+
+        instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
+        new_cost_center_id = vals['cost_center_id']
+        xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
+        line_data = format_data_per_id(self.read(cr, uid, ids, ['cost_center_id'], context=context))
+        for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
+            xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
+            old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
+            if not old_cost_center_id == new_cost_center_id:
+                destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+                generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name)
+
+        return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
         
+
 account_analytic_line()
 
 class product_product(osv.osv):
@@ -204,6 +224,5 @@ class product_product(osv.osv):
                     'last_modification' : now,
                 })
         return res
-        
 
 product_product()
