@@ -556,9 +556,9 @@ class orm_template(object):
 
         def check_type(field_type):
             if field_type == 'float':
-                return 0.0
+                return '0.0'
             elif field_type == 'integer':
-                return 0
+                return '0'
             elif field_type == 'boolean':
                 return 'False'
             return ''
