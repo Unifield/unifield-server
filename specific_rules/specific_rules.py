@@ -1670,7 +1670,6 @@ CREATE OR REPLACE view report_stock_inventory AS (
         UF-1546: This method is to remove the lines that have quantity = 0 from the list view
         '''
         res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
-        res = False
         if self._name == 'report.stock.inventory' and res:
             for index, data in enumerate(res):
                 if 'product_qty' in data and data['product_qty'] == 0.0:
