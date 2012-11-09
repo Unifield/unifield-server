@@ -1664,6 +1664,18 @@ CREATE OR REPLACE view report_stock_inventory AS (
             fields = []
         context['with_expiry'] = 1
         return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
+    
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+        '''
+        UF-1546: This method is to remove the lines that have quantity = 0 from the list view
+        '''
+        res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        if self._name == 'report.stock.inventory':
+            for index, data in enumerate(res):
+                if data['product_qty'] == 0.0:
+                    del res[index] # Remove this line from the res
+        return res
+    
 report_stock_inventory()
 
 class product_product(osv.osv):
