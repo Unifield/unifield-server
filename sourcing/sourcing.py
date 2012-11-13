@@ -1034,13 +1034,13 @@ class procurement_order(osv.osv):
             if procurement.product_id.type == 'consu':
                 location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
             elif procurement.product_id.type == 'service_recep':
-                location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
+                location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
             else:
                 wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
                 if wh_ids:
                     location_id = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
                 else:
-                    location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
+                    location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
 
         if purchase_ids:
             line_values = values['order_line'][0][2]

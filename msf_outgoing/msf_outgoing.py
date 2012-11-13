@@ -3105,7 +3105,8 @@ class sale_order(osv.osv):
         proc_id = kwargs['proc_id']
         order = kwargs['order']
         if order.procurement_request :
-            pick_id = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)[0].move_id.picking_id.id
+            proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
+            pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
                 wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
 
