@@ -53,8 +53,21 @@ class update(osv.osv):
     }
 
     _order = 'sequence, create_date desc'
-    
+
     def unfold_package(self, cr, uid, entity, packet, context=None):
+        """
+            Called by receive_package() when client instance try to push its updates.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param packet : dict : update format packet.
+                    Please see sync_server.sync_server.receive_package to get the full documentation
+                    of the format.
+            @param context : context
+
+            @return : True or raise an error
+        """
         data = {
             'source': entity.id,
             'model': packet['model'],
@@ -62,9 +75,11 @@ class update(osv.osv):
             'rule_id': packet['rule_id'],
             'fields': packet['fields']
         }
-        
+
         for update in packet['load']:
+            # Try to detect old packet type and raise an error
             if 'owner' not in update: raise Exception, "Packet field 'owner' absent"
+            # Otherwise, get the id of the owner or 0 if absent from sync.server.entity list
             else:
                 owner = self.pool.get('sync.server.entity').search(cr, uid, [('name','=',update['owner'])], limit=1)
                 owner = owner[0] if owner else 0
@@ -73,27 +88,55 @@ class update(osv.osv):
                 'values': update['values'],
                 'owner': owner,
             })
+            # Avoid adding two time the same update
+            # by searching packets that have the same values
             ids = self.search(cr, uid, [('version', '=', data['version']), 
                                         ('session_id', '=', data['session_id']),
                                         ('owner','=', data['owner']),
                                         ('values', '=', data['values'])], context=context)
-            if ids: #Avoid add two time the same update.
+            if ids:
                 continue
             self.create(cr, uid, data,context=context)
-            
+
         return True
-    
-    
+
     def confirm_updates(self, cr, uid, entity, session_id, context=None):
+        """
+            Called by confirm_update during client instance push process. It set a unique sequence number for all the sent packages.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param session_id : string : the synchronization session_id given at the beginning of the session by get_model_sync.
+            @param context : context
+
+            @return : True or raise an error
+        """
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
         sequence = self._get_next_sequence(cr, uid, context=context)
         self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
         return (True, "Push session validated")
         
     def _get_next_sequence(self, cr, uid, context=None):
+        """
+            Get a unique sequence number for the next sequence id
+            @param cr : cr
+            @param uid : uid
+            @param context : context
+
+            @return : int : sequence number
+        """
         return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.server.update'))
     
     def get_last_sequence(self, cr, uid, context=None):
+        """
+            Get the id of the last sequence number in the database
+            @param cr : cr
+            @param uid : uid
+            @param context : context
+
+            @return : int : sequence number or 0 if no update exists
+        """
         ids = self.search(cr, uid, [('sequence', '!=', 0)], order="sequence desc, id desc", limit=1, context=context)
         if not ids:
             return 0
@@ -101,6 +144,27 @@ class update(osv.osv):
         return seq
     
     def get_update_to_send(self,cr, uid, entity, update_ids, recover=False, context=None):
+        """
+            Called by get_package during the client instance pull process.
+            Return a list of browse_record with only the updates that really need to be send to the client.
+            It filter according to the rules:
+             - rule's directionality is 'up' and update source is a child of entity
+             - rule's directionality is 'down' and update source is an ancestor of entity
+             - rule's directionality is 'bidirectional' (synchronize every where)
+             - rule's directionality is 'bi-private': only the ancestors of update's owner field value
+               are allowed to get the update.
+            Then, it checks the groups.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param update_ids : list of update ids
+            @param recover : flag : if set to True, update of the same source than the entity who try to pull
+                are sent to the entity. Default is False.
+            @param context : context
+
+            @return : list of browse record of the updates to send
+        """
         update_to_send = []
         ancestor = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, entity.id, context=context) 
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
@@ -127,10 +191,43 @@ class update(osv.osv):
         return update_to_send
 
     def _save_puller(self, cr, uid, ids, context, entity_id):
+        """
+            Save the client entity for each update.
+
+            @param cr : cr
+            @param uid : uid
+            @param ids : ids
+            @param context : context
+            @param entity_id : int : client instance entity id
+
+            @return : True on success
+        """
         return self.write(cr, 1, ids, {'puller_ids': [(4, entity_id)]}, context)
 
-    
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
+        """
+            Called by XML RPC get_update method to give a list of updates to pull to the client instance.
+
+            With optimization, SQL requests to search are made to avoid extra time to find updates.
+            The updates are filtered and truncated before being sent to the client.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param last_seq : integer : Last sequence of update receive succefully in the previous pull session. 
+            @param offset : integer : Number of record receive after the last_seq
+            @param max_size : integer : The number of record max per packet. 
+            @param max_seq : interger : The sequence max that the update the sync server send to the client in get_max_sequence, to tell the server don't send me
+                    newer update then the one already their when the pull session start.
+            @param recover : flag : If set to True, will recover self-owned package too.
+            @param context : context
+
+            @return :
+                    Please see sync_server.sync_server.receive_package to get the full documentation
+                    of the format.
+                     - None when no update need to be sent
+                     - A dict that format a packet for the client
+        """
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:
             return None

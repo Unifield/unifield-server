@@ -512,8 +512,8 @@ class sync_manager(osv.osv):
     def confirm_update(self, cr, uid, entity, session_id, context=None):
         """
             Synchronizing entity confirm that all the packet of this session are sent
-            @param entity: string : uuid of the synchronizing entity
-            @param session_id: string : the synchronization session_id given at the begining of the session by get_model_sync.
+            @param entity : string : uuid of the synchronizing entity
+            @param session_id : string : the synchronization session_id given at the beginning of the session by get_model_sync.
             @return tuple : (a, b) 
                 a : boolean : is True is if the call is succesfull, False otherwise
                 b : string : an infromative message
@@ -527,7 +527,7 @@ class sync_manager(osv.osv):
             Give to the synchronizing client the sequence of the last complete push, the pull session will pull until this sequence.
             @param entity: string : uuid of the synchronizing entity
             @return a tuple (a, b)
-                a : boolean :is True is if the call is succesfull, False otherwise
+                a : boolean : is True is if the call is succesfull, False otherwise
                 b : integer : is the sequence number of the last successfull push session by any entity
         
         """
@@ -536,13 +536,14 @@ class sync_manager(osv.osv):
     @check_validated
     def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         """
-            @param entity: string : uuid of the synchronizing entity
-            @param last_seq: integer : Last sequence of update receive succefully in the previous pull session. 
-            @param offset: integer : Number of record receive after the last_seq
-            @param max_size: integer : The number of record max per packet. 
-            @param max_seq: interger : The sequence max that the update the sync server send to the client in get_max_sequence, to tell the server don't send me
+            @param entity : string : uuid of the synchronizing entity
+            @param last_seq : integer : Last sequence of update receive succefully in the previous pull session. 
+            @param offset : integer : Number of record receive after the last_seq
+            @param max_size : integer : The number of record max per packet. 
+            @param max_seq : interger : The sequence max that the update the sync server send to the client in get_max_sequence, to tell the server don't send me
                             newer update then the one already their when the pull session start.
-            @return tuple :(a,b,c) 
+            @param recover : flag : If set to True, will recover self-owned package too.
+            @return tuple : (a,b,c) 
                 a : boolean : True if the call is successfull, False otherwise
                 b : dictionnary : Package if there is some update to send remaining, False otherwise
                 c : boolean : False if there is some update to send remaining, True otherwise
@@ -552,6 +553,8 @@ class sync_manager(osv.osv):
                                     'source_name' : string : source entity's name
                                     'fields' : string : list of fields to include, format : a list of string, same format as the one needed for export data
                                     'sequence' : update's sequence number, a integer
+                                    'offset' : update's server offset, used to get next updates
+                                    'rule' : rule sequence number (for ordering/grouping)
                                     'fallback_values' : update_master.rule_id.fallback_values
                                     'load' : a list of dict that contain record's values and record's version
                                             [{

@@ -48,8 +48,21 @@ class message(osv.osv):
     _logger = logging.getLogger('sync.server')
 
     def unfold_package(self, cr, uid, entity, package, context=None):
+        """
+            unfold_package() is called by the XML RPC method receive_package() when the client instance try to push
+            packages on the synchro server.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param size : dict : package with datas
+            @param context : context
+
+            @return : tuple : (a,b)
+                     a : boolean : is True is if the call is succesfull, False otherwise
+                     b : string : is an error message if a is False
+        """
         for data in package:
-            
             destination = self._get_destination(cr, uid, data['dest'], context=context)
             if not destination:
                 sync_log(self, 'destination %s does not exist' % data['dest'])
@@ -68,6 +81,16 @@ class message(osv.osv):
         return (True, "Message received")
     
     def _get_destination(self, cr, uid, dest, context=None):
+        """
+            Private destination getter.
+
+            @param cr : cr
+            @param uid : uid
+            @param dest : str : destination name
+            @param context : context
+
+            @return : id of the entity which have name matching the argument
+        """
         entity_obj = self.pool.get('sync.server.entity')
         ids = entity_obj.get(cr, uid, name=dest, context=context)
         if ids:
@@ -76,6 +99,18 @@ class message(osv.osv):
             return False
         
     def get_message_packet(self, cr, uid, entity, size, context=None):
+        """
+            get_message_packet() is called by the XML RPC method get_message() when the client instance try to pull its
+            messages.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param size : The number of message max per request.
+            @param context : context
+
+            @return : list : list of messages
+        """
         ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
         if not ids:
             return False
@@ -93,12 +128,35 @@ class message(osv.osv):
         return packet
     
     def set_message_as_received(self, cr, uid, entity, message_uuids, context=None):
+        """
+            Called by XML RPC method message_received when the client instance pull messages and it succeeds.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param message_uuids : list of message uuids to mark as 'sent'
+            @param context : context
+
+            @return : True or raise an error
+        """
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         return True
         
     def recovery(self, cr, uid, entity, start_seq, context=None):
+        """
+            Mark all messages owned by the entity itself as not sent.
+            Called by message_received() when client instance try pull all messages, including its self-owned messages.
+
+            @param cr : cr
+            @param uid : uid
+            @param entity : browse_record(sync.server.entity) : client instance entity
+            @param start_seq : starting sequence of the messages
+            @param context : context
+
+            @return : True or raise an error
+        """
         ids = self.search(cr, uid, [('sequence', '>', start_seq), ('destination', '=', entity.id)], context=context)
         if ids:
             self._logger.debug("recovery %s" % ids)

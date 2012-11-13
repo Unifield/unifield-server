@@ -116,6 +116,7 @@ class purchase_order_sync(osv.osv):
         po_id = self.check_existing_po(cr, uid, source, so_dict)
         header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, False, False, context)
         header_result['push_fo'] = True
+        header_result['origin'] = so_dict.get('name', False)
 
         default = {}
         default.update(header_result)
