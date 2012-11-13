@@ -622,6 +622,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             vals = {
                 'move_id': move_id,
                 'date': date,
+                'document_date': date,
                 'journal_id': journal_id,
                 'period_id': period_ids[0],
             }
