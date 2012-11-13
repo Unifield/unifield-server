@@ -947,7 +947,7 @@ class shipment(osv.osv):
                 invoice_vals['account_id'] = company.intermission_default_counterpart.id
                 journal_type = 'intermission'
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
-                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                            ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
             invoice_vals['journal_id'] = journal_ids[0]
@@ -3102,7 +3102,8 @@ class sale_order(osv.osv):
         proc_id = kwargs['proc_id']
         order = kwargs['order']
         if order.procurement_request :
-            pick_id = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)[0].move_id.picking_id.id
+            proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
+            pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
                 wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
 

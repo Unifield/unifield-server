@@ -41,6 +41,7 @@
         name: supplier1
     donation_expense_account: account_account_expense1
     property_account_expense: account_account_expense0
+    international_status: itc
 -
   I create an in-kind donation PO with this partner
 -

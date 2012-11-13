@@ -79,6 +79,7 @@
       - sequence: 30
         min_qty: 0.00
         name: supplier3
+    international_status: itc
 -
     I create a second product, P2
 -
@@ -109,6 +110,7 @@
       - sequence: 20
         min_qty: 0.00
         name: supplier1
+    international_status: itc
 -
     I create the product P3
 -
@@ -136,6 +138,7 @@
       - sequence: 10
         min_qty: 0.00
         name: supplier3
+    international_status: itc
 -
   I create a new fiscal year
 -

@@ -5,7 +5,7 @@
             <field name="name">sale.order.tree</field>
             <field name="model">sale.order</field>
             <field name="type">tree</field>
-            <field name="priority">2</field>
+            <field name="priority">99</field>
             <field name="arch" type="xml">
                 <tree string="Sales Orders" >
                     <field name="name"/>
@@ -14,11 +14,12 @@
                     <field name="partner_id"/>
                     <field name="user_id" />
                     <field name="picked_rate" widget="progressbar"/>
-                    <field name="invoiced_rate" widget="progressbar"/>
+                    <!-- Remove invoiced rate because it's always N/A 
+                    <field name="invoiced_rate" widget="progressbar"/>-->
                     <field name="amount_untaxed" sum="Total Tax Excluded"/>
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="procurement_request" invisible="1"/>
-                    <field name="state"/>
+                    <field name="state" string="State" />
                 </tree>
             </field>
         </record>

@@ -63,7 +63,7 @@ class account_commitment(osv.osv):
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
-        'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Automatic - ESC supplier')], string="Type", readonly=True),
+        'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'notes': fields.text(string="Comment"),
     }

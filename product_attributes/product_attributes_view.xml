@@ -58,8 +58,10 @@
                    <group colspan="4" col="6">
                         <group colspan="1" col="2">
                             <separator string="Codes" colspan="2"/>
-                            <field name="default_code" required="1" string="Code"/>
+                            <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" 
+                            attrs="{'readonly':[('duplicate_ok','=',False)]}" />
                             <field name="old_code"/>
+                            <field name="duplicate_ok" invisible="1"/>
                         </group>
                         <group colspan="4" col="2">
                             <separator string="Description" colspan="2"/>
@@ -90,13 +92,15 @@
                                 <separator string="Weights" colspan="2"/>
                                 <field digits="(14, 3)" name="volume" attrs="{'readonly':[('type','=','service')]}"/>
                                 <field digits="(14, 3)" name="weight" attrs="{'readonly':[('type','=','service')]}"/>
+                                <!-- uf-1544
                                 <field digits="(14, 3)" name="weight_net" attrs="{'readonly':[('type','=','service')]}"/>
+                                 -->
                             </group>
 
                             <group colspan="2" col="2" name="status">
                                 <separator string="Status" colspan="2"/>
                                 <field name="categ_id" readonly="1"/>
-                                <field name="international_status"/>
+                                <field name="international_status" required="1"/>
                                 <field name="state"/>
                                 <field name="active"/>
                             </group>
@@ -118,6 +122,7 @@
                                 <field name="sterilized" colspan="2"/>
                                 <field name="single_use" colspan="2"/>
                                 <field name="narcotic" colspan="2"/>
+                                <field name="controlled_substance" colspan="2"/>
                                 <separator string="Transport" colspan="2"/>
                                 <field name="dangerous_goods" colspan="2"/>
                                 <field name="un_code" colspan="2"/>
@@ -125,9 +130,11 @@
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
                                 <field name="justification_code_id" colspan="2"/>
-                                <field name="med_device_class" colspan="2"/>
-                                <field name="gmdn_code" colspan="2"/>
-                                <field name="gmdn_description" colspan="2"/>
+                                <!-- uf-1544
+                                <field name="med_device_class" colspan="2" />
+                                <field name="gmdn_code" colspan="2" />
+                                <field name="gmdn_description" colspan="2" />
+                                 -->
                                 <field name="closed_article" colspan="2"/>
                                 <separator string="Import restrictions" colspan="4"/>
                                 <field name="restricted_country" colspan="2"/>
@@ -151,7 +158,8 @@
                                 <field name="abc_class" colspan="2"/>
                             </group>
                             <separator string="Code remarks section" colspan="4"/>
-                            <group colspan="2" col="2">
+                            <!-- to remove : uf-1544
+                            <group colspan="2" col="2" >
                                 <field name="section_code_ids" colspan="2" nolabel="1">
                                     <tree string="Section Code" editable="top">
                                         <field name="code" nolabel="1" readonly="1"/>
@@ -160,6 +168,7 @@
                                     <form/>
                                 </field>
                             </group>
+                             -->
                             <group colspan="2" col="2">
                                 <field name="supply_source_ids" colspan="2" nolabel="1"/>
                             </group>
@@ -170,7 +179,7 @@
                         <page string="Suppliers">
                             <field colspan="4" name="seller_ids" nolabel="1">
                                 <form>
-                                    <field name="name"/>
+                                    <field name="name" on_change="onchange_supplier(name)" attrs="{'readonly': [('catalogue_id', '!=', False)]}" />
                                     <field name="sequence"/>
                                     <field name="product_code" />
                                     <field name="product_name" />
@@ -233,7 +242,8 @@
                         </page>
                         <page string="Descriptions">
                             <separator string="Description"/>
-                            <field name="product_catalog_page"/>
+                            <!-- uf-1544 invisible-->
+                            <field name="product_catalog_page" invisible="1"/>
                             <field name="product_catalog_path"/>
                             <separator string="Description"/>
                             <field colspan="4" name="description" nolabel="1"/>
@@ -249,10 +259,13 @@
                                 <field name="sale_delay" attrs="{'readonly':[('sale_ok','=',0)]}" invisible="True" />
                                 <field name="produce_delay" invisible="True" />
                             </group>
+                            <!-- uf-1544 invisible-->
                             <group colspan="2" col="2" name="store">
+                            </group>
+                            <!-- 
                                 <separator string="Storage Localisation" colspan="2"/>
                                 <field name="loc_indic" attrs="{'readonly':[('type','=','service')]}" />
-                            </group>
+                             -->
 
                         </page>
                     </notebook>

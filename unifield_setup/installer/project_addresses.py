@@ -172,12 +172,13 @@ class project_addresses(osv.osv_memory):
             if bill_address:
                 address_obj.unlink(cr, uid, bill_address[0], context=context)
         
-        self.pool.get('res.company').write(cr, uid, [company.id], {'name': company.instance_id.instance}, context=context)
+        if company.instance_id:
+            self.pool.get('res.company').write(cr, uid, [company.id], {'name': company.instance_id.instance}, context=context)
 
-        c = context.copy()
-        c.update({'from_config': True})
-        self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance,
-                                                                              'partner_type': 'internal'}, context=c)
+            c = context.copy()
+            c.update({'from_config': True})
+            self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance,
+                                                                                  'partner_type': 'internal'}, context=c)
 
         return res
     

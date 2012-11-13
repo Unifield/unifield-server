@@ -27,4 +27,5 @@ import purchase_order
 import sale_order
 import initial_stock_inventory
 import stock_cost_reevaluation
+import product_list
 import check_line

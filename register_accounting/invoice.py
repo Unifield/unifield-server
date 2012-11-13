@@ -32,6 +32,9 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def button_dummy_compute_total(self, cr, uid, ids, context=None):
+        return True
+
     def _get_virtual_fields(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get fields in order to transform them into 'virtual fields" (kind of field duplicity):
@@ -45,6 +48,20 @@ class account_invoice(osv.osv):
             'virtual_partner_id': inv.partner_id.id or False}
         return res
 
+    def _is_direct_invoice(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        If this invoice is linked to a register line with "register_line_ids", so this is a direct invoice.
+        Otherwise return False
+        """
+        if not context:
+            context = {}
+        res = {}
+        for inv in self.browse(cr, uid, ids):
+            res[inv.id] = False
+            if inv.register_line_ids:
+                res[inv.id] = True
+        return res
+
     _columns = {
         'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, 
@@ -55,6 +72,8 @@ class account_invoice(osv.osv):
             type='many2one', relation="account.account", readonly=True),
         'virtual_partner_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Supplier",
             type='many2one', relation="res.partner", readonly=True),
+        'is_direct_invoice': fields.function(_is_direct_invoice, method=True, store=False, type='boolean', readonly=True, string="Is direct invoice?"),
+        'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
     }
 
     def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):
@@ -255,6 +274,20 @@ class account_invoice(osv.osv):
                 self.check_down_payments(cr, uid, inv.id)
         return res
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Delete register line if this invoice is a Direct Invoice
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids):
+            if inv.is_direct_invoice and inv.register_line_ids:
+                if not context.get('from_register', False):
+                    self.pool.get('account.bank.statement.line').unlink(cr, uid, [x.id for x in inv.register_line_ids], {'from_direct_invoice': True})
+        return super(account_invoice, self).unlink(cr, uid, ids, context)
+
 account_invoice()
 
 class account_invoice_line(osv.osv):
@@ -274,6 +307,72 @@ class account_invoice_line(osv.osv):
     _columns = {
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='string'),
     }
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        If invoice is a Direct Invoice and is in draft state:
+         - compute total amount (check_total field)
+         - write total to the register line
+        """
+        if not context:
+            context = {}
+        res = super(account_invoice_line, self).create(cr, uid, vals, context)
+        if vals.get('invoice_id', False):
+            invoice = self.pool.get('account.invoice').browse(cr, uid, vals.get('invoice_id'))
+            if invoice and invoice.is_direct_invoice and invoice.state == 'draft':
+                amount = 0.0
+                for l in invoice.invoice_line:
+                    amount += l.price_subtotal
+                amount += vals.get('price_unit', 0.0) * vals.get('quantity', 0.0)
+                self.pool.get('account.invoice').write(cr, uid, [invoice.id], {'check_total': amount}, context)
+                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invoice.register_line_ids], {'amount': -1 * amount}, context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        If invoice is a Direct Invoice and is in draft state:
+         - compute total amount (check_total field)
+         - write total to the register line
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_invoice_line, self).write(cr, uid, ids, vals, context)
+        for invl in self.browse(cr, uid, ids):
+            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
+                amount = 0.0
+                for l in invl.invoice_id.invoice_line:
+                    amount += l.price_subtotal
+                self.pool.get('account.invoice').write(cr, uid, [invl.invoice_id.id], {'check_total': amount}, context)
+                self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in invl.invoice_id.register_line_ids], {'amount': -1 * amount}, context)
+        return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        If invoice is a Direct Invoice and is in draft state:
+         - compute total amount (check_total field)
+         - write total to the register line
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Fetch all invoice_id to check
+        direct_invoice_ids = []
+        for invl in self.browse(cr, uid, ids):
+            if invl.invoice_id and invl.invoice_id.is_direct_invoice and invl.invoice_id.state == 'draft':
+                direct_invoice_ids.append(invl.invoice_id.id)
+        # Normal behaviour
+        res = super(account_invoice_line, self).unlink(cr, uid, ids, context)
+        # See all direct invoice
+        for inv in self.pool.get('account.invoice').browse(cr, uid, direct_invoice_ids):
+            amount = 0.0
+            for l in inv.invoice_line:
+                amount += l.price_subtotal
+            self.pool.get('account.invoice').write(cr, uid, [inv.id], {'check_total': amount}, context)
+            self.pool.get('account.bank.statement.line').write(cr, uid, [x.id for x in inv.register_line_ids], {'amount': -1 * amount}, context)
+        return res
 
 account_invoice_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

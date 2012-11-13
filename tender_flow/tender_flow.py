@@ -723,13 +723,13 @@ class procurement_order(osv.osv):
             if procurement.product_id.type == 'consu':
                 values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
             elif procurement.product_id.type == 'service_recep':
-                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_location', 'stock_location_service')[1]
+                values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
             else:
                 wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
                 if wh_ids:
                     values['location_id'] = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
                 else:
-                    values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_service')[1]
+                    values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
         
         return values
     
@@ -936,7 +936,7 @@ class ir_values(osv.osv):
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
         new_values = values
         
-        po_accepted_values = {'client_action_multi': ['ir_open_purchase_order_follow_up', 
+        po_accepted_values = {'client_action_multi': ['Order Follow Up',
                                                       'action_view_purchase_order_group'],
                               'client_print_multi': ['Purchase Order (Merged)', 
                                                      'Purchase Order',

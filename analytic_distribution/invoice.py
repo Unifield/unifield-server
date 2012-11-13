@@ -35,6 +35,14 @@ class account_invoice(osv.osv):
         res['analytic_distribution_id'] = x.get('analytic_distribution_id', False)
         return res
 
+    def button_analytic_distribution_from_direct_inv(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        st_line_id = self.read(cr, uid, context['active_id'], ['register_line_ids'])
+        context['from_direct_inv'] = st_line_id.get('register_line_ids') and st_line_id['register_line_ids'][0] 
+        return self.button_analytic_distribution(cr, uid, ids, context)
+    
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice
@@ -61,6 +69,8 @@ class account_invoice(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
         }
+        if context.get('from_direct_inv'):
+            vals['from_direct_inv'] = context['from_direct_inv']
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
         # Create the wizard
@@ -92,6 +102,13 @@ class account_invoice_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
     }
+    
+    def button_analytic_distribution_from_direct_inv_line(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        acc_inv_line = self.browse(cr, uid, context['active_id'])
+        context['from_direct_inv'] = acc_inv_line.invoice_id and acc_inv_line.invoice_id.register_line_ids and acc_inv_line.invoice_id.register_line_ids[0].id
+        return self.button_analytic_distribution(cr, uid, ids, context)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -127,6 +144,8 @@ class account_invoice_line(osv.osv):
             'state': 'dispatch',
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
         }
+        if context.get('from_direct_inv'):
+            vals['from_direct_inv'] = context['from_direct_inv']
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
         # Create the wizard

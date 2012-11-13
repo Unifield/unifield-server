@@ -409,13 +409,15 @@ class stock_cost_reevaluation(osv.osv):
     
     def copy(self, cr, uid, ids, default=None, context=None):
         '''
-        Set the state to 'draft'
+        Set the state to 'draft' and the creation date to the current date
         '''
         if not default:
             default = {}
             
         if not 'state' in default:
             default.update({'state': 'draft'})
+
+        default.update({'date': time.strftime('%Y-%m-%d')})
             
         return super(stock_cost_reevaluation, self).copy(cr, uid, ids, default=default, context=context)
     

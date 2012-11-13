@@ -27,7 +27,6 @@ from tools.translate import _
 from datetime import datetime
 import decimal_precision as dp
 import time
-import netsvc
 from ..register_tools import open_register_view
 from ..register_tools import _get_date_in_period
 
@@ -57,6 +56,18 @@ class wizard_account_invoice(osv.osv):
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
+
+    def check_analytic_distribution(self, cr, uid, ids):
+        """
+        Check that all line have a valid analytic distribution state
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for w in self.browse(cr, uid, ids):
+            for l in w.invoice_line:
+                if l.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is not valid for this line: %s') % (l.name or '',))
+        return True
 
     def compute_wizard(self, cr, uid, ids, context=None):
         """
@@ -89,6 +100,7 @@ class wizard_account_invoice(osv.osv):
         """
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
+        self.check_analytic_distribution(cr, uid, ids)
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
         for val in inv:
@@ -129,15 +141,10 @@ class wizard_account_invoice(osv.osv):
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id'][0]], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
         vals.update({'date_invoice': vals['date_invoice'] or time.strftime('%Y-%m-%d')})
+        vals.update({'register_posting_date': vals['register_posting_date'] or time.strftime('%Y-%m-%d')})
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
-        
-        # Approve invoice
-        netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', inv_id, 'invoice_open', cr)
-       
-        # Make an invoice number
-        inv_number = inv_obj.read(cr, uid, inv_id, ['number'])['number']
         
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {
@@ -150,7 +157,7 @@ class wizard_account_invoice(osv.osv):
             'invoice_id': inv_id,
             'partner_type': 'res.partner,%d'%(vals['partner_id'], ),
             'statement_id': inv['register_id'][0],
-            'name': inv_number,
+            'name': 'Direct Invoice',
         })
         
         # Temp post the line

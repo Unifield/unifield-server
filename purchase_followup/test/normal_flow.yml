@@ -44,6 +44,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
+    international_status: itc
 -
   I create a new Purchase order
 -

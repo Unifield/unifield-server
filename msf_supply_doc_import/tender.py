@@ -62,6 +62,8 @@ class tender(osv.osv):
         '''
         if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
@@ -114,7 +116,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 # Cell 3: UoM
                 uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                 to_write.update({

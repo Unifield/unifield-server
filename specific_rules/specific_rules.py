@@ -1188,6 +1188,16 @@ class stock_inventory(osv.osv):
                         return False
 
         return True
+
+    def copy(self, cr, uid, inventory_id, defaults, context=None):
+        '''
+        Set the creation date of the document to the current date
+        '''
+        if not defaults:
+            defaults = {}
+
+        defaults.update({'date': time.strftime('%Y-%m-%d %H:%M:%S'), 'move_ids': False})
+        return super(stock_inventory, self).copy(cr, uid, inventory_id, defaults, context=context)
         
     _columns = {
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),

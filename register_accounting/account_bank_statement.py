@@ -30,10 +30,12 @@ from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
 from register_tools import create_cashbox_lines
 from register_tools import totally_or_partial_reconciled
+from register_tools import open_register_view
 import time
 from datetime import datetime
 import decimal_precision as dp
 from tools.misc import flatten
+import netsvc
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -798,6 +800,15 @@ class account_bank_statement_line(osv.osv):
         'transfer_amount': lambda *a: 0,
     }
 
+    def return_to_register(self, cr, uid, ids, context=None):
+        """
+        Return to register from which lines come from
+        """
+        st_line = self.browse(cr, uid, ids[0])
+        if st_line and st_line.statement_id:
+            return open_register_view(self, cr, uid, st_line.statement_id.id)
+        raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
+
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
         Create move from the register line
@@ -1119,7 +1130,8 @@ class account_bank_statement_line(osv.osv):
                     'journal_id': st_line.statement_id.journal_id.id,
                     'period_id': st_line.statement_id.period_id.id,
                     'date': st_line.document_date or st_line.date or curr_date,
-                    'name': 'DirectExpense/' + st_line.name,
+                    # name removed from UF-1542 because of a bug from UF-1129
+                    #'name': 'DirectExpense/' + st_line.name,
                     'partner_id': st_line.partner_id.id,
                 }
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
@@ -1292,6 +1304,11 @@ class account_bank_statement_line(osv.osv):
         # Parse register lines
         for stl in self.browse(cr, uid, st_lines):
             if stl.invoice_id:
+                # Approve invoice
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', stl.invoice_id.id, 'invoice_open', cr)
+                # Add name to the register line
+                inv_number = self.pool.get('account.invoice').read(cr, uid, stl.invoice_id.id, ['number'])['number']
+                self.write(cr, uid, [stl.id], {'name': inv_number})
                 # Hard post register line
                 self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
                 # Do reconciliation
@@ -1541,6 +1558,9 @@ class account_bank_statement_line(osv.osv):
                     #    self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
                     #        {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
+            # Delete direct invoice if exists
+            if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
+                self.pool.get('account.invoice').unlink(cr, uid, [st_line.invoice_id.id], {'from_register': True})
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
     def button_advance(self, cr, uid, ids, context=None):
@@ -1597,19 +1617,43 @@ class account_bank_statement_line(osv.osv):
             return False
 
     def button_open_invoices(self, cr, uid, ids, context=None):
+        """
+        Open invoices linked to the register given register lines.
+        To find them, search invoice that move_id is the same as move_line's move_id
+        """
+        # Checks
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
         if not l['imported_invoice_line_ids']:
             raise osv.except_osv(_('Error'), _("No related invoice line"))
+        # Fetch invoices
+        move_ids = []
+        for regl in self.browse(cr, uid, ids):
+            for ml in regl.imported_invoice_line_ids:
+                if ml.move_id:
+                    move_ids.append(ml.move_id.id)
+        inv_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id', 'in', move_ids)])
+        if not inv_ids:
+            raise osv.except_osv(_('Error'), _("No related invoice line"))
+        # Search journal type in order journal_id field not blank @invoice display
+        journal_type = []
+        for inv in self.pool.get('account.invoice').browse(cr, uid, inv_ids):
+            if inv.journal_id and inv.journal_id.type not in journal_type:
+                journal_type.append(inv.journal_id.type)
+        print journal_type
         return {
             'name': "Invoice Lines",
             'type': 'ir.actions.act_window',
-            'res_model': 'account.move.line',
+            'res_model': 'account.invoice',
             'target': 'new',
             'view_mode': 'tree,form',
             'view_type': 'form',
-            'domain': [('id', 'in', l['imported_invoice_line_ids'])]
+            'domain': [('id', 'in', inv_ids)],
+            'context': {'journal_type': journal_type}
         }
-        
 
     def button_open_invoice(self, cr, uid, ids, context=None):
         """
@@ -1620,7 +1664,7 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'direct_supplier_invoice_form'), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])
@@ -1640,7 +1684,9 @@ class account_bank_statement_line(osv.osv):
             {
                 'active_id': ids[0],
                 'type': 'in_invoice',
+                'journal_type': 'purchase',
                 'active_ids': ids,
+                'from_register': True,
             }
         }
 
@@ -1849,3 +1895,4 @@ class ir_values(osv.osv):
         return values
 
 ir_values()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
