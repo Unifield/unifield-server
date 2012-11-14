@@ -772,6 +772,17 @@ class purchase_order(osv.osv):
         (_check_valid_till,
             'You must specify a Valid Till date.',
             ['valid_till']),]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the reference at this step
+        '''
+        if context.get('rfq_ok', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
+        else:
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')})
+
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
