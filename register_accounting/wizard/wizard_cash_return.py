@@ -499,13 +499,15 @@ class wizard_cash_return(osv.osv_memory):
             register = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         journal = register.journal_id
         period_id = register.period_id.id
-        move_name = "Advance return" + "/" + wizard.advance_st_line_id.statement_id.journal_id.code
+        # move name have been deleted by UTP-330 to be consistent with other register lines ' sequence
+        #move_name = "Advance return" + "/" + wizard.advance_st_line_id.statement_id.journal_id.code
         # prepare a move
         move_vals = {
             'journal_id': journal.id,
             'period_id': period_id,
             'date': wizard.date,
-            'name': move_name,
+            # name have been deleted by UTP-330
+            #'name': move_name,
         }
         # create the move
         move_id = move_obj.create(cr, uid, move_vals, context=context)
