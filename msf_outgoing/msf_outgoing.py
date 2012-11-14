@@ -3234,9 +3234,8 @@ class sale_order(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         if picking_id:
             picking_obj.log_picking(cr, uid, [picking_id], context=context)
-        
-        # Launch a first check availability
-        self.pool.get('stock.picking').action_assign(cr, uid, [picking_id], context=context)
+            # Launch a first check availability
+            self.pool.get('stock.picking').action_assign(cr, uid, [picking_id], context=context)
         
         return cond
 
