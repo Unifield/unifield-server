@@ -291,7 +291,7 @@
           <para style="P3">Opening balance: [[ o.balance_start and o.balance_start or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P3">Calculated balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
+          <para style="P3">Theoretical balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
         </td>
       </tr>
       <tr>
