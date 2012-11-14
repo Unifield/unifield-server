@@ -756,9 +756,10 @@ class account_bank_statement_line(osv.osv):
         return res
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register"),
-        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
-        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
