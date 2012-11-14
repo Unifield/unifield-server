@@ -105,7 +105,6 @@ class tender(osv.osv):
     
     _defaults = {'state': 'draft',
                  'internal_state': 'draft',
-                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'tender'),
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
                  'creator': lambda obj, cr, uid, context: uid,
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
@@ -115,6 +114,13 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the reference of the tender at this time
+        '''
+        vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
+        return super(tender, self).create(cr, uid, vals, context=context)
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
