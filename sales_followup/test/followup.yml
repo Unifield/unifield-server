@@ -190,7 +190,7 @@
               assert line.product_available == 'Available (2000.0)', "The product availability is not 'Available (2000.0)' (2/P3)"
               assert line.available_qty == 2000.0, "The available qty is not equal to 2000.00 (2/P3)"
               assert len(line.outgoing_ids) == 1, "Number of outgoing deliveries is different than 1 (2/P3)"
-              assert line.outgoing_status == 'Waiting (1)', "Outgoing status is different than 'Waiting (1)' (2/P3)"
+              assert line.outgoing_status == 'Available (1)', "Outgoing status is different than 'Waiting (1)' (2/P3)"
              
             if line.product_id.id == ref('product4'):
               assert line.sourced_ok == 'Closed', "Sourced is not equal to 'Closed' (2/P4)"
