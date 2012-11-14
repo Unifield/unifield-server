@@ -267,7 +267,7 @@ Created documents : \n'''
                                                                                        'location': location_id,
                                                                                        'compute_child': True,})
             
-        available_stock = product.qty_available - picked_resa.get(product.id)
+        available_stock = product.qty_available + picked_resa.get(product.id)
             
         quantity_on_order = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['confirmed'],
                                                                                               'what': ('in, out'), 
