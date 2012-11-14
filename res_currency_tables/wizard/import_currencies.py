@@ -65,7 +65,7 @@ class import_currencies(osv.osv_memory):
             self._check_periods(cr, uid, wizard.rate_date, context=context)
         
             for line in import_data:
-                if len(line[0]) == 3:
+                if len(line) > 0 and len(line[0]) == 3:
                     # we have a currency ISO code; search it and its rates
                     # update context with active_test = False; otherwise, non-set currencies
                     context.update({'active_test': False})
