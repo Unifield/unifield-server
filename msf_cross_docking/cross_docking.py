@@ -360,11 +360,13 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                                * if the move is an outgoing delivery, picked them from cross-docking
                                * else picked them from the non-stockable location
                             '''
-                            if move.product_id.type == 'consu':
-                                if pick.type == 'out':
+                            if move.product_id.type in ('consu', 'service_recep'):
+                                if move.picking_id.type == 'out':
                                     id_loc_s = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')
-                                else:
+                                elif move.product_id.type == 'consu':
                                     id_loc_s = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+                                else:
+                                    id_loc_s = self.pool.get('stock.location').get_service_location(cr, uid)
                                 move_obj.write(cr, uid, [move_ids], {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
                             else:
                                 move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id,
@@ -404,6 +406,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         if setup.allocation_setup != 'unallocated':
             cross_docking_location = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
         stock_location_input = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        stock_location_service = self.pool.get('stock.location').get_service_location(cr, uid)
         stock_location_non_stockable = self.pool.get('stock.location').search(cr, uid, [('non_stockable_ok', '=', True)])
         if stock_location_non_stockable:
             stock_location_non_stockable = stock_location_non_stockable[0]
@@ -422,9 +425,6 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 var.source_type = None
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
-                if product_type not in ('service_recep', 'service'):
-                    # treat moves towards CROSS DOCKING if NOT SERVICE
-                    values.update({'location_dest_id': cross_docking_location})
             elif var.dest_type == 'to_stock':
                 var.source_type = None
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because
@@ -434,6 +434,8 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 if product_type not in ('service_recep', 'service'):
                     if product_type == 'consu' and stock_location_non_stockable:
                         values.update({'location_dest_id': stock_location_non_stockable})
+                    elif product_type == 'service_recep' and stock_location_service:
+                        values.update({'location_dest_id': stock_location_service})
                     else:
                         # treat moves towards STOCK if NOT SERVICE
                         values.update({'location_dest_id': stock_location_input})
@@ -584,11 +586,13 @@ class stock_move(osv.osv):
                    * if the move is an outgoing delivery, picked them from cross-docking
                    * else picked them from the non-stockable location
                 '''
-                if move.product_id.type == 'consu':
+                if move.product_id.type in ('consu', 'service_recep'):
                     if move.picking_id.type == 'out':
                         id_loc_s = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')
-                    else:
+                    elif move.product_id.type == 'consu':
                         id_loc_s = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+                    else:
+                        id_loc_s = self.pool.get('stock.location').get_service_location(cr, uid)
                     self.write(cr, uid, move.id, {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
                 else:
                     self.write(cr, uid, move.id, {'location_id': move.picking_id.warehouse_id.lot_stock_id.id,
