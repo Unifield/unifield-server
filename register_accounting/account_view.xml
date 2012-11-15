@@ -359,7 +359,7 @@
                     <field name="amount" invisible="1"/>
                     <field name="document_date"/>
                     <field name="date"/>
-                    <field name="sequence"/>
+                    <field name="sequence_for_reference"/>
                     <field name="name" string="Description"/>
                     <field name="ref"/>
                     <field name="account_id"/>
