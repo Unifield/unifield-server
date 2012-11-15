@@ -143,9 +143,10 @@ class account_invoice(osv.osv):
             # Create counterparts and reconcile them
             for el in to_use:
                 # create down payment counterpart on dp account
+                dp_info = self.pool.get('account.move.line').browse(cr, uid, el[0])
                 # first create the move
                 vals = {
-                    'journal_id': inv.journal_id.id,
+                    'journal_id': dp_info.statement_id and dp_info.statement_id.journal_id and dp_info.statement_id.journal_id.id or False,
                     'period_id': inv.period_id.id,
                     'date': inv.date_invoice,
                     'partner_id': inv.partner_id.id,
@@ -161,14 +162,14 @@ class account_invoice(osv.osv):
                     'document_date': inv.document_date,
                 })
                 # create dp counterpart line
-                dp_account = self.pool.get('account.move.line').read(cr, uid, el[0], ['account_id']).get('account_id', False)
+                dp_account = dp_info and dp_info.account_id and dp_info.account_id.id or False
                 debit = 0.0
                 credit = el[1]
                 if amount < 0:
                     credit = 0.0
                     debit = el[1]
                 vals.update({
-                    'account_id': dp_account and dp_account[0] or False,
+                    'account_id': dp_account or False,
                     'debit_currency': debit,
                     'credit_currency': credit,
                 })
