@@ -173,7 +173,7 @@ class stock_move(osv.osv):
             
         res = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0}
+            res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
                 if obj.purchase_line_id:
@@ -202,6 +202,7 @@ class stock_move(osv.osv):
                                     res[obj.id]['move_id'] = integrity_check[0].id
                                     res[obj.id]['picking_id'] = integrity_check[0].picking_id.id
                                     res[obj.id]['picking_version'] = integrity_check[0].picking_id.update_version_from_in_stock_picking
+                                    res[obj.id]['quantity'] = integrity_check[0].product_qty
                                 else:
                                     # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
                                     self.log(cr, uid, integrity_check[0].id, _('The Stock Move %s from %s has already been processed and is therefore not updated.')%(integrity_check[0].name, integrity_check[0].picking_id.name))
@@ -335,6 +336,8 @@ class stock_picking(osv.osv):
                       'product_uos_qty': 0,
                       'product_uom': data_back['product_uom'],
                       'state': 'confirmed',
+                      'prodlot_id': False, # reset batch number
+                      'asset_id': False, # reset asset
                       }
             out_move_id = move_obj.copy(cr, uid, out_move, values, context=context)
         # update quantity
@@ -555,7 +558,9 @@ class stock_picking(osv.osv):
                     # if split happened
                     if update_out:
                         # update out move - quantity is increased, to match the original qty
-                        self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
+                        # diff_qty = quantity originally in OUT move - count
+                        out_diff_qty = mirror_data['quantity'] - count
+                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
