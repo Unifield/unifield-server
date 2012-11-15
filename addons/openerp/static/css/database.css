@@ -22,6 +22,10 @@ form select {
     -webkit-border-radius: 3px;
 }
 
+.fieldcol .readonlyfield {
+   background-color: #EEEEEE;
+}
+
 .fielderror {
     color: red;
 }
