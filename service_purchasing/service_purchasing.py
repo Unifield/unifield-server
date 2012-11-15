@@ -296,18 +296,18 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
     
-    def _check_purchase_category(self, cr, uid, ids, context=None):
-        """
-        Purchase Order of type Category Service should contain only Service Products.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.categ == 'service':
-                for line in obj.order_line:
-                    if not line.product_id or line.product_id.type not in ('service_recep', 'service',):
-                        return False
-        return True
+#    def _check_purchase_category(self, cr, uid, ids, context=None):
+#        """
+#        Purchase Order of type Category Service should contain only Service Products.
+#        """
+#        if context is None:
+#            context = {}
+#        for obj in self.browse(cr, uid, ids, context=context):
+#            if obj.categ == 'service':
+#                for line in obj.order_line:
+#                    if not line.product_id or line.product_id.type not in ('service_recep', 'service',):
+#                        return False
+#        return True
     
     def has_stockable_product(self,cr, uid, ids, *args):
         '''
@@ -320,36 +320,40 @@ class purchase_order(osv.osv):
                     return True
                 
         return result
-    
+     
+#    by QT : Remove the constraint because if you change the Order category from 'Service' to 'Medical' and try to add a non-service product,
+#            the constraint returns False
     _constraints = [
-        (_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
+#        (_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
     ]
     
 purchase_order()
 
 
-class purchase_order_line(osv.osv):
-    '''
-    add constraint
-    '''
-    _inherit = 'purchase.order.line'
-    
-    def _check_purchase_order_category(self, cr, uid, ids, context=None):
-        """
-        Purchase Order of type Category Service should contain only Service Products.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type not in ('service_recep', 'service',) and obj.order_id.categ == 'service':
-                return False
-        return True
-    
-    _constraints = [
-        (_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
-    ]
-    
-purchase_order_line()
+#    by QT : Remove the constraint because if you change the Order category from 'Service' to 'Medical' and try to add a non-service product,
+#            the constraint returns False
+#class purchase_order_line(osv.osv):
+#    '''
+#    add constraint
+#    '''
+#    _inherit = 'purchase.order.line'
+#    
+#    def _check_purchase_order_category(self, cr, uid, ids, context=None):
+#        """
+#        Purchase Order of type Category Service should contain only Service Products.
+#        """
+#        if context is None:
+#            context = {}
+#        for obj in self.browse(cr, uid, ids, context=context):
+#            if obj.product_id.type not in ('service_recep', 'service',) and obj.order_id.categ == 'service':
+#                return False
+#        return True
+#    
+#    _constraints = [
+#        (_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
+#    ]
+#    
+#purchase_order_line()
 
 
 class stock_picking(osv.osv):

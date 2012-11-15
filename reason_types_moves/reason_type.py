@@ -385,7 +385,7 @@ class stock_move(osv.osv):
         '''
         If the picking is in default value, copy the reason type of the picking to the new moves
         '''
-        if 'picking_id' in default and 'reason_type_id' not in default:
+        if default.get('picking_id') and 'reason_type_id' not in default:
             pick = self.pool.get('stock.picking').browse(cr, uid, default.get('picking_id'), context=context)
             default['reason_type_id'] = pick.reason_type_id.id
             

@@ -119,6 +119,7 @@ class purchase_order(osv.osv):
         stock_loc_obj = self.pool.get('stock.location')
         warehouse_obj = self.pool.get('stock.warehouse')
         value = {}
+        message = {}
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cross_loc = False
         if setup.allocation_setup != 'unallocated':
@@ -133,7 +134,26 @@ class purchase_order(osv.osv):
                 value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
             else:
                 value = {'location_id': False}
-        return {'value': value}
+        
+        if ids and categ in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service PO
+            category = categ=='service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if categry == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+                          FROM purchase_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN purchase_order po ON l.order_id = po.id
+                          WHERE (t.type != 'service recep' %s) AND po.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+            res = cr.fetchall()
+            if res:
+                cat_name = categ=='service' and 'Service' or 'Transport'
+                message.update({'title': _('Warning'),
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can purchase only \'%s\' products on a \'%s\' purchase order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+                
+        return {'value': value, 'warning': message}
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):

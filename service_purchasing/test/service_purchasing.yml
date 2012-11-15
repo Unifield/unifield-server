@@ -228,14 +228,14 @@
 
 -
   !python {model: purchase.order}: |
-    from osv.orm import except_orm
+    from osv.osv import except_osv
     po = self.browse(cr, uid, ref("purchase_order_po3"), context=context)
     try:
       po.write({'categ':'service'}, context=context)
-    except except_orm as e:
+    except except_osv as e:
       # ok the constraint is triggered
       pass
     else:
-      assert False, 'The constraint: "Purchase Order of type Category Service should contain only Service with Reception Products." has not been triggered'
+      assert False, 'The constraint about Purchase Order of type Category Service with not only Service with Reception Products has not been triggered'
       
     

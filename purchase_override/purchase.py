@@ -175,6 +175,24 @@ class purchase_order(osv.osv):
         'no_line': lambda *a: True,
         'active': True,
     }
+    
+    def _check_service(self, cr, uid, ids, vals, context=None):
+        '''
+        Avoid the saving of a PO with non service products on Service PO
+        '''
+        categ = {'transport': _('Transport'),
+                 'service': _('Service')}
+        
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
+                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can purchase only \'Transport\' products on a \'Transport\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                
+        return True                    
 
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -207,6 +225,8 @@ class purchase_order(osv.osv):
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
+            
+        self._check_service(cr, uid, ids, vals, context=context)
             
         if vals.get('order_type'):
             if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
@@ -460,6 +480,10 @@ class purchase_order(osv.osv):
         Check analytic distribution.
         '''
         for order in self.browse(cr, uid, ids, context=context):
+            if order.categ in ['transport', 'service']:
+                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+                if ch_res.get('warning', {}).get('message', False):
+                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -539,6 +563,10 @@ class purchase_order(osv.osv):
         move_obj = self.pool.get('stock.move')
             
         for order in self.browse(cr, uid, ids, context=context):
+            if order.categ in ['transport', 'service']:
+                ch_res = self.onchange_categ(cr, uid, [order.id], order.categ, order.warehouse_id.id, order.cross_docking_ok, order.location_id.id, context=context)
+                if ch_res.get('warning', {}).get('message', False):
+                    raise osv.except_osv(_('Error'), ch_res.get('warning', {}).get('message', ''))
             if not order.delivery_confirmed_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             todo = []
@@ -1216,8 +1244,11 @@ stock moves which are already processed : '''
             
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
+            
+        res = super(purchase_order, self).create(cr, uid, vals, context=context)
+        self._check_service(cr, uid, [res], vals, context=context)
     
-        return super(purchase_order, self).create(cr, uid, vals, context=context)
+        return res
 
     def wkf_action_cancel_po(self, cr, uid, ids, context=None):
         """
@@ -1640,6 +1671,21 @@ class purchase_order_line(osv.osv):
             super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
 
         return po_line_id
+    
+    def default_get(self, cr, uid, fields, context=None):
+        if not context:
+            context = {}
+
+        if context.get('purchase_id'):
+            # Check validity of the purchase order
+            data = {}
+            if context.get('partner_id'):
+                data.update({'partner_id': context.get('partner_id')})
+            if context.get('categ'):
+                data.update({'categ': context.get('categ')})
+            self.pool.get('purchase.order').write(cr, uid, [context.get('purchase_id')], data, context=context)
+
+        return super(purchase_order_line, self).default_get(cr, uid, fields, context=context)
 
     def copy(self, cr, uid, line_id, defaults={}, context=None):
         '''
@@ -2029,6 +2075,40 @@ class purchase_order_group(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
     
 purchase_order_group()
+
+class product_product(osv.osv):
+    _name = 'product.product'
+    _inherit = 'product.product'
+    
+    def _get_purchase_type(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+            
+        return res
+    
+    def _src_purchase_type(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns a domain according to the PO type
+        '''
+        res = []
+        for arg in args:
+            if arg[0] == 'purchase_type':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error'), _('Only the \'=\' operator is allowed.'))
+                # Returns all service products
+                if arg[2] == 'service':
+                    res.append(('type', '=', 'service_recep'))
+                elif arg[2] == 'transport':
+                    res.append(('transport_ok', '=', True))
+
+        return res
+
+    _columns = {
+        'purchase_type': fields.function(_get_purchase_type, fnct_search=_src_purchase_type, type='boolean', string='Purchase type', method=True, store=False),
+    }
+    
+product_product()
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
