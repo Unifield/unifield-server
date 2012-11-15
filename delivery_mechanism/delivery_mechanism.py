@@ -547,7 +547,7 @@ class stock_picking(osv.osv):
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
-                                'processed_stock_move': True, # will not be updated by the synchro anymore if already completely or partially processed
+                                'processed_stock_move': (move.processed_stock_move or count != 0) and True or False, # count == 0 means not processed. will not be updated by the synchro anymore if already completely or partially processed
                                 }
                     # average computation - empty if not average
                     defaults.update(average_values)
