@@ -243,6 +243,52 @@ class sale_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
+
+    def onchange_categ(self, cr, uid, ids, categ, context=None):
+        '''
+        Check if the list of products is valid for this new category
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        message = {}
+        if ids and categ in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service FO
+            category = categ=='service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+                          FROM sale_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN sale_order fo ON l.order_id = fo.id
+                          WHERE (t.type != 'service_recep' %s) AND fo.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+            res = cr.fetchall()
+            if res:
+                cat_name = categ=='service' and 'Service' or 'Transport'
+                message.update({'title': _('Warning'),
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can sale only \'%s\' products on a \'%s\' field order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+
+        return {'warning': message}
+
+    def _check_service(self, cr, uid, ids, vals, context=None):
+        '''
+        Avoid the saving of a FO with a non service products on Service FO
+        '''
+        categ = {'transport': _('Transport'),
+                 'service': _('Service')}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Transport\' product. You can sale only \'Transport\' products on a \'Transport\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can sale only \'Service\' products on a \'Service\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+
+        return True
     
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -256,7 +302,9 @@ class sale_order(osv.osv):
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
-        return super(sale_order, self).create(cr, uid, vals, context)
+        res = super(sale_order, self).create(cr, uid, vals, context)
+        self._check_service(cr, uid, [res], vals, context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -271,6 +319,8 @@ class sale_order(osv.osv):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        self._check_service(cr, uid, ids, vals, context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 

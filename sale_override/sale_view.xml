@@ -44,7 +44,7 @@
                         <field name="order_type" />
                         <field name="priority" />
                         <newline />
-                        <field name="categ" />
+                        <field name="categ" on_change="onchange_categ(categ)" />
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="details" />
                         <field name="noinvoice" invisible="1" />
