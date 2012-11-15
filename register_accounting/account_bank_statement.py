@@ -833,6 +833,7 @@ class account_bank_statement_line(osv.osv):
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,
             'period_id': st.period_id.id,
+            'document_date': st_line.document_date,
             'date': st_line.date,
             'name': st_line_number,
             'ref': st_line.ref or False,
