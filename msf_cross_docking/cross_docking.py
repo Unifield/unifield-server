@@ -139,14 +139,14 @@ class purchase_order(osv.osv):
             # Avoid selection of non-service producs on Service PO
             category = categ=='service' and 'service_recep' or 'transport'
             transport_cat = ''
-            if categry == 'transport':
+            if category == 'transport':
                 transport_cat = 'OR p.transport_ok = False'
             cr.execute('''SELECT p.default_code AS default_code, t.name AS name
                           FROM purchase_order_line l
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN purchase_order po ON l.order_id = po.id
-                          WHERE (t.type != 'service recep' %s) AND po.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+                          WHERE (t.type != 'service_recep' %s) AND po.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
             res = cr.fetchall()
             if res:
                 cat_name = categ=='service' and 'Service' or 'Transport'
