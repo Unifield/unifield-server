@@ -16,7 +16,11 @@
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
                          <attribute name="string">Invoiced</attribute>
                          <attribute name="attrs">{'invisible': [('intl_customer_ok', '=', False)]}</attribute>
-                    </xpath>
+                     </xpath>
+
+                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//field[@name='product_id']" position="attributes">
+                         <attribute name="domain">[('sale_ok', '=', True), ('purchase_type', '=', parent.categ)]</attribute>
+                     </xpath>
 
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='Extra Info']" position="replace">
                     </xpath>
