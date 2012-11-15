@@ -3167,6 +3167,9 @@ class sale_order(osv.osv):
                 move_data['location_dest_id'] = order.shop_id.warehouse_id.lot_output_id.id
             else:
                 move_data['location_dest_id'] = order.shop_id.warehouse_id.lot_packing_id.id
+                
+            if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
 
         move_data['state'] = 'confirmed'
         return move_data

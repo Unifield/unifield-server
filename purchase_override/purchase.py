@@ -1181,7 +1181,7 @@ stock moves which are already processed : '''
                 if order_line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep',):
                     dest = order.location_id.id
                     # service with reception are directed to Service Location
-                    if order_line.product_id.product_tmpl_id.type == 'service_recep':
+                    if order_line.product_id.product_tmpl_id.type == 'service_recep' and not order.cross_docking_ok:
                         service_loc = self.pool.get('stock.location').search(cr, uid, [('service_location', '=', True)], context=context)
                         if service_loc:
                             dest = service_loc[0]

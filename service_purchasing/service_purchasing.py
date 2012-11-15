@@ -223,13 +223,19 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.location_id.service_location:
-                raise osv.except_osv(_('Error'), _('You cannot select Service Location as Source Location.'))
             if obj.product_id.type in ('service_recep', 'service'):
-                if not obj.picking_id or obj.picking_id.type != 'in':
-                    raise osv.except_osv(_('Error'), _('Only Incoming Shipment can manipulate Service Products.'))
-                if not obj.location_dest_id.service_location:
-                    raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+                if obj.picking_id and obj.picking_id.type == 'in':
+                    if (not obj.purchase_line_id and not obj.location_dest_id.service_location) or \
+                        (obj.purchase_line_id and not obj.purchase_line_id.order_id.cross_docking_ok and obj.location_dest_id.service_location):
+                        raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+                elif obj.picking_id and obj.picking_id.type == 'internal':
+                    if not obj.location_id.cross_docking_location_ok:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
+                    if not obj.location_dest_id.service_location:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+                elif obj.picking_id and obj.picking_id.type == 'out':
+                    if not obj.location_id.cross_docking_location_ok:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
             elif obj.location_dest_id.service_location:
                 raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
         return True
