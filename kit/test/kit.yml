@@ -194,7 +194,8 @@
   I check the corresponding purchase order has been created and store the corresponding id in the context
 -
   !python {model: purchase.order}: |
-    ids = self.search(cr, uid, [('origin', '=', 'so a')], context=context)
+    so_name = self.pool.get('sale.order').browse(cr, uid, ref("kit_so_A")).name
+    ids = self.search(cr, uid, [('origin', '=', so_name)], context=context)
     assert len(ids) == 1, 'the number of created purchase order is wrong - 1 - %s'%len(ids)
     context.setdefault('yml_kit', {}).update(po=ids[0])
 -
@@ -512,7 +513,8 @@
   I check the out creation
 -
   !python {model: stock.picking}: |
-    out_ids = self.search(cr, uid, [('origin', '=', 'so b')], context=context)
+    so_name = self.pool.get('sale.order').browse(cr, uid, ref("kit_so_B")).name
+    out_ids = self.search(cr, uid, [('origin', '=', so_name)], context=context)
     assert len(out_ids) == 1, 'number of out ids for so b is wrong - 1 - %s'%len(out_ids) 
     context.update(out_ids=out_ids)
 -
@@ -586,7 +588,8 @@
   I check the corresponding purchase order has been created and store the corresponding id in the context
 -
   !python {model: purchase.order}: |
-    ids = self.search(cr, uid, [('origin', '=', 'so b')], context=context)
+    so_name = self.pool.get('sale.order').browse(cr, uid, ref("kit_so_B")).name
+    ids = self.search(cr, uid, [('origin', '=', so_name)], context=context)
     assert len(ids) == 1, 'the number of created purchase order is wrong - 1 - %s'%len(ids)
     context.setdefault('yml_kit', {}).update(po=ids[0])
 -
