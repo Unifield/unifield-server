@@ -172,7 +172,7 @@ def do_update():
         ## Remove any -d and -u flags from command-line parameters
         args = list(sys.argv)
         for i, x in enumerate(args):
-            if x in ('-d', '-u'):
+            if x in ('-d', '-u', '-c'):
                 args[i] = None
                 args[i+1] = None
         args = filter(lambda x:x is not None, args)
