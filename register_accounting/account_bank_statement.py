@@ -1491,6 +1491,9 @@ class account_bank_statement_line(osv.osv):
             if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
+            if absl.is_down_payment and not absl.down_payment_id:
+                raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
+
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
@@ -1505,9 +1508,7 @@ class account_bank_statement_line(osv.osv):
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
 
-                if absl.is_down_payment and not absl.down_payment_id:
-                    raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
-                elif absl.is_down_payment:
+                if absl.is_down_payment:
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl.id, context=context)
 
