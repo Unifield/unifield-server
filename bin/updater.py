@@ -44,16 +44,20 @@ def isset_lock(file=None):
 
 def set_lock(file=None):
     """Set the lock file to make OpenERP run into do_update method against normal execution"""
+    from tools import config
     if file is None: file = lock_file
     with open(file, "w") as f:
-        f.write(os.getcwd())
+        f.write(unicode({'path':os.getcwd(),'rcfile':config.rcfile}))
 
 def unset_lock(file=None):
     """Remove the lock"""
     global exec_path
+    global rcfile
     if file is None: file = lock_file
     with open(file, "r") as f:
-        exec_path = f.read().strip()
+         data = eval(f.read().strip())
+         exec_path = data['path']
+         rcfile = data['rcfile']
     os.unlink(file)
 
 def parse_version_file(filepath):
@@ -166,10 +170,21 @@ def do_update():
             log.write("Cannot write into `%s': %s" % (log, unicode(e)))
         warn(lock_file, 'removed')
         ## Now, update
+        args = list(sys.argv)
         application_time = now()
         revisions = []
         files = None
         try:
+            ## Fix command-line arguments for Windows
+            for i, x in enumerate(args):
+                if x in ('-d', '-u', '-c'):
+                    args[i] = None
+                    args[i+1] = None
+            args = filter(lambda x:x is not None, args)
+            if os.name == 'nt':
+                args.extend(['-c', '"%s"' % rcfile])
+            else:
+                args.extend(['-c', rcfile])
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
             os.unlink(new_version_file)
@@ -216,11 +231,11 @@ def do_update():
                 warn("Purging...")
                 Try(lambda:rmtree(update_dir))
         warn(("Restart OpenERP in %s:" % exec_path), \
-             [sys.executable]+sys.argv)
+             [sys.executable]+args)
         if log is not sys.stderr:
             log.close()
         os.chdir(exec_path)
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        os.execv(sys.executable, [sys.executable] + args)
 
 
 def update_path():
