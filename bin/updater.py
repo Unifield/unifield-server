@@ -169,13 +169,6 @@ def do_update():
         application_time = now()
         revisions = []
         files = None
-        ## Remove any -d and -u flags from command-line parameters
-        args = list(sys.argv)
-        for i, x in enumerate(args):
-            if x in ('-d', '-u', '-c'):
-                args[i] = None
-                args[i+1] = None
-        args = filter(lambda x:x is not None, args)
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
@@ -223,11 +216,11 @@ def do_update():
                 warn("Purging...")
                 Try(lambda:rmtree(update_dir))
         warn(("Restart OpenERP in %s:" % exec_path), \
-             [sys.executable]+args)
+             [sys.executable]+sys.argv)
         if log is not sys.stderr:
             log.close()
         os.chdir(exec_path)
-        os.execv(sys.executable, [sys.executable] + args)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 
 def update_path():
