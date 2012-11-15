@@ -15,7 +15,7 @@
                     <newline/>
                     <separator string="Your Selection" colspan="4"/>
                     <newline/>
-                    <field name="purchase_id" domain="[('invoiced', '=', False), ('state', '=', 'approved'), ('currency_id', '=', currency_id), ('partner_id', '=', partner_id)]" colspan="2"/>
+                    <field name="purchase_id" domain="[('invoiced', '=', False), ('state', 'in', ['approved', 'done']), ('currency_id', '=', currency_id), ('partner_id', '=', partner_id)]" colspan="2"/>
                     <newline/>
                     <group col="6" colspan="4">
                         <label string="" colspan="2"/>
