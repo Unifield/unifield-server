@@ -85,7 +85,7 @@ def add_versions(versions, filepath=server_version_file):
         return
     with open(filepath, 'a') as f:
         for ver in versions:
-            f.write((" ".join([unicode(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+"\n")
+            f.write((" ".join([unicode(x) for x in ver]) if hasattr(ver, '__iter__') else ver)+os.linesep)
 
 def find(path):
     """Unix-like find"""
@@ -117,7 +117,7 @@ log = sys.stderr
 def warn(*args):
     """Define way to forward logs"""
     global log
-    log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+"\n")
+    log.write(("[%s] UPDATER: " % now())+" ".join(map(lambda x:unicode(x), args))+os.linesep)
 
 def Try(command):
     """Try...Resume..."""
