@@ -28,8 +28,8 @@
                 <data>
                     <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
                         <field name="cross_docking_ok"
-                            attrs="{'readonly':['|', '|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('categ','in', ['service', 'transport']), ('state', '!=', 'draft')]}"
-                            on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id)"
+                            attrs="{'readonly':['|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('state', '!=', 'draft')]}"
+                            on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id, categ)"
                         />
                     </xpath>
                     <field name="location_id" position= "replace">

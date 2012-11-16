@@ -46,20 +46,20 @@ class purchase_order(osv.osv):
         'cross_docking_ok': False,
     }
 
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         '''
         Changes destination location
         '''
-        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)
         if order_type == 'direct':
-            location_id = self.onchange_cross_docking_ok(cr, uid, ids, False, warehouse_id)['value']['location_id']
+            location_id = self.onchange_cross_docking_ok(cr, uid, ids, False, warehouse_id, categ)['value']['location_id']
             if 'value' in res:
                 res['value'].update({'location_id': location_id})
             else:
                 res.update({'value': {'location_id': location_id}})
         return res
 
-    def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, warehouse_id, context=None):
+    def onchange_cross_docking_ok(self, cr, uid, ids, cross_docking_ok, warehouse_id, categ, context=None):
         """ Finds location id for changed cross_docking_ok.
         @param cross_docking_ok: Changed value of cross_docking_ok.
         @return: Dictionary of values.
@@ -75,7 +75,10 @@ class purchase_order(osv.osv):
                 if not warehouse_ids:
                     return {'warning': {'title': _('Error !'), 'message': _('No Warehouse defined !')}, 'value': {'location_id': False}}
                 warehouse_id = warehouse_ids[0]
-            c_dock_loc = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
+            if categ not in ('service', 'transport'):
+                c_dock_loc = warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]
+            else:
+                c_dock_loc = self.pool.get('stock.location').get_service_location(cr, uid)
         return {'value': {'location_id': c_dock_loc}}
 
     def onchange_location_id(self, cr, uid, ids, location_id, categ, context=None):
@@ -125,10 +128,10 @@ class purchase_order(osv.osv):
         if setup.allocation_setup != 'unallocated':
             cross_loc = stock_loc_obj.get_cross_docking_location(cr, uid)
         service_loc = stock_loc_obj.get_service_location(cr, uid)
-        if categ in ['service', 'transport']:
-            value = {'location_id': service_loc, 'cross_docking_ok': False}
-        elif cross_docking_ok:
+        if cross_docking_ok:
             value = {'location_id': cross_loc}
+        elif categ in ['service', 'transport']:
+            value = {'location_id': service_loc}
         elif location_id == service_loc or (setup.allocation_setup != 'unallocated' and location_id == cross_loc):
             if warehouse_id:
                 value = {'location_id': warehouse_obj.read(cr, uid, [warehouse_id], ['lot_input_id'])[0]['lot_input_id'][0]}
@@ -161,20 +164,20 @@ class purchase_order(osv.osv):
         stock_loc_obj = self.pool.get('stock.location')
         if 'order_type' in vals and vals['order_type'] == 'direct':
             vals.update({'cross_docking_ok': False})
-        if 'categ' in vals and vals['categ'] in ['service', 'transport']:
-            vals.update({'cross_docking_ok': False, 'location_id': stock_loc_obj.get_service_location(cr, uid)})
         if 'cross_docking_ok' in vals and vals['cross_docking_ok']:
             vals.update({'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
+        elif 'categ' in vals and vals['categ'] in ['service', 'transport']:
+            vals.update({'cross_docking_ok': False, 'location_id': stock_loc_obj.get_service_location(cr, uid)})
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
         stock_loc_obj = self.pool.get('stock.location')
         if vals.get('order_type') == 'direct':
             vals.update({'cross_docking_ok': False})
-        if 'categ' in vals and vals['categ'] in ['service', 'transport']:
-            vals.update({'cross_docking_ok': False, 'location_id': stock_loc_obj.get_service_location(cr, uid)})
         if vals.get('cross_docking_ok'):
             vals.update({'location_id': stock_loc_obj.get_cross_docking_location(cr, uid)})
+        elif 'categ' in vals and vals['categ'] in ['service', 'transport']:
+            vals.update({'cross_docking_ok': False, 'location_id': stock_loc_obj.get_service_location(cr, uid)})
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
     def _check_cross_docking(self, cr, uid, ids, context=None):
