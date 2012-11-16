@@ -1671,6 +1671,13 @@ class account_bank_statement_line(osv.osv):
             view_id = (view.get('res_id'), view.get('name'))
         else:
             raise osv.except_osv(_('Error'), _("View not found."))
+        context.update({
+            'active_id': ids[0],
+            'type': 'in_invoice',
+            'journal_type': 'purchase',
+            'active_ids': ids,
+            'from_register': True,
+            })
         return {
             'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
@@ -1680,14 +1687,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'view_id': view_id,
             'res_id': self.browse(cr, uid, ids[0], context=context).invoice_id.id,
-            'context':
-            {
-                'active_id': ids[0],
-                'type': 'in_invoice',
-                'journal_type': 'purchase',
-                'active_ids': ids,
-                'from_register': True,
-            }
+            'context': context,
         }
 
     def button_duplicate(self, cr, uid, ids, context=None):
