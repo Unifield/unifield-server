@@ -425,6 +425,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 var.source_type = None
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
+                values.update({'location_dest_id': cross_docking_location})
             elif var.dest_type == 'to_stock':
                 var.source_type = None
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because

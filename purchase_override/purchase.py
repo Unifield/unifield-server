@@ -1178,43 +1178,40 @@ stock moves which are already processed : '''
             for order_line in order.order_line:
                 if not order_line.product_id:
                     continue
-                if order_line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep',):
-                    dest = order.location_id.id
-                    # service with reception are directed to Service Location
-                    if order_line.product_id.product_tmpl_id.type == 'service_recep' and not order.cross_docking_ok:
-                        service_loc = self.pool.get('stock.location').search(cr, uid, [('service_location', '=', True)], context=context)
-                        if service_loc:
-                            dest = service_loc[0]
-                            
-                    move_values = {
-                        'name': order.name + ': ' +(order_line.name or ''),
-                        'product_id': order_line.product_id.id,
-                        'product_qty': order_line.product_qty,
-                        'product_uos_qty': order_line.product_qty,
-                        'product_uom': order_line.product_uom.id,
-                        'product_uos': order_line.product_uom.id,
-                        'date': order_line.date_planned,
-                        'date_expected': order_line.date_planned,
-                        'location_id': loc_id,
-                        'location_dest_id': dest,
-                        'picking_id': picking_id,
-                        'move_dest_id': order_line.move_dest_id.id,
-                        'state': 'draft',
-                        'purchase_line_id': order_line.id,
-                        'company_id': order.company_id.id,
-                        'price_currency_id': order.pricelist_id.currency_id.id,
-                        'price_unit': order_line.price_unit
-                    }
-                    # hook for stock move values modification
-                    move_values = self._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, move_values=move_values, order_line=order_line,)
-                    
-                    if reason_type_id:
-                        move_values.update({'reason_type_id': reason_type_id})
-                    
-                    move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
-                    if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line, move_id=move):
-                        self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
-                    todo_moves.append(move)
+                dest = order.location_id.id
+                # service with reception are directed to Service Location
+                if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
+                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                        
+                move_values = {
+                    'name': order.name + ': ' +(order_line.name or ''),
+                    'product_id': order_line.product_id.id,
+                    'product_qty': order_line.product_qty,
+                    'product_uos_qty': order_line.product_qty,
+                    'product_uom': order_line.product_uom.id,
+                    'product_uos': order_line.product_uom.id,
+                    'date': order_line.date_planned,
+                    'date_expected': order_line.date_planned,
+                    'location_id': loc_id,
+                    'location_dest_id': dest,
+                    'picking_id': picking_id,
+                    'move_dest_id': order_line.move_dest_id.id,
+                    'state': 'draft',
+                    'purchase_line_id': order_line.id,
+                    'company_id': order.company_id.id,
+                    'price_currency_id': order.pricelist_id.currency_id.id,
+                    'price_unit': order_line.price_unit
+                }
+                # hook for stock move values modification
+                move_values = self._hook_action_picking_create_stock_picking(cr, uid, ids, context=context, move_values=move_values, order_line=order_line,)
+                
+                if reason_type_id:
+                    move_values.update({'reason_type_id': reason_type_id})
+                
+                move = self.pool.get('stock.move').create(cr, uid, move_values, context=context)
+                if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line, move_id=move):
+                    self.pool.get('stock.move').write(cr, uid, [order_line.move_dest_id.id], {'location_id':order.location_id.id})
+                todo_moves.append(move)
             self.pool.get('stock.move').action_confirm(cr, uid, todo_moves)
             self.pool.get('stock.move').force_assign(cr, uid, todo_moves)
             wf_service = netsvc.LocalService("workflow")

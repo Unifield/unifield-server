@@ -225,9 +225,8 @@ class stock_move(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.product_id.type in ('service_recep', 'service'):
                 if obj.picking_id and obj.picking_id.type == 'in':
-                    if (not obj.purchase_line_id and not obj.location_dest_id.service_location) or \
-                        (obj.purchase_line_id and not obj.purchase_line_id.order_id.cross_docking_ok and obj.location_dest_id.service_location):
-                        raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+                    if not obj.location_dest_id.service_location and not obj.location_dest_id.cross_docking_location_ok:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Service or Cross Docking Location as Destination Location.'))
                 elif obj.picking_id and obj.picking_id.type == 'internal':
                     if not obj.location_id.cross_docking_location_ok:
                         raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
