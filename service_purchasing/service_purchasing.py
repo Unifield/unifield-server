@@ -233,7 +233,7 @@ class stock_move(osv.osv):
                         raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
                     if not obj.location_dest_id.service_location:
                         raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
-                elif obj.picking_id and obj.picking_id.type == 'out':
+                elif obj.picking_id and obj.picking_id.type == 'out' and obj.picking_id.subtype in ('standard', 'picking'):
                     if not obj.location_id.cross_docking_location_ok:
                         raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
             elif obj.location_dest_id.service_location:

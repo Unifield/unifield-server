@@ -431,14 +431,13 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 #by default it is "default"and we do not want that info on INCOMING shipment
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
-                if product_type not in ('service_recep', 'service'):
-                    if product_type == 'consu' and stock_location_non_stockable:
-                        values.update({'location_dest_id': stock_location_non_stockable})
-                    elif product_type == 'service_recep' and stock_location_service:
-                        values.update({'location_dest_id': stock_location_service})
-                    else:
-                        # treat moves towards STOCK if NOT SERVICE
-                        values.update({'location_dest_id': stock_location_input})
+                if product_type == 'consu' and stock_location_non_stockable:
+                    values.update({'location_dest_id': stock_location_non_stockable})
+                elif product_type == 'service_recep' and stock_location_service:
+                    values.update({'location_dest_id': stock_location_service})
+                else:
+                    # treat moves towards STOCK if NOT SERVICE
+                    values.update({'location_dest_id': stock_location_input})
         return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
