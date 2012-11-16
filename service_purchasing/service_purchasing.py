@@ -128,7 +128,7 @@ class stock_move(osv.osv):
         product_type = False
         location_id = loc_id and location_obj.browse(cr, uid, loc_id) or False
         location_dest_id = loc_dest_id and location_obj.browse(cr, uid, loc_dest_id) or False
-        service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        service_loc = location_obj.get_service_location(cr, uid)
         non_stockable_loc = location_obj.search(cr, uid, [('non_stockable_ok', '=', True)])
         id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         input_id = location_obj.search(cr, uid, [('input_ok', '=', True)])
@@ -150,9 +150,6 @@ class stock_move(osv.osv):
         else:
             vals.update({'product_type': False})
 
-        if service_loc:
-            service_loc = service_loc[0]
-            
         if non_stockable_loc:
             non_stockable_loc = non_stockable_loc[0]
             
@@ -190,11 +187,15 @@ class stock_move(osv.osv):
                 vals.update(location_id=id_cross)
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or location_dest_id.virtual_ok)):
                 vals.update(location_id=stock_ids and stock_ids[0] or False)
+            elif product_type == 'service_recep':
+                vals.update(location_id=id_cross)
             # Destination location
             if product_type == 'consu' and not (loc_dest_id and (location_dest_id.usage == 'inventory' or location_dest_id.destruction_location or location_dest_id.quarantine_location)):
                 vals.update(location_dest_id=non_stockable_loc)
             elif product_type == 'product' and not (loc_dest_id and (not location_dest_id.non_stockable_ok and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok))):
                 vals.update(location_dest_id=False)
+            elif product_type == 'service_recep':
+                vals.update(location_dest_id=service_loc)
         # Case when outgoing delivery or picking ticket
         elif product_type and parent_type == 'out':
             # Source location
@@ -203,6 +204,8 @@ class stock_move(osv.osv):
                 vals.update(location_id=id_cross)
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or not location_id.quarantine_location or not location_id.output_ok or not location_id.input_ok)):
                 vals.update(location_id=stock_ids and stock_ids[0] or False)
+            elif product_type == 'service_recep':
+                vals.update(location_id=id_cross)
             # Destinatio location
             if product_type == 'consu' and not (loc_dest_id and (location_dest_id.output_ok or location_dest_id.usage == 'customer')):
                 # If we are not in Picking ticket and the dest. loc. is not output or customer, unset the dest.
