@@ -1173,9 +1173,19 @@ class sale_order_line(osv.osv):
         """
         Default procurement method is 'on order' if no product selected
         """
-        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
-        if context is None:
+        if not context:
             context = {}
+
+        if context.get('sale_id'):
+            # Check validity of the field order
+            data = {}
+            if context.get('partner_id'):
+                data.update({'partner_id': context.get('partner_id')})
+            if context.get('categ'):
+                data.update({'categ': context.get('categ')})
+            self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
+
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data

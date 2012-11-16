@@ -148,7 +148,7 @@
                     
                     <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id}</attribute>
+                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id, 'categ': categ, 'partner_id': partner_id}</attribute>
                     </xpath>
                     
                 </data>
