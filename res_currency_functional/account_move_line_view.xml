@@ -136,5 +136,18 @@
         <field name="act_window_id" ref="account.action_account_moves_all_a"/>
     </record>
 
+    <!-- Journal Entries Search (filter) -->
+        <record model="ir.ui.view" id="msf_instance_view_account_move_line_filter">
+            <field name="name">inherit.view.account.move.line.filter</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='journal_id']" position="replace">
+                    <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
