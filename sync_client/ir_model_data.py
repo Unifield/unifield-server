@@ -112,9 +112,9 @@ class write_info(osv.osv):
     _rec_name = 'fields_modif'
     
     _columns= {
-        'create_date' :fields.datetime('Create Date'),
-        'model' : fields.char('model', size=64), 
-        'res_id' : fields.integer('Ressource Id'),
+        'create_date' :fields.datetime('Create Date', select=1),
+        'model' : fields.char('model', size=64, select=1),
+        'res_id' : fields.integer('Ressource Id', select=1),
         'fields_modif' : fields.text('Fields Modified'),
     }
     
