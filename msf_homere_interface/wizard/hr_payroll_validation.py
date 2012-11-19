@@ -62,13 +62,13 @@ class hr_payroll_validation(osv.osv_memory):
         return res
 
     def default_get(self, cr, uid, fields, context=None):
-        hrp = self.pool.get('hr.payroll.msf')
         """
         Fields ' value
         """
         if not context:
             context = {}
         res = super(hr_payroll_validation, self).default_get(cr, uid, fields, context)
+        hrp = self.pool.get('hr.payroll.msf')
         pattern = re.compile('^entry(.*)$')
         for field in fields:
             res[field] = ''
@@ -92,8 +92,8 @@ class hr_payroll_validation(osv.osv_memory):
         if not context:
             context = {}
         res = super(hr_payroll_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        # Verification
-        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
+        # Verification and sorting lines as explained in UTP-342
+        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')], order='account_id, name')
         for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
             if line.account_id and line.account_id.user_type.code == 'expense' and line.analytic_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
