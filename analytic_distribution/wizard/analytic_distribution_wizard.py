@@ -934,21 +934,21 @@ class analytic_distribution_wizard(osv.osv_memory):
             direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
             if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
                 return {
-                    'name': "Supplier Invoice",
+                    'name': "Supplier Direct Invoice",
                     'type': 'ir.actions.act_window',
                     'res_model': 'wizard.account.invoice',
                     'target': 'new',
                     'view_mode': 'form',
                     'view_type': 'form',
                     'res_id': direct_invoice_id,
-                    'context':
-                    {
-                        'active_id': register_id,
-                        'type': 'in_invoice',
-                        'journal_type': 'purchase',
-                        'active_ids': register_id,
-                    }
+                    'context': context,
                 }
         # Validate account_move if we come from a Journal Entry or a Journal Item
         if wiz and (wiz.move_id or wiz.move_line_id):
@@ -1101,25 +1101,24 @@ class analytic_distribution_wizard(osv.osv_memory):
             direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and direct_invoice.register_id and direct_invoice.register_id.id or False
             if register_id:
+                context.update({
+                    'active_id': register_id,
+                    'type': 'in_invoice',
+                    'journal_type': 'purchase',
+                    'active_ids': register_id,
+                    })
                 return {
-                    'name': "Supplier Invoice",
+                    'name': "Supplier Direct Invoice",
                     'type': 'ir.actions.act_window',
                     'res_model': 'wizard.account.invoice',
                     'target': 'new',
                     'view_mode': 'form',
                     'view_type': 'form',
                     'res_id': direct_invoice_id,
-                    'context':
-                    {
-                        'active_id': register_id,
-                        'type': 'in_invoice',
-                        'journal_type': 'purchase',
-                        'active_ids': register_id,
-                    }
+                    'context': context,
                 }
         elif wiz.from_direct_inv:
             return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
-
         return {'type' : 'ir.actions.act_window_close'}
 
     def update_analytic_lines(self, cr, uid, ids, context=None):
