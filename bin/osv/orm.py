@@ -2194,7 +2194,7 @@ class orm_memory(orm_template):
 
         result = self._where_calc(cr, user, args, context=context)
         if result == []:
-            return [ k for k, v in self.nin_memory_sorted_items(cr, user, order, context=context) ]
+            return [ k for k, v in self._in_memory_sorted_items(cr, user, order, context=context) ]
 
         res = []
         counter = 0
