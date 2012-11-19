@@ -365,12 +365,12 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                             '''
                             if move.product_id.type in ('consu', 'service_recep'):
                                 if move.picking_id.type == 'out':
-                                    id_loc_s = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')
+                                    id_loc_s = obj_data.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
                                 elif move.product_id.type == 'consu':
-                                    id_loc_s = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
+                                    id_loc_s = obj_data.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
                                 else:
                                     id_loc_s = self.pool.get('stock.location').get_service_location(cr, uid)
-                                move_obj.write(cr, uid, [move_ids], {'location_id': id_loc_s[1], 'move_cross_docking_ok': False}, context=context)
+                                move_obj.write(cr, uid, [move_ids], {'location_id': id_loc_s, 'move_cross_docking_ok': False}, context=context)
                             else:
                                 move_obj.write(cr, uid, [move_ids], {'location_id': pick.warehouse_id.lot_stock_id.id,
                                                                      'move_cross_docking_ok': False}, context=context)
