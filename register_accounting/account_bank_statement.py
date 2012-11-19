@@ -1492,7 +1492,7 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
             if absl.is_down_payment and not absl.down_payment_id:
-                raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
+                raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
 
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
