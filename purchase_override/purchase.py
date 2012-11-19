@@ -75,6 +75,31 @@ class purchase_order(osv.osv):
         return res
     # @@@end
     
+    def _invoiced_search(self, cr, uid, obj, name, args, context=None):
+        """
+        Search purchase regarding if all invoice are in open/paid state
+        """
+        if not len(args):
+            return []
+        res = [('id', '=', 0)]
+        inv_res = False
+        for arg in args:
+            if arg[1] == '=':
+                cr.execute("SELECT id FROM purchase_order ORDER BY id")
+                allpo = [x and x[0] for x in cr.fetchall()]
+                is_invoiced = False
+                if allpo:
+                    is_invoiced = self._invoiced(cr, uid, allpo, name, False, False)
+                if arg[2] is False:
+                    inv_res = [is_invoiced[x] is False and x or None for x in is_invoiced]
+                elif arg[2] is True:
+                    inv_res = [is_invoiced[x] is not False and x or None for x in is_invoiced]
+            else:
+                except_osv(_('Warning'), _('This operator is not supported for "invoiced" field.'))
+        if inv_res:
+            return [('id', 'in', [x and x for x in inv_res])]
+        return res
+
     # @@@purchase.purchase_order._shipped_rate
     def _invoiced_rate(self, cursor, user, ids, name, arg, context=None):
         res = {}
@@ -127,7 +152,7 @@ class purchase_order(osv.osv):
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'details': fields.char(size=30, string='Details', states={'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'invoiced': fields.function(_invoiced, method=True, string='Invoiced', type='boolean', help="It indicates that an invoice has been generated"),
+        'invoiced': fields.function(_invoiced, fnct_search=_invoiced_search, method=True, string='Invoiced', type='boolean', help="It indicates that an invoice has been generated"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'confirmed':[('readonly',True)],'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
