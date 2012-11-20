@@ -11,6 +11,7 @@ from datetime import datetime
 from base64 import b64decode
 from StringIO import StringIO
 import logging
+import time
 
 if sys.version_info >= (2, 6, 6):
     from zipfile import ZipFile, ZipInfo
@@ -25,6 +26,7 @@ lock_file = 'update.lock'
 update_dir = '.update'
 server_version_file = 'unifield-version.txt'
 new_version_file = os.path.join(update_dir, 'update-list.txt')
+restart_delay = 10
 
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
@@ -34,7 +36,7 @@ logger = logging.getLogger('updater')
 def restart_server():
     """Restart OpenERP server"""
     global restart_required
-    logger.info("Restaring OpenERP Server...")
+    logger.info("Restaring OpenERP Server in %d seconds..." % restart_delay)
     restart_required = True
 
 def isset_lock(file=None):
@@ -170,21 +172,10 @@ def do_update():
             log.write("Cannot write into `%s': %s" % (log, unicode(e)))
         warn(lock_file, 'removed')
         ## Now, update
-        args = list(sys.argv)
         application_time = now()
         revisions = []
         files = None
         try:
-            ## Fix command-line arguments for Windows
-            for i, x in enumerate(args):
-                if x in ('-d', '-u', '-c'):
-                    args[i] = None
-                    args[i+1] = None
-            args = filter(lambda x:x is not None, args)
-            if os.name == 'nt':
-                args.extend(['-c', '"%s"' % rcfile])
-            else:
-                args.extend(['-c', rcfile])
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
             os.unlink(new_version_file)
@@ -230,12 +221,16 @@ def do_update():
                         os.rename(target, f)
                 warn("Purging...")
                 Try(lambda:rmtree(update_dir))
-        warn(("Restart OpenERP in %s:" % exec_path), \
-             [sys.executable]+args)
-        if log is not sys.stderr:
-            log.close()
-        os.chdir(exec_path)
-        os.execv(sys.executable, [sys.executable] + args)
+        if os.name == 'nt':
+            warn("Exiting OpenERP Server with code 1 to tell service to restart")
+            sys.exit(1) # require service to restart
+        else:
+            warn(("Restart OpenERP in %s:" % exec_path), \
+                 [sys.executable]+sys.argv)
+            if log is not sys.stderr:
+                log.close()
+            os.chdir(exec_path)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
 
 
 def update_path():

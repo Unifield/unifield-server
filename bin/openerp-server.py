@@ -219,6 +219,8 @@ if os.name == 'posix':
     signal.signal(signal.SIGQUIT, dumpstacks)
 
 def quit(restart=False):
+    if restart:
+        time.sleep(updater.restart_delay)
     netsvc.Agent.quit()
     netsvc.Server.quitAll()
     if tools.config['pidfile']:
@@ -247,6 +249,8 @@ def quit(restart=False):
                         logger.info(str(thread.getName()) + ' could not be terminated')
     if not restart:
         sys.exit(0)
+    elif os.name == 'nt':
+        sys.exit(1) # require service restart
     else:
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
