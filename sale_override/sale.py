@@ -975,7 +975,7 @@ class sale_order(osv.osv):
                 continue
             for line in order.order_line:
                 # the product needs to have a product selected, otherwise not procurement, and no po to trigger back the so
-                if line.type == 'make_to_order' and line.state != 'confirmed' and line.product_id:
+                if line.product_id and line.type == 'make_to_order' and line.state != 'confirmed' and (not line.procurement_id or line.procurement_id.state != 'cancel'):
                     return False
         return True
 

@@ -858,6 +858,7 @@ stock moves which are already processed : '''
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+
         # from listed po, list corresponding so
         all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
         # if we have sol_ids, we are treating a po which is make_to_order from sale order
@@ -872,6 +873,7 @@ stock moves which are already processed : '''
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
+                                                                 ('procurement_id.state', '!=', 'cancel'),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:
