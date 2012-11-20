@@ -207,7 +207,8 @@
                                     </field>
                                 </form>
                                 <tree>
-                                    <field name="sequence"/>
+                                    <field name="editable" invisible="1" />
+                                    <field name="sequence_bis"/>
                                     <field name="name"/>
                                     <field name="delay"/>
                                     <field name="catalogue_id"/>
