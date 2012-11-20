@@ -77,7 +77,7 @@ class res_company(osv.osv):
                 # An instance was not set; add DB name and activate it
                 instance_obj.write(cr, uid, [vals['instance_id']], {'instance': cr.dbname,
                                                                     'state': 'active'}, context=context)
-            else:
+            elif company.instance_id.id != vals.get('instance_id'):
                 # An instance was already set
                 old_instance_id = company.instance_id.id
                 # Deactivate the instance
