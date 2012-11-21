@@ -1,0 +1,158 @@
+-
+  For Purchase Order, rule for the CREATE, WRITE and DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PO CREATE, WRITE and DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['partner_ref']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('rfq_ok', '=', False)]",
+                                      'log_create': True,
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  For Purchase Order, rule for the CREATE and WRITE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PO CREATE and WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['details', 'delivery_requested_date', 'confirmed_delivery_date']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('rfq_ok', '=', False)]",
+                                      'log_create': True,
+                                      'log_write': True,
+                                      'log_unlink': False,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  For Purchase Order, rule for the CREATE and DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PO CREATE and DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['order_line']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
+
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('rfq_ok', '=', False)]",
+                                      'log_create': True,
+                                      'log_write': False,
+                                      'log_unlink': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  For Purchase Order, rule for the WRITE and DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PO WRITE and DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['partner_id', 'notes']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
+
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('rfq_ok', '=', False)]",
+                                      'log_create': False,
+                                      'log_write': True,
+                                      'log_unlink': True,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  For Purchase Order, rule for the WRITE ONLY of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PO WRITE ONLY'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'location_id', 'unallocated_ok']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
+
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'domain_filter': "[('rfq_ok', '=', False)]",
+                                      'log_create': False,
+                                      'log_write': True,
+                                      'log_unlink': False,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                     }, context=context)
+
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
+-
+  For Purchase Order lines, rule for the WRITE ONLY of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PO Line'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order.line')], context=context)
+    rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
+    if object_ids and not rule_id:
+      # Create the rule
+      fields = ['comment', 'confirmed_delivery_date', 'date_planned', 'default_code',
+                'default_name', 'name', 'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2',
+                'nomen_manda_3', 'notes', 'price_unit', 'product_qty', 'product_uom',
+                'taxes_id']
+
+      fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
+      field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
+      field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'order_id')], context=context)
+      
+      name_id = False
+      parent_id = False
+      
+      if field_parent:
+        parent_id = field_parent[0]
+        if field_name:
+          name_id = field_name[0]
+        
+      rule_id = self.create(cr, uid, {'name': name,
+                                      'object_id': object_ids[0],
+                                      'log_write': True,
+                                      'log_unlink': False,
+                                      'log_create': False,
+                                      'field_ids': [(6, 0, fields_ids)],
+                                      'parent_field_id': parent_id,
+                                      'name_get_field_id': name_id,
+                                     }, context=context)
+                                    
+      # Subscribe to the rule
+      self.subscribe(cr, uid, rule_id)
