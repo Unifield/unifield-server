@@ -32,6 +32,8 @@ import logging
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
+import decimal_precision as dp
+
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class purchase_order_confirm_wizard(osv.osv):
@@ -1777,6 +1779,7 @@ class purchase_order_line(osv.osv):
         return result
 
     _columns = {
+        'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
@@ -1786,7 +1789,7 @@ class purchase_order_line(osv.osv):
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
         # openerp bug: id is not given to onchanqge call if we are into one2many view
         'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
-        'old_price_unit': fields.float(digits=(16,2), string='Old price'),
+        'old_price_unit': fields.float(string='Old price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
 
         # This field is used to identify the FO PO line between 2 instances of the sync

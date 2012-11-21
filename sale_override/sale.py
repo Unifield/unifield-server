@@ -30,6 +30,8 @@ from tools.translate import _
 import logging
 from workflow.wkf_expr import _eval_expr
 
+import decimal_precision as dp
+
 from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
@@ -986,7 +988,8 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+    _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
+                'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
                 'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
