@@ -152,9 +152,10 @@ class audittrail_rule(osv.osv):
         'domain_filter': [],
     }
 
-    _sql_constraints = [
-        ('model_uniq', 'unique (object_id)', """There is a rule defined on this object\n You can not define other on the same!""")
-    ]
+# we replace the sql_constraint below by a Python constraint which checks that there is one type of rule per type.
+#    _sql_constraints = [
+#        ('model_uniq', 'unique (object_id)', """There is a rule defined on this object\n You can not define other on the same!""")
+#    ]
     
     def _check_domain_filter(self, cr, uid, ids, context=None):
         """
@@ -656,6 +657,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
     domain = eval(domain)
     fields_to_read = ['id']
 
+    old_values = {}
     if method in ('create'):
         res_id = fct_src(self, *args, **kwargs)
         
@@ -701,6 +703,40 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
 
         # We create only one line on creation (not one line by field)
         create_log_line(self, cr, uid, model, [vals])
+        # We take the list of fields that will be updated
+        res_ids = []
+        res = True
+        if args:
+            if isinstance(args[2], (long, int)):
+                res_ids = [args[2]]
+            else:
+                res_ids = list(args[2])
+            fields = []
+            if len(args)>3 and type(args[3]) == dict:
+                fields.extend(list(set(args[3]) & set(fields_to_trace)))
+
+        # Get new values
+        if res_ids:
+            fields_to_trace.append('id')
+            for resource in resource_pool.read(cr, uid, [res_id], fields_to_trace):
+                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
+                    continue
+                res_id = resource['id']
+                res_id2 = parent_field_id and resource[parent_field.name][0] or res_id
+                if 'id' in resource:
+                    del resource['id']
+
+        # now we create one line for each field tracked
+        lines = []
+        for field in resource.keys():
+            line = vals.copy()
+            line.update({
+                  'name': field,
+                  'new_value': resource[field],
+                  })
+            lines.append(line)
+
+        create_log_line(self, cr, uid, model, lines)
 
         return res_id
 
@@ -712,7 +748,6 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             res_ids = list(args[2])
         model_name = model.name
         model_id = model.id
-        old_values = {}
         fields_to_read = [name_get_field, 'name']
         fields_to_read.extend(_get_domain_fields(self, domain))
         
@@ -773,7 +808,6 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 res_ids = [args[2]]
             else:
                 res_ids = list(args[2])
-            old_values = {}
             fields = []
             if len(args)>3 and type(args[3]) == dict:
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
