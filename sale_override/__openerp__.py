@@ -27,7 +27,7 @@
         Add hooks to sale class
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
+    "init_xml": ["data.xml",
     ],
     "depends" : [
         "sale",

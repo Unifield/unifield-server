@@ -27,7 +27,7 @@
         Add hooks to purchase class
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
+    "init_xml": ["data.xml",
     ],
     "depends" : [
         "purchase",
