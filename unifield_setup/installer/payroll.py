@@ -30,7 +30,7 @@ class payroll_setup(osv.osv_memory):
     _inherit = 'res.config'
     
     _columns = {
-        'payroll_ok': fields.boolean(string='Is the system manage Payrolls ?'),
+        'payroll_ok': fields.boolean(string='Does the system manage Payrolls import from Homere ?'),
     }
     
     def default_get(self, cr, uid, fields, context=None):
