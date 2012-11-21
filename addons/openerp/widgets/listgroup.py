@@ -79,27 +79,36 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
 
     child = len(group_by) == 1
     digits = (16,2)
+    # custom fields - decimal_precision computation
+    computation = False
+    
     if fields:
         for key, val in fields.items():
             if val.get('digits'):
                 digits = val['digits']
+            # custom fields - decimal_precision computation
+            if val.get('computation'):
+                computation = val['computation']
     if isinstance(digits, basestring):
             digits = eval(digits)
     integer, digit = digits
+    
+    if isinstance(computation, basestring):
+            computation = eval(computation)
 
     if grp_records and total_fields and group_by:
         for sum_key, sum_val in total_fields.items():
             if grp_records[0].has_key(sum_key):
                 value = sum(map(lambda x: x[sum_key], grp_records))
                 if isinstance(value, float):
-                    total_fields[sum_key][1] = format.format_decimal(value or 0.0, digit)
+                    total_fields[sum_key][1] = format.format_decimal(value or 0.0, digit, computation=computation)
                 else:
                     total_fields[sum_key][1] = value
     if grp_records:
         for rec in grp_records:
             for key, val in rec.items():
                 if isinstance(val, float):
-                    rec[key] = format.format_decimal(val or 0.0, digit)
+                    rec[key] = format.format_decimal(val or 0.0, digit, computation=computation)
 
             for grp_by in group_by:
                 if not rec.get(grp_by):
