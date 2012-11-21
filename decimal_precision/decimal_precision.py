@@ -50,10 +50,24 @@ class decimal_precision(osv.osv):
         cr.execute('select computation from decimal_precision where name=%s', (application,))
         res = cr.fetchone()
         return res[0] if res else False
+    
+    def create(self, cr, uid, vals, context=None):
+        '''
+        create function updates digits as well
+        '''
+        res = super(decimal_precision, self).create(cr, uid, vals, context=context)
+        self.precision_get.clear_cache(cr.dbname)
+        self.computation_get.clear_cache(cr.dbname)
+        for obj in self.pool.obj_list():
+            for colname, col in self.pool.get(obj)._columns.items():
+                if isinstance(col, (fields.float, fields.function)):
+                    col.digits_change(cr)
+        return res
 
     def write(self, cr, uid, ids, data, *args, **argv):
         res = super(decimal_precision, self).write(cr, uid, ids, data, *args, **argv)
         self.precision_get.clear_cache(cr.dbname)
+        self.computation_get.clear_cache(cr.dbname)
         for obj in self.pool.obj_list():
             for colname, col in self.pool.get(obj)._columns.items():
                 if isinstance(col, (fields.float, fields.function)):
