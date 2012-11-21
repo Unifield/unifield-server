@@ -147,14 +147,17 @@ class account_analytic_line(osv.osv):
     _delete_owner_field = 'cost_center_id'
     
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_code, context=None):
-        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id.code', 'ilike', cost_center_code[:5] + '%')], context=context)
-        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        if instance_ids:
-            instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-            return instance_data['instance']
-        elif current_instance.parent_id and current_instance.parent_id.instance:
-            # Instance has a parent
-            return current_instance.parent_id.instance
+        if cost_center_code:
+            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id.code', '=ilike', cost_center_code[:5] + '%')], context=context)
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance_ids:
+                instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+                return instance_data['instance']
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                return current_instance.parent_id.instance
+            else:
+                return False
         else:
             return False
     
