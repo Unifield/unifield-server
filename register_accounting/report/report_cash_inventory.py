@@ -28,6 +28,7 @@ class cash_inventory(report_sxw.rml_parse):
         super(cash_inventory, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_selection': self.get_selection,
+            'get_total_entry_encoding': self.get_total_entry_encoding,
         })
         return
 
@@ -35,6 +36,22 @@ class cash_inventory(report_sxw.rml_parse):
         # Parse each budget line
         register_states = dict(self.pool.get('account.bank.statement')._columns['state'].selection)
         return register_states[value]
+
+    def get_total_entry_encoding(self, statement_id=None):
+        """
+        
+        """
+        res = 0.0
+        if not statement_id:
+            return res
+        self.cr.execute("""
+            SELECT SUM(amount)
+            FROM account_bank_statement_line
+            WHERE statement_id = %s""", (str(statement_id),))
+        sql_res = self.cr.fetchall()
+        if sql_res:
+            res = sql_res[0] and sql_res[0][0]
+        return res
 
 report_sxw.report_sxw('report.cash.inventory', 'account.bank.statement', 'addons/register_accounting/report/cash_inventory.rml', parser=cash_inventory)
 
