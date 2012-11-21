@@ -191,13 +191,20 @@ class float(_column):
         _column.__init__(self, string=string, **args)
         self.digits = digits
         self.digits_compute = digits_compute
-
+        
+        # custom fields
+        self.computation = args.get('computation', False)
 
     def digits_change(self, cr):
         if self.digits_compute:
             t = self.digits_compute(cr)
             self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (__builtin__.float(x or 0.0),))
             self.digits = t
+            
+            # new customized fields
+            computation = self.digits_compute(cr, computation=True)
+            self.computation = computation
+
 
 class date(_column):
     _type = 'date'
@@ -744,6 +751,9 @@ class function(_column):
 
         self.digits = args.get('digits', (16,2))
         self.digits_compute = args.get('digits_compute', None)
+        
+        # custom fields
+        self.computation = args.get('computation', False)
 
         self._fnct_inv_arg = fnct_inv_arg
         if not fnct_inv:
@@ -783,6 +793,10 @@ class function(_column):
             t = self.digits_compute(cr)
             self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (__builtin__.float(x or 0.0),))
             self.digits = t
+            
+            # new customized fields
+            computation = self.digits_compute(cr, computation=True)
+            self.computation = computation
 
 
     def search(self, cr, uid, obj, name, args, context=None):
