@@ -1,11 +1,11 @@
 -
   For Purchase Order, rule for the CREATE, WRITE and DELETE of objects with the list of fields to track
 -
-  !python {model: audittrail.rule}: |
+  !python {model: audittrail.rule, id: rule_po_1}: |
     name = 'PO CREATE, WRITE and DELETE'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
-    if object_ids and not rule_id:
+    if object_ids:
       # Create the rule
       fields = ['partner_ref']
 
@@ -25,13 +25,13 @@
 -
   For Purchase Order, rule for the CREATE and WRITE of objects with the list of fields to track
 -
-  !python {model: audittrail.rule}: |
+  !python {model: audittrail.rule, id: rule_po_2}: |
     name = 'PO CREATE and WRITE'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
-    if object_ids and not rule_id:
+    if object_ids:
       # Create the rule
-      fields = ['details', 'delivery_requested_date', 'confirmed_delivery_date']
+      fields = ['details', 'delivery_requested_date', 'delivery_confirmed_date']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         
@@ -49,11 +49,11 @@
 -
   For Purchase Order, rule for the CREATE and DELETE of objects with the list of fields to track
 -
-  !python {model: audittrail.rule}: |
+  !python {model: audittrail.rule, id: rule_po_3}: |
     name = 'PO CREATE and DELETE'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
-    if object_ids and not rule_id:
+    if object_ids:
       # Create the rule
       fields = ['order_line']
 
@@ -73,11 +73,11 @@
 -
   For Purchase Order, rule for the WRITE and DELETE of objects with the list of fields to track
 -
-  !python {model: audittrail.rule}: |
+  !python {model: audittrail.rule, id: rule_po_4}: |
     name = 'PO WRITE and DELETE'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
-    if object_ids and not rule_id:
+    if object_ids:
       # Create the rule
       fields = ['partner_id', 'notes']
 
@@ -97,13 +97,13 @@
 -
   For Purchase Order, rule for the WRITE ONLY of objects with the list of fields to track
 -
-  !python {model: audittrail.rule}: |
+  !python {model: audittrail.rule, id: rule_po_5}: |
     name = 'PO WRITE ONLY'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
-    if object_ids and not rule_id:
+    if object_ids:
       # Create the rule
-      fields = ['order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'location_id', 'unallocated_ok']
+      fields = ['order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'transport_type', 'cross_docking_ok', 'location_id', 'unallocation_ok']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
 
@@ -121,16 +121,16 @@
 -
   For Purchase Order lines, rule for the WRITE ONLY of objects with the list of fields to track
 -
-  !python {model: audittrail.rule}: |
+  !python {model: audittrail.rule, id: rule_pol_1}: |
     name = 'PO Line'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order.line')], context=context)
     rule_id = self.search(cr, uid, [('object_id', 'in', object_ids)], context=context)
-    if object_ids and not rule_id:
+    if object_ids:
       # Create the rule
       fields = ['comment', 'confirmed_delivery_date', 'date_planned', 'default_code',
                 'default_name', 'name', 'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2',
                 'nomen_manda_3', 'notes', 'price_unit', 'product_qty', 'product_uom',
-                'taxes_id']
+                'taxes_id', '']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
       field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
