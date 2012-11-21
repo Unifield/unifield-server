@@ -28,9 +28,11 @@ class decimal_precision(osv.osv):
     _columns = {
         'name': fields.char('Usage', size=50, select=True, required=True),
         'digits': fields.integer('Digits', required=True),
+        'computation': fields.boolean(string='Computation precision (rstrip zeros for display)')
     }
     _defaults = {
         'digits': 2,
+        'computation': False,
     }
 
     _sql_constraints = [
@@ -42,6 +44,12 @@ class decimal_precision(osv.osv):
         cr.execute('select digits from decimal_precision where name=%s', (application,))
         res = cr.fetchone()
         return res[0] if res else 2
+    
+    @cache(skiparg=3)
+    def computation_get(self, cr, uid, application):
+        cr.execute('select computation from decimal_precision where name=%s', (application,))
+        res = cr.fetchone()
+        return res[0] if res else False
 
     def write(self, cr, uid, ids, data, *args, **argv):
         res = super(decimal_precision, self).write(cr, uid, ids, data, *args, **argv)
@@ -55,7 +63,11 @@ class decimal_precision(osv.osv):
 decimal_precision()
 
 def get_precision(application):
-    def change_digit(cr):
+    def change_digit(cr, **kwargs):
+        # modify the initial function so we can gather other customized fields
+        if kwargs.get('computation', False):
+            return pooler.get_pool(cr.dbname).get('decimal.precision').computation_get(cr, 1, application)
+        
         res = pooler.get_pool(cr.dbname).get('decimal.precision').precision_get(cr, 1, application)
         return (16, res)
     return change_digit
