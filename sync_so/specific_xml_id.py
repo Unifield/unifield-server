@@ -146,11 +146,18 @@ class account_analytic_line(osv.osv):
     _inherit = 'account.analytic.line'
     _delete_owner_field = 'cost_center_id'
     
-    def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
-        instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', '=', cost_center_id)], context=context)
-        if instance_ids:
-            instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-            return instance_data['instance']
+    def get_instance_name_from_cost_center(self, cr, uid, cost_center_code, context=None):
+        if cost_center_code:
+            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id.code', '=ilike', cost_center_code[:5] + '%')], context=context)
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance_ids:
+                instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+                return instance_data['instance']
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                return current_instance.parent_id.instance
+            else:
+                return False
         else:
             return False
     
@@ -158,13 +165,16 @@ class account_analytic_line(osv.osv):
         if not dest_field == 'cost_center_id':
             return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
         
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
         res = []
         for data in cost_center_data:
             if data['cost_center_id']:
-                cost_center_id = data['cost_center_id'][0]
-                print cost_center_id
-                res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center_id, context))
+                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, data['cost_center_id'][0], context=context)
+                res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context))
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                res.append(current_instance.parent_id.instance)
             else:
                 res.append(False)
         return res
