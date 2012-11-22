@@ -66,6 +66,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
             else:
                 res['error_on_lines'] = True
 
+        if not res['line_ids']:
+            raise osv.except_osv(_('Error'), _('No non-sourced lines are selected. Please select non-sourced lines'))
 
         res['company_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         
