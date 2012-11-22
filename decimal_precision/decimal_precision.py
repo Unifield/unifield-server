@@ -28,7 +28,7 @@ class decimal_precision(osv.osv):
     _columns = {
         'name': fields.char('Usage', size=50, select=True, required=True),
         'digits': fields.integer('Digits', required=True),
-        'computation': fields.boolean(string='Computation precision (rstrip zeros for display)')
+        'computation': fields.boolean(string='Remove trailing zeros')
     }
     _defaults = {
         'digits': 2,
