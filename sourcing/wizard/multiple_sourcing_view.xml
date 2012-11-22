@@ -11,7 +11,7 @@
                     <field name="company_id" invisible="1" />
                     <field name="error_on_lines" invisible="1" />
                     <group colspan="4" col="4" attrs="{'invisible': [('error_on_lines', '=', False]}">
-                        <label string="Some of the selected lines have already been sourced. These lines has been ignored." colspan="4" />
+                        <label string="Some of the selected lines have already been sourced. These lines have been ignored." colspan="4" />
                     </group>
                     <group colspan="4" col="4">
                         <separator colspan="4" string="Selected lines to source" />
@@ -26,8 +26,10 @@
                             </tree>
                         </field>
                         <separator colspan="4" string="Procurement method" />
-                        <field name="type" />
-                        <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')], 'required': [('type', '=', 'make_to_order')]}"/>
+                        <field name="type" 
+                               on_change="change_type(type)"/>
+                        <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')], 'required': [('type', '=', 'make_to_order')]}"
+                               on_change="change_po_cft(po_cft)"/>
                         <separator colspan="4" string="Supplier selection" />
                         <field name="supplier"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"

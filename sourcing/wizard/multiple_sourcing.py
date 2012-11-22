@@ -54,13 +54,15 @@ class multiple_sourcing_wizard(osv.osv_memory):
         if not context:
             context = {}
 
-        if not context.get('active_ids'):
-            raise osv.except_osv(_('Error'), _('You should select at least one line to process.'))
+        if not context.get('active_ids') or len(context.get('active_ids')) < 2:
+            raise osv.except_osv(_('Error'), _('You should select at least two lines to process.'))
 
         res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields, context=context)
 
         res['line_ids'] = []
         res['error_on_lines'] = False
+        res['type'] = 'make_to_order'
+        res['po_cft'] = 'po'
 
         for line in self.pool.get('sourcing.line').browse(cr, uid, context.get('active_ids'), context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
@@ -93,6 +95,25 @@ class multiple_sourcing_wizard(osv.osv_memory):
             line_obj.confirmLine(cr, uid, todo_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
+
+
+    def change_type(self, cr, uid, ids, type, context=None):
+        '''
+        Set to null the other fields if the type is 'from stock'
+        '''
+        if type == 'make_to_stock':
+            return {'value': {'po_cft': False, 'supplier': False}}
+
+        return {}
+
+    def change_po_cft(self, cr, uid, ids, po_cft, context=None):
+        '''
+        Unset the supplier if tender is choosen
+        '''
+        if po_cft == 'cft':
+            return {'value': {'supplier': False}}
+
+        return {}
 
 multiple_sourcing_wizard()
 
