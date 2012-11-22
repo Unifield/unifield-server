@@ -943,11 +943,7 @@ def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
         for thisrule in rule_pool.browse(cr, uid, rule_ids):
             # if the rule for the right method, then go inside and do the track change log
             if getattr(thisrule, 'log_' + method_name):
-                fields_to_trace = []
-                list_of_field = [(field.id) for field in thisrule.field_ids]
-                print list_of_field
-                for field in thisrule.field_ids:
-                    fields_to_trace.append(field.name)
+                fields_to_trace = [(field.name) for field in thisrule.field_ids]
                 return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, thisrule.domain_filter, *args, **kwargs)
         
         return old_method(self, *args, **kwargs)
