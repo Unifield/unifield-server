@@ -40,7 +40,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                                      string='Sourcing lines'),
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', required=True),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
-        'supplier': fields.many2one('res.partner', 'Supplier'),
+        'supplier': fields.many2one('res.partner', 'Supplier', help='If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.'),
         'company_id': fields.many2one('res.company', 'Current company'),
     }
 
