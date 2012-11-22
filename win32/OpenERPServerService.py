@@ -55,6 +55,7 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         # stop the running TERP Server: say it's a normal exit
         win32api.TerminateProcess(int(self.terpprocess._handle), 0)
+        self.stopping = True
         servicemanager.LogInfoMsg("OpenERP Server stopped correctly")
         # And set my event.
         win32event.SetEvent(self.hWaitStop)
@@ -73,7 +74,6 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
     def StartControl(self,ws):
         # this listens to the Service Manager's events
         win32event.WaitForSingleObject(ws, win32event.INFINITE)
-        self.stopping = True
 
     def SvcDoRun(self):
         # Start OpenERP Server itself

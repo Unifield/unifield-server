@@ -26,7 +26,7 @@ lock_file = 'update.lock'
 update_dir = '.update'
 server_version_file = 'unifield-version.txt'
 new_version_file = os.path.join(update_dir, 'update-list.txt')
-restart_delay = 10
+restart_delay = 5
 
 md5hex_size = (md5().digest_size * 8 / 4)
 base_version = '8' * md5hex_size
