@@ -27,6 +27,8 @@ from tools.translate import _
 from mx.DateTime import DateFrom, now, RelativeDate
 from datetime import date
 
+import decimal_precision as dp
+
 import time
 
 import base64
@@ -633,7 +635,7 @@ class supplier_catalogue_line(osv.osv):
                                   help='Minimal order quantity to get this unit price.'),
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                   help='UoM of the product used to get this unit price.'),
-        'unit_price': fields.float(digits=(16,2), string='Unit Price', required=True),
+        'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                    help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
