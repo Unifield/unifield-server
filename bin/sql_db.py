@@ -325,7 +325,7 @@ class ConnectionPool(object):
 
     @locked
     def close_all(self, dsn):
-        self.__logger.info('%r: Close all connections to %r', self, dsn)
+        self.__logger.info('%r: Close all connections', self)
         for i, (cnx, used) in tools.reverse_enumerate(self._connections):
             if dsn_are_equals(cnx.dsn, dsn):
                 cnx.close()
