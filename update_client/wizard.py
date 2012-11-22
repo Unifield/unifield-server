@@ -68,10 +68,8 @@ class upgrade(osv.osv_memory):
         res = self.write(cr, uid, ids, wiz_value, context=context)
         if status != 'success':
             return res
-        base_module_upgrade(cr, self.pool)
-        cr.commit()
         ## Restart automatically
-        return self.restart(cr, uid, ids, context=context)
+        self.restart(cr, uid, ids, context=context)
 
     def _generate(self, cr, uid, context=None):
         """Make the wizard caption"""
