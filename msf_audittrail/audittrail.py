@@ -719,10 +719,13 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
         if res_ids:
             fields_to_trace.append('id')
             for resource in resource_pool.read(cr, uid, [res_id], fields_to_trace):
-                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
+                if parent_field_id and len(args)>3 and not args[3].get(parent_field.name, resource[parent_field.name]):
                     continue
                 res_id = resource['id']
-                res_id2 = parent_field_id and resource[parent_field.name][0] or res_id
+                if parent_field_id and resource.get(parent_field.name):
+                    res_id2 = resource.get(parent_field.name)[0]
+                else:
+                    res_id2 = res_id
                 if 'id' in resource:
                     del resource['id']
 
@@ -811,6 +814,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             fields = []
             if len(args)>3 and type(args[3]) == dict:
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
+                
+            fields = fields_to_trace
                 
         model_id = model.id
         if parent_field_id:
@@ -936,12 +941,16 @@ def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
             return old_method(self, *args, **kwargs)
 
         for thisrule in rule_pool.browse(cr, uid, rule_ids):
-            fields_to_trace = []
-            for field in thisrule.field_ids:
-                fields_to_trace.append(field.name)
+            # if the rule for the right method, then go inside and do the track change log
             if getattr(thisrule, 'log_' + method_name):
+                fields_to_trace = []
+                list_of_field = [(field.id) for field in thisrule.field_ids]
+                print list_of_field
+                for field in thisrule.field_ids:
+                    fields_to_trace.append(field.name)
                 return log_fct(self, cr, uid_orig, model, method, old_method, fields_to_trace, thisrule.id, thisrule.parent_field_id.id, thisrule.name_get_field_id.name, thisrule.domain_filter, *args, **kwargs)
-            return old_method(self, *args, **kwargs)
+        
+        return old_method(self, *args, **kwargs)
     res = my_fct(cr, uid_orig, model, method_name, *args, **kwargs)
     return res
 
