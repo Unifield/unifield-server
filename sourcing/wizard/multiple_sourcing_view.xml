@@ -37,7 +37,7 @@
                     <separator colspan="4" string="Actions" />
                     <label colspan="1" />
                     <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1" />
-                    <button name="source_lines" string="Ok" icon="gtk-execute" colspan="2" />
+                    <button name="source_lines" string="Ok" icon="terp-camera_test" colspan="2" type="object" />
                 </form>
             </field>
         </record>

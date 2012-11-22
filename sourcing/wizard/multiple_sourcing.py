@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 
+from tools.translate import _
+
 _SELECTION_TYPE = [
     ('make_to_stock', 'from stock'),
     ('make_to_order', 'on order'),]
@@ -72,6 +74,25 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res['company_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         
         return res
+
+    def source_lines(self, cr, uid, ids, context=None):
+        '''
+        Set values to sourcing lines and confirm them
+        '''
+        if not context:
+            context = {}
+
+        line_obj = self.pool.get('sourcing.line')
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            todo_ids = []
+            for line in wiz.line_ids:
+                todo_ids.append(line.id)
+
+            line_obj.write(cr, uid, todo_ids, {'type': wiz.type, 'po_cft': wiz.po_cft, 'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+            line_obj.confirmLine(cr, uid, todo_ids, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
 
 multiple_sourcing_wizard()
 
