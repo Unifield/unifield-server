@@ -46,8 +46,6 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         # a reference to the server's process
         self.terpprocess = None
-        # info if the service terminates correctly or if the server crashed
-        self.stopping = False
 
 
     def SvcStop(self):
@@ -55,7 +53,6 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         # stop the running TERP Server: say it's a normal exit
         win32api.TerminateProcess(int(self.terpprocess._handle), 0)
-        self.stopping = True
         servicemanager.LogInfoMsg("OpenERP Server stopped correctly")
         # And set my event.
         win32event.SetEvent(self.hWaitStop)
@@ -82,10 +79,7 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         thread.start_new_thread(self.StartControl, (self.hWaitStop,))
         # Log a info message that the server is running
         servicemanager.LogInfoMsg("OpenERP Server up and running")
-        # verification if the server is really running, else quit with an error
-        self.terpprocess.wait()
-        if not self.stopping:
-            sys.exit("OpenERP Server check: server not running, check the logfile for more info")
+        sys.exit(self.terpprocess.wait())
 
 
 
