@@ -796,7 +796,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 "method": method,
                 "object_id": model_id,
                 "user_id": uid_orig,
-                "field_description": model_name,
+                "field_description": get_field_description(model=parent_field.model_id),
             }
 
             if not parent_field_id:
@@ -816,7 +816,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                         "object_id": model_id,
                         "user_id": uid_orig,
                         "res_id": res_id,  
-                        "field_description": model_name,
+                        "field_description": get_field_description(model=parent_field.model_id),
                         }
 
             # We create only one line when deleting a record
