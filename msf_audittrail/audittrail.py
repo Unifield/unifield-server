@@ -71,6 +71,11 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _trace = True
 
+    # [utp-360]: I rename the 'date' to 'Actual Receipt Date' because before it was 'Date'
+    _columns = {
+        'date': fields.datetime('Actual Receipt Date', required=True, select=True, help="Move date: scheduled date until move is done, then date of actual move processing", readonly=True),
+    }
+
 stock_move()
 
 class account_invoice(osv.osv):
@@ -156,7 +161,11 @@ class audittrail_rule(osv.osv):
 #    _sql_constraints = [
 #        ('model_uniq', 'unique (object_id)', """There is a rule defined on this object\n You can not define other on the same!""")
 #    ]
-    
+
+    _sql_constraints = [
+        ('rule_name_uniq', 'unique(name)', """The AuditTrail rule name must be unique!""")
+    ]
+
     def _check_domain_filter(self, cr, uid, ids, context=None):
         """
         Check that if you select cross docking, you do not have an other location than cross docking
@@ -630,6 +639,17 @@ def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
             
     return res
 
+def get_field_description(model):
+    """
+    Redefine the field_description for sale order and sale order line
+    """
+    if model.model == 'sale.order':
+        field_description = 'Field Order'
+    elif model.model == 'sale.order.line':
+        field_description = 'Field Order Line'
+    else:
+        field_description = model.name
+    return field_description
 
 def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):
     """
@@ -688,7 +708,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 "object_id": model_id,
                 "user_id": uid_orig,
                 "res_id": res_id2,
-                "field_description": model.name,
+                "field_description": get_field_description(model=model),
         }
 
         # Add the name of the created sub-object
