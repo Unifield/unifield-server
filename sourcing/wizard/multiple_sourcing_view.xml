@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="mulitple_sourcing_wizard_form_view" model="ir.ui.view">
+            <field name="name">multiple.sourcing.wizard.form.view</field>
+            <field name="model">multiple.sourcing.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Source multiple lines">
+                    <field name="company_id" invisible="1" />
+                    <group colspan="4" col="4">
+                        <separator colspan="4" string="Selected lines to source" />
+                        <field name="line_ids" nolabel="1" colspan="4">
+                            <tree string="Lines to source">
+                                <field name="sale_order_id" />
+                                <field name="line_number" />
+                                <field name="product_id" />
+                                <field name="qty" />
+                                <field name="uom_id" />
+                                <field name="real_stock" />
+                            </tree>
+                        </field>
+                        <separator colspan="4" string="Procurement method" />
+                        <field name="type" />
+                        <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')], 'required': [('type', '=', 'make_to_order')]}"/>
+                        <separator colspan="4" string="Supplier selection" />
+                        <field name="supplier"
+                               domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
+                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')],
+                                       'required': [('type', '=', 'make_to_order'), ('po_cft', 'in', ['po', 'dpo'])]}"/>
+                    </group>
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="1" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1" />
+                    <button name="source_lines" string="Ok" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+        <act_window name="Source lines"
+                    res_model="multiple.sourcing.wizard"
+                    src_model="sourcing.line"
+                    view_mode="form"
+                    target="new"
+                    key2="client_action_multi"
+                    id="action_multiple_sourcing" />
+
+    </data>
+</openerp>

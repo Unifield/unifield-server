@@ -1,0 +1,97 @@
+# -*- coding: utf-8 -*-
+##############################################################################
+#    
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2011 MSF, TeMPO Consulting
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#
+##############################################################################
+
+from osv import osv
+from osv import fields
+
+_SELECTION_TYPE = [
+    ('make_to_stock', 'from stock'),
+    ('make_to_order', 'on order'),]
+
+_SELECTION_PO_CFT = [
+    ('po', 'Purchase Order'),
+    ('dpo', 'Direct Purchase Order'),
+    ('cft', 'Tender'),]
+
+
+class multiple_sourcing_wizard(osv.osv_memory):
+    _name = 'multiple.sourcing.wizard'
+
+    _columns = {
+        'line_ids': fields.many2many('sourcing.line', 'source_sourcing_line_rel', 'line_id', 'wizard_id',
+                                     string='Sourcing lines'),
+        'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', required=True),
+        'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
+        'supplier': fields.many2one('res.partner', 'Supplier'),
+        'company_id': fields.many2one('res.company', 'Current company'),
+    }
+
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set lines with the selected lines
+        '''
+        if not context:
+            context = {}
+
+        if not context.get('active_ids'):
+            raise osv.except_osv(_('Error'), _('You should select at least one line to process.'))
+
+        res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields, context=context)
+
+        res['line_ids'] = context.get('active_ids')
+        res['company_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
+        
+        return res
+
+multiple_sourcing_wizard()
+
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+
+        return res
+
+    def _src_contains_fo(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if arg[0] == 'line_contains_fo':
+                if type(arg[2]) == type(list()):
+                    for line in self.pool.get('sourcing.line').browse(cr, uid, arg[2][0][2], context=context):
+                        if not line.procurement_request:
+                            res.append(('partner_type', 'in', ['external', 'esc']))
+
+        return res
+
+    _columns = {
+        'line_contains_fo': fields.function(_get_dummy, fnct_search=_src_contains_fo, method=True, string='Lines contains FO', type='boolean', store=False),
+    }
+
+res_partner()
+
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
