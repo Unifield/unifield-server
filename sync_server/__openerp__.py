@@ -34,7 +34,8 @@
     'data': [
         'sync_server_view.xml',
         'rules_view.xml',
-        'security/ir.model.access.csv'
+        'security/ir.model.access.csv',
+        'data/cron.xml',
     ],
     'demo_xml': [
     ],
