@@ -49,7 +49,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
     def default_get(self, cr, uid, fields, context=None):
         '''
-        Set lines with the selected lines
+        Set lines with the selected lines to source
         '''
         if not context:
             context = {}
@@ -64,6 +64,8 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res['type'] = 'make_to_order'
         res['po_cft'] = 'po'
 
+        # Ignore all lines which have already been sourced, if there are some alredy sourced lines, a message
+        # will be displayed at the top of the wizard
         for line in self.pool.get('sourcing.line').browse(cr, uid, context.get('active_ids'), context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
@@ -91,7 +93,12 @@ class multiple_sourcing_wizard(osv.osv_memory):
             for line in wiz.line_ids:
                 todo_ids.append(line.id)
 
-            line_obj.write(cr, uid, todo_ids, {'type': wiz.type, 'po_cft': wiz.po_cft, 'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+            # Write parameters
+            line_obj.write(cr, uid, todo_ids, {'type': wiz.type, 
+                                               'po_cft': wiz.po_cft, 
+                                               'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+            
+            # Confirm the lines
             line_obj.confirmLine(cr, uid, todo_ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
@@ -99,7 +106,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
     def change_type(self, cr, uid, ids, type, context=None):
         '''
-        Set to null the other fields if the type is 'from stock'
+        Unset the other fields if the type is 'from stock'
         '''
         if type == 'make_to_stock':
             return {'value': {'po_cft': False, 'supplier': False}}
@@ -118,6 +125,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
 multiple_sourcing_wizard()
 
 
+#############################################################
+#                                                           #
+# This modification on res.partner avoid the selection      #
+# of internal/inter-section/intermission partners           #
+# if a line on multiple sourcing wizard coming from a FO    #
+#                                                           #
+#############################################################
 class res_partner(osv.osv):
     _name = 'res.partner'
     _inherit = 'res.partner'
