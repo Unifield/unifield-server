@@ -299,7 +299,7 @@
           <para style="P3">Closed on: [[ o.closing_date and o.closing_date or '' ]]</para>
         </td>
         <td>
-          <para style="P3">Cash Transaction: [[ o.id and get_total_entry_encoding(o.id) or '0.0' ]]</para>
+          <para style="P3">Cash Transaction: [[ o.total_entry_encoding and o.total_entry_encoding or '0.0' ]]</para>
         </td>
         <td>
           <para style="P3">CashBox Balance: [[ o.balance_end_cash and o.balance_end_cash or '0.0' ]]</para>

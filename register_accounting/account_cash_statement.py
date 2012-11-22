@@ -252,7 +252,23 @@ class account_cash_statement(osv.osv):
         """
         Sum of given register's transactions
         """
-        return super(account_cash_statement, self)._get_sum_entry_encoding(cr, uid, ids, field_name, arg, context)
+        res = {}
+        # COMPUTE amounts
+        cr.execute("""
+        SELECT statement_id, SUM(amount) FROM (
+            SELECT statement_id, amount
+            FROM account_bank_statement_line
+            WHERE statement_id in %s
+            ORDER BY statement_id) AS lines
+            GROUP BY lines.statement_id""", (tuple(ids,),))
+        sql_res = cr.fetchall()
+        if sql_res:
+            res = dict(sql_res)
+            # Complete those that have no result
+            for id in ids:
+                if id not in res:
+                    res.update({id: 0.0})
+        return res
 
     _columns = {
             'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
