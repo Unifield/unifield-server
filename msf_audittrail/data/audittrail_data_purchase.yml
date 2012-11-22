@@ -7,7 +7,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids and not rule_id:
       # Create the rule
-      fields = ['name', 'partner_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date','order_line']
+      fields = ['name', 'partner_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         
@@ -80,7 +80,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids and not rule_id:
       # Create the rule
-      fields = ['name']
+      fields = []
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
       field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
@@ -151,7 +151,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids and not rule_id:
       # Create the rule
-      fields = ['name']
+      fields = []
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
       field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
