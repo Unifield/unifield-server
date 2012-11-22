@@ -42,6 +42,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT'),
         'supplier': fields.many2one('res.partner', 'Supplier', help='If you have choose lines coming from Field Orders, only External/ESC suppliers will be available.'),
         'company_id': fields.many2one('res.company', 'Current company'),
+        'error_on_lines': fields.boolean('If there is line without need sourcing on selected lines'),
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -56,7 +57,16 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         res = super(multiple_sourcing_wizard, self).default_get(cr, uid, fields, context=context)
 
-        res['line_ids'] = context.get('active_ids')
+        res['line_ids'] = []
+        res['error_on_lines'] = False
+
+        for line in self.pool.get('sourcing.line').browse(cr, uid, context.get('active_ids'), context=context):
+            if line.state == 'draft' and line.sale_order_state == 'validated':
+                res['line_ids'].append(line.id)
+            else:
+                res['error_on_lines'] = True
+
+
         res['company_id'] = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id
         
         return res
