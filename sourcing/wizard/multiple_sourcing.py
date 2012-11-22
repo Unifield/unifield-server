@@ -90,8 +90,14 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             todo_ids = []
+            ir_lines = False
             for line in wiz.line_ids:
                 todo_ids.append(line.id)
+                if line.procurement_request:
+                    ir_lines = True
+
+            if wiz.po_cft == 'dpo' and ir_lines:
+                raise osv.except_osv(_('Error'), ('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
 
             # Write parameters
             line_obj.write(cr, uid, todo_ids, {'type': wiz.type, 
