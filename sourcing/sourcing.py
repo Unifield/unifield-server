@@ -475,6 +475,10 @@ class sourcing_line(osv.osv):
             
             if sl.po_cft == 'cft' and not sl.product_id:
                 raise osv.except_osv(_('Warning'), _("You can't Source with 'Tender' if you don't have product."))
+            elif sl.type == 'make_to_stock' and not sl.product_id:
+                raise osv.except_osv(_('Warning'), _("You can't Source 'from stock' if you don't have product."))
+            elif not sl.product_id and sl.supplier and sl.supplier.partner_type == 'external':
+                raise osv.except_osv(_('Warning'), _("You can't Source to an 'External' partner if you don't have product."))
             
             # set the corresponding sale order line to 'confirmed'
             result.append((sl.id, sl.sale_order_line_id.write({'state': state_to_use}, context)))
