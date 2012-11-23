@@ -7,7 +7,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids and not rule_id:
       # Create the rule
-      fields = ['name','partner_id2', 'backorder_id', 'reason_type_id', 'date', 'min_date', 'order_category', 'warehouse_id']
+      fields = ['name']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'stock.picking'), ('name', 'in', fields)], context=context)
         
