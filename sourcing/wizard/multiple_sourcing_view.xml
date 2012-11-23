@@ -17,7 +17,7 @@
                         <separator colspan="4" string="Selected lines to source" />
                         <field name="line_ids" nolabel="1" colspan="4">
                             <tree string="Lines to source" hide_new_button="True" noteditable="True">
-                                <field name="sale_order_id" />
+                                <field name="sale_order_id" string="Order reference" />
                                 <field name="line_number" />
                                 <field name="product_id" />
                                 <field name="qty" />
@@ -28,18 +28,18 @@
                         <separator colspan="4" string="Procurement method" />
                         <field name="type" 
                                on_change="change_type(type)"/>
-                        <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')], 'required': [('type', '=', 'make_to_order')]}"
+                        <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                on_change="change_po_cft(po_cft)"/>
                         <separator colspan="4" string="Supplier selection" />
                         <field name="supplier"
                                domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
-                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')],
-                                       'required': [('type', '=', 'make_to_order'), ('po_cft', 'in', ['po', 'dpo'])]}"/>
+                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"/>
                     </group>
                     <separator colspan="4" string="Actions" />
-                    <label colspan="1" />
-                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1" />
-                    <button name="source_lines" string="Ok" icon="terp-camera_test" colspan="2" type="object" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" help="Close the wizard" />
+                    <button name="save_lines" string="Save" icon="gtk-apply" type="object" help="Save new settings and close the wizard" />
+                    <button name="source_lines" string="Source default" icon="terp-camera_test" type="object" help="Check confirm the lines as 'default'/main wizard settings" />
+                    <button name="save_source_lines" string="Save &amp; source" icon="gtk-redo" type="object" help="Source lines with new options selected on the wizard" />
                 </form>
             </field>
         </record>

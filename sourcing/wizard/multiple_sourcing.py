@@ -79,9 +79,35 @@ class multiple_sourcing_wizard(osv.osv_memory):
         
         return res
 
+    def save_lines(self, cr, uid, ids, context=None):
+        '''
+        Set values to sourcing lines
+        '''
+        if not context:
+            context = {}
+
+        line_obj = self.pool.get('sourcing.line')
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.type == 'make_to_order':
+                if not wiz.po_cft:
+                    raise osv.except_osv(_('Error'), _('The Procurement method should be filled !'))
+                elif wiz.po_cft != 'cft' and not wiz.supplier:
+                    raise osv.except_osv(_('Error'), _('You should select a supplier !'))
+                
+            for line in wiz.line_ids:
+                if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
+                    raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
+
+                line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
+                                                    'po_cft': wiz.po_cft, 
+                                                    'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+            
+        return {'type': 'ir.actions.act_window_close'}
+
     def source_lines(self, cr, uid, ids, context=None):
         '''
-        Set values to sourcing lines and confirm them
+        Confirm all lines
         '''
         if not context:
             context = {}
@@ -91,16 +117,21 @@ class multiple_sourcing_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             for line in wiz.line_ids:
                 if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
-                    raise osv.except_osv(_('Error'), ('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-
-                # Work line by line because if work with all lines, the system doesn't confirm the order
-                # Write parameters
-                line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
-                                                    'po_cft': wiz.po_cft, 
-                                                    'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
-            
-                # Confirm the lines
+                    raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
+                
                 line_obj.confirmLine(cr, uid, [line.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def save_source_lines(self, cr, uid, ids, context=None):
+        '''
+        Set values to sourcing lines and confirm them
+        '''
+        if not context:
+            context = {}
+
+        self.save_lines(cr, uid, ids, context=context)
+        self.source_lines(cr, uid, ids, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
