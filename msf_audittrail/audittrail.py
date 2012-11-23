@@ -708,7 +708,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 "object_id": model_id,
                 "user_id": uid_orig,
                 "res_id": res_id2,
-                "field_description": get_field_description(model=model),
+                "field_description": get_field_description(model),
         }
 
         # Add the name of the created sub-object
@@ -790,13 +790,16 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             if domain and not _check_domain(self, cr, uid, old_values[res_id], domain, model, res_id):
                 res_ids.pop(res_ids.index(res_id))
                 continue
-                
+            if model_name == 'Sales Order':
+                model_name = 'Field Order'
+            elif model_name == 'Sales Order Line':
+                model_name = 'Field Order Line'
             vals = {
                 "name": "%s" %model_name,
                 "method": method,
                 "object_id": model_id,
                 "user_id": uid_orig,
-                "field_description": get_field_description(model=parent_field.model_id),
+                "field_description": model_name,
             }
 
             if not parent_field_id:
@@ -816,7 +819,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                         "object_id": model_id,
                         "user_id": uid_orig,
                         "res_id": res_id,  
-                        "field_description": get_field_description(model=parent_field.model_id),
+                        "field_description": model_name,
                         }
 
             # We create only one line when deleting a record
