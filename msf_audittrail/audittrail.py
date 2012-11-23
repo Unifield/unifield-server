@@ -647,13 +647,15 @@ def get_field_description(model):
         field_description = 'Field Order'
     elif model.model == 'sale.order.line':
         field_description = 'Field Order Line'
+    elif model.model== 'stock.picking':
+        field_description = 'Incoming Shipment'
     else:
         field_description = model.name
     return field_description
 
 def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):
     """
-    Logging function: This function is performs logging oprations according to method
+    Logging function: This function is performs logging operations according to method
     @param cr: the current database
     @param uid: the current user’s ID for security checks,
     @param model: Object who's values are being changed
@@ -794,6 +796,8 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 model_name = 'Field Order'
             elif model_name == 'Sales Order Line':
                 model_name = 'Field Order Line'
+            elif model_name == 'Picking List':
+                model_name = 'Incoming Shipment'
             vals = {
                 "name": "%s" %model_name,
                 "method": method,
