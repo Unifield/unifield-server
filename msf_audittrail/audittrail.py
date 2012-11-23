@@ -560,6 +560,8 @@ def create_log_line(self, cr, uid, model, lines=[]):
 
         if field_id:
             field_description = field['field_description']
+            if field_description == 'Pricelist':
+                field_description = 'Currency'
 
 #            if field['ttype'] == 'many2one':
 #                if type(old_value) == tuple:
