@@ -129,7 +129,32 @@ class stock_move(osv.osv):
         # set the line number from original stock move
         move_data.update({'line_number': move.line_number})
         return move_data
-    
+
+    def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
+        '''
+        Get the requestor_location_id in case of IR to update the location_dest_id of each move
+        '''
+        picking_id = kwargs['picking'].id
+        location_dest_id = False
+        sql = """
+select so.location_requestor_id, so.procurement_request
+from stock_picking sp
+left join purchase_order po
+on sp.purchase_id = po.id
+left join procurement_order pro
+on po.id = pro.purchase_id
+left join sale_order_line sol
+on pro.id = sol.procurement_id
+left join sale_order so
+on sol.order_id = so.id
+where sp.id = %s
+        """
+        cr.execute(sql, (picking_id,))
+        res = cr.dictfetchall()
+        if res[0]['procurement_request']:
+            location_dest_id = res[0]['location_requestor_id']
+        return location_dest_id
+
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
         hook to update defaults data
