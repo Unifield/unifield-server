@@ -80,12 +80,14 @@
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
     move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_ids[0])], context=context)
+    print "action_process"
     dic = self.action_process(cr, uid, in_ids, context=context)
     wiz_obj = self.pool.get(dic['res_model'])
     data_wiz = wiz_obj.read(cr, uid, [dic['res_id']], ['dest_type'], context=dic['context'])
     print "data_wiz is %s" % data_wiz
     data_wiz = wiz_obj.read(cr, uid, [dic['res_id']], ['dest_type'], context=dic['context'])[0]
     wiz_obj.copy_all(cr,uid, [dic['res_id']], context=dic['context'])
+    print "do_incoming_shipment"
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids,['state', 'move_lines'], context=context)
     print "data3 is %s" % data
