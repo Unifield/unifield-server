@@ -1944,7 +1944,13 @@ class stock_move(osv.osv):
             context = {}
         move_data = kwargs['move_data']
         return move_data
-    
+
+    def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
+        '''
+        Get the requestor_location_id in case of IR to update the location_dest_id of each move
+        '''
+        return False
+
     def create_chained_picking(self, cr, uid, moves, context=None):
         res_obj = self.pool.get('res.company')
         location_obj = self.pool.get('stock.location')
@@ -1966,11 +1972,14 @@ class stock_move(osv.osv):
                 if old_ptype != picking.type:
                     old_pick_name = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                     picking_obj.write(cr, uid, [picking.id], {'name': old_pick_name}, context=context)
+                location_dest_id = self._get_location_for_internal_request(cr, uid, context=context, picking=picking)
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
+                if not location_dest_id:
+                    location_dest_id = loc.id
                 move_data = {'location_id': move.location_dest_id.id,
-                             'location_dest_id': loc.id,
+                             'location_dest_id': location_dest_id,
                              'date_moved': time.strftime('%Y-%m-%d'),
                              'picking_id': pickid,
                              'state': 'waiting',
