@@ -88,15 +88,14 @@
     wiz_obj.copy_all(cr,uid, [dic['res_id']], context=dic['context'])
     print "do_incoming_shipment"
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
-    data = self.read(cr, uid, in_ids,['state', 'move_lines'], context=context)
-    print "data3 is %s" % data
     data = self.read(cr, uid, in_ids,['state', 'move_lines'], context=context)[0]
+    print "Start loop"
     for move_line in data['move_lines']:
         pol_id = move_obj.read(cr, uid, move_line, ['purchase_line_id'])['purchase_line_id']
-        print "pol_id is %s" % pol_id
+        print "pol_id is %s" % (pol_id,)
         pol_id = move_obj.read(cr, uid, move_line, ['purchase_line_id'])['purchase_line_id'][0]
         int_move = move_obj.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'internal')])
         location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id']
-        print "location_dest_id is %s" % location_dest_id
+        print "location_dest_id is %s" % (location_dest_id,)
         location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id'][0]
         assert location_dest_id == ref("location_test"), 'The location_dest_id of the stock move should be the same as the location_requestor_id of the IR but it is not'
