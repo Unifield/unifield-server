@@ -1972,10 +1972,10 @@ class stock_move(osv.osv):
                 if old_ptype != picking.type:
                     old_pick_name = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                     picking_obj.write(cr, uid, [picking.id], {'name': old_pick_name}, context=context)
-                location_dest_id = self._get_location_for_internal_request(cr, uid, context=context, picking=picking)
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
+                location_dest_id = self._get_location_for_internal_request(cr, uid, context=context, move=move)
                 if not location_dest_id:
                     location_dest_id = loc.id
                 move_data = {'location_id': move.location_dest_id.id,
