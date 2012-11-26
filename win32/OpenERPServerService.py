@@ -32,6 +32,8 @@ import subprocess
 import os
 import thread
 
+EXIT_UPDATE_REQUIRE_RESTART = 1
+
 class OpenERPServerService(win32serviceutil.ServiceFramework):
     # required info
     _svc_name_ = "openerp-server-6.0"
@@ -73,13 +75,26 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         win32event.WaitForSingleObject(ws, win32event.INFINITE)
 
     def SvcDoRun(self):
-        # Start OpenERP Server itself
-        self.StartTERP()
         # start the loop waiting for the Service Manager's stop signal
         thread.start_new_thread(self.StartControl, (self.hWaitStop,))
-        # Log a info message that the server is running
-        servicemanager.LogInfoMsg("OpenERP Server up and running")
-        sys.exit(self.terpprocess.wait())
+        while True:
+            # Start OpenERP Server itself
+            self.StartTERP()
+            # Log a info message that the server is running
+            servicemanager.LogInfoMsg("OpenERP Server up and running")
+            # wait until child process is terminated
+            # if exit status is:
+            # - special 'restart'
+            #       simply loop to restart the process and finish update
+            # - other exit stauts:
+            #       server crashed? exit with an error message
+            exit_status = self.terpprocess.wait()
+            if exit_status == EXIT_UPDATE_REQUIRE_RESTART:
+                servicemanager.LogInfoMsg("OpenERP has been updated, restarting...")
+                continue  # restart openerp process
+            if exit_status == 0:
+                break  # normal exit
+            sys.exit(exit_status)
 
 
 
