@@ -213,6 +213,7 @@ Section OpenERP_Server SectionOpenERP_Server
 
     nsExec::Exec '"$INSTDIR\openerp-server.exe" --stop-after-init --logfile "$INSTDIR\openerp-server.log" -s'
     nsExec::Exec '"$INSTDIR\service\OpenERPServerService.exe" -auto -install'
+    nsExec::Exec 'sc failure openerp-server-6.0 reset= 0 actions= restart/0/restart/0/restart/0'
 SectionEnd
 
 Section -RestartServer
