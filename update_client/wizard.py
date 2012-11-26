@@ -70,6 +70,7 @@ class upgrade(osv.osv_memory):
             return res
         ## Restart automatically
         self.restart(cr, uid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
     def _generate(self, cr, uid, context=None):
         """Make the wizard caption"""
