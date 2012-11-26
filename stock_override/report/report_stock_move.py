@@ -65,7 +65,7 @@ class report_stock_move(osv.osv):
         'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'),
             ('05','May'), ('06','June'), ('07','July'), ('08','August'), ('09','September'),
             ('10','October'), ('11','November'), ('12','December')], 'Month',readonly=True),
-        'partner_id':fields.many2one('res.partner.address', 'Partner', readonly=True),
+        'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
         'company_id':fields.many2one('res.company', 'Company', readonly=True),
         'picking_id':fields.many2one('stock.picking', 'Reference', readonly=True),
@@ -117,7 +117,7 @@ class report_stock_move(osv.osv):
                         al.product_qty,
                         al.out_qty as product_qty_out,
                         al.in_qty as product_qty_in,
-                        al.address_id as partner_id,
+                        al.partner_id as partner_id,
                         al.product_id as product_id,
                         al.state as state ,
                         al.product_uom as product_uom,
@@ -164,7 +164,7 @@ class report_stock_move(osv.osv):
                         sm.tracking_id as tracking_id,
                         sum(sm.product_qty) as product_qty,
                         pt.nomen_manda_2 as categ_id ,
-                        sm.address_id as address_id,
+                        sp.partner_id2 as partner_id,
                         sm.product_id as product_id,
                         sm.origin as origin,
                         sm.reason_type_id as reason_type_id,
@@ -183,7 +183,7 @@ class report_stock_move(osv.osv):
                         LEFT JOIN stock_location sl ON (sm.location_id = sl.id)
 
                     GROUP BY
-                        sm.id,sp.type, sm.date,sm.address_id,
+                        sm.id,sp.type, sm.date,sp.partner_id2,
                         sm.product_id,sm.state,sm.product_uom,sm.date_expected, sm.origin,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty, sm.prodlot_id, sm.comment, sm.tracking_id,
                         sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.nomen_manda_2, sp.stock_journal_id, sm.reason_type_id)
@@ -192,7 +192,7 @@ class report_stock_move(osv.osv):
                     GROUP BY
                         al.out_qty,al.in_qty,al.curr_year,al.curr_month,
                         al.curr_day,al.curr_day_diff,al.curr_day_diff1,al.curr_day_diff2,al.dp,al.location_id,al.location_dest_id,
-                        al.address_id,al.product_id,al.state,al.product_uom, al.sm_id, al.origin,
+                        al.partner_id,al.product_id,al.state,al.product_uom, al.sm_id, al.origin,
                         al.picking_id,al.company_id,al.type,al.product_qty, al.categ_id, al.stock_journal, al.tracking_id, al.comment, al.prodlot_id, al.reason_type_id
                )
         """)
