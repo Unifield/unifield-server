@@ -74,9 +74,8 @@
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)
     print "data2 is %s" % data
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
-    po_id = data['purchase_id']
-    print "po_id is %s" % po_id
     po_id = data['purchase_id'][0]
+    print "po_id is %s" % po_id
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
     move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_ids[0])], context=context)
