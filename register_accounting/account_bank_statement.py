@@ -1137,7 +1137,8 @@ class account_bank_statement_line(osv.osv):
                 move_vals= {
                     'journal_id': st_line.statement_id.journal_id.id,
                     'period_id': st_line.statement_id.period_id.id,
-                    'date': st_line.document_date or st_line.date or curr_date,
+                    'date': st_line.date or curr_date,
+                    'document_date': st_line.document_date or curr_date,
                     # name removed from UF-1542 because of a bug from UF-1129
                     #'name': 'DirectExpense/' + st_line.name,
                     'partner_id': st_line.partner_id.id,
