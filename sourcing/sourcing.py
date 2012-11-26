@@ -79,6 +79,28 @@ class sourcing_line(osv.osv):
             raise osv.except_osv(_('Invalid action !'), _('Cannot delete Sale Order Line(s) from the sourcing tool !'))
         # delete the sourcing line
         return super(sourcing_line, self).unlink(cr, uid, ids, context)
+
+    def _getAvailableStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
+        '''
+        get available stock for the product of the corresponding sourcing line
+        '''
+        result = {}
+        productObj = self.pool.get('product.product')
+        # for each sourcing line
+        for sl in self.browse(cr, uid, ids, context):
+            product_context = context
+            if sl.product_id:
+                real_stock = sl.product_id.qty_available
+                product_context = context
+                product_context.update({'states': ('assigned',), 'what': ('out',)})
+                productId = productObj.get_product_available(cr, uid, [sl.product_id.id], context=product_context)
+                res = real_stock + productId.get(sl.product_id.id, 0.00)
+            else:
+                res = 0.00
+
+            result[sl.id] = res
+            
+        return result
     
     def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
@@ -89,16 +111,15 @@ class sourcing_line(osv.osv):
         productObj = self.pool.get('product.product')
         # for each sourcing line
         for sl in self.browse(cr, uid, ids, context):
-            rts = sl.rts
-            productId = sl.product_id.id
-            if productId:
-                productList = [productId]
+            product_context = context
+            product_context.update({'to_date': sl.rts})
+            if sl.product_id:
+                productId = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
+                res = productId.virtual_available
             else:
-                productList = []
-            res = productObj.get_product_available(cr, uid, productList, context={'states': ('confirmed','waiting','assigned','done'),
-                                                                                  'what': ('in', 'out'),
-                                                                                  'to_date': rts})
-            result[sl.id] = res.get(productId, 0.0)
+                res = 0.00
+
+            result[sl.id] = res
             
         return result
     
@@ -249,8 +270,8 @@ class sourcing_line(osv.osv):
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
-        'available_stock': fields.float('Available Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
         'estimated_delivery_date': fields.function(_get_date, type='date', method=True, store=False, string='Estimated DD', readonly=True, multi='dates'),
