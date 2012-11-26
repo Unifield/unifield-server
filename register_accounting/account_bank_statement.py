@@ -747,18 +747,24 @@ class account_bank_statement_line(osv.osv):
         return res
     
     def _get_sequence(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Get default sequence number: "" (no char).
+        If moves, get first one's name.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids):
+            res[line.id] = ''
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
-            else:
-                res[line.id] = ''
         return res
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register"),
-        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
-        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
@@ -769,7 +775,8 @@ class account_bank_statement_line(osv.osv):
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
-        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char"),
+        # WARNING: Due to UTP-348, store = True for sequence_for_reference field is mandatory! Otherwise this breaks Cheque Inventory report.
+        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char", store=True, size=64),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
@@ -1672,6 +1679,13 @@ class account_bank_statement_line(osv.osv):
             view_id = (view.get('res_id'), view.get('name'))
         else:
             raise osv.except_osv(_('Error'), _("View not found."))
+        context.update({
+            'active_id': ids[0],
+            'type': 'in_invoice',
+            'journal_type': 'purchase',
+            'active_ids': ids,
+            'from_register': True,
+            })
         return {
             'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
@@ -1681,14 +1695,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'view_id': view_id,
             'res_id': self.browse(cr, uid, ids[0], context=context).invoice_id.id,
-            'context':
-            {
-                'active_id': ids[0],
-                'type': 'in_invoice',
-                'journal_type': 'purchase',
-                'active_ids': ids,
-                'from_register': True,
-            }
+            'context': context,
         }
 
     def button_duplicate(self, cr, uid, ids, context=None):
