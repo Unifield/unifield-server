@@ -134,25 +134,16 @@ class stock_move(osv.osv):
         '''
         Get the requestor_location_id in case of IR to update the location_dest_id of each move
         '''
-        picking_id = kwargs['picking'].id
         location_dest_id = False
-        sql = """
-select so.location_requestor_id, so.procurement_request
-from stock_picking sp
-left join purchase_order po
-on sp.purchase_id = po.id
-left join procurement_order pro
-on po.id = pro.purchase_id
-left join sale_order_line sol
-on pro.id = sol.procurement_id
-left join sale_order so
-on sol.order_id = so.id
-where sp.id = %s
-        """
-        cr.execute(sql, (picking_id,))
-        res = cr.dictfetchall()
-        if res[0]['procurement_request']:
-            location_dest_id = res[0]['location_requestor_id']
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        move = kwargs['move']
+        if move.purchase_line_id:
+            proc_id = move.purchase_line_id.procurement_id.id
+            sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', proc_id)])
+            so_id = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id.id
+            if so_obj.browse(cr, uid, [so_id],context=context)[0].procurement_request:
+                location_dest_id = so_obj.browse(cr, uid, [so_id],context=context)[0].location_requestor_id.id
         return location_dest_id
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
