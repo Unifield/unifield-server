@@ -97,7 +97,7 @@ class account_journal(osv.osv):
     # the create and write check and replace with the "good" journal if necessary.
     def create(self, cr, uid, vals, context=None):
         analytic_obj = self.pool.get('account.analytic.journal')
-        if vals['type'] not in ['situation', 'stock'] and 'analytic_journal_id' in vals:
+        if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and 'analytic_journal_id' in vals:
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
             
             instance_id = False
