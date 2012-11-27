@@ -1671,10 +1671,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         '''
         res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
         if self._name == 'report.stock.inventory' and res:
-            for index, data in enumerate(res):
-                if 'product_qty' in data and data['product_qty'] == 0.0:
-                    del res[index] # Remove this line from the res
-        return res
+            sorted_list = [data for data in res if 'product_qty' in data and data['product_qty'] != 0.0]
+        return sorted_list
     
 report_stock_inventory()
 
