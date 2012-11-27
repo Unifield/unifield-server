@@ -736,7 +736,7 @@ class sale_order(osv.osv):
         - allow to customize the execution condition
         '''
         line = kwargs['line']
-        result = line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu')
+        result = line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep')
         return result
 
     def _hook_ship_create_product_id(self, cr, uid, ids, context=None,  *args, **kwargs):
