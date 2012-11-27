@@ -1117,18 +1117,17 @@ class stock_production_lot(osv.osv):
             res.append((record['id'], name))
         return res
 
-    def remove_batch(self, cr, uid, ids, context=None):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Remove the batch
         '''
         for batch in self.browse(cr, uid, ids, context=context):
-            if batch.stock_available != 0.00:
+            if not batch.delete_ok:
                 raise osv.except_osv(_('Error'), _('You cannot remove a batch number which has stock !'))
-            else:
-                super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
 
-        return True
-    
+        return super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
+
+
 stock_production_lot()
 
 

@@ -129,7 +129,7 @@
 
                     <field name="date" position="after">
                         <field name="delete_ok" invisible="1" />
-                        <button name="remove_batch" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': [('delete_ok', '=', False)]}" confirm="Do you really want to delete selected record(s) ?" />
+                        <button name="unlink" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': [('delete_ok', '=', False)]}" confirm="Do you really want to delete selected record(s) ?" />
                     </field>
                 </data>
             </field>
