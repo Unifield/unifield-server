@@ -1673,7 +1673,10 @@ CREATE OR REPLACE view report_stock_inventory AS (
         sorted_list = []
         if self._name == 'report.stock.inventory' and res:
             sorted_list = [data for data in res if data.get('product_qty', 10) != 0.0]
-        return sorted_list
+        if sorted_list:
+            return sorted_list
+        else:
+            return res
     
 report_stock_inventory()
 
