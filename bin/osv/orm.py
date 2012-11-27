@@ -1985,6 +1985,12 @@ class orm_memory(orm_template):
             ids_orig = ids
             if isinstance(ids, (int, long)):
                 ids = [ids]
+
+            # order ids by _parent_order or _order
+            order_by = self._parent_order or self._order
+            ids_set = set(ids)
+            data = self._in_memory_sorted_items(cr, user, order_by, context=context, sort_raw_id=True)
+            ids = [ id for id, values in data if id in ids_set ]
             for id in ids:
                 r = {'id': id}
                 for f in fields_to_read:
@@ -2107,6 +2113,81 @@ class orm_memory(orm_template):
             res = e.exp
         return res or []
 
+    def _in_memory_sorted_items(self, cr, user, order_spec, context=None, sort_raw_id=False):
+        """ sort internal orm_memory data by requestd order
+        :param cr: database cursor
+        :param uid: current user id
+        :param order_spec: ``order by`` specification, for overriding the natural
+                      sort ordering of the groups, see also :py:meth:`~osv.orm.orm_memory.search`
+                      (supported only for many2one fields currently)
+        :param context: context arguments, like lang, time zone
+        :param sort_raw_id: if True, relationnal field (i.e many2one) will be sorted by their 'id'
+                            and no based on order specification of the related object. Not active
+                            by default
+        :return: list of tuple containing the row id and row valud => [(id1, {values...}), (id2, {values...}), ...]
+        """
+        if context is None:
+            context = {}
+        data = self.datas.items()
+        if order_spec:
+
+            if not regex_order.match(order_spec):
+                raise except_orm(_('AccessError'), _('Invalid "order" specified. A valid "order" specification is a comma-separated list of valid field names (optionnaly followed by asc/desc for the direction)'))
+
+            order_context = {'lang': context.get('lang')}
+            order_parts_getters = []
+            order_info = {}
+            for order_part in order_spec.split(','):
+                order_split = order_part.strip().split(' ')
+                order_field = order_split[0].strip()
+                order_direction = order_split[1].strip().lower() if len(order_split) == 2 else 'asc'
+                if order_field == 'id':
+                    getter = lambda d, i: d[0]
+                elif order_field in self._columns:
+                    order_column = self._columns[order_field]
+                    if order_column._classic_read:
+                        getter = lambda d, i: d[1][order_field]
+                    elif order_column._type == 'many2one':
+                        #getter = lambda d, i: d[1][order_field]
+                        if not order_column._classic_write and not getattr(order_column, 'store', False):
+                            # many2one field has to be stored for search to work
+                            # ignoring this field
+                            continue
+                        if sort_raw_id:
+                            # uppon read, many2one sorting is done directly on 'id'
+                            getter = lambda d, i: d[1][order_field]
+                        else:
+                            # use the fact the read follow object standard _parent_order/_order to get many2one ordered
+                            dest_model = self.pool.get(order_column._obj)
+                            dest_ids = set([ (d.get(order_field) or False) for k, d in data ])
+                            dest_ids_has_false = False in dest_ids
+                            if dest_ids_has_false:
+                                dest_ids.remove(False)
+                            ordered_ids = [ x['id'] for x in dest_model.read(cr, 1, list(dest_ids), ['id'], context=order_context) ]
+                            if dest_ids_has_false:
+                                ordered_ids.insert(0, False) # false is always first
+                            order_info[order_field] = ordered_ids
+                            getter = lambda d, i: i[order_field].index(d[1][order_field] or False)
+                else:
+                    raise NotImplementedError()
+                order_parts_getters.append((getter, order_direction))
+            # create an inline sort method that fullfill 'cmp' specification
+            def in_memory_sort(x, y):
+                i = order_info
+                for (getter, direction) in order_parts_getters:
+                    if direction == 'asc': # normal sort order
+                        v = cmp(getter(x, i), getter(y, i))
+                    elif direction == 'desc':
+                        v = cmp(getter(y, i), getter(x, i))
+                    if v == 0:
+                        # at this level item equals,
+                        # continue to next order field
+                        continue
+                    return v
+                return 0
+            data.sort(cmp=in_memory_sort)
+        return data
+
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
         if not context:
             context = {}
@@ -2119,14 +2200,14 @@ class orm_memory(orm_template):
 
         result = self._where_calc(cr, user, args, context=context)
         if result == []:
-            return self.datas.keys()
+            return [ k for k, v in self._in_memory_sorted_items(cr, user, order, context=context) ]
 
         res = []
         counter = 0
         #Find the value of dict
         f = False
         if result:
-            for id, data in self.datas.items():
+            for id, data in self._in_memory_sorted_items(cr, user, order, context=context):
                 data['id'] = id
                 # If no offset, give the first entries between 0 and the limit
                 if not offset and limit and (counter > int(limit)):
