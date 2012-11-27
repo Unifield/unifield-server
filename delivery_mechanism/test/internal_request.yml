@@ -9,7 +9,7 @@
   I check the Location Requestor id
 -
   !python {model: sale.order}: |
-    ir_data = self.read(cr, uid, ref("ir_1"), ['location_requestor_id'])[0]
+    ir_data = self.read(cr, uid, ref("ir_1"), ['location_requestor_id'])
     assert ir_data['location_requestor_id'], 'The Location Requestor is missing'
 -
   Create an Internal Request Line (Sale Order Line)
