@@ -133,7 +133,7 @@ class purchase_order(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'date_order':fields.date(string='Creation Date', readonly=True, required=True,
                             states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
-        'name': fields.char('Order Reference', size=64, required=True, select=True, states={'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)], 'done':[('readonly',True)]},
+        'name': fields.char('Order Reference', size=64, required=True, select=True, readonly=True,
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'confirmed': [('readonly',False)]}),
@@ -174,6 +174,7 @@ class purchase_order(osv.osv):
         'dest_address_id': lambda obj, cr, uid, ctx: obj.pool.get('res.partner').address_get(cr, uid, obj.pool.get('res.users').browse(cr, uid, uid, ctx).company_id.partner_id.id, ['delivery'])['delivery'],
         'no_line': lambda *a: True,
         'active': True,
+        'name': lambda *a: False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -186,6 +187,8 @@ class purchase_order(osv.osv):
         res.update({'unallocation_ok': False, 'allocation_setup': setup.allocation_setup})
         if setup.allocation_setup == 'unallocated':
             res.update({'unallocation_ok': True})
+
+        res.update({'name': False})
 
         return res
 

@@ -12,6 +12,10 @@
                     <xpath expr="/form/group//field[@name='shop_id']" position="replace">
                         <field name="warehouse_id" required="1" />
                     </xpath>
+                    
+                    <xpath expr="/form//field[@name='name']" position="replace">
+                        <field name="name" required="1" />
+                    </xpath>
 
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
                          <attribute name="string">Invoiced</attribute>
@@ -25,10 +29,6 @@
 
 					<xpath expr="/form/group/field[@name='client_order_ref']" position="attributes">
                         <attribute name="attrs">{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}</attribute>
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='name']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'validated'])]}</attribute>
                     </xpath>
 
                     <xpath expr="/form//field[@name='partner_id']" position="replace">

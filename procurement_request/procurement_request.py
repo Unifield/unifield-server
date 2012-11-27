@@ -104,10 +104,11 @@ class procurement_request(osv.osv):
             },
             multi='sums', help="The total amount."),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
+        'name': lambda *a: False,
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
         'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
@@ -119,8 +120,7 @@ class procurement_request(osv.osv):
 
         if context.get('procurement_request') or vals.get('procurement_request', False):
             # Get the ISR number
-            if not vals.get('name', False):
-                vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
 
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company.partner_id.address:
@@ -135,6 +135,8 @@ class procurement_request(osv.osv):
             vals['pricelist_id'] = pl
             if 'delivery_requested_date' in vals:
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
+        else:
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
 
         return super(procurement_request, self).create(cr, uid, vals, context)
     
