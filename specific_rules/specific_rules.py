@@ -1254,7 +1254,8 @@ class stock_inventory(osv.osv):
                     
             for product in product_obj.browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already in the list
-                if not line_obj.search(cr, uid, [('inventory_id', '=', inv.id), 
+                if product.type not in ('consu', 'service', 'service_recep') and\
+                   not line_obj.search(cr, uid, [('inventory_id', '=', inv.id), 
                                                  ('product_id', '=', product.id),
                                                  ('product_uom', '=', product.uom_id.id)], context=context):
                     line_obj.create(cr, uid, {'inventory_id': inv.id,
