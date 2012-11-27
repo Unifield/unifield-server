@@ -382,10 +382,19 @@ class sourcing_line(osv.osv):
         if type == make to stock, change pocft to False
         '''
         value = {}
+        message = {}
+        if id:
+            line = self.browse(cr, uid, id, context=context)[0]
+            if line.product_id.type in ('consu', 'service', 'service_recep') and type == 'make_to_stock':
+                product_type = line.product_id.type=='consu' and 'non stockable' or 'service'
+                value.update({'type': 'make_to_order'})
+                message.update({'title': _('Warning'),
+                                'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type})
+
         if type == 'make_to_stock':
             value.update({'po_cft': False})
     
-        return {'value': value}
+        return {'value': value, 'warning': message}
     
     def onChangeSupplier(self, cr, uid, id, supplier, context=None):
         '''
@@ -738,7 +747,7 @@ class sale_order_line(osv.osv):
         
         if vals.get('product_id',False):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
-            if bropro.type == 'consu':
+            if bropro.type in ('consu', 'service', 'service_recep'):
                 vals['type'] = 'make_to_order'
         
         # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
@@ -835,7 +844,7 @@ class sale_order_line(osv.osv):
 
         if vals.get('product_id',False):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
-            if bropro.type == 'consu':
+            if bropro.type in ('consu', 'service', 'service_recep'):
                 vals['type'] = 'make_to_order'
 
         # update the corresponding sourcing line if not called from a sourcing line updated
