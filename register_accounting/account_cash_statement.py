@@ -255,12 +255,10 @@ class account_cash_statement(osv.osv):
         res = {}
         # COMPUTE amounts
         cr.execute("""
-        SELECT statement_id, SUM(amount) FROM (
-            SELECT statement_id, amount
-            FROM account_bank_statement_line
-            WHERE statement_id in %s
-            ORDER BY statement_id) AS lines
-            GROUP BY lines.statement_id""", (tuple(ids,),))
+        SELECT statement_id, SUM(amount) 
+        FROM account_bank_statement_line 
+        WHERE statement_id in %s
+        GROUP BY statement_id""", (tuple(ids,),))
         sql_res = cr.fetchall()
         if sql_res:
             res = dict(sql_res)
