@@ -39,33 +39,41 @@ class purchase_order(osv.osv):
 
     def _search_po_for_down_payment(self, cr, uid, obj, name, args, context=None):
         """
-        Search PO available for down payments
+        Search PO available for down payments regarding these criteria:
+        - the PO should not be 100% invoiced (invoice_rate field)
+        - the PO should be confirmed ('approved' state), but could be in done state and not completly invoiced
+        - the currency should be the same as given currency in args
+        - the partner should be the same as given partner in args
+        - DO NOT display PO that ar inkind donation, donation expiry, loan, donation_st
+        
+        To be 100% invoiced, a PO should have some linked invoiced that are validated ('open' state or 'paid' state) and that sum of amount is greater or equal to PO total amount. So to find PO that are not 100% invoiced, you should find those from which all invoice are not created or which amount is inferior to PO total amount.
         """
+        # Create default result
         res = [('id', 'in', [])]
+        # Only parse args that are composed of 3 element (field, operator, value)
         if args and args[0] and len(args[0]) == 3:
+            # This method don't support operators except "="
             if args[0][1] != '=':
                 raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
+            # Create SQL request
             c_id = args[0][2].get('currency_id', False)
             p_id = args[0][2].get('partner_id', False)
-            sql = """
-            SELECT po.id
+            sql = """SELECT po.id
             FROM purchase_order as po
-            WHERE po.pricelist_id = %s
-            AND po.partner_id = %s""" % (c_id, p_id)
-            sql2 = """
-            SELECT res.purchase_id FROM (
-                SELECT pir.purchase_id, po.amount_untaxed - SUM(inv.amount_total) as diff
-                FROM purchase_invoice_rel as pir, account_invoice as inv, purchase_order as po
-                WHERE pir.purchase_id = po.id AND pir.invoice_id = inv.id
-                AND po.pricelist_id = %s AND po.partner_id = %s
-                AND po.state in %s
-                GROUP BY pir.purchase_id, po.amount_untaxed
-                ) as res
-            WHERE diff >= 0""" % (c_id, p_id, ('approved', 'done'))
-            cr.execute(sql2)
+            LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
+            LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
+            LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
+            WHERE po.state in ('approved', 'done')
+            AND po.pricelist_id = prod.id
+            AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
+            AND po.order_type not in ('loan', 'in_kind', 'donation_exp', 'donation_st')
+            AND po.partner_id = %s
+            GROUP BY po.id, po.amount_total
+            HAVING COALESCE(po.amount_total - sum(inv.amount_total), 10) != 0"""
+            cr.execute(sql, (c_id, p_id))
             sql_res = cr.fetchall()
-            po_ids = []
-            res = [('id', 'in', [x and x.get('purchase_id') for x in sql_res])]
+            # Transform result
+            res = [('id', 'in', [x and x[0] for x in sql_res])]
         return res
 
     _columns = {
