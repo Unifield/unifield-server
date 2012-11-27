@@ -1672,11 +1672,8 @@ CREATE OR REPLACE view report_stock_inventory AS (
         res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
         sorted_list = []
         if self._name == 'report.stock.inventory' and res:
-            sorted_list = [data for data in res if data.get('product_qty', 10) != 0.0]
-        if sorted_list:
-            return sorted_list
-        else:
-            return res
+             return [data for data in res if data.get('product_qty', 10) != 0.0]
+        return res
     
 report_stock_inventory()
 
