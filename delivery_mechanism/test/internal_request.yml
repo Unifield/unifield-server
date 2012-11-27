@@ -91,5 +91,5 @@
             int_move = move_obj.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'internal')])
             location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])
             print "location_dest_id is %s" % (location_dest_id,)
-            location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id'][0]
+            location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])['location_dest_id'][0]
             assert location_dest_id == ref("location_test"), 'The location_dest_id of the stock move should be the same as the location_requestor_id of the IR but it is not'
