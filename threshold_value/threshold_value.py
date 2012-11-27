@@ -233,7 +233,7 @@ class threshold_value(osv.osv):
 
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
-                if product.id not in products:
+                if product.type not in ('consu', 'service', 'service_recep') and product.id not in products:
                     self.pool.get('threshold.value.line').create(cr, uid, {'product_id': product.id,
                                                                                             'product_uom_id': product.uom_id.id,
                                                                                             'product_qty': 1.00,
