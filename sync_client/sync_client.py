@@ -28,7 +28,6 @@ import socket
 import rpc
 import uuid
 import tools
-import time
 import sys
 import traceback
 
@@ -534,7 +533,12 @@ class entity(osv.osv, Thread):
        
         self.pull_update(cr, uid, log=log, context=context)
         self.pull_message(cr, uid, log=log, context=context)
+        import cProfile
+        p = cProfile.Profile()
+        p.enable()
         self.push_update(cr, uid, log=log, context=context)
+        p.disable()
+        p.dump_stats(datetime.strftime(datetime.now(), "/tmp/profile-%Y%m%d-%H%M.prof"))
         self.push_message(cr, uid, log=log, context=context)
             
         return self.stopSync(cr, uid, log)

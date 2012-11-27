@@ -247,7 +247,7 @@ class ir_model_data_sync(osv.osv):
         get_last_modification = self.pool.get('sync.client.write_info').get_last_modification
         watch_fields = set(self._clean_included_fields(cr, uid, included_fields))
         res_type = type(ids)
-        ids = filter(lambda id:bool(id), (ids if isinstance(ids, (tuple, list)) else [ids]))
+        ids = filter(bool, (ids if isinstance(ids, (tuple, list)) else [ids]))
         result = filter(
             lambda rec: (not rec.sync_date or \
                          watch_fields & get_last_modification(cr, uid, rec.model, rec.res_id, rec.sync_date, context=context)), \
@@ -294,10 +294,19 @@ def need_to_push(self, cr, uid, ids, included_fields, context=None):
     """
         @return True if last modification date is greater than last sync date
     """
-    
+    if not ids:
+        return ids
     model_data = self.pool.get('ir.model.data')
-    data_ids = model_data.get(cr, uid, self, ids, context=context)
-    rel_data = dict(zip(data_ids, ids))
+    cr.execute("""SELECT id, res_id FROM %s WHERE
+                      module = 'sd' AND
+                      model = '%s' AND
+                      res_id IN (%s) AND
+                      (sync_date < last_modification OR sync_date IS NULL)""" \
+               % (model_data._table, self._name, ",".join(map(str, ids))))
+    rel_data = dict(cr.fetchall())
+    data_ids = rel_data.keys()
+    #if len(ids) > 1000 or self._name == 'account.move.line':
+    #    import ipdb; ipdb.set_trace()
     return [rel_data[x] for x in model_data.need_to_push(cr, uid, data_ids, included_fields, context=context)]
     
 osv.osv.need_to_push = need_to_push    
