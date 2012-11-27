@@ -253,6 +253,11 @@ class account_cash_statement(osv.osv):
         Sum of given register's transactions
         """
         res = {}
+        if not ids:
+            return res
+        # Complete those that have no result
+        for id in ids:
+            res[id] = 0.0
         # COMPUTE amounts
         cr.execute("""
         SELECT statement_id, SUM(amount) 
@@ -261,11 +266,7 @@ class account_cash_statement(osv.osv):
         GROUP BY statement_id""", (tuple(ids,),))
         sql_res = cr.fetchall()
         if sql_res:
-            res = dict(sql_res)
-            # Complete those that have no result
-            for id in ids:
-                if id not in res:
-                    res.update({id: 0.0})
+            res.update(dict(sql_res))
         return res
 
     _columns = {
