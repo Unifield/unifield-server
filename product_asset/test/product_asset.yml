@@ -3,7 +3,15 @@
   We then create new products with different internal and supplier configuration (code and name).
   
   Finally we create purchase orders with purchase order lines for these different products.
-  
+-
+  I create a service stock location
+-
+  !record {model: stock.location, id: service_loc}:
+    name: service
+    service_location: True
+    location_category: other
+    usage: inventory
+-
   Creating a product.category record
 - 
   !record {model: product.category, id: product_category_testproducts0}:

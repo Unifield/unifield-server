@@ -1,4 +1,12 @@
 -
+  I create a service stock location
+-
+  !record {model: stock.location, id: service_loc}:
+    name: service
+    service_location: True
+    location_category: other
+    usage: inventory
+-
   I test the function fields for kit_compo_01
 -
   !python {model: composition.kit}: |
