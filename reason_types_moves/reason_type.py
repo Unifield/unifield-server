@@ -481,13 +481,13 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+
         # if the source and the destination locations are the same the state is done
         # By QT : Comment the below lines because, with this code, the state is change to 'Done' but the destination
         #         location becomes not editable and it's not passed to the create/write method
         #if location_dest_id and location_id:
         #    if location_dest_id == location_id:
         #        vals['state'] = 'done'
-
 
         return {'value': vals}
     

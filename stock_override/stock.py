@@ -159,6 +159,9 @@ class stock_picking(osv.osv):
 
         if not context.get('active_id',False):
             vals['from_wkf'] = True
+        # in case me make a copy of a stock.picking coming from a workflow
+        if context.get('not_workflow', False):
+            vals['from_wkf'] = False
     
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
