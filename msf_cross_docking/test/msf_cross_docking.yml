@@ -77,7 +77,7 @@
     warehouse_id = po_obj.browse(cr, uid, [po_id])[0].warehouse_id
     categ = po_obj.browse(cr, uid, [po_id])[0].categ
     assert c_d_option == True, 'If a purchase order is created from Field Order "On Order", the option cross docking should be checked and it is not here.'
-    assert po_obj.browse(cr, uid, [po_id])[0].location_id.id == self.onchange_cross_docking_ok(cr, uid, [po_id], categ, c_d_option, warehouse_id, context=context)['value']['location_id'], 'If the option cross docking is checked, the location should be cross docking'
+    assert po_obj.browse(cr, uid, [po_id])[0].location_id.id == self.onchange_cross_docking_ok(cr, uid, [po_id], c_d_option, warehouse_id, categ, context=context)['value']['location_id'], 'If the option cross docking is checked, the location should be cross docking'
     # change Invoicing control to From Picking
     self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
     import netsvc
