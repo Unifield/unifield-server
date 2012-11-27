@@ -1674,7 +1674,18 @@ class purchase_order_line(osv.osv):
             context = {}
 
         if context.get('purchase_id'):
-            # Check validity of the purchase order
+            # Check validity of the purchase order. We write the order to avoid
+            # the creation of a new line if one line of the order is not valid
+            # according to the order category
+            # Example : 
+            #    1/ Create a new PO with 'Other' as Order Category
+            #    2/ Add a new line with a Stockable product
+            #    3/ Change the Order Category of the PO to 'Service' -> A warning message is displayed
+            #    4/ Try to create a new line -> The system displays a message to avoid you to create a new line
+            #       while the not valid line is not modified/deleted
+            #
+            #   Without the write of the order, the message displayed by the system at 4/ is displayed at the saving
+            #   of the new line that is not very understandable for the user
             data = {}
             if context.get('partner_id'):
                 data.update({'partner_id': context.get('partner_id')})
