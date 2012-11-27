@@ -109,13 +109,21 @@ class sourcing_line(osv.osv):
         '''
         result = {}
         productObj = self.pool.get('product.product')
+
+        # UF-1411 : Compute the virtual stock on Stock + Input locations
+        location_ids = []
+        wids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+        for w in self.pool.get('stock.warehouse').browse(cr, uid, wids, context=context):
+            location_ids.append(w.lot_stock_id.id)
+            location_ids.append(w.lot_input_id.id)
+
         # for each sourcing line
         for sl in self.browse(cr, uid, ids, context):
             product_context = context
-            product_context.update({'to_date': sl.rts})
+            product_context.update({'location': location_ids, 'to_date': sl.rts})
             if sl.product_id:
-                productId = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
-                res = productId.virtual_available
+                product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
+                res = product_virtual.virtual_available
             else:
                 res = 0.00
 
