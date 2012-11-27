@@ -67,35 +67,29 @@
     move_obj = self.pool.get('stock.move')
     # get the corresponding procurement order
     data = sol_obj.read(cr, uid, [ref("irl_1")], ['procurement_id'], context=context)
-    print "data1 is %s" % data
     data = sol_obj.read(cr, uid, [ref("irl_1")], ['procurement_id'], context=context)[0]
     assert data['procurement_id'], 'the procurement is missing, problem in procurement generation'
     proc_id = data['procurement_id'][0]
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)
-    print "data2 is %s" % data
     data = proc_obj.read(cr, uid, [proc_id], ['purchase_id', 'state', 'note'], context=context)[0]
     po_id = data['purchase_id'][0]
-    print "po_id is %s" % po_id
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
     move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_ids[0])], context=context)
-    print "action_process"
     dic = self.action_process(cr, uid, in_ids, context=context)
     wiz_obj = self.pool.get(dic['res_model'])
     data_wiz = wiz_obj.read(cr, uid, [dic['res_id']], ['dest_type'], context=dic['context'])
-    print "data_wiz is %s" % data_wiz
     data_wiz = wiz_obj.read(cr, uid, [dic['res_id']], ['dest_type'], context=dic['context'])[0]
     wiz_obj.copy_all(cr,uid, [dic['res_id']], context=dic['context'])
-    print "do_incoming_shipment"
     wiz_obj.do_incoming_shipment(cr, uid, [dic['res_id']], context=dic['context'])
     data = self.read(cr, uid, in_ids,['state', 'move_lines'], context=context)[0]
     print "Start loop"
     for move_line in data['move_lines']:
-        pol_id = move_obj.read(cr, uid, move_line, ['purchase_line_id'])['purchase_line_id']
-        print "pol_id is %s" % (pol_id,)
-        pol_id = move_obj.read(cr, uid, move_line, ['purchase_line_id'])['purchase_line_id'][0]
-        int_move = move_obj.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'internal')])
-        location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id']
-        print "location_dest_id is %s" % (location_dest_id,)
-        location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id'][0]
-        assert location_dest_id == ref("location_test"), 'The location_dest_id of the stock move should be the same as the location_requestor_id of the IR but it is not'
+        if move_obj.read(cr, uid, move_line, ['purchase_line_id'])['purchase_line_id']:
+            pol_id = move_obj.read(cr, uid, move_line, ['purchase_line_id'])['purchase_line_id'][0]
+            print "pol_id is %s" % (pol_id,)
+            int_move = move_obj.search(cr, uid, [('purchase_line_id', '=', pol_id), ('type', '=', 'internal')])
+            location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id']
+            print "location_dest_id is %s" % (location_dest_id,)
+            location_dest_id = move_obj.read(cr, uid, int_move, ['location_dest_id'])[0]['location_dest_id'][0]
+            assert location_dest_id == ref("location_test"), 'The location_dest_id of the stock move should be the same as the location_requestor_id of the IR but it is not'
