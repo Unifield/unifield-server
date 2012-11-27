@@ -446,13 +446,19 @@ class procurement_request_line(osv.osv):
         if context is None:
             context = {}
         v = {}
+        m = {}
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
             v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
-        return {'value': v}
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            if product.type in ('consu', 'service', 'service_recep'):
+                v.update({'type': 'make_to_order'})
+                m.update({'title': _('Warning'),
+                          'message': _('You can\'t source a line \'from stock\' if line contains a non-stockable or service product.')})
+        return {'value': v, 'warning': m}
     
     def comment_change(self, cr, uid, ids, comment, product_id, nomen_manda_0, context=None):
         '''
