@@ -198,13 +198,6 @@ Section OpenERP_Server SectionOpenERP_Server
     !insertmacro MUI_STARTMENU_WRITE_END
 
 
-    FileOpen $9 '$INSTDIR\install.log' w
-    FileWrite $9 "Hostname $TextPostgreSQLHostname$\r$\n"
-    FileWrite $9 "Port $TextPostgreSQLPort$\r$\n"
-    FileWrite $9 "Username $TextPostgreSQLUsername$\r$\n"
-    FileWrite $9 "Password $TextPostgreSQLPassword$\r$\n"
-    FileClose $9
-
 # If there is a previous install of the OpenERP Server, keep the login/password from the config file
     WriteIniStr "$INSTDIR\openerp-server.conf" "options" "db_host" $TextPostgreSQLHostname
     WriteIniStr "$INSTDIR\openerp-server.conf" "options" "db_user" $TextPostgreSQLUsername
