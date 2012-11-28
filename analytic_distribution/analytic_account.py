@@ -116,7 +116,11 @@ class analytic_account(osv.osv):
         default = default.copy()
         default['code'] = (account['code'] or '') + '(copy)'
         default['name'] = (account['name'] or '') + '(copy)'
-        return super(analytic_account, self).copy(cr, uid, id, default, context=context)
+        default['tuple_destination_summary'] = []
+        # code is deleted in copy method in addons
+        new_id = super(analytic_account, self).copy(cr, uid, id, default, context=context)
+        self.write(cr, uid, new_id, {'code': '%s(copy)' % (account['code'] or '')})
+        return new_id
 
     def set_funding_pool_parent(self, cr, uid, vals):
         if 'category' in vals and \
