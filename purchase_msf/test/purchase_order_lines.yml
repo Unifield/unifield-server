@@ -98,7 +98,7 @@
     mes_type: fixed
     name: Boite \xc3\xa0 chaussures
     name_template: Boite \xc3\xa0 chaussures
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_qty: 0.0
     standard_price: 1.0
@@ -130,7 +130,7 @@
     mes_type: fixed
     name: Camembert
     name_template: Camembert
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_id: res_partner_africom0
     seller_ids:
@@ -170,7 +170,7 @@
     mes_type: fixed
     name: Pneu
     name_template: Pneu
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_id: res_partner_alaindeloin0
     seller_ids:
