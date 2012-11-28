@@ -50,15 +50,11 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-<ss:Worksheet ss:Name="Stock initial inventory">
-<Table >
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 ## ==================================== we loop over the stock_initial_inventory so "objects" == stock_initial_inventory  ====================================================
 % for o in objects:
-
-## we loop over the stock_initial_inventory_line
-
-    
+<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<Table >
+    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
@@ -68,6 +64,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
     </Row>
+    ## we loop over the stock_initial_inventory_line
     % for line in o.inventory_line_id:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
