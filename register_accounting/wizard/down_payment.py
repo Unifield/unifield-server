@@ -74,6 +74,10 @@ class wizard_down_payment(osv.osv_memory):
                 ('move_id', operator, move_ids)])
             if dp.id not in move_line_ids:
                 total -= dp.amount_currency
+        # Cut away open and paid invoice linked to this PO
+        invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])
+        for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total']):
+            total -= inv.get('amount_total', 0.0)
         if (-1 * absl.amount) > total:
             raise osv.except_osv(_('Warning'), 
                 _('Register line amount is superior to (PO total amount - down payments). Maximum amount should be: %s') % (total))
