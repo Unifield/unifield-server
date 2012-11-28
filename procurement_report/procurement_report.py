@@ -166,6 +166,7 @@ class procurement_rules_report(osv.osv):
                 LEFT JOIN
                     product_template temp
                     ON prod.product_tmpl_id = temp.id
+                WHERE temp.type not in ('service', 'service_recep', 'consu')
                 GROUP BY al.product_id, al.location_id, prod.default_code, temp.name, temp.nomen_manda_0, temp.nomen_manda_1, temp.nomen_manda_2, temp.nomen_manda_3
                 ORDER BY prod.default_code, temp.name, al.product_id, al.location_id
             )

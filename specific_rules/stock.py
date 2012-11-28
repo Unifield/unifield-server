@@ -188,7 +188,7 @@ class initial_stock_inventory(osv.osv):
             c.update({'location': location_id, 'compute_child': False, 'to_date': inventory.date})
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=c):
                 # Check if the product is not already on the report
-                if product.id not in products:
+                if product.type not in ('consu', 'service', 'service_recep') and product.id not in products:
                     batch_mandatory = product.batch_management
                     date_mandatory = product.perishable
                     values = {'product_id': product.id,
