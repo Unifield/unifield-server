@@ -56,26 +56,39 @@ class so_po_common(osv.osv_memory):
             return ir_data.res_id
         return False
 
+
+    def get_full_original_fo_ref(self, source, original_fo_name):
+        '''
+        Get the full original name of the FO, prefixed by the source name --> Ex: COORDO_2.12/OC/BI101/PO00018
+        In case FO is a split FO, then remove the suffix -x at the end
+        '''
+        if not original_fo_name:
+            raise Exception, "The FO name of in the data is empty --> Cannot retrieve the original PO!"
+
+        if original_fo_name[-2] == '-' and original_fo_name[-1] in ['1', '2', '3']:
+            original_fo_name = original_fo_name[:-2] # remove the suffix (-2/-3 at the end)
+
+        ref = source + '.' + original_fo_name
+        if not ref:
+            raise Exception, "PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref
+        return ref
+
     def get_original_po_id(self, cr, uid, source, so_info, context):
         if not context:
             context = {}
         context.update({'active_test': False})
+        po_object = self.pool.get('purchase.order')
         
-        # First, search the original PO via the client_order_ref stored at the FO
+        # First, search the original PO via the client_order_ref stored in the FO
         ref = so_info.client_order_ref
         if ref:
             po_split = ref.split('.')
             if len(po_split) != 2:
                 raise Exception, "PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref
-            po_ids = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_split[1])], context=context)
-        else:
-            # If the client_order_ref not stored in the FO, then retrieve the original PO via the FO name (as partner_ref)!
-            if not so_info.name or so_info.name[-2] != '-' or so_info.name[-1] not in ['2', '3']:
-                raise Exception, "FO name format/value is invalid! (correct format: instance_name.fo_name-2/3) " + so_info.name
-            ref = source + '.' + so_info.name[:-2] # remove the -2 or -3 at the end will make it the original FO ref
-            if not ref:
-                raise Exception, "PO reference format/value is invalid! (correct format: instance_name.po_name) " + ref
-            po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', ref)], context=context)
+            po_ids = po_object.search(cr, uid, [('name', '=', po_split[1])], context=context)
+        else: # if not found, then retrieve it via the FO Name as reference
+            ref = self.get_full_original_fo_ref(source, so_info.name)
+            po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
             
         if not po_ids:
             raise Exception, "Cannot find the original PO with the given info: " + ref 
