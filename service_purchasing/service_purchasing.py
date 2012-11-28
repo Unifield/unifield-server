@@ -62,7 +62,7 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         
-        if type == 'service_recep':
+        if type in ('consu', 'service', 'service_recep'):
             return {'value': {'procure_method': 'make_to_order', 'supply_method': 'buy',}}
         return {}
     
@@ -73,8 +73,8 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.type == 'service_recep' and obj.procure_method != 'make_to_order':
-                raise osv.except_osv(_('Error'), _('You must select on order procurement method for Service with Reception products.'))
+            if obj.type in ('consu', 'service', 'service_recep') and obj.procure_method != 'make_to_order':
+                raise osv.except_osv(_('Error'), _('You must select on order procurement method for %s products.') % (obj.type=='consu' and 'Non-stockable' or 'Service'))
         return True
     
     _constraints = [
