@@ -42,6 +42,7 @@
         'security/ir.model.access.csv',
         'sourcing_sequence.xml',
         'sourcing_view.xml',
+        'wizard/multiple_sourcing_view.xml',
     ],
     'installable': True,
 }
