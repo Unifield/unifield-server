@@ -80,7 +80,7 @@ class wizard_down_payment(osv.osv_memory):
             total -= inv.get('amount_total', 0.0)
         if (-1 * absl.amount) > total:
             raise osv.except_osv(_('Warning'), 
-                _('Register line amount is superior to (PO total amount - down payments). Maximum amount should be: %s') % (total))
+                _('Maximum amount should be: %s. Register line amount is higher than (PO - DPs - open/paid INV).') % (total))
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
