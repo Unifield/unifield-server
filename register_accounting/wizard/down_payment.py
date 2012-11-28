@@ -44,7 +44,7 @@ class wizard_down_payment(osv.osv_memory):
 
     def check_register_line_and_po(self, cr, uid, absl_id, po_id, context=None):
         """
-        Verify that register line amount is not superior to (PO total_amount - all down payments).
+        Verify that register line amount is not superior to (PO total_amount - all used down payments - open/paid invoices).
         Check partner on register line AND PO (should be equal)
         """
         # Some verifications
@@ -73,7 +73,7 @@ class wizard_down_payment(osv.osv_memory):
             move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', absl.account_id.id), 
                 ('move_id', operator, move_ids)])
             if dp.id not in move_line_ids:
-                total -= dp.amount_currency
+                total -= (dp.amount_currency - dp.down_payment_amount)
         # Cut away open and paid invoice linked to this PO
         invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])
         for inv in self.pool.get('account.invoice').read(cr, uid, invoice_ids, ['amount_total']):
