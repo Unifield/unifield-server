@@ -22,7 +22,7 @@
 
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
                          <attribute name="string">Invoiced</attribute>
-                         <attribute name="attrs">{'invisible': 1}</attribute>
+                         <attribute name="invisible">1</attribute>
                     </xpath>
 
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='Extra Info']" position="replace">
