@@ -23,6 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
+import decimal_precision as dp
+
 
 class stock_partial_move_memory_out(osv.osv_memory):
     _name = "stock.move.memory.out"
@@ -35,7 +37,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'move_id' : fields.many2one('stock.move', "Move"),
         'wizard_id' : fields.many2one('stock.partial.move', string="Wizard"),
         'wizard_pick_id' : fields.many2one('stock.partial.picking', string="Wizard"),
-        'cost' : fields.float("Cost", help="Unit Cost for this product line"),
+        'cost' : fields.float("Cost", digits_compute=dp.get_precision('Purchase Price Computation'), help="Unit Cost for this product line"),
         'currency' : fields.many2one('res.currency', string="Currency", help="Currency in which Unit cost is expressed"),
         
     }
