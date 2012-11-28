@@ -458,7 +458,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             
             # Create a new move
-            new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+            new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': m.document_date}, context=context)
             # Search move line that have to be corrected.
             # NB: this is useful when you correct a move line twice and do a reverse on it. It should be reverse the complementary move line of the first move line
             # and reverse the last correction line.
@@ -500,7 +500,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     new_distrib_id = ana_obj.copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
-                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': date, 'period_id': period_ids[0]}, context=context)
+                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': ml.document_date, 'period_id': period_ids[0]}, context=context)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
