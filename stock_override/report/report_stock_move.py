@@ -164,10 +164,7 @@ class report_stock_move(osv.osv):
                         sm.tracking_id as tracking_id,
                         sum(sm.product_qty) as product_qty,
                         pt.nomen_manda_2 as categ_id,
-                        CASE WHEN sm.picking_id is null THEN sm.partner_id2
-                             WHEN sp.partner_id2 is null THEN sm.partner_id2
-                             ELSE sp.partner_id2
-                        END AS partner_id,
+                        sp.partner_id2 as partner_id,
                         sm.product_id as product_id,
                         sm.origin as origin,
                         sm.reason_type_id as reason_type_id,
@@ -186,7 +183,7 @@ class report_stock_move(osv.osv):
                         LEFT JOIN stock_location sl ON (sm.location_id = sl.id)
 
                     GROUP BY
-                        sm.id,sp.type, sm.date,sp.partner_id2,sm.partner_id2,
+                        sm.id,sp.type, sm.date,sp.partner_id2,
                         sm.product_id,sm.state,sm.product_uom,sm.date_expected, sm.origin,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty, sm.prodlot_id, sm.comment, sm.tracking_id,
                         sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.nomen_manda_2, sp.stock_journal_id, sm.reason_type_id)
