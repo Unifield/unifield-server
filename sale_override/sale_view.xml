@@ -13,10 +13,12 @@
                         <field name="warehouse_id" required="1" />
                     </xpath>
 
+                    <!-- uf-1499
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
                          <attribute name="string">Invoiced</attribute>
                          <attribute name="attrs">{'invisible': [('intl_customer_ok', '=', False)]}</attribute>
                     </xpath>
+                     -->
 
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='Extra Info']" position="replace">
                     </xpath>
