@@ -618,12 +618,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 if check_accounts and aal.account_id.id in check_accounts:
                     raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
             # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
             # Prepare default value for new line
             vals = {
                 'move_id': move_id,
                 'date': date,
-                'document_date': date,
+                'document_date': ml.document_date,
                 'journal_id': journal_id,
                 'period_id': period_ids[0],
             }
@@ -644,6 +644,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'account_id': ml.account_id.id,
                 'source_date': ml.date,
                 'reversal': True,
+                'document_date': ml.document_date,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
@@ -656,6 +657,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'ref': ml.ref,
                 'source_date': ml.date,
                 'have_an_historic': True,
+                'document_date': ml.document_date,
             }
             if distrib_id:
                 cor_vals['analytic_distribution_id'] = distrib_id
