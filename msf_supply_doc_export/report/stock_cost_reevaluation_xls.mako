@@ -71,8 +71,8 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.average_cost or 0.00)|x}</Data></Cell>
     </Row>
     % endfor
-% endfor
 </Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
+% endfor
 </Workbook>
