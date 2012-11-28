@@ -66,7 +66,7 @@ class purchase_order_sync(osv.osv):
         header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, False, context)
         header_result['split_po'] = True
         
-        po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
         # Check if there is the location from the original PO
         
         wf_service = netsvc.LocalService("workflow")
@@ -201,7 +201,7 @@ class purchase_order_sync(osv.osv):
         print "The validated FO (not yet split) updates the original PO", source
 
         so_po_common = self.pool.get('so.po.common')
-        po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
         so_dict = so_info.to_dict()
         
         header_result = {}
