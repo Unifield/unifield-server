@@ -304,9 +304,16 @@ def format_decimal(value, digits=2, **kwargs):
 
     result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
     
-    # if we are treating a computation field, we strip the zeros
-    if kwargs.get('computation', False):
-        result = result.rstrip('0').rstrip('.')
+    # if we are treating a computation field, we apply the formatting algorithm
+    if result and kwargs.get('computation', False):
+        # fixed min decimal value
+        min_digits = 2
+        # remove trailing zeros
+        result = result.rstrip('0')
+        # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
+        splitted_result = result.split('.')
+        if splitted_result and (len(splitted_result) == 2) and (len(splitted_result[1]) < min_digits):
+            result = ("%%.%df" % min_digits) % float(result)
     
     return result
 
