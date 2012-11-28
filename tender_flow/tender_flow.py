@@ -103,7 +103,8 @@ class tender(osv.osv):
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product')
                 }
     
-    _defaults = {'state': 'draft',
+    _defaults = {'categ': 'other',
+                 'state': 'draft',
                  'internal_state': 'draft',
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
                  'creator': lambda obj, cr, uid, context: uid,
