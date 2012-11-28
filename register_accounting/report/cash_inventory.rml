@@ -291,7 +291,7 @@
           <para style="P3">Opening balance: [[ o.balance_start and o.balance_start or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P3">Calculated balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
+          <para style="P3">Theoretical balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
         </td>
       </tr>
       <tr>
@@ -310,10 +310,26 @@
           <para style="P3"> </para>
         </td>
         <td>
-          <para style="P3">Open Advances Amount: [[ o.open_advance_amount and o.open_advance_amount or '0.0' ]]</para>
+          <para style="P3">Calculated Balance: [[ o.msf_calculated_balance and o.msf_calculated_balance or '0.0' ]]</para>
         </td>
         <td>
           <para style="P3">Gap: [[ o.closing_gap and o.closing_gap or '0.0' ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3"> </para>
+        </td>
+        <td>
+          <para style="P3">Unrecorded Advances: [[ o.open_advance_amount and o.open_advance_amount or '0.0' ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3"> </para>
+        </td>
+        <td>
+          <para style="P3">Unrecorded expenses: [[ o.unrecorded_expenses_amount and o.unrecorded_expenses_amount or '0.0']]</para>
         </td>
       </tr>
     </blockTable>

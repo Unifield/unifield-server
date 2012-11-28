@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
 				<data>
 		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
-						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" />
+						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]"/>
 		    		</xpath>
 
                     <xpath expr="/tree/field[@name='product_uom']" position="after">
@@ -30,7 +30,7 @@
             <field name="arch" type="xml">
 				<data>
 		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
-						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" />
+						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
 		    		</xpath>
 
 	                <xpath expr="/tree/field[@name='create_date']" position="after">

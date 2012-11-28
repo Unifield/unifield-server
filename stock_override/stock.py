@@ -159,6 +159,9 @@ class stock_picking(osv.osv):
 
         if not context.get('active_id',False):
             vals['from_wkf'] = True
+        # in case me make a copy of a stock.picking coming from a workflow
+        if context.get('not_workflow', False):
+            vals['from_wkf'] = False
     
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
@@ -1205,6 +1208,8 @@ class ir_values(osv.osv):
             for v in values:
                 if key == 'action' and v[1] in move_accepted_values[key2]:
                     new_values.append(v)          
+                elif context.get('_terp_view_name', False) == 'Destruction Report':
+                    new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []
             for v in values:

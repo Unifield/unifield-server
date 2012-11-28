@@ -28,7 +28,7 @@
   !record {model: product.product, id: product_service_p0}:
     default_code: P2
     name: product 0 test
-    type: service
+    type: service_recep
     international_status: itc
     
 - 
