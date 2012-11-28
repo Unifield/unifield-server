@@ -1116,7 +1116,10 @@ class account_bank_statement_line(osv.osv):
             if st_line.third_parties:
                 partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
             # finally write move object
-            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type}, context=context)
+            move_vals = {'partner_type': partner_type}
+            if 'document_date' in move_line_values:
+                move_vals.update({'document_date': move_line_values.get('document_date')})
+            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, ids, context=None):
