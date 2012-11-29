@@ -71,7 +71,7 @@
     mes_type: fixed
     name: Camembert
     name_template: Camembert
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_id: res_partner_africom0
     seller_ids:
@@ -103,7 +103,7 @@
     mes_type: fixed
     name: Book
     name_template: Book
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_id: res_partner_mission_42
     seller_ids:
