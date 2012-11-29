@@ -1419,6 +1419,18 @@ stock moves which are already processed : '''
 purchase_order()
 
 
+class purchase_order_line(osv.osv):
+    '''
+    this modification is placed before merged, because unit price of merged should be Computation as well
+    '''
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+    _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
+                }
+    
+purchase_order_line()
+
+
 class purchase_order_merged_line(osv.osv):
     '''
     A purchase order merged line is a special PO line.
@@ -1839,7 +1851,6 @@ class purchase_order_line(osv.osv):
         return result
 
     _columns = {
-        'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'parent_line_id': fields.many2one('purchase.order.line', string='Parent line', ondelete='set null'),
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=64, string='Origin'),
