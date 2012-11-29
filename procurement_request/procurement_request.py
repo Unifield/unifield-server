@@ -120,7 +120,8 @@ class procurement_request(osv.osv):
 
         if context.get('procurement_request') or vals.get('procurement_request', False):
             # Get the ISR number
-            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
+            if not vals.get('name', False):
+                vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
 
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company.partner_id.address:
@@ -135,7 +136,7 @@ class procurement_request(osv.osv):
             vals['pricelist_id'] = pl
             if 'delivery_requested_date' in vals:
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
-        else:
+        elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
 
         return super(procurement_request, self).create(cr, uid, vals, context)

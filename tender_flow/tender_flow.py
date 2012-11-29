@@ -120,7 +120,8 @@ class tender(osv.osv):
         '''
         Set the reference of the tender at this time
         '''
-        vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
+        if not vals.get('name', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
         return super(tender, self).create(cr, uid, vals, context=context)
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
@@ -776,9 +777,9 @@ class purchase_order(osv.osv):
         '''
         Set the reference at this step
         '''
-        if context.get('rfq_ok', False):
+        if context.get('rfq_ok', False) and not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
-        else:
+        elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')})
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
