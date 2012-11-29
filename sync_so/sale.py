@@ -46,6 +46,8 @@ class sale_order_sync(osv.osv):
         header_result = {}
         so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
         header_result['order_line'] = so_po_common.get_lines(cr, uid, po_info, False, False, False, True, context)
+        # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
+        header_result['order_line'] = [line[2].update({'confirmed_delivery_date': False}) for line in header_result['order_line']]
         
         default = {}
         default.update(header_result)
@@ -54,8 +56,8 @@ class sale_order_sync(osv.osv):
         
         # reset confirmed_delivery_date to all lines
         so_line_obj = self.pool.get('sale.order.line')
-
-# [utp-360] => confirmed_delivery_date is updated by default and shouldn't be modify here
+        
+        # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
 #        for order in self.browse(cr, uid, [so_id], context=context):
 #            for line in order.order_line:
 #                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
