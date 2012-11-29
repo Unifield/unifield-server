@@ -512,6 +512,11 @@ def create_log_line(self, cr, uid, model, lines=[]):
 
 #        if old_value == new_value and method not in ('create', 'unlink'):
 #            continue
+        # the check below is for the case where we have empty fields but with different types (i.e. transport_type that was comparing a unicode and a boolean)
+        if not old_value:
+            old_value = False
+        if not new_value:
+            new_value = False
         
         if method not in ('create', 'unlink') and (old_value == new_value \
            or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])):
