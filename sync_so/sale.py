@@ -54,10 +54,11 @@ class sale_order_sync(osv.osv):
         
         # reset confirmed_delivery_date to all lines
         so_line_obj = self.pool.get('sale.order.line')
-        
-        for order in self.browse(cr, uid, [so_id], context=context):
-            for line in order.order_line:
-                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
+
+# [utp-360] => confirmed_delivery_date is updated by default and shouldn't be modify here
+#        for order in self.browse(cr, uid, [so_id], context=context):
+#            for line in order.order_line:
+#                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
         
         so_po_common.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)        
         return True
