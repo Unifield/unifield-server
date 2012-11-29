@@ -73,6 +73,7 @@ class unifield_setup_configuration(osv.osv):
                                                  string='Restrictive countries'),
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
         'lang_id': fields.char(size=5, string='Default language'),
+        'payroll_ok': fields.boolean(string='System manages payrolls ?'),
     }
     
     _defaults = {
@@ -84,6 +85,7 @@ class unifield_setup_configuration(osv.osv):
         'lang_id': lambda *a: 'en_MF',
         'unallocated_ok': lambda *a: False,
         'fixed_asset_ok': lambda *a: False,
+        'payroll_ok': lambda *a: False,
     }
     
     _constraints = [

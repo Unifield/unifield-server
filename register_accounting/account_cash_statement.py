@@ -40,6 +40,18 @@ class account_cash_statement(osv.osv):
 #        bank = self.browse(cr, uid, res_id)
 #        return bank.name + '_' +bank.journal_id.code
 
+    def __init__(self, pool, cr):
+        """
+        Change a field to function
+        """
+        super(account_cash_statement, self).__init__(pool, cr)
+        if self.pool._store_function.get(self._name, []):
+            newstore = []
+            for fct in self.pool._store_function[self._name]:
+                if fct[1] != 'total_entry_encoding':
+                    newstore.append(fct)
+            self.pool._store_function[self._name] = newstore
+
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
         @param name: Names of fields.
@@ -236,6 +248,27 @@ class account_cash_statement(osv.osv):
                         self.write(cr, uid, [next_st.id], {'balance_start': amount})
         return res
 
+    def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Sum of given register's transactions
+        """
+        res = {}
+        if not ids:
+            return res
+        # Complete those that have no result
+        for id in ids:
+            res[id] = 0.0
+        # COMPUTE amounts
+        cr.execute("""
+        SELECT statement_id, SUM(amount) 
+        FROM account_bank_statement_line 
+        WHERE statement_id in %s
+        GROUP BY statement_id""", (tuple(ids,),))
+        sql_res = cr.fetchall()
+        if sql_res:
+            res.update(dict(sql_res))
+        return res
+
     _columns = {
             'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
@@ -250,6 +283,8 @@ class account_cash_statement(osv.osv):
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
             'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance', 
                 help="Opening balance + Cash Transaction"),
+            # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
+            'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):

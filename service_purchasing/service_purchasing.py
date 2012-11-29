@@ -128,7 +128,7 @@ class stock_move(osv.osv):
         product_type = False
         location_id = loc_id and location_obj.browse(cr, uid, loc_id) or False
         location_dest_id = loc_dest_id and location_obj.browse(cr, uid, loc_dest_id) or False
-        service_loc = location_obj.search(cr, uid, [('service_location', '=', True)])
+        service_loc = location_obj.get_service_location(cr, uid)
         non_stockable_loc = location_obj.search(cr, uid, [('non_stockable_ok', '=', True)])
         id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
         input_id = location_obj.search(cr, uid, [('input_ok', '=', True)])
@@ -150,9 +150,6 @@ class stock_move(osv.osv):
         else:
             vals.update({'product_type': False})
 
-        if service_loc:
-            service_loc = service_loc[0]
-            
         if non_stockable_loc:
             non_stockable_loc = non_stockable_loc[0]
             
@@ -190,11 +187,15 @@ class stock_move(osv.osv):
                 vals.update(location_id=id_cross)
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or location_dest_id.virtual_ok)):
                 vals.update(location_id=stock_ids and stock_ids[0] or False)
+            elif product_type == 'service_recep':
+                vals.update(location_id=id_cross)
             # Destination location
             if product_type == 'consu' and not (loc_dest_id and (location_dest_id.usage == 'inventory' or location_dest_id.destruction_location or location_dest_id.quarantine_location)):
                 vals.update(location_dest_id=non_stockable_loc)
             elif product_type == 'product' and not (loc_dest_id and (not location_dest_id.non_stockable_ok and (location_dest_id.usage == 'internal' or location_dest_id.virtual_ok))):
                 vals.update(location_dest_id=False)
+            elif product_type == 'service_recep':
+                vals.update(location_dest_id=service_loc)
         # Case when outgoing delivery or picking ticket
         elif product_type and parent_type == 'out':
             # Source location
@@ -203,6 +204,8 @@ class stock_move(osv.osv):
                 vals.update(location_id=id_cross)
             elif product_type == 'product' and not (loc_id and (location_id.usage == 'internal' or not location_id.quarantine_location or not location_id.output_ok or not location_id.input_ok)):
                 vals.update(location_id=stock_ids and stock_ids[0] or False)
+            elif product_type == 'service_recep':
+                vals.update(location_id=id_cross)
             # Destinatio location
             if product_type == 'consu' and not (loc_dest_id and (location_dest_id.output_ok or location_dest_id.usage == 'customer')):
                 # If we are not in Picking ticket and the dest. loc. is not output or customer, unset the dest.
@@ -223,14 +226,19 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.location_id.service_location:
-                raise osv.except_osv(_('Error'), _('You cannot select Service Location as Source Location.'))
             if obj.product_id.type in ('service_recep', 'service'):
-                if not obj.picking_id or obj.picking_id.type != 'in':
-                    raise osv.except_osv(_('Error'), _('Only Incoming Shipment can manipulate Service Products.'))
-                if not obj.location_dest_id.service_location:
-                    raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
-            elif obj.location_dest_id.service_location:
+                if obj.picking_id and obj.picking_id.type == 'in':
+                    if not obj.location_dest_id.service_location and not obj.location_dest_id.cross_docking_location_ok:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Service or Cross Docking Location as Destination Location.'))
+                elif obj.picking_id and obj.picking_id.type == 'internal':
+                    if not obj.location_id.cross_docking_location_ok:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
+                    if not obj.location_dest_id.service_location:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
+                elif obj.picking_id and obj.picking_id.type == 'out' and obj.picking_id.subtype in ('standard', 'picking'):
+                    if not obj.location_id.cross_docking_location_ok:
+                        raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
+            elif obj.location_dest_id.service_location or obj.location_id.service_location:
                 raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
         return True
     
@@ -296,18 +304,18 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
     
-    def _check_purchase_category(self, cr, uid, ids, context=None):
-        """
-        Purchase Order of type Category Service should contain only Service Products.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.categ == 'service':
-                for line in obj.order_line:
-                    if not line.product_id or line.product_id.type not in ('service_recep', 'service',):
-                        return False
-        return True
+#    def _check_purchase_category(self, cr, uid, ids, context=None):
+#        """
+#        Purchase Order of type Category Service should contain only Service Products.
+#        """
+#        if context is None:
+#            context = {}
+#        for obj in self.browse(cr, uid, ids, context=context):
+#            if obj.categ == 'service':
+#                for line in obj.order_line:
+#                    if not line.product_id or line.product_id.type not in ('service_recep', 'service',):
+#                        return False
+#        return True
     
     def has_stockable_product(self,cr, uid, ids, *args):
         '''
@@ -320,36 +328,40 @@ class purchase_order(osv.osv):
                     return True
                 
         return result
-    
+     
+#    by QT : Remove the constraint because if you change the Order category from 'Service' to 'Medical' and try to add a non-service product,
+#            the constraint returns False
     _constraints = [
-        (_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
+#        (_check_purchase_category, 'Purchase Order of type Category Service should contain only Service Products.', ['categ']),
     ]
     
 purchase_order()
 
 
-class purchase_order_line(osv.osv):
-    '''
-    add constraint
-    '''
-    _inherit = 'purchase.order.line'
-    
-    def _check_purchase_order_category(self, cr, uid, ids, context=None):
-        """
-        Purchase Order of type Category Service should contain only Service Products.
-        """
-        if context is None:
-            context = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type not in ('service_recep', 'service',) and obj.order_id.categ == 'service':
-                return False
-        return True
-    
-    _constraints = [
-        (_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
-    ]
-    
-purchase_order_line()
+#    by QT : Remove the constraint because if you change the Order category from 'Service' to 'Medical' and try to add a non-service product,
+#            the constraint returns False
+#class purchase_order_line(osv.osv):
+#    '''
+#    add constraint
+#    '''
+#    _inherit = 'purchase.order.line'
+#    
+#    def _check_purchase_order_category(self, cr, uid, ids, context=None):
+#        """
+#        Purchase Order of type Category Service should contain only Service Products.
+#        """
+#        if context is None:
+#            context = {}
+#        for obj in self.browse(cr, uid, ids, context=context):
+#            if obj.product_id.type not in ('service_recep', 'service',) and obj.order_id.categ == 'service':
+#                return False
+#        return True
+#    
+#    _constraints = [
+#        (_check_purchase_order_category, 'Purchase Order of type Category Service should contain only Service Products.', ['product_id']),
+#    ]
+#    
+#purchase_order_line()
 
 
 class stock_picking(osv.osv):

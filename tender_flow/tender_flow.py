@@ -105,7 +105,6 @@ class tender(osv.osv):
     
     _defaults = {'state': 'draft',
                  'internal_state': 'draft',
-                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'tender'),
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
                  'creator': lambda obj, cr, uid, context: uid,
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
@@ -115,6 +114,13 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the reference of the tender at this time
+        '''
+        vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
+        return super(tender, self).create(cr, uid, vals, context=context)
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
@@ -153,8 +159,7 @@ class tender(osv.osv):
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
-                          'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
+                values = {'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
                           'rfq_ok': True,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
@@ -170,7 +175,7 @@ class tender(osv.osv):
                           'delivery_requested_date': tender.requested_date,
                           }
                 # create the rfq - dic is udpated for default partner_address_id at purchase.order level
-                po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id))
+                po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
                 
                 for line in tender.tender_line_ids:
                     if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_supply_doc_import', 'product_tbd')[1]:
@@ -759,13 +764,23 @@ class purchase_order(osv.osv):
 
     _defaults = {
                 'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
-                'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
                  }
     
     _constraints = [
         (_check_valid_till,
             'You must specify a Valid Till date.',
             ['valid_till']),]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the reference at this step
+        '''
+        if context.get('rfq_ok', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
+        else:
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')})
+
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''

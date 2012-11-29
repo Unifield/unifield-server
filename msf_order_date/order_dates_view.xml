@@ -58,12 +58,12 @@
                     
 					<!-- Improve functionalities of onchange_order_type -->
 					<xpath expr="/form//field[@name='order_type']" position="replace">
-					    <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id,delivery_requested_date)" />
+					    <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id,delivery_requested_date)" />
 					</xpath>
                     
                     <!-- Give the context when create a new PO line -->
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'pricelist_id': pricelist_id, 'rfq_ok': rfq_ok}</attribute>
+                        <attribute name="context">{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': rfq_ok}</attribute>
                     </xpath>
                     
                     <!-- Delete the Requested date from 'Delivery' tab -->
@@ -148,7 +148,7 @@
                     
                     <!-- Give the context when create a new SO line -->
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
-                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id}</attribute>
+                        <attribute name="context">{'sale_id': active_id, 'pricelist_id': pricelist_id, 'categ': categ, 'partner_id': partner_id}</attribute>
                     </xpath>
                     
                 </data>

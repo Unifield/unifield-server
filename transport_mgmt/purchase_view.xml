@@ -126,7 +126,7 @@
                     <!-- The field product_domain is True or False, so the result of the domain is [True, True] (only transport
                             products) or [True, False] (all products) -->
                     <xpath expr="/form/notebook//field[@name='product_id']" position="attributes">
-                        <attribute name="domain">[('transport_ok', 'in', [True, parent.categ=='transport' and 't' or 'f'])]</attribute>
+                        <attribute name="domain">[parent.categ in ('transport', 'service') and ('type', '=', 'service_recep') or ('type', '!=', False), ('transport_ok', 'in', [True, parent.categ=='transport' and 't' or 'f'])]</attribute>
                     </xpath>
                 </data>
             </field>
