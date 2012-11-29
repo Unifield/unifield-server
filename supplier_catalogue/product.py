@@ -290,7 +290,7 @@ class product_product(osv.osv):
             if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
-                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price)
+                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price, round=False, context=context)
                 res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)

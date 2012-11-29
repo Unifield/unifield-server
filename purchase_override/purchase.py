@@ -806,7 +806,7 @@ stock moves which are already processed : '''
                     # convert from currency of pol to currency of sol
                     price_unit_converted = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id,
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
-                                                                                 round=True, context=date_context)
+                                                                                 round=False, context=date_context)
                     fields_dic = {'product_id': line.product_id and line.product_id.id or False,
                                   'name': line.name,
                                   'default_name': line.default_name,

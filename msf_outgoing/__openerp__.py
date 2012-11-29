@@ -37,6 +37,7 @@
     'init_xml': [],
     "depends" : ["stock",
                  "purchase",
+                 "purchase_override", # so we can use Decimal Precision "Purchase Price Computation" within fields
                  "sale",
                  "product_asset",
                  "kit",
