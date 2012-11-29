@@ -120,7 +120,7 @@ class sourcing_line(osv.osv):
         # for each sourcing line
         for sl in self.browse(cr, uid, ids, context):
             product_context = context
-            product_context.update({'location': location_ids, 'to_date': sl.rts})
+            product_context.update({'location': location_ids, 'to_date': '%s 23:59:59' % sl.rts})
             if sl.product_id:
                 product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
                 res = product_virtual.virtual_available
