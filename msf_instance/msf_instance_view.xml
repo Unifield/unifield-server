@@ -86,6 +86,18 @@
             </field>
         </record>
 
+        <record id="view_account_analytic_line_filter_instance_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.line.filter.instance.inherit</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="arch" type="xml">
+                <field name="journal_id" position="before">
+                    <field name="instance_id"/>
+                </field>
+            </field>
+        </record>
+
     <!-- Redefine analytic journal -->
         <record id="view_account_analytic_journal_instance_tree" model="ir.ui.view">
             <field name="name">account.analytic.journal.instance.tree</field>
@@ -110,7 +122,19 @@
                 </field>
             </field>
         </record>
-        
+
+        <record id="view_analytic_journal_search_instance_inherit" model="ir.ui.view">
+            <field name="name">account.analytic.journal.search.instance.inherit</field>
+            <field name="model">account.analytic.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_analytic_journal_search"/>
+            <field name="arch" type="xml">
+                <field name="code" position="before">
+                    <field name="instance_id" readonly="1"/>
+                </field>
+            </field>
+        </record>
+
     <!-- Redefine G/L journal -->
         <record id="view_account_journal_form_instance_inherit" model="ir.ui.view">
             <field name="name">account.journal.form.instance.inherit</field>
