@@ -42,7 +42,6 @@
         'security/ir.model.access.csv',
         'security/audittrail_security.xml',
         #'audittrail_data.yml',
-        'data/audittrail_remove_rules.yml',
         'data/audittrail_data_picking.yml',
         'data/audittrail_data_sale.yml',
         'data/audittrail_data_purchase.yml',
