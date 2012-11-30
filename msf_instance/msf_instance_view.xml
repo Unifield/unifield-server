@@ -129,11 +129,26 @@
             <field name="name">account.journal.tree.instance.inherit</field>
             <field name="model">account.journal</field>
             <field name="type">tree</field>
-            <field name="inherit_id" ref="account_journal.view_account_journal_tree_inherit"/>
+            <field name="inherit_id" ref="account.view_account_journal_search"/>
             <field name="arch" type="xml">
                 <field name="code" position="before">
                     <field name="instance_id" readonly="1"/>
                 </field>
+            </field>
+        </record>
+
+        <record id="view_account_journal_view_search_instance_inherit" model="ir.ui.view">
+            <field name="name">account.journal.view.search.instance.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_journal_view_search"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search//field[@name='code']" position="before">
+                        <field name="instance_id"/>
+                    </xpath>
+                </data>
             </field>
         </record>
 
