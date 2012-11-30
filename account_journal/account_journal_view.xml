@@ -57,7 +57,6 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search//field[@name='name']" position="replace">
-                        <field name="code" select="1"/>
                         <field name="name" select="1"/>
                         <field name="type" select="1"/>
                     </xpath>
