@@ -152,6 +152,8 @@
             </field>
         </record>
 
+
+    <!-- Redefine Journal Entries -->
         <record id="view_move_form_instance_inherit" model="ir.ui.view">
             <field name="name">account.move.form.instance.inherit</field>
             <field name="model">account.move</field>
@@ -175,6 +177,19 @@
               <xpath expr="/tree//field[@name='name']" position="before">
                   <field name="instance_id" readonly="1"/>
               </xpath>
+            </field>
+        </record>
+
+        <record id="view_account_move_filter_instance_inherit" model="ir.ui.view">
+            <field name="name">account.move.filter.instance.inherit</field>
+            <field name="model">account.move</field>
+            <field name="type">search</field>
+            <field name="priority" eval="30"/>
+            <field name="inherit_id" ref="account.view_account_move_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="/search//field[@name='journal_id']" position="before">
+                    <field name="instance_id"/>
+                </xpath>
             </field>
         </record>
 
