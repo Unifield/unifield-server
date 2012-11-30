@@ -1,0 +1,24 @@
+-
+  Delete the rules for the object stock.move
+-
+  !python {model: audittrail.rule}: |
+    move_rule_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.move')], context=context)
+    self.unlink(cr, uid, move_rule_ids, context=context)
+-
+  Delete the rules for the object stock.picking
+-
+  !python {model: audittrail.rule}: |
+    picking_rule_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'stock.picking')], context=context)
+    self.unlink(cr, uid, picking_rule_ids, context=context)
+-
+  Delete the rules for the object purchase.order
+-
+  !python {model: audittrail.rule}: |
+    po_rule_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'purchase.order')], context=context)
+    self.unlink(cr, uid, po_rule_ids, context=context)
+-
+  Delete the rules for the object sale.order
+-
+  !python {model: audittrail.rule}: |
+    so_rule_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sale.order')], context=context)
+    self.unlink(cr, uid, so_rule_ids, context=context)
