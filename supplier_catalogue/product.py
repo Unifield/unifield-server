@@ -224,7 +224,6 @@ class pricelist_partnerinfo(osv.osv):
             res[line.id] = False
             if line.suppinfo_id:
                 res[line.id] = line.suppinfo_id.sequence
-        print res
         return res
 
     _columns = {
