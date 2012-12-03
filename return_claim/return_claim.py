@@ -766,8 +766,6 @@ class claim_event(osv.osv):
         picking_tools.confirm(cr, uid, event_picking_id, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking) - force assign - must be available thanks to UI checks
-        picking_tools.check_assign(cr, uid, event_picking_id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
