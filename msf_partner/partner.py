@@ -118,14 +118,14 @@ class res_partner(osv.osv):
                 price_list = self.pool.get('product.product')._get_partner_info_price(cr, uid, product, partner.id, context.get('product_qty', 1.00), pricelist.currency_id.id, time.strftime('%Y-%m-%d'), uom, context=context)
                 if not price_list:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
+                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=False, context=context)
                     res[partner.id] = {'price_currency': pricelist.currency_id.id,
                                        'price_unit': price,
                                        'valide_until_date': False}
                 else:
                     info_price = partner_price.browse(cr, uid, price_list[0], context=context)
                     partner_currency_id = pricelist.currency_id.id
-                    price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price)
+                    price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price, round=False, context=context)
                     currency = partner_currency_id
                     # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
 #                    currency = info_price.currency_id.id
