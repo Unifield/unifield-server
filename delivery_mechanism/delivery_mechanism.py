@@ -139,11 +139,9 @@ class stock_move(osv.osv):
         so_obj = self.pool.get('sale.order')
         move = kwargs['move']
         if move.purchase_line_id:
-            proc_id = move.purchase_line_id.procurement_id.id
-            sol_ids = sol_obj.search(cr, uid, [('procurement_id', '=', proc_id)])
-            so_id = sol_obj.browse(cr, uid, sol_ids, context=context)[0].order_id.id
-            if so_obj.browse(cr, uid, [so_id],context=context)[0].procurement_request:
-                location_dest_id = so_obj.browse(cr, uid, [so_id],context=context)[0].location_requestor_id.id
+            proc = move.purchase_line_id.procurement_id
+            if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
+                location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
         return location_dest_id
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
