@@ -1536,6 +1536,8 @@ class account_bank_statement_line(osv.osv):
                 elif absl.direct_invoice:
                     if not absl.invoice_id:
                         raise osv.except_osv(_('Error'), _('This line is linked to an unknown Direct Invoice.'))
+                    if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+                        raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
                     self.do_direct_invoice_reconciliation(cr, uid, [absl.id], context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
