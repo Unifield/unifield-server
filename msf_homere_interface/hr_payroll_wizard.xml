@@ -157,6 +157,24 @@
             </field>
         </record>
 
+        <record id="hr_nat_staff_import_wizard" model="ir.ui.view">
+            <field name="name">hr.nat.staff.import.wizard</field>
+            <field name="model">hr.nat.staff.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import nat. staff">
+                  <label string="This wizard will import National staff employees file in XML Spreadsheet 2003 format. To generate this file, create a Speadsheet with some columns: 'Name', 'Code', 'Job', 'Destination', 'Cost Center', 'Funding Pool', 'Free 1', 'Free 2'." colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+    
     <!--
         Actions
     -->
@@ -215,6 +233,16 @@
             <field name="target">new</field>
         </record>
 
+        <!-- National Staff Employee Import -->
+        <record id="action_nat_staff_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import nat. staff</field>
+            <field name="res_model">hr.nat.staff.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hr_nat_staff_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
         <!-- Delete "Employee Hierarchy" action -->
         <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Employee Hierarchy%')]"/>
 
@@ -222,6 +250,8 @@
         Menus
     -->
         <menuitem id="import_expat_employees" parent="hr.menu_hr_main" name="Import expats" sequence="20" action="action_expat_employee_import_wizard"/>
+        <menuitem id="import_nat_staff" parent="hr.menu_hr_main" name="Import nat. staff" sequence="30" action="action_nat_staff_import_wizard"/>
+
 
     </data>
 </openerp>
