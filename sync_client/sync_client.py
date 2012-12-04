@@ -28,7 +28,6 @@ import socket
 import rpc
 import uuid
 import tools
-import time
 import sys
 import traceback
 
@@ -37,7 +36,6 @@ from sync_common.common import sync_log
 
 from threading import Thread
 import pooler
-from datetime import datetime
 
 class entity(osv.osv, Thread):
     """ OpenERP entity name and unique identifier """
