@@ -160,9 +160,11 @@ class db(netsvc.ExportService):
         db = sql_db.db_connect('template1')
         cr = db.cursor()
         cr.autocommit(True) # avoid transaction block
+        drop_db = False
         try:
             try:
                 cr.execute('DROP DATABASE "%s"' % db_name)
+                drop_db = True
             except Exception, e:
                 logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                         'DROP DB: %s failed:\n%s' % (db_name, e))
@@ -172,6 +174,8 @@ class db(netsvc.ExportService):
                     'DROP DB: %s' % (db_name))
         finally:
             cr.close()
+            if drop_db and db_name in pooler.pool_dic:
+                del pooler.pool_dic[db_name]
         return True
 
     def _set_pg_psw_env_var(self):
