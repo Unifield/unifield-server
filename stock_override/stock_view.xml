@@ -510,7 +510,9 @@
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="min_date" string="Expected Receipt Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"/>
+                            <field name="min_date" string="Expected Receipt Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+                            on_change="change_min_date()"/>
+                            <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                         </group>
                     </group>

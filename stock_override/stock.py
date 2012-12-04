@@ -654,10 +654,14 @@ class stock_move(osv.osv):
             else:
                 vals['address_id'] = addr.get('delivery')
 
-        if vals.get('type') == 'in' and not vals.get('date_expected'):
+        type = vals.get('type')
+        if not type and vals.get('picking_id'):
+            type = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'), context=context).type
+            
+        if type == 'in' and not vals.get('date_expected'):
             vals['date_expected'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
-        if vals.get('type') == 'in' and vals.get('date_expected'):
+        if type == 'in' and vals.get('date_expected'):
             vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).create(cr, uid, vals, context=context)
@@ -681,9 +685,9 @@ class stock_move(osv.osv):
                     addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
 
-        if vals.get('date_expected') and vals.get('state') != 'done' and vals.get('type') != 'in':
+        if vals.get('date_expected'):
             for move in self.browse(cr, uid, ids, context=context):
-                if move.state not in ('done', 'cancel') and move.type == 'in':
+                if vals.get('state', move.state) not in ('done', 'cancel') and vals.get('type', move.type) == 'in':
                     vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
