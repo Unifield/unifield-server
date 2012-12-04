@@ -212,8 +212,9 @@
             <field name="inherit_id" ref="account.view_account_move_filter"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search//field[@name='journal_id']" position="before">
-                        <field name="instance_id"/>
+                    <xpath expr="/search//field[@name='journal_id']" position="replace">
+                      <field name="instance_id"/>
+                      <field name="journal_id" domain="[('instance_id', '=', instance_id)]"/>
                     </xpath>
                     <xpath expr="/search//filter[@string='Date']" position="after">
                         <separator orientation="vertical"/>
@@ -255,8 +256,9 @@
             <field name="inherit_id" ref="account.view_account_move_line_filter"/>
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="/search//field[@name='journal_id']" position="before">
-                        <field name="instance_id"/>
+                    <xpath expr="/search//field[@name='journal_id']" position="replace">
+                        <field name="instance_id" select="1"/>
+                        <field name="journal_id" select="1" domain="[('instance_id', '=', instance_id)]"/>
                     </xpath>
                     <xpath expr="/search//filter[@string='Period']" position="after">
                         <separator orientation="vertical"/>
