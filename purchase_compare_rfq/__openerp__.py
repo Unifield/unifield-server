@@ -31,7 +31,6 @@
     'author': 'TeMPO Consulting, MSF',
     'website': 'http://unifield.msf.org',
     'depends': ['purchase',
-                'purchase_override', # so we can use Decimal Precision "Purchase Price Computation"
                 ],
     'init_xml': [],
     'update_xml': [

@@ -29,7 +29,7 @@
     "website": "http://unifield.msf.org",
     "depends" : ["stock", "reason_types_moves"],
     "category" : "Generic Modules/Inventory Control",
-    "init_xml" : ["data.xml",],
+    "init_xml" : [],
     "demo_xml" : [],
     "update_xml" : [
         "stock_data.xml",
