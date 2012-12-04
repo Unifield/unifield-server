@@ -28,4 +28,5 @@ import sale_order
 import initial_stock_inventory
 import stock_cost_reevaluation
 import product_list
+import real_consumption
 import check_line
