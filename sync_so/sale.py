@@ -38,6 +38,7 @@ class sale_order_sync(osv.osv):
     }
     
     def create_so(self, cr, uid, source, po_info, context=None):
+        print "Create an FO from a PO (normal flow)"
         if not context:
             context = {}
         po_dict = po_info.to_dict()
@@ -63,6 +64,7 @@ class sale_order_sync(osv.osv):
         return True
 
     def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
+        print "Update the validated FO when the relevant PO got validated"
         if not context:
             context = {}
         po_dict = po_info.to_dict()
@@ -82,6 +84,7 @@ class sale_order_sync(osv.osv):
         return True
 
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
+        print "Update the PO references to the FO, including its sub-FOs"
         if not context:
             context = {}
             

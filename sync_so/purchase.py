@@ -55,7 +55,7 @@ class purchase_order_sync(osv.osv):
     def create_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "call purchase order", source
+        print "Create the split PO at destination"
         
         so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
@@ -66,20 +66,15 @@ class purchase_order_sync(osv.osv):
         header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, False, False, False, False, context)
         header_result['split_po'] = True
         
-        po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
-        # Check if there is the location from the original PO
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
         
-        wf_service = netsvc.LocalService("workflow")
         if so_info.state == 'sourced':
             header_result['state'] = 'sourced'
 
-        # get the suffix of the FO and add it into the newly created PO to make sure the reference is consistent
-        partner_ref = source
-        so_name_split = so_info.name.split('-')
-        if len(so_name_split) == 2:
+        # Name the new split PO to stick with the name of FO (FOxxxx-1, FOxxxx-2 or FOxxxx-3)
+        if so_info.name[-2] == '-' and so_info.name[-1] in ['1', '2', '3']:
             po_name = self.browse(cr, uid, po_id, context=context)['name']
-            header_result['name'] = po_name + "-" + so_name_split[1]
-            partner_ref = source + "." + so_name_split[0]
+            header_result['name'] = po_name + so_info.name[-2:]
         
         # UTP-163: Get the 'source document' of the original PO, and add it into the split PO, if existed
         origin = self.browse(cr, uid, po_id, context=context)['origin']
@@ -93,18 +88,19 @@ class purchase_order_sync(osv.osv):
         
         # after created this splitted PO, pass it to the confirmed, as the split SO has been done so too.
         if so_info.state == 'confirmed':
-            wf_service.trg_validate(uid, 'purchase.order', res_id, 'purchase_confirm', cr)
+            netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order', res_id, 'purchase_confirm', cr)
         else:
             self.write(cr, uid, res_id, {'state': 'sourced' } , context=context)
         
-        # Set the original PO to "split" state -- cannot do anything with this original PO
+        # Set the original PO to "split" state -- cannot do anything with this original PO, and update the partner_ref
+        partner_ref = so_po_common.get_full_original_fo_ref(source, so_info.name)
         res_id = self.write(cr, uid, po_id, {'state' : 'split', 'active': False, 'partner_ref': partner_ref} , context=context)
         return res_id
 
     def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
+        print "Create a PO from an FO (push flow)"
         if not context:
             context = {}
-        print "call purchase order", source
         
         so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
@@ -168,7 +164,7 @@ class purchase_order_sync(osv.osv):
     def update_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "Update the split PO when the sourced FO got confirmed", source
+        print "Update the split PO when the sourced FO got confirmed"
         
         so_dict = so_info.to_dict()
         po_id = self.check_update(cr, uid, source, so_dict)
@@ -198,10 +194,10 @@ class purchase_order_sync(osv.osv):
     def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "The validated FO (not yet split) updates the original PO", source
+        print "Update the original PO when the relevant FO got validated"
 
         so_po_common = self.pool.get('so.po.common')
-        po_id = so_po_common.get_original_po_id(cr, uid, so_info.client_order_ref, context)
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
         so_dict = so_info.to_dict()
         
         header_result = {}
