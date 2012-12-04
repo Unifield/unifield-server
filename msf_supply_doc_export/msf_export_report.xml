@@ -102,5 +102,31 @@
             menu="True"
             />
 
+    <!-- REAL AVERAGE CONSUMPTION -->
+        <report
+            id="report_real_consumption_xls"
+            string="Real Consumption Excel Export"
+            model="real.average.consumption"
+            name="real.consumption.xls"
+            file="msf_supply_doc_export/report/report_real_consumption_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- MONTHLY REVIEW CONSUMPTION -->
+        <report
+            id="report_monthly_consumption_xls"
+            string="Monthly Consumption Excel Export"
+            model="monthly.review.consumption"
+            name="monthly.consumption.xls"
+            file="msf_supply_doc_export/report/report_monthly_consumption_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
     </data>
 </openerp>
