@@ -35,6 +35,7 @@
         'view/initial_stock_inventory_line_view.xml',
         'view/stock_cost_reevaluation_view.xml',
         'view/product_list_view.xml',
+        'view/real_consumtion_import_line.xml',
         'data/msf_supply_doc_import_data.xml',
         'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',

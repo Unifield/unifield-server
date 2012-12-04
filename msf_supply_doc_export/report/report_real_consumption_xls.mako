@@ -81,7 +81,13 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.uom_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date" >
+            % if line.expiry_date and line.expiry_date != 'False':
+                <Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.consumed_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.remark or '')|x}</Data></Cell>
     </Row>

@@ -63,14 +63,17 @@ def get_log_message(**kwargs):
     # nb_lines_error and tender are just for tender
     nb_lines_error = kwargs.get('nb_lines_error', False)
     tender = kwargs.get('tender', False)
+    real_consumption = kwargs.get('real_consumption', False)
     # not for tender
     obj = kwargs.get('obj', False)
     msg_to_return = False
     # nb_lines_error => is just for tender
     if tender and nb_lines_error:
         msg_to_return = "The import of lines had errors, please correct the red lines below"
+    elif real_consumption and nb_lines_error:
+        msg_to_return = "The import of lines had errors, please correct the red lines below"
     # is for all but tender
-    elif not tender and [x for x in obj.order_line if x.to_correct_ok]:
+    elif not tender and not real_consumption and [x for x in obj.order_line if x.to_correct_ok]:
         msg_to_return = "The import of lines had errors, please correct the red lines below"
     # is for all but tender
     elif not to_write:
@@ -126,16 +129,23 @@ def quantity_value(**kwargs):
     Compute qty value of the cell.
     """
     row = kwargs['row']
-    product_qty = kwargs['to_write']['product_qty']
+    if kwargs.get('real_consumption', False):
+        product_qty = kwargs['to_write']['consumed_qty']
+    else:
+        product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
+    # some object have not there uom at the 3rd column, so we pass them the relevant cell number (i.e. 2 for real consumption report)
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 2
     try:
-        if not row.cells[2]:
+        if not row.cells[cell_nb]:
             warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
         else:
-            if row.cells[2].type in ['int', 'float']:
-                product_qty = row.cells[2].data
+            if row.cells[cell_nb].type in ['int', 'float']:
+                product_qty = row.cells[cell_nb].data
             else:
                 error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
     # if the cell is empty
@@ -156,12 +166,16 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
+    # some object have not there uom at the 3rd column, so we pass them the relevant cell number (i.e. 2 for real consumption report)
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 3
     msg = ''
     try:
         # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
-        if row.cells[3] and str(row.cells[3]) != str(None):
-            if row.cells[3].type == 'str':
-                uom_name = row.cells[3].data.strip()
+        if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+            if row.cells[cell_nb].type == 'str':
+                uom_name = row.cells[cell_nb].data.strip()
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
                 if uom_ids:
                     uom_id = uom_ids[0]
