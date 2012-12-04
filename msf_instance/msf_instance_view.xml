@@ -213,8 +213,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search//field[@name='journal_id']" position="replace">
-                      <field name="instance_id" on_change="filter_journal(instance_id, journal_id)"/>
-                      <field name="journal_id" />
+                      <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                      <field name="journal_id_fake" />
                     </xpath>
                     <xpath expr="/search//filter[@string='Date']" position="after">
                         <separator orientation="vertical"/>
@@ -253,12 +253,13 @@
             <field name="name">account.move.line.filter.instance.inherit</field>
             <field name="model">account.move.line</field>
             <field name="type">search</field>
+            <field name="priority" eval="300" />
             <field name="inherit_id" ref="account.view_account_move_line_filter"/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search//field[@name='journal_id']" position="replace">
-                        <field name="instance_id" select="1"/>
-                        <field name="journal_id" select="1" domain="[('instance_id', '=', instance_id)]"/>
+                        <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                        <field name="journal_id_fake" />
                     </xpath>
                     <xpath expr="/search//filter[@string='Period']" position="after">
                         <separator orientation="vertical"/>
