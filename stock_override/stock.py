@@ -177,6 +177,7 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
+                 
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -652,6 +653,12 @@ class stock_move(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
+
+        if vals.get('type') == 'in' and not vals.get('date_expected'):
+            vals['date_expected'] = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        if vals.get('type') == 'in' and vals.get('date_expected'):
+            vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).create(cr, uid, vals, context=context)
     
@@ -673,6 +680,11 @@ class stock_move(osv.osv):
                 if move.address_id.id != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+
+        if vals.get('date_expected') and vals.get('state') != 'done' and vals.get('type') != 'in':
+            for move in self.browse(cr, uid, ids, context=context):
+                if move.state not in ('done', 'cancel') and move.type == 'in':
+                    vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
     
