@@ -171,6 +171,17 @@ class account_move(osv.osv):
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
     }
     
+    def filter_journal(self, cr, uid, ids, instance_id, journal_id, context=None):
+        value = {}
+        dom = []
+        if instance_id:
+            dom = [('instance_id', '=', instance_id)]
+
+            if journal_id and not self.pool.get('account.journal').search(cr, uid, [('id', '=', journal_id), ('instance_id', '=', instance_id)]):
+                    value['journal_id'] = False
+
+        return {'domain': {'journal_id': dom}, 'value': value}
+
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
