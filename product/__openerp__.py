@@ -26,7 +26,7 @@
     "author" : "OpenERP SA",
     "category" : "Generic Modules/Inventory Control",
     "depends" : ["base", "process", "decimal_precision"],
-    "init_xml" : [],
+    "init_xml" : ["data.xml"],
     "demo_xml" : ["product_demo.xml"],
     "description": """
     This is the base module for managing products and pricelists in OpenERP.

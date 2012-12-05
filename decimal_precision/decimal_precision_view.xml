@@ -9,6 +9,7 @@
                 <form string="Decimal Precision">
                     <field name="name" select="1"/>
                     <field name="digits"/>
+                    <field name="computation" />
                 </form>
             </field>
         </record>
@@ -20,6 +21,7 @@
                 <tree string="Decimal Precision">
                     <field name="name" select="1"/>
                     <field name="digits"/>
+                    <field name="computation" />
                 </tree>
             </field>
         </record>

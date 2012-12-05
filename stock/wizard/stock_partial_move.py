@@ -23,6 +23,8 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
+import decimal_precision as dp
+
 
 class stock_partial_move_memory_out(osv.osv_memory):
     _name = "stock.move.memory.out"
