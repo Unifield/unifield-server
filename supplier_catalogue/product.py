@@ -211,6 +211,19 @@ class pricelist_partnerinfo(osv.osv):
                 return False
             
         return True
+
+    def _get_supplierinfo(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', ids)], context=context)
+        return result
+
+    def _get_sequence(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = line.suppinfo_id.sequence
+
+        return res
     
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
@@ -220,7 +233,9 @@ class pricelist_partnerinfo(osv.osv):
         'valid_from': fields.date(string='Valid from'),
         'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
         'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),
-        'sequence': fields.related('suppinfo_id', 'sequence', string='Sequence', type='integer'),
+        #'sequence': fields.related('suppinfo_id', 'sequence', string='Sequence', type='integer', 
+        'sequence': fields.function(_get_sequence, method=True, string='Sequence', type='integer', 
+                                    store={'product.supplierinfo': (_get_supplierinfo, ['sequence'], 10)}),
     }
 
     _constraints = [
