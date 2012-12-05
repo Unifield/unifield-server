@@ -32,6 +32,23 @@ class hr_employee(osv.osv):
 
     _order = 'name_resource'
 
+    def _get_allow_edition(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        For given ids get True or False regarding payroll system configuration (activated or not).
+        If payroll_ok is True, so don't permit Local employee edition.
+        Otherwise permit user to edit them.
+        """
+        if not context:
+            context = {}
+        res = {}
+        allowed = False
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup and not setup.payroll_ok:
+            allowed = True
+        for e in ids:
+            res[e] = allowed
+        return res
+
     _columns = {
         'employee_type': fields.selection([('', ''), ('local', 'Local Staff'), ('ex', 'Expatriate employee')], string="Type", required=True),
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -45,6 +62,7 @@ class hr_employee(osv.osv):
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination",),
+        'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
     }
 
     _defaults = {
@@ -62,10 +80,16 @@ class hr_employee(osv.osv):
         # Some verifications
         if not context:
             context = {}
+        allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
+            # Search Payroll functionnality preference (activated or not)
+            # If payroll_ok is False, then we permit user to create local employees
+            setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+            if setup and not setup.payroll_ok:
+                allow_edition = True
             # Raise an error if employee is created manually
-            if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_data', False):
-                    raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+            if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_data', False) and not allow_edition:
+                raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
 #            # Raise an error if no cost_center
 #            if not vals.get('cost_center_id', False):
 #                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
@@ -84,6 +108,9 @@ class hr_employee(osv.osv):
         ex = False
         allowed = False
         res = []
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup and not setup.payroll_ok:
+            allowed = True
         # Prepare some variable for process
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
