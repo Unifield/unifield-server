@@ -94,6 +94,14 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         """
         if not context:
             return {'type': 'ir.actions.act_window_close'}
+        # Clean up error table
+        if context.get('employee_import_wizard_ids', False):
+            wiz_ids = context.get('employee_import_wizard_ids')
+            if isinstance(wiz_ids, (int, long)):
+                wiz_ids = [wiz_ids]
+            line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
+            if line_ids:
+                self.pool.get('hr.payroll.employee.import.errors').unlink(cr, uid, line_ids)
         if context.get('from', False):
             result = False
             domain = False
@@ -110,6 +118,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'expat_employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_expatriate': 1})
+            if context.get('from') == 'nat_staff_import':
+                result = ('inherit_view_employee_tree', 'hr.employee')
+                context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:
