@@ -70,7 +70,11 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             employees = ','.join([x.get('name', False) and x.get('name') for x in self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name'])])
             raise osv.except_osv(_('Warning'), _('More than one employee have the same code: %s') % (employees or '',))
         elif employee_ids:
-            employee_id = employee_ids[0]
+            e_data = self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name'])
+            if e_data[0].get('name', False) == vals.get('name'):
+                employee_id = employee_ids[0]
+            else:
+                raise osv.except_osv(_('Warning'), _('More than one employee have the same code: %s') % (e_data[0].get('name') or '',))
         # Update other fields
         vals.update({'employee_type': 'local', 'active': True,})
 #        # Search job
