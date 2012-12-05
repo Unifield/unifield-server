@@ -88,7 +88,13 @@
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.consumed_qty or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" >
+            % if line.consumed_qty:
+                <Data ss:Type="Number">${(line.consumed_qty or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.remark or '')|x}</Data></Cell>
     </Row>
     % endfor

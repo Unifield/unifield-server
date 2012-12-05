@@ -58,22 +58,18 @@ def get_log_message(**kwargs):
     """
     Define log message
     """
-    obj = kwargs.get('obj', False)
     to_write = kwargs['to_write']
     # nb_lines_error and tender are just for tender
     nb_lines_error = kwargs.get('nb_lines_error', False)
     tender = kwargs.get('tender', False)
-    real_consumption = kwargs.get('real_consumption', False)
     # not for tender
     obj = kwargs.get('obj', False)
     msg_to_return = False
     # nb_lines_error => is just for tender
     if tender and nb_lines_error:
         msg_to_return = "The import of lines had errors, please correct the red lines below"
-    elif real_consumption and nb_lines_error:
-        msg_to_return = "The import of lines had errors, please correct the red lines below"
     # is for all but tender
-    elif not tender and not real_consumption and [x for x in obj.order_line if x.to_correct_ok]:
+    elif not tender and [x for x in obj.order_line if x.to_correct_ok]:
         msg_to_return = "The import of lines had errors, please correct the red lines below"
     # is for all but tender
     elif not to_write:
@@ -131,6 +127,8 @@ def quantity_value(**kwargs):
     row = kwargs['row']
     if kwargs.get('real_consumption', False):
         product_qty = kwargs['to_write']['consumed_qty']
+    elif kwargs.get('monthly_consumption', False):
+        product_qty = kwargs['to_write']['fmc']
     else:
         product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']

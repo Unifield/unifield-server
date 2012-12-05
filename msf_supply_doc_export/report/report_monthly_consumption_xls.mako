@@ -71,9 +71,27 @@
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.amc or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.fmc or '')|x}</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.valid_until|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line" >
+            % if line.amc and line.amc:
+                <Data ss:Type="Number">${(line.amc or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+        <Cell ss:StyleID="line" >
+            % if line.fmc and line.fmc:
+                <Data ss:Type="Number">${(line.fmc or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+        <Cell ss:StyleID="short_date" >
+            % if line.valid_until and line.valid_until != 'False':
+                <Data ss:Type="DateTime">${line.valid_until|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
     </Row>
     % endfor
 </Table>
