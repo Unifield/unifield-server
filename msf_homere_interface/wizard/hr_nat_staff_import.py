@@ -49,14 +49,16 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
          - funding pool: like destination
          - free1: like destination
          - free2: like destination
+        Return changed vals and another value: employee_id.
+        If employee_id is False, it's an employee creation. Else, it's an employee update.
         """
+        # Prepare some values
+        employee_id = False
         # Some checks
         if not context:
             context = {}
         if not vals:
-            return {}
-        # Prepare some values
-        employee_id = False
+            return {}, employee_id
         # Check mandatory fields
         if not vals.get('name', False):
             raise osv.except_osv(_('Error'), _('Name is a mandatory field!'))
@@ -69,16 +71,19 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('More than one employee have the same code: %s') % (employees or '',))
         elif employee_ids:
             employee_id = employee_ids[0]
+        # Update other fields
+        vals.update({'employee_type': 'local', 'active': True,})
+
         # Search job
-        if vals.get('job', False):
-            job_ids = self.pool.get('hr.job').search(cr, uid, [('name', '=', vals.get('job'))])
-            if job_ids:
-                vals.update({'job_id': job_ids[0]})
-            else:
-                job_id = self.pool.get('hr.job').create(cr, uid, {'name': vals.get('job')})
-                vals.update({'job_id': job_id})
-        del(vals['job'])
-        return vals
+#        if vals.get('job', False):
+#            job_ids = self.pool.get('hr.job').search(cr, uid, [('name', '=', vals.get('job'))])
+#            if job_ids:
+#                vals.update({'job_id': job_ids[0]})
+#            else:
+#                job_id = self.pool.get('hr.job').create(cr, uid, {'name': vals.get('job')})
+#                vals.update({'job_id': job_id})
+#        del(vals['job'])
+        return vals, employee_id
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -106,7 +111,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             reader = fileobj.getRows()
             reader.next()
             start = 1
-            column_list = ['name', 'identification_id', 'job', 'dest', 'cc', 'fp', 'f1', 'f2']
+            column_list = ['name', 'identification_id'] #, 'job', 'dest', 'cc', 'fp', 'f1', 'f2']
             for num, line in enumerate(reader):
                 processed += 1
                 # Fetch values
@@ -118,27 +123,34 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
                         else:
                             vals[el] = False
                 # Check values
+                employee_id = False
                 try:
-                    vals = self.update_or_create_employee(cr, uid, vals, context)
+                    vals, employee_id = self.update_or_create_employee(cr, uid, vals, context)
                 except osv.except_osv, e:
                     errors.append('Line %s, %s' % (start+num, e.value))
-#                name = line.cells and line.cells[0] and line.cells[0].data or False
-#                if not name:
-#                    continue
-#                code = line.cells and line.cells[1] and line.cells[1].data or False
-#                # Create Expat employee
-#                self.pool.get('hr.employee').create(cr, uid, {'name': line.cells[0].data, 'active': True, 'type': 'local', 'identification_id': code})
-                created += 1
-            
+                    continue
+                # Do creation/update
+                context.update({'from': 'import'})
+                if employee_id:
+                    self.pool.get('hr.employee').write(cr, uid, [employee_id], vals, context)
+                    updated += 1
+                else:
+                    self.pool.get('hr.employee').create(cr, uid, vals, context)
+                    created += 1
+            for error in errors:
+                self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': error})
+            if errors:
+                context.update({'employee_import_wizard_ids': wiz.id})
+
             context.update({'message': ' '})
             
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
             view_id = view_id and view_id[1] or False
             
             # This is to redirect to Employee Tree View
-            context.update({'from': 'expat_employee_import'})
+            context.update({'from': 'employee_import'})
             
-            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'})
+            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee', 'filename': wiz.filename or False,}, context=context)
             
             return {
                 'name': 'National staff employee import confirmation',
