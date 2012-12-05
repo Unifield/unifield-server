@@ -118,6 +118,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'expat_employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_expatriate': 1})
+            if context.get('from') == 'nat_staff_import':
+                result = ('inherit_view_employee_tree', 'hr.employee')
+                context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:

@@ -154,7 +154,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             view_id = view_id and view_id[1] or False
             
             # This is to redirect to Employee Tree View
-            context.update({'from': 'employee_import'})
+            context.update({'from': 'nat_staff_import'})
             
             res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee', 'filename': wiz.filename or False,}, context=context)
             
