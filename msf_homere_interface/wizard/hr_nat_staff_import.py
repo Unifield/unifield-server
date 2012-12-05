@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-
+from tools.misc import ustr
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from base64 import decodestring
 
@@ -119,7 +119,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
                 if line.cells:
                     for i, el in enumerate(column_list):
                         if len(line.cells) > i:
-                            vals[el] = str(line.cells[i])
+                            vals[el] = ustr(line.cells[i])
                         else:
                             vals[el] = False
                 # Check values
