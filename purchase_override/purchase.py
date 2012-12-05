@@ -32,6 +32,8 @@ import logging
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
 
+import decimal_precision as dp
+
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
 class purchase_order_confirm_wizard(osv.osv):
@@ -805,7 +807,7 @@ stock moves which are already processed : '''
                     # convert from currency of pol to currency of sol
                     price_unit_converted = self.pool.get('res.currency').compute(cr, uid, line.currency_id.id,
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
-                                                                                 round=True, context=date_context)
+                                                                                 round=False, context=date_context)
                     fields_dic = {'product_id': line.product_id and line.product_id.id or False,
                                   'name': line.name,
                                   'default_name': line.default_name,
@@ -1418,6 +1420,18 @@ stock moves which are already processed : '''
 purchase_order()
 
 
+class purchase_order_line(osv.osv):
+    '''
+    this modification is placed before merged, because unit price of merged should be Computation as well
+    '''
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
+    _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
+                }
+    
+purchase_order_line()
+
+
 class purchase_order_merged_line(osv.osv):
     '''
     A purchase order merged line is a special PO line.
@@ -1847,7 +1861,7 @@ class purchase_order_line(osv.osv):
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
         # openerp bug: id is not given to onchanqge call if we are into one2many view
         'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
-        'old_price_unit': fields.float(digits=(16,2), string='Old price'),
+        'old_price_unit': fields.float(string='Old price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
 
         # This field is used to identify the FO PO line between 2 instances of the sync
@@ -1941,16 +1955,16 @@ class purchase_order_line(osv.osv):
                 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
-                info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id, info_price.price)
+                info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id, info_price.price, round=False, context=context)
                 res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
             else:
-                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res['value']['price_unit'])
+                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res['value']['price_unit'], round=False, context=context)
                 res['value'].update({'old_price_unit': old_price})
         else:
-            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res.get('value').get('price_unit'))
+            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res.get('value').get('price_unit'), round=False, context=context)
             res['value'].update({'old_price_unit': old_price})
                 
         # Set the unit price with cost price if the product has no staged pricelist
@@ -1960,7 +1974,7 @@ class purchase_order_line(osv.osv):
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
-            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price)
+            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False, context=context)
         
             if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
                 res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})

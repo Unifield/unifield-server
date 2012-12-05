@@ -389,7 +389,7 @@ class stock_picking(osv.osv):
 
                     if qty > 0:
                         new_price = currency_obj.compute(cr, uid, product_currency,
-                                move_currency_id, product_price)
+                                move_currency_id, product_price, round=False, context=context)
                         new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                                 product.uom_id.id)
                         if product.qty_available <= 0:
@@ -666,6 +666,7 @@ class stock_move(osv.osv):
         return False
 
     _columns = {
+        'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
@@ -881,7 +882,7 @@ class stock_move(osv.osv):
                 qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
                 if qty > 0:
                     new_price = currency_obj.compute(cr, uid, product_currency,
-                            move_currency_id, product_price)
+                            move_currency_id, product_price, round=False, context=context)
                     new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                             product.uom_id.id)
                     if product.qty_available <= 0:
