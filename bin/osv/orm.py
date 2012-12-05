@@ -1144,7 +1144,7 @@ class orm_template(object):
                 if not write_access:
                     res[f]['readonly'] = True
                     res[f]['states'] = {}
-                for arg in ('digits', 'invisible', 'filters'):
+                for arg in ('digits', 'invisible', 'filters', 'computation'):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 

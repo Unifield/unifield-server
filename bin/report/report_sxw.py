@@ -81,10 +81,28 @@ class _float_format(float, _format):
 
     def __str__(self):
         digits = 2
+        computation = False
         if hasattr(self,'_field') and getattr(self._field, 'digits', None):
             digits = self._field.digits[1]
+        
+        # custom fields - decimal_precision computation
+        if hasattr(self,'_field') and getattr(self._field, 'computation', None):
+            computation = self._field.computation
+            
         if hasattr(self, 'lang_obj'):
-            return self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
+            result = self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
+            if computation:
+                # fixed min decimal value
+                min_digits = 2
+                # remove trailing zeros
+                result = result.rstrip('0')
+                # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
+                splitted_result = result.split('.')
+                if splitted_result and (len(splitted_result) == 2) and (len(splitted_result[1]) < min_digits):
+                    result = ("%%.%df" % min_digits) % float(result)
+            
+            return result
+        
         return self.val
 
 class _int_format(int, _format):
@@ -271,6 +289,13 @@ class rml_parse(object):
                 formatLang(value, dp='Account') -> digits=3
                 formatLang(value, digits=5, dp='Account') -> digits=5
         """
+        digits = 2
+        computation = False
+        # could be a clue for proper use of digit and computation directly from field object - I leave this code as a start for further dev later on
+        if hasattr(value,'_field'):
+            #print digits
+            pass
+            
         if digits is None:
             if dp:
                 digits = self.get_digits(dp=dp)
