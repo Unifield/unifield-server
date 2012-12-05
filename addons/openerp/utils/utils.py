@@ -343,7 +343,7 @@ class TinyForm(object):
 
             v = _VALIDATORS.get(kind, openobject.validators.DefaultValidator)()
             if kind == "float" and attrs.get("digit"):
-                v = validators.Float(digit=attrs.get("digit"))
+                v = validators.Float(digit=attrs.get("digit"), computation=attrs.get("computation"))
             v.not_empty = (required or False) and True
 
             try:

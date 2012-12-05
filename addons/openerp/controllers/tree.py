@@ -42,7 +42,11 @@ def decimal_formatter(value, info):
     if isinstance(digits, basestring):
         digits = eval(digits)
     integer, digit = digits
-    return format_decimal(value, digit)
+    
+    # custom fields - decimal_precision computation
+    computation = info.get('computation', False)
+    
+    return format_decimal(value, digit, computation=computation)
 
 FORMATTERS = {
     'integer': lambda value, _i: '%s' % int(value),
