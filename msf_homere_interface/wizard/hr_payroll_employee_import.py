@@ -94,6 +94,14 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         """
         if not context:
             return {'type': 'ir.actions.act_window_close'}
+        # Clean up error table
+        if context.get('employee_import_wizard_ids', False):
+            wiz_ids = context.get('employee_import_wizard_ids')
+            if isinstance(wiz_ids, (int, long)):
+                wiz_ids = [wiz_ids]
+            line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
+            if line_ids:
+                self.pool.get('hr.payroll.employee.import.errors').unlink(cr, uid, line_ids)
         if context.get('from', False):
             result = False
             domain = False
