@@ -41,15 +41,6 @@ class real_average_consumption(osv.osv):
         'to_correct_ok': fields.boolean('To correct', readonly=1),
     }
 
-#    def _get_template(self, cr, uid, context=None):
-#        template_path = addons.get_module_resource('msf_supply_doc_import','data','rac_template.xls')
-#        with open(template_path, 'rwa') as template_file:
-#            return template_file.read().encode('base64')
-#
-#    _defaults = {
-#        'file_to_import': _get_template,
-#    }
-
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
@@ -111,27 +102,21 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 prod = product_obj.browse(cr, uid, product_id)
                 if prod.batch_management:
                     if prod.batch_management and not row[3]:
-                        error += "Line %s in your Excel file: batch number required\n" % (line_num, )
-                        ignore_lines += 1
-                        continue
+                        error += "Line %s in your Excel file: batch number required, please fix the line below with the product\n" % (line_num, prod.default_code)
                     if row[3]:
                         lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])])
                         if not lot:
-                            error += "Line %s in your Excel file: batch number %s not found.\n" % (line_num, row[3])
-                            ignore_lines += 1
-                            continue
-                        batch = lot[0]
+                            error += "Line %s in your Excel file: batch number %s not found, please fix the red line below.\n" % (line_num, row[3])
+                        else:
+                            batch = lot[0]
                 if prod.perishable:
                     if not row[4]:
-                        error += "Line %s in your Excel file  : expiry date required\n" % (line_num, )
-                        ignore_lines += 1
-                        continue
-                    elif row[4] and row[4].type in ('datetime', 'date'):
-                        expiry_date = row[4].data
-                    else:
-                        error += "Line %s in your Excel file: expiry date %s has a wrong format, use 'YYYY-MM-DD' \n" % (line_num, row[4])
-                        ignore_lines += 1
-                        continue
+                        error += "Line %s in your Excel file  : expiry date required, please fix the red line below\n" % (line_num, )
+                    elif row[4] and row[4].data:
+                        if row[4].type in ('datetime', 'date'):
+                            expiry_date = row[4].data
+                        else:
+                            error += "Line %s in your Excel file: expiry date %s has a wrong format, use 'YYYY-MM-DD' \n" % (line_num, row[4])
             else:
                 product_id = False
                 error += 'Line %s in your Excel file: Product [%s] %s not found ! Details: %s \n' % (line_num, row[0], row[1], p_value['error_list'])
@@ -177,7 +162,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 line_obj.create(cr, uid, line_data)
                 complete_lines += 1
             except osv.except_osv:
-                error += "Line %s in your Excel file: warning not enough qty in stock\n"%(line_num, )
+                error += "Line %s in your Excel file: Warning, not enough quantity in stock\n" % (line_num, )
 
         if complete_lines or ignore_lines:
             self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
