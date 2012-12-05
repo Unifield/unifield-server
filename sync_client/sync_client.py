@@ -272,11 +272,21 @@ class entity(osv.osv):
                         self.log_id = False
                         self.log_cr.close()
                     if is_standalone:
-                        self.is_syncing = False                    
+                        self.is_syncing = False
                 return res
 
             return wrapper
         return decorator
+
+    def last_log_status(self, cr, uid, context=None):
+        if not hasattr(self, 'log_info'):
+            monitor = self.pool.get("sync.monitor")
+            monitor_ids = monitor.search(cr, uid, [], context=context, limit=1, order='sequence_number desc')
+            if monitor_ids:
+                self.log_info = monitor.read(cr, uid, monitor_ids, context=context)[0]
+            else:
+                self.log_info = {}
+        return self.log_info
        
     """
         Push Update
@@ -575,16 +585,17 @@ class entity(osv.osv):
     def get_status(self, cr, uid, context=None):
         if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
             return "Not Connected"
+
         if getattr(self, 'is_syncing', False):
             return "Syncing..."
-        monitor = self.pool.get("sync.monitor")
-        monitor_ids = monitor.search(cr, uid, [], context=context)
-        if monitor_ids:
-            last_log = monitor.browse(cr, uid, monitor_ids[0], context=context)
-            status = filter(lambda x:x[0] == last_log.status, self.pool.get("sync.monitor")._columns['status'].selection)[0][1] if last_log.status else 'Unknown Status'
-            return "Last Sync: %s at %s" % (status, last_log.end)
-        else:
-            return "Connected"
+        
+        last_log = self.last_log_status(cr, uid)
+        if last_log:
+            status_dict = dict( self.pool.get("sync.monitor")._columns['status'].selection )
+            status = status_dict[last_log['status']]
+            return "Last Sync: %s at %s" % (status, last_log['end'])
+
+        return "Connected"
    
 entity()
 
