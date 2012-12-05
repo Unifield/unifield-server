@@ -838,7 +838,7 @@
             </field>
         </record>
     <!-- UF-426: remove Journal Items in Cash and Bank -->
-        <delete model="ir.ui.menu" id="account.menu_action_account_moves_bank"/>
+    <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
     <!--
       Add onchange on account_id for Journal items (account.move.line)

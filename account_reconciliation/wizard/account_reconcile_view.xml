@@ -3,7 +3,7 @@
     <data>
 
     <!-- Delete old Write-Off wizard -->
-        <delete id="account_move_line_reconcile_writeoff" model="ir.ui.view"/>
+    <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
     <!-- Delete Write-Off fields and button for reconcile wizard -->
         <record id="inherit_view_account_move_line_reconcile_full" model="ir.ui.view">
