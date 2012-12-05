@@ -49,6 +49,25 @@ class hr_employee(osv.osv):
             res[e] = allowed
         return res
 
+    def onchange_type(self, cr, uid, ids, e_type=None, context=None):
+        """
+        Update allow_edition field when changing employee_type
+        """
+        res = {}
+        if not context:
+            context = {}
+        if not e_type:
+            return res
+        elif e_type == 'local':
+            if not 'value' in res:
+                res['value'] = {}
+            allowed = False
+            setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+            if setup and not setup.payroll_ok:
+                allowed = True
+            res['value'].update({'allow_edition': allowed,})
+        return res
+
     _columns = {
         'employee_type': fields.selection([('', ''), ('local', 'Local Staff'), ('ex', 'Expatriate employee')], string="Type", required=True),
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=False, domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"),

@@ -20,7 +20,7 @@
                         <field name="user_id" on_change="onchange_user(user_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                         <field name="company_id" widget="selection" on_change="onchange_company(company_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                         <field name="active" attrs="{'readonly': [('employee_type', '=', 'local')]}"/>
-                        <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                        <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                         <newline/>
                         <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                         <field name="parent_id"/>
@@ -43,7 +43,7 @@
                             <separator colspan="2" string="Social IDs"/>
                             <field name="ssnid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                             <field name="sinid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                            <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
                             <field name="passport_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                         </group>
                         <group col="2" colspan="2">
@@ -108,7 +108,7 @@
                 <field name="department_id" position="replace"/>
                 <field name="parent_id" position="replace"/>
                 <field name="name" position="after">
-                    <field name="identification_id"/>
+                  <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
                 </field>
                 <field name="job_id" position="after">
                     <field name="destination_id"/>
@@ -130,8 +130,9 @@
         <field name="type">tree</field>
         <field name="arch" type="xml">
             <tree string="Employees" editable="top">
+                <field name="allow_edition" invisible="1"/>
                 <field name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
                 <field name="job_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                 <field name="destination_id" domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
                 <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)"/>
