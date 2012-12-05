@@ -92,6 +92,19 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
     }
 
+    def check_identification_id(self, cr, uid, ids, vals, context=None):
+        """
+        Check that no employee have the same identification number.
+        """
+        if not vals:
+            return True
+        if vals.get('identification_id', False):
+            e_ids = self.search(cr, uid, [('identification_id', '=', vals.get('identification_id'))])
+            if e_ids:
+                msg = ','.join([x and x.get('name', '') for x in self.read(cr, uid, e_ids, ['name'])])
+                raise osv.except_osv(_('Error'), _('More than one employee exists with the same Identification No.: %s') % (msg or '',))
+        return True
+
     def create(self, cr, uid, vals, context=None):
         """
         Block creation for local staff if no 'from' in context
@@ -112,6 +125,7 @@ class hr_employee(osv.osv):
 #            # Raise an error if no cost_center
 #            if not vals.get('cost_center_id', False):
 #                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
+            self.check_identification_id(cr, uid, [], vals, context)
         return super(hr_employee, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -152,8 +166,11 @@ class hr_employee(osv.osv):
                 for el in vals:
                     if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
                         new_vals.update({el: vals[el]})
+            # Check identification number
+            if local:
+                self.check_identification_id(cr, uid, [emp.id], vals, context)
             # Write changes
-            employee_id = super(hr_employee, self).write(cr, uid, ids, new_vals, context)
+            employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
                 res.append(employee_id)
         return res
@@ -166,11 +183,15 @@ class hr_employee(osv.osv):
         if not context:
             context = {}
         delete_local_staff = False
-        if context.get('unlink', False) and context.get('unlink') == 'auto':
+        allowed = False
+        setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup and not setup.payroll_ok:
+            allowed = True
+        if (context.get('unlink', False) and context.get('unlink') == 'auto') or allowed:
             delete_local_staff = True
         # Browse all employee
         for emp in self.browse(cr, uid, ids):
-            if emp.employee_type == 'local' and not delete_local_staff:
+            if emp.employee_type == 'local' and (not delete_local_staff or not allowed):
                 raise osv.except_osv(_('Warning'), _('You are not allowed to delete local staff manually!'))
         return super(hr_employee, self).unlink(cr, uid, ids, context)
 
