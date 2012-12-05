@@ -1620,7 +1620,7 @@ msgstr ""
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
-msgid "Approved (ITC)"
+msgid "ITC"
 msgstr ""
 
 #. module: base
@@ -12690,7 +12690,7 @@ msgstr ""
 
 #. module: product_attributes
 #: field:product.product,international_status:0
-msgid "International Status"
+msgid "Product Creator"
 msgstr ""
 
 #. module: account
@@ -16894,7 +16894,7 @@ msgstr ""
 
 #. module: register_accounting
 #: help:account.move.line,from_import_invoice_ml_id:0
-msgid "Move line that have been used for an Import Invoices Wizard in order to generate the present move line"
+msgid "Move line that have been used for an Pending Payments Wizard in order to generate the present move line"
 msgstr ""
 
 #. module: stock_schedule
@@ -19823,7 +19823,7 @@ msgstr ""
 
 #. module: product_attributes
 #: field:product.product,heat_sensitive_item:0
-msgid "Heat-sensitive item"
+msgid "Temperature sensitive item"
 msgstr ""
 
 #. module: account
@@ -23076,7 +23076,7 @@ msgstr ""
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
-msgid "Approved (ESC)"
+msgid "ESC"
 msgstr ""
 
 #. modules: purchase, product, base, stock
@@ -23534,7 +23534,7 @@ msgstr ""
 
 #. module: product_attributes
 #: field:product.product,criticism:0
-msgid "Criticism"
+msgid "Criticality"
 msgstr ""
 
 #. module: analytic_distribution
@@ -28674,7 +28674,7 @@ msgstr ""
 #. modules: register_accounting, account_voucher
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
-msgid "Import Invoices"
+msgid "Pending Payments"
 msgstr ""
 
 #. module: stock_move_tracking
@@ -28832,7 +28832,7 @@ msgstr ""
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
-msgid "Not approved (Local)"
+msgid "Local"
 msgstr ""
 
 #. module: analytic_distribution

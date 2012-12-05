@@ -69,7 +69,7 @@
                     </xpath>
 
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
@@ -87,7 +87,8 @@
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">
                         <field name="invoice_address_id"
-                            domain="[('partner_id', 'in', (dest_partner_id, company_id))]"
+                            domain="[('partner_id', 'in', [dest_partner_id, company_id])]"
+                            context="contact_display='partner_address'"
                             attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
                             />
                     </xpath>
@@ -265,7 +266,8 @@
                     <xpath expr="/form//field[@name='product_id']" position="replace">
                         <field name="product_id" colspan="4" 
                             context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
-                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"/>
+                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"
+                            domain="[('purchase_type', '=', parent.categ)]" />
                     </xpath>
 
                     <xpath expr="/form//field[@name='price_unit']" position="replace">

@@ -104,10 +104,11 @@ class procurement_request(osv.osv):
             },
             multi='sums', help="The total amount."),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
+        'name': lambda *a: False,
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
         'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
@@ -135,6 +136,8 @@ class procurement_request(osv.osv):
             vals['pricelist_id'] = pl
             if 'delivery_requested_date' in vals:
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
+        elif not vals.get('name', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
 
         return super(procurement_request, self).create(cr, uid, vals, context)
     
@@ -284,10 +287,16 @@ class procurement_request(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
             for line in request.order_line:
                 # for FO
-                if line.type == 'make_to_order' and not line.po_cft == 'cft' and not line.supplier:
-                    line_number = line.line_number
-                    request_name = request.name
-                    raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !')%(line_number,request_name))
+                if line.type == 'make_to_order' and not line.po_cft == 'cft':
+                    if not line.supplier:
+                        line_number = line.line_number
+                        request_name = request.name
+                        raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !')%(line_number,request_name))
+                    # an Internal Request without product can only have Internal, Intersection or Intermission partners.
+                    elif line.supplier and not line.product_id and line.order_id.procurement_request and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                        raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
+                        the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
+                        """))
             message = _("The internal request '%s' has been confirmed.") %(request.name,)
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
             context.update({'view_id': proc_view and proc_view[1] or False})
@@ -355,7 +364,7 @@ class procurement_request_line(osv.osv):
             else:
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
-                
+
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
@@ -386,6 +395,8 @@ class procurement_request_line(osv.osv):
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
+        'product_ok': fields.boolean('Product selected'),
+        'comment_ok': fields.boolean('Comment written'),
     }
     
     def _get_planned_date(self, cr, uid, c=None):
@@ -400,6 +411,8 @@ class procurement_request_line(osv.osv):
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
         'date_planned': _get_planned_date,
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
+        'product_ok': False,
+        'comment_ok': False,
     }
     
     def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
@@ -416,11 +429,12 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order'}
-            domain = {'product_uom':[]}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False}
+            domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
-            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 'type': product.procure_method}
+            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
+                     'type': product.procure_method, 'comment_ok': True}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
@@ -435,34 +449,47 @@ class procurement_request_line(osv.osv):
         if context is None:
             context = {}
         v = {}
+        m = {}
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
             v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
-        return {'value': v}
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            if product.type in ('consu', 'service', 'service_recep'):
+                v.update({'type': 'make_to_order'})
+                m.update({'title': _('Warning'),
+                          'message': _('You can\'t source a line \'from stock\' if line contains a non-stockable or service product.')})
+        return {'value': v, 'warning': m}
     
-    def comment_change(self, cr, uid, ids, comment, product_id, type, context=None):
+    def comment_change(self, cr, uid, ids, comment, product_id, nomen_manda_0, context=None):
         '''
         Fill the level of nomenclatures with tag "to be defined" if you have only comment
         '''
         if context is None:
             context = {}
         value = {}
+        domain = {}
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
+        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
+        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
+        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
         
         if comment and not product_id:
-            value.update({'nomen_manda_0': nomen_manda_0,
-                        'nomen_manda_1': nomen_manda_1,
-                        'nomen_manda_2': nomen_manda_2,
-                        'nomen_manda_3': nomen_manda_3,
-                        'name': 'To be defined',})
-        return {'value': value}
+            value.update({'name': 'To be defined',
+                          'supplier': False,
+                          'product_ok': True})
+            # it bugs with the To Be Defined => needs to be removed
+#            if not nomen_manda_0:
+#                value.update({'nomen_manda_0': tbd_0,
+#                              'nomen_manda_1': tbd_1,
+#                              'nomen_manda_2': tbd_2,})
+            domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
+        if not comment:
+            value.update({'product_ok': True})
+            domain = {'product_uom':[], 'supplier': []}
+        return {'value': value, 'domain': domain}
     
 procurement_request_line()
 
@@ -483,15 +510,22 @@ class purchase_order(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         sale_line_obj = self.pool.get('sale.order.line')
-        if order_line.move_dest_id:
+        po_line_obj = self.pool.get('purchase.order.line')
+        # If the line comes from an ISR and it's not splitted line,
+        # change the move_dest_id of this line (and their children)
+        # to match with the procurement ordre move destination
+        if order_line.move_dest_id and not order_line.parent_line_id:
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+            po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
             if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
                     if proc.move_id:
-	                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-        	        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
+                        move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
+                        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
                     proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
+                    # Update the move_dest_id of all children to avoid the system to deal with a deleted stock move
+                    po_line_obj.write(cr, uid, po_line_ids, {'move_dest_id': move_id}, context=context)
                     
         return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)
     

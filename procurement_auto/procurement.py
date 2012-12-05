@@ -60,7 +60,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         '''
         res = {}
         for proc in self.browse(cr, uid, ids):
-            res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
+            if proc.frequence_id:
+                res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
             
         return res
     
@@ -322,7 +323,7 @@ class stock_warehouse_automatic_supply(osv.osv):
 
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
-                if product.id not in products:
+                if product.type not in ('consu', 'service', 'service_recep') and product.id not in products:
                     self.pool.get('stock.warehouse.automatic.supply.line').create(cr, uid, {'product_id': product.id,
                                                                                             'product_uom_id': product.uom_id.id,
                                                                                             'product_qty': 1.00,

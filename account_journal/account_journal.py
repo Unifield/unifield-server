@@ -118,15 +118,15 @@ class account_journal(osv.osv):
         # Analytic journal associated
         if type == 'cash':
             analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS'),
-                                                                          ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
+                                                                          ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cash_journal
         elif type == 'bank': 
             analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK'),
-                                                                          ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
+                                                                          ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_bank_journal
         elif type == 'cheque': 
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
-                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
+                                                                            ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         elif type == 'cur_adj':
             debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]
@@ -189,7 +189,8 @@ class account_journal(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Default Debit Account is missing.'))
         
         # if the journal can be linked to a register, the register is also created
-        if vals['type'] in ('cash','bank','cheque'):
+        # UTP-182: but not create if the journal came from another instance via the synchronization 
+        if vals['type'] in ('cash','bank','cheque') and not context.get('sync_data', False):
             # 'from_journal_creation' in context permits to pass register creation that have a
             #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
             context.update({'from_journal_creation': True})

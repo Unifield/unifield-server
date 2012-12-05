@@ -39,7 +39,7 @@
     alert_time: 0.0
     categ_id: product.cat0
     cost_method: standard
-    default_code: test
+    default_code: test1
     life_time: 0.0
     mes_type: fixed
     name: test product
@@ -65,6 +65,7 @@
     weight: 0.0
     weight_net: 0.0
     perishable: True
+    international_status: itc
 -
   Creating a new revaluation doc
 -

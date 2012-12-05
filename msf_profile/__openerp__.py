@@ -110,6 +110,7 @@
         "msf_supply_doc_export",
         "msf_supply_doc_import",
         "mission_stock_cron",
+        "report_webkit_override",
     ],
     "update_xml": [
         "report.xml",

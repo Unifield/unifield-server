@@ -31,9 +31,10 @@
 	                  		<group colspan="2">
     	              			<notebook>
         	          				<page string="Default address">
-					                    <field name="company_id" invisible="1"/>
-					                    <field name="name" readonly="1"/>
-				    	                <field name="website"/>
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="second_time" invisible="1" />
+                                        <field name="name" attrs="{'readonly': [('second_time', '=', True)]}"/>
+                                        <field name="partner_name" attrs="{'readonly': [('second_time', '=', True)]}" required="True" />
 				        	            <field name="street" required="True"/>
 				            	        <field name="street2"/>
 				                	    <field name="zip" required="True"/>
@@ -42,6 +43,7 @@
 					                    <field name="state_id"/>
 					                    <field name="phone"/>
 					                    <field name="email"/>
+				    	                <field name="website"/>
 				    	                <field name="account_no"/>
 				        	            <field name="currency" widget="selection" invisible="1"/>
 				            	    </page>

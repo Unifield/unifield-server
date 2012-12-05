@@ -30,10 +30,12 @@ from register_tools import _set_third_parties
 from register_tools import previous_register_is_closed
 from register_tools import create_cashbox_lines
 from register_tools import totally_or_partial_reconciled
+from register_tools import open_register_view
 import time
 from datetime import datetime
 import decimal_precision as dp
 from tools.misc import flatten
+import netsvc
 
 def _get_fake(cr, table, ids, *a, **kw):
     ret = {}
@@ -169,7 +171,7 @@ class account_bank_statement(osv.osv):
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
-        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal Name', required=True, readonly=True),
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=False),
         'balance_gap': fields.function(_balance_gap_compute, method=True, string='Gap', readonly=True),
         'notes': fields.text('Comments'),
@@ -352,7 +354,7 @@ class account_bank_statement(osv.osv):
 
     def button_wiz_import_invoices(self, cr, uid, ids, context=None):
         """
-        When pressing 'Import Invoices' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
+        When pressing 'Pending Payments' button then opening a wizard to select some invoices and add them into the register by changing their states to 'paid'.
         """
         # statement_id is useful for making some line's registration.
         # currency_id is useful to filter invoices in the same currency
@@ -745,18 +747,24 @@ class account_bank_statement_line(osv.osv):
         return res
     
     def _get_sequence(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Get default sequence number: "" (no char).
+        If moves, get first one's name.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids):
+            res[line.id] = ''
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
-            else:
-                res[line.id] = ''
         return res
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register"),
-        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
-        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
@@ -767,7 +775,8 @@ class account_bank_statement_line(osv.osv):
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
-        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char"),
+        # WARNING: Due to UTP-348, store = True for sequence_for_reference field is mandatory! Otherwise this breaks Cheque Inventory report.
+        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char", store=True, size=64),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
@@ -789,7 +798,9 @@ class account_bank_statement_line(osv.osv):
             type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
-        'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] )
+        'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'), 
+            ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'), 
+            ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
     }
 
     _defaults = {
@@ -797,6 +808,15 @@ class account_bank_statement_line(osv.osv):
         'direct_invoice': lambda *a: 0,
         'transfer_amount': lambda *a: 0,
     }
+
+    def return_to_register(self, cr, uid, ids, context=None):
+        """
+        Return to register from which lines come from
+        """
+        st_line = self.browse(cr, uid, ids[0])
+        if st_line and st_line.statement_id:
+            return open_register_view(self, cr, uid, st_line.statement_id.id)
+        raise osv.except_osv(_('Warning'), _('You have to select some line to return to a register.'))
 
     def create_move_from_st_line(self, cr, uid, st_line_id, company_currency_id, st_line_number, context=None):
         """
@@ -822,6 +842,7 @@ class account_bank_statement_line(osv.osv):
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,
             'period_id': st.period_id.id,
+            'document_date': st_line.document_date,
             'date': st_line.date,
             'name': st_line_number,
             'ref': st_line.ref or False,
@@ -1097,7 +1118,10 @@ class account_bank_statement_line(osv.osv):
             if st_line.third_parties:
                 partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
             # finally write move object
-            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type}, context=context)
+            move_vals = {'partner_type': partner_type}
+            if 'document_date' in move_line_values:
+                move_vals.update({'document_date': move_line_values.get('document_date')})
+            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, ids, context=None):
@@ -1118,8 +1142,10 @@ class account_bank_statement_line(osv.osv):
                 move_vals= {
                     'journal_id': st_line.statement_id.journal_id.id,
                     'period_id': st_line.statement_id.period_id.id,
-                    'date': st_line.document_date or st_line.date or curr_date,
-                    'name': 'DirectExpense/' + st_line.name,
+                    'date': st_line.date or curr_date,
+                    'document_date': st_line.document_date or curr_date,
+                    # name removed from UF-1542 because of a bug from UF-1129
+                    #'name': 'DirectExpense/' + st_line.name,
                     'partner_id': st_line.partner_id.id,
                 }
                 move_id = move_obj.create(cr, uid, move_vals, context=context)
@@ -1278,6 +1304,29 @@ class account_bank_statement_line(osv.osv):
                 context=context)
             # Do reconciliation
             move_line_obj.reconcile_partial(cr, uid, [st_line.from_import_cheque_id.id, move_line_id[0]], context=context)
+        return True
+
+    def do_direct_invoice_reconciliation(self, cr, uid, st_lines=None, context=None):
+        """
+        Do a reconciliation between given register lines and their Direct invoice.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not st_lines or isinstance(st_lines, (int, long)):
+            st_lines = []
+        # Parse register lines
+        for stl in self.browse(cr, uid, st_lines):
+            if stl.invoice_id:
+                # Approve invoice
+                netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', stl.invoice_id.id, 'invoice_open', cr)
+                # Add name to the register line
+                inv_number = self.pool.get('account.invoice').read(cr, uid, stl.invoice_id.id, ['number'])['number']
+                self.write(cr, uid, [stl.id], {'name': inv_number})
+                # Hard post register line
+                self.pool.get('account.move').post(cr, uid, [stl.move_ids[0].id])
+                # Do reconciliation
+                self.pool.get('account.invoice').action_reconcile_direct_invoice(cr, uid, [stl.invoice_id.id], context=context)
         return True
 
     def analytic_distribution_is_mandatory(self, cr, uid, id, context=None):
@@ -1456,6 +1505,9 @@ class account_bank_statement_line(osv.osv):
             if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
+            if absl.is_down_payment and not absl.down_payment_id:
+                raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
+
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
@@ -1470,19 +1522,23 @@ class account_bank_statement_line(osv.osv):
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
 
-                if absl.is_down_payment and not absl.down_payment_id:
-                    raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
-                elif absl.is_down_payment:
+                if absl.is_down_payment:
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl.id, context=context)
 
                 seq = self.pool.get('ir.sequence').get(cr, uid, 'all.registers')
                 self.write(cr, uid, [absl.id], {'sequence_for_reference': seq}, context=context)
-                # Case where this line come from an "Import Invoices" Wizard
+                # Case where this line come from an "Pending Payments" Wizard
                 if absl.imported_invoice_line_ids:
                     self.do_import_invoices_reconciliation(cr, uid, [absl.id], context=context)
                 elif absl.from_import_cheque_id:
                     self.do_import_cheque_reconciliation(cr, uid, [absl.id], context=context)
+                elif absl.direct_invoice:
+                    if not absl.invoice_id:
+                        raise osv.except_osv(_('Error'), _('This line is linked to an unknown Direct Invoice.'))
+                    if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+                        raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
+                    self.do_direct_invoice_reconciliation(cr, uid, [absl.id], context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
                     # do a move that enable a complete supplier follow-up
@@ -1519,6 +1575,9 @@ class account_bank_statement_line(osv.osv):
                     #    self.pool.get('account.move.line').write(cr, uid, [x['id'] for x in st_line.imported_invoice_line_ids], 
                     #        {'imported_invoice_line_ids': (3, st_line.id, False)}, context=context)
                     self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids])
+            # Delete direct invoice if exists
+            if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
+                self.pool.get('account.invoice').unlink(cr, uid, [st_line.invoice_id.id], {'from_register': True})
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
     def button_advance(self, cr, uid, ids, context=None):
@@ -1575,19 +1634,43 @@ class account_bank_statement_line(osv.osv):
             return False
 
     def button_open_invoices(self, cr, uid, ids, context=None):
+        """
+        Open invoices linked to the register given register lines.
+        To find them, search invoice that move_id is the same as move_line's move_id
+        """
+        # Checks
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         l = self.read(cr, uid, ids, ['imported_invoice_line_ids'])[0]
         if not l['imported_invoice_line_ids']:
             raise osv.except_osv(_('Error'), _("No related invoice line"))
+        # Fetch invoices
+        move_ids = []
+        for regl in self.browse(cr, uid, ids):
+            for ml in regl.imported_invoice_line_ids:
+                if ml.move_id:
+                    move_ids.append(ml.move_id.id)
+        inv_ids = self.pool.get('account.invoice').search(cr, uid, [('move_id', 'in', move_ids)])
+        if not inv_ids:
+            raise osv.except_osv(_('Error'), _("No related invoice line"))
+        # Search journal type in order journal_id field not blank @invoice display
+        journal_type = []
+        for inv in self.pool.get('account.invoice').browse(cr, uid, inv_ids):
+            if inv.journal_id and inv.journal_id.type not in journal_type:
+                journal_type.append(inv.journal_id.type)
+        print journal_type
         return {
             'name': "Invoice Lines",
             'type': 'ir.actions.act_window',
-            'res_model': 'account.move.line',
+            'res_model': 'account.invoice',
             'target': 'new',
             'view_mode': 'tree,form',
             'view_type': 'form',
-            'domain': [('id', 'in', l['imported_invoice_line_ids'])]
+            'domain': [('id', 'in', inv_ids)],
+            'context': {'journal_type': journal_type}
         }
-        
 
     def button_open_invoice(self, cr, uid, ids, context=None):
         """
@@ -1598,13 +1681,20 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'invoice_supplier_form'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'direct_supplier_invoice_form'), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])
             view_id = (view.get('res_id'), view.get('name'))
         else:
             raise osv.except_osv(_('Error'), _("View not found."))
+        context.update({
+            'active_id': ids[0],
+            'type': 'in_invoice',
+            'journal_type': 'purchase',
+            'active_ids': ids,
+            'from_register': True,
+            })
         return {
             'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
@@ -1614,12 +1704,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'view_id': view_id,
             'res_id': self.browse(cr, uid, ids[0], context=context).invoice_id.id,
-            'context':
-            {
-                'active_id': ids[0],
-                'type': 'in_invoice',
-                'active_ids': ids,
-            }
+            'context': context,
         }
 
     def button_duplicate(self, cr, uid, ids, context=None):
@@ -1827,3 +1912,4 @@ class ir_values(osv.osv):
         return values
 
 ir_values()
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

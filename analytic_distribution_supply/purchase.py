@@ -151,8 +151,11 @@ class purchase_order(osv.osv):
                 'currency_id': po.currency_id and po.currency_id.id or False,
                 'partner_id': po.partner_id and po.partner_id.id or False,
                 'purchase_id': po.id or False,
-                'type': po.partner_id and po.partner_id.partner_type or 'manual',
             }
+            if po.partner_id and po.partner_id.partner_type == 'external':
+                vals.update({'type': 'external'})
+            else:
+                vals.update({'type': 'manual'})
             # prepare some values
             today = strftime('%Y-%m-%d')
             period_ids = get_period_from_date(self, cr, uid, po.delivery_confirmed_date or today, context=context)
@@ -225,7 +228,9 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             # Change commitment state if exists
             if po.commitment_ids:
-                self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
+                for com in po.commitment_ids:
+                    if com.type != 'manual':
+                        self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
         return True
 
     def wkf_action_cancel_po(self, cr, uid, ids, context=None):

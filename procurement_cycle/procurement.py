@@ -81,7 +81,8 @@ class stock_warehouse_order_cycle(osv.osv):
         '''
         res = {}
         for proc in self.browse(cr, uid, ids):
-            res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
+            if proc.frequence_id:
+                res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
             
         return res
     
@@ -259,9 +260,10 @@ Time used to compute the quantity of products to order according to the monthly 
                     
             for product in product_obj.browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already in the list
-                if not line_obj.search(cr, uid, [('order_cycle_id', '=', report.id), 
-                                                 ('product_id', '=', product.id),
-                                                 ('uom_id', '=', product.uom_id.id)], context=context):
+                if product.type not in ('consu', 'service', 'service_recep') and \
+                        not line_obj.search(cr, uid, [('order_cycle_id', '=', report.id), 
+                                                      ('product_id', '=', product.id),
+                                                      ('uom_id', '=', product.uom_id.id)], context=context):
                     line_obj.create(cr, uid, {'order_cycle_id': report.id,
                                               'product_id': product.id, 
                                               'safety_stock': 0.00,

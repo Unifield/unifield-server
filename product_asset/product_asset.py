@@ -380,12 +380,12 @@ class product_product(osv.osv):
         if a product is not of type product, it is set to single subtype
         '''
         # fetch the product
-#        if 'type' in vals and vals['type'] != 'product':
-        if vals.get('type') != 'product':
+        if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
 #        if 'type' in vals and vals['type'] == 'consu':
-        if vals.get('type') == 'consu':
-            vals.update(procure_method='make_to_order')
+# Remove these two lines to display the warning message of the constraint
+#        if vals.get('type') == 'consu':
+#            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).create(cr, uid, vals, context=context)
     
@@ -394,12 +394,12 @@ class product_product(osv.osv):
         if a product is not of type product, it is set to single subtype
         '''
         # fetch the product
-#        if 'type' in vals and vals['type'] != 'product':
-        if vals.get('type') != 'product':
+        if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
 #        if 'type' in vals and vals['type'] == 'consu':
-        if vals.get('type') == 'consu':
-            vals.update(procure_method='make_to_order')
+# Remove these two lines to display the warning message of the constraint
+#        if vals.get('type') == 'consu':
+#            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
 
@@ -460,7 +460,7 @@ class stock_move(osv.osv):
                 if move.location_id.usage == 'supplier' or move.location_dest_id.usage == 'customer' or (move.picking_id and move.picking_id.type == 'out' and move.picking_id.subtype == 'picking'):
                     if move.product_id.subtype == 'asset':
                         if not move.asset_id and move.product_qty:
-                            raise osv.except_osv(_('Error!'),  _('You must assign an asset for this product.'))
+                            raise osv.except_osv(_('Error!'),  _('You must assign an asset for the product %s.') % move.product_id.name)
         return True
     
     def create(self, cr, uid, vals, context=None):

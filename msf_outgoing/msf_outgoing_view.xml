@@ -215,7 +215,7 @@
 								name="move_lines" 
 								nolabel="1" 
 								widget="one2many_list" 
-								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}" 
+								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}" 
 							    on_change="onchange_move()"  
 							    >
 								<tree string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
@@ -252,7 +252,6 @@
 										<field name="from_wkf_line" invisible="1" />
 										<!-- Service products can't be sent -->
                                         <field name="product_id"
-                                               domain="[('type', 'not in', ('service', 'service_recep'))]"
                                                context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}"
                                                on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
                                                attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
@@ -277,11 +276,11 @@
                         				<field name="location_output_id" invisible="1" />
                         				<!-- # picking_ticket_src is a fields.function to compute the available locations according to the product-->
 										<field name="location_id"
-											domain="[('picking_ticket_src', '=', product_id)]"
+											domain="[('picking_ticket_src', '=', product_id), ('id', '!=', location_dest_id)]"
 											context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
 											attrs="{'readonly': [('state', '=', 'assigned')]}"
 										 	 />
-										<field name="location_dest_id" readonly="1" on_change="location_dest_change(location_dest_id, location_id)" />
+										<field name="location_dest_id" readonly="1" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
 									</group>
 									<group colspan="2" col="4">
 										<separator string="Traceability" colspan="4" />
@@ -587,7 +586,7 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}"  attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="composition_list_id" />
@@ -628,9 +627,9 @@
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
-										<field name="location_id" domain="[ ('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok])]" readonly="1"
+										<field name="location_id" domain="[ ('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok]), ('id', '!=', location_dest_id)]" readonly="1"
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id, location_id)" readonly="1" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" readonly="1" />
 									</group>
 									<group colspan="2" col="4">
 										<separator string="Traceability" colspan="4" />
@@ -798,7 +797,7 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}" readonly="1">
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}" readonly="1">
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="asset_id" />
@@ -960,7 +959,7 @@
 					</group>
 					<notebook colspan="4">
 						<page string="Products">
-							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines, 'address_out_id': address_id}">
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}">
 								<tree string="Stock Moves">
 									<field name="product_id"/>
 									<field name="composition_list_id" />
@@ -1003,9 +1002,9 @@
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
-										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out'])]"
+										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_dest_id)]"
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']),]" on_change="location_dest_change(location_dest_id, location_id)" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />
@@ -1218,8 +1217,8 @@
 									<field name="location_id" />
 									<field name="location_dest_id" />
 									<field name="state" />
-									<field name="move_lines" nolabel="True" colspan="4">
-										<tree editable="bottom">
+									<field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
+										<tree>
 											<field name="name" />
 											<field name="origin" />
 											<field name="product_id" />

@@ -53,7 +53,7 @@
 </Styles>
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${(o.name or '')|x}">
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">
@@ -64,7 +64,7 @@
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
 
-## we loop over the purchase_order_line
+## we loop over the purchase_order_line "%s"%po_name.split('/')[-1])
     
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
@@ -93,8 +93,8 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
-% endfor
 </Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
+% endfor
 </Workbook>

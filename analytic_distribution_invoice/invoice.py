@@ -27,6 +27,35 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _check_analytic_distribution_state(self, cr, uid, ids, context=None):
+        """
+        Check if analytic distribution is valid
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids, context=context):
+            for invl in inv.invoice_line:
+                if inv.from_yml_test or invl.from_yml_test:
+                    continue
+                if invl.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
+        return True
+
+    def button_close_direct_invoice(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution before closing pop-up
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self._check_analytic_distribution_state(cr, uid, ids, context)
+        if context.get('from_register', False):
+            return {'type': 'ir.actions.act_window_close'}
+        return True
+
     def _hook_fields_for_refund(self, cr, uid, *args):
         """
         Add these fields to result:
@@ -125,14 +154,7 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Browse invoice and all invoice lines to detect a non-valid line
-        for inv in self.browse(cr, uid, ids, context=context):
-            for invl in inv.invoice_line:
-                if inv.from_yml_test or invl.from_yml_test:
-                    continue
-                if invl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
-        # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
-        # FIXME: what about analytic accountancy?
+        self._check_analytic_distribution_state(cr, uid, ids)
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
 
 account_invoice()

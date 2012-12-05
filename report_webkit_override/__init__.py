@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    All Rigts Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,24 +20,3 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
-from osv import osv
-from osv import fields
-from tools.translate import _
-
-class product_product(osv.osv):
-    _inherit = 'product.product'
-    _name = 'product.product'
-    
-    def copy(self, cr, uid, id, default=None, context=None):
-        product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
-        if default is None:
-            default = {}
-        copy_pattern = _("%s (copy)")
-        copydef = dict(name=(copy_pattern % product2copy['name']),
-                       default_code=False,
-                       )
-        copydef.update(default)
-        return super(product_product, self).copy(cr, uid, id, copydef, context)
-
-product_product()

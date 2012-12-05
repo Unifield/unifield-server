@@ -12,7 +12,7 @@
                     	<field name="creator" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     	<field name="creation_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     	<field name="requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                        <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="name" />
                         <field name="sale_order_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -226,9 +226,11 @@
                     <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
+                    <!--
+                    Deletion of the attrs on order_line because this avoid the opening of the purchase order line form view in readonly mode
                     <xpath expr="/form/notebook//field[@name='order_line']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
+                    </xpath>-->
                     <xpath expr="/form//field[@name='fiscal_position']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>

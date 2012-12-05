@@ -158,6 +158,23 @@ class stock_initial_inventory_report_xls(WebKitParser):
 
 stock_initial_inventory_report_xls('report.initial.stock.inventory_xls','initial.stock.inventory','addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako')
 
+class product_list_report_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(product_list_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(product_list_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+product_list_report_xls('report.product.list.xls', 'product.list', 'addons/msf_supply_doc_export/report/product_list_xls.mako')
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
@@ -189,30 +206,45 @@ class ir_values(osv.osv):
                 or v[2]['report_name'] == 'sale.order_xls' and context['_terp_view_name'] == 'Field Orders' :
                     new_act.append(v)
                 values = new_act
-                
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models]:
+        
+        # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+        elif context.get('_terp_view_name') and context['_terp_view_name'] == 'Internal Requests' and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] == 'Picking Tickets' and context.get('picking_screen', False)\
-                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] == 'Pre-Packing Lists' and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Tickets', 'Pre-Packing Lists'] :
+                if v[2]['name'] == 'Import lines':
+                    new_act.append(v)
+            values = new_act
+        
+        # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+        elif context.get('_terp_view_name') and context['_terp_view_name'] == 'Field Orders' and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[2]['name'] == 'Order Follow Up':
+                    new_act.append(v)
+            values = new_act
+            
+        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
+            new_act = []
+            for v in values:
+                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in ('Picking Tickets', 'Picking Ticket') and context.get('picking_screen', False)\
+                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in ('Pre-Packing Lists', 'Pre-Packing List') and context.get('ppl_screen', False)\
+                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Ticket', 'Picking Tickets', 'Pre-Packing List', 'Pre-Packing Lists', 'Delivery Orders', 'Delivery Order']:
                     new_act.append(v)
                 values = new_act
-                
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
             new_act = []
             for v in values:
 
-                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] == 'Packing Lists' :
+                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in ('Packing Lists', 'Packing List') :
                     new_act.append(v)
-                elif context['_terp_view_name'] == 'Shipment Lists':
+                elif context['_terp_view_name'] in ('Shipment Lists', 'Shipment List', 'Shipments', 'Shipment'):
                     new_act.append(v)
                 values = new_act
-        elif context.get('picking_screen') and context.get('from_so'):
+        elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:
                 if v[2].get('report_name', False) :
-                    if v[2]['report_name'] == 'picking.ticket':
+                    if v[2]['report_name'] in ('picking.ticket', 'labels'):
                         new_act.append(v)
                 values = new_act
         return values

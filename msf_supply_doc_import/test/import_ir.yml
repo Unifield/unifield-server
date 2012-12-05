@@ -1,0 +1,32 @@
+-
+  Create an Internal Request 1 (IR1)
+-
+  !record {model: sale.order, id: ir1}:
+    name: My IR test
+    company_id: base.main_company
+    date_order: !eval time.strftime('%Y-%m-%d')
+    invoice_quantity: order
+    order_policy: manual
+    partner_id: partner_A
+    partner_invoice_id: address_A
+    partner_order_id: address_A
+    partner_shipping_id: address_A
+    picking_policy: direct
+    pricelist_id: product.list0
+    shop_id: sale.shop
+-
+  Import Internal request lines
+-
+  !python {model: sale.order}: |
+    import addons, base64, logging
+    
+    # we update the context value in order to call the method "import_internal_req"
+    context.update({'_terp_view_name': 'Internal Requests'})
+    logging.getLogger('tests').log(logging.TEST, 'We import ir.xml.')
+    # get the file path
+    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'ir.xml')
+    file = open(file_path, 'r')
+    file64 = base64.b64encode(file.read())
+    self.write(cr, uid, ref("ir1"), {'file_to_import': file64}, context=context)
+    self.import_file(cr, uid, [ref("ir1")], context=context)
+

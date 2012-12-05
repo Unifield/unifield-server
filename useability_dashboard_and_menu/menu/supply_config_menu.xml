@@ -159,8 +159,12 @@
                 <menuitem action="msf_outgoing.action_labels_tree" 
                 id="msf_outgoing.menu_report_custo_labels" 
                 parent="menu_report_cust" 
-                 sequence="7"/>
-    
+                sequence="7"/>
+
+            <record id="stock.action_location_form" model="ir.actions.act_window">
+                <field name="context">{'full':1, 'search_default_in_location':1, 'from_advanced_menu': 1}</field>
+            </record>
+
     <!-- TOOLS -->
         <menuitem id="menu_tools" 
         name="Tools" 

@@ -315,7 +315,7 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or []}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
                                 >
@@ -354,7 +354,6 @@
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="from_wkf_line" invisible="1" />
                                         <field name="product_id"
-                                            domain="[('type', 'not in', ('service', 'service_recep'))]"
                                             on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id, parent.type)"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}"
                                             colspan="4"
@@ -387,11 +386,11 @@
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id" 
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
-                                            domain="[('internal_src', '=', product_id), ('usage', '!=', 'view')]"
+                                            domain="[('internal_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id)]"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" 
                                             />
                                        <field name="location_dest_id"
-                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view')]" 
+                                            domain="[('internal_dest', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_id)]" 
                                             on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     </group>
@@ -521,7 +520,7 @@
                             <field name="subtype" invisible="1" />
                             <field colspan="4" name="move_lines" nolabel="1" widget="one2many_list"
                                 default_get="{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id}"
-                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
+                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_in_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 on_change="onchange_move()"
                                 >
                                 <tree
@@ -543,7 +542,7 @@
                                     <field name="state"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="kit_check" invisible="True"/>
-                                    <button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('state', '!=', 'done'), ('kit_check', '=', False)]}"/>
+                                    <button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('fake_state', '!=', 'done'), ('kit_check', '=', False)]}"/>
                                     <button name="in_action_confirm" states="draft,confirmed" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
@@ -582,13 +581,13 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id"
-                                        	domain="[('usage', '!=', 'view'), ('usage', '=', 'supplier')]"
+                                        	domain="[('usage', '!=', 'view'), ('usage', '=', 'supplier'), ('id', '!=', location_dest_id)]"
                                         	context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	 />
             							<field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
-                                            domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id)]"
+                                            domain="[('usage', '!=', 'view'), ('incoming_dest', '=', product_id), ('id', '!=', location_id)]"
                                             on_change="location_dest_change(location_dest_id, location_id)"
                                             />
                                     <field name="move_cross_docking_ok" invisible="1"/>
@@ -787,8 +786,8 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines, 'address_out_id': address_id}"
-                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines, 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"
+                                context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf}"
                                 >
                                 <tree colors="grey:scrapped==True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
@@ -824,7 +823,6 @@
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="from_wkf_line" invisible="1" />
                                         <field name="product_id"
-                                            domain="[('type', 'not in', ('service', 'service_recep'))]"
                                             context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}" 
                                             on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type, purchase_line_id, True)"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
@@ -850,12 +848,12 @@
                                         <field name="location_virtual_id" invisible="1"/>
                                         <field name="location_output_id" invisible="1"/>
                                         <field name="location_id"
-                                            domain="[('outgoing_src', '=', product_id), ('usage', '!=', 'view')]"
+                                            domain="[('outgoing_src', '=', product_id), ('usage', '!=', 'view'), ('id', '!=', location_dest_id)]"
                                             attrs="{'readonly': [('state', '=', 'assigned')]}"
                                             context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"/>
                                         <field name="move_cross_docking_ok" invisible="1"/>
                                         <field name="location_dest_id"
-                                        	domain="[('usage', '!=', 'view'), '|', ('output_ok', '=', True), ('usage', '=', 'customer')]"
+                                        	domain="[('usage', '!=', 'view'), '|', ('output_ok', '=', True), ('usage', '=', 'customer'), ('id', '!=', location_id)]"
                                         	on_change="location_dest_change(location_dest_id, location_id)"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	 />
@@ -1039,6 +1037,18 @@
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
                     </group>
                 </form>
+            </field>
+        </record>
+
+        <!-- Remove 'Update' button on product form -->
+        <record id="product_form_remove_update_button" model="ir.ui.view">
+            <field name="name">product.form.remove.update.button</field>
+            <field name="model">product.product</field>
+            <field name="priority">2</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_product_standard_price_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//button[@string='Update']" position="replace" />
             </field>
         </record>
 

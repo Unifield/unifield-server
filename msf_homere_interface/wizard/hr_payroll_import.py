@@ -205,7 +205,7 @@ class hr_payroll_import(osv.osv_memory):
         if sys.platform.startswith('win'):
             homere_file = os.path.join(config['root_path'], 'homere.conf')
         else:
-            homere_file = os.path.join(os.path.expanduser('~'),'tmp/homere.password') # relative path from user directory to homere password file
+            homere_file = os.path.join(os.path.expanduser('~'),'tmp/homere.conf') # relative path from user directory to homere password file
         
         # Search homere password file
         if not os.path.exists(homere_file):

@@ -49,6 +49,7 @@ class sale_order(osv.osv):
             default = {}
 
         default.update({'loan_id': False,
+                        'order_policy': 'picking',
                         'active': True})
 
         if not context.get('keepClientOrder', False):
@@ -175,8 +176,10 @@ class sale_order(osv.osv):
         return res
     
     _columns = {
+        # we increase the size of client_order_ref field from 64 to 128
+        'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('id', '!=', company_id2)]"),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('customer','=',True), ('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
@@ -240,6 +243,52 @@ class sale_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
+
+    def onchange_categ(self, cr, uid, ids, categ, context=None):
+        '''
+        Check if the list of products is valid for this new category
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        message = {}
+        if ids and categ in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service FO
+            category = categ=='service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+                          FROM sale_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN sale_order fo ON l.order_id = fo.id
+                          WHERE (t.type != 'service_recep' %s) AND fo.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+            res = cr.fetchall()
+            if res:
+                cat_name = categ=='service' and 'Service' or 'Transport'
+                message.update({'title': _('Warning'),
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can sale only \'%s\' products on a \'%s\' field order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+
+        return {'warning': message}
+
+    def _check_service(self, cr, uid, ids, vals, context=None):
+        '''
+        Avoid the saving of a FO with a non service products on Service FO
+        '''
+        categ = {'transport': _('Transport'),
+                 'service': _('Service')}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Transport\' product. You can sale only \'Transport\' products on a \'Transport\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can sale only \'Service\' products on a \'Service\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+
+        return True
     
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -253,7 +302,9 @@ class sale_order(osv.osv):
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
-        return super(sale_order, self).create(cr, uid, vals, context)
+        res = super(sale_order, self).create(cr, uid, vals, context)
+        self._check_service(cr, uid, [res], vals, context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -268,6 +319,8 @@ class sale_order(osv.osv):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        self._check_service(cr, uid, ids, vals, context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
@@ -345,8 +398,15 @@ class sale_order(osv.osv):
             # loop through lines
             for line in so.order_line:
                 # check that each line must have a supplier specified
-                if not line.supplier and line.type == 'make_to_order' and line.po_cft in ('po', 'dpo'):
-                    raise osv.except_osv(_('Error'), _('Supplier is not defined for all Field Order lines.'))
+                if  line.type == 'make_to_order':
+                    if not line.product_id:
+                        raise osv.except_osv(_('Warning'), _("""You can't confirm a Sale Order that contains
+                        lines with procurement method 'On Order' and without product. Please check the line %s
+                        """) % line.line_number)
+                    if not line.supplier and line.po_cft in ('po', 'dpo'):
+                        raise osv.except_osv(_('Error'), _("""Supplier is not defined for all Field Order lines. 
+                        Please check the line %s
+                        """) % line.line_number)
                 fo_type = False
                 # get corresponding type
                 if line.type == 'make_to_stock':
@@ -1113,9 +1173,30 @@ class sale_order_line(osv.osv):
         """
         Default procurement method is 'on order' if no product selected
         """
-        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
-        if context is None:
+        if not context:
             context = {}
+
+        if context.get('sale_id'):
+            # Check validity of the field order. We write the order to avoid
+            # the creation of a new line if one line of the order is not valid
+            # according to the order category
+            # Example : 
+            #    1/ Create a new FO with 'Other' as Order Category
+            #    2/ Add a new line with a Stockable product
+            #    3/ Change the Order Category of the FO to 'Service' -> A warning message is displayed
+            #    4/ Try to create a new line -> The system displays a message to avoid you to create a new line
+            #       while the not valid line is not modified/deleted
+            #
+            #   Without the write of the order, the message displayed by the system at 4/ is displayed at the saving
+            #   of the new line that is not very understandable for the user
+            data = {}
+            if context.get('partner_id'):
+                data.update({'partner_id': context.get('partner_id')})
+            if context.get('categ'):
+                data.update({'categ': context.get('categ')})
+            self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
+
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data

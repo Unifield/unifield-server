@@ -44,7 +44,7 @@
 ## we loop over the sale_order so "objects" == sale_order
 % for o in objects:
 ## we loop over the sale_order_line
-<ss:Worksheet ss:Name="Internal Request">
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 6 %>
 <Table x:FullColumns="1" x:FullRows="1">
@@ -72,6 +72,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
-% endfor
 </Table>
-<x:WorksheetOptions/></ss:Worksheet></Workbook>
+<x:WorksheetOptions/></ss:Worksheet>
+% endfor
+</Workbook>

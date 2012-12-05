@@ -53,7 +53,7 @@
 </Styles>
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="Tender">
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 
 ## definition of the columns' size
 <% nb_of_columns = 6 %>
@@ -85,6 +85,7 @@
         %endif
     </Row>
     % endfor
-% endfor
 </Table>
-<x:WorksheetOptions/></ss:Worksheet></Workbook>
+<x:WorksheetOptions/></ss:Worksheet>
+% endfor
+</Workbook>

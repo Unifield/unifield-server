@@ -134,6 +134,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
+                    # run the procurement, the make_po function detects the link to original po
+                    # and force merge the line to this po (even if it is not draft anymore)
                     new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)
                     new_proc_id = new_data_so[0]['procurement_id'][0]
                     wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)

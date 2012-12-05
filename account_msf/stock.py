@@ -53,7 +53,8 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
         if not invoice_vals.get('date_invoice',False):
             invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())  
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'),
+                                                                        ('is_current_instance', '=', True)])
         if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind":
             if not journal_ids:
                 raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))

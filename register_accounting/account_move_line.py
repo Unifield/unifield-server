@@ -69,7 +69,7 @@ class account_move_line(osv.osv):
             ('account_id.type','in',['receivable','payable']),
             ('reconcile_id','=',False), 
             ('state', '=', 'valid'), 
-            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund']), 
+            ('journal_id.type', 'in', ['purchase', 'sale','purchase_refund','sale_refund', 'hr']), 
             ('account_id.type_for_register', 'not in', ['down_payment']) 
         ]
         return dom1+[('amount_residual_import_inv', '>', 0)]
@@ -155,21 +155,21 @@ class account_move_line(osv.osv):
         return r_move.keys()
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register"),
-        'transfer_journal_id': fields.many2one('account.journal', 'Journal'),
-        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
             help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id', 
             string="Imported Invoices", required=False, readonly=True),
         'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice', 
-            help="Move line that have been used for an Import Invoices Wizard in order to generate the present move line"),
+            help="Move line that have been used for an Pending Payments Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?", 
             help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
         'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean", 
@@ -293,7 +293,7 @@ class account_move_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
-        Add partner_txt to vals
+        Add partner_txt to vals.
         """
         # Some verifications
         if not context:
@@ -307,5 +307,4 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -100,7 +100,9 @@ class import_analytic_lines(osv.osv_memory):
             else:
                 error.append("Currency %s does not exist"%(curr,))
 
-            jids = journal_obj.search(cr, uid, [('currency', '=', curr_id[0]), ('type', '=', 'bank')])
+            jids = journal_obj.search(cr, uid, [('currency', '=', curr_id[0]),
+                                                ('type', '=', 'bank'),
+                                                ('is_current_instance', '=', True)])
             if not jids:
                 cr.execute('SELECT max(code) from account_account where parent_id=%s'%(parent_account,))
 

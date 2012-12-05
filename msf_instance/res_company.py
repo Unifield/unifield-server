@@ -31,10 +31,12 @@ class res_company(osv.osv):
         'instance_id': fields.many2one('msf.instance', string="Proprietary Instance", 
             help="Representation of the current instance"),
         'second_time': fields.boolean('Config. Wizard launched for the second time'),
+        'company_second_time': fields.boolean('Company Config. Wizard launched for the second time'),
     }
     
     _defaults = {
         'second_time': lambda *a: False,
+        'company_second_time': lambda *a: False,
     }
 
     def _refresh_objects(self, cr, uid, object_name, old_instance_id, new_instance_id, context=None):
@@ -75,7 +77,7 @@ class res_company(osv.osv):
                 # An instance was not set; add DB name and activate it
                 instance_obj.write(cr, uid, [vals['instance_id']], {'instance': cr.dbname,
                                                                     'state': 'active'}, context=context)
-            else:
+            elif company.instance_id.id != vals.get('instance_id'):
                 # An instance was already set
                 old_instance_id = company.instance_id.id
                 # Deactivate the instance

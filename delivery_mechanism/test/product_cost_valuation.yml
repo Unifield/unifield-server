@@ -3,6 +3,14 @@
   create some stock moves to Cross-docking and stock locatio
   and see if the cost price of the product is ok.
 -
+  We create a service stock location
+-
+  !record {model: stock.location, id: service_loc}:
+    name: service
+    service_location: True
+    location_category: other
+    usage: inventory
+-
   We create a stock move from MSF Supplier to Cross-Docking
 -
   !record {model: stock.picking, id: val_pick1}:
