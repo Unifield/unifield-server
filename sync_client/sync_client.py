@@ -174,7 +174,7 @@ class entity(osv.osv):
                     self.is_syncing = True
                 
                 #is_standalone = step is not None
-                make_log = not getattr(self, 'log_info', False)
+                make_log = not getattr(self, 'log_id', False)
                 
                 # Runs the firstfn,sync_process is called
                 if make_log:
@@ -264,15 +264,15 @@ class entity(osv.osv):
                     if isinstance(res, (str, unicode)):
                         self.log_info['error'] += res
                 finally:
-                    if not step == 'status' and make_log:
+                    if make_log:
                         self.log_info['status'] = self.log_info[step]
+                        self.log_info['end'] = fields.datetime.now()
                     self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
                     if make_log:
-                        self.log_info = False
+                        self.log_id = False
                         self.log_cr.close()
                     if is_standalone:
-                        self.is_syncing = False
-                    
+                        self.is_syncing = False                    
                 return res
 
             return wrapper
@@ -293,14 +293,17 @@ class entity(osv.osv):
         cont = False
         if cont or entity.state == 'init':
             self.create_update(cr, uid, context=context)
+            cr.commit()
             cont = True
             self._logger.info("init")
         if cont or entity.state == 'update_send':
             self.send_update(cr, uid, context=context)
+            cr.commit()
             cont = True
             self._logger.info("sent update")
         if cont or entity.state == 'update_validate':
             self.validate_update(cr, uid, context=context)
+            cr.commit()
             self._logger.info("validate update")
 
         return True
@@ -392,8 +395,11 @@ class entity(osv.osv):
             self.set_last_sequence(cr, uid, context)
         
         self.retrieve_update(cr, uid, recover=recover, context=context)
+        cr.commit()
 
-        return self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
+        res = self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
+        cr.commit()
+        return res
     
 
     def set_last_sequence(self, cr, uid, context=None):
@@ -449,7 +455,9 @@ class entity(osv.osv):
         
         if entity.state == 'init':
             self.create_message(cr, uid, context)
+            cr.commit()
         self.send_message(cr, uid, context)
+        cr.commit()
 
         return True
         
@@ -499,7 +507,9 @@ class entity(osv.osv):
             raise SkipStep
         
         self.get_message(cr, uid, context)
+        cr.commit()
         self.execute_message(cr, uid, context)
+        cr.commit()
 
         return True
         
@@ -557,7 +567,6 @@ class entity(osv.osv):
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
-
         return True
         
     def get_upgrade_status(self, cr, uid, context=None):
