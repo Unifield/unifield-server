@@ -67,14 +67,14 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
         # Search employee and check double identification_id
         employee_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('identification_id', '=', vals.get('identification_id'))])
         if employee_ids and len(employee_ids) > 1:
-            employees = ','.join([x.get('name', False) and x.get('name') for x in self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name'])])
-            raise osv.except_osv(_('Warning'), _('More than one employee have the same code: %s') % (employees or '',))
+            employees = ','.join([x.get('name', False) and "%s%s" % (x.get('name'), x.get('identification_id', '')) for x in self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name', 'identification_id'])])
+            raise osv.except_osv(_('Warning'), _('Employee code already used by: %s') % (employees or '',))
         elif employee_ids:
-            e_data = self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name'])
+            e_data = self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name', 'identification_id'])
             if e_data[0].get('name', False) == vals.get('name'):
                 employee_id = employee_ids[0]
             else:
-                raise osv.except_osv(_('Warning'), _('More than one employee have the same code: %s') % (e_data[0].get('name') or '',))
+                raise osv.except_osv(_('Warning'), _('Employee code already used by: %s %s') % (e_data[0].get('name') or '', e_data[0].get('identification_id') or '',))
         # Update other fields
         vals.update({'employee_type': 'local', 'active': True,})
 #        # Search job
