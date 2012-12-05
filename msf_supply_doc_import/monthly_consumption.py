@@ -57,9 +57,8 @@ class monthly_review_consumption(osv.osv):
 
         vals = {}
         vals['line_ids'] = []
-        ignore_lines, complete_lines, fmc = 0, 0, 0
+        ignore_lines, complete_lines= 0, 0
         error = ''
-        valid_until = False
 
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
@@ -80,6 +79,8 @@ class monthly_review_consumption(osv.osv):
                 'error_list': [],
                 'default_code': False,
             }
+            fmc = 0
+            valid_until = False
             line_num += 1
             # Check length of the row
             if len(row) != 5:

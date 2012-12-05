@@ -26,6 +26,7 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
 import time
+import addons
 
 
 class real_average_consumption(osv.osv):
@@ -39,6 +40,15 @@ class real_average_consumption(osv.osv):
         'text_error': fields.text('Errors when trying to import file', readonly=1),
         'to_correct_ok': fields.boolean('To correct', readonly=1),
     }
+
+#    def _get_template(self, cr, uid, context=None):
+#        template_path = addons.get_module_resource('msf_supply_doc_import','data','rac_template.xls')
+#        with open(template_path, 'rwa') as template_file:
+#            return template_file.read().encode('base64')
+#
+#    _defaults = {
+#        'file_to_import': _get_template,
+#    }
 
     def import_file(self, cr, uid, ids, context=None):
         '''
@@ -57,11 +67,8 @@ class real_average_consumption(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'consumption_calculation', 'real_average_consumption_form_view')[1]
 
-        ignore_lines, complete_lines, consumed_qty = 0, 0, 0
+        ignore_lines, complete_lines = 0, 0
         error = ''
-        remark = ''
-        batch = False
-        expiry_date = False
 
         obj = self.browse(cr, uid, ids, context=context)[0]
         if not obj.file_to_import:
@@ -84,6 +91,10 @@ class real_average_consumption(osv.osv):
                 'error_list': [],
                 'warning_list': [],
             }
+            consumed_qty = 0
+            remark = ''
+            batch = False
+            expiry_date = False
             line_num += 1
             # Check length of the row
             if len(row) != 7:
