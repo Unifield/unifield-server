@@ -128,7 +128,6 @@ class entity(osv.osv):
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
-        'is_syncing' : fields.boolean("Is Currently Syncing?"),
     }
     
     _constraints = [
@@ -171,11 +170,11 @@ class entity(osv.osv):
                 if getattr(self, 'is_syncing', False):
                     return False
                 
-                if not step:
+                if is_standalone:
                     self.is_syncing = True
                 
                 #is_standalone = step is not None
-                make_log = not getattr(self, 'log', False)
+                make_log = not getattr(self, 'log_info', False)
                 
                 # Runs the firstfn,sync_process is called
                 if make_log:
@@ -184,7 +183,7 @@ class entity(osv.osv):
                     self.log_cr.autocommit(True)
 
                     # Init log dict for sync.monitor
-                    self.log = {
+                    self.log_info = {
                         'error' : '',
                         'status' : 'in-progress',
                         'data_pull' : 'null',
@@ -203,9 +202,9 @@ class entity(osv.osv):
                             con_br = con._get_connection_manager(cr, uid, context=context)
                     # Check again
                     if not con_br.state == 'Connected':
-                        self.log.update({
+                        self.log_info.update({
                             'end' : fields.datetime.now(),
-                            'error' : self.log['error'] + "Not connected to server. Please check password and connection status in the Connection Manager",
+                            'error' : self.log_info['error'] + "Not connected to server. Please check password and connection status in the Connection Manager",
                             'status' : 'failed',
                         })
 
@@ -213,21 +212,21 @@ class entity(osv.osv):
                     elif hasattr(self, 'upgrade'):
                         up_to_date = self.upgrade(cr, uid, context=context)
                         if not up_to_date[0]:
-                            self.log.update({
+                            self.log_info.update({
                                 'end' : fields.datetime.now(),
-                                'error' : self.log['error'] + "Revision Update failed: " + up_to_date[1],
+                                'error' : self.log_info['error'] + "Revision Update failed: " + up_to_date[1],
                                 'status' : 'failed',
                             })
                         elif 'last' not in up_to_date[1].lower():
-                            self.log['error'] += "Revision Update Status: " + up_to_date[1]
+                            self.log_info['error'] += "Revision Update Status: " + up_to_date[1]
                     # Raise when error occurs
-                    if self.log['status'] == 'failed':
-                        self.pool.get('sync.monitor').create(self.log_cr, uid, self.log)
+                    if self.log_info['status'] == 'failed':
+                        self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info)
                         self.is_syncing = False
                         self.log_cr.close()
                         self.log_cr = None
-                        error = self.log['error']
-                        self.log = None
+                        error = self.log_info['error']
+                        self.log_info = None
                         raise osv.except_osv(_('Error!'), _(error))
 
                 # Prevent non-standalone syncs from running at the same time
@@ -235,41 +234,41 @@ class entity(osv.osv):
                     return False
                 
                 # Previous sync function failed so stop sync process from continuing
-                elif self.log['status'] != 'in-progress':
+                elif self.log_info['status'] != 'in-progress':
                     return True
 
                 if make_log:
-                    self.log_id = self.pool.get('sync.monitor').create(self.log_cr, uid, self.log, context=context)
+                    self.log_id = self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info, context=context)
                 else:
-                    self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log, context=context)
+                    self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
 
                 try:
                     res = fn(self, cr, uid, *args, **kwargs)
                 except SkipStep:
                     # res failed but without exception
-                    self.log[step] = 'null'
-                    self.log['error'] += '%s: Not a valid state' % state_prefix[step]
+                    self.log_info[step] = 'null'
+                    self.log_info['error'] += '%s: Not a valid state' % state_prefix[step]
                     if make_log:
                         raise osv.except_osv(_('Error!'), 'You cannot perform this action now.')
                 except BaseException, e:
-                    self.log[step] = 'failed'
+                    self.log_info[step] = 'failed'
                     if is_standalone:
                         self._logger.exception('Error in sync_process at step %s' % step)
-                        self.log['error'] = self.log.get('error', '') + "%s: %s" % (self.state_prefix[step], unicode(e))
+                        self.log_info['error'] = self.log_info.get('error', '') + "%s: %s" % (self.state_prefix[step], unicode(e))
                     if make_log:
                         raise osv.except_osv(_('Error!'), unicode(e))
                     else:
                         raise
                 else:
-                    self.log[step] = 'ok'
-                    if res:
-                        self.log['error'] += res
+                    self.log_info[step] = 'ok'
+                    if isinstance(res, (str, unicode)):
+                        self.log_info['error'] += res
                 finally:
                     if not step == 'status' and make_log:
-                        self.log['status'] = self.log[step]
-                    self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log, context=context)
+                        self.log_info['status'] = self.log_info[step]
+                    self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
                     if make_log:
-                        self.log = False
+                        self.log_info = False
                         self.log_cr.close()
                     if is_standalone:
                         self.is_syncing = False
@@ -304,6 +303,8 @@ class entity(osv.osv):
             self.validate_update(cr, uid, context=context)
             self._logger.info("validate update")
 
+        return True
+
     
     def create_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -326,6 +327,7 @@ class entity(osv.osv):
         
         set_rules(entity.id)
         prepare_update(entity.id)
+        return True
         #state init => update_send
         
     def send_update(self, cr, uid, context=None):
@@ -356,6 +358,7 @@ class entity(osv.osv):
             send_more = send_package(entity.id)
             i += 1
         #state update_send => update_validate
+        return True
 
     def validate_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -370,7 +373,7 @@ class entity(osv.osv):
         elif res and not res[0]:
             raise Exception, res[1]
         #state update validate => init 
-    
+        return True
     
     
     """
@@ -401,6 +404,8 @@ class entity(osv.osv):
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
+
+        return True
 
     def retrieve_update(self, cr, uid, recover=False, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -446,6 +451,7 @@ class entity(osv.osv):
             self.create_message(cr, uid, context)
         self.send_message(cr, uid, context)
 
+        return True
         
     def create_message(self, cr, uid, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
@@ -494,6 +500,8 @@ class entity(osv.osv):
         
         self.get_message(cr, uid, context)
         self.execute_message(cr, uid, context)
+
+        return True
         
     def get_message(self, cr, uid, context):
         def _ack_message(proxy, uuid, message_uuid):
@@ -549,6 +557,8 @@ class entity(osv.osv):
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
+
+        return True
         
     def get_upgrade_status(self, cr, uid, context=None):
         return ""
@@ -556,8 +566,7 @@ class entity(osv.osv):
     def get_status(self, cr, uid, context=None):
         if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
             return "Not Connected"
-        me = self.get_entity(cr, uid, context)
-        if me.is_syncing:
+        if getattr(self, 'is_syncing', False):
             return "Syncing..."
         monitor = self.pool.get("sync.monitor")
         monitor_ids = monitor.search(cr, uid, [], context=context)
