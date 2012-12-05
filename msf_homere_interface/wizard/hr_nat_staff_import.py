@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-
+from tools.misc import ustr
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from base64 import decodestring
 
@@ -67,14 +67,17 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
         # Search employee and check double identification_id
         employee_ids = self.pool.get('hr.employee').search(cr, uid, [('employee_type', '=', 'local'), ('identification_id', '=', vals.get('identification_id'))])
         if employee_ids and len(employee_ids) > 1:
-            employees = ','.join([x.get('name', False) and x.get('name') for x in self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name'])])
-            raise osv.except_osv(_('Warning'), _('More than one employee have the same code: %s') % (employees or '',))
+            employees = ','.join([x.get('name', False) and "%s%s" % (x.get('name'), x.get('identification_id', '')) for x in self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name', 'identification_id'])])
+            raise osv.except_osv(_('Warning'), _('Employee code already used by: %s') % (employees or '',))
         elif employee_ids:
-            employee_id = employee_ids[0]
+            e_data = self.pool.get('hr.employee').read(cr, uid, employee_ids, ['name', 'identification_id'])
+            if e_data[0].get('name', False) == vals.get('name'):
+                employee_id = employee_ids[0]
+            else:
+                raise osv.except_osv(_('Warning'), _('Employee code already used by: %s %s') % (e_data[0].get('name') or '', e_data[0].get('identification_id') or '',))
         # Update other fields
         vals.update({'employee_type': 'local', 'active': True,})
-
-        # Search job
+#        # Search job
 #        if vals.get('job', False):
 #            job_ids = self.pool.get('hr.job').search(cr, uid, [('name', '=', vals.get('job'))])
 #            if job_ids:
@@ -83,6 +86,13 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
 #                job_id = self.pool.get('hr.job').create(cr, uid, {'name': vals.get('job')})
 #                vals.update({'job_id': job_id})
 #        del(vals['job'])
+        # Search default nat staff destination
+        try:
+            ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
+        except ValueError:
+            ns_id = False
+        if ns_id:
+            vals.update({'destination_id': ns_id})
         return vals, employee_id
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -119,7 +129,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
                 if line.cells:
                     for i, el in enumerate(column_list):
                         if len(line.cells) > i:
-                            vals[el] = str(line.cells[i])
+                            vals[el] = ustr(line.cells[i])
                         else:
                             vals[el] = False
                 # Check values
@@ -148,7 +158,7 @@ class hr_nat_staff_import_wizard(osv.osv_memory):
             view_id = view_id and view_id[1] or False
             
             # This is to redirect to Employee Tree View
-            context.update({'from': 'employee_import'})
+            context.update({'from': 'nat_staff_import'})
             
             res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee', 'filename': wiz.filename or False,}, context=context)
             
