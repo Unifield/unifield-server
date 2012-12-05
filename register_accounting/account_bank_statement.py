@@ -747,18 +747,24 @@ class account_bank_statement_line(osv.osv):
         return res
     
     def _get_sequence(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Get default sequence number: "" (no char).
+        If moves, get first one's name.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
         for line in self.browse(cr, uid, ids):
+            res[line.id] = ''
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
-            else:
-                res[line.id] = ''
         return res
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register"),
-        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
-        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
+        'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
         'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
         'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
@@ -769,7 +775,8 @@ class account_bank_statement_line(osv.osv):
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
-        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char"),
+        # WARNING: Due to UTP-348, store = True for sequence_for_reference field is mandatory! Otherwise this breaks Cheque Inventory report.
+        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char", store=True, size=64),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),
@@ -791,7 +798,9 @@ class account_bank_statement_line(osv.osv):
             type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
         'transfer_amount': fields.float(string="Amount", help="Amount used for Transfers"),
-        'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'),('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] )
+        'type_for_register': fields.related('account_id','type_for_register', string="Type for register", type='selection', selection=[('none','None'), 
+            ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'), 
+            ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
     }
 
     _defaults = {
@@ -833,6 +842,7 @@ class account_bank_statement_line(osv.osv):
         move_id = account_move_obj.create(cr, uid, {
             'journal_id': st.journal_id.id,
             'period_id': st.period_id.id,
+            'document_date': st_line.document_date,
             'date': st_line.date,
             'name': st_line_number,
             'ref': st_line.ref or False,
@@ -1108,7 +1118,10 @@ class account_bank_statement_line(osv.osv):
             if st_line.third_parties:
                 partner_type = ','.join([str(st_line.third_parties._table_name), str(st_line.third_parties.id)])
             # finally write move object
-            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], {'partner_type': partner_type}, context=context)
+            move_vals = {'partner_type': partner_type}
+            if 'document_date' in move_line_values:
+                move_vals.update({'document_date': move_line_values.get('document_date')})
+            self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
         return True
 
     def do_direct_expense(self, cr, uid, ids, context=None):
@@ -1129,7 +1142,8 @@ class account_bank_statement_line(osv.osv):
                 move_vals= {
                     'journal_id': st_line.statement_id.journal_id.id,
                     'period_id': st_line.statement_id.period_id.id,
-                    'date': st_line.document_date or st_line.date or curr_date,
+                    'date': st_line.date or curr_date,
+                    'document_date': st_line.document_date or curr_date,
                     # name removed from UF-1542 because of a bug from UF-1129
                     #'name': 'DirectExpense/' + st_line.name,
                     'partner_id': st_line.partner_id.id,
@@ -1491,6 +1505,9 @@ class account_bank_statement_line(osv.osv):
             if absl.account_id.user_type.code in ['expense'] and absl.analytic_distribution_state != 'valid' and not context.get('from_yml'):
                 raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for this line: %s') % (absl.name or '',))
 
+            if absl.is_down_payment and not absl.down_payment_id:
+                raise osv.except_osv(_('Error'), _('You need to specify a PO before temp posting the Down Payment!'))
+
             if absl.state == "draft":
                 self.create_move_from_st_line(cr, uid, absl.id, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
@@ -1505,9 +1522,7 @@ class account_bank_statement_line(osv.osv):
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
 
-                if absl.is_down_payment and not absl.down_payment_id:
-                    raise osv.except_osv(_('Error'), _('Link with a PO for Down Payment is missing!'))
-                elif absl.is_down_payment:
+                if absl.is_down_payment:
                     self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, absl.id, absl.down_payment_id.id, context=context)
                     self.create_down_payment_link(cr, uid, absl.id, context=context)
 
@@ -1521,6 +1536,8 @@ class account_bank_statement_line(osv.osv):
                 elif absl.direct_invoice:
                     if not absl.invoice_id:
                         raise osv.except_osv(_('Error'), _('This line is linked to an unknown Direct Invoice.'))
+                    if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
+                        raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
                     self.do_direct_invoice_reconciliation(cr, uid, [absl.id], context=context)
                 else:
                     acc_move_obj.post(cr, uid, [x.id for x in absl.move_ids], context=context)
@@ -1671,6 +1688,13 @@ class account_bank_statement_line(osv.osv):
             view_id = (view.get('res_id'), view.get('name'))
         else:
             raise osv.except_osv(_('Error'), _("View not found."))
+        context.update({
+            'active_id': ids[0],
+            'type': 'in_invoice',
+            'journal_type': 'purchase',
+            'active_ids': ids,
+            'from_register': True,
+            })
         return {
             'name': "Supplier Direct Invoice",
             'type': 'ir.actions.act_window',
@@ -1680,14 +1704,7 @@ class account_bank_statement_line(osv.osv):
             'view_type': 'form',
             'view_id': view_id,
             'res_id': self.browse(cr, uid, ids[0], context=context).invoice_id.id,
-            'context':
-            {
-                'active_id': ids[0],
-                'type': 'in_invoice',
-                'journal_type': 'purchase',
-                'active_ids': ids,
-                'from_register': True,
-            }
+            'context': context,
         }
 
     def button_duplicate(self, cr, uid, ids, context=None):

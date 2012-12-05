@@ -32,6 +32,7 @@ import decimal_precision as dp
 import logging
 from os import path
 
+from msf_partner import PARTNER_TYPE
 
 #----------------------------------------------------------
 # Procurement Order
@@ -124,6 +125,44 @@ class stock_picking(osv.osv):
         state_list['done'] = _('is closed.')
         
         return state_list
+    
+    def _get_stock_picking_from_partner_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of res.partner objects for which values have changed
+        
+        return the list of ids of stock.picking objects which need to get their fields updated
+        
+        self is res.partner object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        pick_obj = self.pool.get('stock.picking')
+        result = pick_obj.search(cr, uid, [('partner_id2', 'in', ids)], context=context)
+        return result
+    
+    def _vals_get_stock_ov(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
+            if obj.partner_id2:
+                result[obj.id].update({'partner_type_stock_picking': obj.partner_id2.partner_type})
+            
+        return result
 
     _columns = {
         'state': fields.selection([
@@ -144,10 +183,15 @@ class stock_picking(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'from_wkf': fields.boolean('From wkf'),
+        'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
+        'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
+                                                      store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
+                                                              'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
-                'from_wkf': lambda *a: False,
+                 'from_wkf': lambda *a: False,
+                 'update_version_from_in_stock_picking': 0,
                  }
     
     def create(self, cr, uid, vals, context=None):
@@ -159,6 +203,9 @@ class stock_picking(osv.osv):
 
         if not context.get('active_id',False):
             vals['from_wkf'] = True
+        # in case me make a copy of a stock.picking coming from a workflow
+        if context.get('not_workflow', False):
+            vals['from_wkf'] = False
     
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
@@ -386,6 +433,7 @@ class stock_picking(osv.osv):
                             'state': 'assigned',
                             'move_dest_id': False,
                             'price_unit': move.price_unit,
+                            'processed_stock_move': True,
                     }
                     prodlot_id = prodlot_ids[move.id]
                     if prodlot_id:
@@ -398,6 +446,7 @@ class stock_picking(osv.osv):
                         {
                             'product_qty' : move.product_qty - product_qty,
                             'product_uos_qty':move.product_qty - product_qty, #TODO: put correct uos_qty
+                            'processed_stock_move': True,
                         })
 
             if new_picking:
@@ -627,10 +676,12 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
+        'processed_stock_move': fields.boolean(string='Processed Stock Move'),
     }
     
     _defaults = {
         'location_dest_id': _default_location_destination,
+        'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
     }
     
     def create(self, cr, uid, vals, context=None):
@@ -1204,6 +1255,8 @@ class ir_values(osv.osv):
             for v in values:
                 if key == 'action' and v[1] in move_accepted_values[key2]:
                     new_values.append(v)          
+                elif context.get('_terp_view_name', False) == 'Destruction Report':
+                    new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []
             for v in values:

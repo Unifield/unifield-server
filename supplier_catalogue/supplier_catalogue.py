@@ -514,6 +514,11 @@ class supplier_catalogue_line(osv.osv):
                                                   'catalogue_id': vals['catalogue_id'],
                                                   },
                                                   context=context)
+        
+        # Pass 'no_store_function' to False to compute the sequence on the pricelist.partnerinfo object
+        create_context = context.copy()
+        if context.get('no_store_function'):
+            create_context['no_store_function'] = False
             
         price_id = price_obj.create(cr, uid, {'name': catalogue.name,
                                               'suppinfo_id': sup_id,
@@ -525,7 +530,7 @@ class supplier_catalogue_line(osv.osv):
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_from': catalogue.period_from,
                                               'valid_till': catalogue.period_to,}, 
-                                              context=context)
+                                              context=create_context)
         
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})

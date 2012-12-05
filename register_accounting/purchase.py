@@ -28,8 +28,57 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
 
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Return fake data for down_payment_filter field
+        """
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_po_for_down_payment(self, cr, uid, obj, name, args, context=None):
+        """
+        Search PO available for down payments regarding these criteria:
+        - the PO should not be 100% invoiced (invoice_rate field)
+        - the PO should be confirmed ('approved' state), but could be in done state and not completly invoiced
+        - the currency should be the same as given currency in args
+        - the partner should be the same as given partner in args
+        - DO NOT display PO that ar inkind donation, donation expiry, loan, donation_st
+        
+        To be 100% invoiced, a PO should have some linked invoiced that are validated ('open' state or 'paid' state) and that sum of amount is greater or equal to PO total amount. So to find PO that are not 100% invoiced, you should find those from which all invoice are not created or which amount is inferior to PO total amount.
+        """
+        # Create default result
+        res = [('id', 'in', [])]
+        # Only parse args that are composed of 3 element (field, operator, value)
+        if args and args[0] and len(args[0]) == 3:
+            # This method don't support operators except "="
+            if args[0][1] != '=':
+                raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
+            # Create SQL request
+            c_id = args[0][2].get('currency_id', False)
+            p_id = args[0][2].get('partner_id', False)
+            sql = """SELECT po.id
+            FROM purchase_order as po
+            LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
+            LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
+            LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
+            WHERE po.state in ('approved', 'done')
+            AND po.pricelist_id = prod.id
+            AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
+            AND po.order_type not in ('loan', 'in_kind', 'donation_exp', 'donation_st')
+            AND po.partner_id = %s
+            GROUP BY po.id, po.amount_total
+            HAVING COALESCE(po.amount_total - sum(inv.amount_total), 10) != 0"""
+            cr.execute(sql, (c_id, p_id))
+            sql_res = cr.fetchall()
+            # Transform result
+            res = [('id', 'in', [x and x[0] for x in sql_res])]
+        return res
+
     _columns = {
         'down_payment_ids': fields.one2many('account.move.line', 'down_payment_id', string="Down Payments", readonly=True),
+        'down_payment_filter': fields.function(_get_fake, fnct_search=_search_po_for_down_payment, type="many2one", method=True, string="PO for Down Payment"),
     }
 
     def copy(self, cr, uid, id, default=None, context=None):

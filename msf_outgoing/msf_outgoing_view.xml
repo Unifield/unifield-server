@@ -252,7 +252,6 @@
 										<field name="from_wkf_line" invisible="1" />
 										<!-- Service products can't be sent -->
                                         <field name="product_id"
-                                               domain="[('type', 'not in', ('service', 'service_recep'))]"
                                                context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}"
                                                on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
                                                attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
@@ -277,11 +276,11 @@
                         				<field name="location_output_id" invisible="1" />
                         				<!-- # picking_ticket_src is a fields.function to compute the available locations according to the product-->
 										<field name="location_id"
-											domain="[('picking_ticket_src', '=', product_id)]"
+											domain="[('picking_ticket_src', '=', product_id), ('id', '!=', location_dest_id)]"
 											context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
 											attrs="{'readonly': [('state', '=', 'assigned')]}"
 										 	 />
-										<field name="location_dest_id" readonly="1" on_change="location_dest_change(location_dest_id, location_id)" />
+										<field name="location_dest_id" readonly="1" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
 									</group>
 									<group colspan="2" col="4">
 										<separator string="Traceability" colspan="4" />
@@ -628,9 +627,9 @@
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
-										<field name="location_id" domain="[ ('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok])]" readonly="1"
+										<field name="location_id" domain="[ ('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok]), ('id', '!=', location_dest_id)]" readonly="1"
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view')]" on_change="location_dest_change(location_dest_id, location_id)" readonly="1" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" readonly="1" />
 									</group>
 									<group colspan="2" col="4">
 										<separator string="Traceability" colspan="4" />
@@ -1003,9 +1002,9 @@
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
-										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out'])]"
+										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_dest_id)]"
 										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
-										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']),]" on_change="location_dest_change(location_dest_id, location_id)" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Dates" colspan="2" />

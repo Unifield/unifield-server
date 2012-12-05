@@ -72,7 +72,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest1
     nomen_manda_2: product_nomenclature_nomenclaturetest2
     nomen_manda_3: product_nomenclature_nomenclaturetest3
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_qty: 0.0
     standard_price: 1.0

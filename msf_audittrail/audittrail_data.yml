@@ -11,7 +11,7 @@
                 'delivery_requested_date', 'est_transport_lead_time', 'invoice_method', 'invoice_ids',
                 'loan_duration', 'loan_id', 'location_id', 'notes', 'order_type',
                 'picking_ids', 'priority', 'ready_to_ship_date', 'rfq_ok', 'shipment_date', 'shipped',
-                'state', 'tender_id', 'transport_type', 'valid_till']
+                'state', 'tender_id', 'transport_type', 'valid_till', 'partner_ref']
 
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order'), ('name', 'in', fields)], context=context)
         

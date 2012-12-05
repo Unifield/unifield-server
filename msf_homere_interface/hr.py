@@ -64,8 +64,8 @@ class hr_employee(osv.osv):
             context = {}
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Raise an error if employee is created manually
-            if not context.get('from', False) or context.get('from') not in ['yaml', 'import']:
-                raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
+            if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_data', False):
+                    raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
 #            # Raise an error if no cost_center
 #            if not vals.get('cost_center_id', False):
 #                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
@@ -90,7 +90,7 @@ class hr_employee(osv.osv):
                 local = True
             elif vals.get('employee_type') == 'ex':
                 ex = True
-        if context.get('from', False) and context.get('from') in ['yaml', 'import']:
+        if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_data', False):
             allowed = True
         # Browse all employees
         for emp in self.browse(cr, uid, ids):
