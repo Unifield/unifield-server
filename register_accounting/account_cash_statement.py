@@ -349,27 +349,21 @@ class account_cashbox_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Override for the synch module: create new cashbox line only when this line for the cash register does not exist 
+        Override for the synch module: remove existing cashbox line if it is here
         """
-        pieces = int(vals['pieces'])
+        pieces = float(vals['pieces'])
         existed_ids = False
-        temp = "-open-"
         
         if 'starting_id' in vals:
-            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], context=context)
+            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], limit=1, context=context)
 
         if 'ending_id' in vals:
-            temp = "-close-"
-            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], context=context)
-        
-        number = False
-        if 'number' in vals:
-            number = vals['number']
+            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], limit=1, context=context)
         
         if existed_ids:
-            return osv.osv.write(self, cr, uid, existed_ids, vals, context=context)
+            self.unlink(cr, uid, existed_ids, context=context)
         
-        return osv.osv.create(self, cr, uid, vals, context=None)
+        return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
     
 account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -112,7 +112,7 @@
     mes_type: fixed
     name: Boite \xc3\xa0 chaussures
     name_template: Boite \xc3\xa0 chaussures
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_qty: 0.0
     standard_price: 1.0

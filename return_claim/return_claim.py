@@ -746,7 +746,10 @@ class claim_event(osv.osv):
         picking_values = {'name': new_name,
                           'partner_id': claim.partner_id_return_claim.id, # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
-                          'reason_type_id': context['common']['rt_goods_return']}
+                          'purchase_id': origin_picking.purchase_id.id,
+                          'sale_id': origin_picking.sale_id.id,
+                          'reason_type_id': context['common']['rt_goods_return'],
+                          'invoice_state': '2binvoiced'}
         move_values = {'reason_type_id': context['common']['rt_goods_return']}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
@@ -763,8 +766,6 @@ class claim_event(osv.osv):
         picking_tools.confirm(cr, uid, event_picking_id, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking) - force assign - must be available thanks to UI checks
-        picking_tools.check_assign(cr, uid, event_picking_id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type

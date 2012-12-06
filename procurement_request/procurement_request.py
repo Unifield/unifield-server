@@ -120,7 +120,8 @@ class procurement_request(osv.osv):
 
         if context.get('procurement_request') or vals.get('procurement_request', False):
             # Get the ISR number
-            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
+            if not vals.get('name', False):
+                vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'procurement.request')})
 
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company.partner_id.address:
@@ -135,7 +136,7 @@ class procurement_request(osv.osv):
             vals['pricelist_id'] = pl
             if 'delivery_requested_date' in vals:
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
-        else:
+        elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
 
         return super(procurement_request, self).create(cr, uid, vals, context)
@@ -448,13 +449,19 @@ class procurement_request_line(osv.osv):
         if context is None:
             context = {}
         v = {}
+        m = {}
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
             v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
-        return {'value': v}
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            if product.type in ('consu', 'service', 'service_recep'):
+                v.update({'type': 'make_to_order'})
+                m.update({'title': _('Warning'),
+                          'message': _('You can\'t source a line \'from stock\' if line contains a non-stockable or service product.')})
+        return {'value': v, 'warning': m}
     
     def comment_change(self, cr, uid, ids, comment, product_id, nomen_manda_0, context=None):
         '''

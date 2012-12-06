@@ -118,6 +118,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
               'initial_qty': fields.related('move_id', 'product_qty', string='Initial Qty', readonly=True),
               # override to change the name
               'quantity' : fields.float("Quantity to process", required=True),
+              # override for decimal precision - after purchase override so Purchase Price Computation exists
+              'cost' : fields.float("Cost", digits_compute=dp.get_precision('Purchase Price Computation'), help="Unit Cost for this product line"),
               }
     
     _defaults = {'integrity_status': 'empty',

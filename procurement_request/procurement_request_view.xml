@@ -24,6 +24,9 @@
                             on_change="pricelist_id_change(pricelist_id)"
                             required="1" />
                     </xpath>
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='type']" position="attributes">
+                        <attribute name="on_change">requested_type_change(product_id, type)</attribute>
+                    </xpath>
                 </data>
             </field>
         </record>

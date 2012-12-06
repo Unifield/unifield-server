@@ -958,6 +958,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.move_line_id:
                 move_id = wiz.move_line_id.move_id.id
             self.pool.get('account.move').validate(cr, uid, [move_id])
+        # Validate account_move if we come from a temp posted register line
+        if wiz and (wiz.register_line_id and wiz.register_line_id.state == 'temp'):
+            # write analytic distribution on move line and validate move
+            distribution_id = wiz.distribution_id and wiz.distribution_id.id or False
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', wiz.register_line_id.account_id.id), ('id', 'not in', [wiz.register_line_id.first_move_line_id.id])])
+            # write changes
+            self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, distribution_id)}, check=False, update_check=False)
+            self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         
