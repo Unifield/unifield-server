@@ -58,6 +58,7 @@
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="type"/>
                     <field name="type_for_register"/>
+                    <field name="accrual_account" invisible="1"/>
                 </xpath>
             </field>
         </record>
@@ -71,12 +72,13 @@
             <field name="priority">25</field>
             <field name="arch" type="xml">
                 <xpath expr="/search/group[1]" position="replace">
-                    <group col="10" colspan="4">
+                    <group col="12" colspan="4">
 
 	                    <filter name="active" icon="terp-check" string="Active" context="{'filter_inactive_accounts': 1}"/>
 	                    <separator orientation="vertical"/>
                         <filter icon="terp-sale" string="Receivable Accounts" domain="[('type','=','receivable')]"/>
                         <filter icon="terp-purchase" string="Payable Accounts" domain="[('type','=','payable')]"/>
+                        <filter name="accrual_account" string="Accrual Account" domain="[('accrual_account','=',True)]"/>
                         <separator orientation="vertical"/>
                         <newline/>
 
