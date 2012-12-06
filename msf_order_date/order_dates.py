@@ -1394,10 +1394,8 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
         # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
         for obj in self.browse(cr, uid, ids, context=context):
-            if (obj.type != 'in' and obj.manual_min_date_stock_picking) or (obj.type == 'in' and not result[obj.id].get('min_date')):
+            if not result[obj.id].get('min_date') and obj.manual_min_date_stock_picking:
                 result.setdefault(obj.id, {}).update({'min_date': obj.manual_min_date_stock_picking})
-            elif obj.type == 'in' and obj.manual_min_date_stock_picking:
-                continue
             else:
                 if obj.purchase_id:
                     result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date})
@@ -1447,7 +1445,7 @@ class stock_picking(osv.osv):
         return {'value': {'min_date_manually': True}}
     
     def create(self, cr, uid, vals, context=None):
-        if vals.get('type') == 'in' and (not vals.get('purchase id') or not vals.get('sale_id')):
+        if not vals.get('purchase id') or not vals.get('sale_id'):
             vals['manual_min_date_stock_picking'] = vals.get('min_date')
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
@@ -1457,7 +1455,7 @@ class stock_picking(osv.osv):
         '''
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type == 'in' and vals.get('min_date_manually', pick.min_date_manually) and vals.get('min_date', vals.get('manual_min_date_stock_picking')):
+            if vals.get('min_date_manually', pick.min_date_manually) and vals.get('min_date', vals.get('manual_min_date_stock_picking')):
                 vals.update({'manual_min_date_stock_picking': vals.get('min_date', vals.get('manual_min_date_stock_picking'))})
                 move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id)], context=context)
                 move_obj.write(cr, uid, move_ids, {'date_expected': vals.get('min_date', vals.get('manual_min_date_stock_picking'))}, context=context)

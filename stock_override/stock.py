@@ -661,7 +661,7 @@ class stock_move(osv.osv):
         if type == 'in' and not vals.get('date_expected'):
             vals['date_expected'] = time.strftime('%Y-%m-%d %H:%M:%S')
 
-        if type == 'in' and vals.get('date_expected'):
+        if vals.get('date_expected'):
             vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).create(cr, uid, vals, context=context)
@@ -687,7 +687,7 @@ class stock_move(osv.osv):
 
         if vals.get('date_expected'):
             for move in self.browse(cr, uid, ids, context=context):
-                if vals.get('state', move.state) not in ('done', 'cancel') and vals.get('type', move.type) == 'in':
+                if vals.get('state', move.state) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
