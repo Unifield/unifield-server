@@ -206,9 +206,9 @@ class update_to_send(osv.osv):
     
     def sync_finished(self, cr, uid, update_ids, context=None):
         model_data_pool = self.pool.get('ir.model.data')
-        
+
         for update in self.browse(cr, uid, update_ids, context=context):
-            model_data_pool.write(cr, uid, update.xml_id.id, {'sync_date' : update.sync_date, 'version' : update.version})
+            model_data_pool._sync(cr, uid, update.xml_id, date=update.sync_date, version=update.version, context=context)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)    
         self._logger.debug("Pushed finished")
         

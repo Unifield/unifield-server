@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
+
 		<record id="ir_cron_automaticsynchronization0" model="ir.cron">
 			<field name="function">sync_threaded</field>
 			<field name="user_id">1</field>
@@ -13,5 +14,20 @@
 			<field eval="1" name="interval_number"/>
 			<field name="model">sync.client.entity</field>
 		</record>
+
+		<record id="ir_cron_purge_write_info" model="ir.cron">
+			<field name="name">Purge unused write_info</field>
+			<field eval="True" name="active"/>
+			<field ref="base.user_root" name="user_id"/>
+			<field name="interval_number">1</field>
+			<field name="interval_type">days</field>
+			<field name="numbercall">-1</field>
+			<field eval="False" name="doall"/>
+			<field name="model">sync.client.write_info</field>
+			<field name="function">purge</field>
+            <field eval="'(None,)'" name="args" />
+			<field name="priority">1</field>
+		</record>
+
 	</data>
 </openerp>

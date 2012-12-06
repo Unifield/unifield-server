@@ -118,6 +118,11 @@ class write_info(osv.osv):
         'fields_modif' : fields.text('Fields Modified'),
     }
     
+    def purge(self, cr, uid, context=None):
+        self._logger.info("Start purging write_info....")
+        cr.execute("DELETE FROM sync_client_write_info WHERE NOT id IN (SELECT MAX(id) FROM sync_client_write_info GROUP BY model, res_id, fields_modif)")
+        self._logger.info("Number of purged rows: %d" % cr.rowcount)
+        return True
 
     def get_last_modification(self, cr, uid, model_name, res_id, last_sync, context=None):
         ids = self.search(cr, uid, [('res_id', '=', res_id), ('model', '=', model_name), ('create_date', '>', last_sync)], context=context)
@@ -255,16 +260,19 @@ class ir_model_data_sync(osv.osv):
         result = [rec.id for rec in result]
         return result if issubclass(res_type, (list, tuple)) else bool(result)
            
+    def _sync(self, cr, uid, rec, date=False, version=False, context=None):
+        if not date:
+            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if not version: 
+            version = rec.version + 1
+        self.write(cr, uid, rec.id, {'sync_date' : date, 'version' : version}, context=context)
+        self.pool.get('sync.client.write_info').delete_old_log(cr, uid, rec.model, rec.res_id, date, context=context)
+
     def sync(self, cr, uid, xml_id, date=False, version=False, context=None):
         ir_data = self.get_ir_record(cr, uid, xml_id, context=context)
         if not ir_data:
             raise ValueError('No references to %s' % (xml_id))
-        if not date:
-            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if not version: 
-            version = ir_data.version + 1
-        self.write(cr, uid, ir_data.id, {'sync_date' : date, 'version' : version}, context=context)
-        self.pool.get('sync.client.write_info').delete_old_log(cr, uid, ir_data.model, ir_data.res_id, date, context=context)
+        self._sync(cr, uid, ir_data, date=date, version=version, context=context)
         
     _order = 'id desc'
     
