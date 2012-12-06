@@ -22,6 +22,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+import decimal_precision as dp
 
 import time
 
@@ -246,7 +247,7 @@ class initial_stock_inventory_line(osv.osv):
     _columns = {
         'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
         'prodlot_name': fields.char(size=64, string='Batch'),
-        'average_cost': fields.float(digits=(16, 2), string='Initial average cost', required=True),
+        'average_cost': fields.float(string='Initial average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True),
         'currency_id': fields.many2one('res.currency', string='Functional currency', readonly=True),
         'err_msg': fields.function(_get_error_msg, method=True, type='char', string='Message', store=False),
     }
@@ -549,7 +550,7 @@ class stock_cost_reevaluation_line(osv.osv):
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
-        'average_cost': fields.float(digits=(16, 2), string='Average cost', required=True),
+        'average_cost': fields.float(string='Average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True),
         'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'reevaluation_id': fields.many2one('stock.cost.reevaluation', string='Header'),
     }

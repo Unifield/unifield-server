@@ -57,12 +57,15 @@ class payroll_setup(osv.osv_memory):
 
         # Get menus
         payroll_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'menu_finance_payroll')[1]
+        not_payroll_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'import_nat_staff')[1]
         
         # Write changes
         if not payload.payroll_ok:
             self.pool.get('ir.ui.menu').write(cr, uid, payroll_ids, {'active': False}, context=context)
+            self.pool.get('ir.ui.menu').write(cr, uid, not_payroll_ids, {'active': True}, context=context)
         else:
             self.pool.get('ir.ui.menu').write(cr, uid, payroll_ids, {'active': True}, context=context)
+            self.pool.get('ir.ui.menu').write(cr, uid, not_payroll_ids, {'active': False}, context=context)
     
         setup_obj.write(cr, uid, [setup_id.id], {'payroll_ok': payload.payroll_ok}, context=context)
         
