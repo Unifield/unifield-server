@@ -193,41 +193,34 @@ class entity(osv.osv):
                     }
                     # Check if connection is up
                     con = self.pool.get('sync.client.sync_server_connection')
-                    con_br = con._get_connection_manager(cr, uid, context=context)
-                    if not con_br.state == 'Connected':
-                        # Try to connect with password == login (helpful for development)
-                        if not con_br.password:
-                            con.write(cr, uid, [con_br.id], {'password' : con_br.login}, context=context)
-                            con.connect(cr, uid, [con_br.id], context=context)
-                            con_br = con._get_connection_manager(cr, uid, context=context)
-                    # Check again
-                    if not con_br.state == 'Connected':
+                    try:
+                        con.connect(cr, uid, context=context)
+                    except osv.except_osv, e:
                         self.log_info.update({
-                            'end' : fields.datetime.now(),
-                            'error' : self.log_info['error'] + "Not connected to server. Please check password and connection status in the Connection Manager",
+                            'error' : self.log_info['error'] + _(e.value),
                             'status' : 'failed',
                         })
-
-                    # Check for update (if connection is up)
-                    elif hasattr(self, 'upgrade'):
-                        up_to_date = self.upgrade(cr, uid, context=context)
-                        if not up_to_date[0]:
-                            self.log_info.update({
-                                'end' : fields.datetime.now(),
-                                'error' : self.log_info['error'] + "Revision Update failed: " + up_to_date[1],
-                                'status' : 'failed',
-                            })
-                        elif 'last' not in up_to_date[1].lower():
-                            self.log_info['error'] += "Revision Update Status: " + up_to_date[1]
+                    else:
+                        # Check for update (if connection is up)
+                        if hasattr(self, 'upgrade'):
+                            up_to_date = self.upgrade(cr, uid, context=context)
+                            if not up_to_date[0]:
+                                self.log_info.update({
+                                    'error' : self.log_info['error'] + "Revision Update failed: " + up_to_date[1],
+                                    'status' : 'failed',
+                                })
+                            elif 'last' not in up_to_date[1].lower():
+                                self.log_info['error'] += "Revision Update Status: " + up_to_date[1]
                     # Raise when error occurs
                     if self.log_info['status'] == 'failed':
+                        self.log_info['end'] = fields.datetime.now()
                         self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info)
                         self.is_syncing = False
                         self.log_cr.close()
                         self.log_cr = None
                         error = self.log_info['error']
                         self.log_info = None
-                        raise osv.except_osv(_('Error!'), _(error))
+                        raise osv.except_osv(_('Error!'), error)
 
                 # Prevent non-standalone syncs from running at the same time
                 elif not is_standalone:
@@ -558,10 +551,9 @@ class entity(osv.osv):
     """
     def sync_threaded(self, cr, uid, context=None):
         # Check if connection is up
-        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
-            raise osv.except_osv(_('Error!'), _("Not connected to server. Please check password and connection status in the Connection Manager"))
+        self.pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
         # Check for update (if connection is up)
-        elif hasattr(self, 'upgrade'):
+        if hasattr(self, 'upgrade'):
             up_to_date = self.upgrade(cr, uid, context=context)
             if not up_to_date[0]:
                 cr.commit()
@@ -583,7 +575,7 @@ class entity(osv.osv):
         return ""
 
     def get_status(self, cr, uid, context=None):
-        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+        if not self.pool.get('sync.client.sync_server_connection').is_connected:
             return "Not Connected"
 
         if getattr(self, 'is_syncing', False):
@@ -610,45 +602,53 @@ class sync_server_connection(osv.osv):
         This class is also a singleton
         
     """     
+
     def _auto_init(self,cr,context=None):
         res = super(sync_server_connection,self)._auto_init(cr,context=context)
         if not self.search(cr, 1, [], context=context):
             self.create(cr, 1, {}, context=context)
         return res
     
+    def _is_connected(self):
+        return getattr(self, '_uid', 0) > 0
+    
+    is_connected = property(_is_connected)
+
     def _get_state(self, cr, uid, ids, name, arg, context=None):
-        res = {}
-        for connection in self.browse(cr, uid, ids, context=context):
-            ## Make sure we get an integer (xmlrpc bug fixed in 6.1 server)
-            res[connection.id] = "Connected" if int(connection.uid) and connection.password else "Disconnected"
-        return res
- 
-    _password = {}
-    _uid = {}
+        return dict.fromkeys(ids, "Connected" if getattr(self, '_uid', False) else "Disconnected")
 
     def _get_password(self, cr, uid, ids, field, arg, context):
-        return dict.fromkeys(ids, self._password.get(cr.dbname))
+        return dict.fromkeys(ids, getattr(self, '_password', ''))
 
     def _set_password(self, cr, uid, ids, field, password, arg, context):
-        self._password[cr.dbname] = password
+        self._password = password
+
+    def _get_uid(self, cr, uid, ids, field, arg, context):
+        return dict.fromkeys(ids, getattr(self, '_uid', ''))
+
+    def unlink(self, cr, uid, ids, context=None):
+        self._uid = False
+        return super(sync_server_connection, self).unlink(cr, uid, ids, context=context)
 
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
     _rec_name = 'host'
 
     _columns = {
-        'host': fields.char('Host', help='Synchronization server host name', size=256),
+        'active': fields.boolean('Active'),
+        'host': fields.char('Host', help='Synchronization server host name', size=256, required=True),
         'port': fields.integer('Port', help='Synchronization server connection port'),
         'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
-        'uid': fields.integer('Uid on synchro server', readonly=True),
+        'uid': fields.function(_get_uid, string='Uid on synchro server', readonly=True, type='char', method=True),
         'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True, store=False),
         'max_size' : fields.integer("Max Packet Size"),
     }
-    
+
     _defaults = {
+        'active': True,
         'host' : 'sync.unifield.org',
         'port' : 8070,
         'protocol': 'netrpc_gzip',
@@ -659,6 +659,8 @@ class sync_server_connection(osv.osv):
     
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
+        if not ids:
+            raise osv.except_osv('Connection Error', "Connection manager not set!")
         return self.browse(cr, uid, ids, context=context)[0]
     
     def connector_factory(self, con):
@@ -673,22 +675,34 @@ class sync_server_connection(osv.osv):
         elif con.protocol == 'netrpc_gzip':
             connector = rpc.GzipNetRPCConnector(con.host, con.port)
         else:
-            raise Exception('Unknown protocol: %s' % con.protocol)
+            raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
- 
-    def connect(self, cr, uid, ids, context=None):
-        try:
-            for con in self.browse(cr, uid, ids, context=context):
-                if not con.database:
-                    raise osv.except_osv(_("Error"), _("Missing database name"))
-                connector = self.connector_factory(con)
-                
-                cnx = rpc.Connection(connector, con.database, con.login, con.password)
-                if cnx.user_id:
-                    self.write(cr, uid, con.id, {'uid' : cnx.user_id}, context=context)
+
+    def connect(self, cr, uid, ids=None, context=None):
+        if getattr(self, '_uid', False):
             return True
+        try: 
+            con = self._get_connection_manager(cr, uid, context=context)
+            connector = self.connector_factory(con)
+            if not getattr(self, '_password', False):
+                self._password = con.login
+            cnx = rpc.Connection(connector, con.database, con.login, self._password)
+            if cnx.user_id:
+                self._uid = cnx.user_id
+            else:
+                raise osv.except_osv('Not Connected', "Not connected to server. Please check password and connection status in the Connection Manager")
         except socket.error, e:
             raise osv.except_osv(_("Error"), _(e.strerror))
+        except osv.except_osv:
+            raise
+        except BaseException, e:
+            raise osv.except_osv(_("Error"), _(unicode(e)))
+        
+        return True
+
+    def action_connect(self, cr, uid, ids, context=None):
+        self.connect(cr, uid, ids, context=context)
+        return {}
     
     def get_connection(self, cr, uid, model, context=None):
         """
@@ -699,16 +713,19 @@ class sync_server_connection(osv.osv):
         connector = self.connector_factory(con)
         cnx = rpc.Connection(connector, con.database, con.login, con.password, con.uid)
         return rpc.Object(cnx, model)
-    
-    def disconnect(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'uid' : False}, context=context)
+
+    def disconnect(self, cr, uid, context=None):
+        self._uid = False
         return True
-    
-    def _entity_connection(self,cr,uid,ids,context=None):     
-        return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
-    
-    _constraints = [
-        (_entity_connection, _('The connection parameter is unique, you cannot create a new one'), ['host'])
+        
+    def action_disconnect(self, cr, uid, ids, context=None):
+        self.disconnect(cr, uid, context=context)
+        return {}
+
+
+
+    _sql_constraints = [
+        ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one') 
     ]
 
 sync_server_connection()
