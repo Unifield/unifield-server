@@ -90,17 +90,21 @@ class _float_format(float, _format):
             computation = self._field.computation
             
         if hasattr(self, 'lang_obj'):
-            result = self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
+            # dynamic number of digits if computation - do not interfer with number formatting according to locale
             if computation:
+                v = ("%%.%df" % digits) % self.name
+                num, decimals = v.split(".", 1)
                 # fixed min decimal value
                 min_digits = 2
                 # remove trailing zeros
-                result = result.rstrip('0')
+                decimals = decimals.rstrip('0')
                 # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
-                splitted_result = result.split('.')
-                if splitted_result and (len(splitted_result) == 2) and (len(splitted_result[1]) < min_digits):
-                    result = ("%%.%df" % min_digits) % float(result)
+                if len(decimals) < min_digits:
+                    digits = min_digits
+                else:
+                    digits = len(decimals)
             
+            result = self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
             return result
         
         return self.val
