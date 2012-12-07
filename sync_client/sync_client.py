@@ -35,7 +35,7 @@ import traceback
 import logging
 from sync_common.common import sync_log
 
-from threading import Thread
+from threading import Thread, RLock
 import pooler
 from datetime import datetime
 
@@ -158,114 +158,105 @@ class entity(osv.osv):
     def get_uuid(self, cr, uid, context=None):
         return self.get_entity(cr, uid, context=context).identifier
 
-    def sync_process(step='status', is_standalone=None):
-        is_standalone = not (step == 'status')
+    def __init__(self, *args, **kwargs):
+        self.sync_lock = RLock()
+        super(entity, self).__init__(*args, **kwargs)
+
+    def sync_process(step='status', is_step=None):
+        is_step = not (step == 'status')
 
         def decorator(fn):
 
             @functools.wraps(fn)
             def wrapper(self, cr, uid, context=None, *args, **kwargs):
 
-                # start logging
-                if getattr(self, 'is_syncing', False):
+                # First, check if we can acquire the lock or return False
+                if not self.sync_lock.acquire(blocking=False):
                     return False
-                
-                if is_standalone:
-                    self.is_syncing = True
-                
-                #is_standalone = step is not None
-                make_log = not getattr(self, 'log_id', False)
-                
-                # Runs the firstfn,sync_process is called
-                if make_log:
 
-                    self.log_cr = pooler.get_db(cr.dbname).cursor()
-                    self.log_cr.autocommit(True)
+                # Lock is acquired, so don't put any code outside the try...catch!!
+                try:
+                    # are we creating a new log line?
+                    make_log = not getattr(self, 'log_id', False)
+                    
+                    # we have to make the log
+                    if make_log:
+                        # let's make the private log cursor
+                        self.log_cr = pooler.get_db(cr.dbname).cursor()
+                        self.log_cr.autocommit(True)
 
-                    # Init log dict for sync.monitor
-                    self.log_info = {
-                        'error' : '',
-                        'status' : 'in-progress',
-                        'data_pull' : 'null',
-                        'msg_pull' : 'null',
-                        'data_push' : 'null',
-                        'msg_push' : 'null',
-                    }
-                    # Check if connection is up
-                    con = self.pool.get('sync.client.sync_server_connection')
-                    try:
+                        # Init log dict for sync.monitor
+                        self.log_info = {
+                            'error' : '',
+                            'status' : 'in-progress',
+                            'data_pull' : 'null',
+                            'msg_pull' : 'null',
+                            'data_push' : 'null',
+                            'msg_push' : 'null',
+                        }
+                        # already create the log to get the id early
+                        self.log_id = self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info, context=context)
+
+                        # Check if connection is up
+                        con = self.pool.get('sync.client.sync_server_connection')
                         con.connect(cr, uid, context=context)
-                    except osv.except_osv, e:
-                        self.log_info.update({
-                            'error' : self.log_info['error'] + _(e.value),
-                            'status' : 'failed',
-                        })
-                    else:
+                        # connect() raise an osv.except_osv if something goes wrong
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
+                            # TODO: replace the return value of upgrade to a status and raise an error on required update
                             up_to_date = self.upgrade(cr, uid, context=context)
                             if not up_to_date[0]:
-                                self.log_info.update({
-                                    'error' : self.log_info['error'] + "Revision Update failed: " + up_to_date[1],
-                                    'status' : 'failed',
-                                })
+                                raise osv.except_osv(_("Error!"), _("Revision Update Failed: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 self.log_info['error'] += "Revision Update Status: " + up_to_date[1]
-                    # Raise when error occurs
-                    if self.log_info['status'] == 'failed':
-                        self.log_info['end'] = fields.datetime.now()
-                        self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info)
-                        self.is_syncing = False
-                        self.log_cr.close()
-                        self.log_cr = None
-                        error = self.log_info['error']
-                        self.log_info = None
-                        raise osv.except_osv(_('Error!'), error)
 
-                # Prevent non-standalone syncs from running at the same time
-                elif not is_standalone:
-                    return False
-                
-                # Previous sync function failed so stop sync process from continuing
-                elif self.log_info['status'] != 'in-progress':
-                    return True
-
-                if make_log:
-                    self.log_id = self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info, context=context)
-                else:
+                    # update log line
                     self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
 
-                try:
+                    # ah... we can now call the function!
                     res = fn(self, cr, uid, *args, **kwargs)
                 except SkipStep:
                     # res failed but without exception
+                    assert is_step, "Cannot have a SkipTest error outside a sync step process!"
                     self.log_info[step] = 'null'
-                    self.log_info['error'] += '%s: Not a valid state' % state_prefix[step]
+                    self.log_info['error'] += "%s: Not a valid state, skipped.\n" % self.state_prefix[step]
                     if make_log:
-                        raise osv.except_osv(_('Error!'), 'You cannot perform this action now.')
+                        raise osv.except_osv(_('Error!'), "You cannot perform this action now.")
+                except osv.except_osv, e:
+                    self.log_info[step] = 'failed'
+                    if not is_step:
+                        self.log_info['error'] += e.value
+                    raise
                 except BaseException, e:
                     self.log_info[step] = 'failed'
-                    if is_standalone:
+                    error = unicode(e)
+                    if is_step:
                         self._logger.exception('Error in sync_process at step %s' % step)
-                        self.log_info['error'] = self.log_info.get('error', '') + "%s: %s" % (self.state_prefix[step], unicode(e))
+                        self.log_info['error'] += "%s: %s\n" % (self.state_prefix[step], error)
                     if make_log:
-                        raise osv.except_osv(_('Error!'), unicode(e))
+                        raise osv.except_osv(_('Error!'), error)
                     else:
                         raise
                 else:
                     self.log_info[step] = 'ok'
-                    if isinstance(res, (str, unicode)):
-                        self.log_info['error'] += res
+                    if isinstance(res, (str, unicode)) and res:
+                        if is_step:
+                            self.log_info['error'] += "%s: %s\n" % (self.state_prefix[step], res)
+                        else:
+                            self.log_info['error'] += res + "\n"
                 finally:
+                    # if we created the log, we close it
                     if make_log:
                         self.log_info['status'] = self.log_info[step]
                         self.log_info['end'] = fields.datetime.now()
+                    # update the log
                     self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
+                    # if we created the log, we close it
                     if make_log:
                         self.log_id = False
                         self.log_cr.close()
-                    if is_standalone:
-                        self.is_syncing = False
+                    # gotcha!
+                    self.sync_lock.release()
                 return res
 
             return wrapper
@@ -563,7 +554,7 @@ class entity(osv.osv):
         t.start()
         return True
 
-    @sync_process(is_standalone=True)
+    @sync_process(is_step=True)
     def sync(self, cr, uid, context=None):
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
@@ -574,11 +565,19 @@ class entity(osv.osv):
     def get_upgrade_status(self, cr, uid, context=None):
         return ""
 
+    # Check if lock can be acquired or not
+    def is_syncing(self):
+        acquired = self.sync_lock.acquire(blocking=False)
+        if not acquired:
+            return True
+        self.sync_lock.release()
+        return False
+
     def get_status(self, cr, uid, context=None):
         if not self.pool.get('sync.client.sync_server_connection').is_connected:
             return "Not Connected"
 
-        if getattr(self, 'is_syncing', False):
+        if self.is_syncing():
             return "Syncing..."
         
         last_log = self.last_log_status(cr, uid)
@@ -722,7 +721,10 @@ class sync_server_connection(osv.osv):
         self.disconnect(cr, uid, context=context)
         return {}
 
-
+    def write(self, *args, **kwargs):
+        # reset connection flag when data changed
+        self._uid = False
+        return super(sync_server_connection, self).write(*args, **kwargs)
 
     _sql_constraints = [
         ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one') 
