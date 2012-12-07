@@ -241,6 +241,10 @@ class purchase_order(osv.osv):
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
+        # some values were '' (empty string) and they were inconsistent with their type (such as date)
+        for k, v in vals.items():
+            if not v:
+                vals.update({k: False})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
