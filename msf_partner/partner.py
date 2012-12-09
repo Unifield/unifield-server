@@ -245,6 +245,26 @@ class res_partner(osv.osv):
                 vals['property_stock_supplier'] = msf_supplier[1]
         return super(res_partner, self).create(cr, uid, vals, context=context)
     
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1634, when it creates a new company each time a partner is duplicated
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        fields_to_reset = ['ref_companies'] # reset this value, otherwise the content of the field triggers the creation of a new company
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
+        res = super(res_partner, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
+        return res
+    
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
         '''
         Change the procurement method according to the partner type
