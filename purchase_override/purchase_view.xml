@@ -74,7 +74,7 @@
                         <newline />
                         <field name="categ" />
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
-                        <field name="details" />
+                        <field name="details" attrs="{'invisible': [('state', 'in', ['sourced', 'split'])]}"/>
                     </xpath>
                     <xpath expr="/form/notebook/page//field[@name='invoice_method']" position="replace">
                         <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />

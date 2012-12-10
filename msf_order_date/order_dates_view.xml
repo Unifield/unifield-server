@@ -50,8 +50,8 @@
                             	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"
                             	attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="ready_to_ship_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
-                            <field name="shipment_date" attrs="{'readonly': [('shipped', '=', True)], 'invisible': [('partner_type', '=', 'external')]}" />
+                            <field name="ready_to_ship_date" attrs="{'readonly': [('state', 'in', ['split', 'shipped', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}" />
+                            <field name="shipment_date" attrs="{'readonly': [('state', 'in', ['split', 'shipped', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}" />
                             <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
                         </group>
                     </xpath>
