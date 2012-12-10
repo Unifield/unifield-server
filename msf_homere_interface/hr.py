@@ -102,7 +102,7 @@ class hr_employee(osv.osv):
             e_ids = self.search(cr, uid, [('identification_id', '=', vals.get('identification_id'))])
             if e_ids:
                 msg = ','.join([x and x.get('name', '') for x in self.read(cr, uid, e_ids, ['name'])])
-                raise osv.except_osv(_('Error'), _('More than one employee exists with the same Identification No.: %s') % (msg or '',))
+                raise osv.except_osv(_('Error'), _('Employee code already used by:: %s') % (msg or '',))
         return True
 
     def create(self, cr, uid, vals, context=None):
