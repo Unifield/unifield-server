@@ -302,19 +302,19 @@ def format_decimal(value, digits=2, **kwargs):
     else:
         val = numbers.format_number(int(num), locale=locale)
 
-    result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
-    
-    # if we are treating a computation field, we apply the formatting algorithm
-    if result and kwargs.get('computation', False):
+    # process the decimals length
+    # if we are treating a computation field, we apply the formatting algorithm - do not interfer with number formatting according to locale
+    if kwargs.get('computation', False):
         # fixed min decimal value
         min_digits = 2
         # remove trailing zeros
-        result = result.rstrip('0')
+        decimals = decimals.rstrip('0')
         # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
-        splitted_result = result.split('.')
-        if splitted_result and (len(splitted_result) == 2) and (len(splitted_result[1]) < min_digits):
-            result = ("%%.%df" % min_digits) % float(result)
-    
+        if len(decimals) < min_digits:
+            decimals = decimals + '0'*(min_digits - len(decimals))
+
+    result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
+        
     return result
 
 def parse_decimal(value):
