@@ -48,5 +48,22 @@
             </field>
         </record>
 
+        <record id="view_account_journal_view_search_inherit" model="ir.ui.view">
+            <field name="name">account.journal.view.search.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_journal_search"/>
+            <field name="priority" eval="18"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search//field[@name='name']" position="replace">
+                        <field name="name" select="1"/>
+                        <field name="type" select="1"/>
+                    </xpath>
+                    <xpath expr="/search//field[@name='user_id']" position="replace"/>
+                </data>
+            </field>
+        </record>
+
     </data>
 </openerp>

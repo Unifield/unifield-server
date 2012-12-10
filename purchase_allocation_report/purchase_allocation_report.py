@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+import decimal_precision as dp
+
 import tools
 
 from purchase_override import ORDER_CATEGORY, PURCHASE_ORDER_STATE_SELECTION
@@ -56,7 +58,7 @@ class purchase_order_line_allocation_report(osv.osv):
         'product_id': fields.many2one('product.product', string='Product'),
         'product_qty': fields.float(digits=(16,2), string='Qty'),
         'uom_id': fields.many2one('product.uom', string='UoM'),
-        'unit_price': fields.float(digits=(16,2), string='Unit Price'),
+        'unit_price': fields.float(string='Unit Price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'analytic_id': fields.many2one('analytic.distribution', string='Distribution'),
         'percentage': fields.float(digits=(16,2), string='%'),
         'subtotal': fields.float(digits=(16,2), string='Subtotal'),

@@ -256,7 +256,7 @@
             <para style="terp_default_Right_9">[[ formatLang(l.quantity)]] [[ (l.uos_id and l.uos_id.name) or '' ]]</para>
           </td>
           <td>
-            <para style="terp_default_Right_9">[[ formatLang(l.price_unit) ]]</para>
+            <para style="terp_default_Right_9">[[ l.price_unit or '0.00' ]]</para>
           </td>
           <td>
             <para style="terp_default_Right_9">[[ formatLang(l.price_subtotal, dp='Account') ]] [[ o.currency_id.symbol ]]</para>
