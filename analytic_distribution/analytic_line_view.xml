@@ -38,6 +38,10 @@
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
                         <field name="ref"/>
                     </xpath>
+                    <xpath expr="/search//field[@name='journal_id']" position="replace">
+                        <field name="journal_id"/>
+                        <field name="journal_type"/>
+                    </xpath>
                 </data>
             </field>
         </record>

@@ -77,6 +77,12 @@ account_journal()
 class account_move(osv.osv):
     _inherit = 'account.move'
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
@@ -84,8 +90,10 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj']),('is_current_instance','=',True)]"),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj'])]"),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
+        'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
+            help="This indicates which Journal Type is attached to this Journal Entry"),
     }
 
     _defaults = {
@@ -180,6 +188,22 @@ class account_move(osv.osv):
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
+        return res
+
+    def post(self, cr, uid, ids, context=None):
+        """
+        Add document date
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # If invoice in context, we come from self.action_move_create from invoice.py. So at invoice validation step.
+        if context.get('invoice', False):
+            inv_info = self.pool.get('account.invoice').read(cr, uid, context.get('invoice') and context.get('invoice').id, ['document_date'])
+            if inv_info.get('document_date', False):
+                self.write(cr, uid, ids, {'document_date': inv_info.get('document_date')})
+        res = super(account_move, self).post(cr, uid, ids, context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):

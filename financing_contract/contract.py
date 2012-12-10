@@ -191,7 +191,8 @@ class financing_contract_contract(osv.osv):
                     'overhead_percentage': source_format.overhead_percentage,
                 }
                 self.pool.get('financing.contract.format').copy_format_lines(cr, uid, donor.format_id.id, format_id, context=context)
-        return {'value': format_vals}
+                res = {'value': format_vals}
+        return res
     
     def onchange_currency_table(self, cr, uid, ids, currency_table_id, reporting_currency_id, context=None):
         values = {'reporting_currency': False}

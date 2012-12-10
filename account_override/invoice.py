@@ -29,6 +29,8 @@ from tools.translate import _
 import logging
 import datetime
 
+import decimal_precision as dp
+
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
@@ -232,6 +234,7 @@ class account_invoice_line(osv.osv):
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'line_number': fields.integer(string='Line Number'),
+        'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
     }
 
     _defaults = {

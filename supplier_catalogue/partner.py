@@ -42,6 +42,13 @@ class res_partner(osv.osv):
         'catalogue_ids': fields.one2many('supplier.catalogue', 'partner_id', string='Catalogues', readonly=True),
         'catalogue_bool': fields.function(_get_bool_cat, type='char', method=True, string='Catalogue'),
     }
+
+    def copy(self, cr, uid, partner_id, defaults=None, context=None):
+        if not defaults:
+            defaults = {}
+        defaults['catalogue_ids'] = []
+
+        return super(res_partner, self).copy(cr, uid, partner_id, defaults, context=context)
     
 res_partner()
 
