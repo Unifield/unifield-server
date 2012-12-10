@@ -126,6 +126,14 @@ class hr_employee(osv.osv):
 #            if not vals.get('cost_center_id', False):
 #                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
             self.check_identification_id(cr, uid, [], vals, context)
+            # Add Nat. staff by default if not in vals
+            if not vals.get('destination_id', False):
+                try:
+                    ns_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_destination_national_staff')[1]
+                except ValueError:
+                    ns_id = False
+                vals.update({'destination_id': ns_id})
+
         return super(hr_employee, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
