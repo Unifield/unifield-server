@@ -282,7 +282,7 @@ class sourcing_line(osv.osv):
                 if line.type == 'make_to_stock':
                     raise osv.except_osv(_('Warning'), _("You can't Source 'from stock' if you don't have product."))
                 if line.supplier and line.supplier.partner_type in ('external', 'esc'):
-                    raise osv.except_osv(_('Warning'), _("You can't Source to an 'External' partner if you don't have product."))
+                    raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
 
         return True
 
