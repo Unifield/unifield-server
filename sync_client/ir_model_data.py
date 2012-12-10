@@ -366,7 +366,6 @@ orm.write = write
 
 def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name):
     if destination_name == instance_name or not destination_name:
-        print "destination name", destination_name
         return
         
     message_data = {
@@ -377,7 +376,6 @@ def generate_message_for_destination(self, cr, uid, destination_name, xml_id, in
             'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
             'destination_name': destination_name
     }
-    print "message_data", message_data
     self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
     instance_obj = self.pool.get('msf.instance')
     instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
@@ -402,9 +400,6 @@ def unlink(self, cr, uid, ids, context=None):
         data = self.read(cr, uid, ids, [self._delete_owner_field], context=context)
         data = format_data_per_id(data)
         destination_names = self.get_destination_name(cr, uid, ids, self._delete_owner_field, context=context)
-        print 'Sync delete', xml_ids
-        import pprint
-        pprint.pprint(data)
         for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
             xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
             generate_message_for_destination(self, cr, uid, destination_names[i], xml_id, instance_name)
