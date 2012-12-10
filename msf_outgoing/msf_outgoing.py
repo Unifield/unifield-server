@@ -3195,13 +3195,8 @@ class sale_order(osv.osv):
         order = kwargs['order']
         
         picking_data['state'] = 'draft'
-        picking_data['min_date'] = order.ready_to_ship_date
-        picking_data['min_date_manually'] = True
         if setup.delivery_process == 'simple':
             picking_data['subtype'] = 'standard'
-            shipment_lt = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.shipment_lead_time
-            min_date = time.strptime(picking_data['min_date'], '%Y-%m-%d') + timedelta(days=shipment_lt)
-            picking_data['min_date'] = time.strftime('%Y-%m-%d', min_date)
             # use the name according to picking ticket sequence
             pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
         else:

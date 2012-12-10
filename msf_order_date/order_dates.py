@@ -1396,6 +1396,8 @@ class stock_picking(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if not result[obj.id].get('min_date') and obj.manual_min_date_stock_picking:
                 result.setdefault(obj.id, {}).update({'min_date': obj.manual_min_date_stock_picking})
+            elif result[obj.id].get('min_date'):
+                continue
             else:
                 if obj.purchase_id:
                     result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date})
