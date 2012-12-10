@@ -1,17 +1,13 @@
 <?xml version="1.0" ?>
 <openerp>
     <data noupdate="0">
-    <!-- We delete the default data of the module report_webkit -->
-    <delete id="report_webkit.ir_property_webkitheaderdefault0" model="ir.property" />
-    <delete id="report_webkit.ir_header_img_camptocamplogo0" model="ir.header_img" />
-    <delete id="report_webkit.ir_header_webkit_basesample0" model="ir.header_webkit" />
     <!-- We set the default data for MSF -->
-        <record id="ir_property_webkitheaderdefault0" model="ir.property">
+        <record id="report_webkit.ir_property_webkitheaderdefault0" model="ir.property" >
             <field name="fields_id" ref="report_webkit.field_ir_act_report_xml_webkit_header"/>
             <field eval="&quot;&quot;&quot;webkit_header_default&quot;&quot;&quot;" name="name"/>
-            <field eval="&quot;&quot;&quot;ir.header_webkit,2&quot;&quot;&quot;" name="value"/>
+            <field eval="&quot;&quot;&quot;ir.header_webkit,1&quot;&quot;&quot;" name="value"/>
         </record>
-        <record id="ir_header_webkit_basesample0" model="ir.header_webkit">
+        <record id="report_webkit.ir_header_webkit_basesample0" model="ir.header_webkit" >
             <field name="footer_html"><![CDATA[<html>
     <head>
         <meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
@@ -172,7 +168,7 @@ width:50%;
 }]]> </field>
             <field eval="&quot;&quot;&quot;Base Sample&quot;&quot;&quot;" name="name"/>
         </record>
-        <record id="ir_header_img_msf0" model="ir.header_img">
+        <record id="report_webkit.ir_header_img_camptocamplogo0" model="ir.header_img" >
             <field eval="&quot;&quot;&quot;png&quot;&quot;&quot;" name="type"/>
             <field eval="&quot;&quot;&quot;/9j/4AAQSkZJRgABAQEBLAEsAAD/4RJORXhpZgAATU0AKgAAAAgABwESAAMAAAABAAEAAAEaAAUA
 AAABAAAAYgEbAAUAAAABAAAAagEoAAMAAAABAAIAAAExAAIAAAALAAAAcgEyAAIAAAAUAAAAfodp
