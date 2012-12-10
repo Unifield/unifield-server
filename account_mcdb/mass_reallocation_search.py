@@ -37,8 +37,6 @@ class mass_reallocation_search(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Prepare some values
-        valid_ids = []
         # Only process first id
         account = self.pool.get('account.analytic.account').browse(cr, uid, ids, context=context)[0]
         if account.category != 'FUNDING':
