@@ -248,7 +248,8 @@ class res_partner(osv.osv):
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
-        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1634, when it creates a new company each time a partner is duplicated
+        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1631/1632, 
+        when duplicating a new partner (by button duplicate), or company, it creates duplicated currencies
         '''
         if default is None:
             default = {}
