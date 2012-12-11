@@ -217,6 +217,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         # write order line on PO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
+        self._check_service(cr, uid, ids, vals, context=context)
         msg_to_return = get_log_message(to_write=to_write, obj=obj)
         if msg_to_return:
             self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id})

@@ -80,7 +80,7 @@ class msf_budget_line(osv.osv):
             # if commitments are set to False in context, the engagement analytic journals are removed
             # from the domain
             if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', 'in', engagement_journal_ids))
+                actual_domain.append(('journal_id', 'not in', engagement_journal_ids))
             
             # Call budget_tools method
             res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)

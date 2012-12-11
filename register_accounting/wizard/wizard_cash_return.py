@@ -306,7 +306,7 @@ class wizard_cash_return(osv.osv_memory):
 
         # Prepare some values
         date = move_line.date
-        document_date = move_line.date
+        document_date = move_line.document_date
         name = move_line.name
         amount = (move_line.credit - move_line.debit) or 0.0
         account_id = move_line.account_id.id
@@ -611,11 +611,14 @@ class wizard_cash_return(osv.osv_memory):
                     # create the move with 2 move lines for the supplier
                     if total > 0:
                         # prepare the move
-                        supp_move_name = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description'], context=context).get('description', "/")
+                        supp_move_info = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description', 'date'], context=context)
+                        supp_move_name = supp_move_info.get('description', "/")
+                        supp_move_date = supp_move_info.get('date', curr_date)
                         supp_move_vals = {
                             'journal_id': journal.id,
                             'period_id': period_id,
-                            'date': curr_date,
+                            'date': supp_move_date,
+                            'document_date': supp_move_date,
                             'name': supp_move_name,
                             'partner_id': supplier_id,
                         }
@@ -629,9 +632,9 @@ class wizard_cash_return(osv.osv_memory):
                         # Create the move
                         supp_move_id = move_obj.create(cr, uid, supp_move_vals, context=context)
                         # Create move_lines
-                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, curr_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, total, 0.0, supp_move_id, False, context=context)
-                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, curr_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, 0.0, total, supp_move_id, False, context=context)
                         # We hard post the move
                         supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)

@@ -132,3 +132,9 @@
     for info in self.browse(cr, uid, info_ids):
       assert int(info.delay) == 10, "Delay is not correct :: result: %s (expected 10)" % info.delay
       assert len(info.pricelist_ids) == 2, "Number of lines in supplier info not correct :: result %s (expected 2)" % len(info.pricelist_ids)
+-
+  Try to duplicate a partner with a catalogue
+-
+  !python {model: res.partner}: |
+     self.copy(cr, uid, ref('supplier1'), context=context)
+

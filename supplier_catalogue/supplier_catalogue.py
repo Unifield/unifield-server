@@ -27,6 +27,8 @@ from tools.translate import _
 from mx.DateTime import DateFrom, now, RelativeDate
 from datetime import date
 
+import decimal_precision as dp
+
 import time
 
 import base64
@@ -514,6 +516,11 @@ class supplier_catalogue_line(osv.osv):
                                                   'catalogue_id': vals['catalogue_id'],
                                                   },
                                                   context=context)
+        
+        # Pass 'no_store_function' to False to compute the sequence on the pricelist.partnerinfo object
+        create_context = context.copy()
+        if context.get('no_store_function'):
+            create_context['no_store_function'] = False
             
         price_id = price_obj.create(cr, uid, {'name': catalogue.name,
                                               'suppinfo_id': sup_id,
@@ -525,7 +532,7 @@ class supplier_catalogue_line(osv.osv):
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_from': catalogue.period_from,
                                               'valid_till': catalogue.period_to,}, 
-                                              context=context)
+                                              context=create_context)
         
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})
@@ -633,7 +640,7 @@ class supplier_catalogue_line(osv.osv):
                                   help='Minimal order quantity to get this unit price.'),
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                   help='UoM of the product used to get this unit price.'),
-        'unit_price': fields.float(digits=(16,2), string='Unit Price', required=True),
+        'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                    help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),

@@ -27,8 +27,7 @@
         Add hooks to purchase class
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
+    "init_xml": [],
     "depends" : [
         "purchase",
         "account_override",

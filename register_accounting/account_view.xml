@@ -350,7 +350,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
-                <tree string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True">
+                <tree string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
                     <button name="button_advance" states="hard" string="Advance return" type="object" 
                         icon="terp-stock_effects-object-colorize" context="context"
                         attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
@@ -359,7 +359,7 @@
                     <field name="amount" invisible="1"/>
                     <field name="document_date"/>
                     <field name="date"/>
-                    <field name="sequence"/>
+                    <field name="sequence_for_reference"/>
                     <field name="name" string="Description"/>
                     <field name="ref"/>
                     <field name="account_id"/>
@@ -377,6 +377,37 @@
                     <field name="statement_id"/>
                     <field name="direct_invoice" invisible="1" readonly="1"/>
                 </tree>
+            </field>
+        </record>
+
+    <!-- Bank Statement Line Form View -->
+        <record id="view_account_bank_statement_line_form" model="ir.ui.view">
+          <field name="name">view.account.bank.statement.line.form</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Register Line" hide_duplicate_button="1" hide_delete_button="1" hide_new_button="1">
+                    <field name="from_cash_return" invisible="1" readonly="1"/>
+                    <field name="amount" invisible="1" readonly="1"/>
+                    <field name="document_date" readonly="1"/>
+                    <field name="date" readonly="1"/>
+                    <field name="sequence" readonly="1"/>
+                    <field name="name" string="Description" readonly="1"/>
+                    <field name="ref" readonly="1"/>
+                    <field name="account_id" readonly="1"/>
+                    <field name="partner_id" readonly="1"/>
+                    <field name="employee_id" readonly="1"/>
+                    <field name="register_id" readonly="1"/>
+                    <field name="amount_in" readonly="1"/>
+                    <field name="amount_out" readonly="1"/>
+                    <field name="currency_id" readonly="1"/>
+                    <field name="functional_in" readonly="1"/>
+                    <field name="functional_out" readonly="1"/>
+                    <field name="functional_currency_id" readonly="1"/>
+                    <field name="state" readonly="1"/>
+                    <field name="statement_id" readonly="1"/>
+                    <field name="direct_invoice" invisible="1" readonly="1"/>
+                </form>
             </field>
         </record>
 
@@ -626,19 +657,20 @@
                     <notebook colspan="4">
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
+                                <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
-                                    <field name="document_date"/>
-                                    <field name="date"/>
+                                    <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
                                     <field name="cheque_number" required="1"/>
                                     <field name="sequence_for_reference"/>
-                                    <field name="name" string="Description"/>
+                                    <field name="name" string="Description" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
                                     <field name="partner_type_mandatory" invisible="1"/>
                                     <field name="ref"/>
                                     <field domain="[('journal_id','=',parent.journal_id), ('type', '&lt;&gt;', 'view')]" name="account_id" 
                                         on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
                                     <field name="partner_type"
-                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
                                             context="{'curr': parent.currency}"
                                         />
@@ -806,7 +838,7 @@
             </field>
         </record>
     <!-- UF-426: remove Journal Items in Cash and Bank -->
-        <delete model="ir.ui.menu" id="account.menu_action_account_moves_bank"/>
+    <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
     <!--
       Add onchange on account_id for Journal items (account.move.line)

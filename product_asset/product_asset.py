@@ -383,8 +383,9 @@ class product_product(osv.osv):
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
 #        if 'type' in vals and vals['type'] == 'consu':
-        if vals.get('type') == 'consu':
-            vals.update(procure_method='make_to_order')
+# Remove these two lines to display the warning message of the constraint
+#        if vals.get('type') == 'consu':
+#            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).create(cr, uid, vals, context=context)
     
@@ -396,8 +397,9 @@ class product_product(osv.osv):
         if 'type' in vals and vals['type'] != 'product':
             vals.update(subtype='single')
 #        if 'type' in vals and vals['type'] == 'consu':
-        if vals.get('type') == 'consu':
-            vals.update(procure_method='make_to_order')
+# Remove these two lines to display the warning message of the constraint
+#        if vals.get('type') == 'consu':
+#            vals.update(procure_method='make_to_order')
         # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
 

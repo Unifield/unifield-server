@@ -79,6 +79,28 @@ class sourcing_line(osv.osv):
             raise osv.except_osv(_('Invalid action !'), _('Cannot delete Sale Order Line(s) from the sourcing tool !'))
         # delete the sourcing line
         return super(sourcing_line, self).unlink(cr, uid, ids, context)
+
+    def _getAvailableStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
+        '''
+        get available stock for the product of the corresponding sourcing line
+        '''
+        result = {}
+        productObj = self.pool.get('product.product')
+        # for each sourcing line
+        for sl in self.browse(cr, uid, ids, context):
+            product_context = context
+            if sl.product_id:
+                real_stock = sl.product_id.qty_available
+                product_context = context
+                product_context.update({'states': ('assigned',), 'what': ('out',)})
+                productId = productObj.get_product_available(cr, uid, [sl.product_id.id], context=product_context)
+                res = real_stock + productId.get(sl.product_id.id, 0.00)
+            else:
+                res = 0.00
+
+            result[sl.id] = res
+            
+        return result
     
     def _getVirtualStock(self, cr, uid, ids, field_names=None, arg=False, context=None):
         '''
@@ -87,18 +109,26 @@ class sourcing_line(osv.osv):
         '''
         result = {}
         productObj = self.pool.get('product.product')
+
+        # UF-1411 : Compute the virtual stock on Stock + Input locations
+        location_ids = []
+        wids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+        for w in self.pool.get('stock.warehouse').browse(cr, uid, wids, context=context):
+            location_ids.append(w.lot_stock_id.id)
+            location_ids.append(w.lot_input_id.id)
+
         # for each sourcing line
         for sl in self.browse(cr, uid, ids, context):
-            rts = sl.rts
-            productId = sl.product_id.id
-            if productId:
-                productList = [productId]
+            product_context = context
+            rts = sl.rts < time.strftime('%Y-%m-%d') and time.strftime('%Y-%m-%d') or sl.rts
+            product_context.update({'location': location_ids, 'to_date': '%s 23:59:59' % rts})
+            if sl.product_id:
+                product_virtual = productObj.browse(cr, uid, sl.product_id.id, context=product_context)
+                res = product_virtual.virtual_available
             else:
-                productList = []
-            res = productObj.get_product_available(cr, uid, productList, context={'states': ('confirmed','waiting','assigned','done'),
-                                                                                  'what': ('in', 'out'),
-                                                                                  'to_date': rts})
-            result[sl.id] = res.get(productId, 0.0)
+                res = 0.00
+
+            result[sl.id] = res
             
         return result
     
@@ -249,8 +279,8 @@ class sourcing_line(osv.osv):
         'type': fields.selection(_SELECTION_TYPE, string='Procurement Method', readonly=True, states={'draft': [('readonly', False)]}),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string='PO/CFT', readonly=True, states={'draft': [('readonly', False)]}),
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
-        'available_stock': fields.float('Available Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
         'estimated_delivery_date': fields.function(_get_date, type='date', method=True, store=False, string='Estimated DD', readonly=True, multi='dates'),
@@ -266,6 +296,29 @@ class sourcing_line(osv.osv):
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
+    
+    def _check_line_conditions(self, cr, uid, ids, context=None):
+        '''
+        Check if the line have good values
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.type == 'make_to_order' and line.po_cft not in ['cft'] and not line.product_id and \
+               line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product, the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""))
+
+            if not line.product_id:
+                if line.po_cft == 'cft':
+                    raise osv.except_osv(_('Warning'), _("You can't source with 'Tender' if you don't have product."))
+                if line.type == 'make_to_stock':
+                    raise osv.except_osv(_('Warning'), _("You can't Source 'from stock' if you don't have product."))
+                if line.supplier and line.supplier.partner_type in ('external', 'esc'):
+                    raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
+
+        return True
+
+    _constraints = [
+        (_check_line_conditions, 'An error occurs on the data of the line', ['type', 'cft', 'product_id', 'supplier']),
+    ]
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -382,10 +435,19 @@ class sourcing_line(osv.osv):
         if type == make to stock, change pocft to False
         '''
         value = {}
+        message = {}
+        if id:
+            line = self.browse(cr, uid, id, context=context)[0]
+            if line.product_id.type in ('consu', 'service', 'service_recep') and type == 'make_to_stock':
+                product_type = line.product_id.type=='consu' and 'non stockable' or 'service'
+                value.update({'type': 'make_to_order'})
+                message.update({'title': _('Warning'),
+                                'message': _('You cannot choose \'from stock\' as method to source a %s product !') % product_type})
+
         if type == 'make_to_stock':
             value.update({'po_cft': False})
     
-        return {'value': value}
+        return {'value': value, 'warning': message}
     
     def onChangeSupplier(self, cr, uid, id, supplier, context=None):
         '''
@@ -446,7 +508,7 @@ class sourcing_line(osv.osv):
 #            default.update({'sale_order_id': soId,})
             
         return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
-    
+
     def confirmLine(self, cr, uid, ids, context=None):
         '''
         set the corresponding line's state to 'confirmed'
@@ -472,9 +534,6 @@ class sourcing_line(osv.osv):
                     raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
                     the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
                     """))
-            
-            if sl.po_cft == 'cft' and not sl.product_id:
-                raise osv.except_osv(_('Warning'), _("You can't Source with 'Tender' if you don't have product."))
             
             # set the corresponding sale order line to 'confirmed'
             result.append((sl.id, sl.sale_order_line_id.write({'state': state_to_use}, context)))
@@ -738,7 +797,7 @@ class sale_order_line(osv.osv):
         
         if vals.get('product_id',False):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
-            if bropro.type == 'consu':
+            if bropro.type in ('consu', 'service', 'service_recep'):
                 vals['type'] = 'make_to_order'
         
         # fill po/cft : by default, if mto -> po and po_cft is not specified in data, if mts -> False
@@ -835,7 +894,7 @@ class sale_order_line(osv.osv):
 
         if vals.get('product_id',False):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
-            if bropro.type == 'consu':
+            if bropro.type in ('consu', 'service', 'service_recep'):
                 vals['type'] = 'make_to_order'
 
         # update the corresponding sourcing line if not called from a sourcing line updated
@@ -954,7 +1013,7 @@ class procurement_order(osv.osv):
             st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
             if 'pricelist' in kwargs:
                 cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price)
+                st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             line.update({'price_unit': st_price})
         return line
     

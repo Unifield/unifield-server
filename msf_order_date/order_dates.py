@@ -692,11 +692,11 @@ class purchase_order(osv.osv):
         res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         return res
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         """
         Set the delivery_confirmed_date if order_type == 'purchase_list'
         """
-        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)
         if not 'value' in res:
             res['value'] = {}
         if order_type == 'purchase_list' and delivery_requested_date:
@@ -1430,7 +1430,8 @@ class stock_picking(osv.osv):
         self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
         return True
 
-    _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
+    # utp-360: I rename the date 'Actual Receipt Date' because before it was 'Creation Date'
+    _columns = {'date': fields.datetime('Actual Receipt Date', help="Date of Order", select=True),
                 'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
                                             method=True, store=True, type='datetime', string='Expected Date', select=1,
                                             help="Expected date for the picking to be processed"),

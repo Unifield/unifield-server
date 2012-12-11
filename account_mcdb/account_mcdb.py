@@ -329,7 +329,7 @@ class account_mcdb(osv.osv_memory):
             # prepare tuples that would be processed
             booking = ('amount_book_from', 'amount_book_to', 'amount_currency')
             functional = ('amount_func_from', 'amount_func_to', 'balance')
-            for curr in [booking, functional]: #FIXME:add functional when possible
+            for curr in [booking, functional]:
                 # Prepare some values
                 mnt_from = getattr(wiz, curr[0]) or False
                 mnt_to = getattr(wiz, curr[1]) or False
@@ -396,6 +396,9 @@ class account_mcdb(osv.osv_memory):
         # Prepare some value
         res_id = ids[0]
         all_fields = True
+        # Search model
+        wiz = self.browse(cr, uid, res_id)
+        res_model = wiz and wiz.model or False
         if field and field in (self._columns and self._columns.keys()):
             if self._columns[field]._type == 'many2many':
                 # Don't clear all other fields
@@ -404,15 +407,12 @@ class account_mcdb(osv.osv_memory):
                 self.write(cr, uid, ids, {field: [(6,0,[])]}, context=context)
         # Clear all fields if necessary
         if all_fields:
-            res_id = self.create(cr, uid, {}, context=context)
+            res_id = self.create(cr, uid, {'model': res_model}, context=context)
         # Update context
         context.update({
             'active_id': ids[0],
             'active_ids': ids,
         })
-        # Search model
-        wiz = self.browse(cr, uid, res_id)
-        res_model = wiz and wiz.model or False
         # Prepare some values
         name = _('Selector')
         view_name = False
@@ -442,7 +442,7 @@ class account_mcdb(osv.osv_memory):
     def _button_add(self, cr, uid, ids, obj=False, field=False, args=[], context=None):
         """
         Search all elements of an object (obj) regarding criteria (args). Then return wizard and complete given field (field).
-        NB: We consider field is always a MANY2ONE field! (no sense to add all elements of another field…
+        NB: We consider field is always a MANY2ONE field! (no sense to add all elements of another field...)
         """
         # Some verifications
         if not context:
