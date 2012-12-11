@@ -1460,7 +1460,7 @@ class stock_picking(osv.osv):
         for pick in self.browse(cr, uid, ids, context=context):
             if vals.get('min_date_manually', pick.min_date_manually) and vals.get('min_date', vals.get('manual_min_date_stock_picking')):
                 vals.update({'manual_min_date_stock_picking': vals.get('min_date', vals.get('manual_min_date_stock_picking'))})
-                move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), ('state', 'not in', ('done', 'cancel')], context=context)
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), ('state', 'not in', ('done', 'cancel'))], context=context)
                 move_obj.write(cr, uid, move_ids, {'date_expected': vals.get('min_date', vals.get('manual_min_date_stock_picking'))}, context=context)
                 
         return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
