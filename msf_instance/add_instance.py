@@ -119,7 +119,7 @@ class account_journal(osv.osv):
     
     def write(self, cr, uid, ids, vals, context=None):
         analytic_obj = self.pool.get('account.analytic.journal')
-        if 'analytic_journal_id' in vals:
+        if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
             
             instance_id = False
