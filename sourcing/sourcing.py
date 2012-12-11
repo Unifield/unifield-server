@@ -296,6 +296,29 @@ class sourcing_line(osv.osv):
              'name': lambda self, cr, uid, context=None: self.pool.get('ir.sequence').get(cr, uid, 'sourcing.line'),
              'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
     }
+    
+    def _check_line_conditions(self, cr, uid, ids, context=None):
+        '''
+        Check if the line have good values
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.type == 'make_to_order' and line.po_cft not in ['cft'] and not line.product_id and \
+               line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product, the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""))
+
+            if not line.product_id:
+                if line.po_cft == 'cft':
+                    raise osv.except_osv(_('Warning'), _("You can't source with 'Tender' if you don't have product."))
+                if line.type == 'make_to_stock':
+                    raise osv.except_osv(_('Warning'), _("You can't Source 'from stock' if you don't have product."))
+                if line.supplier and line.supplier.partner_type in ('external', 'esc'):
+                    raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
+
+        return True
+
+    _constraints = [
+        (_check_line_conditions, 'An error occurs on the data of the line', ['type', 'cft', 'product_id', 'supplier']),
+    ]
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -485,7 +508,7 @@ class sourcing_line(osv.osv):
 #            default.update({'sale_order_id': soId,})
             
         return super(sourcing_line, self).copy_data(cr, uid, id, default, context=context)
-    
+
     def confirmLine(self, cr, uid, ids, context=None):
         '''
         set the corresponding line's state to 'confirmed'
@@ -511,9 +534,6 @@ class sourcing_line(osv.osv):
                     raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
                     the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
                     """))
-            
-            if sl.po_cft == 'cft' and not sl.product_id:
-                raise osv.except_osv(_('Warning'), _("You can't Source with 'Tender' if you don't have product."))
             
             # set the corresponding sale order line to 'confirmed'
             result.append((sl.id, sl.sale_order_line_id.write({'state': state_to_use}, context)))
