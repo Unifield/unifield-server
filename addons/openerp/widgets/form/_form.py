@@ -435,8 +435,13 @@ class Float(TinyInputWidget):
             digits = eval(digits)
 
         integer, digit = digits
+        
+        # custom fields - decimal_precision computation
+        computation = attrs.get('computation', False)
+        if isinstance(computation, basestring):
+            computation = eval(computation)
 
-        self.validator = validators.Float(digit=digit)
+        self.validator = validators.Float(digit=digit, computation=computation)
 
 #        if not self.default:
 #            self.default = 0.0

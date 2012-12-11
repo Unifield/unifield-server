@@ -1126,6 +1126,10 @@ class Form(SecuredController):
                 digit = field[k].get('digits')
                 if digit: digit = digit[1]
                 values2[k]['digit'] = digit or 2
+                
+                # custom fields - decimal_precision computation
+                computation = field[k].get('computation')
+                values2[k]['computation'] = computation
 
         values = TinyForm(**values2).from_python().make_plain()
 

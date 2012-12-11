@@ -300,9 +300,14 @@ class List(TinyWidget):
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
+        
+        # custom fields - decimal_precision computation
+        computation = attrs.get('computation', False)
+        if isinstance(computation, basestring):
+            computation = eval(computation)
 
         integer, digit = digits
-        return format.format_decimal(sum or 0.0, digit)
+        return format.format_decimal(sum or 0.0, digit, computation=computation)
 
     def do_real_sum(self, data, field):
         sum = 0.0
@@ -320,9 +325,14 @@ class List(TinyWidget):
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
+        
+        # custom fields - decimal_precision computation
+        computation = attrs.get('computation', False)
+        if isinstance(computation, basestring):
+            computation = eval(computation)
 
         integer, digit = digits
-        return format.format_decimal(sum or 0.0, digit)
+        return format.format_decimal(sum or 0.0, digit, computation=computation)
 
 
     def display(self, value=None, **params):
@@ -602,9 +612,14 @@ class Float(Char):
         digits = self.attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
+            
+        # custom fields - decimal_precision computation
+        computation = self.attrs.get('computation', False)
+        if isinstance(computation, basestring):
+            computation = eval(computation)
 
         integer, digit = digits
-        return format.format_decimal(self.value or 0.0, digit)
+        return format.format_decimal(self.value or 0.0, digit, computation=computation)
 
     def get_sortable_text(self):
         return ustr(self.value or '0.0')

@@ -290,7 +290,7 @@ def _convert_date_format_in_domain(domain, fields, context):
 
     return fixed_domain
 
-def format_decimal(value, digits=2):
+def format_decimal(value, digits=2, **kwargs):
     locale = get_locale()
     v = ("%%.%df" % digits) % value
     if not digits:
@@ -302,7 +302,20 @@ def format_decimal(value, digits=2):
     else:
         val = numbers.format_number(int(num), locale=locale)
 
-    return val + unicode(numbers.get_decimal_symbol(locale) + decimals)
+    # process the decimals length
+    # if we are treating a computation field, we apply the formatting algorithm - do not interfer with number formatting according to locale
+    if kwargs.get('computation', False):
+        # fixed min decimal value
+        min_digits = 2
+        # remove trailing zeros
+        decimals = decimals.rstrip('0')
+        # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
+        if len(decimals) < min_digits:
+            decimals = decimals + '0'*(min_digits - len(decimals))
+
+    result = val + unicode(numbers.get_decimal_symbol(locale) + decimals)
+        
+    return result
 
 def parse_decimal(value):
 
