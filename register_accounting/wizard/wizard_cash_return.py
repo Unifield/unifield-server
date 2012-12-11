@@ -515,7 +515,7 @@ class wizard_cash_return(osv.osv_memory):
         if wizard.returned_amount > 0:
             return_name = "Cash return"
             return_acc_id = register.journal_id.default_credit_account_id.id
-            return_id = self.create_move_line(cr, uid, ids, wizard.date, return_name, journal, register, False, False, return_acc_id, \
+            return_id = self.create_move_line(cr, uid, ids, wizard.date, return_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
                 wizard.returned_amount, 0.0, move_id, False, context=context)
         if wizard.display_invoice:
             # make treatment for invoice lines
