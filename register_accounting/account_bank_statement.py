@@ -94,9 +94,11 @@ class account_journal(osv.osv):
         if not args or not context.get('curr'):
             return dom
         if args[0][2]:
-           t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
-           if t['type_for_register'] == 'transfer_same':
-               return dom+[('currency', 'in', [context['curr']])]
+            t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
+            if t['type_for_register'] == 'transfer_same':
+                return dom+[('currency', 'in', [context['curr']])]
+            elif t['type_for_register'] == 'transfer':
+                return dom+[('currency', 'not in', [context['curr']])]
         return dom
 
     _columns = {
