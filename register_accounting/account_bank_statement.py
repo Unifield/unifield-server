@@ -1792,7 +1792,7 @@ class account_bank_statement_line(osv.osv):
                 curr_field = 'currency_from'
         if absl and absl.transfer_amount:
             vals.update({amount_field: absl.transfer_amount,})
-        elif absl and absl.transfer_journal_id:
+        if absl and absl.transfer_journal_id:
             vals.update({'currency_id': absl.transfer_journal_id.currency.id, curr_field: absl.transfer_journal_id.currency.id})
         if absl and absl.state == 'hard':
             vals.update({'state': 'closed',})
