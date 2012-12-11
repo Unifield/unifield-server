@@ -26,7 +26,6 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
 import time
-import addons
 
 
 class real_average_consumption(osv.osv):
@@ -106,17 +105,28 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     if row[3]:
                         lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])])
                         if not lot:
-                            error += "Line %s in your Excel file: batch number %s not found, please fix the red line below.\n" % (line_num, row[3])
+                            error += "Line %s in your Excel file: batch number %s not found.\n" % (line_num, row[3])
                         else:
                             batch = lot[0]
                 if prod.perishable:
                     if not row[4]:
-                        error += "Line %s in your Excel file  : expiry date required, please fix the red line below\n" % (line_num, )
+                        error += "Line %s in your Excel file  : expiry date required\n" % (line_num, )
                     elif row[4] and row[4].data:
                         if row[4].type in ('datetime', 'date'):
                             expiry_date = row[4].data
                         else:
-                            error += "Line %s in your Excel file: expiry date %s has a wrong format, use 'YYYY-MM-DD' \n" % (line_num, row[4])
+                            try:
+                                expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%m/%Y'))
+                            except ValueError:
+                                try:
+                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%b/%Y'))
+                                except ValueError as e:
+                                    error += "Line %s in your Excel file: expiry date %s has a wrong format (day/month/year). Details: %s' \n" % (line_num, row[4], e)
+                    if not batch and product_id and expiry_date:
+                        batch_list = self.pool.get('stock.production.lot').search(cr, uid, [('product_id', '=', product_id),
+                                                                                            ('life_date', '=', time.strftime('%d/%b/%Y', time.strptime(str(expiry_date), '%d/%b/%Y')))])
+                        if batch_list:
+                            batch = batch_list[0]
             else:
                 product_id = False
                 error += 'Line %s in your Excel file: Product [%s] %s not found ! Details: %s \n' % (line_num, row[0], row[1], p_value['error_list'])
@@ -168,7 +178,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
-        self.button_update_stock(cr, uid, rac_id)
         return True
 
     def button_remove_lines(self, cr, uid, ids, context=None):

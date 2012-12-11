@@ -102,6 +102,8 @@ Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
             if row.cells[3] and row.cells[3].data:
                 if row.cells[3].type in ('int', 'float'):
                     fmc = row.cells[3].data
+                elif isinstance(row.cells[3].data, (int, long, float)):
+                    fmc = row.cells[3].data
                 else:
                     error += "Line %s in your Excel file: FMC should be a number and not %s \n" % (line_num, row.cells[3].data)
                     ignore_lines += 1
@@ -112,10 +114,14 @@ Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
                 if row[4].type in ('datetime', 'date'):
                     valid_until = row[4].data
                 else:
-                    error += "Line %s in your Excel file: expiry date %s has a wrong format, use 'YYYY-MM-DD' \n" % (line_num, row[4])
-                    ignore_lines += 1
-                    continue
- 
+                    try:
+                        expiry_date = time.strftime('%Y-%m-%d', time.strptime(str(row[4]), '%d/%m/%Y'))
+                    except ValueError:
+                        try:
+                            expiry_date = time.strftime('%Y-%b-%d', time.strptime(str(row[4]), '%d/%b/%Y'))
+                        except ValueError as e:
+                            error += "Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n" % (line_num, row[4], e)
+
             line_data = {'name': product_id,
                          'fmc': fmc,
                          'mrc_id': mrc_id,
