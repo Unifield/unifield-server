@@ -50,7 +50,6 @@ class monthly_review_consumption(osv.osv):
         mrc_id = ids[0]
 
         product_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('monthly.review.consumption.line')
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'consumption_calculation', 'monthly_review_consumption_form_view')[1]
@@ -85,7 +84,7 @@ class monthly_review_consumption(osv.osv):
             # Check length of the row
             if len(row) != 5:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
+Product Code*, Product Description*, AMC, FMC, Valid Until"""))
 
             # Cell 0: Product Code
             p_value = {}
@@ -115,10 +114,10 @@ Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
                     valid_until = row[4].data
                 else:
                     try:
-                        expiry_date = time.strftime('%Y-%m-%d', time.strptime(str(row[4]), '%d/%m/%Y'))
+                        valid_until = time.strftime('%Y-%m-%d', time.strptime(str(row[4]), '%d/%m/%Y'))
                     except ValueError:
                         try:
-                            expiry_date = time.strftime('%Y-%b-%d', time.strptime(str(row[4]), '%d/%b/%Y'))
+                            valid_until = time.strftime('%Y-%b-%d', time.strptime(str(row[4]), '%d/%b/%Y'))
                         except ValueError as e:
                             error += "Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n" % (line_num, row[4], e)
 

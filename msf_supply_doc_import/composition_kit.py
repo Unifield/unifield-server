@@ -25,7 +25,6 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
-import time
 
 
 class composition_kit(osv.osv):
@@ -88,7 +87,7 @@ class composition_kit(osv.osv):
             # Check length of the row
             if len(row) != 5:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Module, Product Code*, Product Description*, Quantity and Product UOM""" % line_num))
+Module, Product Code*, Product Description*, Quantity and Product UOM"""))
 
             # Cell 0: Module
             if row.cells[0] and row.cells[0].data:

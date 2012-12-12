@@ -89,7 +89,7 @@ class real_average_consumption(osv.osv):
             # Check length of the row
             if len(row) != 7:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Consumed Quantity, Remark""" % line_num))
+Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Consumed Quantity, Remark"""))
 
             # Cell 0: Product Code
             p_value = {}

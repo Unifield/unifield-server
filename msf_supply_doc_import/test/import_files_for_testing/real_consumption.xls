@@ -20,72 +20,157 @@
   <ProtectStructure>False</ProtectStructure>
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
-<Styles>
-    <Style ss:ID="header">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
-        <Borders>
-          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-        </Borders>
-    </Style>
-    <Style ss:ID="line">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-        <Borders>
-          <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-          <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-        </Borders>
-    </Style>
-    <Style ss:ID="short_date">
-     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-     <Borders>
-      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-     </Borders>
-     <NumberFormat ss:Format="Short Date"/>
-    </Style>
-</Styles>
-<ss:Worksheet ss:Name="CONSO_00002">
-
-
-<Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="300" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="250" />
-
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product UOM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Batch Number</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Consumed Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Remark</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">ADAPCABL1S-</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">(computer) CABLE, SERIAL interface for two PC (fem/fem)</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">PCE</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="short_date" >
-                <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="line" >
-                <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-    </Row>
-</Table>
-<x:WorksheetOptions/>
-</ss:Worksheet>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s21">
+   <NumberFormat ss:Format="@"/>
+  </Style>
+  <Style ss:ID="s22">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font/>
+   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s23">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font/>
+   <Interior ss:Color="#FFCC99" ss:Pattern="Solid"/>
+   <NumberFormat ss:Format="@"/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s24">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s25">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font/>
+   <Interior/>
+   <NumberFormat ss:Format="@"/>
+   <Protection/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="CONSO_00006">
+  <Table ss:ExpandedColumnCount="7" ss:ExpandedRowCount="7" x:FullColumns="1"
+   x:FullRows="1">
+   <Column ss:Width="120"/>
+   <Column ss:Width="300"/>
+   <Column ss:Width="60"/>
+   <Column ss:AutoFitWidth="0" ss:Width="89.25"/>
+   <Column ss:StyleID="s21" ss:Width="60"/>
+   <Column ss:Width="60"/>
+   <Column ss:Width="249.75"/>
+   <Row ss:AutoFitHeight="0" ss:Height="25.5">
+    <Cell ss:StyleID="s22"><Data ss:Type="String">Product Code</Data></Cell>
+    <Cell ss:StyleID="s22"><Data ss:Type="String">Product Description</Data></Cell>
+    <Cell ss:StyleID="s22"><Data ss:Type="String">Product UOM</Data></Cell>
+    <Cell ss:StyleID="s22"><Data ss:Type="String">Batch Number</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">Expiry Date</Data></Cell>
+    <Cell ss:StyleID="s22"><Data ss:Type="String">Consumed Quantity</Data></Cell>
+    <Cell ss:StyleID="s22"><Data ss:Type="String">Remark</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">DDGTMENT3S-</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">TEST MENINGITIS (Pastorex), A, C, Y/W135, 25 tests, kit</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s25"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">DDGTTRYT2R-</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">TEST, TRYPANO (CATT), reagent, 250 tests, kit</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s25"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">DINJAMIK5V-</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">AMIKACIN, 500 mg, powder, vial</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">BN123</Data></Cell>
+    <Cell ss:StyleID="s25"><Data ss:Type="String">28/Feb/2013</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="Number">12</Data></Cell>
+    <Cell ss:StyleID="s24"/>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">DINJCHLM5A-</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">CHLORPROMAZINE, 25 mg/ml, 2 ml, amp.</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">BN456</Data></Cell>
+    <Cell ss:StyleID="s25"><Data ss:Type="String">31/Dec/2013</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="Number">15</Data></Cell>
+    <Cell ss:StyleID="s24"/>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">DINJGANC5V-</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">GANCICLOVIR, 500 mg, powder, vial for infusion</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">BN789</Data></Cell>
+    <Cell ss:StyleID="s25"/>
+    <Cell ss:StyleID="s24"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="s24"/>
+   </Row>
+   <Row ss:Height="25.5">
+    <Cell ss:StyleID="s24"><Data ss:Type="String">DORAAZIT2T-</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">AZITHROMYCIN, 250 mg, tab.</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">PCE</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">MSFBN/000007</Data></Cell>
+    <Cell ss:StyleID="s25"><Data ss:Type="String">31/Nov/2013</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s24"/>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>10</ActiveRow>
+     <ActiveCol>6</ActiveCol>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+  <x:WorksheetOptions/>
+ </Worksheet>
 </Workbook>

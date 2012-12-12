@@ -30,7 +30,7 @@
                     <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Currency*, Comment" align="0.0" invisible="1"/>
                     <field name="file_to_import" colspan="2" />
                     <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1"/>
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1" confirm="Are you sure that you want to remove all lines?"/>
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
                 </group>
                 </xpath>
