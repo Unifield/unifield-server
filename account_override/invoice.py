@@ -79,23 +79,6 @@ class account_invoice(osv.osv):
             'close':[('readonly',True)]}, select=True),
     }
 
-    def onchange_supplier(self, cr, uid, ids, partner_id=None, inv_type=None):
-        """
-        Change currency regarding default one from supplier (partner_id).
-        """
-        res = {}
-        if partner_id and inv_type:
-            p = self.pool.get('res.partner').browse(cr, uid, partner_id)
-            if p:
-                c_id = False
-                if inv_type in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
-                    c_id = p.property_product_pricelist_purchase.currency_id.id
-                elif inv_type in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
-                    c_id = p.property_product_pricelist.currency_id.id
-                if c_id:
-                    res['value'] = {'currency_id': c_id,}
-        return res
-
     _defaults = {
         'journal_id': _get_journal,
         'from_yml_test': lambda *a: False,
