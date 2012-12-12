@@ -208,6 +208,21 @@ class monthly_consumption_xls(WebKitParser):
         return (a[0], 'xls')
 monthly_consumption_xls('report.monthly.consumption.xls', 'monthly.review.consumption', 'addons/msf_supply_doc_export/report/report_monthly_consumption_xls.mako')
 
+class composition_kit_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(composition_kit_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(composition_kit_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+composition_kit_xls('report.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_composition_kit_xls.mako')
 
 class ir_values(osv.osv):
     """
