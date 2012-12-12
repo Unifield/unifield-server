@@ -99,6 +99,7 @@ class wizard_import_cheque(osv.osv_memory):
                     'partner_id': line.partner_id.id or None,
                     'ref': line.ref or None,
                     'number': line.invoice.number or None,
+                    'cheque_number': line.cheque_number or None,
                     'supplier_ref': line.invoice.name or None,
                     'account_id': line.account_id.id or None,
                     'date_maturity': line.date_maturity or None,
