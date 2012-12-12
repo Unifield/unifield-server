@@ -37,6 +37,7 @@
         'view/product_list_view.xml',
         'view/real_consumption_import_line.xml',
         'view/monthly_consumption_view.xml',
+        'view/composition_kit_import_line_view.xml',
         'data/msf_supply_doc_import_data.xml',
         'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',
@@ -52,6 +53,9 @@
         'test/import_rfq.yml',
         'test/import_ir.yml',
         'test/import_tender.yml',
+        'test/import_composition_kit.yml',
+        'test/import_real_average_consumption.yml',
+        'test/import_monthly_consumption.yml',
     ],
     "installable": True,
     "active": False

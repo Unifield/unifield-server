@@ -30,4 +30,5 @@ import stock_cost_reevaluation
 import product_list
 import real_consumption
 import monthly_consumption
+import composition_kit
 import check_line

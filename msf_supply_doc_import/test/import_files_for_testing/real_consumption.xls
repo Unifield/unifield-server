@@ -40,41 +40,52 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="short_date">
+     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+     <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+     </Borders>
+     <NumberFormat ss:Format="Short Date"/>
+    </Style>
 </Styles>
-## ==================================== we loop over the composition_kit so "objects" == composition_kit  ====================================================
-% for o in objects:
-<ss:Worksheet ss:Name="${o.composition_product_id.name.replace('/', '_')|x}">
+<ss:Worksheet ss:Name="CONSO_00002">
 
-## definition of the columns' size
+
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="90" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="250" />
+
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Module</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UOM</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Product UOM</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Batch Number</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Consumed Quantity</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">Remark</Data></Cell>
     </Row>
-    ## we loop over the products line
-    % for line in o.composition_item_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_module or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_product_id.default_code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" >
-            % if line.amc and line.amc:
-                <Data ss:Type="Number">${(line.item_qty or '')|x}</Data>
-            % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">ADAPCABL1S-</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">(computer) CABLE, SERIAL interface for two PC (fem/fem)</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">PCE</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="short_date" >
                 <Data ss:Type="String"></Data>
-            % endif
         </Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_uom_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" >
+                <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
-    % endfor
 </Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
-% endfor
 </Workbook>

@@ -25,16 +25,17 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
+import time
 
 
-class monthly_review_consumption(osv.osv):
-    _inherit = 'monthly.review.consumption'
+class composition_kit(osv.osv):
+    _inherit = 'composition.kit'
 
     _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml', 
+        'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n 
-                                        The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order :
-                                        Product Code*, Product Description*, AMC, FMC, Valid Until"""),
+                                        The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
+                                        Module, Product Code*, Product Description*, Quantity and Product UOM"""),
         'text_error': fields.text('Errors when trying to import file', readonly=1),
         'to_correct_ok': fields.boolean('To correct', readonly=1),
     }
@@ -47,17 +48,15 @@ class monthly_review_consumption(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        mrc_id = ids[0]
+        item_kit_id = ids[0]
 
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-        line_obj = self.pool.get('monthly.review.consumption.line')
+        line_obj = self.pool.get('composition.item')
         obj_data = self.pool.get('ir.model.data')
-        view_id = obj_data.get_object_reference(cr, uid, 'consumption_calculation', 'monthly_review_consumption_form_view')[1]
+        view_id = obj_data.get_object_reference(cr, uid, 'kit', 'view_composition_kit_form')[1]
 
-        vals = {}
-        vals['line_ids'] = []
-        ignore_lines, complete_lines= 0, 0
+        ignore_lines, complete_lines = 0, 0
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
@@ -76,60 +75,72 @@ class monthly_review_consumption(osv.osv):
         for row in rows:
             # default values
             to_write = {
-                'error_list': [],
                 'default_code': False,
+                'item_qty': 0,
+                'error_list': [],
+                'warning_list': [],
             }
-            fmc = 0
-            valid_until = False
+            item_qty = 0
+            module = ''
+            batch = False
+            expiry_date = False
             line_num += 1
             # Check length of the row
             if len(row) != 5:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
+Module, Product Code*, Product Description*, Quantity and Product UOM""" % line_num))
 
-            # Cell 0: Product Code
+            # Cell 0: Module
+            if row.cells[0] and row.cells[0].data:
+                module = row.cells[0].data
+
+            # Cell 1: Product Code
             p_value = {}
-            p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            p_value = product_value(cr, uid, cell_nb=1, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
             if p_value['default_code']:
                 product_id = p_value['default_code']
             else:
                 product_id = False
-                error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
+                error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[1], p_value['error_list'])
                 ignore_lines += 1
                 continue
 
-            # Cell 3: Quantity (FMC)
+            # Cell 3: Quantity
             if row.cells[3] and row.cells[3].data:
-                if row.cells[3].type in ('int', 'float'):
-                    fmc = row.cells[3].data
-                elif isinstance(row.cells[3].data, (int, long, float)):
-                    fmc = row.cells[3].data
-                else:
-                    error += "Line %s in your Excel file: FMC should be a number and not %s \n" % (line_num, row.cells[3].data)
+                try:
+                    item_qty = float(row.cells[3].data)
+                except ValueError as e:
+                    error += "Line %s in your Excel file: the Quantity should be a number and not %s. Details: %s\n" % (line_num, row.cells[3].data, e)
                     ignore_lines += 1
                     continue
+            else:
+                item_qty = 0
 
-            # Cell 4: Date (Valid Until)
-            if row[4] and row[4].data:
-                if row[4].type in ('datetime', 'date'):
-                    valid_until = row[4].data
-                else:
-                    try:
-                        expiry_date = time.strftime('%Y-%m-%d', time.strptime(str(row[4]), '%d/%m/%Y'))
-                    except ValueError:
-                        try:
-                            expiry_date = time.strftime('%Y-%b-%d', time.strptime(str(row[4]), '%d/%b/%Y'))
-                        except ValueError as e:
-                            error += "Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n" % (line_num, row[4], e)
+            # Cell 4: UOM
+            uom_value = {}
+            uom_value = compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+            if uom_value['uom_id'] and uom_value['uom_id'] != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+                item_uom_id = uom_value['uom_id']
+            else:
+                item_uom_id = False
+                error += 'Line %s in your Excel file: UoM %s not found ! Details: %s' % (line_num, row[4], uom_value['error_list'])
+                ignore_lines += 1
+                continue
 
-            line_data = {'name': product_id,
-                         'fmc': fmc,
-                         'mrc_id': mrc_id,
-                         'valid_until': valid_until,}
+            line_data = {'item_product_id': product_id,
+                         'item_uom_id': item_uom_id,
+                         'prodlot_id': batch,
+                         'expiry_date': expiry_date,
+                         'item_qty': item_qty,
+                         'module': module,
+                         'item_kit_id': item_kit_id}
 
             context['import_in_progress'] = True
-            line_obj.create(cr, uid, line_data)
-            complete_lines += 1
+            try:
+                line_obj.create(cr, uid, line_data)
+                complete_lines += 1
+            except osv.except_osv:
+                error += "Line %s in your Excel file: Warning, not enough quantity in stock\n" % (line_num, )
 
         if complete_lines or ignore_lines:
             self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
@@ -146,11 +157,11 @@ Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
         if isinstance(ids, (int, long)):
             ids = [ids]
         vals = {}
-        vals['line_ids'] = []
+        vals['composition_item_ids'] = []
         for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.line_ids
+            line_browse_list = line.composition_item_ids
             for var in line_browse_list:
-                vals['line_ids'].append((2, var.id))
+                vals['composition_item_ids'].append((2, var.id))
             self.write(cr, uid, ids, vals, context=context)
             self.remove_error_message(cr, uid, ids, context)
         return True
@@ -159,4 +170,4 @@ Product Code*, Product Description*, AMC, FMC, Valid Until""" % line_num))
         vals = {'text_error': False, 'to_correct_ok': False}
         return self.write(cr, uid, ids, vals, context=context)
 
-monthly_review_consumption()
+composition_kit()

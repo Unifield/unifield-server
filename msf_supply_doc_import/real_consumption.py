@@ -129,7 +129,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                             batch = batch_list[0]
             else:
                 product_id = False
-                error += 'Line %s in your Excel file: Product [%s] %s not found ! Details: %s \n' % (line_num, row[0], row[1], p_value['error_list'])
+                error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
                 ignore_lines += 1
                 continue
 
@@ -146,10 +146,10 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
 
             # Cell 5: Quantity
             if row.cells[5] and row.cells[5].data:
-                if row.cells[5].type in ('int', 'float'):
-                    consumed_qty = row.cells[5].data
-                else:
-                    error += "Line %s in your Excel file: the Consumed Quantity should be a number and not %s \n" % (line_num, row.cells[5].data)
+                try:
+                    consumed_qty = float(row.cells[5].data)
+                except ValueError as e:
+                    error += "Line %s in your Excel file: the Consumed Quantity should be a number and not %s \n. Details: %s" % (line_num, row.cells[5].data, e)
                     ignore_lines += 1
                     continue
             else:

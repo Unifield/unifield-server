@@ -95,10 +95,13 @@ def product_value(cr, uid, **kwargs):
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 0
     try:
-        if row.cells[0] and row.cells[0].data:
-            product_code = row.cells[0].data
-            if product_code and row.cells[0].type == 'str':
+        if row.cells[cell_nb] and row.cells[cell_nb].data:
+            product_code = row.cells[cell_nb].data
+            if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
                 p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                 if not p_ids:
@@ -134,7 +137,6 @@ def quantity_value(**kwargs):
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
-    # some object have not there uom at the 3rd column, so we pass them the relevant cell number (i.e. 2 for real consumption report)
     cell_nb = kwargs.get('cell_nb', False)
     if not cell_nb:
         cell_nb = 2
