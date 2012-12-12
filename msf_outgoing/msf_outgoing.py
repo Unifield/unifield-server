@@ -3179,6 +3179,13 @@ class sale_order(osv.osv):
             if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
                 move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
 
+            sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+            if sale_line.type == 'make_to_order':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                move_data['move_cross_docking_ok'] = True
+                # Update the stock.picking
+                self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
+
         move_data['state'] = 'confirmed'
         return move_data
     
