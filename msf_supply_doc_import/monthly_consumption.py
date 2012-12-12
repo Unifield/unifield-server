@@ -127,8 +127,13 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
                          'valid_until': valid_until,}
 
             context['import_in_progress'] = True
-            line_obj.create(cr, uid, line_data)
-            complete_lines += 1
+            try:
+                line_obj.create(cr, uid, line_data)
+                complete_lines += 1
+            except osv.except_osv as osv_error:
+                osv_value = osv_error.value
+                osv_name = osv_error.name
+                error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
 
         if complete_lines or ignore_lines:
             self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
