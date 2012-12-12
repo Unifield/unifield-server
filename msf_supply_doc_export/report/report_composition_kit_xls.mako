@@ -64,7 +64,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.item_product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" >
-            % if line.amc and line.amc:
+            % if line.item_qty:
                 <Data ss:Type="Number">${(line.item_qty or '')|x}</Data>
             % else:
                 <Data ss:Type="String"></Data>
