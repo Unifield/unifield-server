@@ -29,9 +29,45 @@ from tools.translate import _
 import logging
 import datetime
 
+import decimal_precision as dp
+
 class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
+
+    
+    def _get_journal(self, cr, uid, context=None):
+        """
+        WARNING: This method has been taken from account module from OpenERP
+        """
+        # @@@override@account.invoice.py
+        if context is None:
+            context = {}
+        type_inv = context.get('type', 'out_invoice')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        company_id = context.get('company_id', user.company_id.id)
+        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
+        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
+        args = [('type', '=', type2journal.get(type_inv, 'sale')),
+                ('company_id', '=', company_id),
+                ('refund_journal', '=', refund_journal.get(type_inv, False))]
+        if user.company_id.instance_id:
+            args.append(('is_current_instance','=',True))
+        journal_obj = self.pool.get('account.journal')
+        res = journal_obj.search(cr, uid, args, limit=1)
+        return res and res[0] or False
+    
+    def onchange_company_id(self, cr, uid, ids, company_id, part_id, type, invoice_line, currency_id):
+        """
+        This is a method to redefine the journal_id domain with the current_instance taken into account
+        """
+        res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, type, invoice_line, currency_id)
+        if 'domain' in res and 'journal_id' in res['domain']:
+            journal_domain = res['domain']['journal_id']
+            journal_domain.append(('is_current_instance','=',True))
+            new_journal_ids = self.pool.get('account.journal').search(cr, uid, journal_domain)
+            res['domain']['journal_id'] = [('id','in',new_journal_ids)]
+        return res
 
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -44,6 +80,7 @@ class account_invoice(osv.osv):
     }
 
     _defaults = {
+        'journal_id': _get_journal,
         'from_yml_test': lambda *a: False,
         'date_invoice': lambda *a: strftime('%Y-%m-%d'),
     }
@@ -182,6 +219,8 @@ class account_invoice(osv.osv):
         """
         if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
         return res
@@ -195,6 +234,7 @@ class account_invoice_line(osv.osv):
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'line_number': fields.integer(string='Line Number'),
+        'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
     }
 
     _defaults = {

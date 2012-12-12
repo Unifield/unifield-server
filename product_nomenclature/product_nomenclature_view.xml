@@ -82,8 +82,10 @@
                                         get_selection="get_nomen"
 										on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" />
 								</group>
+								<!--  uf-1544
 								<separator string="Library" colspan="10" />
                                 <field name="library" colspan="4"/>
+                                 -->
 							</group>
 							
 							<group colspan="2" col="5">

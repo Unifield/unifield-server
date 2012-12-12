@@ -1,4 +1,12 @@
 -
+  I create a service stock location
+-
+ !record {model: stock.location, id: service_loc}:
+   name: service
+   service_location: True
+   location_category: other
+   usage: inventory
+-
   I create a partner with a donation payable account and another account
 -
   !record {model: res.partner, id: supplier1}:
@@ -41,6 +49,7 @@
         name: supplier1
     donation_expense_account: account_account_expense1
     property_account_expense: account_account_expense0
+    international_status: itc
 -
   I create an in-kind donation PO with this partner
 -

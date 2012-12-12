@@ -81,7 +81,7 @@ class sale_order_change_currency(osv.osv_memory):
             
         for wiz in self.browse(cr, uid, ids, context=context):            
             for line in wiz.order_id.order_line:
-                new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, line.price_unit)
+                new_price = currency_obj.compute(cr, uid, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id, line.price_unit, round=False, context=context)
                 line_obj.write(cr, uid, line.id, {'price_unit': new_price}, context=c)
                 
             order_data = {'pricelist_id': wiz.new_pricelist_id.id,}

@@ -104,10 +104,11 @@ class procurement_request(osv.osv):
             },
             multi='sums', help="The total amount."),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
     }
     
     _defaults = {
-        'name': lambda obj, cr, uid, context: not context.get('procurement_request', False) and obj.pool.get('ir.sequence').get(cr, uid, 'sale.order') or obj.pool.get('ir.sequence').get(cr, uid, 'procurement.request'),
+        'name': lambda *a: False,
         'procurement_request': lambda obj, cr, uid, context: context.get('procurement_request', False),
         'state': 'draft',
         'warehouse_id': lambda obj, cr, uid, context: len(obj.pool.get('stock.warehouse').search(cr, uid, [])) and obj.pool.get('stock.warehouse').search(cr, uid, [])[0],
@@ -135,6 +136,8 @@ class procurement_request(osv.osv):
             vals['pricelist_id'] = pl
             if 'delivery_requested_date' in vals:
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
+        elif not vals.get('name', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'sale.order')})
 
         return super(procurement_request, self).create(cr, uid, vals, context)
     
@@ -446,13 +449,19 @@ class procurement_request_line(osv.osv):
         if context is None:
             context = {}
         v = {}
+        m = {}
         product_obj = self.pool.get('product.product')
         if product_id and type != 'make_to_stock':
             product = product_obj.browse(cr, uid, product_id, context=context)
             v.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
         elif product_id and type == 'make_to_stock':
             v.update({'supplier': False})
-        return {'value': v}
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            if product.type in ('consu', 'service', 'service_recep'):
+                v.update({'type': 'make_to_order'})
+                m.update({'title': _('Warning'),
+                          'message': _('You can\'t source a line \'from stock\' if line contains a non-stockable or service product.')})
+        return {'value': v, 'warning': m}
     
     def comment_change(self, cr, uid, ids, comment, product_id, nomen_manda_0, context=None):
         '''
@@ -501,15 +510,22 @@ class purchase_order(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         sale_line_obj = self.pool.get('sale.order.line')
-        if order_line.move_dest_id:
+        po_line_obj = self.pool.get('purchase.order.line')
+        # If the line comes from an ISR and it's not splitted line,
+        # change the move_dest_id of this line (and their children)
+        # to match with the procurement ordre move destination
+        if order_line.move_dest_id and not order_line.parent_line_id:
             proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
             so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+            po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
             if all(not line.order_id or line.order_id.procurement_request for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
                 for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
                     if proc.move_id:
-	                move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-        	        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
+                        move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
+                        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
                     proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
+                    # Update the move_dest_id of all children to avoid the system to deal with a deleted stock move
+                    po_line_obj.write(cr, uid, po_line_ids, {'move_dest_id': move_id}, context=context)
                     
         return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)
     

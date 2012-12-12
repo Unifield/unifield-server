@@ -70,5 +70,36 @@
             </field>
         </record>
 
+        <record id="analytic_view_move_form" model="ir.ui.view">
+            <field name="name">analytic.view.move.form</field>
+            <field name="model">account.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="priority" eval="23"/>
+            <field name="arch" type="xml">
+              <data>
+                    <xpath expr="/form/notebook" position="before">
+                        <group colspan="6" col="3">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="2" attrs="{'invisible': ['|', ('analytic_distribution_id', '=', False), ('status', '=', 'sys')]}"/>
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="2" attrs="{'invisible': ['|', ('analytic_distribution_id', '!=', False), ('status', '=', 'sys')]}"/>
+                            <field name="analytic_distribution_id" invisible="1"/>
+                        </group>
+                    </xpath>
+                    <xpath expr="/form//tree" position="attributes">
+                        <attribute name="colors">blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid') or state in ('draft')</attribute>
+                    </xpath>
+                    <xpath expr="/form//tree//field[@name='partner_id']" position="after">
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <field name="display_analytic_button" invisible="1"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                        context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
+                        <field name="analytic_distribution_state" invisible="1"/>
+                        <field name="analytic_distribution_state_recap" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+
     </data>
 </openerp>

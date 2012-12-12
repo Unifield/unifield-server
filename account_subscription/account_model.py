@@ -266,8 +266,8 @@ class account_model(osv.osv):
                 val.update({
                     'name': line.name,
                     'quantity': line.quantity,
-                    'debit': line.debit,
-                    'credit': line.credit,
+                    'debit_currency': line.debit, # UF-1535: set this value as the booking currency, and not functional currency
+                    'credit_currency': line.credit, # UF-1535: set this value as the booking currency, and not functional currency
                     'account_id': line.account_id.id,
                     'move_id': move_id,
                     'partner_id': line.partner_id.id,

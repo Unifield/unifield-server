@@ -60,8 +60,8 @@ class msf_accrual_line(osv.osv):
         'journal_id': fields.many2one('account.journal', 'Journal', required=True),
         'third_party_type': fields.selection([('res.partner', 'Partner'),
                                               ('hr.employee', 'Employee')], 'Third Party', required=True),
-        'partner_id': fields.many2one('res.partner', 'Third Party Partner'),
-        'employee_id': fields.many2one('hr.employee', 'Third Party Employee'),
+        'partner_id': fields.many2one('res.partner', 'Third Party Partner', ondelete="restrict"),
+        'employee_id': fields.many2one('hr.employee', 'Third Party Employee', ondelete="restrict"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'functional_amount': fields.function(_get_functional_amount, method=True, store=False, string="Functional Amount", type="float", readonly="True"),
         'functional_currency_id': fields.many2one('res.currency', 'Functional Currency', required=True, readonly=True),
@@ -75,7 +75,7 @@ class msf_accrual_line(osv.osv):
     _defaults = {
         'third_party_type': 'res.partner',
         'journal_id': lambda self,cr,uid,c: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'accrual'),
-                                                                                              ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])[0],
+                                                                                              ('is_current_instance', '=', True)])[0],
         'functional_currency_id': lambda self,cr,uid,c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'state': 'draft',
     }

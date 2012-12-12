@@ -46,7 +46,7 @@ class stock_move_tracking(osv.osv_memory):
             if not track.product_id and not track.prodlot_id and not track.expired_date:
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
             
-            domain = []
+            domain = [('product_qty', '>', 0.00), '|', ('location_id.usage', 'in', ['supplier', 'customer']), ('location_dest_id.usage', 'in', ['supplier', 'customer'])]
             if track.expired_date:
                 # Add two lines in domain because we cannot compare equality between date and datetime
                 domain.append(('prodlot_id.life_date', '=', track.expired_date))

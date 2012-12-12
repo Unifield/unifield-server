@@ -83,6 +83,18 @@ class product_supplierinfo(osv.osv):
                 res[x.id] = False
         
         return res
+
+    def _get_seller_delay(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the supplier lt
+        '''
+        res = {}
+        for price in self.browse(cr, uid, ids, context=context):
+            product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
+            product = self.pool.get('product.product').browse(cr, uid, product_id)
+            res[price.id] = (price.name and price.name.supplier_lt) or (product_id and int(product[0].procure_delay)) or 1
+
+        return res
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
@@ -90,7 +102,22 @@ class product_supplierinfo(osv.osv):
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
                                       help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
+        'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
+
     }
+
+    def onchange_supplier(self, cr, uid, ids, supplier_id):
+        '''
+        Set the Indicative delivery LT
+        '''
+        v = {}
+
+        if supplier_id:
+            supplier = self.pool.get('res.partner').browse(cr, uid, supplier_id)
+            v.update({'delay': supplier.supplier_lt})
+
+        return {'value': v}
+
     
     # Override the original method
     def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
@@ -184,7 +211,21 @@ class pricelist_partnerinfo(osv.osv):
                 return False
             
         return True
-    
+
+    def _get_supplierinfo(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', ids)], context=context)
+        return result
+
+    def _get_sequence(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.suppinfo_id:
+                res[line.id] = line.suppinfo_id.sequence
+        return res
+
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
@@ -193,13 +234,16 @@ class pricelist_partnerinfo(osv.osv):
         'valid_from': fields.date(string='Valid from'),
         'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
         'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),
-        'sequence': fields.related('suppinfo_id', 'sequence', string='Sequence', type='integer'),
+        'sequence': fields.function(_get_sequence, method=True, string='Sequence', type='integer',
+                                    store={'pricelist.partnerinfo': (lambda self, cr, uid, ids, c={}: ids, [], 20),
+                                           'product.supplierinfo': (_get_supplierinfo, ['sequence'], 20),
+                                        })
     }
 
     _constraints = [
         (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
     ]
-    
+
 pricelist_partnerinfo()
 
 
@@ -263,7 +307,7 @@ class product_product(osv.osv):
             if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
-                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price)
+                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price, round=False, context=context)
                 res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)

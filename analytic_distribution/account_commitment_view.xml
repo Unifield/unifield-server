@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <form string="Commitment Voucher" hide_duplicate_button="1">
                     <group col="6" colspan="4">
-                        <field name="journal_id"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                         <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
                         <newline/>
                         <field name="name"/>

@@ -253,6 +253,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Change context if account special type is "donation"
         if ml.account_id and ml.account_id.type_for_register and ml.account_id.type_for_register == 'donation':
             wiz_obj.write(cr, uid, [wizard], {'from_donation': True}, context=context)
+        # Update context to inform wizard we come from a correction wizard
+        context.update({'from_correction': True,})
         return {
             'name': "Accounting Corrections Wizard",
             'type': 'ir.actions.act_window',
@@ -328,14 +330,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
         aal_obj = self.pool.get('account.analytic.line')
         j_obj = self.pool.get('account.journal')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
+                                       ('is_current_instance', '=', True)], context=context)
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
+                                            ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra accounting journal
         ej_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                        ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                        ('is_current_instance', '=', True)])
         j_extra_id = ej_ids and ej_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
@@ -362,6 +364,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             vals = {
                 'move_id': move_id,
                 'date': date,
+                'document_date': date,
                 'journal_id': journal_id,
                 'period_id': period_ids[0],
             }
@@ -412,14 +415,14 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_obj = self.pool.get('account.journal')
         aal_obj = self.pool.get('account.analytic.line')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
+                                       ('is_current_instance', '=', True)], context=context)
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
+                                            ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra-accounting journal
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                             ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context, 
@@ -455,7 +458,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             
             # Create a new move
-            new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+            new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': m.document_date}, context=context)
             # Search move line that have to be corrected.
             # NB: this is useful when you correct a move line twice and do a reverse on it. It should be reverse the complementary move line of the first move line
             # and reverse the last correction line.
@@ -497,7 +500,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     new_distrib_id = ana_obj.copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
-                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'period_id': period_ids[0]}, context=context)
+                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': ml.document_date, 'period_id': period_ids[0]}, context=context)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
@@ -579,11 +582,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
+                                            ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra-accounting journal
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                             ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 
@@ -615,11 +618,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 if check_accounts and aal.account_id.id in check_accounts:
                     raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
             # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
             # Prepare default value for new line
             vals = {
                 'move_id': move_id,
                 'date': date,
+                'document_date': ml.document_date,
                 'journal_id': journal_id,
                 'period_id': period_ids[0],
             }
@@ -640,6 +644,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'account_id': ml.account_id.id,
                 'source_date': ml.date,
                 'reversal': True,
+                'document_date': ml.document_date,
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
@@ -652,6 +657,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'ref': ml.ref,
                 'source_date': ml.date,
                 'have_an_historic': True,
+                'document_date': ml.document_date,
             }
             if distrib_id:
                 cor_vals['analytic_distribution_id'] = distrib_id
@@ -708,11 +714,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
-                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)
+                                            ('is_current_instance', '=', True)], context=context)
         j_corr_id = j_corr_ids and j_corr_ids[0] or False
         # Search extra-accounting journal
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
-                                             ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                             ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], 

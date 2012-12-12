@@ -29,6 +29,7 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
+    international_status: itc
 -
   Product B
 - 
@@ -40,3 +41,4 @@
       - sequence: 10
         min_qty: 0.00
         name: partner_A
+    international_status: itc

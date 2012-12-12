@@ -42,11 +42,6 @@
 -
   I check that there is a move for this partner that has been reconciliated and have the same amount
 -
-  !python {model: account.move}: |
-    res_ids = self.search(cr, uid, [('state', '=', 'posted'), ('name', '=', 'DirectExpense/Some water')])
-    moves = self.browse(cr, uid, res_ids)
-    for move in moves:
-        for move_line in move.line_id:
-            assert move_line.reconcile_id != False, "A line have not been reconciled!"
-            assert move_line.partner_id.id == ref("res_partner_supplier_0"), "The supplier was not written correctly."
-        assert move.amount == 238.41, "The amount don't correspond"
+  !python {model: account.move.line}: |
+    res_ids = self.search(cr, uid, [('partner_id', '=', ref('res_partner_supplier_0')), ('journal_id', '=', ref('account_journal_cash_0')), ('amount_currency', '=', 238.41), ('reconcile_id', '!=', False)], order='id DESC', limit=1)
+    assert res_ids, "No direct expense found!"

@@ -947,7 +947,7 @@ class shipment(osv.osv):
                 invoice_vals['account_id'] = company.intermission_default_counterpart.id
                 journal_type = 'intermission'
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
-                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                            ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
             invoice_vals['journal_id'] = journal_ids[0]
@@ -1387,6 +1387,9 @@ class stock_picking(osv.osv):
                                    sale_id=False,
                                    )
                 else:
+                    # if the corresponding draft picking ticket is done, we do not allow copy
+                    if obj.backorder_id and obj.backorder_id.state == 'done':
+                        raise osv.except_osv(_('Error !'), _('Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied.'))
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
                     base = base.split('-')[0] + '-'
@@ -1426,6 +1429,8 @@ class stock_picking(osv.osv):
         default.update(backorder_ids=[])
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
+        
+        context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result
@@ -1679,7 +1684,7 @@ class stock_picking(osv.osv):
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'), # old_multi get_vals
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals'),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
@@ -2305,6 +2310,7 @@ class stock_picking(osv.osv):
                     # copy the stock move and set the quantity
                     values = {'picking_id': new_pick_id,
                               'product_qty': partial['product_qty'],
+                              'product_uos_qty': partial['product_qty'],
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
@@ -2313,9 +2319,9 @@ class stock_picking(osv.osv):
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
                     new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                     
-                # decrement the initial move, cannot be less than zero
+                # decrement the initial move, cannot be less than zero and mark the stock move as processed - will not be updated by delivery_mech anymore
                 initial_qty = max(initial_qty - count, 0)
-                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty}, context=context)
+                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty, 'product_uos_qty': initial_qty, 'processed_stock_move': True}, context=context)
                 
             # confirm the new picking ticket
             wf_service = netsvc.LocalService("workflow")
@@ -2409,6 +2415,7 @@ class stock_picking(osv.osv):
                         first = False
                         # update existing move
                         values = {'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2419,6 +2426,7 @@ class stock_picking(osv.osv):
                         # copy the stock move and set the quantity
                         values = {'state': 'assigned',
                                   'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -3045,8 +3053,8 @@ class stock_move(osv.osv):
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
                 'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p', multi='get_vals',),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
-                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
@@ -3102,7 +3110,8 @@ class sale_order(osv.osv):
         proc_id = kwargs['proc_id']
         order = kwargs['order']
         if order.procurement_request :
-            pick_id = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)[0].move_id.picking_id.id
+            proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
+            pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
                 wf_service.trg_validate(uid, 'stock.picking', [pick_id], 'button_confirm', cr)
 
@@ -3166,6 +3175,9 @@ class sale_order(osv.osv):
                 move_data['location_dest_id'] = order.shop_id.warehouse_id.lot_output_id.id
             else:
                 move_data['location_dest_id'] = order.shop_id.warehouse_id.lot_packing_id.id
+                
+            if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
 
         move_data['state'] = 'confirmed'
         return move_data

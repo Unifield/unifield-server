@@ -48,6 +48,6 @@ class move_tracking(report_sxw.rml_parse):
     def _get_type(self, move, type):
         return self.get_selection(move, 'type')
 
-report_sxw.report_sxw('report.tracking.move.report','stock.move','addons/stock_move_tracking/report/move_tracking.rml',parser=move_tracking)
+report_sxw.report_sxw('report.tracking.move.report','stock.move','addons/stock_move_tracking/report/move_tracking.rml',parser=move_tracking, header='internal landscape')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

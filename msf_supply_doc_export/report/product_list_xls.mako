@@ -40,30 +40,18 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-  <Style ss:ID="short_date">
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <NumberFormat ss:Format="Short Date"/>
-  </Style>
 </Styles>
-<ss:Worksheet ss:Name="Product List">
-<Table >
-    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
 ## ==================================== we loop over the product_list so "objects" == product_list  ====================================================
 % for o in objects:
-
-## we loop over the product_list_line
-
-    
+<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<Table >
+    <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
     </Row>
+    ## we loop over the product_list_line
     % for line in o.product_ids:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name.default_code or '')|x}</Data></Cell>
@@ -71,8 +59,8 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
-% endfor
 </Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
+% endfor
 </Workbook>

@@ -3,7 +3,15 @@
   We then create new products with different internal and supplier configuration (code and name).
   
   Finally we create purchase orders with purchase order lines for these different products.
-  
+-
+  I create a service stock location
+-
+  !record {model: stock.location, id: service_loc}:
+    name: service
+    service_location: True
+    location_category: other
+    usage: inventory
+-
   Creating a product.category record
 - 
   !record {model: product.category, id: product_category_testproducts0}:
@@ -104,7 +112,7 @@
     mes_type: fixed
     name: Boite \xc3\xa0 chaussures
     name_template: Boite \xc3\xa0 chaussures
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_qty: 0.0
     standard_price: 1.0
@@ -119,6 +127,7 @@
     weight_net: 0.0
     subtype: asset
     asset_type_id: product_asset_type_0
+    international_status: itc
 -
 
   I create an asset

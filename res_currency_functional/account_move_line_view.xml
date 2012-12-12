@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="200"/>
             <field name="arch" type="xml">
-                <tree string="Account Entry Line" noteditable="1" colors="red:state in ('draft');black:state in ('valid')">
+                <tree string="Account Entry Line" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
                     <field name="journal_id"/>
                     <field name="move_id"/>
                     <field name="name"/>
@@ -53,7 +53,7 @@
                         <field name="name" select="1"/>
                         <field name="ref"/>
                         <newline/>
-                        <field name="journal_id"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                         <field name="period_id"/>
                         <newline />
                         <field name="document_date"/>
@@ -99,8 +99,8 @@
             <field name="type">tree</field>
             <field name="priority" eval="250"/>
             <field name="arch" type="xml">
-                <tree string="Account Entry Line" editable="bottom" noteditable="1">
-                    <field name="journal_id"/>
+                <tree string="Account Entry Line" editable="bottom" noteditable="1" hide_new_button="1"> 
+                    <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
                     <field name="move_id" readonly="1" string="Entry Sequence"/>
                     <field name="name"/>
                     <field name="ref"/>
@@ -135,6 +135,20 @@
         <field name="view_id" ref="view_move_line_tree_editable"/>
         <field name="act_window_id" ref="account.action_account_moves_all_a"/>
     </record>
+
+    <!-- Journal Entries Search (filter) -->
+        <record model="ir.ui.view" id="msf_instance_view_account_move_line_filter">
+            <field name="name">inherit.view.account.move.line.filter</field>
+            <field name="model">account.move.line</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_move_line_filter" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='journal_id']" position="replace">
+                    <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
+                    <field name="journal_type"/>
+                </xpath>
+            </field>
+        </record>
 
     </data>
 </openerp>

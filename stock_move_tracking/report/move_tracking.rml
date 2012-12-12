@@ -93,7 +93,7 @@
           <para style="P4">[[ move.expired_date and move.expired_date != "False" and formatLang(move.expired_date[0:10], date=True) or '/' ]]</para>
         </td>
         <td>
-          <para style="P4">[[ move.origin ]]</para>
+          <parawrap style="P4">[[ move.origin ]]</parawrap>
         </td>
         <td>
           <para style="P4">[[ move.name ]]</para>

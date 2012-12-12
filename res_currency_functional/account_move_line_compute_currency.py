@@ -70,7 +70,7 @@ class account_move_line_compute_currency(osv.osv):
         company_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         # Search Miscellaneous Transactions journal
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
-                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], order='id', context=context)
+                                       ('is_current_instance', '=', True)], order='id', context=context)
         if not j_ids:
             raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
         journal_id = j_ids[0]
@@ -205,7 +205,7 @@ class account_move_line_compute_currency(osv.osv):
         # Search Miscellaneous Transactions journal
         j_obj = self.pool.get('account.journal')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
-                                       ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], order='id', context=context)
+                                       ('is_current_instance', '=', True)], order='id', context=context)
         if not j_ids:
             raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
         journal_id = j_ids[0]
@@ -424,6 +424,13 @@ class account_move_line_compute_currency(osv.osv):
         if ('journal_id' not in ctx) and vals.get('move_id'):
             m = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['journal_id'])
             ctx['journal_id'] = m.get('journal_id', False) and m.get('journal_id')[0] or False
+
+        # Add currency on line
+        if context.get('from_web_menu', False):
+            if 'move_id' in vals:
+                m_currency = self.pool.get('account.move').read(cr, uid, vals.get('move_id'), ['manual_currency_id'])
+                if m_currency and m_currency.get('manual_currency_id'):
+                    vals.update({'currency_id': m_currency.get('manual_currency_id')[0]})
         
         account = self.pool.get('account.account').browse(cr, uid, vals['account_id'], context=context)
         curr_fun = account.company_id.currency_id.id
@@ -457,6 +464,9 @@ class account_move_line_compute_currency(osv.osv):
             newvals = vals.copy()
             date = vals.get('date', line.date)
             source_date = vals.get('source_date', line.source_date)
+            # Add currency on line
+            if context.get('from_web_menu', False):
+                vals.update({'currency_id': line.move_id and line.move_id.manual_currency_id and line.move_id.manual_currency_id.id or False})
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
             newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency))

@@ -375,7 +375,7 @@ class stock_move(osv.osv):
         # Change the reason type of the picking if it is not the same
         if vals.get('picking_id'):
             pick_id = self.pool.get('stock.picking').browse(cr, uid, vals['picking_id'], context=context)
-            if pick_id.reason_type_id.id != vals['reason_type_id'] and not context.get('from_claim') and not context.get('from_chaining'):
+            if vals.get('reason_type_id') and pick_id.reason_type_id.id != vals['reason_type_id'] and not context.get('from_claim') and not context.get('from_chaining'):
                 other_type_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
                 self.pool.get('stock.picking').write(cr, uid, vals['picking_id'], {'reason_type_id': other_type_id}, context=context)
 
@@ -385,7 +385,7 @@ class stock_move(osv.osv):
         '''
         If the picking is in default value, copy the reason type of the picking to the new moves
         '''
-        if 'picking_id' in default and 'reason_type_id' not in default:
+        if default.get('picking_id') and 'reason_type_id' not in default:
             pick = self.pool.get('stock.picking').browse(cr, uid, default.get('picking_id'), context=context)
             default['reason_type_id'] = pick.reason_type_id.id
             
@@ -481,11 +481,13 @@ class stock_move(osv.osv):
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
             if dest_id.scrap_location:
                 vals['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-        # if the source and the destination locations are the same the state is done
-        if location_dest_id and location_id:
-            if location_dest_id == location_id:
-                vals['state'] = 'done'
 
+        # if the source and the destination locations are the same the state is done
+        # By QT : Comment the below lines because, with this code, the state is change to 'Done' but the destination
+        #         location becomes not editable and it's not passed to the create/write method
+        #if location_dest_id and location_id:
+        #    if location_dest_id == location_id:
+        #        vals['state'] = 'done'
 
         return {'value': vals}
     

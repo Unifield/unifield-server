@@ -55,7 +55,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             # prepare some values
             current_date = strftime('%Y-%m-%d')
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
-                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                            ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No HQ journal found!'))
             journal_id = journal_ids[0]
@@ -68,9 +68,16 @@ class hq_entries_validation_wizard(osv.osv_memory):
             total_debit = 0
             total_credit = 0
             
+            # Check if document_date is the same as all lines
+            document_date = False
+            same_document_date = True
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
                 'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
                 'destination_id_first_value']):
+                if not document_date:
+                    document_date = line.get('document_date', False)
+                if line.get('document_date', False) and line.get('document_date') != document_date:
+                    same_document_date = False
                 account_id = line.get('account_id_first_value', False) and line.get('account_id_first_value')[0] or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('An account is missing!'))
@@ -159,6 +166,11 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 counterpart_credit = abs(total_debit - total_credit)
             counterpart_vals.update({'debit_currency': counterpart_debit, 'credit_currency': counterpart_credit,})
             self.pool.get('account.move.line').create(cr, uid, counterpart_vals, context={}, check=False)
+            # If ALL LINES have SAME DOCUMENT DATE, give this document date to the journal entry (move)
+            if counterpart_date != document_date:
+                same_document_date = False
+            if same_document_date:
+                self.pool.get('account.move').write(cr, uid, [move_id], {'document_date': document_date})
             # Post move
             post = self.pool.get('account.move').post(cr, uid, [move_id])
         return res
@@ -181,7 +193,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
         # Search an analytic correction journal
         acor_journal_id = False
         acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'),
-                                                                                      ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)])
+                                                                                      ('is_current_instance', '=', True)])
         if acor_journal_ids:
             acor_journal_id = acor_journal_ids[0]
         # Tag active_ids as user validated

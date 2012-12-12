@@ -139,7 +139,7 @@ class stock_location(osv.osv):
                 if type(arg[2]) != type(1):
                     raise osv.except_osv(_('Error'), _('Bad operand'))
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
-                if product.type == 'consu':
+                if product.type in ('service_recep', 'consu'):
                     res = [('cross_docking_location_ok', '=', True)]
                 else:
                     res = [('usage', '=', 'internal'), ('quarantine_location', '=', False), ('output_ok', '=', False)]
@@ -159,7 +159,7 @@ class stock_location(osv.osv):
                     raise osv.except_osv(_('Error'), _('Bad operand'))
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type in ('service', 'service_recep'):
-                    res = [('service_location', '=', True)]
+                    res = ['|', ('cross_docking_location_ok', '=', True), ('service_location', '=', True)]
                 elif product.type == 'consu':
                     res = ['|', '|', ('cross_docking_location_ok', '=', True), ('non_stockable_ok', '=', True), ('virtual_ok', '=', True)]
                 else:
@@ -180,7 +180,7 @@ class stock_location(osv.osv):
                 if type(arg[2]) != type(1):
                     raise osv.except_osv(_('Error'), _('Bad operand'))
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
-                if product.type == 'consu':
+                if product.type in ('service_recep', 'consu'):
                     # Cross-docking locations
                     res = [('cross_docking_location_ok', '=' ,True)]
                 else:
@@ -204,6 +204,9 @@ class stock_location(osv.osv):
                 if product.type == 'consu':
                     # Cross docking and quarantine locations
                     res = [('service_location', '=', False), '|', ('cross_docking_location_ok', '=', True), ('quarantine_location', '=', True)]
+                elif product.type == 'service_recep':
+                    # Cross docking locations
+                    res = [('cross_docking_location_ok', '=', True)]
                 else:
                     # All internal and virtual locations
                     res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]
@@ -225,7 +228,10 @@ class stock_location(osv.osv):
                 product = self.pool.get('product.product').browse(cr, uid, arg[2])
                 if product.type == 'consu':
                     # Inventory, destruction and quarantine location
-                    res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
+                    res = [('service_location', '=', False), '|', '|', ('usage', '=', 'inventory'), ('destruction_location', '=', True), ('quarantine_location', '=', True)]
+                elif product.type == 'service_recep':
+                    # Service location
+                    res = [('service_location', '=', True)]
                 else:
                     # All internal and virtual locations
                     res = [('non_stockable_ok', '=', False), ('service_location', '=', False), '|', ('usage', '=', 'internal'), ('virtual_ok', '=', True)]

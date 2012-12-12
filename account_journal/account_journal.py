@@ -95,11 +95,14 @@ class account_journal(osv.osv):
         return False
     
     def name_get(self, cr, user, ids, context=None):
-        result = self.browse(cr, user, ids, context=context)
+        """
+        Get code for journals
+        """
+        result = self.read(cr, user, ids, ['code'])
         res = []
         for rs in result:
-            txt = rs.name
-            res += [(rs.id, txt)]
+            txt = rs.get('code', '')
+            res += [(rs.get('id'), txt)]
         return res
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):
@@ -118,15 +121,15 @@ class account_journal(osv.osv):
         # Analytic journal associated
         if type == 'cash':
             analytic_cash_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CAS'),
-                                                                          ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
+                                                                          ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cash_journal
         elif type == 'bank': 
             analytic_bank_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'BNK'),
-                                                                          ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
+                                                                          ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_bank_journal
         elif type == 'cheque': 
             analytic_cheque_journal = analytic_journal_obj.search(cr, uid, [('code', '=', 'CHK'),
-                                                                            ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id)], context=context)[0]
+                                                                            ('is_current_instance', '=', True)], context=context)[0]
             value['value']['analytic_journal_id'] = analytic_cheque_journal
         elif type == 'cur_adj':
             debit_default_dom = [('type','<>','view'),('type','<>','consolidation')]

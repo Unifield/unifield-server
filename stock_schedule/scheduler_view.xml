@@ -188,10 +188,7 @@
         <menuitem id="stock.menu_action_production_lot_form" action="stock.action_production_lot_form" sequence="-10" parent="stock.menu_traceability" />
 
         <!-- DELETE PRODUCTS -->
-        <delete model="ir.ui.menu" id="stock.menu_stock_product" />
-        <delete model="ir.ui.menu" id="stock.menu_product_by_category_stock_form" />
-        <delete model="ir.ui.menu" id="stock.menu_stock_products_menu" />
-
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
         <menuitem id="stock_automatic_procurements_menu"
                   name="Replenishment Rules"
