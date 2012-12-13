@@ -51,6 +51,7 @@ class account_cash_statement(osv.osv):
                 if fct[1] != 'total_entry_encoding':
                     newstore.append(fct)
             self.pool._store_function[self._name] = newstore
+            super(account_cash_statement, self)._columns['total_entry_encoding'].store = False
 
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
