@@ -133,7 +133,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                             batch = batch_list[0]
             else:
                 product_id = False
-                error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
+                error += 'Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
                 ignore_lines += 1
                 continue
 
@@ -144,7 +144,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 uom_id = uom_value['uom_id']
             else:
                 uom_id = False
-                error += 'Line %s in your Excel file: UoM %s not found ! Details: %s' % (line_num, row[2], uom_value['error_list'])
+                error += 'Line %s in your Excel file ignored: UoM %s not found ! Details: %s' % (line_num, row[2], uom_value['error_list'])
                 ignore_lines += 1
                 continue
 
@@ -153,7 +153,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 try:
                     consumed_qty = float(row.cells[5].data)
                 except ValueError as e:
-                    error += "Line %s in your Excel file: the Consumed Quantity should be a number and not %s \n. Details: %s" % (line_num, row.cells[5].data, e)
+                    error += "Line %s in your Excel file ignored: the Consumed Quantity should be a number and not %s \n. Details: %s" % (line_num, row.cells[5].data, e)
                     ignore_lines += 1
                     continue
             else:

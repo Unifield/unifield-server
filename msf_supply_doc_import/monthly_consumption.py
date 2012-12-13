@@ -98,7 +98,7 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
                 product_id = p_value['default_code']
             else:
                 product_id = False
-                error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
+                error += 'Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
                 ignore_lines += 1
                 continue
 
@@ -109,7 +109,7 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
                 elif isinstance(row.cells[3].data, (int, long, float)):
                     fmc = row.cells[3].data
                 else:
-                    error += "Line %s in your Excel file: FMC should be a number and not %s \n" % (line_num, row.cells[3].data)
+                    error += "Line %s in your Excel file ignored: FMC should be a number and not %s \n" % (line_num, row.cells[3].data)
                     ignore_lines += 1
                     continue
 
