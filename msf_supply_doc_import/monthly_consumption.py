@@ -25,6 +25,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
+import time
 
 
 class monthly_review_consumption(osv.osv):
