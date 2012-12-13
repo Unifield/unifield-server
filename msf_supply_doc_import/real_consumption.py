@@ -26,6 +26,7 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
 import time
+import datetime
 
 
 class real_average_consumption(osv.osv):
@@ -50,6 +51,9 @@ class real_average_consumption(osv.osv):
             ids = [ids]
         rac_id = ids[0]
 
+        # erase previous error messages
+        self.remove_error_message(cr, uid, ids, context)
+
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
@@ -57,7 +61,7 @@ class real_average_consumption(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'consumption_calculation', 'real_average_consumption_form_view')[1]
 
-        ignore_lines, complete_lines = 0, 0
+        ignore_lines, complete_lines, lines_with_error = 0, 0, 0
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
@@ -124,7 +128,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                     error += "Line %s in your Excel file: expiry date %s has a wrong format (day/month/year). Details: %s' \n" % (line_num, row[4], e)
                     if not batch and product_id and expiry_date:
                         batch_list = self.pool.get('stock.production.lot').search(cr, uid, [('product_id', '=', product_id),
-                                                                                            ('life_date', '=', time.strftime('%d/%b/%Y', time.strptime(str(expiry_date), '%d/%b/%Y')))])
+                                                                                            ('life_date', '=', expiry_date)])
                         if batch_list:
                             batch = batch_list[0]
             else:
@@ -170,14 +174,15 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             context['import_in_progress'] = True
             try:
                 line_obj.create(cr, uid, line_data)
-                complete_lines += 1
             except osv.except_osv as osv_error:
+                lines_with_error += 1
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+            complete_lines += 1
 
         if complete_lines or ignore_lines:
-            self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("%s lines have been imported, %s lines have been ignored and %s line(s) with error(s)" % (complete_lines, ignore_lines, lines_with_error)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True
@@ -201,6 +206,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
         return True
 
     def remove_error_message(self, cr,uid, ids, context=None):
+        """
+        Remove error of import lines
+        """
         vals = {'text_error': False, 'to_correct_ok': False}
         return self.write(cr, uid, ids, vals, context=context)
 

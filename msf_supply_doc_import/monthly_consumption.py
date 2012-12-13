@@ -49,6 +49,9 @@ class monthly_review_consumption(osv.osv):
             ids = [ids]
         mrc_id = ids[0]
 
+        # erase previous error messages
+        self.remove_error_message(cr, uid, ids, context)
+
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('monthly.review.consumption.line')
         obj_data = self.pool.get('ir.model.data')
@@ -56,7 +59,7 @@ class monthly_review_consumption(osv.osv):
 
         vals = {}
         vals['line_ids'] = []
-        ignore_lines, complete_lines= 0, 0
+        ignore_lines, complete_lines, lines_with_error = 0, 0, 0
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
@@ -129,14 +132,15 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
             context['import_in_progress'] = True
             try:
                 line_obj.create(cr, uid, line_data)
-                complete_lines += 1
             except osv.except_osv as osv_error:
+                lines_with_error += 1
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+            complete_lines += 1
 
         if complete_lines or ignore_lines:
-            self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("%s lines have been imported, %s lines have been ignored and %s line(s) with error(s)" % (complete_lines, ignore_lines, lines_with_error)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True
@@ -160,6 +164,9 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
         return True
 
     def remove_error_message(self, cr,uid, ids, context=None):
+        """
+        Remove error of import lines
+        """
         vals = {'text_error': False, 'to_correct_ok': False}
         return self.write(cr, uid, ids, vals, context=context)
 

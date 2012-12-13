@@ -34,7 +34,7 @@ class composition_kit(osv.osv):
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n 
                                         The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
-                                        Module, Product Code*, Product Description*, Quantity and Product UOM"""),
+                                        Module, Product Code*, Product Description, Quantity and Product UOM"""),
         'text_error': fields.text('Errors when trying to import file', readonly=1),
         'to_correct_ok': fields.boolean('To correct', readonly=1),
     }
@@ -49,13 +49,16 @@ class composition_kit(osv.osv):
             ids = [ids]
         item_kit_id = ids[0]
 
+        # erase previous error messages
+        self.remove_error_message(cr, uid, ids, context)
+
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('composition.item')
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'kit', 'view_composition_kit_form')[1]
 
-        ignore_lines, complete_lines = 0, 0
+        ignore_lines, complete_lines, lines_with_error = 0, 0, 0
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
@@ -66,7 +69,7 @@ class composition_kit(osv.osv):
 
         # iterator on rows
         rows = fileobj.getRows()
-        
+
         # ignore the first row
         rows.next()
         line_num = 1
@@ -81,13 +84,11 @@ class composition_kit(osv.osv):
             }
             item_qty = 0
             module = ''
-            batch = False
-            expiry_date = False
             line_num += 1
             # Check length of the row
             if len(row) != 5:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Module, Product Code*, Product Description*, Quantity and Product UOM"""))
+Module, Product Code*, Product Description, Quantity and Product UOM"""))
 
             # Cell 0: Module
             if row.cells[0] and row.cells[0].data:
@@ -128,30 +129,29 @@ Module, Product Code*, Product Description*, Quantity and Product UOM"""))
 
             line_data = {'item_product_id': product_id,
                          'item_uom_id': item_uom_id,
-                         'prodlot_id': batch,
-                         'expiry_date': expiry_date,
                          'item_qty': item_qty,
-                         'module': module,
+                         'item_module': module,
                          'item_kit_id': item_kit_id}
 
             context['import_in_progress'] = True
             try:
                 line_obj.create(cr, uid, line_data)
-                complete_lines += 1
             except osv.except_osv as osv_error:
+                lines_with_error += 1
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+            complete_lines += 1
 
         if complete_lines or ignore_lines:
-            self.log(cr, uid, obj.id, _("%s lines have been imported and %s lines have been ignored" % (complete_lines, ignore_lines)), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("%s lines have been imported, %s lines have been ignored and %s line(s) with error(s)" % (complete_lines, ignore_lines, lines_with_error)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
-        Remove lines
+        Remove all lines
         '''
         if context is None:
             context = {}
@@ -168,6 +168,9 @@ Module, Product Code*, Product Description*, Quantity and Product UOM"""))
         return True
 
     def remove_error_message(self, cr,uid, ids, context=None):
+        """
+        Remove error of import lines
+        """
         vals = {'text_error': False, 'to_correct_ok': False}
         return self.write(cr, uid, ids, vals, context=context)
 
