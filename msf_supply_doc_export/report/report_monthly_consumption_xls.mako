@@ -52,8 +52,11 @@
     </Style>
 </Styles>
 ## ==================================== we loop over the monthly_review_consumption so "objects" == monthly_review_consumption  ====================================================
+<% val = 0 %>
 % for o in objects:
-<ss:Worksheet ss:Name="${"From %s To %s"%(o.period_from.replace('/', '_'), o.period_to.replace('/', '_'))|x}">
+<% val += 1 %>
+## the val enables to have several reports with the same name (in tab) except for the val
+<ss:Worksheet ss:Name="${"%s- From %s To %s. %s"%(val, o.period_from.replace('/', '_'), o.period_to.replace('/', '_'), o.cons_location_id)|x}">
 
 ## definition of the columns' size
 <Table x:FullColumns="1" x:FullRows="1">
