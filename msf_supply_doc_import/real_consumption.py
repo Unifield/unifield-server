@@ -26,7 +26,6 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from check_line import *
 import time
-import datetime
 
 
 class real_average_consumption(osv.osv):
