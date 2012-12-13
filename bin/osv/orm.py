@@ -2145,14 +2145,15 @@ class orm_memory(orm_template):
                     getter = lambda d, i: d[0]
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
+                    # OEB-79: Patch provided by Xavier
+                    if hasattr(order_column, 'store'):
+                        # explicitly skip function field (stored or not) as for osv_memory we do not have raw data
+                        # in 'self.datas' available for sorting
+                        continue
+                    
                     if order_column._classic_read:
                         getter = lambda d, i: d[1][order_field]
                     elif order_column._type == 'many2one':
-                        #getter = lambda d, i: d[1][order_field]
-                        if not order_column._classic_write and not getattr(order_column, 'store', False):
-                            # many2one field has to be stored for search to work
-                            # ignoring this field
-                            continue
                         if sort_raw_id:
                             # uppon read, many2one sorting is done directly on 'id'
                             getter = lambda d, i: d[1][order_field]
