@@ -30,6 +30,16 @@ from check_line import *
 class composition_kit(osv.osv):
     _inherit = 'composition.kit'
 
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.composition_item_ids if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
     _columns = {
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n 
@@ -37,7 +47,18 @@ class composition_kit(osv.osv):
                                         Module, Product Code*, Product Description, Quantity and Product UOM"""),
         'text_error': fields.text('Errors when trying to import file', readonly=1),
         'to_correct_ok': fields.boolean('To correct', readonly=1),
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
+
+    def mark_as_completed(self, cr, uid, ids, context=None):
+        """
+        Check that there isn't error
+        """
+        res = super(composition_kit, self).mark_as_completed(cr, uid, ids, context=context)
+        for obj in self.browse(cr, uid, ids, context=context):
+            if any([item for item in obj.composition_item_ids if item.to_correct_ok]):
+                raise osv.except_osv(_('Warning !'), _('Please fix the line with errors (red lines)'))
+        return res
 
     def import_file(self, cr, uid, ids, context=None):
         '''
@@ -58,7 +79,7 @@ class composition_kit(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'kit', 'view_composition_kit_form')[1]
 
-        ignore_lines, complete_lines, lines_with_error = 0, 0, 0
+        complete_lines, lines_with_error = 0, 0
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
@@ -77,12 +98,12 @@ class composition_kit(osv.osv):
         for row in rows:
             # default values
             to_write = {
-                'default_code': False,
-                'item_qty': 0,
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'product_qty': 1,
                 'error_list': [],
                 'warning_list': [],
             }
-            item_qty = 0
             module = ''
             line_num += 1
             # Check length of the row
@@ -97,41 +118,25 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             # Cell 1: Product Code
             p_value = {}
             p_value = product_value(cr, uid, cell_nb=1, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-            if p_value['default_code']:
-                product_id = p_value['default_code']
-            else:
-                product_id = False
-                error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[1], p_value['error_list'])
-                ignore_lines += 1
-                continue
+            to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
 
             # Cell 3: Quantity
-            if row.cells[3] and row.cells[3].data:
-                try:
-                    item_qty = float(row.cells[3].data)
-                except ValueError as e:
-                    error += "Line %s in your Excel file: the Quantity should be a number and not %s. Details: %s\n" % (line_num, row.cells[3].data, e)
-                    ignore_lines += 1
-                    continue
-            else:
-                item_qty = 0
+            qty_value = {}
+            qty_value = quantity_value(cell_nb=3, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
 
             # Cell 4: UOM
             uom_value = {}
             uom_value = compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-            if uom_value['uom_id'] and uom_value['uom_id'] != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
-                item_uom_id = uom_value['uom_id']
-            else:
-                item_uom_id = False
-                error += 'Line %s in your Excel file: UoM %s not found ! Details: %s' % (line_num, row[4], uom_value['error_list'])
-                ignore_lines += 1
-                continue
+            to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
-            line_data = {'item_product_id': product_id,
-                         'item_uom_id': item_uom_id,
-                         'item_qty': item_qty,
+            line_data = {'item_product_id': to_write['default_code'],
+                         'item_uom_id': to_write['product_uom'],
+                         'item_qty': to_write['qty'],
                          'item_module': module,
-                         'item_kit_id': item_kit_id}
+                         'item_kit_id': item_kit_id,
+                         'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+                         'text_error': '\n'.join(to_write['error_list'])}
 
             context['import_in_progress'] = True
             try:
@@ -143,8 +148,8 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
             complete_lines += 1
 
-        if complete_lines or ignore_lines:
-            self.log(cr, uid, obj.id, _("%s lines have been imported, %s lines have been ignored and %s line(s) with error(s)" % (complete_lines, ignore_lines, lines_with_error)), context={'view_id': view_id, })
+        if complete_lines or lines_with_error:
+            self.log(cr, uid, obj.id, _("%s lines have been imported and %s line(s) with error(s)" % (complete_lines, lines_with_error)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True
@@ -175,3 +180,61 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
         return self.write(cr, uid, ids, vals, context=context)
 
 composition_kit()
+
+
+class composition_item(osv.osv):
+    '''
+    override of tender_line class
+    '''
+    _inherit = 'composition.item'
+    _description = 'Composition Item Line'
+    _columns = {
+        'to_correct_ok': fields.boolean('To correct'),
+        'text_error': fields.text('Errors', readonly=True),
+    }
+
+    def onchange_uom(self, cr, uid, ids, product_id, product_uom, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        warning = {}
+        if product_uom and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, product_uom, context=context)
+            if product.uom_id.category_id.id != uom.category_id.id:
+                warning = {'title': 'Wrong Product UOM !',
+                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product"}
+        return {'warning': warning}
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        if not context.get('import_in_progress') and not context.get('button'):
+            obj_data = self.pool.get('ir.model.data')
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            message = ''
+            if vals.get('item_uom_id'):
+                if vals.get('item_uom_id') == tbd_uom:
+                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if vals.get('item_product_id'):
+                if vals.get('item_product_id') == tbd_product:
+                    message += 'You have to define a valid product, i.e. not "To be define".'
+            if vals.get('item_uom_id') and vals.get('item_product_id'):
+                product_id = vals.get('item_product_id')
+                product_uom = vals.get('item_uom_id')
+                res = self.onchange_uom(cr, uid, ids, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+            else:
+                vals['to_correct_ok'] = False
+                vals['text_error'] = False
+        return super(composition_item, self).write(cr, uid, ids, vals, context=context)
+
+composition_item()

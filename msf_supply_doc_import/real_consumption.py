@@ -79,7 +79,8 @@ class real_average_consumption(osv.osv):
         for row in rows:
             # default values
             to_write = {
-                'default_code': False,
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
                 'consumed_qty': 0,
                 'error_list': [],
                 'warning_list': [],

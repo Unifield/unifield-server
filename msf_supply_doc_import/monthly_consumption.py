@@ -79,7 +79,8 @@ class monthly_review_consumption(osv.osv):
             # default values
             to_write = {
                 'error_list': [],
-                'default_code': False,
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
             }
             fmc = 0
             valid_until = False
