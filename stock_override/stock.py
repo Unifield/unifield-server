@@ -523,6 +523,25 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
+    def is_invoice_needed(self, cr, uid, ids, sp=None):
+        """
+        Check if invoice is needed. Cases where we do not need invoice:
+        - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
+        - OUT from FO AND stock picking type in internal, external or esc
+        So all OUT that have internel, external or esc should return FALSE from this method.
+        """
+        res = True
+        if not sp:
+            return res
+        # type out and partner_type in internal, external or esc
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']:
+            res = False
+        # partner is itself (those that own the company)
+        company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
+        if sp.partner_id.id == company_partner_id.id:
+            res = False
+        return res
+
     def action_done(self, cr, uid, ids, context=None):
         """
         Create automatically invoice
@@ -532,10 +551,15 @@ class stock_picking(osv.osv):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
+                # We don't create invoice in these cases:
+                # - 
+                sp_type = False
+                inv_type = self._get_invoice_type(sp)
+                is_invoice_needed = self.is_invoice_needded(cr, uid, sp)
+                if not is_invoice_needed:
+                    continue
                 # we do not create invoice for procurement_request (Internal Request)
                 if not sp.sale_id.procurement_request and sp.subtype == 'standard':
-                    sp_type = False
-                    inv_type = self._get_invoice_type(sp)
                     if sp.type == 'in' or sp.type == 'internal':
                         if inv_type == 'out_refund':
                             sp_type = 'sale_refund'
