@@ -45,41 +45,50 @@ class stock_partial_move_memory_out(osv.osv_memory):
         lot_obj = self.pool.get('stock.production.lot')
         # browse the object
         item = self.browse(cr, uid, id, context=context)
+        # picking type
+        picking_real_type = item.move_id.picking_id.type
         # by default we return empty result
         result = 'empty'
-        # product management type - cannot use hidden checks, because validate is called within get_vals function, would result in infinite loop
-        data = prod_obj.read(cr, uid, [item.product_id.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
-        management = data['batch_management']
-        perishable = data['perishable']
-        type = data['type']
-        subtype = data['subtype']
-        if management:
-            if not item.prodlot_id:
-                # lot is needed
-                result = 'missing_lot'
+        # validation is only needed if the line has been selected (qty > 0)
+        if item.quantity != 0:
+            # product management type - cannot use hidden checks, because validate is called within get_vals function, would result in infinite loop
+            data = prod_obj.read(cr, uid, [item.product_id.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
+            management = data['batch_management']
+            perishable = data['perishable']
+            type = data['type']
+            subtype = data['subtype']
+            if management:
+                if not item.prodlot_id:
+                    # lot is needed
+                    result = 'missing_lot'
+                else:
+                    data = lot_obj.read(cr, uid, [item.prodlot_id.id], ['life_date','name','type'], context=context)
+                    lot_type = data[0]['type']
+                    if lot_type != 'standard':
+                        result = 'wrong_lot_type_need_standard'
+            elif perishable:
+                if not item.expiry_date:
+                    # expiry date is needed
+                    result = 'missing_date'
             else:
-                data = lot_obj.read(cr, uid, [item.prodlot_id.id], ['life_date','name','type'], context=context)
-                lot_type = data[0]['type']
-                if lot_type != 'standard':
-                    result = 'wrong_lot_type_need_standard'
-        elif perishable:
-            if not item.expiry_date:
-                # expiry date is needed
-                result = 'missing_date'
-        else:
-            # no lot needed
-            if item.prodlot_id:
-                result = 'no_lot_needed'
-        # quantity check
-        if item.quantity <= 0:
-            result = 'must_be_greater_than_0'
-        # asset check - asset is not mandatory for moves performed internally
-        if type == 'product' and subtype == 'asset':
-            if not item.asset_id:
-                result = 'missing_asset'
-        else:
-            if item.asset_id:
-                result = 'not_asset_needed'
+                # no lot needed
+                if item.prodlot_id:
+                    result = 'no_lot_needed'
+            # asset check - asset is not mandatory for moves performed internally
+            if type == 'product' and subtype == 'asset':
+                if picking_real_type in ['out', 'in']:
+                    if not item.asset_id:
+                        result = 'missing_asset'
+            else:
+                if item.asset_id:
+                    result = 'not_asset_needed'
+            # quantity check cannot be negative
+            if item.quantity <= 0:
+                result = 'must_be_greater_than_0'
+            # for internal or simple out, cannot process more than specified in stock move
+            if picking_real_type in ['out', 'internal']:
+                if item.quantity > item.quantity_ordered:
+                    result = 'greater_than_available'
                 
         # we return the found result
         return result
