@@ -56,6 +56,47 @@
                 </form>
             </field>
         </record>-->
+
+        <record id="sale_order_followup_split_progress_view" model="ir.ui.view">
+            <field name="name">sale.order.followup.progress.view</field>
+            <field name="model">sale.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up">
+                    <separator colspan="4" string="General Information" />
+                    <field name="order_id" />
+                    <field name="cust_ref" />
+                    <field name="creation_date" />
+                    <field name="state" />
+                    <separator colspan="4" string="Associated documents" />
+                    <field name="requested_date" />
+                    <field name="confirmed_date" />
+                    <field name="line_ids" colspan="4" nolabel="1">
+                        <tree string="Order follow up lines">
+                            <field name="original_order_id" />
+                            <field name="line_number" />
+                            <field name="product_id" />
+                            <field name="procure_method" />
+                            <field name="po_cft" />
+                            <field name="qty_ordered" />
+                            <field name="uom_id" />
+                            <field name="sourced_ok" />
+                            <field name="tender_status" />
+                            <!--<field name="quotation_status" />-->
+                            <field name="purchase_status" />
+                            <field name="incoming_status" />
+                            <field name="product_available" />
+                            <field name="outgoing_status" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" />
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Close" icon="gtk-cancel" colspan="2" />
+                        <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
         
         <record id="sale_order_followup_progress_view" model="ir.ui.view">
             <field name="name">sale.order.followup.progress.view</field>
@@ -103,10 +144,11 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Order follow up lines">
+                    <field name="original_order_id" />
                     <field name="line_number" />
                     <field name="product_id" />
-             <field name="procure_method" />
-            <field name="po_cft" />
+                    <field name="procure_method" />
+                    <field name="po_cft" />
                     <field name="qty_ordered" />
                     <field name="uom_id" />
                     <field name="sourced_ok" />
@@ -138,6 +180,7 @@
                     <field name="qty_ordered" />
                     <field name="procure_method" />
                     <field name="po_cft" />
+                    <field name="original_order_id" attrs="{'invisible': [('original_order_id', '=', False)]}" />
                     <separator colspan="4" string="Associated documents" />
                     <field name="tender_ids" nolabel="1" string="Tenders" colspan="4">
                         <tree string="Tender" colors="green:state in ('done');grey: state in ('cancel')">

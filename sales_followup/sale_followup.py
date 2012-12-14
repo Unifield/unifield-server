@@ -145,6 +145,7 @@ class sale_order_followup(osv.osv_memory):
         Creates and display a followup object
         '''
         order_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
         line_obj = self.pool.get('sale.order.line.followup')
         
         if context is None:
@@ -164,25 +165,41 @@ class sale_order_followup(osv.osv_memory):
             followup_id = self.create(cr, uid, {'order_id': o.id})
             
             for line in o.order_line:
-                purchase_ids = self.get_purchase_ids(cr, uid, line.id, context=context)
-                purchase_line_ids = self.get_purchase_line_ids(cr, uid, line.id, purchase_ids, context=context)
-                incoming_ids = self.get_incoming_ids(cr, uid, line.id, purchase_ids, context=context)
-                outgoing_ids = self.get_outgoing_ids(cr, uid, line.id, context=context)
-                displayed_out_ids = self.get_outgoing_ids(cr, uid, line.id, non_zero=True, context=context)
-                tender_ids = self.get_tender_ids(cr, uid, line.id, context=context)
-#                quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
+                split_line_ids = sol_obj.search(cr, uid, [('original_line_id', '=', line.id)], context=context)
+                first_line = True
+                split_lines = False
+                if split_line_ids:
+                    split_lines = True
+                    lines = sol_obj.browse(cr, uid, split_line_ids, context=context)
+                else:
+                    lines = [line]
+
+                for l in lines:
+                    purchase_ids = self.get_purchase_ids(cr, uid, l.id, context=context)
+                    purchase_line_ids = self.get_purchase_line_ids(cr, uid, l.id, purchase_ids, context=context)
+                    incoming_ids = self.get_incoming_ids(cr, uid, l.id, purchase_ids, context=context)
+                    outgoing_ids = self.get_outgoing_ids(cr, uid, l.id, context=context)
+                    displayed_out_ids = self.get_outgoing_ids(cr, uid, l.id, non_zero=True, context=context)
+                    tender_ids = self.get_tender_ids(cr, uid, l.id, context=context)
+#                    quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
                 
-                line_obj.create(cr, uid, {'followup_id': followup_id,
-                                          'line_id': line.id,
-                                          'tender_ids': [(6,0,tender_ids)],
-#                                          'quotation_ids': [(6,0,quotation_ids)],
-                                          'purchase_ids': [(6,0,purchase_ids)],
-                                          'purchase_line_ids': [(6,0,purchase_line_ids)],
-                                          'incoming_ids': [(6,0,incoming_ids)],
-                                          'outgoing_ids': [(6,0,outgoing_ids)],
-                                          'displayed_out_ids': [(6,0,displayed_out_ids)]})
-                    
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
+                    line_obj.create(cr, uid, {'followup_id': followup_id,
+                                              'line_id': line.id,
+                                              'original_order_id': split_lines and l.order_id and l.order_id.id or False,
+                                              'first_line': first_line,
+                                              'tender_ids': [(6,0,tender_ids)],
+#                                             'quotation_ids': [(6,0,quotation_ids)],
+                                              'purchase_ids': [(6,0,purchase_ids)],
+                                              'purchase_line_ids': [(6,0,purchase_line_ids)],
+                                              'incoming_ids': [(6,0,incoming_ids)],
+                                              'outgoing_ids': [(6,0,outgoing_ids)],
+                                              'displayed_out_ids': [(6,0,displayed_out_ids)]})
+                    first_line = False
+                   
+        if split_lines:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_split_progress_view')[1]
+        else:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
@@ -672,6 +689,8 @@ class sale_order_line_followup(osv.osv_memory):
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True, on_delete='cascade'),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
+        'original_order_id': fields.many2one('sale.order', string='Orig. line', readonly=True),
+        'first_line': fields.boolean(string='First line'),
         'procure_method': fields.related('line_id', 'type', type='selection', selection=[('make_to_stock','From stock'), ('make_to_order','On order')], readonly=True, string='Proc. Method'),
         'po_cft': fields.related('line_id', 'po_cft', type='selection', selection=[('po','PO'), ('dpo', 'DPO'), ('cft','CFT')], readonly=True, string='PO/CFT'),
         'line_number': fields.related('line_id', 'line_number', string='Order line', readonly=True, type='integer'),

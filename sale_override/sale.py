@@ -442,7 +442,8 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -1055,6 +1056,7 @@ class sale_order_line(osv.osv):
                 
                 # This field is used to identify the FO PO line between 2 instances of the sync
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+                'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 }
 
     _sql_constraints = [
