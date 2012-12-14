@@ -609,6 +609,34 @@ class stock_picking(osv.osv):
                     move_obj.action_assign(cr, uid, not_assigned_move)
         return True
 
+    def _hook_action_assign_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
+        
+        -  when product is Expiry date mandatory, a "pre-assignment" of batch numbers regarding the available quantity
+        and location logic in addition to FEFO logic (First expired first out).
+        '''
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        loc_obj = self.pool.get('stock.location')
+        to_write = {}
+        vals = {'move_lines': []}
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+                if move.product_id.perishable: # perishable for perishable or batch management
+                    # the product is batch management we use the FEFO list
+                    for loc in res['fefo']:
+                        if move.product_qty > 0.0:
+                            to_write = {'prodlot_id': loc['prodlot_id']}
+                    vals['move_lines'].append((1, move.id, to_write))
+            self.write(cr, uid, ids, vals, context)
+        return super(stock_picking, self)._hook_action_assign_assign_batch(cr, uid, ids, context=context)
+
 stock_picking()
 
 # ----------------------------------------------------
