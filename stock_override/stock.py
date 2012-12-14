@@ -647,7 +647,7 @@ class stock_picking(osv.osv):
                             # as long all needed are not fulfilled
                             if needed_qty:
                                 # we treat the available qty from FEFO list corresponding to needed quantity
-                                if loc['qty'] > needed_qty:
+                                if loc['qty'] >= needed_qty:
                                     update_line = (1, move.id, {'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
                                     needed_qty = 0.0
                                 else:
