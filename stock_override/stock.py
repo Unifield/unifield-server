@@ -625,8 +625,10 @@ class stock_picking(osv.osv):
         loc_obj = self.pool.get('stock.location')
         vals = {'move_lines': []}
         for pick in self.browse(cr, uid, ids, context=context):
-            for move in [move for move in pick.move_lines if move.state in ['confirmed', 'cancel']]:
+            move_list = [move for move in pick.move_lines if move.state in ['confirmed']]
+            for move in move_list:
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+                update_line = (1, move.id, {})
                 if move.product_id.perishable: # perishable for perishable or batch management
                     values = {'name': move.name,
                               'picking_id': pick.id,
@@ -635,7 +637,6 @@ class stock_picking(osv.osv):
                               'date_expected': move.date_expected,
                               'date': move.date,
                               'state': 'assigned',
-                              'location_id': move.location_id.id,
                               'location_dest_id': move.location_dest_id.id,
                               'reason_type_id': move.reason_type_id.id,
                               }
@@ -646,14 +647,18 @@ class stock_picking(osv.osv):
                             # as long all needed are not fulfilled
                             if needed_qty:
                                 # we treat the available qty from FEFO list corresponding to needed quantity
-                                if loc['qty']:
+                                if loc['qty'] > needed_qty:
+                                    update_line = (1, move.id, {'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                    needed_qty = 0.0
+                                else:
                                     # we take all available
                                     selected_qty = loc['qty']
                                     needed_qty -= selected_qty
                                     dict1 = values.copy()
-                                    dict1.update({'product_qty': selected_qty, 'prodlot_id': loc['prodlot_id']})
+                                    dict1.update({'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
                                     vals['move_lines'].append((0, 0, dict1))
-                                    vals['move_lines'].append((1, move.id, {'product_qty': needed_qty}))
+                                    update_line = (1, move.id, {'product_qty': needed_qty})
+                    vals['move_lines'].append(update_line)
             if vals['move_lines']:
                 self.write(cr, uid, ids, vals, context)
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
