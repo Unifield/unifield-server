@@ -609,7 +609,7 @@ class stock_picking(osv.osv):
                     move_obj.action_assign(cr, uid, not_assigned_move)
         return True
 
-    def _hook_action_assign_assign_batch(self, cr, uid, ids, context=None):
+    def _hook_action_assign_batch(self, cr, uid, ids, context=None):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_assign method from stock>stock.py>stock_picking class
@@ -623,19 +623,40 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         loc_obj = self.pool.get('stock.location')
-        to_write = {}
         vals = {'move_lines': []}
         for pick in self.browse(cr, uid, ids, context=context):
-            for move in pick.move_lines:
+            for move in [move for move in pick.move_lines if move.state in ['confirmed', 'cancel']]:
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
                 if move.product_id.perishable: # perishable for perishable or batch management
+                    values = {'name': move.name,
+                              'picking_id': pick.id,
+                              'product_uom': move.product_uom.id,
+                              'product_id': move.product_id.id,
+                              'date_expected': move.date_expected,
+                              'date': move.date,
+                              'state': 'assigned',
+                              'location_id': move.location_id.id,
+                              'location_dest_id': move.location_dest_id.id,
+                              'reason_type_id': move.reason_type_id.id,
+                              }
+                    needed_qty = move.product_qty
                     # the product is batch management we use the FEFO list
                     for loc in res['fefo']:
-                        if move.product_qty > 0.0:
-                            to_write = {'prodlot_id': loc['prodlot_id']}
-                    vals['move_lines'].append((1, move.id, to_write))
-            self.write(cr, uid, ids, vals, context)
-        return super(stock_picking, self)._hook_action_assign_assign_batch(cr, uid, ids, context=context)
+                        if not [move for move in pick.move_lines if move.prodlot_id.id == loc['prodlot_id'] and move.product_id.id == loc['product_id']]:
+                            # as long all needed are not fulfilled
+                            if needed_qty:
+                                # we treat the available qty from FEFO list corresponding to needed quantity
+                                if loc['qty']:
+                                    # we take all available
+                                    selected_qty = loc['qty']
+                                    needed_qty -= selected_qty
+                                    dict1 = values.copy()
+                                    dict1.update({'product_qty': selected_qty, 'prodlot_id': loc['prodlot_id']})
+                                    vals['move_lines'].append((0, 0, dict1))
+                                    vals['move_lines'].append((1, move.id, {'product_qty': needed_qty}))
+            if vals['move_lines']:
+                self.write(cr, uid, ids, vals, context)
+        return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
 stock_picking()
 
