@@ -544,17 +544,16 @@ class stock_picking(osv.osv):
 
     def action_done(self, cr, uid, ids, context=None):
         """
-        Create automatically invoice
+        Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
         if res:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
-                # We don't create invoice in these cases:
-                # - 
                 sp_type = False
                 inv_type = self._get_invoice_type(sp)
+                # Check if no invoice needed
                 is_invoice_needed = self.is_invoice_needded(cr, uid, sp)
                 if not is_invoice_needed:
                     continue
