@@ -365,25 +365,29 @@ def write(model,cr,uid,ids,values,context=None):
 orm.write = write
 
 def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name):
-    if destination_name == instance_name or not destination_name:
-        return
-        
-    message_data = {
-            'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
-            'sent' : False,
-            'generate_message' : True,
-            'remote_call': self._name + ".message_unlink",
-            'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
-            'destination_name': destination_name
-    }
-    self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
     instance_obj = self.pool.get('msf.instance')
-    instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
-    if instance_ids:
-        instance_record = instance_obj.browse(cr, uid, instance_ids[0])
-        parent = instance_record.parent_id and instance_record.parent_id.instance or False
-        if parent:
-            generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name)
+    
+    if not destination_name:
+        return
+    else:
+        if destination_name != instance_name:
+            message_data = {
+                    'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
+                    'sent' : False,
+                    'generate_message' : True,
+                    'remote_call': self._name + ".message_unlink",
+                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
+                    'destination_name': destination_name
+            }
+            self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
+        # generate message for parent instance
+        instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
+        if instance_ids:
+            instance_record = instance_obj.browse(cr, uid, instance_ids[0])
+            parent = instance_record.parent_id and instance_record.parent_id.instance or False
+            if parent:
+                generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name)
+        return
 
 old_unlink = orm.unlink
 
