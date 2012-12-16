@@ -24,7 +24,7 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from check_line import *
+import check_line
 import time
 
 
@@ -97,7 +97,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
 
             # Cell 0: Product Code
             p_value = {}
-            p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
             if p_value['default_code']:
                 product_id = p_value['default_code']
                 to_write.update({'product_id': product_id})
@@ -139,7 +139,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
 
             # Cell 2: UOM
             uom_value = {}
-            uom_value = compute_uom_value(cr, uid, cell_nb=2, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+            uom_value = check_line.compute_uom_value(cr, uid, cell_nb=2, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
             if uom_value['uom_id'] and uom_value['uom_id'] != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
                 uom_id = uom_value['uom_id']
             else:

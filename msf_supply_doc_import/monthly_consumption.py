@@ -24,7 +24,7 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from check_line import *
+import check_line
 import time
 
 
@@ -93,7 +93,7 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
 
             # Cell 0: Product Code
             p_value = {}
-            p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
             if p_value['default_code']:
                 product_id = p_value['default_code']
             else:

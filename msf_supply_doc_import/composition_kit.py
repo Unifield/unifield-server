@@ -24,7 +24,7 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from check_line import *
+import check_line
 
 
 class composition_kit(osv.osv):
@@ -117,17 +117,17 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
 
             # Cell 1: Product Code
             p_value = {}
-            p_value = product_value(cr, uid, cell_nb=1, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            p_value = check_line.product_value(cr, uid, cell_nb=1, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
             to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
 
             # Cell 3: Quantity
             qty_value = {}
-            qty_value = quantity_value(cell_nb=3, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            qty_value = check_line.quantity_value(cell_nb=3, product_obj=product_obj, row=row, to_write=to_write, context=context)
             to_write.update({'qty': qty_value['product_qty'], 'error_list': qty_value['error_list'], 'warning_list': qty_value['warning_list']})
 
             # Cell 4: UOM
             uom_value = {}
-            uom_value = compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+            uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
             to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
             line_data = {'item_product_id': to_write['default_code'],

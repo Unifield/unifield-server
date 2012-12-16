@@ -27,7 +27,7 @@ from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from check_line import *
+import check_line
 from msf_supply_doc_import import MAX_LINES_NB
 
 
@@ -102,7 +102,7 @@ class sale_order(osv.osv):
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
         # check that the max number of lines is not excedeed
-        if check_nb_of_lines(fileobj=fileobj):
+        if check_line.check_nb_of_lines(fileobj=fileobj):
             raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
         # iterator on rows
         rows = fileobj.getRows()
@@ -139,34 +139,34 @@ class sale_order(osv.osv):
 Product Code, Product Description, Quantity, UoM, Currency, Comment.
 That means Not price, Neither Delivery requested date. """))
             try:
-                if not check_empty_line(row=row, col_count=col_count):
+                if not check_line.check_empty_line(row=row, col_count=col_count):
                     continue
                 # for each cell we check the value
                 # Cell 0: Product Code
                 p_value = {}
-                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
                 # Cell 2: Quantity
                 qty_value = {}
-                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                 # Cell 3: UoM
                 uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                 # Cell 4: Currency
                 curr_value = {}
-                curr_value = compute_currency_value(cr, uid, cell=4, browse_sale=browse_sale,
+                curr_value = check_line.compute_currency_value(cr, uid, cell=4, browse_sale=browse_sale,
                                                     currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
 
                 # Cell 5: Comment
                 c_value = {}
-                c_value = comment_value(row=row, cell=5, to_write=to_write, context=context)
+                c_value = check_line.comment_value(row=row, cell=5, to_write=to_write, context=context)
                 to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                 to_write.update({
                     'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
@@ -184,7 +184,7 @@ That means Not price, Neither Delivery requested date. """))
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
         self._check_service(cr, uid, ids, vals, context=context)
-        msg_to_return = get_log_message(to_write=to_write, obj=obj)
+        msg_to_return = check_line.get_log_message(to_write=to_write, obj=obj)
         if msg_to_return:
             self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
         return True
@@ -218,7 +218,7 @@ That means Not price, Neither Delivery requested date. """))
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
         # check that the max number of lines is not excedeed
-        if check_nb_of_lines(fileobj=fileobj):
+        if check_line.check_nb_of_lines(fileobj=fileobj):
             raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
         # iterator on rows
         rows = fileobj.getRows()
@@ -254,46 +254,46 @@ That means Not price, Neither Delivery requested date. """))
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
             try:
-                if not check_empty_line(row=row, col_count=col_count):
+                if not check_line.check_empty_line(row=row, col_count=col_count):
                     continue
 
                 # Cell 0: Product Code
                 p_value = {}
-                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
                 # Cell 2: Quantity
                 qty_value = {}
-                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
 
                 # Cell 3: UOM
                 uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
                 # Cell 4: Price
                 price_value = {}
-                price_value = compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
+                price_value = check_line.compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
                 to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
                                  'warning_list': price_value['warning_list']})
 
                 # Cell 5: Date
                 date_value = {}
-                date_value = compute_date_value(row=row, to_write=to_write, context=context)
+                date_value = check_line.compute_date_value(row=row, to_write=to_write, context=context)
                 to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list'],
                                  'warning_list': date_value['warning_list']})
 
                 # Cell 6: Currency
                 curr_value = {}
-                curr_value = compute_currency_value(cr, uid, cell=6, browse_sale=browse_sale,
+                curr_value = check_line.compute_currency_value(cr, uid, cell=6, browse_sale=browse_sale,
                                                     currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
 
                 # Cell 7: Comment
                 c_value = {}
-                c_value = comment_value(row=row, cell=7, to_write=to_write, context=context)
+                c_value = check_line.comment_value(row=row, cell=7, to_write=to_write, context=context)
                 to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                 to_write.update({
                     'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
@@ -312,7 +312,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
         # write order line on PO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
-        msg_to_return = get_log_message(to_write=to_write, obj=obj)
+        msg_to_return = check_line.get_log_message(to_write=to_write, obj=obj)
         if msg_to_return:
             self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
         return True
