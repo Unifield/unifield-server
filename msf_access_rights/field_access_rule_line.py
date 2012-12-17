@@ -46,4 +46,29 @@ class field_access_rule_line(osv.osv):
 		'write_access' : True
 	}
 
+	def _get_field_name_from_id(self, cr, uid, field, context={}):
+		if field: 
+			fields_pool = self.pool.get('ir.model.fields')
+			fields = fields_pool.browse(cr, uid, field, context=context)
+			return fields.name
+		else:
+			return ''
+
+	def _add_field_name_to_values(self, cr, uid, values, context={}):
+		if 'field' in values and ('field_name' not in values or not values['field_name']):
+			values['field_name'] = self._get_field_name_from_id(cr, uid, values['field'], context=context)
+		return values
+
+	def create(self, cr, uid, values, context={}):
+		values = self._add_field_name_to_values(cr, uid, values, context)
+		return super(field_access_rule_line, self).create(cr, uid, values, context=context)
+
+	def write(self, cr, uid, ids, values, context={}):
+		values = self._add_field_name_to_values(cr, uid, values, context)
+		return super(field_access_rule_line, self).write(cr, uid, ids, values, context=context)
+
+	def onchange_field(self, cr, uid, ids, field, context={}):
+		field_name = self._get_field_name_from_id(cr, uid, field, context=context)
+		return {'value': {'field_name' : field_name}}
+
 field_access_rule_line()
