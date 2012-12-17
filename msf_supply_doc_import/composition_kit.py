@@ -79,7 +79,7 @@ class composition_kit(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'kit', 'view_composition_kit_form')[1]
 
-        complete_lines, lines_with_error = 0, 0
+        complete_lines = 0
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
@@ -142,14 +142,13 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             try:
                 line_obj.create(cr, uid, line_data)
             except osv.except_osv as osv_error:
-                lines_with_error += 1
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
             complete_lines += 1
 
-        if complete_lines or lines_with_error:
-            self.log(cr, uid, obj.id, _("%s lines have been imported and %s line(s) with error(s)" % (complete_lines, lines_with_error)), context={'view_id': view_id, })
+        if complete_lines:
+            self.log(cr, uid, obj.id, _("%s lines have been imported" % (complete_lines)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True
