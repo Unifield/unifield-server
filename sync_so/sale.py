@@ -42,7 +42,7 @@ class sale_order_sync(osv.osv):
         if not context:
             context = {}
             
-        context['from_sync'] = True
+        context['no_check_line'] = True
         po_dict = po_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
         
@@ -76,7 +76,7 @@ class sale_order_sync(osv.osv):
         print "Update the validated FO when the relevant PO got validated"
         if not context:
             context = {}
-        context['from_sync'] = True
+        context['no_check_line'] = True
             
         po_dict = po_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
@@ -98,7 +98,7 @@ class sale_order_sync(osv.osv):
         if not context:
             context = {}
             
-        context['from_sync'] = True
+        context['no_check_line'] = True
         so_po_common = self.pool.get('so.po.common')
         so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
         
