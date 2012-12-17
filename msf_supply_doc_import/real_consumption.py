@@ -182,7 +182,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             complete_lines += 1
 
         if complete_lines or ignore_lines:
-            self.log(cr, uid, obj.id, _("%s lines have been imported, %s lines have been ignored and %s line(s) with error(s)" % (complete_lines, ignore_lines, lines_with_error)), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("%s line(s) imported, %s line(s) ignored and %s line(s) with error(s)" % (complete_lines, ignore_lines, lines_with_error)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True

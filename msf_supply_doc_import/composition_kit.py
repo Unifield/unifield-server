@@ -148,7 +148,10 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             complete_lines += 1
 
         if complete_lines:
-            self.log(cr, uid, obj.id, _("%s lines have been imported" % (complete_lines)), context={'view_id': view_id, })
+            if complete_lines == 1:
+                self.log(cr, uid, obj.id, _("%s line has been imported" % (complete_lines)), context={'view_id': view_id, })
+            else:
+                self.log(cr, uid, obj.id, _("%s lines have been imported" % (complete_lines)), context={'view_id': view_id, })
         if error:
             self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
         return True
