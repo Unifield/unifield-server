@@ -3235,6 +3235,7 @@ class sale_order(osv.osv):
         '''
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
+
         # On Simple OUT configuration, the system should confirm the OUT and launch a first check availability
         if setup.delivery_process != 'simple':
             cond = cond and False
@@ -3244,6 +3245,8 @@ class sale_order(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         if picking_id:
             picking_obj.log_picking(cr, uid, [picking_id], context=context)
+            # Launch a first check availability
+            self.pool.get('stock.picking').action_assign(cr, uid, [picking_id], context=context)
         
         return cond
 
