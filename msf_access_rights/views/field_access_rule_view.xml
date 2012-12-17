@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Field Access Rule Tree View -->
+        <record id="field_access_rule_list_view" model="ir.ui.view">
+            <field name='name'>Field Access Rule List</field>
+            <field name='model'>msf_access_rights.field_access_rule</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <form string="Field Access Rule">
+                    <field name="active" />
+                    <field name="name" />
+                    <field name="model" />
+                    <field name="instance_level" />
+                    <field name="domain" />
+                    <field name="status" />
+                </form>
+            </field>
+        </record>
+
+        <!-- Field Access Rule Search View -->
+        <record id="field_access_rule_search" model="ir.ui.view">
+            <field name='name'>Field Access Rule Search</field>
+            <field name='model'>msf_access_rights.field_access_rule</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Ideas">
+                    <group col="6" colspan="4">     
+                        <filter string="Active" icon="terp-partner"
+                            domain="[('active','=','1')]"
+                            help="Show only Field Access Rules marked as Active"/>
+                        <filter string="Inactive" icon="terp-partner"
+                            domain="[('active','!=','1')]"
+                            help="Show only Field Access Rules marked as Inactive"/>
+                        <field name="name" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Field Access Rule Form View -->
+        <record id="field_access_rule_form_view" model="ir.ui.view">
+            <field name='name'>Field Access Rule Form</field>
+            <field name='model'>msf_access_rights.field_access_rule</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group col="6" colspan="4">
+                        <field name="name" default_focus='1' colspan="1" />
+                        <field name="model" on_change='onchange_model(model)' colspan="1" />
+                        <field name="model_name" readonly='1' colspan="1" />    
+                        <field name="instance_level" colspan="1" />
+                        <field name="domain_filter" on_change='onchange_domain_filter(domain_filter)' colspan="1" />
+                        <button type='object' name='create_new_filter_button' string='Create New filter' icon='stock/gtk-add' colspan="2" />
+                    </group>
+
+                    <separator string="Domain" colspan="2" />
+                    <separator string="Groups" colspan="2" />
+                    <field name="domain" colspan="2" nolabel="1" />
+                    <field name="groups" colspan="2" nolabel="1" />
+
+                    <separator string="Field Access Rule Lines" colspan="4" />
+                    <button type='object' name='generate_rules_button' string='Generate Rules' icon='stock/gtk-execute' colspan="2" />
+                    <button type='object' name='manage_line_lines_button' string='Manage Rule Lines' colspan="2" icon='stock/gtk-find-and-replace' />
+                    <field name="field_access_rule_line_ids" colspan='4' nolabel='1' />
+
+                    <separator string="Comments" colspan="4" />
+                    <field name="comment" nolabel='1' colspan="4" />
+
+                    <separator string="Rule Status" colspan="4" />
+                    <group col="6" colspan="4">
+                        <field name="active" colspan="2" />
+                        <field name="status" colspan="2" />
+                        <button type='object' name='validate_button' string='Validate' icon='icons/camera_test' colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

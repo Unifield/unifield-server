@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+		<!-- Field Access Rule List -->
+		<record id="field_access_rules_list" model="ir.actions.act_window">
+	        <field name="name">Field Access Rules</field>
+	        <field name="res_model">msf_access_rights.field_access_rule</field>
+	        <field name="view_mode">tree,form</field>
+    	</record>
+
+		<menuitem name="Field Access Rules" action="field_access_rules_list" id="field_access_rule_list_menu" parent="base.menu_config" sequence="0" />
+
+		<!-- Field Access Rule Line List -->
+		<record id="field_access_rule_line_list" model="ir.actions.act_window">
+	        <field name="name">Field Access Rule Lines</field>
+	        <field name="res_model">msf_access_rights.field_access_rule_line</field>
+	        <field name="view_mode">tree,form</field>
+    	</record>
+
+		<menuitem name="Field Access Rule Lines" action="field_access_rule_line_list" id="field_access_rule_line_list_menu" parent="base.menu_config" sequence="0" />
+
+	</data>
+</openerp>
+
