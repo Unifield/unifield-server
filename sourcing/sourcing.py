@@ -301,6 +301,13 @@ class sourcing_line(osv.osv):
         '''
         Check if the line have good values
         '''
+        if not context:
+            context = {}
+        if context.get('from_sync', False):
+            return True
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
             if line.type == 'make_to_order' and line.po_cft not in ['cft'] and not line.product_id and \
                line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
@@ -315,10 +322,6 @@ class sourcing_line(osv.osv):
                     raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
 
         return True
-
-    _constraints = [
-        (_check_line_conditions, 'An error occurs on the data of the line', ['type', 'cft', 'product_id', 'supplier']),
-    ]
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -411,7 +414,9 @@ class sourcing_line(osv.osv):
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
         
-        return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
+        res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
+        self._check_line_conditions(cr, uid, ids, context)
+        return res
     
     def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, context=None):
         '''
@@ -488,8 +493,9 @@ class sourcing_line(osv.osv):
         '''
         create method from sourcing_line
         '''
-        result = super(sourcing_line, self).create(cr, uid, vals, context)
-        return result
+        res = super(sourcing_line, self).create(cr, uid, vals, context)
+        self._check_line_conditions(cr, uid, res, context)
+        return res
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
