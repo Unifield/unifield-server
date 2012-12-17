@@ -49,6 +49,9 @@
                 <xpath expr="/form//field[@name='sale_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}</attribute>
                 </xpath>
+                <xpath expr="/form//field[@name='partner_id2']" position="attributes">
+                    <attribute name="domain">[('customer', '=', True)]</attribute>
+                </xpath>
             </field>
         </record>
 
