@@ -529,13 +529,14 @@ class stock_picking(osv.osv):
         - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
         - OUT from FO AND stock picking type in internal, external or esc
         So all OUT that have internel, external or esc should return FALSE from this method.
+        This means to only accept intermission and intersection invoicing on OUT with reason type "Deliver partner".
         """
         res = True
         if not sp:
             return res
         # Fetch some values
         try:
-            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_type_moves', 'reason_type_deliver_partner')[1]
+            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
         except ValueError:
             rt_id = False
         # type out and partner_type in internal, external or esc
