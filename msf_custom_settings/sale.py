@@ -34,10 +34,11 @@ class sale_order(osv.osv):
         res = {}
         if not order_type:
             return res
+        domain = [('customer','=',True)]
         if order_type in ['regular', 'donation_st', 'loan']:
-            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])]}
+            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])] + domain}
         elif order_type in ['donation_exp']:
-            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section'])]}
+            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section'])] + domain}
         else:
             pass
         return res
