@@ -234,9 +234,10 @@ class message_received(osv.osv):
             except Exception, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
-                log += tools.ustr(e)
+                temp = e.value or e # to indicate the error message clearer, and not the non-sense "Warning warning"!
+                log += tools.ustr(temp)
                 self._logger.error(log)
-                error = sync_log(self, e, 'error')
+                error = sync_log(self, temp, 'error')
                 log += tools.ustr(error)
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True
