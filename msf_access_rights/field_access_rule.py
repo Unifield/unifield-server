@@ -123,21 +123,18 @@ class field_access_rule(osv.osv):
 		"""
 		Generate and return field_access_rule_line's for each field of the model and all inherited models, with Write Access checked
 		"""
-		print '======================== generate rules button'
-		print ids
-
 		field_access_rule = self.browse(cr, uid, ids[0])
+		if field_access_rule.field_access_rule_line_ids:
+			raise osv.except_osv('Remove Field Access Rune Lines First', 'Please remove all existing field access rule lines before generating new ones')
 
 		fields_pool = self.pool.get('ir.model.fields')
 		fields_search = fields_pool.search(cr, uid, [('model_id','=',field_access_rule.model.id)], context=context)
-		fields = fields_pool.read(cr, uid, fields_search, context=context)
+		fields = fields_pool.browse(cr, uid, fields_search, context=context)
 
-		res = []
-		for field in fields:
-			res.append({'field_name' : field['name']})
+		res = [(0, 0, {'field' : i.id, 'field_name' : i.name}) for i in fields]
+		self.write(cr, uid, ids, {'field_access_rule_line_ids' : res})
 
-		print res
-		return {'values' : {'field_access_rule_line_ids' : res}}
+		return True
 
 	def manage_rule_lines_button():
 		"""

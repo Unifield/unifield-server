@@ -42,4 +42,8 @@ class field_access_rule_line(osv.osv):
 		'field_access_rule': fields.many2one('msf_access_rights.field_access_rule', 'Field Access Rule', required=True),
 	}
 
+	_defaults = {
+		'write_access' : True
+	}
+
 field_access_rule_line()
