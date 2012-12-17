@@ -172,7 +172,7 @@ class entity(osv.osv):
 
                 # First, check if we can acquire the lock or return False
                 if not self.sync_lock.acquire(blocking=False):
-                    return False
+                    raise osv.except_osv('Already Syncing...', 'OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.')
 
                 # Lock is acquired, so don't put any code outside the try...catch!!
                 try:

@@ -58,19 +58,22 @@ class version(osv.osv):
         return self.browse(cr, uid, rev_ids[0]) if rev_ids else False
 
     def _get_next_revisions(self, cr, uid, context=None):
-        current = self._get_last_revision(cr, uid, context=context)
-        if current:
-            revisions = self.search(cr, uid, [('date','>',current.date),('state','!=','installed')], order='date asc')
+        self.current = self._get_last_revision(cr, uid, context=context)
+        if self.current:
+            revisions = self.search(cr, uid, [('date','>',self.current.date),('state','!=','installed')], order='date asc')
         else:
             revisions = self.search(cr, uid, [('state','!=','installed')], order='date asc')
         return revisions
 
     def _is_outdated(self, cr, uid, context=None):
-        current = self._get_last_revision(cr, uid, context=context)
-        where = [('state','!=','installed'),('importance','=','required')]
-        if current:
-            where.append(('date','>',current.date))
-        return bool(self.search(cr, uid, where, limit=1))
+        if not hasattr(self, 'current'):
+            self.current = self._get_last_revision(cr, uid, context=context) 
+        if not hasattr(self, 'version_check'):
+            where = [('state','!=','installed'),('importance','=','required')]
+            if self.current:
+                where.append(('date','>',self.current.date))
+            self.version_check = self.search(cr, uid, where, limit=1)
+        return bool(self.version_check)
 
     def _is_update_available(self, cr, uid, ids, context=None):
         for id in ids if isinstance(ids, list) else [ids]:
