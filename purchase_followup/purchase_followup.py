@@ -116,7 +116,7 @@ class purchase_order_followup(osv.osv_memory):
             followup_id = self.create(cr, uid, 
                                        {'order_id': order.id}, context=context)
             
-            order_ids = order_obj.search(cr, uid, [('name', 'like', order.name)], context=context)
+            order_ids = order_obj.search(cr, uid, [('id', '!=', order.id), ('name', 'like', order.name)], context=context)
             if not order_ids:
                 split = False
                 order_ids = [order.id]
