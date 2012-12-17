@@ -313,11 +313,41 @@ class stock_picking(osv.osv):
                 res['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
         
         return res
-    
+
+    def _check_reason_type(self, cr, uid, ids, context=None):
+        """
+        Do not permit user to create/write a OUT from scratch with some reason types:
+         - GOODS RETURN
+         - GOODS REPLACEMENT
+        """
+        res = True
+        try:
+            rt_return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        except ValueError:
+            rt_return_id = 0
+        try:
+            rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+        except ValueError:
+            rt_replacement_id = 0
+        try:
+            rt_return_unit_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        except ValueError:
+            rt_return_unit_id = 0
+
+        for sp in self.browse(cr, uid, ids):
+            if not sp.purchase_id and not sp.sale_id and sp.type == 'out':
+                if sp.reason_type_id.id in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+                    return False
+        return res
+
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
     }
-    
+
+    _constraints = [
+        (_check_reason_type, "Wrong reason type for an OUT created from scratch.", ['reason_type_id',]),
+    ]
+
 stock_picking()
 
 
