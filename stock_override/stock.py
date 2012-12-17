@@ -523,7 +523,7 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
-    def is_invoice_needed(self, cr, uid, ids, sp=None):
+    def is_invoice_needed(self, cr, uid, sp=None):
         """
         Check if invoice is needed. Cases where we do not need invoice:
         - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
@@ -533,8 +533,15 @@ class stock_picking(osv.osv):
         res = True
         if not sp:
             return res
+        # Fetch some values
+        try:
+            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_type_moves', 'reason_type_deliver_partner')[1]
+        except ValueError:
+            rt_id = False
         # type out and partner_type in internal, external or esc
         if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']:
+            res = False
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and rt_id and sp.reason_type_id.id != rt_id:
             res = False
         # partner is itself (those that own the company)
         company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
@@ -554,7 +561,7 @@ class stock_picking(osv.osv):
                 sp_type = False
                 inv_type = self._get_invoice_type(sp)
                 # Check if no invoice needed
-                is_invoice_needed = self.is_invoice_needded(cr, uid, sp)
+                is_invoice_needed = self.is_invoice_needed(cr, uid, sp)
                 if not is_invoice_needed:
                     continue
                 # we do not create invoice for procurement_request (Internal Request)
