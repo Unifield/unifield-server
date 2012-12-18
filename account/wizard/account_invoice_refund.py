@@ -98,6 +98,12 @@ class account_invoice_refund(osv.osv_memory):
         """
         return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
 
+    def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
+        """
+        Permit to change date regarding other constraints
+        """
+        return period
+
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         """
         @param cr: the current row, from the database cursor,
@@ -140,21 +146,22 @@ class account_invoice_refund(osv.osv_memory):
                 if form['date']:
                     date = form['date']
                     if not form['period']:
-                            cr.execute("select name from ir_model_fields \
-                                            where model = 'account.period' \
-                                            and name = 'company_id'")
-                            result_query = cr.fetchone()
-                            if result_query:
-                                cr.execute("""select p.id from account_fiscalyear y, account_period p where y.id=p.fiscalyear_id \
-                                    and date(%s) between p.date_start AND p.date_stop and y.company_id = %s limit 1""", (date, company.id,))
-                            else:
-                                cr.execute("""SELECT id
-                                        from account_period where date(%s)
-                                        between date_start AND  date_stop  \
-                                        limit 1 """, (date,))
-                            res = cr.fetchone()
-                            if res:
-                                period = res[0]
+                        cr.execute("select name from ir_model_fields \
+                                        where model = 'account.period' \
+                                        and name = 'company_id'")
+                        result_query = cr.fetchone()
+                        if result_query:
+                            cr.execute("""select p.id from account_fiscalyear y, account_period p where y.id=p.fiscalyear_id \
+                                and date(%s) between p.date_start AND p.date_stop and y.company_id = %s limit 1""", (date, company.id,))
+                        else:
+                            cr.execute("""SELECT id
+                                    from account_period where date(%s)
+                                    between date_start AND  date_stop  \
+                                    limit 1 """, (date,))
+                        res = cr.fetchone()
+                        if res:
+                            period = res[0]
+                        period = self._hook_get_period_from_date(cr, uid, inv.id, date, period)
                 else:
                     date = inv.date_invoice
                 if form['description']:
