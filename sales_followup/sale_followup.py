@@ -86,7 +86,7 @@ class sale_order_followup(osv.osv_memory):
         for followup in self.browse(cr, uid, ids, context=context):
             split = False
             for line in followup.order_id.order_line:
-                if sol_obj.search(cr, uid, [('original_line_id', '=', line.id)], context=context):
+                if self.pool.get('sale.order.line').search(cr, uid, [('original_line_id', '=', line.id)], context=context):
                     split = True                
 #            if followup.choose_type == 'documents':
 #                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_document_view')[1]
