@@ -35,7 +35,7 @@ class field_access_rule(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
-        'model': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
+        'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
         'model_name': fields.char('Model Name', size=256, help='The technical name for the model. This is used to make searching for Field Access Rules easier.'),
         'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to'),
         'domain_id': fields.many2one('ir.filters', 'Filter', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule.'),
@@ -58,8 +58,8 @@ class field_access_rule(osv.osv):
 
     def write(self, cr, uid, ids, values, context={}):
     	# get model_name from model
-    	if 'model' in values and values['model']:
-    		values['model_name'] = self.pool.get('ir.model').browse(cr, uid, values['model'], context=context).model
+    	if 'model_id' in values and values['model_id']:
+    		values['model_name'] = self.pool.get('ir.model').browse(cr, uid, values['model_id'], context=context).model
 
         # if domain_text has changed, change status to not_validated
         if 'domain_text' in values:
@@ -77,7 +77,7 @@ class field_access_rule(osv.osv):
 
         return super(field_access_rule, self).write(cr, uid, ids, values, context=context)
 
-    def onchange_model(self, cr, uid, ids, model, context={}):
+    def onchange_model_id(self, cr, uid, ids, model, context={}):
         if model:
             model = self.pool.get('ir.model').browse(cr, uid, model, context=context)
             return {'value': {'model_name': model.model}}
@@ -94,8 +94,11 @@ class field_access_rule(osv.osv):
         else:
             return {'value': {'domain_text': ''}}
 
-    def onchange_domain_text(self, cr, uid, ids, context={}):
-        return {'value': {'status': 'validated', 'active': False}}
+    def onchange_domain_text(self, cr, uid, ids, domain_text, context={}):
+        if domain_text:
+            return {'value': {'status': 'validated', 'active': False}}
+        else:
+            return True
 
     def validate_button(self, cr, uid, ids, context={}):
     	return self.write(cr, uid, ids, {'status':'validated'})
@@ -109,8 +112,8 @@ class field_access_rule(osv.osv):
         record = self.browse(cr, uid, ids[0])
 
         res = {
-            'name': 'Create a New Filter For: %s' % record.model.name,
-            'res_model': record.model.model,
+            'name': 'Create a New Filter For: %s' % record.model_id.name,
+            'res_model': record.model_id.model,
             'type': 'ir.actions.act_window',
             'view_type': 'form',
 			'view_mode':'tree,form',
@@ -130,7 +133,7 @@ class field_access_rule(osv.osv):
             raise osv.except_osv('Remove Field Access Rune Lines First', 'Please remove all existing field access rule lines before generating new ones')
 
         fields_pool = self.pool.get('ir.model.fields')
-        fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model.id)], context=context)
+        fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model_id.id)], context=context)
         fields = fields_pool.browse(cr, uid, fields_search, context=context)
 
         res = [(0, 0, {'field': i.id, 'field_name': i.name}) for i in fields]
