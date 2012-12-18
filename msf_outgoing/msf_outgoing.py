@@ -1153,7 +1153,9 @@ class pack_family_memory(osv.osv_memory):
                         values['amount'] += move.amount
                         values['currency_id'] = move.currency_id and move.currency_id.id or False
                     else:
-                        raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
+                        # when multiple moves are modified from/to values, the first one would raise an exception as the second one is not written yet
+                        pass
+                        #raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
 
