@@ -89,9 +89,9 @@ class account_invoice_refund(osv.osv_memory):
         """
         res = super(account_invoice_refund, self)._hook_get_period_from_date(cr, uid, invoice_id, date, period)
         if date:
-            res = self.pool.get('account.period').get_period_from_date(cr, uid, date)
-            if res and isinstance(res, list):
-                res = res[0]
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date)
+            if period_ids and isinstance(period_ids, list):
+                res = period_ids[0]
         return res
 
 account_invoice_refund()
