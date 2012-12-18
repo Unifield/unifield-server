@@ -281,11 +281,13 @@
                 <form string="Choose a Sale Order">
                     <separator colspan="4" string="Select Sale Order" />
                 <field name="order_id" 
-                                       attrs="{'readonly': [('cust_order_id', '!=', False)], 'required': [('cust_order_id', '=', False)]}" 
+                    attrs="{'readonly': [('cust_order_id', '!=', False)], 'required': [('cust_order_id', '=', False)]}" 
+                    domain="[('state', '!=', 'draft')]"
                        on_change="change_order_id(order_id, cust_order_id, 'order_id')"/>
                     <field name="cust_order_id" 
                                        context="{'from_followup': True}" 
                                        attrs="{'readonly': [('order_id', '!=', False)], 'required': [('cust_order_id', '=', False)]}" 
+                    domain="[('state', '!=', 'draft')]"
                     on_change="change_order_id(order_id, cust_order_id, 'cust_order_id')" />
                     <separator colspan="4" string="Actions" />
                     <button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
