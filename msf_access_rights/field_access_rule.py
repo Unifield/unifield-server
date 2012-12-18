@@ -35,7 +35,7 @@ class field_access_rule(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
-        'model': fields.many2one('ir.model', 'Model', help='The model for which this rule applies', required=True),
+        'model': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
         'model_name': fields.char('Model Name', size=256, help='The technical name for the model. This is used to make searching for Field Access Rules easier.'),
         'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to', required=True),
         'domain_id': fields.many2one('ir.filters', 'Filter', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule.'),
@@ -57,6 +57,10 @@ class field_access_rule(osv.osv):
     ]
 
     def write(self, cr, uid, ids, values, context={}):
+    	# get model_name from model
+    	if 'model' in values and values['model']:
+    		values['model_name'] = self.pool.get('ir.model').browse(cr, uid, values['model'], context=context).model
+
         # if domain_text has changed, change status to not_validated
         if 'domain_text' in values:
             if len(ids) == 1:
@@ -91,7 +95,7 @@ class field_access_rule(osv.osv):
             return {'value': {'domain_text': ''}}
 
     def onchange_domain_text(self, cr, uid, ids, context={}):
-        return {'value': {'status': 'not_validated'}}
+        return {'value': {'status': 'not_validated', 'active': False}}
 
     def create_new_filter_button(self, cr, uid, ids, context={}):
         """
@@ -103,7 +107,7 @@ class field_access_rule(osv.osv):
 
         res = {
             'name': 'Create a New Filter For: %s' % record.model.name,
-            'view_mode': 'tree,form',
+            'view_mode': 'tree',
             'view_type': 'form',
             'res_model': record.model.model,
             'type': 'ir.actions.act_window',

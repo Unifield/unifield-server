@@ -9,7 +9,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <form string="Field Access Rule">
-                    <field name="active" />
+                    <field name="active" invisible='1' />
                     <field name="name" />
                     <field name="model" />
                     <field name="instance_level" />
@@ -51,11 +51,11 @@
                         <field name="model" on_change='onchange_model(model)'  colspan="1" />
                         <field name="model_name" readonly='1' colspan="1" />    
                         <field name="instance_level" colspan="1" />
-                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' colspan="1" />
+                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' domain="[('model_id','=',model_name)]" colspan="1" />
                         <button type='object' name='create_new_filter_button' string='Create New Filter' icon='stock/gtk-add' colspan="2" />
                     </group>
 
-                    <separator string="Domain" colspan="2" />
+                    <separator string="Advanced Filter" colspan="2" />
                     <separator string="Groups" colspan="2" />
                     <field name="domain_text" on_change='onchange_domain_text()' colspan="2" nolabel="1" />
                     <field name="group_ids" colspan="2" nolabel="1" />

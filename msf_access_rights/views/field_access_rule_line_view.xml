@@ -12,6 +12,7 @@
                     <field name="field" on_change='onchange_field(field)' />
                     <field name="field_name" readonly='1' />
                     <field name="write_access" />
+                    <field name="field_access_rule" invisible='1' />
                     <field name="value_not_synchronized_on_create" />
                     <field name="value_not_synchronized_on_write" />
                 </tree>

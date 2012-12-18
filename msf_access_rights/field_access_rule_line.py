@@ -43,7 +43,9 @@ class field_access_rule_line(osv.osv):
 	}
 
 	_defaults = {
-		'write_access' : True
+		'write_access' : True,
+		'value_not_synchronized_on_write' : False,
+		'value_not_synchronized_on_create' : False,
 	}
 
 	def _get_field_name_from_id(self, cr, uid, field, context={}):
