@@ -84,10 +84,17 @@ class sale_order_followup(osv.osv_memory):
         Launches the correct view according to the user's choice
         '''
         for followup in self.browse(cr, uid, ids, context=context):
+            split = False
+            for line in followup.order_id.order_line:
+                if sol_obj.search(cr, uid, [('original_line_id', '=', line.id)], context=context):
+                    split = True                
 #            if followup.choose_type == 'documents':
 #                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_document_view')[1]
 #            else:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
+            if split:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_split_progress_view')[1]
+            else:
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
             
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
