@@ -303,7 +303,7 @@ class sourcing_line(osv.osv):
         '''
         if not context:
             context = {}
-        if context.get('from_sync', False):
+        if context.get('no_check_line', False):
             return True
         
         if isinstance(ids, (int, long)):
@@ -602,6 +602,8 @@ class sale_order(osv.osv):
             ids = [ids]
    
         context['fromOrder'] = True
+        context['no_check_line'] = True
+        
         values = {}
         if 'priority' in vals:
             values.update({'priority': vals['priority']})
