@@ -37,14 +37,14 @@ class field_access_rule(osv.osv):
         'name': fields.char('Name', size=256, required=True),
         'model': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
         'model_name': fields.char('Model Name', size=256, help='The technical name for the model. This is used to make searching for Field Access Rules easier.'),
-        'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to', required=True),
+        'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to'),
         'domain_id': fields.many2one('ir.filters', 'Filter', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule.'),
         'domain_text': fields.text('Advanced Filter', help='The Filter that chooses which records this rule applies to'),
         'group_ids': fields.many2many('res.groups', 'field_access_rule_groups_rel', 'field_access_rule_id', 'group_id', 'Groups', help='A list of groups that should be affected by this rule. If you leave this empty, this rule will apply to all groups.'),
         'field_access_rule_line_ids': fields.one2many('msf_access_rights.field_access_rule_line', 'field_access_rule', 'Field Access Rule Lines', help='A list of fields and their specific access and synchronization propagation rules that will be implemented by this rule. If you have left out any fields, users will have full write access, and all values will be synchronized when the record is created or editted.', required=True),
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
-        'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
+        'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
     }
 
     _defaults = {
@@ -67,12 +67,12 @@ class field_access_rule(osv.osv):
                 record = self.browse(cr, uid, ids[0], context=context)
                 domain_text = getattr(record, 'domain_text', '')
                 if domain_text != values['domain_text']:
-                    values['status'] = 'not_validated'
+                    values['status'] = 'validated'
             else:
-                values['status'] = 'not_validated'
+                values['status'] = 'validated'
 
         # deactivate if not validated
-        if 'status' in values and values['status'] == 'not_validated':
+        if 'status' in values and values['status'] == 'validated':
             values['active'] = False
 
         return super(field_access_rule, self).write(cr, uid, ids, values, context=context)
@@ -95,7 +95,10 @@ class field_access_rule(osv.osv):
             return {'value': {'domain_text': ''}}
 
     def onchange_domain_text(self, cr, uid, ids, context={}):
-        return {'value': {'status': 'not_validated', 'active': False}}
+        return {'value': {'status': 'validated', 'active': False}}
+
+    def validate_button(self, cr, uid, ids, context={}):
+    	return self.write(cr, uid, ids, {'status':'validated'})
 
     def create_new_filter_button(self, cr, uid, ids, context={}):
         """
@@ -107,14 +110,13 @@ class field_access_rule(osv.osv):
 
         res = {
             'name': 'Create a New Filter For: %s' % record.model.name,
-            'view_mode': 'tree',
-            'view_type': 'form',
             'res_model': record.model.model,
             'type': 'ir.actions.act_window',
+            'view_type': 'form',
+			'view_mode':'tree,form',
             'target': 'new', 
         }
 
-        print res
         return res
 
     def generate_rules_button(self, cr, uid, ids, context={}):
@@ -141,13 +143,16 @@ class field_access_rule(osv.osv):
         Send the user to a list view of field_access_rule_line's for this field_access_rule.
         """
         assert len(ids) <= 1, "Cannot work on list of ids != 1"
+
         this = self.browse(cr, uid, ids, context=context)[0]
+        x, view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_access_rights', 'field_access_rule_full_tree_view')
 
         return {
             'type': 'ir.actions.act_window',
             'name': 'Field Access Rule Lines for rule: %s' % this.name,
-            'view_mode': 'tree,form',
             'view_type': 'form',
+			'view_mode':'tree,form',
+			'view_id': [view_id],
             'target': 'new',
             'res_model': 'msf_access_rights.field_access_rule_line',
             'context': {
@@ -155,7 +160,7 @@ class field_access_rule(osv.osv):
             },
         }
 
-    def validate_button(self, cr, uid, ids, context={}):
+    def validate_domain_button(self, cr, uid, ids, context={}):
         """
         Validates the domain_text filter, and if successful, changes the Status field to validated
         """
@@ -183,10 +188,10 @@ class field_access_rule(osv.osv):
             except ValueError:
                 raise osv.except_osv(exception_title, exception_body)
 
-            self.write(cr, uid, ids, {'status': 'validated'}, context=context)
+            self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
             return True
         else:
-            self.write(cr, uid, ids, {'status': 'validated'}, context=context)
+            self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
             return True
 
 field_access_rule()

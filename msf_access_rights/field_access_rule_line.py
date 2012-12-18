@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 
+
 class field_access_rule_line(osv.osv):
 	"""
 	Lets user create access and sync propagation rules for fields of models.
@@ -39,14 +40,18 @@ class field_access_rule_line(osv.osv):
 		'value_not_synchronized_on_create': fields.boolean('Value NOT Synchronized on Create', help='If checked, the value for this field given by a synchronization or import is ignored when this record is created.'),
 		'value_not_synchronized_on_write': fields.boolean('Value NOT Synchronized on Write', help='If checked, the value for this field given by a synchronization or import is ignored when this record is editted.'),
 
-		'field_access_rule': fields.many2one('msf_access_rights.field_access_rule', 'Field Access Rule', required=True),
+		'field_access_rule': fields.many2one('msf_access_rights.field_access_rule', 'Field Access Rule', ondelete='cascade', required=True),
 	}
 
 	_defaults = {
-		'write_access' : True,
-		'value_not_synchronized_on_write' : False,
-		'value_not_synchronized_on_create' : False,
+		'write_access': True,
+		'value_not_synchronized_on_write': False,
+		'value_not_synchronized_on_create': False,
 	}
+
+	_sql_constraints = [
+		('rule_id_field_unique', 'unique (field_access_rule, field)', 'You cannot have two Field Access Rule Lines for the same Field in the same Rule')
+	]
 
 	def _get_field_name_from_id(self, cr, uid, field, context={}):
 		if field: 

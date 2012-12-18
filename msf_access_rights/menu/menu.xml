@@ -16,6 +16,7 @@
 	        <field name="name">Field Access Rule Lines</field>
 	        <field name="res_model">msf_access_rights.field_access_rule_line</field>
 	        <field name="view_mode">tree,form</field>
+	        <field name="view_id" ref="field_access_rule_full_tree_view"/>
     	</record>
 
 		<menuitem name="Field Access Rule Lines" action="field_access_rule_line_list" id="field_access_rule_line_list_menu" parent="base.menu_config" sequence="0" />

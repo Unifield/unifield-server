@@ -47,32 +47,33 @@
             <field name="arch" type="xml">
                 <form>
                     <group col="6" colspan="4">
-                        <field name="name" default_focus='1' colspan="1" />
-                        <field name="model" on_change='onchange_model(model)'  colspan="1" />
-                        <field name="model_name" readonly='1' colspan="1" />    
-                        <field name="instance_level" colspan="1" />
-                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' domain="[('model_id','=',model_name)]" colspan="1" />
-                        <button type='object' name='create_new_filter_button' string='Create New Filter' icon='stock/gtk-add' colspan="2" />
+                        <field name="name" attrs="{'readonly':[('status','!=','not_validated')]}" default_focus='1' colspan="1" />
+                        <field name="model" attrs="{'readonly':[('status','!=','not_validated')]}" on_change='onchange_model(model)'  colspan="1" />
+                        <field name="model_name" attrs="{'readonly':[('status','!=','not_validated')]}" readonly='1' colspan="1" />    
+                        <button type='object' name='validate_button' string='Validate Model' icon='icons/camera_test' attrs="{'readonly':[('status','!=','not_validated')]}" colspan="6" />
+                        <field name="instance_level" attrs="{'readonly':[('status','=','not_validated')]}" colspan="1" />
+                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' domain="[('model_id','=',model_name)]" attrs="{'readonly':[('status','=','not_validated')]}" colspan="1" />
+                        <button type='object' name='create_new_filter_button' string='Create New Filter' icon='stock/gtk-add' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" />
                     </group>
 
                     <separator string="Advanced Filter" colspan="2" />
                     <separator string="Groups" colspan="2" />
-                    <field name="domain_text" on_change='onchange_domain_text()' colspan="2" nolabel="1" />
-                    <field name="group_ids" colspan="2" nolabel="1" />
+                    <field name="domain_text" on_change='onchange_domain_text()' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" nolabel="1" />
+                    <field name="group_ids" attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" nolabel="1" />
 
                     <separator string="Field Access Rule Lines" colspan="4" />
-                    <button type='object' name='generate_rules_button' string='Generate Rules' icon='stock/gtk-execute' colspan="2" />
-                    <button type='object' name='manage_rule_lines_button' string='Manage Rule Lines' colspan="2" icon='stock/gtk-find-and-replace' />
-                    <field name="field_access_rule_line_ids" colspan='4' nolabel='1' />
+                    <button type='object' name='generate_rules_button' string='Generate Rules' icon='stock/gtk-execute' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" />
+                    <button type='object' name='manage_rule_lines_button' string='Manage Rule Lines' colspan="2" attrs="{'readonly':[('status','=','not_validated')]}" icon='stock/gtk-find-and-replace' />
+                    <field name="field_access_rule_line_ids" attrs="{'readonly':[('status','=','not_validated')]}" colspan='4' nolabel='1' />
 
                     <separator string="Comments" colspan="4" />
-                    <field name="comment" nolabel='1' colspan="4" />
+                    <field name="comment" nolabel='1' attrs="{'readonly':[('status','=','not_validated')]}" colspan="4" />
 
                     <separator string="Rule Status" colspan="4" />
                     <group col="6" colspan="4">
-                        <field name="active" attrs="{'readonly':[('status','!=','validated')]}" colspan="2" />
+                        <field name="active" attrs="{'readonly':[('status','!=','domain_validated')]}" colspan="2" />
                         <field name="status" readonly='1' colspan="2" />
-                        <button type='object' name='validate_button' string='Validate' icon='icons/camera_test' attrs="{'readonly':[('status','=','validated')]}" colspan="2" />
+                        <button type='object' name='validate_domain_button' string='Validate Filter' icon='icons/camera_test' attrs="{'readonly':[('status','!=','validated')]}" colspan="2" />
                     </group>
                 </form>
             </field>
