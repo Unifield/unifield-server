@@ -83,5 +83,16 @@ class account_invoice_refund(osv.osv_memory):
             data.update({'document_date': form['document_date']})
         return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
 
+    def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
+        """
+        Get period regarding given date
+        """
+        res = super(account_invoice_refund, self)._hook_get_period_from_date(cr, uid, invoice_id, date, period)
+        if date:
+            res = self.pool.get('account.period').get_period_from_date(cr, uid, date)
+            if res and isinstance(res, list):
+                res = res[0]
+        return res
+
 account_invoice_refund()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
