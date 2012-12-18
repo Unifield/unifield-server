@@ -542,8 +542,14 @@ class stock_picking(osv.osv):
         # type out and partner_type in internal, external or esc
         if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']:
             res = False
-        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and rt_id and sp.reason_type_id.id != rt_id:
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and rt_id and sp.partner_id.partner_type in ['intermission', 'section']:
+            # Search all stock moves attached to this one. If one of them is deliver partner, then is_invoice_needed is ok
             res = False
+            sm_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', sp.id)])
+            if sm_ids:
+                for sm in self.pool.get('stock.move').browse(cr, uid, sm_ids):
+                    if sm.reason_type_id.id == rt_id:
+                        res = True
         # partner is itself (those that own the company)
         company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
         if sp.partner_id.id == company_partner_id.id:
