@@ -872,6 +872,7 @@ class account_bank_statement_line(osv.osv):
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
+            'cheque_number': st_line.cheque_number or False,
             # end of add
             'account_id': (st_line.account_id) and st_line.account_id.id,
             'credit': ((amount>0) and amount) or 0.0,
@@ -922,6 +923,7 @@ class account_bank_statement_line(osv.osv):
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
+            'cheque_number': st_line.cheque_number or False,
             # end of add
             'account_id': account_id,
             'credit': ((amount < 0) and -amount) or 0.0,
@@ -1114,6 +1116,8 @@ class account_bank_statement_line(osv.osv):
             move_vals = {'partner_type': partner_type}
             if 'document_date' in move_line_values:
                 move_vals.update({'document_date': move_line_values.get('document_date')})
+            if 'cheque_number' in move_line_values:
+                move_vals.update({'cheque_number': move_line_values.get('cheque_number')})
             self.pool.get('account.move').write(cr, uid, [register_line.move_id.id], move_vals, context=context)
         return True
 
