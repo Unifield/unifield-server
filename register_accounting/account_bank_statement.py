@@ -117,13 +117,21 @@ class account_bank_statement(osv.osv):
     ]
 
     def __init__(self, pool, cr):
+        """
+        Change some fields that were store=True to field that have store=False:
+        - total_entry_encoding
+        - balance_end
+        """
         super(account_bank_statement, self).__init__(pool, cr)
         if self.pool._store_function.get(self._name, []):
             newstore = []
             for fct in self.pool._store_function[self._name]:
-                if fct[1] != 'balance_end':
+                if fct[1] not in ['balance_end', 'total_entry_encoding']:
                     newstore.append(fct)
             self.pool._store_function[self._name] = newstore
+            super(account_bank_statement, self)._columns['total_entry_encoding'].store = False
+            super(account_bank_statement, self)._columns['balance_end'].store = False
+
 
     def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """

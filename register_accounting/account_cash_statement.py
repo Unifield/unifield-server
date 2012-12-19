@@ -40,19 +40,6 @@ class account_cash_statement(osv.osv):
 #        bank = self.browse(cr, uid, res_id)
 #        return bank.name + '_' +bank.journal_id.code
 
-    def __init__(self, pool, cr):
-        """
-        Change a field to function
-        """
-        super(account_cash_statement, self).__init__(pool, cr)
-        if self.pool._store_function.get(self._name, []):
-            newstore = []
-            for fct in self.pool._store_function[self._name]:
-                if fct[1] != 'total_entry_encoding':
-                    newstore.append(fct)
-            self.pool._store_function[self._name] = newstore
-            super(account_cash_statement, self)._columns['total_entry_encoding'].store = False
-
     def _get_starting_balance(self, cr, uid, ids, context=None):
         """ Find starting balance
         @param name: Names of fields.
