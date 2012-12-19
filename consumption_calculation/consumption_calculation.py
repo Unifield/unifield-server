@@ -138,10 +138,16 @@ class real_average_consumption(osv.osv):
             self.pool.get('real.average.consumption.line')._check_qty(cr, uid, to_update, {'noraise': True})
         return True
     
+    def _hook_for_import(self, cr, uid, ids, context=None):
+        return False
+    
     def save_and_process(self, cr, uid, ids, context=None):
         '''
         Returns the wizard to confirm the process of all lines
         '''
+        if context is None:
+            context = {}
+        self._hook_for_import(cr, uid, ids, context=context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'real_average_consumption_confirmation_view')[1],
         
         return {'type': 'ir.actions.act_window',
@@ -364,6 +370,9 @@ class real_average_consumption(osv.osv):
         ret = super(real_average_consumption, self).write(cr, uid, ids, vals, context=context)
         return ret
     
+    def dummy(self, cr, uid, ids, context=None):
+        return True
+    
 real_average_consumption()
 
 
@@ -426,7 +435,7 @@ class real_average_consumption_line(osv.osv):
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
                 expiry_date = obj.expiry_date
-                if not prod_ids:
+                if not prod_ids and not context.get('import_in_progress') and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
                 prodlot_id = prod_ids[0]

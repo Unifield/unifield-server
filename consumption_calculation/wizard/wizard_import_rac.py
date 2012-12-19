@@ -25,8 +25,10 @@ from tools.translate import _
 from tempfile import TemporaryFile
 
 import base64
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import csv
 import time
+from msf_supply_doc_import import check_line
 
 class wizard_import_rac(osv.osv_memory):
     _name = 'wizard.import.rac'
@@ -42,7 +44,7 @@ class wizard_import_rac(osv.osv_memory):
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
         
-        The file should be in CSV format (with ',' character as delimiter).
+        The file should be in XML 2003 format
         The columns should be in this order :
            Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
         """
@@ -71,20 +73,21 @@ class wizard_import_rac(osv.osv_memory):
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('real.average.consumption.line')
-           
+        obj_data = self.pool.get('ir.model.data')
+
         import_rac = self.browse(cr, uid, ids[0], context)
         rac_id = import_rac.rac_id.id
         
-        complete_lines = 0
-        ignore_lines = 0
+        complete_lines, lines_with_error = 0, 0
+        error_log = ''
 
-        fileobj = TemporaryFile('w+')
-        fileobj.write(base64.decodestring(import_rac.file))
+        if not import_rac.file:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        # now we determine the file format
-        fileobj.seek(0)
+        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(import_rac.file))
 
-        reader = csv.reader(fileobj, quotechar='"', delimiter=',')
+        # iterator on rows
+        reader = fileobj.getRows()
 
         error = ''
 
@@ -92,88 +95,130 @@ class wizard_import_rac(osv.osv_memory):
         
         reader.next()
 
-        for line in reader:
+        for row in reader:
+            # Check length of the row
+            col_count = len(row)
+            if not check_line.check_empty_line(row=row, col_count=col_count):
+                continue
+            if col_count != 7:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
+Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Consumed Quantity, Remark"""))
+            # default values
+            to_write = {
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'consumed_qty': 0,
+                'error_list': [],
+                'warning_list': [],
+            }
+            consumed_qty = 0
+            remark = ''
+            error = ''
+            batch = False
+            expiry_date = False
+            batch_mandatory = False
+            date_mandatory = False
             line_num += 1
-            if len(line) < 6:
-                error += 'Line %s is not valid !' % (line_num)
-                error += '\n'
-                ignore_lines += 1
-                continue
-            
-            # Get the product
-            product_ids = product_obj.search(cr, uid, [('default_code', '=', line[0])], context=context)
-            if not product_ids:
-                product_ids = product_obj.search(cr, uid, [('name', '=', line[1])], context=context)
-            
-            if not product_ids:
-                error += 'Line %s Product [%s] %s not found !' % (line_num, line[0], line[1])
-                error += '\n'
-                ignore_lines += 1
-                continue
-
-            product_id = product_ids[0]
-            
-            # Get the UoM
-            uom_ids = uom_obj.search(cr, uid, [('name', '=', line[2])], context=context)
-            if not uom_ids:
-                error += 'Line %s UoM %s not found !' % (line_num, line[2])
-                error += '\n'
-                ignore_lines += 1
-                continue
-
-            prod = product_obj.browse(cr, uid, product_id)
-            if not prod.batch_management and not prod.perishable:
-                batch = False
-                expiry_date = False
-            else:
-                if prod.batch_management and not line[3]:
-                    error += "Line %s : batch number required\n" % (line_num, )
-                    ignore_lines += 1
-                    continue
-                if line[3]:
-                    lot = prodlot_obj.search(cr, uid, [('name', '=', line[3])])
-                    if not lot:
-                        error += "Line %s : batch number %s not found.\n" % (line_num, line[3])
-                        ignore_lines += 1
-                        continue
-                    batch = lot[0]
+            try:
+                # Cell 0: Product Code
+                p_value = {}
+                p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                if p_value['default_code']:
+                    product_id = p_value['default_code']
+                    to_write.update({'product_id': product_id})
+                    # Cell 3: Batch Number
+                    prod = product_obj.browse(cr, uid, product_id)
+                    if prod.batch_management:
+                        batch_mandatory = True
+                        if prod.batch_management and not row[3]:
+                            error += "Line %s in your Excel file: batch number required\n" % (line_num, prod.default_code)
+                        if row[3]:
+                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])])
+                            if not lot:
+                                error += "Line %s in your Excel file: batch number %s not found.\n" % (line_num, row[3])
+                            else:
+                                batch = lot[0]
+                    if prod.perishable:
+                        date_mandatory = True
+                        if not row[4] or str(row[4]) == str(None):
+                            error += "Line %s in your Excel file  : expiry date required\n" % (line_num, )
+                        elif row[4] and row[4].data:
+                            if row[4].type in ('datetime', 'date'):
+                                expiry_date = row[4].data
+                            else:
+                                try:
+                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%m/%Y'))
+                                except ValueError:
+                                    try:
+                                        expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%b/%Y'))
+                                    except ValueError as e:
+                                        error += "Line %s in your Excel file: expiry date %s has a wrong format (day/month/year). Details: %s' \n" % (line_num, row[4], e)
+                        if not batch and product_id and expiry_date:
+                            batch_list = self.pool.get('stock.production.lot').search(cr, uid, [('product_id', '=', product_id),
+                                                                                                ('life_date', '=', expiry_date)])
+                            if batch_list:
+                                batch = batch_list[0]
                 else:
-                    if not line[4]:
-                        error += "Line %s : expiry date required\n" % (line_num, )
-                        ignore_lines += 1
-                        continue
+                    product_id = False
+                    error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
+    
+                # Cell 2: UOM
+                uom_value = {}
+                uom_value = check_line.compute_uom_value(cr, uid, cell_nb=2, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                if uom_value['uom_id'] and uom_value['uom_id'] != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+                    uom_id = uom_value['uom_id']
+                else:
+                    uom_id = False
+                    error += 'Line %s in your Excel file: UoM %s not found ! Details: %s' % (line_num, row[2], uom_value['error_list'])
+    
+                # Cell 5: Quantity
+                if row.cells[5] and row.cells[5].data:
                     try:
-                        expiry_date = time.strftime('%Y-%m-%d', time.strptime(line[4], '%d/%m/%Y'))
-                    except:
-                        error += "Line %s : expiry date %s wrong formt\n" % (line_num, line[4])
-                        ignore_lines += 1
-                        continue
+                        consumed_qty = float(row.cells[5].data)
+                    except ValueError as e:
+                        error += "Line %s in your Excel file: the Consumed Quantity should be a number and not %s \n. Details: %s" % (line_num, row.cells[5].data, e)
+                else:
+                    consumed_qty = 0
+    
+                # Cell 6: Remark
+                if row.cells[6] and row.cells[6].data:
+                    remark = row.cells[6].data
+                error += '\n'.join(to_write['error_list'])
+                line_data = {'batch_mandatory': batch_mandatory,
+                             'date_mandatory': date_mandatory,
+                             'product_id': product_id,
+                             'uom_id': uom_id,
+                             'prodlot_id': batch,
+                             'expiry_date': expiry_date,
+                             'consumed_qty': consumed_qty,
+                             'remark': remark,
+                             'rac_id': rac_id,
+                             'text_error': error,
+                             'to_correct_ok': [True for x in error],}  # the lines with to_correct_ok=True will be red}
+    
+                context.update({'import_in_progress': True, 'noraise': True})
+                line_obj.create(cr, uid, line_data, context=context)
+            except osv.except_osv as osv_error:
+                osv_value = osv_error.value
+                osv_name = osv_error.name
+                error_log += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+                line_ids = line_obj.search(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('uom_id', '=', uom_id), ('rac_id', '=', rac_id)], context=context)
+                text_error = line_obj.read(cr, uid, line_ids, ['text_error'],context=context)[0]['test_error']
+                line_obj.write(cr, uid, line_ids, {'text_error': text_error + '\n' + error_log})
+                lines_with_error += 1
+            complete_lines += 1
 
-            
-            line_data = {'product_id': product_id,
-                         'uom_id': uom_ids[0],
-                         'prodlot_id': batch,
-                         'expiry_date': expiry_date,
-                         'consumed_qty': line[5].replace(',', '.'),
-                         'rac_id': rac_id,}
-            
-            if len(line) == 7:
-                line_data.update({'remark': line[6]})
-            
-            try:    
-                line_obj.create(cr, uid, line_data)
-                complete_lines += 1
-            except osv.except_osv:
-                error += "Line %s : warning not enough qty in stock\n"%(line_num, )
+        #self.pool.get('real.average.consumption').button_update_stock(cr, uid, rac_id)
+        # refresh the view
+        self.pool.get('real.average.consumption').dummy(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'message': '''
+Importation completed !
+# of imported lines : %s
+Error log: %s
 
-        self.pool.get('real.average.consumption').button_update_stock(cr, uid, rac_id)
-        self.write(cr, uid, ids, {'message': '''Importation completed !
-                                                # of imported lines : %s
-                                                # of ignored lines : %s
-                                                
-                                                Reported errors :
+Reported errors :
 %s
-                                             ''' % (complete_lines, ignore_lines, error or 'No error !')}, context=context)
+                                             ''' % (complete_lines, lines_with_error or 'No error !', error_log)}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
         

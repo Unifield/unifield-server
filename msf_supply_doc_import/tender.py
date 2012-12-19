@@ -30,6 +30,17 @@ from msf_supply_doc_import import MAX_LINES_NB
 
 class tender(osv.osv):
     _inherit = 'tender'
+
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.tender_line_ids  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
     _columns = {
         'file_to_import': fields.binary(string='File to import',
                                         help="""* You can use the template of the export for the format that you need to use.
@@ -37,6 +48,7 @@ class tender(osv.osv):
                                                 * You can import up to %s lines each time,
                                                 else you have to split the lines in several files and import each one by one.
                                                 """ % MAX_LINES_NB),
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
 
     def button_remove_lines(self, cr, uid, ids, context=None):

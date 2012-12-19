@@ -15,13 +15,11 @@
                     <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <group colspan="2" col="2">
                         <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                        <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import)
                         <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
-                         -->
                     </group>
-                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import)
+                    <!-- uf-1344 we export as xml file 
                     <button name="export_rac" colspan="2" string="Export lines" icon="terp-mail-forward" type="object" />
-                     -->
+                    -->
                     <separator colspan="4" string="Period of consumption" />
                     <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}"/>
                     <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>

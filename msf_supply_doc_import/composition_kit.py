@@ -107,9 +107,13 @@ class composition_kit(osv.osv):
             module = ''
             line_num += 1
             # Check length of the row
-            if len(row) != 5:
+            col_count = len(row)
+            if col_count != 5:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
 Module, Product Code*, Product Description, Quantity and Product UOM"""))
+
+            if not check_line.check_empty_line(row=row, col_count=col_count):
+                continue
 
             # Cell 0: Module
             if row.cells[0] and row.cells[0].data:
@@ -186,7 +190,7 @@ composition_kit()
 
 class composition_item(osv.osv):
     '''
-    override of tender_line class
+    override of composition_item class
     '''
     _inherit = 'composition.item'
     _description = 'Composition Item Line'
