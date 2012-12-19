@@ -135,7 +135,7 @@
 	                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"
 	                            	on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"  />
 	                            <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])]}" />
-	                            <field name="shipment_date" attrs="{'readonly': [('state', 'in', ['sourced', 'split'])]}"/>
+	                            <field name="shipment_date" />
 	                        </group>
 	                    </page>
                     </xpath>
