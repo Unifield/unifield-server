@@ -642,7 +642,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'name': name,
                 'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
-                'source_date': ml.date,
+                'source_date': ml.source_date or ml.date,
                 'reversal': True,
                 'document_date': ml.document_date,
             })
@@ -655,7 +655,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
                 'ref': ml.ref,
-                'source_date': ml.date,
+                'source_date': ml.source_date or ml.date,
                 'have_an_historic': True,
                 'document_date': ml.document_date,
             }

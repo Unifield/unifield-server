@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 import time
 
 class account_invoice_refund(osv.osv_memory):

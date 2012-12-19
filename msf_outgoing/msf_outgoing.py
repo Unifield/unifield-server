@@ -1153,7 +1153,9 @@ class pack_family_memory(osv.osv_memory):
                         values['amount'] += move.amount
                         values['currency_id'] = move.currency_id and move.currency_id.id or False
                     else:
-                        raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
+                        # when multiple moves are modified from/to values, the first one would raise an exception as the second one is not written yet
+                        pass
+                        #raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
 
@@ -3213,9 +3215,6 @@ class sale_order(osv.osv):
                 picking_data['subtype'] = 'standard'
                 picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-            else:
-                # use the name according to picking ticket sequence
-                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
             
         picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
