@@ -71,9 +71,9 @@
 
                     <separator string="Rule Status" colspan="4" />
                     <group col="6" colspan="4">
-                        <field name="active" attrs="{'readonly':[('status','!=','domain_validated')]}" colspan="2" />
-                        <field name="status" readonly='1' colspan="2" />
                         <button type='object' name='validate_domain_button' string='Validate Filter' icon='icons/camera_test' attrs="{'readonly':[('status','!=','validated')]}" colspan="2" />
+                        <field name="status" readonly='1' colspan="2" />
+                        <field name="active" attrs="{'readonly':[('status','!=','domain_validated')]}" colspan="2" />
                     </group>
                 </form>
             </field>

@@ -44,7 +44,7 @@ class field_access_rule(osv.osv):
         'field_access_rule_line_ids': fields.one2many('msf_access_rights.field_access_rule_line', 'field_access_rule', 'Field Access Rule Lines', help='A list of fields and their specific access and synchronization propagation rules that will be implemented by this rule. If you have left out any fields, users will have full write access, and all values will be synchronized when the record is created or editted.', required=True),
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
-        'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
+        'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
     }
 
     _defaults = {
@@ -56,20 +56,26 @@ class field_access_rule(osv.osv):
         ('name_unique', 'unique (name)', """The name you have chosen has already been used, and it must be unique. Please choose a different name."""),
     ]
 
-    def write(self, cr, uid, ids, values, context={}):
+    def write(self, cr, uid, ids, values, context=None):
+
     	# get model_name from model
-    	if 'model_id' in values and values['model_id']:
-    		values['model_name'] = self.pool.get('ir.model').browse(cr, uid, values['model_id'], context=context).model
+    	if 'model_id' in values:
+            values['model_name'] = ''
+            if values['model_id']:
+                model_name = self.pool.get('ir.model').browse(cr, uid, values['model_id'], context=context).model
+
 
         # if domain_text has changed, change status to not_validated
-        if 'domain_text' in values:
+        if values.get('domain_text'):
             if len(ids) == 1:
                 record = self.browse(cr, uid, ids[0], context=context)
                 domain_text = getattr(record, 'domain_text', '')
+
                 if domain_text != values['domain_text']:
                     values['status'] = 'validated'
             else:
                 values['status'] = 'validated'
+
 
         # deactivate if not validated
         if 'status' in values and values['status'] == 'validated':
@@ -77,7 +83,7 @@ class field_access_rule(osv.osv):
 
         return super(field_access_rule, self).write(cr, uid, ids, values, context=context)
 
-    def onchange_model_id(self, cr, uid, ids, model, context={}):
+    def onchange_model_id(self, cr, uid, ids, model, context=None):
         if model:
             model = self.pool.get('ir.model').browse(cr, uid, model, context=context)
             return {'value': {'model_name': model.model}}
@@ -94,16 +100,16 @@ class field_access_rule(osv.osv):
         else:
             return {'value': {'domain_text': ''}}
 
-    def onchange_domain_text(self, cr, uid, ids, domain_text, context={}):
+    def onchange_domain_text(self, cr, uid, ids, domain_text, context=None):
         if domain_text:
             return {'value': {'status': 'validated', 'active': False}}
         else:
             return True
 
-    def validate_button(self, cr, uid, ids, context={}):
-    	return self.write(cr, uid, ids, {'status':'validated'})
+    def validate_button(self, cr, uid, ids, context=None):
+    	return self.write(cr, uid, ids, {'status':'validated'}, context=context)
 
-    def create_new_filter_button(self, cr, uid, ids, context={}):
+    def create_new_filter_button(self, cr, uid, ids, context=None):
         """
         Send the user to the list view of the selected model so they can save a new filter
         """
@@ -122,7 +128,7 @@ class field_access_rule(osv.osv):
 
         return res
 
-    def generate_rules_button(self, cr, uid, ids, context={}):
+    def generate_rules_button(self, cr, uid, ids, context=None):
         """
         Generate and return field_access_rule_line's for each field of the model and all inherited models, with Write Access checked
         """
@@ -141,7 +147,7 @@ class field_access_rule(osv.osv):
 
         return True
 
-    def manage_rule_lines_button(self, cr, uid, ids, context={}):
+    def manage_rule_lines_button(self, cr, uid, ids, context=None):
         """
         Send the user to a list view of field_access_rule_line's for this field_access_rule.
         """
@@ -163,7 +169,7 @@ class field_access_rule(osv.osv):
             },
         }
 
-    def validate_domain_button(self, cr, uid, ids, context={}):
+    def validate_domain_button(self, cr, uid, ids, context=None):
         """
         Validates the domain_text filter, and if successful, changes the Status field to validated
         """
