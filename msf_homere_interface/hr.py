@@ -82,6 +82,7 @@ class hr_employee(osv.osv):
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination",),
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
+        'photo': fields.binary('Photo', readonly=True),
     }
 
     _defaults = {
