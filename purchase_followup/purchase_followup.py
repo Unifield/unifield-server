@@ -96,6 +96,7 @@ class purchase_order_followup(osv.osv_memory):
             context = {}
         # openERP BUG ?
         ids = context.get('active_ids',[])
+        split = True
         
         if not ids:
             raise osv.except_osv(_('Error'), _('No order found !'))
@@ -107,71 +108,105 @@ class purchase_order_followup(osv.osv_memory):
         line_obj = self.pool.get('purchase.order.followup.line')
         
         for order in order_obj.browse(cr, uid, ids, context=context):
-            if order.state not in ('approved', 'done',
-                                   'except_picking', 'except_invoice'):
+            if order.state not in ('approved', 'done', 'confirmed_wait', 'split',
+                                   'sourced', 'except_picking', 'except_invoice'):
                 raise osv.except_osv(_('Error'), 
                        _('You cannot follow a non-confirmed Purchase order !'))
             
             followup_id = self.create(cr, uid, 
                                        {'order_id': order.id}, context=context)
             
-            for line in order.order_line:
-                first_move = True
-                move_ids1 = []
-                move_ids2 = []
-                move_ids3 = []
-                move_ids4 = []
-                move_ids5 = []
-                move_ids6 = []
-                for move in line.move_ids:
-                    if move.type == 'internal':
-                        continue
-                    elif move.type == 'out':
-                        move_ids6.append(move)
-                    elif move.state == 'done':
-                        move_ids1.append(move)
-                    elif move.product_id.id == line.product_id.id:
-                        move_ids2.append(move)
-                    elif move.product_uom.id == line.product_uom.id:
-                        move_ids3.append(move)
-                    elif move.date_expected == line.confirmed_delivery_date:
-                        move_ids4.append(move)
-                    else:
-                        move_ids4.append(move)
-                for move_ids in [move_ids1, move_ids2, move_ids3, move_ids4, move_ids5, move_ids6]:
-                    for move in move_ids:
-                        line_shipped_rate = "no-progressbar"
-                        if first_move:
-                            line_shipped_rate = self._shipped_rate(cr, uid, line, context)
+            order_ids = order_obj.search(cr, uid, [('id', '!=', order.id), ('name', 'like', order.name)], context=context)
+            if not order_ids:
+                split = False
+                order_ids = [order.id]
+            
+            for o in order_obj.browse(cr, uid, order_ids, context=context):
+                for line in o.order_line:
+                    # If the line has no moves
+                    if not line.move_ids:
                         line_data = {'followup_id': followup_id,
-                                     'move_id': move.id,
-                                     'line_id': line.id,
-                                     'picking_id': move.picking_id.id,
-                                     'move_state': self._get_move_state(cr, uid, move.state, context=context),
-                                     'line_name': line.line_number,
-                                     'line_product_id': first_move and line.product_id.id or False,
-                                     'line_product_qty': first_move and line.product_qty or False,
-                                     'line_uom_id': first_move and line.product_uom.id or False,
-                                     'line_confirmed_date': first_move and line.confirmed_delivery_date or False,
-                                     'line_shipped_rate': line_shipped_rate,
-                                     'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
-                                     'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
-                                     'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
-                                     'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date or False,
-                                     'return_move': move.type == 'out',
-                                     }
+                                     'order_id': line.order_id and line.order_id.id or False,
+                                      'move_id': False,
+                                      'line_id': line.id,
+                                      'picking_id': False,
+                                      'move_state': 'No move',
+                                      'line_name': line.line_number,
+                                      'line_product_id': line.product_id.id,
+                                      'line_product_qty': line.product_qty,
+                                      'line_uom_id': line.product_uom.id,
+                                      'line_confirmed_date': line.confirmed_delivery_date,
+                                      'line_shipped_rate': 0.0,
+                                      'move_product_id': False,
+                                      'move_product_qty': '',
+                                      'move_uom_id': False,
+                                      'move_delivery_date': False,
+                                      'return_move': False,
+                                      }
                         line_obj.create(cr, uid, line_data, context=context)
-                        
-                        # Unflag the first move
-                        if first_move:
-                            first_move = False
+                    first_move = True
+                    move_ids1 = []
+                    move_ids2 = []
+                    move_ids3 = []
+                    move_ids4 = []
+                    move_ids5 = []
+                    move_ids6 = []
+                    for move in line.move_ids:
+                        if move.type == 'internal':
+                            continue
+                        elif move.type == 'out':
+                            move_ids6.append(move)
+                        elif move.state == 'done':
+                            move_ids1.append(move)
+                        elif move.product_id.id == line.product_id.id:
+                            move_ids2.append(move)
+                        elif move.product_uom.id == line.product_uom.id:
+                            move_ids3.append(move)
+                        elif move.date_expected == line.confirmed_delivery_date:
+                            move_ids4.append(move)
+                        else:
+                            move_ids4.append(move)
+                    for move_ids in [move_ids1, move_ids2, move_ids3, move_ids4, move_ids5, move_ids6]:
+                        for move in move_ids:
+                            line_shipped_rate = "no-progressbar"
+                            if first_move:
+                                line_shipped_rate = self._shipped_rate(cr, uid, line, context)
+                            line_data = {'followup_id': followup_id,
+                                         'order_id': line.order_id and line.order_id.id or False,
+                                         'move_id': move.id,
+                                         'line_id': line.id,
+                                         'picking_id': move.picking_id.id,
+                                         'move_state': self._get_move_state(cr, uid, move.state, context=context),
+                                         'line_name': line.line_number,
+                                         'line_product_id': first_move and line.product_id.id or False,
+                                         'line_product_qty': first_move and line.product_qty or False,
+                                         'line_uom_id': first_move and line.product_uom.id or False,
+                                         'line_confirmed_date': first_move and line.confirmed_delivery_date or False,
+                                         'line_shipped_rate': line_shipped_rate,
+                                         'move_product_id': line.product_id.id != move.product_id.id and move.product_id.id or False,
+                                         'move_product_qty': (line.product_qty != move.product_qty or line.product_id.id != move.product_id.id) and '%.2f' % move.product_qty or '',
+                                         'move_uom_id': line.product_uom.id != move.product_uom.id and move.product_uom.id or False,
+                                         'move_delivery_date': line.confirmed_delivery_date != move.date[:10] and move.date or False,
+                                         'return_move': move.type == 'out',
+                                         }
+                            line_obj.create(cr, uid, line_data, context=context)
+                            
+                            # Unflag the first move
+                            if first_move:
+                                first_move = False
+                                
+        if split:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_followup', 'purchase_order_followup_split_form_view')[1]
+        else:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_followup', 'purchase_order_followup_form_view')[1]
                         
         res = {'type': 'ir.actions.act_window',
-                       'res_model': 'purchase.order.followup',
-                       'view_type': 'form',
-                       'view_mode': 'form',
-                       'res_id': followup_id,
-                       'context': context,}
+               'res_model': 'purchase.order.followup',
+               'view_type': 'form',
+               'view_mode': 'form',
+               'view_id': [view_id],
+               'res_id': followup_id,
+               'context': context,}
         
         # If update the view, return the view in the same screen
         if context.get('update'):
@@ -202,6 +237,7 @@ class purchase_order_followup_line(osv.osv_memory):
     
     _columns = {
         'move_id': fields.many2one('stock.move', string='Move'),
+        'order_id': fields.many2one('purchase.order', string='Order'),
         'line_id': fields.many2one('purchase.order.line', string='Order line'),
         'followup_id': fields.many2one('purchase.order.followup', string='Follow-up'),
         'line_name': fields.char(size=64, string='#'),
@@ -224,6 +260,8 @@ class purchase_order_followup_line(osv.osv_memory):
         Open the associated Incoming shipment
         '''
         for line in self.browse(cr, uid, ids, context=context):
+            if not line.picking_id:
+                raise osv.except_osv(_('Error'), _('This line has no incoming shipment !'))
             view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, ids, context=context, pick=line.picking_id)[1]
             return {'type': 'ir.actions.act_window',
                     'res_model': 'stock.picking',
