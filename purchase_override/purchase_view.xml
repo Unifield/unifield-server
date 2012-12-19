@@ -73,7 +73,7 @@
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
-                        <field name="details" attrs="{'invisible': [('state', 'in', ['sourced', 'split'])]}"/>
+                        <field name="details" />
                         <newline />
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                     </xpath>
