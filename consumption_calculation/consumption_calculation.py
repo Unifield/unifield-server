@@ -405,15 +405,24 @@ class real_average_consumption_line(osv.osv):
 
     def _check_qty(self, cr, uid, ids, context=None):
        
+        noraise = context.get('noraise')
         if context is None:
             context = {}
+        context.update({'error_message': ''})
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        error_message = []
         for obj in self.browse(cr, uid, ids):
             if obj.rac_id.created_ok:
                 continue
 
             # Prevent negative consumption qty.
             if obj.consumed_qty < 0.00:
-                raise osv.except_osv(_('Error'), _('The consumed qty. must be positive or 0.00'))
+                if not noraise:
+                    raise osv.except_osv(_('Error'), _('The consumed qty. must be positive or 0.00'))
+                elif context.get('import_in_progress'):
+                    error_message.append('The consumed qty. must be positive or 0.00')
+                    context.update({'error_message': error_message})
 
             location = obj.rac_id.cons_location_id.id
             prodlot_id = None
@@ -423,9 +432,13 @@ class real_average_consumption_line(osv.osv):
             date_mandatory = obj.product_id.perishable
         
             if batch_mandatory and obj.consumed_qty != 0.00:
-                if not obj.prodlot_id and not context.get('noraise'):
-                    raise osv.except_osv(_('Error'), 
-                        _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
+                if not obj.prodlot_id:
+                    if not noraise:
+                        raise osv.except_osv(_('Error'), 
+                            _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
+                    elif context.get('import_in_progress'):
+                        error_message.append("Product: %s, You must assign a Batch Number" % (obj.product_id.name,))
+                        context.update({'error_message': error_message})
                 elif obj.prodlot_id:
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
@@ -435,21 +448,42 @@ class real_average_consumption_line(osv.osv):
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
                 expiry_date = obj.expiry_date
-                if not prod_ids and not context.get('import_in_progress') and not context.get('noraise'):
-                    raise osv.except_osv(_('Error'), 
-                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
+                if not prod_ids:
+                    if not noraise:
+                        raise osv.except_osv(_('Error'), 
+                            _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
+                    elif context.get('import_in_progress'):
+                        error_message.append("Product: %s, no internal batch found for expiry (%s)" % (obj.product_id.name, obj.expiry_date))
+                        context.update({'error_message': error_message})
                 prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
-            if prodlot_id and obj.consumed_qty > product_qty and not context.get('noraise'):
-                raise osv.except_osv(_('Error'), 
-                    _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)")%(obj.product_id.name, obj.consumed_qty, product_qty))
-            
+            if prodlot_id and obj.consumed_qty > product_qty:
+                if not noraise:
+                    raise osv.except_osv(_('Error'), 
+                        _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)")%(obj.product_id.name, obj.consumed_qty, product_qty))
+                elif context.get('import_in_progress'):
+                    error_message.append("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)" % (obj.product_id.name, obj.consumed_qty, product_qty))
+                    context.update({'error_message': error_message})
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, prodlot_id=%s, expiry_date=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, prodlot_id, expiry_date, obj.id))
 
         return True
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
+        self._check_qty(cr, uid, res, context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        self._check_qty(cr, uid, ids, context)
+        return res
 
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
@@ -473,9 +507,10 @@ class real_average_consumption_line(osv.osv):
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
 
-    _constraints = [
-        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-    ]
+# uf-1344 => need to pass the context
+#    _constraints = [
+#        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
+#    ]
 
     _sql_constraints = [
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),

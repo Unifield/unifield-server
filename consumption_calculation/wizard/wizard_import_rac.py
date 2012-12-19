@@ -78,7 +78,7 @@ class wizard_import_rac(osv.osv_memory):
         import_rac = self.browse(cr, uid, ids[0], context)
         rac_id = import_rac.rac_id.id
         
-        complete_lines, lines_with_error = 0, 0
+        ignore_lines, complete_lines, lines_with_error = 0, 0, 0
         error_log = ''
 
         if not import_rac.file:
@@ -119,6 +119,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             batch_mandatory = False
             date_mandatory = False
             line_num += 1
+            context.update({'import_in_progress': True, 'noraise': True})
             try:
                 # Cell 0: Product Code
                 p_value = {}
@@ -196,16 +197,16 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'text_error': error,
                              'to_correct_ok': [True for x in error],}  # the lines with to_correct_ok=True will be red}
     
-                context.update({'import_in_progress': True, 'noraise': True})
-                line_obj.create(cr, uid, line_data, context=context)
-            except osv.except_osv as osv_error:
-                osv_value = osv_error.value
-                osv_name = osv_error.name
-                error_log += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
-                line_ids = line_obj.search(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('uom_id', '=', uom_id), ('rac_id', '=', rac_id)], context=context)
-                text_error = line_obj.read(cr, uid, line_ids, ['text_error'],context=context)[0]['test_error']
-                line_obj.write(cr, uid, line_ids, {'text_error': text_error + '\n' + error_log})
-                lines_with_error += 1
+                line_id = line_obj.create(cr, uid, line_data, context=context)
+                if isinstance(line_id, (int,long)): line_id = [line_id]
+                list_message = context.get('error_message')
+                if list_message:
+                    lines_with_error += 1
+                    text_error = line_obj.read(cr, uid, line_id,['text_error'], context)[0]['text_error']
+                    line_obj.write(cr, uid, line_id, {'text_error': text_error + '\n'+ '\n'.join(list_message)}, context)
+            except Exception, e:
+                error_log += "Line %s in your Excel file:: %s\n" % (line_num, e)
+                ignore_lines += 1
             complete_lines += 1
 
         #self.pool.get('real.average.consumption').button_update_stock(cr, uid, rac_id)
@@ -214,11 +215,11 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
         self.write(cr, uid, ids, {'message': '''
 Importation completed !
 # of imported lines : %s
-Error log: %s
-
-Reported errors :
+# of lines with error(s): %s
+# of ignored lines: %s
+Reported errors for ignored lines :
 %s
-                                             ''' % (complete_lines, lines_with_error or 'No error !', error_log)}, context=context)
+                                             ''' % (complete_lines, lines_with_error or 'No error !', ignore_lines, error_log or "None")}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
         
