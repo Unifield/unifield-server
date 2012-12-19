@@ -257,6 +257,9 @@ class stock_picking(osv.osv):
         if ids:
             for pick in self.browse(cr, uid, ids, context=context):
                 res.update({'reason_type_id': pick.reason_type_id.id})
+                min_date = self.get_min_max_date(cr, uid, [pick.id], 'min_date', {}, context=context)[pick.id]['min_date']
+                if min_date:
+                    res.update({'min_date': min_date, 'manual_min_date_stock_picking': min_date, 'min_date_manually': False})
 
         return {'value': res}
 

@@ -58,18 +58,42 @@
         <menuitem action="action_msf_instance_tree" id="menu_action_msf_instance_tree" parent="base.menu_config"/>
         
 
+		<!-- UF-1631, 1632: not allow to duplicate, delete or add new company -->
         <record model="ir.ui.view" id="view_company_inherit_4_form">
             <field name="name">res.company.form.instance.inherit</field>
             <field name="inherit_id" ref="account_msf.view_company_inherit_3_form"/>
             <field name="model">res.company</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <page string="Configuration" position="inside">
-                  <group col="2" colspan="2">
-                      <separator string="Proprietary Instance" colspan="2"/>
-                      <field name="instance_id" required="1" colspan="2" domain="[('state', '=', 'draft')]"/>
-                  </group>
-                </page>
+            	<data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                        <attribute name="hide_duplicate_button">1</attribute>
+                        <attribute name="hide_new_button">1</attribute>
+                    </xpath>
+                    
+	                <page string="Configuration" position="inside">
+	                  <group col="2" colspan="2">
+	                      <separator string="Proprietary Instance" colspan="2"/>
+	                      <field name="instance_id" required="1" colspan="2" domain="[('state', '=', 'draft')]"/>
+	                  </group>
+	                </page>
+                </data>
+            </field>
+        </record>
+
+        <record id="msf_instance_view_company_tree" model="ir.ui.view">
+            <field name="name">msf.instance.res.company.tree</field>
+            <field name="model">res.company</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_company_tree"/>
+            <field name="arch" type="xml">
+                <tree string="Companies" position="replace">
+	                <tree string="Companies" hide_delete_button="1"  hide_new_button="1" position="replace">
+	                    <field name="name"/>
+	                    <field name="partner_id"/>
+	                </tree>
+                </tree>
             </field>
         </record>
 

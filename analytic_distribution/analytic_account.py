@@ -134,8 +134,8 @@ class analytic_account(osv.osv):
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
             if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
-                 # validate the date (must be > today)
-                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
+                # validate the date (must be > today)
+                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
