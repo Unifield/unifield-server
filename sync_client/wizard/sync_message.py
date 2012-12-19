@@ -231,13 +231,10 @@ class message_received(osv.osv):
                 res = fn(cr, uid, message.source, *arg)
                 self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
                 cr.execute("RELEASE SAVEPOINT exec_message")
-            except Exception, e:
+            except BaseException, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
-                log += tools.ustr(e)
-                self._logger.error(log)
-                error = sync_log(self, e, 'error')
-                log += tools.ustr(error)
+                log += sync_log(self, e, 'error')
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
         return True
 

@@ -79,7 +79,10 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=Fa
         previous_frame = sys._getframe(1)
         output += "%s.%s()" % (previous_frame.f_globals['__package__'], previous_frame.f_code.co_name)
     elif isinstance(message, BaseException):
-        output += tools.ustr(message)
+        if isinstance(message, osv.except_osv):
+            output += message.value
+        else:
+            output += tools.ustr(message)
         if output[-1] != "\n": output += "\n"
     else:
         output += "%s: %s" % (level.capitalize(), message)
