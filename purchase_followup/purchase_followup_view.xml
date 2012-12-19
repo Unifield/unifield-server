@@ -103,10 +103,11 @@
                     <separator colspan="4" string="Select Purchase Order" />
                     <field name="order_id" 
                            attrs="{'readonly': ['|', ('cust_order_id', '!=', False), ('incoming_id', '!=', False)], 'required': [('cust_order_id', '=', False), ('incoming_id', '=', False)]}" 
+                           context="{'active_test': False}"
                            domain="[('rfq_ok', '=', False), ('state', 'in', ['sourced', 'confirmed_wait', 'split', 'approved', 'done', 'except_picking', 'except_invoice'])]"
                            on_change="change_order_id(order_id, cust_order_id, incoming_id, 'order_id')"/>
                     <field name="cust_order_id" 
-                           context="{'from_followup': True}" 
+                           context="{'from_followup': True, 'active_test': False}" 
                            attrs="{'readonly': ['|', ('order_id', '!=', False), ('incoming_id', '!=', False)], 'required': [('order_id', '=', False), ('incoming_id', '=', False)]}" 
                            domain="[('rfq_ok', '=', False), ('state', 'in', ['sourced', 'confirmed_wait', 'split', 'approved', 'done', 'except_picking', 'except_invoice'])]"
                            on_change="change_order_id(order_id, cust_order_id, incoming_id, 'cust_order_id')" />
