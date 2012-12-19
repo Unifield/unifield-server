@@ -22,8 +22,19 @@
 ##############################################################################
 
 from osv import orm
+import logging
 
 super_create = orm.orm.create
+
+def _get_instance_level(self, cr, uid):
+    instance_pool = self.pool.get('msf.instance')
+    instance_level_search = instance_pool.search(cr, uid, [('level','!=',False)])
+    instance_level = instance_pool.browse(cr, uid, instance_level_search[0]).level
+
+    if instance_level == 'section':
+        instance_level = 'hq'
+
+    return instance_level.lower()
 
 def create(self, cr, uid, vals, context=None):
     """
@@ -35,9 +46,9 @@ def create(self, cr, uid, vals, context=None):
     print '=================== CREATE OVERRIDE'
     print '=== CONTEXT: '
     print context
-    print '=== VALS   : '
+    print '=== VALS: '
     print vals
-    print '=== UID    : '
+    print '=== UID: '
     print uid
     print ''
     print ''
@@ -45,7 +56,11 @@ def create(self, cr, uid, vals, context=None):
     context = context or {}
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
-    if uid != 199999:#  and context.get('sync_data')
+    # TODO: remove the testing lines below
+    context['sync_data'] = True
+    uid = 0
+    if uid != 1 and context.get('sync_data'):
+        uid = 1
 
         print '====== SYNCHING'
 
@@ -54,75 +69,84 @@ def create(self, cr, uid, vals, context=None):
 
         if create_result:
 
-            # get rules for this model
-            model_name = self._name
-            user = self.pool.get('res.users').browse(cr, uid, uid)
-            groups = [x.id for x in user.groups_id]
+            instance_level = _get_instance_level(self, cr, uid)
 
-            rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-            rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), '|', ('group_ids', 'in', groups), ('group_ids','=',False)])
+            print '=== INSTANCE_LEVEL: ', instance_level
 
-            print '=== MODEL: ', model_name
-            print '=== USER: ', user
-            print '=== GROUPS: ', groups
-            print '=== RULES_SEARCH: ', rules_search
+            if instance_level:
 
-            # do we have rules that apply to this user and model?
-            if rules_search:
+                # get rules for this model
+                model_name = self._name
+                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                groups = [x.id for x in user.groups_id]
 
-                print '====== GOT RULES: ', rules_search
+                rules_pool = self.pool.get('msf_access_rights.field_access_rule')
+                rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids','=',False)])
 
-                rules = rules_pool.browse(cr, uid, rules_search)
-                new_values = {}
-                
-                # for each rule, check the record against the rule domain.
-                for rule in rules:
+                print '=== MODEL: ', model_name
+                print '=== USER: ', user
+                print '=== GROUPS: ', groups
+                print '=== RULES_SEARCH: ', rules_search
 
-                    print '=== DOMAIN TEXT: ', rule.domain_text
+                # do we have rules that apply to this user and model?
+                if rules_search:
+
+                    print '====== GOT RULES: ', rules_search
+
+                    rules = rules_pool.browse(cr, uid, rules_search)
+                    new_values = {}
                     
-                    # prepare (or skip) the domain check
-                    is_match = True
+                    # for each rule, check the record against the rule domain.
+                    for rule in rules:
 
-                    if rule.domain_text:
-                        domain = eval(rule.domain_text)
-                        domain.append(('id','=',create_result))
-                        domain.append('&')
-                        domain.reverse()
-
-                        print '=== DOMAIN: ', domain
-
-                        if not self.search(cr, uid, domain):
-                            is_match = False
-
-                        print '=== IS_MATCH: ', is_match
+                        print '=== DOMAIN TEXT: ', rule.domain_text
                         
-                    # if record is found that means it matches the domain so modify new values
-                    for line in rule.field_access_rule_line_ids:
-                        if not line.write_access:
-                            new_values[line.field.name] = None
+                        # prepare (or skip) the domain check
+                        is_match = True
 
-                # If we have any values to update
-                if new_values:
+                        if rule.domain_text:
+                            domain = eval(rule.domain_text)
+                            domain.append(('id','=',create_result))
+                            domain.append('&')
+                            domain.reverse()
 
-                    # replace None with the class defaults
-                    defaults = self.pool.get(model_name)._defaults
+                            print '=== DOMAIN: ', domain
 
-                    print '=== NEW VALUES: ', new_values
-                    print '=== DEFAULTS: ', defaults
+                            if not self.search(cr, uid, domain, context=context):
+                                is_match = False
 
-                    for key in defaults.keys():
-                        print '...key: ', key
-                        if key in new_values:
-                            print '......val: ', new_values.get(key)
-                            print '......def: ', defaults[key]
-                            new_values[key] = defaults[key]
+                            print '=== IS_MATCH: ', is_match
+                            
+                        # if record is found that means it matches the domain so modify new values
+                        for line in rule.field_access_rule_line_ids:
+                            if not line.write_access:
+                                new_values[line.field.name] = None
 
-                    print '====== GOT NEW VALUES: ', new_values
+                    # If we have any values to update
+                    if new_values:
 
-                    # then update the record
-                    self.write(cr, uid, create_result, new_values, context=context)
+                        # replace None with the class defaults
+                        defaults = self.pool.get(model_name)._defaults
 
-            return create_result
+                        print '=== NEW VALUES: ', new_values
+                        print '=== DEFAULTS: ', defaults
+
+                        for key in defaults.keys():
+                            print '...key: ', key
+                            if key in new_values:
+                                print '......val: ', new_values.get(key)
+                                print '......def: ', defaults[key]
+                                new_values[key] = defaults[key]
+
+                        print '====== GOT NEW VALUES: ', new_values
+
+                        # then update the record
+                        self.write(cr, uid, create_result, new_values, context=context)
+
+                return create_result
+            else:
+                logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in msf.profile, no Field Access Rules can be respected!')
+                return create_result
 
         else:
             return False
