@@ -18,5 +18,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+import osv_override
+
 import field_access_rule
 import field_access_rule_line
