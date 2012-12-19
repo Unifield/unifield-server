@@ -416,6 +416,8 @@ class stock_picking(osv.osv):
             all_move_ids = [move.id for move in pick.move_lines]
             # related moves - swap if a backorder is created - openERP logic
             done_moves = []
+            # OUT moves to assign
+            to_assign_moves = []
             # average price computation
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
@@ -512,6 +514,7 @@ class stock_picking(osv.osv):
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
+                            to_assign_moves.append(out_move_id)
                             if update_out:
                                 move_obj.write(cr, uid, [out_move_id], values, context=context)
                             elif move.product_id.id != partial['product_id']:
@@ -612,6 +615,9 @@ class stock_picking(osv.osv):
             # update the out version
             if update_pick_version:
                 self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
+
+            # Assign all updated out moves
+            move_obj.action_assign(cr, uid, to_assign_moves)
 
         return {'type': 'ir.actions.act_window_close'}
     
