@@ -47,7 +47,7 @@ class purchase_order_followup(osv.osv_memory):
                 product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
                 if move.type == 'out':
                     move_value -= product_qty*move.price_unit
-                else:
+                elif move.type == 'in':
                     move_value += product_qty*move.price_unit
             
         return round((move_value/line_value)*100, 2)
