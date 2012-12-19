@@ -22,3 +22,4 @@
 import publisher_warranty
 import stock_picking
 import consumption_calculation
+import sale

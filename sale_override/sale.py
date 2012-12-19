@@ -301,7 +301,7 @@ class sale_order(osv.osv):
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
 
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
@@ -317,7 +317,7 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:

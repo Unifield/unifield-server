@@ -1495,12 +1495,27 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
                 partner_id = arg[2]['partner_id']
                 order_type = arg[2]['order_type']
-                if order_type in ['direct', 'in_kind', 'purchase_list']:
-                    newargs.append(('partner_type', 'in', ['esc', 'external']))
-                elif partner_id and partner_id != local_market:
-                    partner = partner_obj.browse(cr, uid, partner_id)
-                    if partner.partner_type not in ('external', 'esc') and order_type == 'direct':
-                        newargs.append(('partner_type', 'in', ['esc', 'external']))
+                # Added by UF-1660 to filter partners
+                # do nothing on partner_type for loan
+                p_list = []
+                if order_type == 'loan':
+                    p_list = ['internal', 'intermission', 'section', 'external']
+                elif order_type in ['direct', 'in_kind']:
+                    p_list = ['esc', 'external']
+                elif order_type in ['donation_st', 'donation_exp']:
+                    p_list = ['internal', 'intermission', 'section']
+                elif order_type in ['purchase_list']:
+                    p_list = ['external']
+                # show all supplier for non taken cases
+                else:
+                    pass
+                if p_list:
+                    newargs.append(('partner_type', 'in', p_list))
+                # Useless code because if we enter in direct case, we do not enter in this one
+#                elif partner_id and partner_id != local_market:
+#                    partner = partner_obj.browse(cr, uid, partner_id)
+#                    if partner.partner_type not in ('external', 'esc') and order_type == 'direct':
+#                        newargs.append(('partner_type', 'in', ['esc', 'external']))
             else:
                 newargs.append(args)
         return newargs
