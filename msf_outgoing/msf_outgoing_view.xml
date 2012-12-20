@@ -282,7 +282,7 @@
 											context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
 											attrs="{'readonly': [('state', '=', 'assigned')]}"
 										 	 />
-										<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
+										<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('name', '=', 'Packing')]" />
 									</group>
 									<group colspan="2" col="4">
 										<separator string="Traceability" colspan="4" />
