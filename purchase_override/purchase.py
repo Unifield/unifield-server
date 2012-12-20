@@ -55,6 +55,22 @@ purchase_order_confirm_wizard()
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
+    
+    def generate_po_from_rfq(self, cr, uid, ids, context=None):
+        '''
+        generate a po from the selected request for quotation
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        # copy the po with rfq_ok set to False
+        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False}, context=context)
+        # log message describing the previous action
+        self.log(cr, uid, new_po_id, _('A Purchase Order has been generated from Request for Quotation.'))
+        return True
 
     def copy(self, cr, uid, id, default=None, context=None):
         '''
