@@ -67,7 +67,8 @@ class purchase_order(osv.osv):
             ids = [ids]
             
         # copy the po with rfq_ok set to False
-        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False}, context=context)
+        data = self.read(cr, uid, ids[0], ['name'], context=context)
+        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
@@ -79,8 +80,13 @@ class purchase_order(osv.osv):
         '''
         if not default:
             default = {}
+        if context is None:
+            context = {}
             
-        default.update({'loan_id': False, 'merged_line_ids': False, 'origin': False, 'partner_ref': False, })
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, })
+        if not context.get('keepOrigin', False):
+            default.update({'origin': False})
+            
         return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
