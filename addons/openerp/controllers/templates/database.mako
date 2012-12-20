@@ -24,11 +24,17 @@
 
             jQuery(document).ready(function () {
                 jQuery(document.body).append($error_tbl);
-                $error_tbl.dialog({
+                var error_dialog_options = {
                     modal: true,
                     resizable: false,
                     title: '<div class="error_message_header">${error.get("title", "Warning")}</div>'
-                });
+                };
+                % if error.get('redirect_to'):
+                    error_dialog_options['close'] = function( event, ui ) {
+                        $(location).attr('href','${error['redirect_to']}');
+                    };
+                % endif
+                $error_tbl.dialog(error_dialog_options);
             })
         </script>
     % endif
