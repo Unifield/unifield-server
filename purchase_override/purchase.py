@@ -68,8 +68,9 @@ class purchase_order(osv.osv):
             
         # copy the po with rfq_ok set to False
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False}, context=context)
+        data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
-        self.log(cr, uid, new_po_id, _('A Purchase Order has been generated from Request for Quotation.'))
+        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
         return True
 
     def copy(self, cr, uid, id, default=None, context=None):
