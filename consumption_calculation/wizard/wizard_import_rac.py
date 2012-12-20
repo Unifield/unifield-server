@@ -166,7 +166,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 # Cell 2: UOM
                 uom_value = {}
                 uom_value = check_line.compute_uom_value(cr, uid, cell_nb=2, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                if uom_value['uom_id'] and uom_value['uom_id'] != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+                if uom_value['uom_id']:
                     uom_id = uom_value['uom_id']
                 else:
                     uom_id = False
@@ -204,6 +204,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     lines_with_error += 1
                     text_error = line_obj.read(cr, uid, line_id,['text_error'], context)[0]['text_error']
                     line_obj.write(cr, uid, line_id, {'text_error': text_error + '\n'+ '\n'.join(list_message)}, context)
+            except IndexError, e:
+                error_log += "Line %s in your Excel file:: %s\n" % (line_num, e)
+                ignore_lines += 1
             except Exception, e:
                 error_log += "Line %s in your Excel file:: %s\n" % (line_num, e)
                 ignore_lines += 1
