@@ -22,11 +22,31 @@
 ##############################################################################
 
 from osv import osv, orm
+from lxml import etree
 import logging
 import copy
 
-super_create = orm.orm.create
+debug = True
+create_debug = False
+write_debug = False
+fields_debug = True
 
+def dprint(string):
+    print string
+
+def cprint(string):
+    if create_debug:
+        dprint(string)
+
+def wprint(string):
+    if write_debug:
+        dprint(string)
+
+def fprint(string):
+    if fields_debug:
+        dprint(string)
+
+super_create = orm.orm.create
 
 def _get_instance_level(self, cr, uid):
     instance_pool = self.pool.get('msf.instance')
@@ -56,16 +76,16 @@ def create(self, cr, uid, vals, context=None):
     If domain matches, for each field with value_not_synchronized_on_create in the rule, update created field with default values.
     """
 
-    print ''
-    print '=================== CREATE OVERRIDE'
-    print '=== CONTEXT: '
-    print context
-    print '=== VALS: '
-    print vals
-    print '=== UID: '
-    print uid
-    print ''
-    print ''
+    cprint('')
+    cprint('=================== CREATE OVERRIDE')
+    cprint('=== CONTEXT: ')
+    cprint(context)
+    cprint('=== VALS: ')
+    cprint(vals)
+    cprint('=== UID: ')
+    cprint(uid)
+    cprint('')
+    cprint('')
 
     context = context or {}
 
@@ -77,7 +97,7 @@ def create(self, cr, uid, vals, context=None):
     if uid != 1 and context.get('sync_data'):
         uid = real_uid
 
-        print '====== SYNCING'
+        cprint('====== SYNCING')
 
         # create the record. we will sanitize it later based on domain search check
         create_result = super_create(self, cr, uid, vals, context)
@@ -86,7 +106,7 @@ def create(self, cr, uid, vals, context=None):
 
             instance_level = _get_instance_level(self, cr, uid)
 
-            print '=== INSTANCE_LEVEL: ', instance_level
+            cprint('=== INSTANCE_LEVEL: ' + instance_level)
 
             if instance_level:
 
@@ -98,15 +118,15 @@ def create(self, cr, uid, vals, context=None):
                 rules_pool = self.pool.get('msf_access_rights.field_access_rule')
                 rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
-                print '=== MODEL: ', model_name
-                print '=== USER: ', user
-                print '=== GROUPS: ', groups
-                print '=== RULES_SEARCH: ', rules_search
+                cprint('=== MODEL: ' + model_name)
+                cprint('=== USER: ' + str(user))
+                cprint('=== GROUPS: ' + str(groups))
+                cprint('=== RULES_SEARCH: ' + str(rules_search))
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
 
-                    print '====== GOT RULES: ', rules_search
+                    cprint('====== GOT RULES: ' + str(rules_search))
 
                     rules = rules_pool.browse(cr, uid, rules_search)
                     new_values = {}
@@ -114,7 +134,7 @@ def create(self, cr, uid, vals, context=None):
                     # for each rule, check the record against the rule domain.
                     for rule in rules:
 
-                        print '=== DOMAIN TEXT: ', rule.domain_text
+                        cprint('=== DOMAIN TEXT: ' + rule.domain_text)
 
                         # prepare (or skip) the domain check
                         is_match = True
@@ -122,7 +142,7 @@ def create(self, cr, uid, vals, context=None):
                         if rule.domain_text:
                             is_match = _record_matches_domain(self, cr, uid, create_result, rule.domain_text)
                         
-                        print '=== IS_MATCH: ', is_match
+                        cprint('=== IS_MATCH: ' + str(is_match))
 
                         if is_match:
                             
@@ -137,17 +157,17 @@ def create(self, cr, uid, vals, context=None):
                         # replace None with the class defaults
                         defaults = self.pool.get(model_name)._defaults
 
-                        print '=== NEW VALUES: ', new_values
-                        print '=== DEFAULTS: ', defaults
+                        cprint('=== NEW VALUES: ' + str(new_values))
+                        cprint('=== DEFAULTS: ' + str(defaults))
 
                         for key in defaults.keys():
-                            print '...key: ', key
+                            cprint('...key: ', key)
                             if key in new_values:
-                                print '......val: ', new_values.get(key)
-                                print '......def: ', defaults[key]
+                                cprint('......val: ' + new_values.get(key))
+                                cprint('......def: ' + defaults[key])
                                 new_values[key] = defaults[key]
 
-                        print '====== GOT NEW VALUES: ', new_values
+                        cprint('====== GOT NEW VALUES: ' + str(new_values))
 
                         # then update the record
                         self.write(cr, uid, create_result, new_values, context=context)
@@ -180,7 +200,7 @@ def write(self, cr, uid, ids, vals, context=None):
     if uid != 1:
         uid = real_uid
 
-        print '================== WRITE OVERRIDE'
+        wprint('================== WRITE OVERRIDE')
 
         # get instance level. if not set, log warning, then return normal write
         instance_level = _get_instance_level(self, cr, uid)
@@ -196,12 +216,12 @@ def write(self, cr, uid, ids, vals, context=None):
         rules_pool = self.pool.get('msf_access_rights.field_access_rule')
         rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
-        print '=== INSTANCE_LEVEL: ', instance_level
-        print '=== MODEL: ', model_name
-        print '=== USER: ', user
-        print '=== GROUPS: ', groups
-        print '=== RULES_SEARCH: ', rules_search
-        print '=== IDS: ', ids
+        wprint('=== INSTANCE_LEVEL: ' + instance_level)
+        wprint('=== MODEL: ' + model_name)
+        wprint('=== USER: ' + str(user))
+        wprint('=== GROUPS: ' + str(groups))
+        wprint('=== RULES_SEARCH: ' + str(rules_search))
+        wprint('=== IDS: ' + str(ids))
 
         # if have rules
         if rules_search:
@@ -217,13 +237,13 @@ def write(self, cr, uid, ids, vals, context=None):
                         # rule applies for this record so throw exception if we are trying to edit a field without write_access
                         access_denied_fields = [line for line in rule.field_access_rule_line_ids if not line.write_access and line.field.name in vals]
                         if access_denied_fields:
-                            print '=== ACCESS_DENIED_FIELDS: ', access_denied_fields
+                            wprint('=== ACCESS_DENIED_FIELDS: ' + str(access_denied_fields))
                             raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\' have access to edit')
 
             # if syncing, sanitize editted rows that don't have sync_on_write permission
             if context.get('sync_data'):
 
-                print '====== SYNCING'
+                wprint('====== SYNCING')
 
                 # iterate over current records and look for rules that match it
                 for record in current_records:
@@ -232,7 +252,7 @@ def write(self, cr, uid, ids, vals, context=None):
                     for rule in rules:
                         if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
 
-                            print '=== RULE MATCHES: ', rule.id
+                            wprint('=== RULE MATCHES: ' + rule.id)
 
                             # rule applies for this record so delete key from new values if key is value_not_synchronized_on_write and the value is different from the existing record field
                             no_sync_fields = [line for line in rule.field_access_rule_line_ids if line.value_not_synchronized_on_write and line.field.name in vals and hasattr(record, line.field.name) and vals[line.field.name] != getattr(record, line.field.name)]
@@ -241,8 +261,8 @@ def write(self, cr, uid, ids, vals, context=None):
                                 del new_values[line.field.name]
 
                     if len(new_values) != len(vals):
-                        print '=== REMOVED KEYS..'
-                        print list(set(vals) - set(new_values))
+                        wprint('=== REMOVED KEYS..')
+                        wprint(list(set(vals) - set(new_values)))
 
                     super_write(self, cr, uid, ids, new_values, context=context)
 
@@ -255,3 +275,130 @@ def write(self, cr, uid, ids, vals, context=None):
         return super_write(self, cr, uid, ids, vals, context=context)
 
 orm.orm.write = write
+
+
+super_fields_view_get = orm.orm.fields_view_get
+
+def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+
+    context = context or {}
+    fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
+
+    real_uid = uid
+    uid = 0
+    if uid != 1:
+        uid = real_uid
+
+        fprint('=================== FIELDS_VIEW_GET OVERRIDE')
+
+        # get instance level. if not set, log warning, then return normal fields_view
+        instance_level = _get_instance_level(self, cr, uid)
+        if not instance_level:
+            logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in msf.instance, no Field Access Rules can be respected!')
+            return fields_view
+
+        # get rules for this model
+        model_name = self._name
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        groups = [x.id for x in user.groups_id]
+
+        rules_pool = self.pool.get('msf_access_rights.field_access_rule')
+        rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+
+        fprint('=== INSTANCE_LEVEL: ' + instance_level)
+        fprint('=== MODEL: ' + model_name)
+        fprint('=== USER: ' + str(user))
+        fprint('=== GROUPS: ' + str(groups))
+        fprint('=== RULES_SEARCH: ' + str(rules_search))
+
+        # if have rules
+        if rules_search:
+            rules = rules_pool.browse(cr, uid, rules_search, context=context)
+
+            # get a dictionary of domains with field names as the key and the value being a concatenation of rule domains, or True if universal
+            domains = {}
+            for rule in rules:
+                for line in [line for line in rule.field_access_rule_line_ids if not line.write_access]:
+                    if domains.get(line.field.name, False) != True:
+                        if rule.domain_text:
+                            domains[line.field.name] = domains.get(line.field.name, []) + (eval(rule.domain_text))
+                        else:
+                            domains[line.field.name] = True
+
+            fprint('=== DOMAINS... ')
+            fprint(domains)
+
+            # modify xml by adding domains to fields
+            if domains:
+
+                # parse the view xml
+                view_xml_text = fields_view['arch']
+                view_xml = etree.fromstring(view_xml_text)
+
+                # loop through domains looking for matching fields and editting attributes
+                for domain_key in domains:
+                    domain_value = domains[domain_key]
+
+                    domain_value_or = copy.deepcopy(domain_value)
+                    if len(domain_value_or) > 1:
+                        domain_value_or.append('|')
+                        domain_value_or.reverse()
+
+                    fprint('=== DOMAINS OR... ')
+                    fprint(domain_value_or)
+
+                    fprint('====== MODIFYING FIELD: %s' % domain_key)
+
+                    # get field from xml using xpath
+                    fields = view_xml.xpath("//field[@name='%s']" % domain_key)
+
+                    # if field is not already readonly, add/edit attrs
+                    for field in fields:
+                        if not field.get('readonly', False):
+
+                            fprint('...not readonly')
+                            
+                            # applicable to all so set readonly
+                            if domain_value == True:
+                                fprint('...domain_value = True')
+                                field.set('readonly', '1')
+                            else:
+                                # find attrs
+                                attrs_text = field.get('attrs', False)
+
+                                if attrs_text:
+                                    fprint('...got attrs_text')
+                                    # add / modify existing readonly key
+                                    attrs = eval(attrs_text)
+                                    if attrs.get('readonly', False):
+                                        # concatenate domain with existing domains
+                                        fprint('...got existing readonly domain')
+                                        attrs['readonly'] = attrs['readonly'] + domain_value
+                                        attrs['readonly'].append('|')
+                                        attrs['readonly'].reverse()
+                                    else:
+                                        fprint('...add readonly key')
+                                        attrs['readonly'] = str( domain_value_or )
+
+                                    field.set('attrs', str(attrs))
+                                else:
+                                    field.set('attrs', str( {'readonly': domain_value_or} ))
+                                    fprint('...set new attrs')
+
+                        fprint('=== MODIFIED FIELD...')
+                        fprint(etree.tostring(field))
+
+                # get the modified xml string and return it
+                fields_view['arch'] = etree.tostring(view_xml)
+                fprint('====== RETURNING XML..')
+                fprint(etree.tostring(view_xml))
+                fprint('====== RETURNING OBJECT..')
+                fprint(fields_view)
+                return fields_view
+
+        else:
+            return fields_view
+
+    return fields_view
+
+orm.orm.fields_view_get = fields_view_get
