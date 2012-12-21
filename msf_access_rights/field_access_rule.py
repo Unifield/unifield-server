@@ -55,15 +55,14 @@ class field_access_rule(osv.osv):
     _sql_constraints = [
         ('name_unique', 'unique (name)', """The name you have chosen has already been used, and it must be unique. Please choose a different name."""),
     ]
+    
+    def create(self, cr, user, vals, context=None):
+        
+        # get model_name from model
+        vals['model_name'] = self.pool.get('ir.model').browse(cr, user, vals['model_id'], context=context).model
+        return super(field_access_rule, self).create(cr, user, vals, context=context)
 
     def write(self, cr, uid, ids, values, context=None):
-
-    	# get model_name from model
-    	if 'model_id' in values:
-            values['model_name'] = ''
-            if values['model_id']:
-                model_name = self.pool.get('ir.model').browse(cr, uid, values['model_id'], context=context).model
-
 
         # if domain_text has changed, change status to not_validated
         if values.get('domain_text'):
