@@ -123,12 +123,23 @@ class analytic_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
         if 'date' in vals and vals['date'] is not False:
             account_obj = self.pool.get('account.analytic.account')
+            date = vals['date']
             account = account_obj.browse(cr, uid, vals['account_id'], context=context)
-            if vals['date'] < account.date_start \
-            or (account.date != False and \
-                vals['date'] >= account.date):
+            # FIXME: refactoring of next code
+            if date < account.date_start or (account.date != False and date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
-                    raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
+                    raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % account.name or '')
+            if 'cost_center_id' in vals:
+                cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
+                if date < cc.date_start or (cc.date != False and date >= cc.date):
+                    if 'from' not in context or context.get('from') != 'mass_reallocation':
+                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % cc.name or '')
+            if 'destination_id' in vals:
+                dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
+                if date < dest.date_start or (dest.date != False and date >= dest.date):
+                    if 'from' not in context or context.get('from') != 'mass_reallocation':
+                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active."))
+        return True
 
     def create(self, cr, uid, vals, context=None):
         """
