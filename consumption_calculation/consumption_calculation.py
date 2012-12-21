@@ -428,13 +428,15 @@ class real_average_consumption_line(osv.osv):
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
         for id in ids:
-            result[id] = {'batch_number_check': False, 'expiry_date_check': False, 'type_check': False}
+            result[id] = {'batch_number_check': False, 'expiry_date_check': False, 'type_check': False, 'to_correct_ok': False}
             
         for out in self.browse(cr, uid, ids, context=context):
             if out.product_id:
                 result[out.id]['batch_number_check'] = out.product_id.batch_management
                 result[out.id]['expiry_date_check'] = out.product_id.perishable
-            
+            # the lines with to_correct_ok=True will be red
+            if out.text_error:
+                result[out.id]['to_correct_ok'] = True
         return result
 
     def _get_qty(self, cr, uid, product, lot, location, uom):
@@ -588,8 +590,8 @@ class real_average_consumption_line(osv.osv):
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
-        'to_correct_ok': fields.boolean('To correct'),
         'text_error': fields.text('Errors', readonly=True),
+        'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
     }
 
 # uf-1344 => need to pass the context so we use create and write instead

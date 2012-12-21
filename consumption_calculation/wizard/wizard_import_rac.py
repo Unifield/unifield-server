@@ -176,7 +176,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if row.cells[6] and row.cells[6].data:
                     remark = row.cells[6].data
                 error += '\n'.join(to_write['error_list'])
-                to_correct_ok =  [True for x in error]
                 line_data = {'batch_mandatory': batch_mandatory,
                              'date_mandatory': date_mandatory,
                              'product_id': product_id,
@@ -186,9 +185,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'consumed_qty': consumed_qty,
                              'remark': remark,
                              'rac_id': rac_id,
-                             'text_error': error,
-                             'to_correct_ok': to_correct_ok,}  # the lines with to_correct_ok=True will be red}
-    
+                             'text_error': error,}
+
                 line_id = line_obj.create(cr, uid, line_data, context=context)
                 if isinstance(line_id, (int,long)): line_id = [line_id]
                 list_message = context.get('error_message')
