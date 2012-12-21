@@ -490,7 +490,7 @@ class real_average_consumption_line(osv.osv):
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
-                expiry_date = obj.expiry_date
+                expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'), 
