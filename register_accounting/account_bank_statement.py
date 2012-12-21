@@ -115,13 +115,21 @@ class account_bank_statement(osv.osv):
     ]
 
     def __init__(self, pool, cr):
+        """
+        Change some fields that were store=True to field that have store=False:
+        - total_entry_encoding
+        - balance_end
+        """
         super(account_bank_statement, self).__init__(pool, cr)
         if self.pool._store_function.get(self._name, []):
             newstore = []
             for fct in self.pool._store_function[self._name]:
-                if fct[1] != 'balance_end':
+                if fct[1] not in ['balance_end', 'total_entry_encoding']:
                     newstore.append(fct)
             self.pool._store_function[self._name] = newstore
+            super(account_bank_statement, self)._columns['total_entry_encoding'].store = False
+            super(account_bank_statement, self)._columns['balance_end'].store = False
+
 
     def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -752,6 +760,20 @@ class account_bank_statement_line(osv.osv):
             if len(line.move_ids) > 0:
                 res[line.id] = line.move_ids[0].name
         return res
+    
+    def _get_bank_statement_line_ids(self, cr, uid, ids, context=None):
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        result = []
+        for move in self.pool.get('account.move').browse(cr, uid, ids, context=context):
+            if move.statement_line_ids:
+                for statement in move.statement_line_ids:
+                    result.append(statement.id)
+        return result
 
     _columns = {
         'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
@@ -769,7 +791,8 @@ class account_bank_statement_line(osv.osv):
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
         # WARNING: Due to UTP-348, store = True for sequence_for_reference field is mandatory! Otherwise this breaks Cheque Inventory report.
-        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char", store=True, size=64),
+        'sequence_for_reference': fields.function(_get_sequence, method=True, string="Sequence", type="char", store={'account.bank.statement.line': (lambda self, cr, uid, ids, c=None: ids, ['move_ids'], 10),
+                                                                                                                     'account.move': (_get_bank_statement_line_ids, ['statement_line_ids'], 10)}, size=64),
         'date': fields.date('Posting Date', required=True),
         'document_date': fields.date(string="Document Date", required=True),
         'cheque_number': fields.char(string="Cheque Number", size=120),

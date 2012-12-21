@@ -84,8 +84,7 @@
             <field name="inherit_id" ref="account.view_account_analytic_account_search"/>
             <field name="arch" type="xml">
                 <filter string="Pending" position="before">
-                    <filter name="active" icon="terp-check" string="Active"
-                            context="{'filter_inactive_accounts': 1}"/>
+					<filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
                 </filter>
                 <field name="partner_id" position="replace">
                 </field>
@@ -155,6 +154,7 @@
             <field name="inherit_id" ref="account.action_account_analytic_account_form"/>
             <field name="search_view_id" ref="view_analytic_account_search"/>
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
+            <field name="domain">[]</field>
             <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
         </record>
 
