@@ -21,12 +21,8 @@
 
 from osv import osv, fields
 from tools.translate import _
-
-from tempfile import TemporaryFile
-
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-import csv
 import time
 from msf_supply_doc_import import check_line
 
@@ -80,19 +76,14 @@ class wizard_import_rac(osv.osv_memory):
         
         ignore_lines, complete_lines, lines_with_error = 0, 0, 0
         error_log = ''
-
+        error = ''
+        line_num = 0
         if not import_rac.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(import_rac.file))
-
         # iterator on rows
         reader = fileobj.getRows()
-
-        error = ''
-
-        line_num = 0
-        
         reader.next()
 
         for row in reader:
@@ -115,7 +106,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             remark = ''
             error = ''
             batch = False
-            expiry_date = False
+            expiry_date = None # date type
             batch_mandatory = False
             date_mandatory = False
             line_num += 1
@@ -185,6 +176,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if row.cells[6] and row.cells[6].data:
                     remark = row.cells[6].data
                 error += '\n'.join(to_write['error_list'])
+                to_correct_ok = lambda error: True if error else False
                 line_data = {'batch_mandatory': batch_mandatory,
                              'date_mandatory': date_mandatory,
                              'product_id': product_id,
@@ -195,7 +187,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'remark': remark,
                              'rac_id': rac_id,
                              'text_error': error,
-                             'to_correct_ok': [True for x in error],}  # the lines with to_correct_ok=True will be red}
+                             'to_correct_ok': to_correct_ok,}  # the lines with to_correct_ok=True will be red}
     
                 line_id = line_obj.create(cr, uid, line_data, context=context)
                 if isinstance(line_id, (int,long)): line_id = [line_id]
@@ -205,24 +197,21 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     text_error = line_obj.read(cr, uid, line_id,['text_error'], context)[0]['text_error']
                     line_obj.write(cr, uid, line_id, {'text_error': text_error + '\n'+ '\n'.join(list_message)}, context)
             except IndexError, e:
-                error_log += "Line %s in your Excel file:: %s\n" % (line_num, e)
+                error_log += "The system reference an object that doesn't exist at line %s in the Excel file. Details: %s\n" % (line_num, e)
                 ignore_lines += 1
             except Exception, e:
-                error_log += "Line %s in your Excel file:: %s\n" % (line_num, e)
+                error_log += "An error appeared at line %s in the Excel file. Details: %s\n" % (line_num, e)
                 ignore_lines += 1
             complete_lines += 1
-
+        if error_log: error_log = "Reported errors for ignored lines : \n" + error_log
         #self.pool.get('real.average.consumption').button_update_stock(cr, uid, rac_id)
-        # refresh the view
-        self.pool.get('real.average.consumption').dummy(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'message': '''
 Importation completed !
 # of imported lines : %s
 # of lines with error(s): %s
 # of ignored lines: %s
-Reported errors for ignored lines :
 %s
-                                             ''' % (complete_lines, lines_with_error or 'No error !', ignore_lines, error_log or "None")}, context=context)
+''' % (complete_lines, lines_with_error or 'No error !', ignore_lines, error_log)}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
         

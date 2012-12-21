@@ -447,7 +447,7 @@ class real_average_consumption_line(osv.osv):
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
-                expiry_date = obj.expiry_date
+                expiry_date = obj.expiry_date or None
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'), 
@@ -455,7 +455,8 @@ class real_average_consumption_line(osv.osv):
                     elif context.get('import_in_progress'):
                         error_message.append("Product: %s, no internal batch found for expiry (%s)" % (obj.product_id.name, obj.expiry_date))
                         context.update({'error_message': error_message})
-                prodlot_id = prod_ids[0]
+                else:
+                    prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
@@ -475,6 +476,7 @@ class real_average_consumption_line(osv.osv):
         if context is None:
             context = {}
         res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
+        if isinstance(res, (int,long)): res = [res]
         self._check_qty(cr, uid, res, context)
         return res
 
@@ -482,6 +484,7 @@ class real_average_consumption_line(osv.osv):
         if context is None:
             context = {}
         res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        if isinstance(ids, (int,long)): ids = [ids]
         self._check_qty(cr, uid, ids, context)
         return res
 
