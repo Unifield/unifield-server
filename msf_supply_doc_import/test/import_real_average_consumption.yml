@@ -12,17 +12,5 @@
     cons_location_id: stock.stock_location_stock
     activity_id: activity1
     period_from: !eval time.strftime('%Y-%m-%d', time.strptime('2011-08-01', '%Y-%m-%d'))
--
-  Import Real Average Consumption lines
--
-  !python {model: real.average.consumption}: |
-    import addons, base64, logging
-    
-    logging.getLogger('tests').log(logging.TEST, 'We import real_consumption.xls.')
-    # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'real_consumption.xls')
-    file = open(file_path, 'r')
-    file64 = base64.b64encode(file.read())
-    self.write(cr, uid, ref("rac1"), {'file_to_import': file64}, context=context)
-    self.import_file(cr, uid, [ref("rac1")], context=context)
+
 

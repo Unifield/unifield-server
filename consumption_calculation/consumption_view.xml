@@ -54,7 +54,12 @@
 
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
                     <separator colspan="4" string="Products" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
+	                <group name="import" string=" Import Lines " colspan="4" col="24">
+	                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" confirm="Are you sure that you want to remove all lines?"/>
+	                    <field name="hide_column_error_ok" invisible="1" colspan="1" />
+	                </group>
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}"
+                    context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                         <tree string="Products" editable="top" colors="red:(batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date) or consumed_qty>product_qty;blue: not prodlot_id and consumed_qty>product_qty">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False}"
@@ -74,6 +79,8 @@
                             <field name="remark" invisible="1" />
                             <field name="batch_mandatory" invisible="0" string="B.Num" readonly="1" />
                             <field name="date_mandatory" invisible="0" string="Exp" readonly="1" />
+		                    <field name="to_correct_ok" invisible="1"/>
+		                    <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />

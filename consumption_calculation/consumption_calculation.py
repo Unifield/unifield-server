@@ -95,7 +95,16 @@ class real_average_consumption(osv.osv):
         self.button_update_stock(cr, uid, res)
         return res
 
-    
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.line_ids  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Reference'),
         'creation_date': fields.datetime(string='Creation date', required=1),
@@ -112,6 +121,7 @@ class real_average_consumption(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
     
     _defaults = {
@@ -138,16 +148,13 @@ class real_average_consumption(osv.osv):
             self.pool.get('real.average.consumption.line')._check_qty(cr, uid, to_update, {'noraise': True})
         return True
     
-    def _hook_for_import(self, cr, uid, ids, context=None):
-        return False
-    
     def save_and_process(self, cr, uid, ids, context=None):
         '''
         Returns the wizard to confirm the process of all lines
         '''
         if context is None:
             context = {}
-        self._hook_for_import(cr, uid, ids, context=context)
+        self.check_lines_to_fix(cr, uid, ids, context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'real_average_consumption_confirmation_view')[1],
         
         return {'type': 'ir.actions.act_window',
@@ -372,7 +379,42 @@ class real_average_consumption(osv.osv):
     
     def dummy(self, cr, uid, ids, context=None):
         return True
-    
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        '''
+        Remove lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        vals = {}
+        vals['line_ids'] = []
+        for line in self.browse(cr, uid, ids, context=context):
+            line_browse_list = line.line_ids
+            for var in line_browse_list:
+                vals['line_ids'].append((2, var.id))
+            self.write(cr, uid, ids, vals, context=context)
+        return True
+
+    def check_lines_to_fix(self, cr, uid, ids, context=None):
+        """
+        Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        message = ''
+        plural= ''
+        obj_data = self.pool.get('ir.model.data')
+        
+        for var in self.browse(cr, uid, ids, context=context):
+            # we check the lines that need to be fixed
+            if var.line_ids:
+                for var in var.line_ids:
+                    if var.to_correct_ok:
+                        raise osv.except_osv(_('Warning !'), _('Some lines need to be fixed before.'))
+        return True
+
 real_average_consumption()
 
 
@@ -480,13 +522,49 @@ class real_average_consumption_line(osv.osv):
         self._check_qty(cr, uid, res, context)
         return res
 
+    def check_product_uom(self, cr, uid, ids, product_id, product_uom, context=None):
+        '''
+        Check if the UoM is convertible to product standard UoM
+        '''
+        if product_uom and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, product_uom, context=context)
+            if product.uom_id.category_id.id != uom.category_id.id:
+                raise osv.except_osv(_('Warning'),
+                                     _("You have to select a product UOM in the same category than the purchase UOM of the product"))
+        return
+
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
-        if isinstance(ids, (int,long)): ids = [ids]
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('import_in_progress') and not context.get('button'):
+            obj_data = self.pool.get('ir.model.data')
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            message = ''
+            if vals.get('uom_id'):
+                if vals.get('uom_id') == tbd_uom:
+                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+            if vals.get('product_id'):
+                if vals.get('product_id') == tbd_product:
+                    message += 'You have to define a valid product, i.e. not "To be define".'
+            if vals.get('uom_id') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('uom_id')
+                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+            else:
+                vals['to_correct_ok'] = False
+                vals['text_error'] = False
         self._check_qty(cr, uid, ids, context)
-        return res
+        return super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
 
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
@@ -508,6 +586,8 @@ class real_average_consumption_line(osv.osv):
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
+        'to_correct_ok': fields.boolean('To correct'),
+        'text_error': fields.text('Errors', readonly=True),
     }
 
 # uf-1344 => need to pass the context
