@@ -74,7 +74,7 @@ class wizard_import_rac(osv.osv_memory):
         import_rac = self.browse(cr, uid, ids[0], context)
         rac_id = import_rac.rac_id.id
         
-        ignore_lines, complete_lines, lines_with_error = 0, 0, 0
+        ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
         error_log = ''
         error = ''
         line_num = 0
@@ -183,6 +183,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if row.cells[6] and row.cells[6].data:
                     remark = row.cells[6].data
                 error += '\n'.join(to_write['error_list'])
+                if error:
+                    lines_to_correct += 1
                 line_data = {'batch_mandatory': batch_mandatory,
                              'date_mandatory': date_mandatory,
                              'product_id': product_id,
@@ -195,13 +197,16 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'text_error': error,}
 
                 line_id = line_obj.create(cr, uid, line_data, context=context)
-                if isinstance(line_id, (int,long)): line_id = [line_id]
+                # when we enter the create, we catch the raise error into the context value of 'error_message'
                 list_message = context.get('error_message')
                 if list_message:
-                    lines_with_error += 1
+                    # if an errors are found and a text_error was already existing we add it the line after
                     text_error = line_obj.read(cr, uid, line_id,['text_error'], context)[0]['text_error']
                     line_obj.write(cr, uid, line_id, {'text_error': text_error + '\n'+ '\n'.join(list_message)}, context)
+                    if not error:
+                        lines_to_correct += 1
             except IndexError, e:
+                # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += "The system reference an object that doesn't exist at line %s in the Excel file. Details: %s\n" % (line_num, e)
                 ignore_lines += 1
             except Exception, e:
@@ -209,14 +214,13 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 ignore_lines += 1
             complete_lines += 1
         if error_log: error_log = "Reported errors for ignored lines : \n" + error_log
-        #self.pool.get('real.average.consumption').button_update_stock(cr, uid, rac_id)
         self.write(cr, uid, ids, {'message': '''
 Importation completed !
 # of imported lines : %s
-# of lines with error(s): %s
+# of lines to correct: %s
 # of ignored lines: %s
 %s
-''' % (complete_lines, lines_with_error or 'No error !', ignore_lines, error_log)}, context=context)
+''' % (complete_lines, lines_to_correct or 'No error !', ignore_lines, error_log)}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
         
