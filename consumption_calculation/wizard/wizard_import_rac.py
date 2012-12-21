@@ -176,7 +176,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if row.cells[6] and row.cells[6].data:
                     remark = row.cells[6].data
                 error += '\n'.join(to_write['error_list'])
-                to_correct_ok = lambda error: True if error else False
+                to_correct_ok =  [True for x in error]
                 line_data = {'batch_mandatory': batch_mandatory,
                              'date_mandatory': date_mandatory,
                              'product_id': product_id,
