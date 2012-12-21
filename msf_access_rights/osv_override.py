@@ -28,8 +28,8 @@ import copy
 
 debug = True
 create_debug = False
-write_debug = False
-fields_debug = True
+write_debug = True
+fields_debug = False
 
 def dprint(string):
     print string
@@ -67,8 +67,13 @@ def _record_matches_domain(self, cr, uid, record_id, domain):
         domain.append(('id', '=', record_id))
         domain.append('&')
         domain.reverse()
-    
+    elif isinstance(domain, bool):
+        return True
+
     return bool(self.search(cr, uid, domain))
+
+class _SetToDefaultFlag:
+    pass
 
 def create(self, cr, uid, vals, context=None):
     """
@@ -116,27 +121,23 @@ def create(self, cr, uid, vals, context=None):
                 groups = [x.id for x in user.groups_id]
 
                 rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-                rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+                rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
                 cprint('=== MODEL: ' + model_name)
                 cprint('=== USER: ' + str(user))
                 cprint('=== GROUPS: ' + str(groups))
-                cprint('=== RULES_SEARCH: ' + str(rules_search))
+                cprint('====== RULES_SEARCH: ' + str(rules_search))
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
 
-                    cprint('====== GOT RULES: ' + str(rules_search))
-
                     rules = rules_pool.browse(cr, uid, rules_search)
-                    new_values = {}
 
                     # for each rule, check the record against the rule domain.
                     for rule in rules:
 
-                        cprint('=== DOMAIN TEXT: ' + rule.domain_text)
+                        cprint('=== DOMAIN TEXT: %s' % rule.domain_text)
 
-                        # prepare (or skip) the domain check
                         is_match = True
 
                         if rule.domain_text:
@@ -146,31 +147,17 @@ def create(self, cr, uid, vals, context=None):
 
                         if is_match:
                             
-                            # if record matches the domain, modify new values
-                            for line in rule.field_access_rule_line_ids:
-                                if not line.value_not_synchronized_on_create:
-                                    new_values[line.field.name] = None
+                            # if record matches the domain, modify values based on rule lines
+                            defaults = self.pool.get(model_name)._defaults
+                            no_sync_vals = [line for line in rule.field_access_rule_line_ids if line.value_not_synchronized_on_create]
+                            
+                            for line in no_sync_vals:
+                                new_def_val = defaults.get(line.field.name, None)
+                                new_val = new_def_val if not hasattr(new_def_val, '__call__') else None
+                                vals[line.field.name] = new_val
 
-                    # If we have any values to update
-                    if new_values:
-
-                        # replace None with the class defaults
-                        defaults = self.pool.get(model_name)._defaults
-
-                        cprint('=== NEW VALUES: ' + str(new_values))
-                        cprint('=== DEFAULTS: ' + str(defaults))
-
-                        for key in defaults.keys():
-                            cprint('...key: ', key)
-                            if key in new_values:
-                                cprint('......val: ' + new_values.get(key))
-                                cprint('......def: ' + defaults[key])
-                                new_values[key] = defaults[key]
-
-                        cprint('====== GOT NEW VALUES: ' + str(new_values))
-
-                        # then update the record
-                        self.write(cr, uid, create_result, new_values, context=context)
+                    # Then update the record
+                    self.write(cr, 1, create_result, vals, context=context)
 
                 return create_result
             else:
@@ -195,6 +182,7 @@ def write(self, cr, uid, ids, vals, context=None):
 
     context = context or {}
 
+    context['sync_data'] = True
     real_uid = uid
     uid = 0
     if uid != 1:
@@ -214,7 +202,7 @@ def write(self, cr, uid, ids, vals, context=None):
         groups = [x.id for x in user.groups_id]
 
         rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-        rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+        rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
         wprint('=== INSTANCE_LEVEL: ' + instance_level)
         wprint('=== MODEL: ' + model_name)
@@ -235,10 +223,12 @@ def write(self, cr, uid, ids, vals, context=None):
                     if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
 
                         # rule applies for this record so throw exception if we are trying to edit a field without write_access
-                        access_denied_fields = [line for line in rule.field_access_rule_line_ids if not line.write_access and line.field.name in vals]
+                        access_denied_fields = [line for line in rule.field_access_rule_line_ids if not line.write_access and line.field.name in vals and (getattr(record, line.field.name, vals[line.field.name]) != vals[line.field.name] and not (bool(getattr(record, line.field.name, vals[line.field.name])) == bool(vals[line.field.name])))]
                         if access_denied_fields:
-                            wprint('=== ACCESS_DENIED_FIELDS: ' + str(access_denied_fields))
-                            raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\' have access to edit')
+                            wprint('====== ACCESS_DENIED_FIELDS: ' + str([line.field.name for line in access_denied_fields]))
+                            wprint('====== VALS: ' + str(vals))
+                            wprint('====== EXISTING VALS: %s' % [ str(line.field.name) + ': ' + str(getattr(record, line.field.name)) + ', ' for line in rule.field_access_rule_line_ids ])
+                            raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
             # if syncing, sanitize editted rows that don't have sync_on_write permission
             if context.get('sync_data'):
@@ -252,10 +242,14 @@ def write(self, cr, uid, ids, vals, context=None):
                     for rule in rules:
                         if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
 
-                            wprint('=== RULE MATCHES: ' + rule.id)
+                            wprint('=== RULE MATCHES: %s' % rule.id)
 
                             # rule applies for this record so delete key from new values if key is value_not_synchronized_on_write and the value is different from the existing record field
-                            no_sync_fields = [line for line in rule.field_access_rule_line_ids if line.value_not_synchronized_on_write and line.field.name in vals and hasattr(record, line.field.name) and vals[line.field.name] != getattr(record, line.field.name)]
+                            no_sync_fields = [line for line in rule.field_access_rule_line_ids \
+                            if line.value_not_synchronized_on_write and \
+                            line.field.name in vals and \
+                            hasattr(record, line.field.name) and \
+                            vals[line.field.name] != getattr(record, line.field.name)]
 
                             for line in no_sync_fields:
                                 del new_values[line.field.name]
@@ -303,7 +297,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         groups = [x.id for x in user.groups_id]
 
         rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-        rules_search = rules_pool.search(cr, uid, ['&', ('model_id.name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+        rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
         fprint('=== INSTANCE_LEVEL: ' + instance_level)
         fprint('=== MODEL: ' + model_name)
@@ -340,7 +334,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                     domain_value = domains[domain_key]
 
                     domain_value_or = copy.deepcopy(domain_value)
-                    if len(domain_value_or) > 1:
+                    if not isinstance(domain_value_or, bool) and len(domain_value_or) > 1:
                         domain_value_or.append('|')
                         domain_value_or.reverse()
 
