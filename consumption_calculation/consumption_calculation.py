@@ -95,6 +95,7 @@ class real_average_consumption(osv.osv):
         self.button_update_stock(cr, uid, res)
         return res
 
+
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
         if isinstance(ids, (int, long)):
@@ -489,7 +490,7 @@ class real_average_consumption_line(osv.osv):
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
-                expiry_date = obj.expiry_date or None
+                expiry_date = obj.expiry_date
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'), 
@@ -591,7 +592,7 @@ class real_average_consumption_line(osv.osv):
         'text_error': fields.text('Errors', readonly=True),
     }
 
-# uf-1344 => need to pass the context
+# uf-1344 => need to pass the context so we use create and write instead
 #    _constraints = [
 #        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
 #    ]
