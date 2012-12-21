@@ -526,15 +526,16 @@ class real_average_consumption_line(osv.osv):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
+        warning = {}
         if product_uom and product_id:
             product_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
-                raise osv.except_osv(_('Warning'),
-                                     _("You have to select a product UOM in the same category than the purchase UOM of the product"))
-        return
+                warning = {'title': 'Wrong Product UOM !',
+                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product", }
+        return {'warning': warning}
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
