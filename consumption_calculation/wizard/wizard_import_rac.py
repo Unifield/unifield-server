@@ -144,12 +144,18 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                     try:
                                         expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%b/%Y'))
                                     except ValueError as e:
-                                        error += "Line %s in your Excel file: expiry date %s has a wrong format (day/month/year). Details: %s' \n" % (line_num, row[4], e)
-                        if not batch and product_id and expiry_date:
-                            batch_list = self.pool.get('stock.production.lot').search(cr, uid, [('product_id', '=', product_id),
-                                                                                                ('life_date', '=', expiry_date)])
-                            if batch_list:
-                                batch = batch_list[0]
+                                        error += """Line %s in your Excel file: expiry date %s has a wrong format (day/month/year). Details: %s' \n
+                                        """ % (line_num, row[4], e)
+                        if expiry_date and product_id:
+                            if not batch:
+                                batch_list = prodlot_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)])
+                                if batch_list:
+                                    batch = batch_list[0]
+                            else:
+                                batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
+                                if expiry_date != batch_read['life_date']:
+                                    error += """Line %s in your Excel file: The date %s does not comply with the expiry date %s of the batch number %s
+                                    """ % (line_num, expiry_date, batch_read['life_date'], batch_read['name'])
                 else:
                     product_id = False
                     error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])

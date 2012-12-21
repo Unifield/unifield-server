@@ -450,9 +450,9 @@ class real_average_consumption_line(osv.osv):
 
     def _check_qty(self, cr, uid, ids, context=None):
        
-        noraise = context.get('noraise')
         if context is None:
             context = {}
+        noraise = context.get('noraise')
         context.update({'error_message': ''})
         if isinstance(ids, (int, long)):
             ids = [ids]
