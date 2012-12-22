@@ -24,6 +24,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
+from psycopg2 import IntegrityError
 from msf_supply_doc_import import check_line
 
 class wizard_import_rac(osv.osv_memory):
@@ -65,6 +66,7 @@ class wizard_import_rac(osv.osv_memory):
         '''
         if context is None:
             context = {}
+        start_time = time.time()
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
@@ -196,6 +198,11 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'rac_id': rac_id,
                              'text_error': error,}
 
+                if line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
+                    error_log += """The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique.
+""" % (line_num, product_obj.read(cr, uid, product_id, ['default_code'])['default_code'], not batch and 'Not specified' or prodlot_obj.read(cr, uid, batch, ['name'])['name'])
+                    ignore_lines += 1
+                    continue
                 line_id = line_obj.create(cr, uid, line_data, context=context)
                 # when we enter the create, we catch the raise error into the context value of 'error_message'
                 list_message = context.get('error_message')
@@ -207,31 +214,38 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                         lines_to_correct += 1
             except IndexError, e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
-                error_log += "The system reference an object that doesn't exist at line %s in the Excel file. Details: %s\n" % (line_num, e)
+                error_log += "Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n" % (line_num, e)
                 ignore_lines += 1
+                continue
             except Exception, e:
-                error_log += "An error appeared at line %s in the Excel file. Details: %s\n" % (line_num, e)
+                error_log += "Line %s ignored: an error appeared in the Excel file. Details: %s\n" % (line_num, e)
                 ignore_lines += 1
+                continue
             complete_lines += 1
         if error_log: error_log = "Reported errors for ignored lines : \n" + error_log
-        self.write(cr, uid, ids, {'message': '''
-Importation completed !
+        end_time = time.time()
+        total_time = str(round(end_time-start_time)) + ' second(s)'
+        vals = {'message': ''' Importation completed in %s!
 # of imported lines : %s
 # of lines to correct: %s
 # of ignored lines: %s
 %s
-''' % (complete_lines, lines_to_correct or 'No error !', ignore_lines, error_log)}, context=context)
-        
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.rac',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': ids[0],
-                'view_id': [view_id],
-                }
+''' % (total_time ,complete_lines, lines_to_correct or 'No error !', ignore_lines, error_log)}
+        try:
+            self.write(cr, uid, ids, vals, context=context)
+            
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_rac_end')[1],
+            
+            return {'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.import.rac',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'target': 'new',
+                    'res_id': ids[0],
+                    'view_id': [view_id],
+                    }
+        except Exception, e:
+            raise osv.except_osv(_('Error !'), _('%s !') % e)
         
     def close_import(self, cr, uid, ids, context=None):
         '''
