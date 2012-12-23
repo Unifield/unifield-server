@@ -456,7 +456,7 @@ class stock_picking(osv.osv):
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
-
+                    values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
                         val_loc = self.pool.get('stock.location').browse(cr, uid, values.get('location_dest_id'), context=context)

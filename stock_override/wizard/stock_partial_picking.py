@@ -94,6 +94,12 @@ class stock_partial_picking(osv.osv_memory):
       
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
+            
+            # integrity constraint
+            integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, None, context=context)
+            if not integrity_check:
+                # the windows must be updated to trigger tree colors
+                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
 
             if not moves_list:
                     raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.')) 
@@ -117,8 +123,7 @@ class stock_partial_picking(osv.osv_memory):
                 #Adding a check whether any move line contains qty less than zero
                 if calc_qty <= 0:
                     raise osv.except_osv(_('Processing Error'), \
-                            _('Can not process quantity %d for Product %s !') \
-                            %(move.quantity, move.product_id.name))
+                            _('Can not process empty lines !'))
 
                 partial_datas['move%s' % (move.move_id.id)] = {
                     'product_id': move.product_id.id, 

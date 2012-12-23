@@ -125,6 +125,7 @@
                       <field name="priority" />
                       <field name="categ" />
                       <field name="date_order" />
+                      <field name="partner_ref" />
                       <field name="partner_id" string="Supplier" />
                       <field name="delivery_requested_date" />
                       <field name="origin" />

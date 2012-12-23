@@ -100,7 +100,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                         res_id = st_obj.write(cr, uid, [st.id], {'name': st_number, 'state':'confirm', 'closing_date': datetime.today()}, context=context)
                 return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
             else:
-                raise osv.except_osv(_('Warning'), _("You don't have really confirm by ticking!"))
+                raise osv.except_osv(_('Warning'), _("Confirm by ticking the 'Are you sure?' checkbox!"))
         return { 'type' : 'ir.actions.act_window_close', 'active_id' : id }
 
 wizard_closing_cashbox()

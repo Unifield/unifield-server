@@ -301,7 +301,7 @@ class sale_order(osv.osv):
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
 
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
@@ -317,7 +317,7 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:
@@ -442,7 +442,8 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -1055,6 +1056,7 @@ class sale_order_line(osv.osv):
                 
                 # This field is used to identify the FO PO line between 2 instances of the sync
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+                'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 }
 
     _sql_constraints = [
