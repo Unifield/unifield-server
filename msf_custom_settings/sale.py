@@ -1,8 +1,11 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    All Rigts Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,29 +23,24 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
 
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    _columns = {
-        'intl_customer_ok': fields.boolean(string='International customer'),
-    }
-
-    def onchange_partner_id(self, cr, uid, ids, part=False, *a, **b):
-        '''
-        Set the intl_customer_ok field if the partner is an ESC or an international partner
-        '''
-        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
-        if part:
-            partner = self.pool.get('res.partner').browse(cr, uid, part)
-            if partner.partner_type == 'esc' or partner.partner_type == 'external' or partner.zone == 'international':
-                res['value'].update({'intl_customer_ok': True})
-            else:
-                res['value'].update({'intl_customer_ok': False})
+    def onchange_order_type(self, cr, uid, id, order_type=None, partner_id=None, context=None):
+        """
+        """
+        res = {}
+        if not order_type:
+            return res
+        domain = [('customer','=',True)]
+        if order_type in ['regular', 'donation_st', 'loan']:
+            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])] + domain}
+        elif order_type in ['donation_exp']:
+            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section'])] + domain}
         else:
-            res['value'].update({'intl_customer_ok': True})
+            pass
         return res
 
 sale_order()

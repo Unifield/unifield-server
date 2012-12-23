@@ -65,7 +65,13 @@ class account_move_line(osv.osv):
         m = re.match(pattern, text)
         if m and m.groups():
             number = m.groups() and m.groups()[0]
-            replacement = string + str(int(number) + 1) + ' - '
+            # Add a check on number due to UF-1396
+            if not isinstance(number, int):
+                try:
+                    nn = int(number)
+                except ValueError:
+                    nn = 0
+            replacement = string + str(nn + 1) + ' - '
             if string == 'REV':
                 replacement = string + ' - '
             result = re.sub(pattern, replacement, text, 1)
