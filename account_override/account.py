@@ -77,6 +77,12 @@ account_journal()
 class account_move(osv.osv):
     _inherit = 'account.move'
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
@@ -84,8 +90,10 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj']),('is_current_instance','=',True)]"),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj'])]"),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
+        'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
+            help="This indicates which Journal Type is attached to this Journal Entry"),
     }
 
     _defaults = {

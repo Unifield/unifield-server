@@ -1153,7 +1153,9 @@ class pack_family_memory(osv.osv_memory):
                         values['amount'] += move.amount
                         values['currency_id'] = move.currency_id and move.currency_id.id or False
                     else:
-                        raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
+                        # when multiple moves are modified from/to values, the first one would raise an exception as the second one is not written yet
+                        pass
+                        #raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
 
@@ -1684,7 +1686,7 @@ class stock_picking(osv.osv):
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'), # old_multi get_vals
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals'),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
@@ -3053,8 +3055,8 @@ class stock_move(osv.osv):
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
                 'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p', multi='get_vals',),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
-                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
@@ -3213,9 +3215,6 @@ class sale_order(osv.osv):
                 picking_data['subtype'] = 'standard'
                 picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-            else:
-                # use the name according to picking ticket sequence
-                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
             
         picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'

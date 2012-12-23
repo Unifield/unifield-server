@@ -221,6 +221,7 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
+                 
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -389,7 +390,7 @@ class stock_picking(osv.osv):
 
                     if qty > 0:
                         new_price = currency_obj.compute(cr, uid, product_currency,
-                                move_currency_id, product_price)
+                                move_currency_id, product_price, round=False, context=context)
                         new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                                 product.uom_id.id)
                         if product.qty_available <= 0:
@@ -523,19 +524,56 @@ class stock_picking(osv.osv):
                 inv_type = 'out_invoice'
         return inv_type
 
+    def is_invoice_needed(self, cr, uid, sp=None):
+        """
+        Check if invoice is needed. Cases where we do not need invoice:
+        - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
+        - OUT from FO AND stock picking type in internal, external or esc
+        So all OUT that have internel, external or esc should return FALSE from this method.
+        This means to only accept intermission and intersection invoicing on OUT with reason type "Deliver partner".
+        """
+        res = True
+        if not sp:
+            return res
+        # Fetch some values
+        try:
+            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        except ValueError:
+            rt_id = False
+        # type out and partner_type in internal, external or esc
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']:
+            res = False
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and rt_id and sp.partner_id.partner_type in ['intermission', 'section']:
+            # Search all stock moves attached to this one. If one of them is deliver partner, then is_invoice_needed is ok
+            res = False
+            sm_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', sp.id)])
+            if sm_ids:
+                for sm in self.pool.get('stock.move').browse(cr, uid, sm_ids):
+                    if sm.reason_type_id.id == rt_id:
+                        res = True
+        # partner is itself (those that own the company)
+        company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
+        if sp.partner_id.id == company_partner_id.id:
+            res = False
+        return res
+
     def action_done(self, cr, uid, ids, context=None):
         """
-        Create automatically invoice
+        Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
         if res:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
+                sp_type = False
+                inv_type = self._get_invoice_type(sp)
+                # Check if no invoice needed
+                is_invoice_needed = self.is_invoice_needed(cr, uid, sp)
+                if not is_invoice_needed:
+                    continue
                 # we do not create invoice for procurement_request (Internal Request)
                 if not sp.sale_id.procurement_request and sp.subtype == 'standard':
-                    sp_type = False
-                    inv_type = self._get_invoice_type(sp)
                     if sp.type == 'in' or sp.type == 'internal':
                         if inv_type == 'out_refund':
                             sp_type = 'sale_refund'
@@ -666,6 +704,7 @@ class stock_move(osv.osv):
         return False
 
     _columns = {
+        'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
@@ -700,6 +739,16 @@ class stock_move(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
+
+        type = vals.get('type')
+        if not type and vals.get('picking_id'):
+            type = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'), context=context).type
+            
+        if type == 'in' and not vals.get('date_expected'):
+            vals['date_expected'] = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        if vals.get('date_expected'):
+            vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).create(cr, uid, vals, context=context)
     
@@ -721,6 +770,11 @@ class stock_move(osv.osv):
                 if move.address_id.id != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+
+        if vals.get('date_expected'):
+            for move in self.browse(cr, uid, ids, context=context):
+                if vals.get('state', move.state) not in ('done', 'cancel'):
+                    vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
     
@@ -881,7 +935,7 @@ class stock_move(osv.osv):
                 qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
                 if qty > 0:
                     new_price = currency_obj.compute(cr, uid, product_currency,
-                            move_currency_id, product_price)
+                            move_currency_id, product_price, round=False, context=context)
                     new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                             product.uom_id.id)
                     if product.qty_available <= 0:

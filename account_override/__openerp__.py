@@ -29,7 +29,7 @@
     "website": "http://unifield.msf.org",
     "depends" : ["account", "analytic", "account_tools", "msf_audittrail"],
     "category" : "Generic Modules/Accounting",
-    "init_xml" : [],
+    "init_xml" : ["data.xml",],
     "demo_xml" : [],
     "update_xml" : [
         'account_invoice_workflow.xml',

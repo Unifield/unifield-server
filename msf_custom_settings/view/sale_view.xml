@@ -11,6 +11,15 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/group" position="attributes">
+                        <attribute name="col">4</attribute>
+                    </xpath>
+                    <xpath expr="/form/group/field[@name='shipped']" position="attributes">
+                        <attribute name="invisible">1</attribute>
+                    </xpath>
+                    <xpath expr="/form/group/field[@name='order_type']" position="attributes">
+                        <attribute name="on_change">onchange_order_type(order_type, partner_id)</attribute>
+                    </xpath>
                     <xpath expr="/form/notebook/page/group[2]" position="replace" >
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/group[2]" position="replace" >

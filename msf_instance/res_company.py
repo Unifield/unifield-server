@@ -51,6 +51,26 @@ class res_company(osv.osv):
                                          context=context)
         return
     
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1631/1632, 
+        when duplicating a new partner (by button duplicate), or company, it creates duplicated currencies
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        fields_to_reset = ['currency_ids'] # reset this value, otherwise the content of the field triggers the creation of a new company
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
+        res = super(res_company, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
+        return res
+    
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
