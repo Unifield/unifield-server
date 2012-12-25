@@ -22,8 +22,6 @@
 from osv import osv, fields
 from tools.translate import _
 
-from tempfile import TemporaryFile
-
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from msf_supply_doc_import import check_line
@@ -43,7 +41,7 @@ class wizard_import_fmc(osv.osv_memory):
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
         
-        The file should be in Excel xml 2003 format (with ',' character as delimiter).
+        The file should be in Excel xml 2003 format.
         The columns should be in this order :
           * Product Code
           * Product Description
@@ -186,8 +184,6 @@ Product Code*, Product Description*, AMC, FMC, Valid Until"""))
         '''
         Return to the initial view
         '''
-        res_id = self.browse(cr, uid, ids[0], context=context).rmc_id.id
-        
         return {'type': 'ir.actions.act_window_close'}
     
 wizard_import_fmc()

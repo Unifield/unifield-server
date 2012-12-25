@@ -26,11 +26,7 @@ from mx.DateTime import *
 from tools.translate import _
 
 import time
-import base64
 import netsvc
-
-import csv
-from tempfile import TemporaryFile
 
 
 class real_average_consumption(osv.osv):
@@ -386,9 +382,6 @@ class real_average_consumption(osv.osv):
         ret = super(real_average_consumption, self).write(cr, uid, ids, vals, context=context)
         return ret
     
-    def dummy(self, cr, uid, ids, context=None):
-        return True
-
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
         Remove lines
@@ -408,14 +401,10 @@ class real_average_consumption(osv.osv):
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         """
-        Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
+        Check the lines that need to be corrected
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        message = ''
-        plural= ''
-        obj_data = self.pool.get('ir.model.data')
-        
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
             if var.line_ids:
@@ -529,7 +518,6 @@ class real_average_consumption_line(osv.osv):
         if context is None:
             context = {}
         res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
-        if isinstance(res, (int,long)): res = [res]
         self._check_qty(cr, uid, res, context)
         return res
 
@@ -992,14 +980,10 @@ class monthly_review_consumption(osv.osv):
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         """
-        Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
+        Check the lines that need to be corrected.
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        message = ''
-        plural= ''
-        obj_data = self.pool.get('ir.model.data')
-        
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
             if var.line_ids:
@@ -1074,7 +1058,6 @@ class monthly_review_consumption_line(osv.osv):
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
             tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
-            message = ''
             if vals.get('name'):
                 if vals.get('name') == tbd_product:
                     raise osv.except_osv(_('Warning !'), _('You have to define a valid product, i.e. not "To be define".'))

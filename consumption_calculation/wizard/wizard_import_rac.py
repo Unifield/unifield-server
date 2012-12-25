@@ -24,7 +24,6 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
-from psycopg2 import IntegrityError
 from msf_supply_doc_import import check_line
 
 class wizard_import_rac(osv.osv_memory):
@@ -41,7 +40,7 @@ class wizard_import_rac(osv.osv_memory):
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
         
-        The file should be in XML 2003 format
+        The file should be in XML 2003 format.
         The columns should be in this order :
            Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
         """
@@ -78,7 +77,6 @@ class wizard_import_rac(osv.osv_memory):
         
         ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
         error_log = ''
-        error = ''
         line_num = 0
         if not import_rac.file:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
@@ -251,8 +249,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
         '''
         Return to the initial view
         '''
-        res_id = self.browse(cr, uid, ids[0], context=context).rac_id.id
-        
         return {'type': 'ir.actions.act_window_close'}
     
 wizard_import_rac()
