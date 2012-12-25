@@ -265,34 +265,42 @@ class real_average_consumption(osv.osv):
                 }
         
     def export_rac(self, cr, uid, ids, context=None):
-        '''
-        Creates a CSV file and launches the wizard to save it
-        '''
-        if context is None:
-            context = {}
-        rac = self.browse(cr, uid, ids[0], context=context)
-        
-        outfile = TemporaryFile('w+')
-        writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product Code', 'Product Description', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
-        
-        for line in rac.line_ids:
-            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
-        outfile.seek(0)    
-        file = base64.encodestring(outfile.read())
-        outfile.close()
-        
-        export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 'file': file, 
-                                                                        'filename': 'rac_%s.csv' % (rac.cons_location_id.name.replace(' ', '_')), 
-                                                                        'message': 'The RAC lines has been exported. Please click on Save As button to download the file'})
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.export.rac',
-                'res_id': export_id,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                }
+        """
+        Return an xml file to open with Excel
+        """
+        datas = {'ids': ids}
+
+        return {'type': 'ir.actions.report.xml',
+                'report_name': 'real.consumption.xls',
+                'datas': datas}
+#        '''
+#        Creates a CSV file and launches the wizard to save it
+#        '''
+#        if context is None:
+#            context = {}
+#        rac = self.browse(cr, uid, ids[0], context=context)
+#        
+#        outfile = TemporaryFile('w+')
+#        writer = csv.writer(outfile, quotechar='"', delimiter=',')
+#        writer.writerow(['Product Code', 'Product Description', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
+#        
+#        for line in rac.line_ids:
+#            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
+#        outfile.seek(0)    
+#        file = base64.encodestring(outfile.read())
+#        outfile.close()
+#        
+#        export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 'file': file, 
+#                                                                        'filename': 'rac_%s.csv' % (rac.cons_location_id.name.replace(' ', '_')), 
+#                                                                        'message': 'The RAC lines has been exported. Please click on Save As button to download the file'})
+#        
+#        return {'type': 'ir.actions.act_window',
+#                'res_model': 'wizard.export.rac',
+#                'res_id': export_id,
+#                'view_mode': 'form',
+#                'view_type': 'form',
+#                'target': 'new',
+#                }
         
     def fill_lines(self, cr, uid, ids, context=None):
         '''
@@ -805,34 +813,42 @@ class monthly_review_consumption(osv.osv):
                 }
         
     def export_fmc(self, cr, uid, ids, context=None):
-        '''
-        Creates a CSV file and launches the wizard to save it
-        '''
-        if context is None:
-            context = {}
-        fmc = self.browse(cr, uid, ids[0], context=context)
-        
-        outfile = TemporaryFile('w+')
-        writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product Code', 'Product Description', 'AMC', 'FMC', 'Valid until'])
-        
-        for line in fmc.line_ids:
-            writer.writerow([line.name.default_code and line.name.default_code.encode('utf-8'), line.name.name and line.name.name.encode('utf-8'), line.amc, line.fmc, line.valid_until or ''])
-        outfile.seek(0)    
-        file = base64.encodestring(outfile.read())
-        outfile.close()
-        
-        export_id = self.pool.get('wizard.export.fmc').create(cr, uid, {'fmc_id': ids[0], 'file': file, 
-                                                                        'filename': 'fmc_%s.csv' % (time.strftime('%Y_%m_%d')), 
-                                                                        'message': 'The FMC lines has been exported. Please click on Save As button to download the file'})
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.export.fmc',
-                'res_id': export_id,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                }
+        """
+        Return an xml file to open with Excel
+        """
+        datas = {'ids': ids}
+
+        return {'type': 'ir.actions.report.xml',
+                'report_name': 'monthly.consumption.xls',
+                'datas': datas}
+#        '''
+#        Creates a CSV file and launches the wizard to save it
+#        '''
+#        if context is None:
+#            context = {}
+#        fmc = self.browse(cr, uid, ids[0], context=context)
+#        
+#        outfile = TemporaryFile('w+')
+#        writer = csv.writer(outfile, quotechar='"', delimiter=',')
+#        writer.writerow(['Product Code', 'Product Description', 'AMC', 'FMC', 'Valid until'])
+#        
+#        for line in fmc.line_ids:
+#            writer.writerow([line.name.default_code and line.name.default_code.encode('utf-8'), line.name.name and line.name.name.encode('utf-8'), line.amc, line.fmc, line.valid_until or ''])
+#        outfile.seek(0)    
+#        file = base64.encodestring(outfile.read())
+#        outfile.close()
+#        
+#        export_id = self.pool.get('wizard.export.fmc').create(cr, uid, {'fmc_id': ids[0], 'file': file, 
+#                                                                        'filename': 'fmc_%s.csv' % (time.strftime('%Y_%m_%d')), 
+#                                                                        'message': 'The FMC lines has been exported. Please click on Save As button to download the file'})
+#        
+#        return {'type': 'ir.actions.act_window',
+#                'res_model': 'wizard.export.fmc',
+#                'res_id': export_id,
+#                'view_mode': 'form',
+#                'view_type': 'form',
+#                'target': 'new',
+#                }
         
     def fill_lines(self, cr, uid, ids, context=None):
         '''
