@@ -231,8 +231,13 @@
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
                     <separator colspan="4" string="Products" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list">
-                        <tree string="Products" editable="top"> 
+	                <group name="import" string=" Import Lines " colspan="4" col="24">
+	                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" confirm="Are you sure that you want to remove all lines?"/>
+                        <field name="hide_column_error_ok" invisible="1" colspan="1" />
+	                </group>
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list"
+                    context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
+                        <tree string="Products" editable="top" colors="red: to_correct_ok==True"> 
                             <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" 
                             	domain="[('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
@@ -244,6 +249,8 @@
 			    <field name="last_reviewed2" invisible="1" />
                             <!--<button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />-->
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
+                            <field name="to_correct_ok" invisible="1"/>
+                            <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" />
                         </tree>
                     </field>
                     <button colspan="4" icon="gtk-execute" string="Valid all lines" type="object" name="valid_multiple_lines" />

@@ -4,17 +4,4 @@
   !record {model: monthly.review.consumption, id: mrc1}:
     period_from: 2011-01-01
     period_to: 2011-02-01
--
-  Import Monthly Review Consumption lines
--
-  !python {model: monthly.review.consumption}: |
-    import addons, base64, logging
-    
-    logging.getLogger('tests').log(logging.TEST, 'We import monthly_consumption.xls.')
-    # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'monthly_consumption.xls')
-    file = open(file_path, 'r')
-    file64 = base64.b64encode(file.read())
-    self.write(cr, uid, ref("mrc1"), {'file_to_import': file64}, context=context)
-    self.import_file(cr, uid, [ref("mrc1")], context=context)
 

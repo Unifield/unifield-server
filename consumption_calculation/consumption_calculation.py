@@ -761,7 +761,17 @@ class monthly_review_consumption(osv.osv):
             res[mrc.id] = len(mrc.line_ids)
             
         return res
-    
+
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.line_ids  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
     _columns = {
         'creation_date': fields.date(string='Creation date'),
         'cons_location_id': fields.char(size=256, string='Location', readonly=True),
@@ -775,6 +785,7 @@ class monthly_review_consumption(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
     }
     
     _defaults = {
@@ -934,6 +945,7 @@ class monthly_review_consumption(osv.osv):
         '''
         if context is None:
             context = {}
+        self.check_lines_to_fix(cr, uid, ids, context)
         for report in self.browse(cr, uid, ids, context=context):
             for line in report.line_ids:
                 if not line.valid_ok:
@@ -960,7 +972,42 @@ class monthly_review_consumption(osv.osv):
     
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
-    
+
+    def button_remove_lines(self, cr, uid, ids, context=None):
+        '''
+        Remove lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        vals = {}
+        vals['line_ids'] = []
+        for line in self.browse(cr, uid, ids, context=context):
+            line_browse_list = line.line_ids
+            for var in line_browse_list:
+                vals['line_ids'].append((2, var.id))
+            self.write(cr, uid, ids, vals, context=context)
+        return True
+
+    def check_lines_to_fix(self, cr, uid, ids, context=None):
+        """
+        Check both the lines that need to be corrected and also that the supplier or the address is not 'To be defined'
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        message = ''
+        plural= ''
+        obj_data = self.pool.get('ir.model.data')
+        
+        for var in self.browse(cr, uid, ids, context=context):
+            # we check the lines that need to be fixed
+            if var.line_ids:
+                for var in var.line_ids:
+                    if var.to_correct_ok:
+                        raise osv.except_osv(_('Warning !'), _('Some lines need to be fixed before.'))
+        return True
+
 monthly_review_consumption()
 
 
@@ -1022,6 +1069,18 @@ class monthly_review_consumption_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('import_in_progress') and not context.get('button'):
+            obj_data = self.pool.get('ir.model.data')
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            message = ''
+            if vals.get('name'):
+                if vals.get('name') == tbd_product:
+                    raise osv.except_osv(_('Warning !'), _('You have to define a valid product, i.e. not "To be define".'))
+                else:
+                    vals['to_correct_ok'] = False
+                    vals['text_error'] = False
         if 'fmc2' in vals:
             vals.update({'fmc': vals.get('fmc2')})
         if 'last_reviewed2' in vals:
@@ -1046,7 +1105,18 @@ class monthly_review_consumption_line(osv.osv):
     
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('monthly.review.consumption.line').search(cr, uid, [('name', 'in', ids)], context=context)
-    
+
+    def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
+        result = {}
+        for id in ids:
+            result[id] = {'to_correct_ok': False}
+            
+        for out in self.browse(cr, uid, ids, context=context):
+            # the lines with to_correct_ok=True will be red
+            if out.text_error:
+                result[out.id]['to_correct_ok'] = True
+        return result
+
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('name', 'default_code', type='char', size=64, readonly=True,
@@ -1064,6 +1134,8 @@ class monthly_review_consumption_line(osv.osv):
         'valid_ok': fields.boolean(string='Validated', readonly=False),
         'mrc_id': fields.many2one('monthly.review.consumption', string='MRC', required=True, ondelete='cascade'),
         'mrc_creation_date': fields.related('mrc_id', 'creation_date', type='date', store=True),
+        'text_error': fields.text('Errors', readonly=True),
+        'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
     }
     
     def valid_line(self, cr, uid, ids, context=None):
