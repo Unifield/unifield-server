@@ -1608,3 +1608,37 @@ class stock_location(osv.osv):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'view_stock_location_without_buttons')
         return super(stock_location, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 stock_location()
+
+
+class real_consumption_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(real_consumption_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(real_consumption_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+real_consumption_xls('report.real.consumption.xls', 'real.average.consumption', 'addons/msf_supply_doc_export/report/report_real_consumption_xls.mako')
+
+class monthly_consumption_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(monthly_consumption_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(monthly_consumption_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+monthly_consumption_xls('report.monthly.consumption.xls', 'monthly.review.consumption', 'addons/msf_supply_doc_export/report/report_monthly_consumption_xls.mako')

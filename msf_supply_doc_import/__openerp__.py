@@ -52,8 +52,6 @@
         'test/import_ir.yml',
         'test/import_tender.yml',
         'test/import_composition_kit.yml',
-        'test/import_real_average_consumption.yml',
-        'test/import_monthly_consumption.yml',
     ],
     "installable": True,
     "active": False

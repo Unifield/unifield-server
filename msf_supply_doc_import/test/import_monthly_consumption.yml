@@ -1,7 +1,0 @@
--
-  Create a Monthly Review Consumption 1 (MRC1)
--
-  !record {model: monthly.review.consumption, id: mrc1}:
-    period_from: 2011-01-01
-    period_to: 2011-02-01
-
