@@ -56,6 +56,55 @@ class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
     
+    def update_supplier_info(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        update the supplier info of corresponding products
+        '''
+        info_obj = self.pool.get('product.supplierinfo')
+        pricelist_info_obj = self.pool.get('pricelist.partnerinfo')
+        for rfq in self.browse(cr, uid, ids, context=context):
+            for line in rfq.order_line:
+                # if the price is updated and a product selected
+                if line.price_unit and line.product_id:
+                    # get the product
+                    product = line.product_id
+                    # find the corresponding suppinfo with sequence -99
+                    info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
+                                                             ('sequence', '=', -99),], context=context)
+                    
+                    if info_99_list:
+                        # we drop it
+                        info_obj.unlink(cr, uid, info_99_list, context=context)
+                    
+                    # create the new one
+                    values = {'name': rfq.partner_id.id,
+                              'product_name': False,
+                              'product_code': False,
+                              'sequence' : -99,
+                              #'product_uom': line.product_uom.id,
+                              #'min_qty': 0.0,
+                              #'qty': function
+                              'product_id' : product.product_tmpl_id.id,
+                              'delay' : int(rfq.partner_id.default_delay),
+                              #'pricelist_ids': created just after
+                              #'company_id': default value
+                              }
+                    
+                    new_info_id = info_obj.create(cr, uid, values, context=context)
+                    # price lists creation - 'pricelist.partnerinfo
+                    values = {'suppinfo_id': new_info_id,
+                              'min_quantity': 1.00,
+                              'price': line.price_unit,
+                              'uom_id': line.product_uom.id,
+                              'currency_id': line.currency_id.id,
+                              'valid_till': rfq.valid_till,
+                              'purchase_order_line_id': line.id,
+                              'comment': 'RfQ original quantity for price : %s' % line.product_qty,
+                              }
+                    new_pricelist_id = pricelist_info_obj.create(cr, uid, values, context=context)
+                    
+        return True
+    
     def generate_po_from_rfq(self, cr, uid, ids, context=None):
         '''
         generate a po from the selected request for quotation
@@ -65,7 +114,9 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+        
+        # update price lists
+        self.update_supplier_info(cr, uid, ids, context=context)
         # copy the po with rfq_ok set to False
         data = self.read(cr, uid, ids[0], ['name'], context=context)
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
