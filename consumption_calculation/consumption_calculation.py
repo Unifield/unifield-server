@@ -561,10 +561,10 @@ class real_average_consumption_line(osv.osv):
             if message:
                 raise osv.except_osv(_('Warning !'), _(message))
             else:
-                vals['to_correct_ok'] = False
                 vals['text_error'] = False
+        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
         self._check_qty(cr, uid, ids, context)
-        return super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        return res
 
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)

@@ -202,6 +202,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     ignore_lines += 1
                     continue
                 line_id = line_obj.create(cr, uid, line_data, context=context)
+                complete_lines += 1
                 # when we enter the create, we catch the raise error into the context value of 'error_message'
                 list_message = context.get('error_message')
                 if list_message:
@@ -219,7 +220,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 error_log += "Line %s ignored: an error appeared in the Excel file. Details: %s\n" % (line_num, e)
                 ignore_lines += 1
                 continue
-            complete_lines += 1
         if error_log: error_log = "Reported errors for ignored lines : \n" + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + ' second(s)'
