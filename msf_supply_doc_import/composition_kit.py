@@ -193,7 +193,7 @@ class composition_item(osv.osv):
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
                 warning = {'title': 'Wrong Product UOM !',
-                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product"}
+                           'message': "You have to select a product UOM in the same category than the UOM of the product"}
         return {'warning': warning}
 
     def write(self, cr, uid, ids, vals, context=None):
