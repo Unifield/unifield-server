@@ -116,7 +116,7 @@ class account_move_line_compute_currency(osv.osv):
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
             if not search_ids:
-                raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "Fox FX gain/loss" to permit reconciliation!'))
+                raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "For FX gain/loss" to allow reconciliation!'))
             # Prepare some values
             partner_db = partner_cr = addendum_db = addendum_cr = None
             if total < 0.0:

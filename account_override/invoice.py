@@ -170,7 +170,8 @@ class account_invoice(osv.osv):
 
     def _hook_period_id(self, cr, uid, inv, context=None):
         """
-        Give matches period that are not draft and not HQ-closed from given date
+        Give matches period that are not draft and not HQ-closed from given date.
+        Do not use special periods as period 13, 14 and 15.
         """
         # Some verifications
         if not context:
@@ -180,7 +181,7 @@ class account_invoice(osv.osv):
         # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
         res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
             ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']), 
-            ('company_id', '=', inv.company_id.id)], context=context, order="date_start ASC, name ASC")
+            ('company_id', '=', inv.company_id.id), ('special', '=', False)], context=context, order="date_start ASC, name ASC")
         return res
 
     def finalize_invoice_move_lines(self, cr, uid, inv, line):

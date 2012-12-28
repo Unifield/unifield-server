@@ -7,7 +7,7 @@
             <field name="type">tree</field>
             <field name="priority">99</field>
             <field name="arch" type="xml">
-                <tree string="Sales Orders" >
+                <tree string="Field Orders" >
                     <field name="name"/>
                     <field name="date_order"/>
                     <field name="client_order_ref" />
@@ -85,8 +85,9 @@
                             <action  name="%(order_action_draft)d" string="Order Waiting For Validation"/>
                             <action  name="%(internal_request_action_validated)d" string="Internal Request Waiting For Sourcing"/>
                             <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing"/>
+                            <!-- Remove the two lines because there are same as above and made let me fix on Field order follow-up (see UF-1650) 
                             <action colspan="4" height="220" name="%(order_action_draft)d" string="Orders Waiting For Validation" width="510"/>
-                            <action colspan="4" height="220" name="%(order_action_validated)d" string="Orders Waiting For Sourcing" width="510"/>
+                            <action colspan="4" height="220" name="%(order_action_validated)d" string="Orders Waiting For Sourcing" width="510"/> -->
                             <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510"/>
                         </child1>
                     </hpaned>

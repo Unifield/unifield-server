@@ -187,12 +187,14 @@ class account_move_line(osv.osv):
         'down_payment_amount': fields.float(string='Down Payment used amount', readonly=True),
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
+        'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
     }
 
     _defaults = {
         'partner_txt': lambda *a: '',
         'down_payment_amount': lambda *a: 0.0,
         'is_transfer_with_change': lambda *a: False,
+        'cheque_number': lambda *a: '',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

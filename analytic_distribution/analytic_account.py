@@ -31,6 +31,29 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
+
+    def _get_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the good value according to the doc type
+        '''
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_filter_active(self, cr, uid, ids, name, args, context=None):
+        """
+        UTP-410: Add the search on active/inactive CC
+        """
+        arg = []
+        for x in args:
+            if x[0] == 'filter_active' and x[2] == True:
+                arg.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+                arg.append('|')
+                arg.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+                arg.append(('date', '=', False))
+        return arg
+
     _columns = {
         'name': fields.char('Name', size=128, required=True),
         'code': fields.char('Code', size=24),
@@ -47,6 +70,7 @@ class analytic_account(osv.osv):
         'destination_ids': many2many_notlazy('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
         'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
+        'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
     }
 
     _defaults ={
@@ -134,8 +158,8 @@ class analytic_account(osv.osv):
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
             if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
-                 # validate the date (must be > today)
-                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
+                # validate the date (must be > today)
+                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
@@ -160,11 +184,6 @@ class analytic_account(osv.osv):
         """
         No description found
         """
-        if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
-            args.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append('|')
-            args.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append(('date', '=', False))
         if context and 'search_by_ids' in context and context['search_by_ids']:
             args2 = args[-1][2]
             del args[-1]

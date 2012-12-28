@@ -48,7 +48,9 @@
             <field name="priority" eval="15"/>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
-                    <form string="Account Board">
+                  <form string="Account Board">
+                  </form>
+                  <!-- DASHBOARD FALSE DELETION UTP-398
                         <hpaned>
                             <child1>
                                 <action colspan="4" height="160" width="400" name="%(account.action_draft_customer_invoices_dashboard)d" string="Customer Invoices to Approve" />
@@ -58,10 +60,10 @@
                             <child2>
                                 <action colspan="4" height="220" name="%(account.action_treasory_graph)d" string="Treasury" />
                                 <action colspan="4" height="220" name="%(account.action_aged_receivable)d" string="Aged Receivables" />
-                                <!--  <action colspan="4" height="220" name="%(account.action_aged_income)d" string="Aged income"/> -->
                             </child2>
                         </hpaned>
-                    </form>
+                      </form>
+                      END OF DASHBOARD FALSE DELETION UTP-398 -->
                 </xpath>
             </field>
         </record>

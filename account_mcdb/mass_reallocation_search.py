@@ -37,8 +37,6 @@ class mass_reallocation_search(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Prepare some values
-        valid_ids = []
         # Only process first id
         account = self.pool.get('account.analytic.account').browse(cr, uid, ids, context=context)[0]
         if account.category != 'FUNDING':
@@ -49,16 +47,22 @@ class mass_reallocation_search(osv.osv_memory):
             search.append(('date', '>=', account.date_start))
         if account.date:
             search.append(('date', '<=', account.date))
-        if account.tuple_destination_account_ids:
-            search.append(('is_fp_compat_with', '=', account.id))
-        else:
-            # trick to avoid problem with FP that have NO destination link. So we need to search a "False" Destination.
-            search.append(('destination_id', '=', 0))
-        if account.cost_center_ids:
-            search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
-        else:
-            # trick to avoid problem with FP that have NO CC.
-            search.append(('cost_center_id', '=', 0))
+        # Search default MSF Private Fund analytic account
+        try:
+            fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            fp_id = 0
+        if account.id != fp_id:
+            if account.tuple_destination_account_ids:
+                search.append(('is_fp_compat_with', '=', account.id))
+            else:
+                # trick to avoid problem with FP that have NO destination link. So we need to search a "False" Destination.
+                search.append(('destination_id', '=', 0))
+            if account.cost_center_ids:
+                search.append(('cost_center_id', 'in', [x.id for x in account.cost_center_ids]))
+            else:
+                # trick to avoid problem with FP that have NO CC.
+                search.append(('cost_center_id', '=', 0))
         for criterium in [('account_id', '!=', account.id), ('journal_id.type', '!=', 'engagement'), ('is_reallocated', '=', False), ('is_reversal', '=', False)]:
             search.append(criterium)
         search.append(('contract_open','=', True))
