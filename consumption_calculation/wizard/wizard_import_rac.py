@@ -176,8 +176,6 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                         consumed_qty = float(row.cells[5].data)
                     except ValueError as e:
                         error += "Line %s in your Excel file: the Consumed Quantity should be a number and not %s \n. Details: %s" % (line_num, row.cells[5].data, e)
-                else:
-                    consumed_qty = 0
     
                 # Cell 6: Remark
                 if row.cells[6] and row.cells[6].data:
@@ -207,7 +205,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 list_message = context.get('error_message')
                 if list_message:
                     # if an errors are found and a text_error was already existing we add it the line after
-                    text_error = line_obj.read(cr, uid, line_id,['text_error'], context)[0]['text_error']
+                    text_error = line_obj.read(cr, uid, line_id,['text_error'], context)['text_error']
                     line_obj.write(cr, uid, line_id, {'text_error': text_error + '\n'+ '\n'.join(list_message)}, context)
                     if not error:
                         lines_to_correct += 1
