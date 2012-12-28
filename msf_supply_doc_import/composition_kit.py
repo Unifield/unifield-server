@@ -45,8 +45,6 @@ class composition_kit(osv.osv):
                                         help="""You can use the template of the export for the format that you need to use. \n 
                                         The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
                                         Module, Product Code*, Product Description, Quantity and Product UOM"""),
-        'text_error': fields.text('Errors when trying to import file', readonly=1),
-        'to_correct_ok': fields.boolean('To correct', readonly=1),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
 
@@ -69,9 +67,6 @@ class composition_kit(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         item_kit_id = ids[0]
-
-        # erase previous error messages
-        self.remove_error_message(cr, uid, ids, context)
 
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
@@ -134,7 +129,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
             to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
-            line_data = {'item_product_id': to_write['default_code'],
+            line_data = {'item_product_id': to_write['product_id'],
                          'item_uom_id': to_write['product_uom'],
                          'item_qty': to_write['qty'],
                          'item_module': module,
@@ -145,19 +140,14 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             context['import_in_progress'] = True
             try:
                 line_obj.create(cr, uid, line_data)
+                complete_lines += 1
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
-            complete_lines += 1
 
-        if complete_lines:
-            if complete_lines == 1:
-                self.log(cr, uid, obj.id, _("%s line has been imported" % (complete_lines)), context={'view_id': view_id, })
-            else:
-                self.log(cr, uid, obj.id, _("%s lines have been imported" % (complete_lines)), context={'view_id': view_id, })
-        if error:
-            self.write(cr, uid, ids, {'text_error': error, 'to_correct_ok': True}, context=context)
+        if complete_lines or error:
+            self.log(cr, uid, obj.id, _("# lines imported: %s. %s" % (complete_lines, error or 'No error.')), context={'view_id': view_id, })
         return True
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -175,15 +165,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             for var in line_browse_list:
                 vals['composition_item_ids'].append((2, var.id))
             self.write(cr, uid, ids, vals, context=context)
-            self.remove_error_message(cr, uid, ids, context)
         return True
-
-    def remove_error_message(self, cr,uid, ids, context=None):
-        """
-        Remove error of import lines
-        """
-        vals = {'text_error': False, 'to_correct_ok': False}
-        return self.write(cr, uid, ids, vals, context=context)
 
 composition_kit()
 
