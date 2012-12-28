@@ -625,7 +625,7 @@ class stock_picking(osv.osv):
         loc_obj = self.pool.get('stock.location')
         vals = {'move_lines': []}
         for pick in self.browse(cr, uid, ids, context=context):
-            move_list = [move for move in pick.move_lines if move.state in ['confirmed', 'assigned']]
+            move_list = [move for move in pick.move_lines if move.state in ['confirmed', 'assigned'] and move.location_id.id != loc_obj.get_cross_docking_location(cr, uid)]
             for move in move_list:
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
                 update_line = (1, move.id, {})
@@ -645,14 +645,19 @@ class stock_picking(osv.osv):
                     for loc in res['fefo']:
                         # as long all needed are not fulfilled
                         if needed_qty:
+                            # if the batch already exists, we update it
+                            batch_ids = move_obj.search(cr, uid, [('prodlot_id', '=', loc['prodlot_id']), ('product_id', '=', loc['product_id']), ('picking_id', '=', pick.id)])
+                            if batch_ids and needed_qty:
+                                continue
                             # we treat the available qty from FEFO list corresponding to needed quantity
                             if loc['qty'] >= needed_qty:
                                 update_line = (1, move.id, {'product_uom': loc['uom_id'], 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
                                 needed_qty = 0.0
-                            elif not [move for move in pick.move_lines if move.prodlot_id.id == loc['prodlot_id'] and move.product_id.id == loc['product_id']]:
+                            elif needed_qty:
                                 # we take all available
                                 selected_qty = loc['qty']
                                 needed_qty -= selected_qty
+                                dict1 = {}
                                 dict1 = values.copy()
                                 dict1.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
                                 vals['move_lines'].append((0, 0, dict1))
