@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 
-
 class field_access_rule(osv.osv):
     """
     Lets user create access and sync propagation rules for fields of models.
@@ -129,7 +128,7 @@ class field_access_rule(osv.osv):
 
     def generate_rules_button(self, cr, uid, ids, context=None):
         """
-        Generate and return field_access_rule_line's for each field of the model and all inherited models, with Write Access checked
+        Generate and return field_access_rule_lines for each field of the model and all inherited models, with Write Access checked
         """
         assert len(ids) <= 1, "Cannot work on list of ids != 1"
 
