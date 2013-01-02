@@ -4,7 +4,7 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Developer: Max Mumford
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from osv import orm
 
 class field_access_rule(osv.osv):
     """
@@ -80,6 +81,9 @@ class field_access_rule(osv.osv):
             values['active'] = False
 
         return super(field_access_rule, self).write(cr, uid, ids, values, context=context)
+    
+    def copy(self, cr, uid, id, default, context=None):
+        raise orm.except_orm('Duplication Disabled', 'The duplication feature has been disabled for Field Access Rules')
 
     def onchange_model_id(self, cr, uid, ids, model, context=None):
         if model:
