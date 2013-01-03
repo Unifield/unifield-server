@@ -65,7 +65,13 @@ class account_move_line(osv.osv):
         m = re.match(pattern, text)
         if m and m.groups():
             number = m.groups() and m.groups()[0]
-            replacement = string + str(int(number) + 1) + ' - '
+            # Add a check on number due to UF-1396
+            if not isinstance(number, int):
+                try:
+                    nn = int(number)
+                except ValueError:
+                    nn = 0
+            replacement = string + str(nn + 1) + ' - '
             if string == 'REV':
                 replacement = string + ' - '
             result = re.sub(pattern, replacement, text, 1)
@@ -114,6 +120,12 @@ class account_move_line(osv.osv):
             return [('move_id.reference', '=', args[0][2])]
         return []
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
@@ -137,6 +149,8 @@ class account_move_line(osv.osv):
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True, readonly=True),
         'state': fields.selection([('draft','Invalid'), ('valid','Valid')], 'State', readonly=True,
             help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
+        'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
+        help="This indicates the type of the Journal attached to this Journal Item"),
     }
 
     _defaults = {

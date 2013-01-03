@@ -69,6 +69,12 @@ class analytic_line(osv.osv):
                     res.append(('destination_id', '=', t[1]))
         return res
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.analytic.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -78,6 +84,8 @@ class analytic_line(osv.osv):
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
+        'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
+            help="Indicates the Journal Type of the Analytic journal item"),
     }
 
     _defaults = {

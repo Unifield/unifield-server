@@ -174,8 +174,14 @@ class old_product_list_line(osv.osv):
     _inherit = 'product.list.line'
     _order = 'removal_date'
 
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('old.product.list.line').search(cr, uid, [('name', 'in', ids)], context=context)
+
     _columns = {
         'removal_date': fields.date(string='Removal date', readonly=True),
+        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char', size=64,
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'old.product.list.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
     }
 
     _defaults = {

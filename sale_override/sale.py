@@ -30,6 +30,8 @@ from tools.translate import _
 import logging
 from workflow.wkf_expr import _eval_expr
 
+import decimal_precision as dp
+
 from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
@@ -186,7 +188,8 @@ class sale_order(osv.osv):
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'details': fields.char(size=30, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        # we increase the size of the 'details' field from 30 to 86
+        'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
@@ -298,7 +301,7 @@ class sale_order(osv.osv):
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
 
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
@@ -314,7 +317,7 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:
@@ -439,7 +442,8 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -1036,7 +1040,8 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+    _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
+                'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
                 'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
@@ -1051,6 +1056,7 @@ class sale_order_line(osv.osv):
                 
                 # This field is used to identify the FO PO line between 2 instances of the sync
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+                'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 }
 
     _sql_constraints = [

@@ -118,14 +118,14 @@ class res_partner(osv.osv):
                 price_list = self.pool.get('product.product')._get_partner_info_price(cr, uid, product, partner.id, context.get('product_qty', 1.00), pricelist.currency_id.id, time.strftime('%Y-%m-%d'), uom, context=context)
                 if not price_list:
                     func_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=True, context=context)
+                    price = self.pool.get('res.currency').compute(cr, uid, func_currency_id, pricelist.currency_id.id, product.standard_price, round=False, context=context)
                     res[partner.id] = {'price_currency': pricelist.currency_id.id,
                                        'price_unit': price,
                                        'valide_until_date': False}
                 else:
                     info_price = partner_price.browse(cr, uid, price_list[0], context=context)
                     partner_currency_id = pricelist.currency_id.id
-                    price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price)
+                    price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price, round=False, context=context)
                     currency = partner_currency_id
                     # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
 #                    currency = info_price.currency_id.id
@@ -244,6 +244,27 @@ class res_partner(osv.osv):
             if msf_supplier and not 'property_stock_supplier' in vals:
                 vals['property_stock_supplier'] = msf_supplier[1]
         return super(res_partner, self).create(cr, uid, vals, context=context)
+    
+    
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        Erase some unused data copied from the original object, which sometime could become dangerous, as in UF-1631/1632, 
+        when duplicating a new partner (by button duplicate), or company, it creates duplicated currencies
+        '''
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        fields_to_reset = ['ref_companies'] # reset this value, otherwise the content of the field triggers the creation of a new company
+        to_del = []
+        for ftr in fields_to_reset:
+            if ftr not in default:
+                to_del.append(ftr)
+        res = super(res_partner, self).copy_data(cr, uid, id, default=default, context=context)
+        for ftd in to_del:
+            if ftd in res:
+                del(res[ftd])
+        return res
     
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
         '''
