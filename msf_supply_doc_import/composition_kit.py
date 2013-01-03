@@ -147,7 +147,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
                 error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
 
         if complete_lines or error:
-            self.log(cr, uid, obj.id, _("# lines imported: %s. %s" % (complete_lines, error or 'No error.')), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("# lines imported: %s. %s" % (complete_lines, error or '')), context={'view_id': view_id, })
         return True
 
     def button_remove_lines(self, cr, uid, ids, context=None):
