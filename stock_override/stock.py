@@ -667,7 +667,7 @@ class stock_picking(osv.osv):
             for move in move_list:
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
                 update_line = (1, move.id, {})
-                if move.product_id.perishable: # perishable for perishable or batch management
+                if move.product_id.perishable and 'fefo' in res: # perishable for perishable or batch management
                     values = {'name': move.name,
                               'picking_id': pick.id,
                               'product_uom': move.product_uom.id,
@@ -683,9 +683,9 @@ class stock_picking(osv.osv):
                     for loc in res['fefo']:
                         # as long all needed are not fulfilled
                         if needed_qty:
-                            # if the batch already exists, we update it
-                            batch_ids = move_obj.search(cr, uid, [('prodlot_id', '=', loc['prodlot_id']), ('product_id', '=', loc['product_id']), ('picking_id', '=', pick.id)])
-                            if batch_ids and needed_qty:
+                            # if the batch already exists, we leave it
+                            move_with_batch_ids = move_obj.search(cr, uid, [('prodlot_id', '=', loc['prodlot_id']), ('product_id', '=', loc['product_id']), ('picking_id', '=', pick.id)])
+                            if move_with_batch_ids and needed_qty:
                                 continue
                             # we treat the available qty from FEFO list corresponding to needed quantity
                             if loc['qty'] >= needed_qty:
