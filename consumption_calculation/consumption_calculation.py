@@ -409,7 +409,7 @@ class real_average_consumption(osv.osv):
             # we check the lines that need to be fixed
             if var.line_ids:
                 for var in var.line_ids:
-                    if var.to_correct_ok:
+                    if var.to_correct_ok and not var.just_info_ok:
                         raise osv.except_osv(_('Warning !'), _('Some lines need to be fixed before.'))
         return True
 
@@ -509,6 +509,8 @@ class real_average_consumption_line(osv.osv):
                 elif context.get('import_in_progress'):
                     error_message.append("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)" % (obj.product_id.name, obj.consumed_qty, product_qty))
                     context.update({'error_message': error_message})
+                    # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
+                    prodlot_id = None
             #recursion: can't use write
             cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, prodlot_id=%s, expiry_date=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, prodlot_id, expiry_date, obj.id))
 
@@ -588,6 +590,7 @@ class real_average_consumption_line(osv.osv):
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
+        'just_info_ok': fields.boolean(string='Just for info'),
     }
 
 # uf-1344 => need to pass the context so we use create and write instead

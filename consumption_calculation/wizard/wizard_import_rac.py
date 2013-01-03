@@ -105,6 +105,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             consumed_qty = 0
             remark = ''
             error = ''
+            just_info_ok = False
             batch = False
             expiry_date = None # date type
             batch_mandatory = False
@@ -157,6 +158,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                     batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
                                     error += """Line %s in your Excel file: The date %s does not comply with the expiry date %s of the batch number %s
                                     """ % (line_num, expiry_date, batch_read['life_date'], batch_read['name'])
+                                    just_info_ok = True
                 else:
                     product_id = False
                     error += 'Line %s in your Excel file: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
@@ -192,7 +194,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'consumed_qty': consumed_qty,
                              'remark': remark,
                              'rac_id': rac_id,
-                             'text_error': error,}
+                             'text_error': error,
+                             'just_info_ok': just_info_ok,}
 
                 if line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
                     error_log += """The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique.
@@ -204,9 +207,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 # when we enter the create, we catch the raise error into the context value of 'error_message'
                 list_message = context.get('error_message')
                 if list_message:
-                    # if an errors are found and a text_error was already existing we add it the line after
-                    text_error = line_obj.read(cr, uid, line_id,['text_error'], context)['text_error']
-                    line_obj.write(cr, uid, line_id, {'text_error': text_error + '\n'+ '\n'.join(list_message)}, context)
+                    # if errors are found and a text_error was already existing we add it the line after
+                    text_error = line_obj.read(cr, uid, line_id,['text_error'], context)['text_error'] + '\n'+ '\n'.join(list_message)
+                    line_obj.write(cr, uid, line_id, {'text_error': text_error}, context)
                     if not error:
                         lines_to_correct += 1
             except IndexError, e:
