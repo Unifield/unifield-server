@@ -418,6 +418,7 @@ class stock_picking(osv.osv):
             done_moves = []
             # OUT moves to assign
             to_assign_moves = []
+            second_assign_moves = []
             # average price computation
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
@@ -585,6 +586,9 @@ class stock_picking(osv.osv):
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
                     # if split happened
                     if update_out:
+                        if out_move_id in to_assign_moves:
+                            to_assign_moves.remove(out_move_id)
+                            second_assign_moves.append(out_move_id)
                         # update out move - quantity is increased, to match the original qty
                         # diff_qty = quantity originally in OUT move - count
                         out_diff_qty = mirror_data['quantity'] - count
@@ -594,6 +598,9 @@ class stock_picking(osv.osv):
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
                     # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
                     if not update_out:
+                        if out_move_id in to_assign_moves:
+                            to_assign_moves.remove(out_move_id)
+                            second_assign_moves.append(out_move_id)
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                         # no split nor product change but out is updated (qty increased), force update out for update out picking
@@ -629,6 +636,7 @@ class stock_picking(osv.osv):
 
             # Assign all updated out moves
             move_obj.action_assign(cr, uid, to_assign_moves)
+            move_obj.action_assign(cr, uid, second_assign_moves)
 
         return {'type': 'ir.actions.act_window_close'}
     
