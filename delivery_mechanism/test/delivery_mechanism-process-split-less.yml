@@ -151,6 +151,8 @@
     assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
     for obj in self.browse(cr, uid, out_ids, context=context):
       for move in obj.move_lines:
+          print move.product_id.name, move.product_qty
+      for move in obj.move_lines:
         if move.product_id.id == ref("product_A"):
           a_qty.remove(move.product_qty)
         if move.product_id.id == ref("product_B"):
