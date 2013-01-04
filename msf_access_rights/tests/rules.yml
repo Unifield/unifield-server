@@ -17,9 +17,9 @@
       'name':'msf_access_rights field_access_rules users test',
       'model_id':user_model.id,
       'instance_level':'project',
-      'filter':None,
-      'domain_text':None,
-      'group_ids':None,
+      'filter':False,
+      'domain_text':False,
+      'group_ids':False,
       'state':'filter_validated',
       'active':'1'
     }

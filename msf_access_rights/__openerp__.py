@@ -37,6 +37,9 @@
         'views/field_access_rule_line_view.xml',
         'menu/menu.xml',
     ],
+    "data": [
+        'data/users.xml'
+    ],
     "test": [
         'tests/rules.yml'
     ],

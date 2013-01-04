@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 
-
 class field_access_rule_line(osv.osv):
 	"""
 	Lets user create access and sync propagation rules for fields of models.

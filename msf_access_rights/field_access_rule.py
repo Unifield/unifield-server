@@ -138,7 +138,7 @@ class field_access_rule(osv.osv):
 
         record = self.browse(cr, uid, ids[0])
         if record.field_access_rule_line_ids:
-            raise osv.except_osv('Remove Field Access Rune Lines First', 'Please remove all existing Field Access Rule Lines before generating new ones')
+            raise osv.except_osv('Remove Field Access Rule Lines First', 'Please remove all existing Field Access Rule Lines before generating new ones')
 
         fields_pool = self.pool.get('ir.model.fields')
         fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model_id.id)], context=context)

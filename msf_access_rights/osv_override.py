@@ -36,7 +36,8 @@ sync_debug = False
 user_debug = False # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
 
 def dprint(string):
-    print string
+    if debug:
+        print string
 
 def cprint(string):
     if create_debug:
@@ -65,11 +66,14 @@ def _record_matches_domain(self, cr, uid, record_id, domain):
     Make a search with domain + id = id. If we get the ID in the result, the domain matches the record
     """
     if isinstance(domain, (str, unicode)):
-        domain = eval(domain)
-        domain.append(('id', '=', record_id))
-        domain.append('&')
-        domain.reverse()
-    elif isinstance(domain, bool):
+        if len(domain) == 0:
+            domain = False
+        else:
+            domain = eval(domain)
+            domain.append(('id', '=', record_id))
+            domain.append('&')
+            domain.reverse()
+    if isinstance(domain, bool):
         return True
 
     return bool(self.search(cr, uid, domain))
@@ -199,10 +203,7 @@ def write(self, cr, uid, ids, vals, context=None):
     if user_debug:
         real_uid = uid
         uid = 0
-        
-    if self._name == 'res.users':
-        print '... users'
-        
+    
     if (uid != 1 or context.get('applyToAdmin', False)):
         
         if user_debug:
@@ -251,14 +252,15 @@ def write(self, cr, uid, ids, vals, context=None):
                             raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
             # if syncing, sanitize editted rows that don't have sync_on_write permission
-            if context.get('sync_data'):
+            if context.get('sync_data') or user.login == 'msf_access_rights_benchmarker':
 
                 wprint('====== SYNCING')
 
-                # iterate over current records and look for rules that match it
+                # iterate over current records 
                 for record in current_records:
                     new_values = copy.deepcopy(vals)
 
+                    # iterate over rules and see if they match the current record
                     for rule in rules:
                         if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
 
@@ -274,13 +276,15 @@ def write(self, cr, uid, ids, vals, context=None):
                             for line in no_sync_fields:
                                 del new_values[line.field.name]
 
-                    if len(new_values) != len(vals):
-                        wprint('=== REMOVED KEYS..')
-                        wprint(list(set(vals) - set(new_values)))
+                            if len(new_values) != len(vals):
+                                wprint('=== REMOVED KEYS..')
+                                wprint(list(set(vals) - set(new_values)))
+                    
+                    # if we still have new values to write, write them for the current record
+                    if new_values:
+                        super_write(self, cr, uid, ids, new_values, context=context)
 
-                    super_write(self, cr, uid, ids, new_values, context=context)
-
-                return True
+            return True
 
         else:
             return super_write(self, cr, uid, ids, vals, context=context)
