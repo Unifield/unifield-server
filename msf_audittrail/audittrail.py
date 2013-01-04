@@ -493,6 +493,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
     log_line_pool = pool.get('audittrail.log.line')
     #start Loop
     for line in lines:
+        dict_of_values = {}
         if line['name'] in('__last_update','id'):
             continue
         if obj_pool._inherits:
@@ -504,6 +505,9 @@ def create_log_line(self, cr, uid, model, lines=[]):
 
         if field_id:
             field = field_pool.read(cr, uid, field_id)
+            if field['ttype'] == 'selection':
+                # if we have a fields.selection, we want to evaluate the 2nd part of the tuple which is user readable
+                dict_of_values = dict(self.pool.get(field['model'])._columns[line['name']].selection)
 
         # Get the values
         old_value = line.get('old_value')
@@ -521,7 +525,8 @@ def create_log_line(self, cr, uid, model, lines=[]):
         # for the many2one field, we compare old_value and new_value with the name (uf_1624), so the 2nd part of the tupe (old_value[1] == new_value[1])
         if method not in ('create', 'unlink') and (old_value == new_value \
            or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])\
-           or (field['ttype'] == 'many2one' and old_value[1] == new_value[1])):
+           or (field['ttype'] == 'many2one' and old_value and new_value and old_value[1] == new_value[1])\
+           or (field['ttype'] == 'selection' and old_value and new_value and dict_of_values.get(old_value) == dict_of_values.get(new_value))):
              continue
 
         res_id = line.get('res_id')
