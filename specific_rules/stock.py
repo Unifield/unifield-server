@@ -418,11 +418,18 @@ class stock_cost_reevaluation(osv.osv):
         '''
         if not default:
             default = {}
-        
+        name = self.read(cr, uid, ids, ['name'])['name']
+        i = 1
+        new_name = '%s (copy %s)' % (name, i)
+        while self.search_count(cr, uid, [('name', '=', new_name)]):
+            i += 1
+            new_name = '%s (copy %s)' % (name, i)
+
         if not 'state' in default:
             default.update({'state': 'draft'})
 
-        default.update({'date': time.strftime('%Y-%m-%d'), 'name': self.read(cr, uid, ids, ['name'])['name'] + ' (copy)'})
+        default.update({'date': time.strftime('%Y-%m-%d'),
+                        'name': new_name})
             
         return super(stock_cost_reevaluation, self).copy(cr, uid, ids, default=default, context=context)
 
