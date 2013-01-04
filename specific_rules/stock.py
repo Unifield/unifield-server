@@ -409,7 +409,7 @@ class stock_cost_reevaluation(osv.osv):
     }
 
     _sql_constraints = [
-        ('name_unique', "unique(name)", 'The name must be unique'),
+        ('name_unique', "unique(name)", 'The Reference of the Product Cost Revaluation must be unique'),
     ]
 
     def copy(self, cr, uid, ids, default=None, context=None):
