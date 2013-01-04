@@ -521,7 +521,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
         # we need to evaluate the value of pricelist_id with its name (old_value[1] == new_value[1]) because the currency is used twice for each pricelist (sale and purchase)
         if method not in ('create', 'unlink') and (old_value == new_value \
            or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])\
-           or line['name'] == 'pricelist_id' and old_value[1] == new_value[1]):
+           or line['name'] in ('pricelist_id', 'partner_id') and old_value[1] == new_value[1]):
              continue
 
         res_id = line.get('res_id')
