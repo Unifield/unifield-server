@@ -184,10 +184,10 @@ class sale_order(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('customer','=',True), ('id', '!=', company_id2)]"),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
-                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
