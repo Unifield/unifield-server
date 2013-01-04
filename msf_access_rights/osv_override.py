@@ -27,9 +27,13 @@ import logging
 import copy
 
 debug = True
+
 create_debug = False
 write_debug = True
 fields_debug = False
+
+sync_debug = False
+user_debug = False # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
 
 def dprint(string):
     print string
@@ -45,8 +49,6 @@ def wprint(string):
 def fprint(string):
     if fields_debug:
         dprint(string)
-
-super_create = orm.orm.create
 
 def _get_instance_level(self, cr, uid):
     instance_pool = self.pool.get('msf.instance')
@@ -75,6 +77,8 @@ def _record_matches_domain(self, cr, uid, record_id, domain):
 class _SetToDefaultFlag:
     pass
 
+super_create = orm.orm.create
+
 def create(self, cr, uid, vals, context=None):
     """
     If rules defined for current user and model, create each record then check domain for each record.
@@ -96,11 +100,17 @@ def create(self, cr, uid, vals, context=None):
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
     # TODO: remove the testing lines below
-    context['sync_data'] = True
-    real_uid = uid
-    uid = 0
-    if uid != 1 and context.get('sync_data'):
-        uid = real_uid
+    if sync_debug:
+        context['sync_data'] = True
+        
+    if user_debug:
+        real_uid = uid
+        uid = 0
+        
+    if (uid != 1 or context.get('applyToAdmin', False)) and context.get('sync_data'):
+        
+        if user_debug: 
+            uid = real_uid
 
         cprint('====== SYNCING')
 
@@ -157,7 +167,7 @@ def create(self, cr, uid, vals, context=None):
                                 vals[line.field.name] = new_val
 
                     # Then update the record
-                    self.write(cr, 1, create_result, vals, context=context)
+                    self.write(cr, 1, create_result, vals, context=context.update({'sync_data':False}))
 
                 return create_result
             else:
@@ -168,7 +178,8 @@ def create(self, cr, uid, vals, context=None):
             return False
 
     else:
-        return super_create(self, cr, uid, vals, context)
+        res = super_create(self, cr, uid, vals, context)
+        return res
 
 orm.orm.create = create
 
@@ -182,11 +193,20 @@ def write(self, cr, uid, ids, vals, context=None):
 
     context = context or {}
 
-    context['sync_data'] = True
-    real_uid = uid
-    uid = 0
-    if uid != 1:
-        uid = real_uid
+    if sync_debug:
+        context['sync_data'] = True
+        
+    if user_debug:
+        real_uid = uid
+        uid = 0
+        
+    if self._name == 'res.users':
+        print '... users'
+        
+    if (uid != 1 or context.get('applyToAdmin', False)):
+        
+        if user_debug:
+            uid = real_uid
 
         wprint('================== WRITE OVERRIDE')
 
@@ -242,7 +262,7 @@ def write(self, cr, uid, ids, vals, context=None):
                     for rule in rules:
                         if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
 
-                            wprint('=== RULE MATCHES: %s' % rule.id)
+                            wprint('=== MATCHING RULE ID: %s' % rule.id)
 
                             # rule applies for this record so delete key from new values if key is value_not_synchronized_on_write and the value is different from the existing record field
                             no_sync_fields = [line for line in rule.field_access_rule_line_ids \

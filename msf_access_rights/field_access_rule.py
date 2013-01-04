@@ -115,7 +115,7 @@ class field_access_rule(osv.osv):
         """
         Send the user to the list view of the selected model so they can save a new filter
         """
-        assert len(ids) <= 1, "Cannot work on list of ids != 1"
+        assert len(ids) <= 1, "Cannot work on list of ids longer than one"
 
         record = self.browse(cr, uid, ids[0])
 
@@ -134,11 +134,11 @@ class field_access_rule(osv.osv):
         """
         Generate and return field_access_rule_lines for each field of the model and all inherited models, with Write Access checked
         """
-        assert len(ids) <= 1, "Cannot work on list of ids != 1"
+        assert len(ids) <= 1, "Cannot work on list of ids longer than one"
 
         record = self.browse(cr, uid, ids[0])
         if record.field_access_rule_line_ids:
-            raise osv.except_osv('Remove Field Access Rune Lines First', 'Please remove all existing field access rule lines before generating new ones')
+            raise osv.except_osv('Remove Field Access Rune Lines First', 'Please remove all existing Field Access Rule Lines before generating new ones')
 
         fields_pool = self.pool.get('ir.model.fields')
         fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model_id.id)], context=context)
