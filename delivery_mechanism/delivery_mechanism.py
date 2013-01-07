@@ -515,7 +515,7 @@ class stock_picking(osv.osv):
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
-                            to_assign_moves.append(out_move_id)
+                            second_assign_moves.append(out_move_id)
                             if update_out:
                                 # UF-1690 : Remove the location_dest_id from values
                                 out_values = values.copy()
@@ -635,8 +635,18 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
 
             # Assign all updated out moves
-            move_obj.action_assign(cr, uid, to_assign_moves)
+            for move in move_obj.browse(cr, uid, to_assign_moves):
+                if not move.product_qty and move.state not in ('done', 'cancel'):
+                    to_assign_moves.remove(move.id)
+                    move.unlink(context=dict(context, call_unlink=True))
+
+            for move in move_obj.browse(cr, uid, second_assign_moves):
+                if not move.product_qty and move.state not in ('done', 'cancel'):
+                    second_assign_moves.remove(move.id)
+                    move.unlink(context=dict(context, call_unlink=True))
+
             move_obj.action_assign(cr, uid, second_assign_moves)
+            move_obj.action_assign(cr, uid, to_assign_moves)
 
         return {'type': 'ir.actions.act_window_close'}
     
