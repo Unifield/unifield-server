@@ -663,7 +663,7 @@ class stock_picking(osv.osv):
         loc_obj = self.pool.get('stock.location')
         vals = {'move_lines': []}
         for pick in self.browse(cr, uid, ids, context=context):
-            move_list = [move for move in pick.move_lines if move.state in ['confirmed', 'assigned'] and move.location_id.id != loc_obj.get_cross_docking_location(cr, uid)]
+            move_list = [move for move in pick.move_lines if move.state in ['assigned']]
             for move in move_list:
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
                 update_line = (1, move.id, {})
@@ -679,8 +679,9 @@ class stock_picking(osv.osv):
                               'reason_type_id': move.reason_type_id.id,
                               }
                     needed_qty = move.product_qty
-                    # the product is batch management we use the FEFO list
-                    for loc in res['fefo']:
+                    # the product is batch management we use the FEFO list but before we sort it to fulfill the batch with the biggest qty first
+                    fefo_list = reversed(sorted(res['fefo'], key=itemgetter('qty')))
+                    for loc in fefo_list:
                         # as long all needed are not fulfilled
                         if needed_qty:
                             # if the batch already exists, we leave it
@@ -689,7 +690,7 @@ class stock_picking(osv.osv):
                                 continue
                             # we treat the available qty from FEFO list corresponding to needed quantity
                             if loc['qty'] >= needed_qty:
-                                update_line = (1, move.id, {'product_uom': loc['uom_id'], 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                update_line = (1, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
                                 needed_qty = 0.0
                             elif needed_qty:
                                 # we take all available
