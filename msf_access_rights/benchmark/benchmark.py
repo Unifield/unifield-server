@@ -21,19 +21,32 @@
 #
 ##############################################################################
 
+import sys
+from optparse import OptionParser
 import datetime
 import openerplib
 
-# variables
-NUMBER_OF_WRITES = 100
-AS_ADMIN = False
-ADMIN_PASSWORD = 'a'
+# command line params
+parser = OptionParser()
 
-# init
-if not AS_ADMIN:
-    connection = openerplib.get_connection(hostname="localhost", database="access_right", login="msf_access_rights_benchmarker", password="benchmark_it")
-else:
-    connection = openerplib.get_connection(hostname="localhost", database="access_right", login="admin", password=ADMIN_PASSWORD)
+parser.add_option('-c', '--create', action='store_true', help='Test the create function')
+parser.add_option('-w', '--write', action='store_true', help='Test the write function')
+parser.add_option('-n', '-i', '--number-of-iterations',  default=100, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
+parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help='The address of the host')
+parser.add_option('-d', '--database', default="access_right", help='The name of the database')
+parser.add_option('-u', '--admin-username', dest='username', default="msf_access_rights_benchmarker", help='The username for the account to use to login to OpenERP')
+parser.add_option('-p', '--admin-password', dest='password', default="benchmark_it", help='The password for the account to use to login to OpenERP')
+
+options, args = parser.parse_args()
+
+def all():
+    if not options.create and not options.write:
+        return True
+    else:
+        return False
+    
+# prepare for write or created
+connection = openerplib.get_connection(hostname=options.host, database=options.database, login=options.username, password=options.password)
 
 field_access_rule_pool = connection.get_model('msf_access_rights.field_access_rule')
 field_access_rule_line_pool = connection.get_model('msf_access_rights.field_access_rule_line')
@@ -67,7 +80,7 @@ if not field_access_rule_id:
     
 else:
     field_access_rule_id = field_access_rule_id[0]
-    
+
 existing_lines = field_access_rule_line_pool.search([('field_access_rule','=',field_access_rule_id)])
 if existing_lines:
     field_access_rule_line_pool.unlink(existing_lines)
@@ -87,45 +100,79 @@ try:
 except:
     field_access_rule_pool.unlink(field_access_rule_id)
     raise
+
+# init write
+if options.write or all():
+        
+    # create the user to write on (unless already exists)
+    user_id = user_pool.search([('name','=','msf_access_rights_benchmark')])
     
-# create the user to write on (unless already exists)
-user_id = user_pool.search([('name','=','msf_access_rights_benchmark')])
-
-if not user_id:
-    
-    user_values = {
-        'name':'msf_access_rights_benchmark',
-        'login':'msf_access_rights_benchmark',
-        'user_email':'benchmark@test.com',
-    }
-    
-    user_id = user_pool.create(user_values)
-else:
-    user_id = user_id[0]
-
-# save timestamp
-start = datetime.datetime.now()
-print '========================================================'
-print 'STARTING %s WRITES. AS_ADMIN=%s' % (NUMBER_OF_WRITES, AS_ADMIN)
-
-# loop write
-even_data = {'user_email':'benchmark1@test.com'}
-odd_data = {'user_email':'benchmark@test.com'}
-
-context = {'sync_data':True, 'applyToAdmin':True}
-
-for i in range(0, NUMBER_OF_WRITES):
-    if i % 2 == 0:
-        user_pool.write(user_id, even_data)
+    if not user_id:
+        
+        user_values = {
+            'name':'msf_access_rights_benchmark',
+            'login':'msf_access_rights_benchmark',
+            'user_email':'benchmark@test.com',
+        }
+        
+        user_id = user_pool.create(user_values)
     else:
-        user_pool.write(user_id, odd_data)
-
-# print time taken
-end = datetime.datetime.now()
-time_taken = end - start
-print 'TIME TAKEN TO PERFORM %s WRITES: %s:%s (seconds:milliseconds)' % (NUMBER_OF_WRITES, time_taken.seconds, time_taken.microseconds / 1000)
-print '========================================================'
-
-# delete test user
+        user_id = user_id[0]
+    
+    # save timestamp
+    start = datetime.datetime.now()
+    print '========================================================'
+    print 'STARTING %s WRITES AS %s' % (options.iterations, options.username)
+    
+    # loop write
+    even_data = {'user_email':'benchmark1@test.com'}
+    odd_data = {'user_email':'benchmark@test.com'}
+    
+    for i in range(0, options.iterations):
+        if i % 2 == 0:
+            user_pool.write(user_id, even_data)
+        else:
+            user_pool.write(user_id, odd_data)
+    
+    # print time taken
+    end = datetime.datetime.now()
+    time_taken = end - start
+    print 'TIME TAKEN TO PERFORM %s WRITES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
+    per_write_time_taken = time_taken / options.iterations
+    print '1 WRITE = %s.%s (seconds)' % (per_write_time_taken.seconds, per_write_time_taken.microseconds)
+    print '========================================================'
+    
+    # delete test user
+    user_pool.unlink([user_id])
+    
+# init create
+if options.create or all():
+    # save timestamp
+    start = datetime.datetime.now()
+    print '========================================================'
+    print 'STARTING %s CREATES AS %s' % (options.iterations, options.username)
+    
+    created_user_ids = []
+    
+    # loop create
+    for i in range(0, options.iterations):
+        user_values = {
+            'name':'msf_access_rights_benchmark_create_' + str(i),
+            'login':'msf_access_rights_benchmark_create_' + str(i),
+            'user_email':'benchmark%s@test.com' % str(i),
+        }
+        created_user_ids.append(user_pool.create(user_values))
+    
+    # print time taken
+    end = datetime.datetime.now()
+    time_taken = end - start
+    print 'TIME TAKEN TO PERFORM %s CREATES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
+    per_create_time_taken = time_taken / options.iterations
+    print '1 CREATE = %s.%s (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds)
+    print '========================================================'
+    
+    # delete created users
+    user_pool.unlink(created_user_ids)
+    
+# cleanup
 field_access_rule_pool.unlink([field_access_rule_id])
-user_pool.unlink([user_id])
