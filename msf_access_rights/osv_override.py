@@ -274,7 +274,8 @@ def write(self, cr, uid, ids, vals, context=None):
                             vals[line.field.name] != getattr(record, line.field.name)]
 
                             for line in no_sync_fields:
-                                del new_values[line.field.name]
+                                if new_values.get(line.field.name, False):
+                                    del new_values[line.field.name]
 
                             if len(new_values) != len(vals):
                                 wprint('=== REMOVED KEYS..')

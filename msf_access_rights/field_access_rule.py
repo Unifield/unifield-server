@@ -134,19 +134,20 @@ class field_access_rule(osv.osv):
         """
         Generate and return field_access_rule_lines for each field of the model and all inherited models, with Write Access checked
         """
-        assert len(ids) <= 1, "Cannot work on list of ids longer than one"
-
-        record = self.browse(cr, uid, ids[0])
-        if record.field_access_rule_line_ids:
-            raise osv.except_osv('Remove Field Access Rule Lines First', 'Please remove all existing Field Access Rule Lines before generating new ones')
-
-        fields_pool = self.pool.get('ir.model.fields')
-        fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model_id.id)], context=context)
-        fields = fields_pool.browse(cr, uid, fields_search, context=context)
-
-        res = [(0, 0, {'field': i.id, 'field_name': i.name}) for i in fields]
-        self.write(cr, uid, ids, {'field_access_rule_line_ids': res})
-
+        
+        if ids:
+            fields_pool = self.pool.get('ir.model.fields')
+            
+            for id in ids:
+                record = self.browse(cr, uid, id)
+                if record.field_access_rule_line_ids:
+                    raise osv.except_osv('Remove Field Access Rule Lines First From %s' % id, 'Please remove all existing Field Access Rule Lines before generating new ones')
+        
+                fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model_id.id)], context=context)
+                fields = fields_pool.browse(cr, uid, fields_search, context=context)
+        
+                res = [(0, 0, {'field': i.id, 'field_name': i.name}) for i in fields]
+                self.write(cr, uid, id, {'field_access_rule_line_ids': res})
         return True
 
     def manage_rule_lines_button(self, cr, uid, ids, context=None):

@@ -27,6 +27,7 @@ import webbrowser
 import datetime
 import openerplib
 import matplotlib.pyplot as plt
+import itertools
 
 # command line params
 parser = OptionParser()
@@ -35,6 +36,7 @@ parser.add_option('-c', '--create', action='store_true', help='Test the create f
 parser.add_option('-w', '--write', action='store_true', help='Test the write function')
 parser.add_option('-f', '--fvg', '--fields-view-get', action='store_true', dest='fvg', help='Test the fields_view_get function')
 parser.add_option('-n', '-i', '--number-of-iterations',  default=50, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
+parser.add_option('-r', '--number-of-rules', default=10, type='int', dest='rules', help='The number of field access rules to create')
 parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help='The address of the host')
 parser.add_option('-d', '--database', default="access_right", help='The name of the database')
 parser.add_option('-u', '--admin-username', dest='username', default="msf_access_rights_benchmarker", help='The username for the account to use to login to OpenERP')
@@ -45,7 +47,7 @@ options, args = parser.parse_args()
 if not options.create and not options.write and not options.fvg:
     options.write = options.create = options.fvg = True 
     
-# prepare for write or created
+# init connection and pools 
 connection = openerplib.get_connection(hostname=options.host, database=options.database, login=options.username, password=options.password)
 
 field_access_rule_pool = connection.get_model('msf_access_rights.field_access_rule')
@@ -60,13 +62,17 @@ instance_pool = connection.get_model('msf.instance')
 instance_level_search = instance_pool.search([('level', '!=', False)])
 instance_level = 'project'
 
-# create a rule to benchmark against (unless already exists)
-field_access_rule_id = field_access_rule_pool.search([('name','=','benchmark_users')])
+# create rules to benchmark against
+field_access_rule_ids = field_access_rule_pool.search([('name','like','benchmark_users_')])
 
-if not field_access_rule_id:
+if field_access_rule_ids:
+    field_access_rule_pool.unlink(field_access_rule_ids)
     
+field_access_rule_ids = []
+
+for i in range(0, options.rules):
     rule_values = {
-      'name':'benchmark_users',
+      'name':'benchmark_users_' + str(i),
       'model_id':user_model_id,
       'instance_level':instance_level,
       'filter':False,
@@ -75,20 +81,19 @@ if not field_access_rule_id:
       'state':'filter_validated',
       'active':'1'
     }
+    field_access_rule_ids.append(field_access_rule_pool.create(rule_values))
     
-    field_access_rule_id = field_access_rule_pool.create(rule_values)
-    
-else:
-    field_access_rule_id = field_access_rule_id[0]
-
-existing_lines = field_access_rule_line_pool.search([('field_access_rule','=',field_access_rule_id)])
+# generate field access rule lines and edit them to have appropriate settings for tests
+existing_lines = field_access_rule_line_pool.search([('field_access_rule','in',field_access_rule_ids)])
 if existing_lines:
     field_access_rule_line_pool.unlink(existing_lines)
     
-field_access_rule_pool.generate_rules_button([field_access_rule_id])
+field_access_rule_pool.generate_rules_button(field_access_rule_ids)
 
-field_access_rule = field_access_rule_pool.read(field_access_rule_id)
-field_access_rule_lines = field_access_rule_line_pool.read(field_access_rule['field_access_rule_line_ids'])
+field_access_rules = field_access_rule_pool.read(field_access_rule_ids)
+
+field_access_rule_line_ids = list(itertools.chain(*[rule['field_access_rule_line_ids'] for rule in field_access_rules]))
+field_access_rule_lines = field_access_rule_line_pool.read(field_access_rule_line_ids)
 
 lines_to_edit = [line['id'] for line in field_access_rule_lines if \
                  line['field_name'] == 'address_id' \
@@ -98,7 +103,7 @@ lines_to_edit = [line['id'] for line in field_access_rule_lines if \
 try:
     field_access_rule_line_pool.write(lines_to_edit, {"value_not_synchronized_on_write":"1"})
 except:
-    field_access_rule_pool.unlink(field_access_rule_id)
+    field_access_rule_pool.unlink(field_access_rule_ids)
     raise
 
 # init write
@@ -190,8 +195,8 @@ if options.fvg:
     time_taken = end - start
     print 'TIME TAKEN TO PERFORM %s FIELDS_VIEW_GET: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
     per_fvg_time_taken = time_taken / options.iterations
-    print '1 FVG = %s.%s (seconds)' % (per_fvg_time_taken.seconds, per_fvg_time_taken.microseconds)
+    print '1 FVG = %s.%06d (seconds)' % (per_fvg_time_taken.seconds, per_fvg_time_taken.microseconds)
     print '========================================================'
     
 # cleanup
-field_access_rule_pool.unlink([field_access_rule_id])
+field_access_rule_pool.unlink(field_access_rule_ids)
