@@ -85,7 +85,7 @@
   !python {model: wizard.import.invoice}: |
     self.action_confirm(cr, uid, [ref('wizard_import_invoice_1')])
 -
-  I check that a line exists incash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 - 36 = 96).
+  I check that a line exists incash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 + 36 = 96).
 -
   !python {model: account.bank.statement.line}: |
     search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_10y')), ('state', '=', 'temp')])
@@ -181,8 +181,8 @@
 -
   !record {model: res.currency.rate, id: new_rate2}:
     currency_id: base.CHF
-    rate: 3
-    name: !eval (DateTime.now()+DateTime.RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+    rate: 1.2
+    name: !eval (DateTime.now()+DateTime.RelativeDateTime(years=10,month=1, day=10)).strftime('%Y-%m-%d')
 -
   I check the reconciled entry has a new addendum line
 -
