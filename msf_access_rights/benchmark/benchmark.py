@@ -23,8 +23,10 @@
 
 import sys
 from optparse import OptionParser
+import webbrowser
 import datetime
 import openerplib
+import matplotlib.pyplot as plt
 
 # command line params
 parser = OptionParser()
@@ -32,7 +34,7 @@ parser = OptionParser()
 parser.add_option('-c', '--create', action='store_true', help='Test the create function')
 parser.add_option('-w', '--write', action='store_true', help='Test the write function')
 parser.add_option('-f', '--fvg', '--fields-view-get', action='store_true', dest='fvg', help='Test the fields_view_get function')
-parser.add_option('-n', '-i', '--number-of-iterations',  default=100, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
+parser.add_option('-n', '-i', '--number-of-iterations',  default=50, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
 parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help='The address of the host')
 parser.add_option('-d', '--database', default="access_right", help='The name of the database')
 parser.add_option('-u', '--admin-username', dest='username', default="msf_access_rights_benchmarker", help='The username for the account to use to login to OpenERP')
@@ -40,13 +42,7 @@ parser.add_option('-p', '--admin-password', dest='password', default="benchmark_
 
 options, args = parser.parse_args()
 
-def all():
-    if not options.create and not options.write and not options.fvg:
-        return True
-    else:
-        return False
-    
-if all():
+if not options.create and not options.write and not options.fvg:
     options.write = options.create = options.fvg = True 
     
 # prepare for write or created
@@ -143,7 +139,7 @@ if options.write:
     time_taken = end - start
     print 'TIME TAKEN TO PERFORM %s WRITES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
     per_write_time_taken = time_taken / options.iterations
-    print '1 WRITE = %s.%s (seconds)' % (per_write_time_taken.seconds, per_write_time_taken.microseconds)
+    print '1 WRITE = %s.%06d (seconds)' % (per_write_time_taken.seconds, per_write_time_taken.microseconds)
     print '========================================================'
     
     # delete test user
@@ -172,7 +168,7 @@ if options.create:
     time_taken = end - start
     print 'TIME TAKEN TO PERFORM %s CREATES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
     per_create_time_taken = time_taken / options.iterations
-    print '1 CREATE = %s.%s (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds)
+    print '1 CREATE = %s.%06d (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds)
     print '========================================================'
     
     # delete created users

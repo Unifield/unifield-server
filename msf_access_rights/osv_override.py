@@ -28,9 +28,9 @@ import copy
 
 debug = True
 
-create_debug = False
+create_debug = True
 write_debug = True
-fields_debug = False
+fields_debug = True
 
 sync_debug = False
 user_debug = False # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
