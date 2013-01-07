@@ -54,7 +54,12 @@ def fprint(string):
 def _get_instance_level(self, cr, uid):
     instance_pool = self.pool.get('msf.instance')
     instance_level_search = instance_pool.search(cr, uid, [('level', '!=', False)])
-    instance_level = instance_pool.browse(cr, uid, instance_level_search[0]).level
+    instance = instance_pool.browse(cr, uid, instance_level_search[0])
+    
+    if instance:
+        instance_level = instance.level
+    else:
+        return None
 
     if instance_level == 'section':
         instance_level = 'hq'
