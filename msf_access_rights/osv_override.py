@@ -352,17 +352,18 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
             # get a dictionary of domains with field names as the key and the value being a concatenation of rule domains, or True if universal
             domains = {}
             for rule in rules:
-                for line in [line for line in rule.field_access_rule_line_ids if not line.write_access]:
-                    if domains.get(line.field.name, False) != True:
-                        if rule.domain_text:
-                            domains[line.field.name] = domains.get(line.field.name, []) + (eval(rule.domain_text))
-                        else:
-                            domains[line.field.name] = True
+                for line in rule.field_access_rule_line_ids:
+                    if not line.write_access:
+                        if domains.get(line.field.name, False) != True:
+                            if rule.domain_text:
+                                domains[line.field.name] = domains.get(line.field.name, []) + (eval(rule.domain_text))
+                            else:
+                                domains[line.field.name] = True
 
             fprint('=== DOMAINS... ')
             fprint(domains)
 
-            # modify xml by adding domains to fields
+            # Edit the view xml by adding the rule domain to the rule's field if that field is in the xml
             if domains:
 
                 # parse the view xml
