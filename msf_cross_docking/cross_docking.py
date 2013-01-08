@@ -337,6 +337,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids, context)
+        context.update({'button_location': True})
         self.action_assign(cr, uid, ids, context)
         return False
 
@@ -379,6 +380,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids, context)
+        context.update({'button_location': True})
         self.action_assign(cr, uid, ids, context)
         return False
 
