@@ -142,6 +142,8 @@ def create(self, cr, uid, vals, context=None):
 
                 rules_pool = self.pool.get('msf_access_rights.field_access_rule')
                 rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+                
+                defaults = self.pool.get(model_name)._defaults
 
                 cprint('=== MODEL: ' + model_name)
                 cprint('=== USER: ' + str(user))
@@ -167,14 +169,12 @@ def create(self, cr, uid, vals, context=None):
 
                         if is_match:
                             
-                            # if record matches the domain, modify values based on rule lines
-                            defaults = self.pool.get(model_name)._defaults
-                            no_sync_vals = [line for line in rule.field_access_rule_line_ids if line.value_not_synchronized_on_create]
-                            
-                            for line in no_sync_vals:
-                                new_def_val = defaults.get(line.field.name, None)
-                                new_val = new_def_val if not hasattr(new_def_val, '__call__') else None
-                                vals[line.field.name] = new_val
+                            # record matches the domain so modify values based on rule lines
+                            for line in rule.field_access_rule_line_ids:
+                                if line.value_not_synchronized_on_create:
+                                    default_value = defaults.get(line.field.name, None)
+                                    new_value = default_value if default_value and not hasattr(default_value, '__call__') else None
+                                    vals[line.field.name] = new_value
 
                     # Then update the record
                     self.write(cr, 1, create_result, vals, context=context.update({'sync_data':False}))
