@@ -663,45 +663,45 @@ class stock_picking(osv.osv):
         loc_obj = self.pool.get('stock.location')
         vals = {'move_lines': []}
         for pick in self.browse(cr, uid, ids, context=context):
-            move_list = [move for move in pick.move_lines if move.state in ['assigned', 'confirmed']]
-            for move in move_list:
-                res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
-                update_line = (1, move.id, {})
-                if move.product_id.perishable and 'fefo' in res: # perishable for perishable or batch management
-                    values = {'name': move.name,
-                              'picking_id': pick.id,
-                              'product_uom': move.product_uom.id,
-                              'product_id': move.product_id.id,
-                              'date_expected': move.date_expected,
-                              'date': move.date,
-                              'state': 'assigned',
-                              'location_dest_id': move.location_dest_id.id,
-                              'reason_type_id': move.reason_type_id.id,
-                              }
+            for move in pick.move_lines:
+                if move.product_id.perishable and move.state == 'assigned':
+                    # we take only the qty of the move assigned (=available) and that are batch mandatory (perishable)
                     needed_qty = move.product_qty
-                    # the product is batch management we use the FEFO list but before we sort it to fulfill the batch with the biggest qty first
-                    fefo_list = reversed(sorted(res['fefo'], key=itemgetter('qty')))
-                    for loc in fefo_list:
-                        # as long all needed are not fulfilled
-                        if needed_qty:
-                            # if the batch already exists, we leave it
-                            move_with_batch_ids = move_obj.search(cr, uid, [('prodlot_id', '=', loc['prodlot_id']), ('product_id', '=', loc['product_id']), ('picking_id', '=', pick.id)])
-                            if move_with_batch_ids and needed_qty:
-                                continue
-                            # we treat the available qty from FEFO list corresponding to needed quantity
-                            if loc['qty'] >= needed_qty:
-                                update_line = (1, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
-                                needed_qty = 0.0
-                            elif needed_qty:
-                                # we take all available
-                                selected_qty = loc['qty']
-                                needed_qty -= selected_qty
-                                dict1 = {}
-                                dict1 = values.copy()
-                                dict1.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
-                                vals['move_lines'].append((0, 0, dict1))
-                                update_line = (1, move.id, {'product_qty': needed_qty})
-                    vals['move_lines'].append(update_line)
+                    res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+                    update_line = (1, move.id, {})
+                    if 'fefo' in res: # perishable for perishable or batch management
+                        values = {'name': move.name,
+                                  'picking_id': pick.id,
+                                  'product_uom': move.product_uom.id,
+                                  'product_id': move.product_id.id,
+                                  'date_expected': move.date_expected,
+                                  'date': move.date,
+                                  'state': 'assigned',
+                                  'location_dest_id': move.location_dest_id.id,
+                                  'reason_type_id': move.reason_type_id.id,
+                                  }
+                        # the product is batch management we use the FEFO list but before we sort it to fulfill the batch with the biggest qty first
+                        fefo_list = reversed(sorted(res['fefo'], key=itemgetter('qty')))
+                        for loc in fefo_list:
+                            # as long all needed are not fulfilled
+                            if needed_qty:
+                                # if the batch already exists and qty is enough, it is available (assigned)
+                                if move.prodlot_id and needed_qty <= move.product_qty:
+                                    vals['move_lines'].append((1, move.id, {'state': 'assigned'}))
+                                # we treat the available qty from FEFO list corresponding to needed quantity
+                                if loc['qty'] >= needed_qty:
+                                    update_line = (1, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                    needed_qty = 0.0
+                                elif needed_qty:
+                                    # we take all available
+                                    selected_qty = loc['qty']
+                                    needed_qty -= selected_qty
+                                    dict1 = {}
+                                    dict1 = values.copy()
+                                    dict1.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                    vals['move_lines'].append((0, 0, dict1))
+                                    update_line = (1, move.id, {'product_qty': needed_qty})
+                        vals['move_lines'].append(update_line)
             if vals['move_lines']:
                 self.write(cr, uid, ids, vals, context)
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
