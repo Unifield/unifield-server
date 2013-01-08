@@ -54,17 +54,18 @@ def fprint(string):
 def _get_instance_level(self, cr, uid):
     instance_pool = self.pool.get('msf.instance')
     instance_level_search = instance_pool.search(cr, uid, [('level', '!=', False)])
-    instance = instance_pool.browse(cr, uid, instance_level_search[0])
     
-    if instance:
+    if instance_level_search:
+        instance = instance_pool.browse(cr, uid, instance_level_search[0])
         instance_level = instance.level
+        
+        if instance_level == 'section':
+            instance_level = 'hq'
+            
+        return instance_level.lower()
     else:
         return None
 
-    if instance_level == 'section':
-        instance_level = 'hq'
-
-    return instance_level.lower()
 
 def _record_matches_domain(self, cr, uid, record_id, domain):
     """
