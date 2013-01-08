@@ -60,7 +60,7 @@ class import_data(osv.osv_memory):
         if row:
             for manda in sorted(col.keys()):
                 if manda != 0:
-                    row[col[manda]] = ' / '.join([row[col[manda-1]], row[col[manda]]])
+                    row[col[manda]] = ' | '.join([row[col[manda-1]], row[col[manda]]])
         return col
 
     def _del_product_cache(self, cr, uid):
