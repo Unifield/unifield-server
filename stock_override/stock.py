@@ -663,7 +663,7 @@ class stock_picking(osv.osv):
         loc_obj = self.pool.get('stock.location')
         vals = {'move_lines': []}
         for pick in self.browse(cr, uid, ids, context=context):
-            move_list = [move for move in pick.move_lines if move.state in ['assigned']]
+            move_list = [move for move in pick.move_lines if move.state in ['assigned', 'confirmed']]
             for move in move_list:
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
                 update_line = (1, move.id, {})
