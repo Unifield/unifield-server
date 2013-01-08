@@ -27,6 +27,7 @@ import datetime
 import openerplib
 import itertools
 import pylab as pl
+import os
 
 # command line params
 field_access_rule_ids = False
@@ -41,11 +42,15 @@ parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help=
 parser.add_option('-d', '--database', default="access_right", help='The name of the database')
 parser.add_option('-u', '--admin-username', dest='username', default="msf_access_rights_benchmarker", help='The username for the account to use to login to OpenERP')
 parser.add_option('-p', '--admin-password', dest='password', default="benchmark_it", help='The password for the account to use to login to OpenERP')
+parser.add_option('-s', '--save-graphs', action='store_true', dest='save', help='Save graphs to physical files (In msf_access_rights/benchmark/graphs directory)')
+parser.add_option('-o', '--file-prefix', dest='prefix', help='A prefix for the filenames when they are saved (In msf_access_rights/benchmark/graphs directory)')
 
 options, args = parser.parse_args()
 
 if not options.create and not options.write and not options.fvg:
-    options.write = options.create = options.fvg = True 
+    options.write = options.create = options.fvg = True
+    
+options.prefix = options.prefix or '' 
     
 # init connection and pools 
 connection = openerplib.get_connection(hostname=options.host, database=options.database, login=options.username, password=options.password)
@@ -208,16 +213,18 @@ def fvg():
     
     return per_fvg_time_taken
     
-# run tests 
-
 def make_graph(graph_name, x, x_labels, y):
     fig = pl.figure()
     ax = pl.subplot(111)
     ax.bar(x, y, width=1)
-    fig.canvas.manager.set_window_title(graph_name)
+    fig.canvas.manager.set_window_title(graph_name + " with %s iterations and %s rules" % (options.iterations, options.rules))
     pl.xticks(x, x_labels)
-    pl.ylabel('Seconds per operation') 
-    pl.show()
+    pl.ylabel('Seconds per operation')
+    
+    if options.save:
+        pl.savefig(options.prefix + graph_name + ".png")
+    else: 
+        pl.show()
     
 def friendly_time(td):
     if td.seconds > 0:
@@ -254,16 +261,15 @@ if field_access_rule_ids:
 # display graphs
 x = [0,1]
 x_labels = ["Without Test Rules", "With Test Rules"]
-prefix = " with %s iterations and %s rules" % (options.iterations, options.rules)
 
 if options.write:
     write_data = [friendly_time(write_time), friendly_time(write_time_with_rules)]
-    make_graph("Write Speed" + prefix, x, x_labels, write_data)
+    make_graph("Write Speed", x, x_labels, write_data)
     
 if options.create:
     create_data = [friendly_time(create_time), friendly_time(create_time_with_rules)]
-    make_graph("Create Speed" + prefix, x, x_labels, create_data)
+    make_graph("Create Speed", x, x_labels, create_data)
     
 if options.fvg:
     fvg_data = [friendly_time(fvg_time), friendly_time(fvg_time_with_rules)]
-    make_graph("Field View Get Speed" + prefix, x, x_labels, fvg_data)
+    make_graph("Field View Get Speed", x, x_labels, fvg_data)
