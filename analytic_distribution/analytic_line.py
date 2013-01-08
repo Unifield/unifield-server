@@ -156,12 +156,11 @@ class analytic_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for id in ids:
+        for l in self.browse(cr, uid, ids):
             vals2 = vals.copy()
-            if not 'account_id' in vals:
-                line = self.browse(cr, uid, [id], context=context)
-                account_id = line and line[0] and line[0].account_id.id or False
-                vals2.update({'account_id': account_id})
+            for el in ['account_id', 'cost_center_id', 'destination_id']:
+                if not el in vals:
+                    vals2.update({el: getattr(l, el, False),})
             self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
