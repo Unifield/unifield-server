@@ -35,7 +35,7 @@ parser = OptionParser()
 parser.add_option('-c', '--create', action='store_true', help='Test the create function')
 parser.add_option('-w', '--write', action='store_true', help='Test the write function')
 parser.add_option('-f', '--fvg', '--fields-view-get', action='store_true', dest='fvg', help='Test the fields_view_get function')
-parser.add_option('-n', '-i', '--number-of-iterations',  default=30, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
+parser.add_option('-n', '-i', '--number-of-iterations',  default=30, type='int', dest='iterations', help='The number of creates/writes/fields_view_get to perform for the benchmark')
 parser.add_option('-r', '--number-of-rules', default=10, type='int', dest='rules', help='The number of field access rules to create')
 parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help='The address of the host')
 parser.add_option('-d', '--database', default="access_right", help='The name of the database')
@@ -247,7 +247,9 @@ if options.fvg:
     
 # cleanup
 if field_access_rule_ids:
+    print '... deleting %s rules' % options.rules
     field_access_rule_pool.unlink(field_access_rule_ids)
+    print '... done'
 
 # display graphs
 x = [0,1]

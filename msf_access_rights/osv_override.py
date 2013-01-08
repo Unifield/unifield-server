@@ -32,8 +32,8 @@ create_debug = True
 write_debug = True
 fields_debug = True
 
-sync_debug = False
-user_debug = False # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
+sync_debug = True
+user_debug = True # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
 
 def dprint(string):
     if debug:
@@ -250,12 +250,21 @@ def write(self, cr, uid, ids, vals, context=None):
                     if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
 
                         # rule applies for this record so throw exception if we are trying to edit a field without write_access
-                        access_denied_fields = [line for line in rule.field_access_rule_line_ids if not line.write_access and line.field.name in vals and (getattr(record, line.field.name, vals[line.field.name]) != vals[line.field.name] and not (bool(getattr(record, line.field.name, vals[line.field.name])) == bool(vals[line.field.name])))]
-                        if access_denied_fields:
-                            wprint('====== ACCESS_DENIED_FIELDS: ' + str([line.field.name for line in access_denied_fields]))
-                            wprint('====== VALS: ' + str(vals))
-                            wprint('====== EXISTING VALS: %s' % [ str(line.field.name) + ': ' + str(getattr(record, line.field.name)) + ', ' for line in rule.field_access_rule_line_ids ])
-                            raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
+                        # for each rule
+                        for line in rule.field_access_rule_line_ids:
+                            # that has write_access denied
+                            if not line.write_access:
+                                # and whose field name is in the new values list
+                                if line.field.name in vals:
+                                    # and whose current value is different from the new value in the new values list
+                                    if getattr(record, line.field.name, vals[line.field.name]) != vals[line.field.name]:
+                                        # (in this case, values resolving to False, equate. For example, False == None)
+                                        if not bool(getattr(record, line.field.name, vals[line.field.name])) == False and bool(vals[line.field.name]) == False:
+                                            # throw access denied error
+                                            wprint('====== ACCESS_DENIED_FIELD: ' + str(line.field.name))
+                                            wprint('====== VALS: ' + str(vals))
+                                            wprint('====== EXISTING VALS: %s' % [ str(line.field.name) + ': ' + str(getattr(record, line.field.name)) + ', ' for line in rule.field_access_rule_line_ids ])
+                                            raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
             # if syncing, sanitize editted rows that don't have sync_on_write permission
             if context.get('sync_data') or user.login == 'msf_access_rights_benchmarker':
@@ -272,16 +281,16 @@ def write(self, cr, uid, ids, vals, context=None):
 
                             wprint('=== MATCHING RULE ID: %s' % rule.id)
 
-                            # rule applies for this record so delete key from new values if key is value_not_synchronized_on_write and the value is different from the existing record field
-                            no_sync_fields = [line for line in rule.field_access_rule_line_ids \
-                            if line.value_not_synchronized_on_write and \
-                            line.field.name in vals and \
-                            hasattr(record, line.field.name) and \
-                            vals[line.field.name] != getattr(record, line.field.name)]
-
-                            for line in no_sync_fields:
-                                if new_values.get(line.field.name, False):
-                                    del new_values[line.field.name]
+                            # for each rule, if value has changed and value_not_synchronized_on_write then delete key from new_values
+                            for line in rule.field_access_rule_line_ids:
+                                # if value_not_synchronized_on_write
+                                if line.value_not_synchronized_on_write:
+                                    # if we have a new value for the field
+                                    if line.field.name in new_values:
+                                        # if the current field value is different from the new field value
+                                        if new_values[line.field.name] != getattr(record, line.field.name):
+                                            # remove field from new_values
+                                            del new_values[line.field.name]
 
                             if len(new_values) != len(vals):
                                 wprint('=== REMOVED KEYS..')
