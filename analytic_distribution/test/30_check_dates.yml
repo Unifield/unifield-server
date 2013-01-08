@@ -1,0 +1,73 @@
+-
+  In order to check date, I create some analytic accounts with inactivation date, an analytic distribution and some expense lines then I reallocate them under the inactive account
+-
+  I create CC1 analytic account
+-
+  !record {model: account.analytic.account, id: cc1}:
+    name: Cost Center 1
+    code: CC1
+    type: normal
+    category: OC
+    date_start: !eval "'%s-%s-03' % (datetime.now().year + 10, datetime.now().month)"
+-
+  I create FP1 analytic account
+-
+  !record {model: account.analytic.account, id: fp1}:
+    name: Funding Pool 1
+    code: FP1
+    type: normal
+    category: FUNDING
+    date_start: !eval "'%s-%s-03' % (datetime.now().year + 10, datetime.now().month)"
+    tuple_destination_account_ids: [tuple_operation_6101]
+-
+  I create an analytic distribution.
+-
+  !record {model: analytic.distribution, id: distrib_2}:
+    name: Distribution for checking dates
+-
+  I add some lines to this distribution. First CC.
+-
+  !record {model: cost.center.distribution.line, id: cost_center_1}:
+    name: CC Line 1
+    analytic_id: cc1
+    destination_id: analytic_account_destination_operation
+    distribution_id: distrib_2
+    percentage: 100.0
+    currency_id: base.EUR
+-
+  Then I create a FP line linked to previous CC.
+-
+  !record {model: funding.pool.distribution.line, id: funding_pool_1}:
+    name: FP Line 1
+    analytic_id: fp1
+    destination_id: analytic_account_destination_operation
+    distribution_id: distrib_2
+    cost_center_id: cc1
+    percentage: 100.0
+    currency_id: base.EUR
+-
+  I create an expense.
+-
+  !record {model: account.move, id: move30}:
+    journal_id: account_journal_expenses_0
+    name: move 30
+    period_id: period1
+    document_date: !eval (DateTime.now()+DateTime.RelativeDateTime(day=17)).strftime('%Y-%m-%d')
+    date: !eval (DateTime.now()+DateTime.RelativeDateTime(day=18)).strftime('%Y-%m-%d')
+    currency_id: base.EUR
+    line_id:
+    - name: a product
+      account_id: account_account_expense0
+      debit: 123.0
+      credit: 0.0
+      currency_id: base.EUR
+      document_date: !eval (DateTime.now()+DateTime.RelativeDateTime(day=17)).strftime('%Y-%m-%d')
+      date: !eval (DateTime.now()+DateTime.RelativeDateTime(day=18)).strftime('%Y-%m-%d')
+      analytic_distribution_id: distrib_2
+    - name: counterpart
+      account_id: account_account_payable_supplier0
+      debit: 0.0
+      credit: 123.0
+      currency_id: base.EUR
+      document_date: !eval (DateTime.now()+DateTime.RelativeDateTime(day=17)).strftime('%Y-%m-%d')
+      date: !eval (DateTime.now()+DateTime.RelativeDateTime(day=18)).strftime('%Y-%m-%d')
