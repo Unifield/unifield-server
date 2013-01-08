@@ -116,6 +116,37 @@ def create_rules():
     print '... done'
     return field_access_rule_ids
 
+# init create
+def create():
+    # save timestamp
+    start = datetime.datetime.now()
+    print '========================================================'
+    print 'STARTING %s CREATES AS %s' % (options.iterations, options.username)
+    
+    created_user_ids = []
+    
+    # loop create
+    for i in range(0, options.iterations):
+        user_values = {
+            'name':'msf_access_rights_benchmark_create_' + str(i),
+            'login':'msf_access_rights_benchmark_create_' + str(i),
+            'user_email':'benchmark%s@test.com' % str(i),
+        }
+        created_user_ids.append(user_pool.create(user_values))
+    
+    # print time taken
+    end = datetime.datetime.now()
+    time_taken = end - start
+    print 'TIME TAKEN TO PERFORM %s CREATES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
+    per_create_time_taken = time_taken / options.iterations
+    print '1 CREATE = %s.%06d (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds)
+    print '========================================================'
+    
+    # delete created users
+    user_pool.unlink(created_user_ids)
+    
+    return per_create_time_taken
+
 def write():
         
     # create the user to write on (unless already exists)
@@ -161,37 +192,6 @@ def write():
     
     return per_write_time_taken
     
-# init create
-def create():
-    # save timestamp
-    start = datetime.datetime.now()
-    print '========================================================'
-    print 'STARTING %s CREATES AS %s' % (options.iterations, options.username)
-    
-    created_user_ids = []
-    
-    # loop create
-    for i in range(0, options.iterations):
-        user_values = {
-            'name':'msf_access_rights_benchmark_create_' + str(i),
-            'login':'msf_access_rights_benchmark_create_' + str(i),
-            'user_email':'benchmark%s@test.com' % str(i),
-        }
-        created_user_ids.append(user_pool.create(user_values))
-    
-    # print time taken
-    end = datetime.datetime.now()
-    time_taken = end - start
-    print 'TIME TAKEN TO PERFORM %s CREATES: %s.%s (seconds)' % (options.iterations, time_taken.seconds, time_taken.microseconds)
-    per_create_time_taken = time_taken / options.iterations
-    print '1 CREATE = %s.%06d (seconds)' % (per_create_time_taken.seconds, per_create_time_taken.microseconds)
-    print '========================================================'
-    
-    # delete created users
-    user_pool.unlink(created_user_ids)
-    
-    return per_create_time_taken
-    
 # init fields_view_get
 def fvg():
     # save timestamp
@@ -222,7 +222,7 @@ def make_graph(graph_name, x, x_labels, y):
     pl.ylabel('Seconds per operation')
     
     if options.save:
-        pl.savefig(options.prefix + graph_name + ".png")
+        pl.savefig(options.prefix + " " + graph_name + ".png")
     else: 
         pl.show()
     
@@ -232,22 +232,22 @@ def friendly_time(td):
     else:
         return td.microseconds / 1000000.0
     
-if options.write:
-    write_time = write()
-
 if options.create:
     create_time = create()
+    
+if options.write:
+    write_time = write()
     
 if options.fvg:
     fvg_time = fvg()
     
 field_access_rule_ids = create_rules()
 
-if options.write:
-    write_time_with_rules = write()
-
 if options.create:
     create_time_with_rules = create()
+
+if options.write:
+    write_time_with_rules = write()
     
 if options.fvg:
     fvg_time_with_rules = fvg()
@@ -262,13 +262,13 @@ if field_access_rule_ids:
 x = [0,1]
 x_labels = ["Without Test Rules", "With Test Rules"]
 
-if options.write:
-    write_data = [friendly_time(write_time), friendly_time(write_time_with_rules)]
-    make_graph("Write Speed", x, x_labels, write_data)
-    
 if options.create:
     create_data = [friendly_time(create_time), friendly_time(create_time_with_rules)]
     make_graph("Create Speed", x, x_labels, create_data)
+    
+if options.write:
+    write_data = [friendly_time(write_time), friendly_time(write_time_with_rules)]
+    make_graph("Write Speed", x, x_labels, write_data)
     
 if options.fvg:
     fvg_data = [friendly_time(fvg_time), friendly_time(fvg_time_with_rules)]

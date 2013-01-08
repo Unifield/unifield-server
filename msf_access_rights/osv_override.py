@@ -26,14 +26,14 @@ from lxml import etree
 import logging
 import copy
 
-debug = True
+debug = False
 
-create_debug = True
-write_debug = True
-fields_debug = True
+create_debug = False
+write_debug = False
+fields_debug = False
 
-sync_debug = True
-user_debug = True # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
+sync_debug = False
+user_debug = False # Warning - this causes some problems because the write within the create function will be filtered as if not being called by an admin 
 
 def dprint(string):
     if debug:
