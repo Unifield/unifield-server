@@ -23,19 +23,19 @@
 
 import sys
 from optparse import OptionParser
-import webbrowser
 import datetime
 import openerplib
-import matplotlib.pyplot as plt
 import itertools
+import pylab as pl
 
 # command line params
+field_access_rule_ids = False
 parser = OptionParser()
 
 parser.add_option('-c', '--create', action='store_true', help='Test the create function')
 parser.add_option('-w', '--write', action='store_true', help='Test the write function')
 parser.add_option('-f', '--fvg', '--fields-view-get', action='store_true', dest='fvg', help='Test the fields_view_get function')
-parser.add_option('-n', '-i', '--number-of-iterations',  default=50, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
+parser.add_option('-n', '-i', '--number-of-iterations',  default=30, type='int', dest='iterations', help='The number of creates/writes to perform for the benchmark')
 parser.add_option('-r', '--number-of-rules', default=10, type='int', dest='rules', help='The number of field access rules to create')
 parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help='The address of the host')
 parser.add_option('-d', '--database', default="access_right", help='The name of the database')
@@ -62,52 +62,56 @@ instance_pool = connection.get_model('msf.instance')
 instance_level_search = instance_pool.search([('level', '!=', False)])
 instance_level = 'project'
 
-# create rules to benchmark against
-field_access_rule_ids = field_access_rule_pool.search([('name','like','benchmark_users_')])
-
-if field_access_rule_ids:
-    field_access_rule_pool.unlink(field_access_rule_ids)
+def create_rules():
+    # create rules to benchmark against
+    print '... creating %s rules' % options.rules
+    field_access_rule_ids = field_access_rule_pool.search([('name','like','benchmark_users_')])
     
-field_access_rule_ids = []
-
-for i in range(0, options.rules):
-    rule_values = {
-      'name':'benchmark_users_' + str(i),
-      'model_id':user_model_id,
-      'instance_level':instance_level,
-      'filter':False,
-      'domain_text':False,
-      'group_ids':False,
-      'state':'filter_validated',
-      'active':'1'
-    }
-    field_access_rule_ids.append(field_access_rule_pool.create(rule_values))
+    if field_access_rule_ids:
+        field_access_rule_pool.unlink(field_access_rule_ids)
+        
+    field_access_rule_ids = []
     
-# generate field access rule lines and edit them to have appropriate settings for tests
-existing_lines = field_access_rule_line_pool.search([('field_access_rule','in',field_access_rule_ids)])
-if existing_lines:
-    field_access_rule_line_pool.unlink(existing_lines)
+    for i in range(0, options.rules):
+        rule_values = {
+          'name':'benchmark_users_' + str(i),
+          'model_id':user_model_id,
+          'instance_level':instance_level,
+          'filter':False,
+          'domain_text':False,
+          'group_ids':False,
+          'state':'filter_validated',
+          'active':'1'
+        }
+        field_access_rule_ids.append(field_access_rule_pool.create(rule_values))
+        
+    # generate field access rule lines and edit them to have appropriate settings for tests
+    existing_lines = field_access_rule_line_pool.search([('field_access_rule','in',field_access_rule_ids)])
+    if existing_lines:
+        field_access_rule_line_pool.unlink(existing_lines)
+        
+    field_access_rule_pool.generate_rules_button(field_access_rule_ids)
     
-field_access_rule_pool.generate_rules_button(field_access_rule_ids)
+    field_access_rules = field_access_rule_pool.read(field_access_rule_ids)
+    
+    field_access_rule_line_ids = list(itertools.chain(*[rule['field_access_rule_line_ids'] for rule in field_access_rules]))
+    field_access_rule_lines = field_access_rule_line_pool.read(field_access_rule_line_ids)
+    
+    lines_to_edit = [line['id'] for line in field_access_rule_lines if \
+                     line['field_name'] == 'address_id' \
+                     or line['field_name'] == 'user_email' \
+                     or line['field_name'] == 'action_id']
+    
+    try:
+        field_access_rule_line_pool.write(lines_to_edit, {"value_not_synchronized_on_write":"1"})
+    except:
+        field_access_rule_pool.unlink(field_access_rule_ids)
+        raise
+    
+    print '... done'
+    return field_access_rule_ids
 
-field_access_rules = field_access_rule_pool.read(field_access_rule_ids)
-
-field_access_rule_line_ids = list(itertools.chain(*[rule['field_access_rule_line_ids'] for rule in field_access_rules]))
-field_access_rule_lines = field_access_rule_line_pool.read(field_access_rule_line_ids)
-
-lines_to_edit = [line['id'] for line in field_access_rule_lines if \
-                 line['field_name'] == 'address_id' \
-                 or line['field_name'] == 'user_email' \
-                 or line['field_name'] == 'action_id']
-
-try:
-    field_access_rule_line_pool.write(lines_to_edit, {"value_not_synchronized_on_write":"1"})
-except:
-    field_access_rule_pool.unlink(field_access_rule_ids)
-    raise
-
-# init write
-if options.write:
+def write():
         
     # create the user to write on (unless already exists)
     user_id = user_pool.search([('name','=','msf_access_rights_benchmark')])
@@ -150,8 +154,10 @@ if options.write:
     # delete test user
     user_pool.unlink([user_id])
     
+    return per_write_time_taken
+    
 # init create
-if options.create:
+def create():
     # save timestamp
     start = datetime.datetime.now()
     print '========================================================'
@@ -179,8 +185,10 @@ if options.create:
     # delete created users
     user_pool.unlink(created_user_ids)
     
+    return per_create_time_taken
+    
 # init fields_view_get
-if options.fvg:
+def fvg():
     # save timestamp
     start = datetime.datetime.now()
     print '========================================================'
@@ -198,5 +206,62 @@ if options.fvg:
     print '1 FVG = %s.%06d (seconds)' % (per_fvg_time_taken.seconds, per_fvg_time_taken.microseconds)
     print '========================================================'
     
+    return per_fvg_time_taken
+    
+# run tests 
+
+def make_graph(graph_name, x, x_labels, y):
+    fig = pl.figure()
+    ax = pl.subplot(111)
+    ax.bar(x, y, width=1)
+    fig.canvas.manager.set_window_title(graph_name)
+    pl.xticks(x, x_labels)
+    pl.ylabel('Seconds per operation') 
+    pl.show()
+    
+def friendly_time(td):
+    if td.seconds > 0:
+        return ((td.seconds * 1000000) + td.microseconds) / 1000000.0
+    else:
+        return td.microseconds / 1000000.0
+    
+if options.write:
+    write_time = write()
+
+if options.create:
+    create_time = create()
+    
+if options.fvg:
+    fvg_time = fvg()
+    
+field_access_rule_ids = create_rules()
+
+if options.write:
+    write_time_with_rules = write()
+
+if options.create:
+    create_time_with_rules = create()
+    
+if options.fvg:
+    fvg_time_with_rules = fvg()
+    
 # cleanup
-field_access_rule_pool.unlink(field_access_rule_ids)
+if field_access_rule_ids:
+    field_access_rule_pool.unlink(field_access_rule_ids)
+
+# display graphs
+x = [0,1]
+x_labels = ["Without Test Rules", "With Test Rules"]
+prefix = " with %s iterations and %s rules" % (options.iterations, options.rules)
+
+if options.write:
+    write_data = [friendly_time(write_time), friendly_time(write_time_with_rules)]
+    make_graph("Write Speed" + prefix, x, x_labels, write_data)
+    
+if options.create:
+    create_data = [friendly_time(create_time), friendly_time(create_time_with_rules)]
+    make_graph("Create Speed" + prefix, x, x_labels, create_data)
+    
+if options.fvg:
+    fvg_data = [friendly_time(fvg_time), friendly_time(fvg_time_with_rules)]
+    make_graph("Field View Get Speed" + prefix, x, x_labels, fvg_data)
