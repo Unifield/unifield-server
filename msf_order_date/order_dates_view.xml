@@ -100,7 +100,7 @@
                 <data>
                 
                 	<field name="partner_id" position="replace" >
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" />
+                		<field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" />
                 		<field name="partner_type" />
                 	</field>
                     

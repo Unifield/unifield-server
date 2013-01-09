@@ -41,6 +41,14 @@ class sale_order(osv.osv):
             res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section'])] + domain}
         else:
             pass
+
+
+        if partner_id and order_type:
+            res.update({'value': {'order_policy': 'picking'}})
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if order_type != 'regular' or (order_type == 'regular' and partner.partner_type == 'internal'):
+                res.update({'value': {'order_policy': 'manual'}})
+
         return res
 
 sale_order()

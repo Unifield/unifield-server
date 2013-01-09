@@ -30,11 +30,11 @@ class sale_order(osv.osv):
         'intl_customer_ok': fields.boolean(string='International customer'),
     }
 
-    def onchange_partner_id(self, cr, uid, ids, part=False, *a, **b):
+    def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, *a, **b):
         '''
         Set the intl_customer_ok field if the partner is an ESC or an international partner
         '''
-        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, *a, **b)
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, order_type, *a, **b)
         if part:
             partner = self.pool.get('res.partner').browse(cr, uid, part)
             if partner.partner_type == 'esc' or partner.partner_type == 'external' or partner.zone == 'international':
