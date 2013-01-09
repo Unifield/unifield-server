@@ -30,6 +30,7 @@ from psycopg2.pool import PoolError
 
 import psycopg2.extensions
 import warnings
+import pooler
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -133,7 +134,17 @@ class Cursor(object):
             if log_exceptions:
                 self.__logger.error("Programming error: %s, in query %s", pe, query)
             raise
-        except Exception:
+        except psycopg2.IntegrityError, ie:
+            if log_exceptions:
+                osv_pool = pooler.pool_dic.get(self.dbname)
+                if osv_pool:
+                    for key in osv_pool._sql_error.keys():
+                        if key in ie[0]:
+                            self.__logger.warn("Known Constraint Error: %s : %s", self._obj.query or query, ie[0])
+                            raise
+                self.__logger.exception("Unknown Constraint Error: %s", self._obj.query or query)
+            raise
+        except Exception, e:
             if log_exceptions:
                 self.__logger.exception("bad query: %s", self._obj.query or query)
             raise
