@@ -391,11 +391,21 @@ class ImpEx(SecuredController):
         # UF-1257 Only use Code, Description and UoM for export due to timeout error from products with some fields:
         # - qty_available
         # - virtual_available
-        # - fmc
-        # - amc
+        # - product_amc
+        # - reviewed_consumption
+        # - monthly_consumption
         if params.model == 'product.product':
-            flds = ['default_code', 'name', 'uom_id']
-            params.fields2 = ['Code', 'Description', 'UoM']
+            tmp_flds = flds
+            flds = []
+            flds_to_remove = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
+            fields_to_remove = ['Real Stock', 'Virtual Stock', 'Real Consumption', 'Monthly consumption', 'Forecasted Monthly Consumption']
+            for f in tmp_flds:
+                if f not in flds_to_remove:
+                    flds.append(f)
+
+            for f_r in fields_to_remove:
+                if f_r in params.fields2:
+                    params.fields2.remove(f_r)
 
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
