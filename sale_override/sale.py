@@ -323,12 +323,17 @@ class sale_order(osv.osv):
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
-        if 'partner_id' in vals:
+        if 'partner_id' in vals and vals.get('yml_module_name') != 'sale':
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
             if vals.get('order_type', 'regular') != 'regular' or (vals.get('order_type', 'regular') == 'regular' and partner.partner_type == 'internal'):
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
+        elif vals.get('yml_module_name') == 'vals':
+            if not vals.get('order_policy'):
+                vals['order_policy'] = 'picking'
+            if not vals.get('invoice_quantity'):
+                vals['invoice_quantity'] = 'order'
 
         res = super(sale_order, self).create(cr, uid, vals, context)
         self._check_service(cr, uid, [res], vals, context=context)
@@ -349,6 +354,8 @@ class sale_order(osv.osv):
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
+            if order.yml_module_name == 'sale':
+                continue
             partner = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id))
             if vals.get('order_type', order.order_type) != 'regular' or (vals.get('order_type', order.order_type) == 'regular' and partner.partner_type == 'internal'):
                 vals['order_policy'] = 'manual'
@@ -891,14 +898,15 @@ class sale_order(osv.osv):
             # from action_wait sale_override
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-                for line in order.order_line:
-                    lines.append(line.id)
-            elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-                for line in order.order_line:
-                    lines.append(line.id)
+            if order.yml_module_name != 'sale':
+                if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
+                    self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+                    for line in order.order_line:
+                        lines.append(line.id)
+                elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
+                    self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+                    for line in order.order_line:
+                        lines.append(line.id)
 # COMMENTED because of SP4 WM 12: Invoice Control
 #            elif not order.from_yml_test:
 #                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
