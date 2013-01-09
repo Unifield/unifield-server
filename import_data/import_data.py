@@ -294,4 +294,14 @@ Find in attachment the rejected lines'''%(nb_error)
         return {'type': 'ir.actions.act_window_close'}
 
 import_data()
+
+class import_product(osv.osv_memory):
+    _name = 'import_product'
+    _inherit = 'import_data'
+
+    _defaults = {
+        'object': lambda *a: 'product.product',
+    }
+
+import_product()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
