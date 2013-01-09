@@ -158,6 +158,14 @@
     name: Receivable
     sign: 1
 -
+  I create an Analytic Expenses Journal.
+-
+  !record {model: account.analytic.journal, id: account_analytic_journal_expenses_0}:
+    code: expense
+    company_id: base.main_company
+    name: Analytic Expenses Journal (test)
+    type: purchase
+-
   I create an Expenses Journal.
 -
   !record {model: account.journal, id: account_journal_expenses_0}:
@@ -166,6 +174,7 @@
     name: Expenses Journal (test)
     type: purchase
     allow_date: 0
+    analytic_journal_id: account_analytic_journal_expenses_0
 -
   I create Supplier 401 Payable Account.
 -
