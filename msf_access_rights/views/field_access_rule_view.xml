@@ -52,7 +52,7 @@
                         <field name="model_name" readonly='1' colspan="1" />    
                         <button type='object' name='validate_button' string='Validate Model' icon='icons/camera_test' attrs="{'readonly':[('status','!=','not_validated')]}" colspan="6" />
                         <field name="instance_level" attrs="{'readonly':[('status','=','not_validated')], 'required':[('status','!=','not_validated')]}" colspan="1" />
-                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' domain="[('model_id','=',model_name)]" attrs="{'readonly':[('status','=','not_validated')]}" colspan="1" />
+                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' attrs="{'readonly':[('status','=','not_validated')]}" colspan="1" />
                         <button type='object' name='create_new_filter_button' string='Create New Filter' icon='stock/gtk-add' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" />
                     </group>
 
