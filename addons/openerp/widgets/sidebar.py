@@ -43,7 +43,8 @@ class Sidebar(TinyWidget):
         self.view_type = view_type
         toolbar = toolbar or {}
         submenu = submenu
-        self.id = id or None 
+        self.id = id or None
+        self.model = model
         self.reports = toolbar.get('print', [])
         self.actions = toolbar.get('action', [])
         self.relates = toolbar.get('relate', [])
