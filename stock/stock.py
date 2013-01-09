@@ -782,13 +782,13 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        self._hook_action_assign_batch(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids):
             move_ids = [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
             move_obj.action_assign(cr, uid, move_ids)
+            self._hook_action_assign_batch(cr, uid, ids, context=context)
         return True
 
     def force_assign(self, cr, uid, ids, *args):
