@@ -375,7 +375,10 @@ class account_move_line(osv.osv):
                 " GROUP BY l2.id"
 
         cr.execute(sql, [tuple(ids)])
-        return dict(cr.fetchall())
+        result = dict(cr.fetchall())
+        for id in ids:
+            result.setdefault(id, 0.0)
+        return result
 
     def _invoice(self, cursor, user, ids, name, arg, context=None):
         invoice_obj = self.pool.get('account.invoice')
