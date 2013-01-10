@@ -69,6 +69,7 @@
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id, remark)"
                                 attrs="{'required': [('date_mandatory', '=', True), ('batch_mandatory', '=', False)], 'readonly': ['|', ('batch_mandatory', '=', True), ('date_mandatory', '=', False)]}"/>
                             <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id, uom_id)"/>
+                            <button string="Split line" icon="terp-stock_effects-object-colorize" name="line_split" type="object" />
                             <field name="remark" invisible="1" />
                             <field name="batch_mandatory" invisible="0" string="B.Num" readonly="1" />
                             <field name="date_mandatory" invisible="0" string="Exp" readonly="1" />
@@ -178,6 +179,23 @@
             id="new_consumption_reports_menu"
             action="action_new_real_consumption_report"
             parent="warehouse_consumption_menu" /> -->
+
+        <record id="real_consumption_split_line_form_view" model="ir.ui.view">
+            <field name="name">real.consumption.split.line.form.view</field>
+            <field name="model">real.average.consumption.split.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Split line">
+                    <separator colspan="4" />
+                    <field name="orig_qty" readonly="1" />
+                    <field name="new_qty" required="1" />
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" icon="gtk-cancel" string="Cancel" />
+                    <button name="split_line" type="object" icon="terp-stock_effects-object-colorize" colspan="2" string="Split line" />
+                    <label />
+                </form>
+            </field>
+        </record>
             
             
         <record id="monthly_review_consumption_form_view" model="ir.ui.view">

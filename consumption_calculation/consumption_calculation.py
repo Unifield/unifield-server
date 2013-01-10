@@ -32,6 +32,8 @@ import netsvc
 import csv
 from tempfile import TemporaryFile
 
+from product._common import rounding
+
 
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
@@ -464,14 +466,31 @@ class real_average_consumption_line(osv.osv):
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
 
-    _constraints = [
-        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-    ]
-
     _sql_constraints = [
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
     ]
 
+    def create(self, cr, uid, values=None, context=None):
+        '''
+        Call the constraint
+        '''
+        new_id = super(real_average_consumption_line, self).create(cr, uid, values, context=context)
+
+        if not self._check_qty(cr, uid, [new_id], context=context):
+            raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+
+        return new_id
+
+    def write(self, cr, uid, ids, values=None, context=None):
+        '''
+        Call the constraint
+        '''
+        res = super(real_average_consumption_line, self).write(cr, uid, ids, values, context=context)
+
+        if not self._check_qty(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+
+        return res
 
     def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, remark=False, context=None):
         '''
@@ -603,8 +622,76 @@ class real_average_consumption_line(osv.osv):
             v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
         
         return {'value': v, 'domain': d}
+
+    def line_split(self, cr, uid, ids, context=None):
+        '''
+        Launch the wizard to split the line
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            split_id = self.pool.get('real.average.consumption.split.line').create(cr, uid, {'line_id': line.id,
+                                                                                             'orig_qty': line.consumed_qty,
+                                                                                             'new_qty': 0.00}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption.split.line',
+                'res_id': split_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',}
     
 real_average_consumption_line()
+
+class real_average_consumption_split_line(osv.osv_memory):
+    _name = 'real.average.consumption.split.line'
+
+    _columns = {
+        'line_id': fields.many2one('real.average.consumption.line', string='Original line'),
+        'orig_qty': fields.float(digits=(16,2), string='Original quantity', readonly=True),
+        'new_qty': fields.float(digits=(16,2), string='New quantity', required=True),
+    }
+
+    def split_line(self, cr, uid, ids, context=None):
+        '''
+        Create a new consumption line and change the quantity of the old line
+        '''
+        line_obj = self.pool.get('real.average.consumption.line')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for split in self.browse(cr, uid, ids, context=context):
+            # Check if the sum of new line and old line qty is equal to the original qty
+            if split.new_qty > split.orig_qty:
+                raise osv.except_osv(_('Error'), _('You cannot have a new quantity greater than the original quantity !'))
+            elif split.new_qty <= 0.00:
+                raise osv.except_osv(_('Error'), _('The new quantity must be positive !'))
+            elif split.new_qty == split.orig_qty:
+                raise osv.except_osv(_('Error'), _('The new quantity must be different than the original quantity !'))
+            elif split.new_qty != rounding(split.new_qty, split.line_id.uom_id.rounding):
+                raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.line_id.uom_id.rounding)
+            else:
+                values = {'consumed_qty': split.new_qty,
+                          'prodlot_id': False,
+                          'expiry_date': False}
+                if split.line_id.product_id.batch_management:
+                    values.update({'remark': 'You must assign a batch number',
+                                   'batch_mandatory': True})
+                if split.line_id.product_id.perishable:
+                    values.update({'remark': 'You must assign an expiry date',
+                                   'date_mandatory': True})
+                # Change the qty of the old line
+                line_obj.write(cr, uid, [split.line_id.id], {'consumed_qty': split.orig_qty - split.new_qty}, {'noraise': True})
+                # Duplicate the original line with new qty
+                line_obj.copy(cr, uid, split.line_id.id, values, {'noraise': True})
+
+        return {'type': 'ir.actions.act_window_close'}
+
+real_average_consumption_split_line()
 
 
 class monthly_review_consumption(osv.osv):
