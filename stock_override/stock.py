@@ -661,6 +661,7 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         loc_obj = self.pool.get('stock.location')
+        prodlot_obj = self.pool.get('stock.production.lot')
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
                 if move.product_id.perishable: # perishable for perishable or batch management
@@ -679,25 +680,28 @@ class stock_picking(osv.osv):
                                       'reason_type_id': move.reason_type_id.id,
                                       }
                             for loc in res['fefo']:
-                                # as long all needed are not fulfilled
-                                if needed_qty:
-                                    # if the batch already exists and qty is enough, it is available (assigned)
-                                    if needed_qty <= loc['qty']:
-                                        if move.prodlot_id.id == loc['prodlot_id']:
-                                            move_obj.write(cr, uid, move.id, {'state': 'assigned'}, context)
-                                        else:
-                                            move_obj.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
-                                                                        'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
-                                            needed_qty = 0.0
-                                    elif needed_qty:
-                                        # we take all available
-                                        selected_qty = loc['qty']
-                                        needed_qty -= selected_qty
-                                        dict_for_create = {}
-                                        dict_for_create = values.copy()
-                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
-                                        move_obj.create(cr, uid, dict_for_create, context)
-                                        move_obj.write(cr, uid, move.id, {'product_qty': needed_qty})
+                                # we ignore the batch that are outdated
+                                expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                                if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                                    # as long all needed are not fulfilled
+                                    if needed_qty:
+                                        # if the batch already exists and qty is enough, it is available (assigned)
+                                        if needed_qty <= loc['qty']:
+                                            if move.prodlot_id.id == loc['prodlot_id']:
+                                                move_obj.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                            else:
+                                                move_obj.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
+                                                                            'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                                needed_qty = 0.0
+                                        elif needed_qty:
+                                            # we take all available
+                                            selected_qty = loc['qty']
+                                            needed_qty -= selected_qty
+                                            dict_for_create = {}
+                                            dict_for_create = values.copy()
+                                            dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                            move_obj.create(cr, uid, dict_for_create, context)
+                                            move_obj.write(cr, uid, move.id, {'product_qty': needed_qty})
                     elif move.state == 'confirmed':
                         # we remove the prodlot_id in case that the move is not available
                         move_obj.write(cr, uid, move.id, {'prodlot_id': False}, context)
