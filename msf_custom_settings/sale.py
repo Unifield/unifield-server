@@ -23,6 +23,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class sale_order(osv.osv):
     _name = 'sale.order'
@@ -35,10 +36,21 @@ class sale_order(osv.osv):
         if not order_type:
             return res
         domain = [('customer','=',True)]
+        msg = _('Partner type is not compatible with given Order Type!')
         if order_type in ['regular', 'donation_st', 'loan']:
             res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])] + domain}
+            # Check that partner correspond
+            if partner_id:
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+                if partner and partner.partner_type not in ['internal', 'intermission', 'section', 'external']:
+                    return {'warning': {'title': 'Error', 'message': msg}}
         elif order_type in ['donation_exp']:
             res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section'])] + domain}
+            # Check that partner correspond
+            if partner_id:
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+                if partner and partner.partner_type not in ['internal', 'intermission', 'section']:
+                    return {'warning': {'title': 'Error', 'message': msg}}
         else:
             pass
         return res
