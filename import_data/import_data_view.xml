@@ -81,6 +81,21 @@
             </field>
         </record>
 
+        <record id="import_product_end" model="ir.ui.view">
+            <field name="name">import.product.end</field>
+            <field name="model">import_product</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Import product in progress">
+                    <label colspan="4" string="The importation of products are in progress. At the end of the importation, a log file will be created if there are errors during importation."/>
+                    <label colspan="4" string="You can access to this log file under the menu Product / Import Products / View Log" />
+                    <separator colspan="4" />
+                    <button special="cancel" icon="gtk-close" string="Close window" />
+                </form>
+            </field>
+        </record>
+
         <act_window name="Import Products"
             res_model="import_product"
             src_model="import_product"
@@ -90,9 +105,27 @@
             id="action_import_products"/>
 
         <menuitem
+            id="parent_import_products"
+            parent="product_attributes.menu_main_product"
+            name="Import Products" />
+
+        <menuitem
         action="action_import_products"
         id="menu_action_import_products"
-        parent="base.menu_product"/>
+        parent="parent_import_products"/>
+
+        <record id="import_request_action" model="ir.actions.act_window">
+            <field name="name">View Logs</field>
+            <field name="res_model">res.request</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('name', 'like', 'Import Product')]</field>
+        </record>
+
+        <menuitem
+            action="import_request_action"
+            id="menu_import_request"
+            parent="parent_import_products" />
 
     </data>
 </openerp>
