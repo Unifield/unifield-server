@@ -592,15 +592,12 @@ class stock_picking(osv.osv):
                         # update out move - quantity is increased, to match the original qty
                         # diff_qty = quantity originally in OUT move - count
                         out_diff_qty = mirror_data['quantity'] - count
-                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
+                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=False, context=dict(context, keepLineNumber=True))
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
                     # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
                     if not update_out:
-                        if out_move_id in to_assign_moves:
-                            to_assign_moves.remove(out_move_id)
-                            second_assign_moves.append(out_move_id)
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                         # no split nor product change but out is updated (qty increased), force update out for update out picking
