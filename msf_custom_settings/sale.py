@@ -43,6 +43,28 @@ class sale_order(osv.osv):
             pass
         return res
 
+    def _check_order_type_and_partner(self, cr, uid, ids, context=None):
+        """
+        Check that partner and order type are compatibles
+        """
+        compats = {
+            'regular':      ['internal', 'intermission', 'section', 'external'],
+            'donation_st':  ['internal', 'intermission', 'section', 'external'],
+            'loan':         ['internal', 'intermission', 'section', 'external'],
+            'donation_exp': ['internal', 'intermission', 'section'],
+            'in_kind':      ['internal', 'intermission', 'section', 'external', 'esc'],
+            'direct':       ['internal', 'intermission', 'section', 'external', 'esc'],
+        }
+        # Browse SO
+        for so in self.browse(cr, uid, ids):
+            if so.order_type not in compats or so.partner_id.partner_type not in compats[so.order_type]:
+                return False
+        return True
+
+    _constraints = [
+       (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+    ]
+
 sale_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
