@@ -223,7 +223,7 @@ class object_query(osv.osv):
             </search>
             ''' % (query.object_id.model_id.name, search_filters, search_group)
             
-            tree_arch = '''<tree string='%s' hide_new_button='1'>
+            tree_arch = '''<tree string='%s' hide_new_button='1' hide_delete_button='1' noteditable="1">
             %s
             </tree>
             ''' % (query.object_id.model_id.name, tree_fields)
