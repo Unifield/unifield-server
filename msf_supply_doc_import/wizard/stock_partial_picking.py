@@ -39,11 +39,21 @@ class stock_partial_picking(osv.osv_memory):
         'file_to_import': fields.binary(string='File to import', filters='*.xml, *.xls',
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format."""),
-        'data': fields.binary('Test'),
-        'filename': fields.char('Test', size=256),
+        'data': fields.binary('Lines not imported'),
+        'filename': fields.char('Lines not imported', size=256),
         'import_error_ok': fields.boolean(string='Error at import', readonly=True),
         'message': fields.text('Report of lines\' import', readonly=True),
     }
+
+    def default_get(self, cr, uid, fields, context=None):
+        if not context:
+            context = {}
+        values = super(stock_partial_picking, self).default_get(cr, uid, fields, context=context)
+        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
+                          ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
+        toto = SpreadsheetCreator('Template of import', columns_header, [])
+        values.update({'file_to_import': base64.encodestring(toto.get_xml()), 'filename': 'template.xls'})
+        return values
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
         lines_not_imported = kwargs.get('line_with_error') # list of list
@@ -166,13 +176,12 @@ Reported errors :
             if picking_type == 'incoming_shipment':
                 new_field_txt = """
                 <newline/>
-                <group name="import_file_lines" string="Import Lines" colspan="4" col="8">
-                <field name="file_to_import"/>
-                <button name="import_file" string="Import the file" icon="gtk-execute" colspan="2" type="object" />
-                <field name="filename" invisible="1"  />
-                <field name="data" filename="filename" readonly="1" colspan="4" />
+                <group name="import_file_lines" string="Import Lines" colspan="4" col="4">
+                <field name="file_to_import" colspan="1"/>
+                <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                 <field name="import_error_ok" invisible="1"/>
-                <newline/>
+                <field name="filename" invisible="1"  />
+                <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
                 </group>
                 """
