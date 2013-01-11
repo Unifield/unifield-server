@@ -59,9 +59,10 @@ x:FullRows="1">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header[0]}</Data></Cell>
 % endfor
 </Row>
-% for index,result in enumerate(objects):
+% for row in objects:
 <Row>
-  % for h in headers:
+  % for index, h in enumerate(headers):
+    <% result=row[index] %>
     % if h[1] == 'date':
         <Cell ss:StyleID="sShortDate">
             <Data ss:Type="DateTime">${result|n}T00:00:00.000</Data>

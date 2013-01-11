@@ -34,7 +34,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
     _description = 'Split purchase order lines'
     
     def default_get(self, cr, uid, *a, **b):
-        toto = SpreadsheetCreator('oooo', [('ooo', 'string'), ('jjj','string')], ['ooooooo', 'kkk'])
+        toto = SpreadsheetCreator('oooo', [('ooo', 'string'), ('jjj','string'), ('i', 'string')], [['a', 'b', 'c'], ['ooooooo', 'kkk', 'll']])
         return {'data': base64.encodestring(toto.get_xml()), 'filename': 'test.xls'}
 
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
