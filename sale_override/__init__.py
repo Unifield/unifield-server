@@ -27,3 +27,4 @@ SALE_ORDER_SPLIT_SELECTION = [('original_sale_order', 'Original'),
 import sale
 import report
 import wizard
+import res_partner
