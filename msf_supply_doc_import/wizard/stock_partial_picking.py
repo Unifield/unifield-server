@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
@@ -27,7 +26,7 @@ from lxml import etree
 # import xml file
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 class stock_partial_picking(osv.osv_memory):
     """
@@ -40,11 +39,20 @@ class stock_partial_picking(osv.osv_memory):
         'file_to_import': fields.binary(string='File to import', filters='*.xml, *.xls',
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format."""),
-        'file_error': fields.binary(string='Lines not imported',
-                                    help="""* This file caught the lines that were not imported."""),
+        'data': fields.binary('Test'),
+        'filename': fields.char('Test', size=256),
         'import_error_ok': fields.boolean(string='Error at import', readonly=True),
         'message': fields.text('Report of lines\' import', readonly=True),
     }
+
+    def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
+        lines_not_imported = kwargs.get('line_with_error') # list of list
+        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
+                          ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
+        toto = SpreadsheetCreator('Lines Not imported', columns_header, lines_not_imported)
+        vals = {'data': base64.encodestring(toto.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        return vals
+        
 
     def import_file(self, cr, uid, ids, context=None):
         if not context:
@@ -70,6 +78,7 @@ class stock_partial_picking(osv.osv_memory):
         import_error_ok = False
         file_line_num = 1
         error_list = []
+        line_with_error = []
         for row in rows:
             # default values
             purchase_line_ids = []
@@ -119,6 +128,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 if product_id:
                     product_name = product_obj.read(cr, uid, product_id, ['name'], context)['name']
                 error_list.append("Line %s of the Excel file: The product %s does not match with the existing product of the line %s" % (file_line_num, product_name or 'is not found in the database or', line_number))
+                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                 import_error_ok = True
                 ignore_lines += 1
         error += '\n'.join(error_list)
@@ -130,9 +140,11 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
 Reported errors :
 %s
                 '''  % (complete_lines, lines_to_correct, ignore_lines, error or 'No error !')
-        self.write(cr, uid, ids, {'message': message,
-                                  'import_error_ok': import_error_ok,}, context=context)
-        
+        vals = {'message': message, 'import_error_ok': import_error_ok,}
+        if line_with_error:
+            file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
+            vals.update(file_to_export)
+        self.write(cr, uid, ids, vals, context=context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.partial.picking',
                 'view_type': 'form',
@@ -157,7 +169,8 @@ Reported errors :
                 <group name="import_file_lines" string="Import Lines" colspan="4" col="8">
                 <field name="file_to_import"/>
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="2" type="object" />
-                <field name="file_error" attrs="{'invisible':[('import_error_ok', '=', True)]}"/>
+                <field name="filename" invisible="1"  />
+                <field name="data" filename="filename" readonly="1" colspan="4" />
                 <field name="import_error_ok" invisible="1"/>
                 <newline/>
                 <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>

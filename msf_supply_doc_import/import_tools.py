@@ -27,7 +27,7 @@ class import_cell_data(osv.osv_memory):
     '''
     _name = 'import.cell.data'
 
-    def get_cell_data(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
+    def get_cell_data(self, cr, uid, ids, row, cell_nb):
         cell_data = False
         try:
             line_content = row.cells
@@ -38,7 +38,7 @@ class import_cell_data(osv.osv_memory):
         return cell_data
 
     def get_purchase_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             purchase_name = cell_data.strip()
             purchase_ids = self.pool.get('purchase.order').search(cr, uid, [('name', '=', purchase_name)])
@@ -48,7 +48,7 @@ class import_cell_data(osv.osv_memory):
 
 
     def get_picking_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             incoming_shipment_name = cell_data.strip()
             picking_ids = self.pool.get('stock.picking').search(cr, uid, [('name', '=', incoming_shipment_name)])
@@ -58,14 +58,14 @@ class import_cell_data(osv.osv_memory):
 
     def get_move_line_number(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         line_number = False
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             if isinstance(cell_data, (int, long)):
                 return cell_data
         return False
 
     def get_product_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             default_code = cell_data.strip()
             product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', default_code)])
@@ -74,14 +74,14 @@ class import_cell_data(osv.osv_memory):
         return False
 
     def get_product_qty(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             if isinstance(cell_data, (float, int, long)):
                 return cell_data
         return False
 
     def get_product_uom_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             product_uom_name = cell_data.strip()
             product_uom_ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', product_uom_name)])
@@ -90,7 +90,7 @@ class import_cell_data(osv.osv_memory):
         return False
 
     def get_prodlot_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             prodlot_name = cell_data.strip()
             prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=', prodlot_name)])
@@ -99,9 +99,16 @@ class import_cell_data(osv.osv_memory):
         return False
 
     def get_expired_date(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context=None)
+        cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data and row.type == 'datetime':
             return expired_date
         return False
+
+    def get_line_values(self, cr, uid, ids, row):
+        list_of_values = []
+        for cell_nb in range(len(row)):
+            cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
+            list_of_values.append(cell_data)
+        return list_of_values
 
 import_cell_data()
