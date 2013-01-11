@@ -36,6 +36,9 @@ class stock_partial_picking(osv.osv_memory):
         'file_to_import': fields.binary(string='File to import', filters='*.xml, *.xls',
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format."""),
+        'file_error': fields.binary(string='Lines not imported',
+                                    help="""* This file caught the line that were not imported."""),
+        'import_error_ok': fields.boolean(string='Error at import', readonly=True),
     }
 
     def import_file(self, cr, uid, ids, context=None):
@@ -57,9 +60,11 @@ class stock_partial_picking(osv.osv_memory):
             picking_type = data[0]['type']
             new_field_txt = """
             <newline/>
-            <group name="import_file_lines" string="Import Lines" colspan="4" col="2">
+            <group name="import_file_lines" string="Import Lines" colspan="4" col="8">
             <field name="file_to_import"/>
             <button name="import_file" string="Import the file" icon="gtk-execute" colspan="2" type="object" />
+            <field name="file_error" attrs="{'invisible':[('import_error_ok', '=', True)]}"/>
+            <field name="import_error_ok" invisible="0"/>
             </group>
             """
             # add field in arch
