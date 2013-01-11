@@ -52,19 +52,16 @@ def fprint(string):
         dprint(string)
 
 def _get_instance_level(self, cr, uid):
-    instance_pool = self.pool.get('msf.instance')
-    instance_level_search = instance_pool.search(cr, uid, [('level', '!=', False)])
+    instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
     
-    if instance_level_search:
-        instance = instance_pool.browse(cr, uid, instance_level_search[0])
-        instance_level = instance.level
-        
-        if instance_level == 'section':
+    instance_level = getattr(instance, 'level', False)
+    
+    if instance_level:
+        if instance_level.lower() == 'section':
             instance_level = 'hq'
             
         return instance_level.lower()
-    else:
-        return None
+    return False
 
 
 def _record_matches_domain(self, cr, uid, record_id, domain):
@@ -181,7 +178,7 @@ def create(self, cr, uid, vals, context=None):
 
                 return create_result
             else:
-                logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in msf.instance, no Field Access Rules can be respected!')
+                logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company, no Field Access Rules can be respected!')
                 return create_result
 
         else:
@@ -220,7 +217,7 @@ def write(self, cr, uid, ids, vals, context=None):
         # get instance level. if not set, log warning, then return normal write
         instance_level = _get_instance_level(self, cr, uid)
         if not instance_level:
-            logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in msf.instance, no Field Access Rules can be respected!')
+            logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company object, no Field Access Rules can be respected!')
             return super_write(self, cr, uid, ids, vals, context=context)
 
         # get rules for this model
@@ -328,7 +325,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         # get instance level. if not set, log warning, then return normal fields_view
         instance_level = _get_instance_level(self, cr, uid)
         if not instance_level:
-            logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in msf.instance, no Field Access Rules can be respected!')
+            logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company object, no Field Access Rules can be respected!')
             return fields_view
 
         # get rules for this model

@@ -79,7 +79,6 @@ class field_access_rule(osv.osv):
             else:
                 values['status'] = 'validated'
 
-
         # deactivate if not validated
         if 'status' in values and values['status'] == 'validated':
             values['active'] = False

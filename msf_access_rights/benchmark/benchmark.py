@@ -63,9 +63,26 @@ user_pool = connection.get_model("res.users")
 model_pool = connection.get_model("ir.model")
 user_model_id = model_pool.search([('model','=','res.users')])[0]
 
-instance_pool = connection.get_model('msf.instance')
-instance_level_search = instance_pool.search([('level', '!=', False)])
-instance_level = 'project'
+def _get_instance_level():
+    company_id = connection.get_model('res.users').read(connection.user_id)['company_id']
+    company = connection.get_model('res.company').read(company_id[0])
+    
+    if company['instance_id']:
+        instance = connection.get_model('msf.instance').read(company['instance_id'])
+        
+        instance_level = instance.get('level', False)
+        
+        if instance_level:
+            if instance_level.lower() == 'section':
+                instance_level = 'hq'
+                
+            return instance_level.lower()
+        else:
+            return False    
+    else:
+        return False
+
+instance_level = _get_instance_level()
 
 def create_rules():
     # create rules to benchmark against
