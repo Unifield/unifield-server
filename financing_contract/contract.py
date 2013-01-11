@@ -55,7 +55,30 @@ class financing_contract_contract(osv.osv):
         })
         return True
 
+    def search_draft_or_temp_posted_register_lines(self, cr, uid, ids, context=None):
+        """
+        Search all draft/temp posted register lines that have an analytic distribution in which funding pool lines have an analytic account set to those given in contract.
+        """
+        res = False
+        for c in self.browse(cr, uid, ids):
+### FIXME
+# Search register lines from statement not closed
+# Search register lines that are draft/temp posted (move_id.state are not valid/closed)
+# Search funding pool lines that have "all fp in contract" as analytic account
+            fpdl_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('account_id', 'in', [x.id for x in c.format_id.funding_pool_ids])])
+            absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', 'in', ['draft', 'temp'], ('distrib_id', 'in', fpdl_ids))])
+            if absl_ids:
+                res = absl_ids
+        return res
+
     def contract_soft_closed(self, cr, uid, ids, *args):
+        """
+        If some draft/temp posted register lines that have an analytic distribution in which funding pool lines have an analytic account set to those given in contract, then raise an error.
+        """
+        # Search draft/temp posted register lines
+        reg_lines = self.search_draft_or_temp_posted_register_lines(cr, uid, ids)
+        if reg_lines:
+            raise osv.except_osv(_('Error'), _("Some register lines linked to contract's funding pools are not hard posted: %s") % (','.join(reg_lines) or '', ))
         self.write(cr, uid, ids, {
             'state': 'soft_closed',
             'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')
