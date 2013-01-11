@@ -363,8 +363,17 @@ class stock_picking(osv.osv):
             uom_name = data['product_uom'][1]
             present_qty = data['product_qty']
             new_qty = max(present_qty + diff_qty, 0)
-            move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
-                                                    'product_uos_qty': new_qty,}, context=context)
+            if new_qty > 0.00 and present_qty != 0.00:
+                new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                                                                   'product_uos_qty': diff_qty,}, context=context)
+                move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+#                if present_qty == 0.00:
+#                    move_obj.write(cr, uid, [out_move_id], {'state': 'draft'})
+#                    move_obj.unlink(cr, uid, out_move_id, context=context)
+            else:
+                move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                                                        'product_uos_qty': new_qty,}, context=context)
+    
             # log the modification
             # log creation message
             move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.')%(stock_move_name, picking_out_name, new_qty, uom_name))
@@ -592,7 +601,7 @@ class stock_picking(osv.osv):
                         # update out move - quantity is increased, to match the original qty
                         # diff_qty = quantity originally in OUT move - count
                         out_diff_qty = mirror_data['quantity'] - count
-                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=False, context=dict(context, keepLineNumber=True))
+                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
