@@ -1044,7 +1044,7 @@ class shipment(osv.osv):
                                                         'analytic_distribution_id': distrib_id,
                                                        }, context=context)
 
-                    self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+                    self.pool.get('shipment').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
                     if move.sale_line_id:
                         sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)],})
                         sale_line_obj.write(cr, uid, [move.sale_line_id.id], {'invoiced': True,
