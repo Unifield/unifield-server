@@ -454,7 +454,7 @@ class stock_picking(osv.osv):
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
-
+                    values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
                         val_loc = self.pool.get('stock.location').browse(cr, uid, values.get('location_dest_id'), context=context)
@@ -513,7 +513,11 @@ class stock_picking(osv.osv):
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
                             if update_out:
-                                move_obj.write(cr, uid, [out_move_id], values, context=context)
+                                # UF-1690 : Remove the location_dest_id from values
+                                out_values = values.copy()
+                                if out_values.get('location_dest_id', False):
+                                    out_values.pop('location_dest_id')
+                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                             elif move.product_id.id != partial['product_id']:
                                 # no split but product changed, we have to update the corresponding out move
                                 move_obj.write(cr, uid, [out_move_id], values, context=context)
@@ -536,7 +540,13 @@ class stock_picking(osv.osv):
                         new_move = move_obj.copy(cr, uid, move.id, dict(values, processed_stock_move=True), context=dict(context, keepLineNumber=True))
                         done_moves.append(new_move)
                         if out_move_id:
-                            new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=dict(context, keepLineNumber=True))
+                            # UF-1690 : Remove the location_dest_id from values
+                            out_values = values.copy()
+                            out_values.update({'state': 'confirmed'})
+                            if out_values.get('location_dest_id', False):
+                                out_values.pop('location_dest_id')
+                            new_out_move = move_obj.copy(cr, uid, out_move_id, out_values, context=dict(context, keepLineNumber=True))
+                            
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity
