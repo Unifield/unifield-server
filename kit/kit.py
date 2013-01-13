@@ -775,7 +775,7 @@ class composition_kit(osv.osv):
             if obj.composition_type == 'theoretical':
                 search_ids = self.search(cr, uid, [('id', '!=', obj.id),
                                                    ('composition_product_id', '=', obj.composition_product_id.id),
-                                                   ('composition_version_txt', '=ilike', obj.composition_version_txt),
+                                                   ('composition_version_txt', 'ilike', obj.composition_version_txt),
                                                    ('composition_creation_date', '=', obj.composition_creation_date)], context=context)
                 if search_ids:
                     #print self.read(cr, uid, ids, ['composition_product_id', 'composition_version_txt', 'composition_creation_date'], context=context)

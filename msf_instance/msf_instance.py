@@ -57,8 +57,8 @@ class msf_instance(osv.osv):
             bad_ids = self.search(cr, uid, [('&'),
                                             ('state', '!=', 'inactive'),
                                             ('|'),
-                                            ('name', '=ilike', instance.name),
-                                            ('code', '=ilike', instance.code)])
+                                            ('name', 'ilike', instance.name),
+                                            ('code', 'ilike', instance.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -93,7 +93,7 @@ class msf_instance(osv.osv):
         for instance in self.browse(cr, uid, ids, context=context):
             bad_ids = self.search(cr, uid, [('&'),
                                             ('state', '!=', 'inactive'),
-                                            ('move_prefix', '=ilike', instance.move_prefix)])
+                                            ('move_prefix', 'ilike', instance.move_prefix)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -104,7 +104,7 @@ class msf_instance(osv.osv):
         for instance in self.browse(cr, uid, ids, context=context):
             bad_ids = self.search(cr, uid, [('&'),
                                             ('state', '!=', 'inactive'),
-                                            ('reconcile_prefix', '=ilike', instance.reconcile_prefix)])
+                                            ('reconcile_prefix', 'ilike', instance.reconcile_prefix)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True

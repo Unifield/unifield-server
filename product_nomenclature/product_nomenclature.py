@@ -210,7 +210,7 @@ class product_nomenclature(osv.osv):
 
         parent_ids = None
         for path in args[0][2].split('/'):
-            dom = [('name', '=ilike', path.strip())]
+            dom = [('name', 'ilike', path.strip())]
             if parent_ids is None:
                 dom.append(('parent_id', '=', False))
             else:

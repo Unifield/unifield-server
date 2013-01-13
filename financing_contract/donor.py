@@ -43,7 +43,7 @@ class financing_contract_donor(osv.osv):
         if not context:
             context = {}
         for donor in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', donor.name),('code', '=ilike', donor.code)])
+            bad_ids = self.search(cr, uid, [('|'),('name', 'ilike', donor.name),('code', 'ilike', donor.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True

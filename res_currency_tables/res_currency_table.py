@@ -56,7 +56,7 @@ class res_currency_table(osv.osv):
         if not context:
             context={}
         for table in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', table.name),('code', '=ilike', table.code)])
+            bad_ids = self.search(cr, uid, [('|'),('name', 'ilike', table.name),('code', 'ilike', table.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True

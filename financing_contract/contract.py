@@ -155,7 +155,7 @@ class financing_contract_contract(osv.osv):
         if not context:
             context = {}
         for contract in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('|'),('name', '=ilike', contract.name),('code', '=ilike', contract.code)])
+            bad_ids = self.search(cr, uid, [('|'),('name', 'ilike', contract.name),('code', 'ilike', contract.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
