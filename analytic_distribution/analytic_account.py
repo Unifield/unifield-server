@@ -81,6 +81,7 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         for account in self.browse(cr, uid, ids, context=context):
+            # UF-1662: When I set the account name to translate=True, the search parameter =ilike raises exception?
             bad_ids = self.search(cr, uid, [('category', '=', account.category),('|'),('name', '=ilike', account.name),('code', '=ilike', account.code)])
             if len(bad_ids) and len(bad_ids) > 1:
                 return False

@@ -14,6 +14,14 @@
         <field name="time_format">%H:%M</field>
     </record>
 
+    <record id="lang_msf_fr" model="res.lang">
+        <field name="code">fr_MF</field>
+        <field name="name">MSF French</field>
+        <field name="translatable">True</field>
+        <field name="date_format">%d/%b/%Y</field>
+        <field name="time_format">%H:%M</field>
+    </record>
+
     <function name="install_lang" model="res.lang"/>
     
     <record model="res.users" id="base.user_root">

@@ -3,3 +3,5 @@ import report
 import double_validation_installer
 import account_installer
 import user_access_configurator
+import msf_translation
+import msf_language_import
