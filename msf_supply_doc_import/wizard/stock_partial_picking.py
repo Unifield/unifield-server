@@ -35,13 +35,23 @@ class stock_partial_picking(osv.osv_memory):
     """
     _inherit = "stock.partial.picking"
 
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if obj.message:
+                res[obj.id] = True
+        return res
+
     _columns = {
         'file_to_import': fields.binary(string='File to import', filters='*.xml, *.xls',
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format."""),
         'data': fields.binary('Lines not imported'),
         'filename': fields.char('Lines not imported', size=256),
-        'import_error_ok': fields.boolean(string='Error at import', readonly=True),
+        'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
         'message': fields.text('Report of lines\' import', readonly=True),
     }
 
@@ -65,6 +75,10 @@ class stock_partial_picking(osv.osv_memory):
         
 
     def import_file(self, cr, uid, ids, context=None):
+        """
+        Read the file line of the xls file and update the values of the wizard.
+        Create an other xls file if lines are ignored.
+        """
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -73,26 +87,27 @@ class stock_partial_picking(osv.osv_memory):
         move_obj = self.pool.get('stock.move.memory.in')
         obj_data = self.pool.get('ir.model.data')
         cell_data = self.pool.get('import.cell.data')
+        list_line_values = []
         for obj in self.read(cr, uid, ids, ['product_moves_in', 'file_to_import'], context):
             file_to_import = obj['file_to_import']
             if not file_to_import:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
             product_moves_in = obj['product_moves_in']
-            test = move_obj.read(cr, uid, product_moves_in)
+            list_line_values = move_obj.read(cr, uid, product_moves_in)
         ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
         # iterator on rows
         rows = fileobj.getRows()
         # ignore the first row
         rows.next()
-        import_error_ok = False
         file_line_num = 1
         error_list = []
         line_with_error = []
+        list_line_nb = [line['line_number'] for line in list_line_values]
+        error = ''
         for row in rows:
             # default values
-            purchase_line_ids = []
-            error = ''
+            line_data = {}
             file_line_num += 1
             # Check length of the row
             if len(row) < 8:
@@ -101,45 +116,58 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
             # Cell 0: Line Number
             cell_nb = 0
             line_number = cell_data.get_move_line_number(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-            # Cell 1: Product Code
-            cell_nb = 1
-            product_id = cell_data.get_product_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-            # Cell 3: Quantity To Process
-            cell_nb = 3
-            product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-            # Cell 4: Product UOM
-            cell_nb = 4
-            product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-            # Cell 5: Batch, Prodlot
-            cell_nb = 5
-            prodlot_id = cell_data.get_prodlot_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-            # Cell 6: Expiry Date
-            cell_nb = 6
-            expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-            line_data = {'line_number': line_number,
-                         'product_id': product_id,
-                         'quantity': product_qty,
-                         'product_uom': product_uom_id,
-                         'prodlot_id': prodlot_id,
-                         'expiry_date':expired_date,}
-            # each line is identifying with the search key below (wizard_pick_id, line_number, product_id)
-            existing_line_id = move_obj.search(cr, uid, [('wizard_pick_id', '=', ids[0]), ('line_number', '=', line_number), ('product_id', '=', product_id),])
-            if existing_line_id:
+            if line_number in list_line_nb:
+                same_line_ids = move_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_pick_id', '=', ids[0])])
+                if len(same_line_ids) == 1:
+                    line = move_obj.read(cr, uid, same_line_ids)[0]
+                # Cell 1: Product Code
+                cell_nb = 1
+                product_id = cell_data.get_product_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                if not product_id:
+                    error_list.append("Line %s of the Excel file: The product was not found in the database" % (file_line_num))
+                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                    ignore_lines += 1
+                    continue
+                elif product_id and product_id != line['product_id']:
+                    error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product." % (file_line_num, line_number))
+                    line_data.update({'product_id': product_id})
+                # Cell 3: Quantity To Process
+                cell_nb = 3
+                product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                if product_qty != line['quantity']:
+                    error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
+                    line_data.update({'quantity': product_qty})
+                # Cell 4: Product UOM
+                cell_nb = 4
+                product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                if not product_uom_id:
+                    error_list.append("Line %s of the Excel file: The product UOM was not found in the database" % (file_line_num))
+                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                    ignore_lines += 1
+                    continue
+                if product_uom_id and product_uom_id != line['product_uom']:
+                    error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (file_line_num, line_number))
+                    line_data.update({'product_uom': product_uom_id})
+                # Cell 5: Batch, Prodlot
+                cell_nb = 5
+                prodlot_id = cell_data.get_prodlot_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                line_data.update({'prodlot_id': prodlot_id})
+                # Cell 6: Expiry Date
+                cell_nb = 6
+                expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                line_data.update({'expiry_date':expired_date,})
                 try:
-                    move_obj.write(cr, uid, existing_line_id, line_data, context)
+                    move_obj.write(cr, uid, [line['id']], line_data, context)
                 except osv.except_osv as osv_error:
                     osv_value = osv_error.value
                     osv_name = osv_error.name
                     error_list.append("Line %s in your Excel file: %s: %s\n" % (file_line_num, osv_name, osv_value))
                     ignore_lines += 1
                 complete_lines += 1
-            elif move_obj.search(cr, uid, [('wizard_pick_id', '=', ids[0]), ('line_number', '=', line_number)]):
-                product_name = False
-                if product_id:
-                    product_name = product_obj.read(cr, uid, product_id, ['name'], context)['name']
-                error_list.append("Line %s of the Excel file: The product %s does not match with the existing product of the line %s" % (file_line_num, product_name or 'is not found in the database or', line_number))
+            else:
+                # lines ignored if they don't have the same line number as the line of the wizard
+                error_list.append("Line %s of the Excel file does not correspond to any line number." % (file_line_num))
                 line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                import_error_ok = True
                 ignore_lines += 1
         error += '\n'.join(error_list)
         message = '''Importation completed !
@@ -150,7 +178,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
 Reported errors :
 %s
                 '''  % (complete_lines, lines_to_correct, ignore_lines, error or 'No error !')
-        vals = {'message': message, 'import_error_ok': import_error_ok,}
+        vals = {'message': message}
         if line_with_error:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
             vals.update(file_to_export)
