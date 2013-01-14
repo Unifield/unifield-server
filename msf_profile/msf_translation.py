@@ -33,7 +33,12 @@ class account_account(osv.osv):
             context = {}
         res = super(account_account, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'account.account,name',
@@ -59,7 +64,12 @@ class account_journal(osv.osv):
             context = {}
         res = super(account_journal, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'account.journal,name',
@@ -84,9 +94,13 @@ class account_analytic_account(osv.osv):
         if context is None:
             context = {}
         res = super(account_analytic_account, self).create(cr, uid, vals, context)
-        return res
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'account.analytic.account,name',
@@ -113,7 +127,12 @@ class account_analytic_journal(osv.osv):
             context = {}
         res = super(account_analytic_journal, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'account.analytic.journal,name',
@@ -139,7 +158,12 @@ class account_period(osv.osv):
             context = {}
         res = super(account_period, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'account.period,name',
@@ -165,7 +189,12 @@ class res_currency(osv.osv):
             context = {}
         res = super(res_currency, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['currency_name'],
                           'value': vals['currency_name'],
                           'name': 'res.currency,currency_name',
@@ -191,7 +220,12 @@ class product_template(osv.osv):
             context = {}
         res = super(product_template, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'product.template,name',
@@ -218,7 +252,12 @@ class product_nomenclature(osv.osv):
             context = {}
         res = super(product_nomenclature, self).create(cr, uid, vals, context)
         
-        ir_translation = {'lang': 'en_US',
+        lang = 'en_US'
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            lang = lang_dict.get('context_lang')
+            
+        ir_translation = {'lang': lang,
                           'src': vals['name'],
                           'value': vals['name'],
                           'name': 'product.nomenclature,name',
