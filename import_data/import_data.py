@@ -248,11 +248,9 @@ class import_data(osv.osv_memory):
                     
                     if ids_to_update:
                         impobj.write(cr, uid, ids_to_update, data)
-                        print 'write %s' % ids_to_update
                         nb_update_success += 1
                     else:
                         impobj.create(cr, uid, data)
-                        print 'create %s' % data
                         nb_succes += 1
                 else:
                     impobj.create(cr, uid, data)
