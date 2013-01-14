@@ -61,12 +61,15 @@ class financing_contract_contract(osv.osv):
         """
         res = False
         for c in self.browse(cr, uid, ids):
-### FIXME
-# Search register lines from statement not closed
-# Search register lines that are draft/temp posted (move_id.state are not valid/closed)
-# Search funding pool lines that have "all fp in contract" as analytic account
-            fpdl_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('account_id', 'in', [x.id for x in c.format_id.funding_pool_ids])])
-            absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', 'in', ['draft', 'temp'], ('distrib_id', 'in', fpdl_ids))])
+            # Create domain to find analytic lines
+            domain = []
+            for actual in c.actual_line_ids:
+                domain += self.pool.get('financing.contract.format.line')._get_analytic_domain(cr, uid, actual, 'allocated_real')
+            # Find analytic lines
+            al_ids = self.pool.get('account.analytic.line').search(cr, uid, domain)
+            move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] and x.get('move_id')[0] for x in self.pool.get('account.analytic.line').read(cr, uid, al_ids, ['move_id'])]
+            # Search statement lines that are draft/temp and which have a move id compatible
+            absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', 'in', ['draft', 'temp']), ('move_ids', 'in', move_ids)])
             if absl_ids:
                 res = absl_ids
         return res
@@ -74,11 +77,17 @@ class financing_contract_contract(osv.osv):
     def contract_soft_closed(self, cr, uid, ids, *args):
         """
         If some draft/temp posted register lines that have an analytic distribution in which funding pool lines have an analytic account set to those given in contract, then raise an error.
+        Otherwise set contract as soft closed.
         """
         # Search draft/temp posted register lines
         reg_lines = self.search_draft_or_temp_posted_register_lines(cr, uid, ids)
         if reg_lines:
-            raise osv.except_osv(_('Error'), _("Some register lines linked to contract's funding pools are not hard posted: %s") % (','.join(reg_lines) or '', ))
+            msg= ''
+            for i, st in enumerate(self.pool.get('account.bank.statement.line').browse(cr, uid, reg_lines)):
+                if i > 0:
+                    msg += ' - '
+                msg += (st.name or '') + (st.statement_id and st.statement_id.name and (' in (' + st.statement_id.name + ')') or '')
+            raise osv.except_osv(_('Error'), _("Some register lines linked to contract's funding pools are not hard posted: %s") % (msg,))
         self.write(cr, uid, ids, {
             'state': 'soft_closed',
             'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')
