@@ -103,6 +103,7 @@ class stock_partial_picking(osv.osv_memory):
         line_with_error = []
         list_line_nb = [line['line_number'] for line in list_line_values]
         error = ''
+        context.update({'import_in_progress': True})
         for line in list_line_values:
             fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
             # iterator on rows

@@ -93,7 +93,8 @@ class split_memory_move(osv.osv_memory):
                 values = {'quantity_ordered': new_qty}
 
             if available_qty_to_process > 0.0 and class_name != 'stock.move.memory.ppl':
-                values['quantity'] = 0.0
+                if not context.get('import_in_progress'):
+                    values['quantity'] = 0.0
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
