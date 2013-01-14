@@ -296,8 +296,9 @@ def write(self, cr, uid, ids, vals, context=None):
                     # if we still have new values to write, write them for the current record
                     if new_values:
                         super_write(self, cr, uid, ids, new_values, context=context)
-
-            return True
+            
+            else:
+                return super_write(self, cr, uid, ids, vals, context=context)
 
         else:
             return super_write(self, cr, uid, ids, vals, context=context)
