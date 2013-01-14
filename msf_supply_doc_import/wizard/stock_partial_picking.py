@@ -129,9 +129,10 @@ class stock_partial_picking(osv.osv_memory):
                             ignore_lines += 1
                             continue
                         elif product_id and product_id != line['product_id']:
-                            error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product." % (file_line_num, line_number))
+                            error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s."
+                                              % (file_line_num, line_number, product_obj.read(cr, uid, line['product_id'], ['default_code'])['default_code'], product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
                             # we change the product through the existing wizard
-                            wizard_values = move_obj.change_product(cr, uid, ids, context)
+                            wizard_values = move_obj.change_product(cr, uid, line['id'], context)
                             wiz_context = wizard_values.get('context')
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': product_id}, context=wiz_context)
                             self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
@@ -166,12 +167,21 @@ class stock_partial_picking(osv.osv_memory):
                                 first_same_line_nb = False
                             else:
                                 # if the line imported is not the first to update the line_number, we split it
-                                
-                                move_obj.create(cr, uid, line_data, context)
+                                wizard_values = move_obj.split(cr, uid, line['id'], context)
+                                wiz_context = wizard_values.get('context')
+                                self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
+                                                                                {'quantity': product_qty}, context=wiz_context)
+                                self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                                error_list.append("Line %s in your Excel file produced a split for the line %s and the quantity were reset." % (file_line_num, line_number))
                         except osv.except_osv as osv_error:
                             osv_value = osv_error.value
                             osv_name = osv_error.name
-                            error_list.append("Line %s in your Excel file: %s: %s\n" % (file_line_num, osv_name, osv_value))
+                            error_list.append("Line %s in your Excel file was added to the file of the lines not imported: %s: %s\n" % (file_line_num, osv_name, osv_value))
+                            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                            ignore_lines += 1
+                        except Exception, e:
+                            error_list.append("Line %s in your Excel file was added to the file of the lines not imported: %s\n" % (file_line_num, e))
+                            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                             ignore_lines += 1
                         complete_lines += 1
                 else:
