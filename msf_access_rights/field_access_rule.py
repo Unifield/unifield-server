@@ -122,17 +122,24 @@ class field_access_rule(osv.osv):
         assert len(ids) <= 1, "Cannot work on list of ids longer than one"
 
         record = self.browse(cr, uid, ids[0])
-
-        res = {
-            'name': 'Create a New Filter For: %s' % record.model_id.name,
-            'res_model': record.model_id.model,
-            'type': 'ir.actions.act_window',
-            'view_type': 'form',
-			'view_mode':'tree,form',
-            'target': 'new', 
-        }
-
-        return res
+        
+        # search in ir.ui.view for form and tree views for this model. If they exist, return action, else return None, otherwise openerp will error
+        view_pool = self.pool.get('ir.ui.view')
+        form = view_pool.search(cr, 1, [('type','=','form'),('model','=',record.model_name)])
+        tree = view_pool.search(cr, 1, [('type','=','tree'),('model','=',record.model_name)])
+        
+        if form and tree:
+            res = {
+                'name': 'Create a New Filter For: %s' % record.model_id.name,
+                'res_model': record.model_id.model,
+                'type': 'ir.actions.act_window',
+                'view_type': 'form',
+    			'view_mode':'tree,form',
+                'target': 'new', 
+            }
+            return res        
+        else:
+            raise osv.except_osv('No List View', 'The chosen model has no List view so this feature cannot be used. You can still manually type a filter in the Advanced Filter field...')
 
     def generate_rules_button(self, cr, uid, ids, context=None):
         """
