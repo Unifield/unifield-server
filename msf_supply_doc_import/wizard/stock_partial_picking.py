@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import threading
+import pooler
 from osv import fields, osv
 from tools.translate import _
 # xml parser
@@ -74,11 +76,13 @@ class stock_partial_picking(osv.osv_memory):
         return vals
         
 
-    def import_file(self, cr, uid, ids, context=None):
+    def _import(self, dbname, uid, ids, context=None):
         """
         Read the file line of the xls file and update the values of the wizard.
         Create an other xls file if lines are ignored.
         """
+        cr = pooler.get_db(dbname).cursor()
+        
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -219,6 +223,8 @@ Reported errors :
             vals.update(file_to_export)
         self.write(cr, uid, ids, vals, context=context)
         self.check_lines(cr, uid, ids, context)
+        cr.commit()
+        cr.close()
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.partial.picking',
                 'view_type': 'form',
@@ -226,6 +232,19 @@ Reported errors :
                 'target': 'new',
                 'res_id': ids[0],
                 }
+
+    def import_file(self, cr, uid, ids, context=None):
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+        Otherwise, you can continue to use Unifield.""")
+        self.log(cr, uid, ids[0], msg_to_return)
+
+    def dummy(self, cr, uid, ids, context=None):
+        """
+        This button is only for updating the view.
+        """
+        return
 
     def check_lines(self, cr, uid, ids, context=None):
         """
@@ -252,14 +271,15 @@ Reported errors :
             if picking_type == 'incoming_shipment':
                 new_field_txt = """
                 <newline/>
-                <group name="import_file_lines" string="Import Lines" colspan="4" col="4">
-                <field name="file_to_import" colspan="1"/>
+                <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
+                <field name="file_to_import" colspan="2"/>
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                 <field name="import_error_ok" invisible="1"/>
                 <field name="filename" invisible="1"  />
                 <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
-                <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
+                <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
                 </group>
+                <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
                 """
                 # add field in arch
                 arch = result['arch']
