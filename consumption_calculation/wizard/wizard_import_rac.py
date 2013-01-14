@@ -122,9 +122,9 @@ class wizard_import_rac(osv.osv_memory):
                 continue
 
             prod = product_obj.browse(cr, uid, product_id)
+            expiry_date = False
             if not prod.batch_management and not prod.perishable:
                 batch = False
-                expiry_date = False
             else:
                 if prod.batch_management and not line[3]:
                     error += "Line %s : batch number required\n" % (line_num, )
