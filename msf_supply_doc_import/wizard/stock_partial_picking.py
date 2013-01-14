@@ -86,7 +86,6 @@ class stock_partial_picking(osv.osv_memory):
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
         move_obj = self.pool.get('stock.move.memory.in')
-        obj_data = self.pool.get('ir.model.data')
         cell_data = self.pool.get('import.cell.data')
         list_line_values = []
         for obj in self.read(cr, uid, ids, ['product_moves_in', 'file_to_import'], context):
@@ -121,6 +120,9 @@ class stock_partial_picking(osv.osv_memory):
                 line_number = cell_data.get_move_line_number(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                 if line_number in list_line_nb:
                     if line_number == line['line_number']:
+                        # Cell 3: Quantity To Process => we need it for the split
+                        cell_nb = 3
+                        product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                         try:
                             if not first_same_line_nb:
                                 # if the line imported is not the first to update the line_number, we split it
@@ -133,6 +135,11 @@ class stock_partial_picking(osv.osv_memory):
                                 # the line that will be updated changed, we take the last created
                                 new_line_id = move_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_pick_id', '=', ids[0])])[-1]
                                 line = move_obj.read(cr, uid, new_line_id)
+
+                            # Cell 3: Quantity To Process
+                            if product_qty != line['quantity']:
+                                error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
+                                line_data.update({'quantity': product_qty})
 
                             # Cell 1: Product Code
                             cell_nb = 1
@@ -150,12 +157,6 @@ class stock_partial_picking(osv.osv_memory):
                                 wiz_context = wizard_values.get('context')
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': product_id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                            # Cell 3: Quantity To Process
-                            cell_nb = 3
-                            product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                            if product_qty != line['quantity']:
-                                error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
-                                line_data.update({'quantity': product_qty})
                             # Cell 4: Product UOM
                             cell_nb = 4
                             product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
@@ -176,7 +177,7 @@ class stock_partial_picking(osv.osv_memory):
                                 cell_nb = 6
                                 expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                                 if not expired_date:
-                                    error_list.append("Line %s of the Excel file: The Expiry Date was not found" % (file_line_num))
+                                    error_list.append("Line %s of the Excel file was added to the file of the lines not imported: The Expiry Date was not found" % (file_line_num))
                                     line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                                     ignore_lines += 1
                                     continue
@@ -187,8 +188,7 @@ class stock_partial_picking(osv.osv_memory):
                                                       % (file_line_num, prodlot_name, expired_date, product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
                                 line_data.update({'prodlot_id': prodlot_id})
                             first_same_line_nb = False
-                            if line_data:
-                                move_obj.write(cr, uid, [line['id']], line_data, context)
+                            move_obj.write(cr, uid, [line['id']], line_data, context)
                         except osv.except_osv as osv_error:
                             osv_value = osv_error.value
                             osv_name = osv_error.name
@@ -218,6 +218,7 @@ Reported errors :
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
             vals.update(file_to_export)
         self.write(cr, uid, ids, vals, context=context)
+        self.check_lines(cr, uid, ids, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.partial.picking',
                 'view_type': 'form',
@@ -225,6 +226,19 @@ Reported errors :
                 'target': 'new',
                 'res_id': ids[0],
                 }
+
+    def check_lines(self, cr, uid, ids, context=None):
+        """
+        If some line have product that is not batch mandatory, we can remove the batch.
+        """
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move.memory.in')
+        for spp in self.browse(cr, uid, ids,context):
+            for line in spp.product_moves_in:
+                if not line.product_id.perishable:
+                    move_obj.write(cr, uid, [line.id], {'prodlot_id': False, 'expiry_date': False}, context)
+        return
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
@@ -235,7 +249,6 @@ Reported errors :
         result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
         picking_type = context.get('picking_type')
         if view_type == 'form':
-            form = etree.fromstring(result['arch'])
             if picking_type == 'incoming_shipment':
                 new_field_txt = """
                 <newline/>

@@ -92,8 +92,8 @@ class import_cell_data(osv.osv_memory):
     def get_prodlot_name(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
-            prodlot_name = cell_data.strip()
-        return prodlot_name
+            return cell_data.strip()
+        return False
 
     def get_expired_date(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
