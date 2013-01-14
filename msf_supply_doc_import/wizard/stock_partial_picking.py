@@ -84,6 +84,7 @@ class stock_partial_picking(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         product_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
         move_obj = self.pool.get('stock.move.memory.in')
         obj_data = self.pool.get('ir.model.data')
         cell_data = self.pool.get('import.cell.data')
@@ -120,52 +121,8 @@ class stock_partial_picking(osv.osv_memory):
                 line_number = cell_data.get_move_line_number(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                 if line_number in list_line_nb:
                     if line_number == line['line_number']:
-                        # Cell 1: Product Code
-                        cell_nb = 1
-                        product_id = cell_data.get_product_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                        if not product_id:
-                            error_list.append("Line %s of the Excel file: The product was not found in the database" % (file_line_num))
-                            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                            ignore_lines += 1
-                            continue
-                        elif product_id and product_id != line['product_id']:
-                            error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s."
-                                              % (file_line_num, line_number, product_obj.read(cr, uid, line['product_id'], ['default_code'])['default_code'], product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
-                            # we change the product through the existing wizard
-                            wizard_values = move_obj.change_product(cr, uid, line['id'], context)
-                            wiz_context = wizard_values.get('context')
-                            self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': product_id}, context=wiz_context)
-                            self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                        # Cell 3: Quantity To Process
-                        cell_nb = 3
-                        product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                        if product_qty != line['quantity']:
-                            error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
-                            line_data.update({'quantity': product_qty})
-                        # Cell 4: Product UOM
-                        cell_nb = 4
-                        product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                        if not product_uom_id:
-                            error_list.append("Line %s of the Excel file: The product UOM was not found in the database" % (file_line_num))
-                            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                            ignore_lines += 1
-                            continue
-                        if product_uom_id and product_uom_id != line['product_uom']:
-                            error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (file_line_num, line_number))
-                            line_data.update({'product_uom': product_uom_id})
-                        # Cell 5: Batch, Prodlot
-                        cell_nb = 5
-                        prodlot_id = cell_data.get_prodlot_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                        line_data.update({'prodlot_id': prodlot_id})
-                        # Cell 6: Expiry Date
-                        cell_nb = 6
-                        expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                        line_data.update({'expiry_date':expired_date,})
                         try:
-                            if first_same_line_nb:
-                                move_obj.write(cr, uid, [line['id']], line_data, context)
-                                first_same_line_nb = False
-                            else:
+                            if not first_same_line_nb:
                                 # if the line imported is not the first to update the line_number, we split it
                                 wizard_values = move_obj.split(cr, uid, line['id'], context)
                                 wiz_context = wizard_values.get('context')
@@ -173,6 +130,65 @@ class stock_partial_picking(osv.osv_memory):
                                                                                 {'quantity': product_qty}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
                                 error_list.append("Line %s in your Excel file produced a split for the line %s and the quantity were reset." % (file_line_num, line_number))
+                                # the line that will be updated changed, we take the last created
+                                new_line_id = move_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_pick_id', '=', ids[0])])[-1]
+                                line = move_obj.read(cr, uid, new_line_id)
+
+                            # Cell 1: Product Code
+                            cell_nb = 1
+                            product_id = cell_data.get_product_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                            if not product_id:
+                                error_list.append("Line %s of the Excel file: The product was not found in the database" % (file_line_num))
+                                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                                ignore_lines += 1
+                                continue
+                            elif product_id and product_id != line['product_id']:
+                                error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s."
+                                                  % (file_line_num, line_number, product_obj.read(cr, uid, line['product_id'], ['default_code'])['default_code'], product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
+                                # we change the product through the existing wizard
+                                wizard_values = move_obj.change_product(cr, uid, line['id'], context)
+                                wiz_context = wizard_values.get('context')
+                                self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': product_id}, context=wiz_context)
+                                self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                            # Cell 3: Quantity To Process
+                            cell_nb = 3
+                            product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                            if product_qty != line['quantity']:
+                                error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
+                                line_data.update({'quantity': product_qty})
+                            # Cell 4: Product UOM
+                            cell_nb = 4
+                            product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                            if not product_uom_id:
+                                error_list.append("Line %s of the Excel file: The product UOM was not found in the database" % (file_line_num))
+                                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                                ignore_lines += 1
+                                continue
+                            if product_uom_id and product_uom_id != line['product_uom']:
+                                error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (file_line_num, line_number))
+                                line_data.update({'product_uom': product_uom_id})
+                            # Is the product batch mandatory?
+                            if product_obj.read(cr, uid, product_id, ['perishable'], context)['perishable']:
+                                # Cell 5: Batch, Prodlot
+                                cell_nb = 5
+                                prodlot_name = cell_data.get_prodlot_name(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                                # Cell 6: Expiry Date
+                                cell_nb = 6
+                                expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
+                                if not expired_date:
+                                    error_list.append("Line %s of the Excel file: The Expiry Date was not found" % (file_line_num))
+                                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                                    ignore_lines += 1
+                                    continue
+                                prodlot_id = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])[0]
+                                if not prodlot_id:
+                                    prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id})
+                                    error_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+                                                      % (file_line_num, prodlot_name, expired_date, product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
+                                line_data.update({'prodlot_id': prodlot_id})
+                            first_same_line_nb = False
+                            if line_data:
+                                move_obj.write(cr, uid, [line['id']], line_data, context)
                         except osv.except_osv as osv_error:
                             osv_value = osv_error.value
                             osv_name = osv_error.name

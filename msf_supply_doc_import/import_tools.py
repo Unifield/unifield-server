@@ -89,19 +89,16 @@ class import_cell_data(osv.osv_memory):
                 return product_uom_ids[0]
         return False
 
-    def get_prodlot_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
+    def get_prodlot_name(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             prodlot_name = cell_data.strip()
-            prodlot_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=', prodlot_name)])
-            if prodlot_ids:
-                return prodlot_ids[0]
-        return False
+        return prodlot_name
 
     def get_expired_date(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and row.type == 'datetime':
-            return expired_date
+        if cell_data and row.cells[cell_nb].type == 'datetime':
+                return cell_data
         return False
 
     def get_line_values(self, cr, uid, ids, row):
