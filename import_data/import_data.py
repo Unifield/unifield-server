@@ -244,11 +244,16 @@ class import_data(osv.osv_memory):
                     ids_to_update = []
 
                     if impobj._name == 'product.product':
-                        search_val = [('default_code', '=', data['default_code'])]
                         ids_to_update = impobj.search(cr, uid, [('default_code', '=', data['default_code'])])
-
-                    impobj.write(cr, uid, ids_to_update, data)
-                    nb_update_success += 1
+                    
+                    if ids_to_update:
+                        impobj.write(cr, uid, ids_to_update, data)
+                        print 'write %s' % ids_to_update
+                        nb_update_success += 1
+                    else:
+                        impobj.create(cr, uid, data)
+                        print 'create %s' % data
+                        nb_succes += 1
                 else:
                     impobj.create(cr, uid, data)
                     nb_succes += 1
