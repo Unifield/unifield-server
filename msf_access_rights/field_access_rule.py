@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from osv import orm
+import psycopg2
 
 class field_access_rule(osv.osv):
     """
@@ -200,7 +201,7 @@ class field_access_rule(osv.osv):
 
             try:
                 pool.search(cr, uid, domain, context=context)
-            except ValueError:
+            except (ValueError, psycopg2.ProgrammingError):
                 raise osv.except_osv(exception_title, exception_body)
 
             self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
