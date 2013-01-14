@@ -114,7 +114,7 @@ class import_data(osv.osv_memory):
         cr = pooler.get_db(dbname).cursor()
 
         obj = self.read(cr, uid, ids[0])
-        import_mode = obj.import_mode
+        import_mode = obj.get('import_mode')
         
         objname = ""
         for sel in self._columns['object'].selection:
@@ -240,6 +240,7 @@ class import_data(osv.osv_memory):
                     self.post_hook[impobj._name](impobj, cr, uid, data, row)
                 
                 if import_mode == 'update':
+                    # Search if an object already exist. If not, create it.
                     ids_to_update = []
 
                     if impobj._name == 'product.product':
@@ -267,7 +268,9 @@ class import_data(osv.osv_memory):
         if self.post_load_hook.get(impobj._name):
             self.post_load_hook[impobj._name](impobj, cr, uid)
         fileobj.close()
+        import_type = 'Import'
         if import_mode == 'update':
+            import_type = 'Update'
             summary = '''Datas Import Summary: 
 Object: %s
 Records updated: %s
@@ -286,7 +289,7 @@ Find in attachment the rejected lines'''%(nb_error)
 
         request_obj = self.pool.get('res.request')
         req_id = request_obj.create(cr, uid,
-            {'name': "Import %s"%(objname,),
+            {'name': "%s %s"%(import_type, objname,),
             'act_from': uid,
             'act_to': uid,
             'body': summary,
@@ -336,5 +339,16 @@ class import_product(osv.osv_memory):
                 'target': 'new'}
 
 import_product()
+
+class update_product(osv.osv_memory):
+    _name = 'update_product'
+    _inherit = 'import_product'
+
+    _defaults = {
+        'object': lambda *a: 'product.product',
+        'import_mode': lambda *a: 'update',
+    }
+
+update_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
