@@ -102,8 +102,12 @@ class field_access_rule(osv.osv):
         """
         if domain_id:
             df = self.pool.get('ir.filters').browse(cr, uid, domain_id)
-            df.domain = df.domain.replace("'ilike'", "'='").replace('"ilike"', '"="').replace("'like'","'='").replace('"like"','"="')
-            return {'value': {'domain_text': df.domain, 'status': 'validated', 'active': False}}
+            original_domain = df.domain
+            df.domain = str([((e[0],'=',e[2]) if isinstance(e, (list, tuple)) and e[1] in ('ilike', 'like') else e) for e in eval(df.domain)])
+            if df.domain == original_domain:
+                return {'value': {'domain_text': df.domain, 'status': 'validated', 'active': False}}
+            else:
+                return {'value': {'domain_text': df.domain, 'status': 'validated', 'active': False}, 'warning': {'title': 'Warning', 'message': 'Due to a technical constraint, "like" and "ilike" operators have been replaced with "=".'}}
         else:
             return {'value': {'domain_text': '', 'status': 'validated', 'active': False}}
 
