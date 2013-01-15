@@ -26,8 +26,9 @@ from lxml import etree
 import logging
 import copy
 
-debug = False
+debug = False # set to True to allow ANY debug printing
 
+# set the following 5 flags to True to allow their specific debug messages. debug must also be set to True
 create_debug = False
 write_debug = False
 fields_debug = False
@@ -40,15 +41,15 @@ def dprint(string):
         print string
 
 def cprint(string):
-    if create_debug:
+    if debug and create_debug:
         dprint(string)
 
 def wprint(string):
-    if write_debug:
+    if debug and write_debug:
         dprint(string)
 
 def fprint(string):
-    if fields_debug:
+    if debug and fields_debug:
         dprint(string)
 
 def _get_instance_level(self, cr, uid):
@@ -107,16 +108,16 @@ def create(self, cr, uid, vals, context=None):
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
     # TODO: remove the testing lines below
-    if sync_debug:
+    if debug and sync_debug:
         context['sync_data'] = True
         
-    if user_debug:
+    if debug and user_debug:
         real_uid = uid
         uid = 0
         
     if (uid != 1 or context.get('applyToAdmin', False)) and context.get('sync_data'):
         
-        if user_debug: 
+        if debug and user_debug: 
             uid = real_uid
 
         cprint('====== SYNCING')
@@ -200,16 +201,16 @@ def write(self, cr, uid, ids, vals, context=None):
 
     context = context or {}
 
-    if sync_debug:
+    if debug and sync_debug:
         context['sync_data'] = True
         
-    if user_debug:
+    if debug and user_debug:
         real_uid = uid
         uid = 0
     
     if (uid != 1 or context.get('applyToAdmin', False)):
         
-        if user_debug:
+        if debug and user_debug:
             uid = real_uid
 
         wprint('================== WRITE OVERRIDE')
@@ -316,10 +317,12 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
     context = context or {}
     fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
 
-    real_uid = uid
-    uid = 0
+    if debug and user_debug:
+        real_uid = uid
+        uid = 0
     if uid != 1:
-        uid = real_uid
+        if debug and user_debug:
+            uid = real_uid
 
         fprint('=================== FIELDS_VIEW_GET OVERRIDE')
 
