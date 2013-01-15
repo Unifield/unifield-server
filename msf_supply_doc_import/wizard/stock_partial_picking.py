@@ -51,8 +51,8 @@ class stock_partial_picking(osv.osv_memory):
         'file_to_import': fields.binary(string='File to import', filters='*.xml, *.xls',
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format."""),
-        'data': fields.binary('Lines not imported'),
-        'filename': fields.char('Lines not imported', size=256),
+        'data': fields.binary('Lines with errors'),
+        'filename': fields.char('Lines with errors', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
         'message': fields.text('Report of lines\' import', readonly=True),
     }
@@ -63,16 +63,16 @@ class stock_partial_picking(osv.osv_memory):
         values = super(stock_partial_picking, self).default_get(cr, uid, fields, context=context)
         columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
-        toto = SpreadsheetCreator('Template of import', columns_header, [])
-        values.update({'file_to_import': base64.encodestring(toto.get_xml()), 'filename': 'template.xls'})
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        values.update({'file_to_import': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
         return values
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
         lines_not_imported = kwargs.get('line_with_error') # list of list
         columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
-        toto = SpreadsheetCreator('Lines Not imported', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(toto.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
+        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
         return vals
         
 
@@ -136,7 +136,7 @@ class stock_partial_picking(osv.osv_memory):
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
                                                                                 {'quantity': product_qty}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                                error_list.append("Line %s in your Excel file produced a split for the line %s and the quantity were reset." % (file_line_num, line_number))
+                                error_list.append("Line %s of the Excel file produced a split for the line %s." % (file_line_num, line_number))
                                 # the line that will be updated changed, we take the last created
                                 new_line_id = move_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_pick_id', '=', ids[0])])[-1]
                                 line = move_obj.read(cr, uid, new_line_id)
@@ -145,12 +145,13 @@ class stock_partial_picking(osv.osv_memory):
                             if product_qty != line['quantity']:
                                 error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
                                 line_data.update({'quantity': product_qty})
+                                move_obj.write(cr, uid, [line['id']], line_data, context)
 
                             # Cell 1: Product Code
                             cell_nb = 1
                             product_id = cell_data.get_product_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                             if not product_id:
-                                error_list.append("Line %s of the Excel file: The product was not found in the database" % (file_line_num))
+                                error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product was not found in the database" % (file_line_num))
                                 line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                                 ignore_lines += 1
                                 continue
@@ -166,15 +167,17 @@ class stock_partial_picking(osv.osv_memory):
                             cell_nb = 4
                             product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                             if not product_uom_id:
-                                error_list.append("Line %s of the Excel file: The product UOM was not found in the database" % (file_line_num))
+                                error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product UOM was not found in the database" % (file_line_num))
                                 line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                                 ignore_lines += 1
                                 continue
                             if product_uom_id and product_uom_id != line['product_uom']:
                                 error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (file_line_num, line_number))
                                 line_data.update({'product_uom': product_uom_id})
+                                move_obj.write(cr, uid, [line['id']], line_data, context)
                             # Is the product batch mandatory?
                             if product_obj.read(cr, uid, product_id, ['perishable'], context)['perishable']:
+                                prodlot_id = False
                                 # Cell 5: Batch, Prodlot
                                 cell_nb = 5
                                 prodlot_name = cell_data.get_prodlot_name(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
@@ -182,32 +185,38 @@ class stock_partial_picking(osv.osv_memory):
                                 cell_nb = 6
                                 expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
                                 if not expired_date:
-                                    error_list.append("Line %s of the Excel file was added to the file of the lines not imported: The Expiry Date was not found" % (file_line_num))
+                                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found" % (file_line_num))
                                     line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                                     ignore_lines += 1
                                     continue
-                                prodlot_id = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])[0]
+                                prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])
+                                if prodlot_ids:
+                                    prodlot_id = prodlot_ids[0]
                                 if not prodlot_id:
-                                    prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id})
-                                    error_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
-                                                      % (file_line_num, prodlot_name, expired_date, product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
+                                    
+                                    if not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)]):
+                                        prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id})
+                                        error_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+                                                          % (file_line_num, prodlot_name, expired_date, product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
+                                    else:
+                                        error_list.append("Line %s of the Excel file: the batch %s already exists, check the product and the expiry date associated." % (file_line_num, prodlot_name))
                                 line_data.update({'prodlot_id': prodlot_id})
+                                move_obj.write(cr, uid, [line['id']], line_data, context)
                             first_same_line_nb = False
-                            move_obj.write(cr, uid, [line['id']], line_data, context)
                         except osv.except_osv as osv_error:
                             osv_value = osv_error.value
                             osv_name = osv_error.name
-                            error_list.append("Line %s in your Excel file was added to the file of the lines not imported: %s: %s\n" % (file_line_num, osv_name, osv_value))
+                            error_list.append("Line %s in your Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_num, osv_name, osv_value))
                             line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                             ignore_lines += 1
                         except Exception, e:
-                            error_list.append("Line %s in your Excel file was added to the file of the lines not imported: %s\n" % (file_line_num, e))
+                            error_list.append("Line %s in your Excel file was added to the file of the lines with errors: %s\n" % (file_line_num, e))
                             line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                             ignore_lines += 1
                         complete_lines += 1
                 else:
                     # lines ignored if they don't have the same line number as the line of the wizard
-                    error_list.append("Line %s of the Excel file does not correspond to any line number." % (file_line_num))
+                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors. It does not correspond to any line number." % (file_line_num))
                     line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                     ignore_lines += 1
         error += '\n'.join(error_list)
@@ -235,17 +244,20 @@ Reported errors :
                 }
 
     def import_file(self, cr, uid, ids, context=None):
+        """
+        Launch a thread for importing lines.
+        """
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
         Otherwise, you can continue to use Unifield.""")
-        self.log(cr, uid, ids[0], msg_to_return)
+        return self.log(cr, uid, ids[0], msg_to_return)
 
     def dummy(self, cr, uid, ids, context=None):
         """
         This button is only for updating the view.
         """
-        return
+        return False
 
     def check_lines(self, cr, uid, ids, context=None):
         """
@@ -258,7 +270,7 @@ Reported errors :
             for line in spp.product_moves_in:
                 if not line.product_id.perishable:
                     move_obj.write(cr, uid, [line.id], {'prodlot_id': False, 'expiry_date': False}, context)
-        return
+        return False
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
