@@ -96,6 +96,9 @@ class stock_partial_picking(osv.osv_memory):
             memory_moves_list = getattr(partial, 'product_moves_%s'%picking_type)
             # organize data according to move id
             for move in memory_moves_list:
+                # if no quantity, don't process the move
+                if not move.quantity:
+                    continue
                 # by default prodlot_id comes from the wizard
                 prodlot_id = move.prodlot_id.id
                 # treat internal batch to be created# if only expiry date mandatory, and not batch management

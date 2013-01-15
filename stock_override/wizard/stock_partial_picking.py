@@ -122,6 +122,8 @@ class stock_partial_picking(osv.osv_memory):
 
                 #Adding a check whether any move line contains qty less than zero
                 if calc_qty <= 0:
+                    # if no quantity, don't process the move
+                    continue
                     raise osv.except_osv(_('Processing Error'), \
                             _('Can not process empty lines !'))
 
