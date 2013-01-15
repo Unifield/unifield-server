@@ -53,7 +53,7 @@
 </Styles>
 ## ==================================== we loop over the composition_kit so "objects" == composition_kit  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s %s" % (o.composition_product_id.default_code.replace('/', '_'), o.composition_version_id.name.replace('/', '_'))|x}">
+<ss:Worksheet ss:Name="${"%s %s" % (o.composition_product_id.default_code.replace('/', '_'), o.composition_reference.replace('/', '_'))|x}">
 
 ## definition of the columns' size
 <Table x:FullColumns="1" x:FullRows="1">
@@ -99,7 +99,7 @@
         </Cell>
         <Cell ss:StyleID="line" >
             % if line.item_lot:
-                <Data ss:Type="String">${(line.item_lot.name or '')|x}</Data>
+                <Data ss:Type="String">${(line.item_lot or '')|x}</Data>
             % else:
                 <Data ss:Type="String"></Data>
             % endif

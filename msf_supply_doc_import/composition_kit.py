@@ -69,8 +69,10 @@ class composition_kit(osv.osv):
         item_kit_id = ids[0]
 
         product_obj = self.pool.get('product.product')
+        asset_obj = self.pool.get('product.asset')
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('composition.item')
+        cell_data_obj = self.pool.get('import.cell.data')
         obj_data = self.pool.get('ir.model.data')
         view_id = obj_data.get_object_reference(cr, uid, 'kit', 'view_composition_kit_form')[1]
 
@@ -103,16 +105,16 @@ class composition_kit(osv.osv):
             line_num += 1
             # Check length of the row
             col_count = len(row)
-            if col_count != 5:
+            if col_count != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Module, Product Code*, Product Description, Quantity and Product UOM"""))
+Module, Product Code*, Product Description, Quantity, Product UOM, Asset, Batch Number, Expiry Date"""))
 
-            if not check_line.check_empty_line(row=row, col_count=col_count):
-                continue
+#            if not check_line.check_empty_line(row=row, col_count=col_count):
+#                continue
 
             # Cell 0: Module
-            if row.cells[0] and row.cells[0].data:
-                module = row.cells[0].data
+            cell_nb = 0
+            module = cell_data_obj.get_cell_data(cr, uid,  ids, row, cell_nb)
 
             # Cell 1: Product Code
             p_value = {}
@@ -129,11 +131,28 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
             to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
-            line_data = {'item_product_id': to_write['product_id'],
-                         'item_uom_id': to_write['product_uom'],
-                         'item_qty': to_write['qty'],
+            # Cell 5: Asset
+            asset_value = {}
+            asset_value = check_line.compute_asset_value(cr, uid, cell_nb=5, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
+            to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
+
+            # Cell 6: Batch (only text)
+            cell_nb = 6
+            batch = cell_data_obj.get_cell_data(cr, uid,  ids, row, cell_nb)
+
+            # Cell 7: Expiry Date
+            expiry_date_value = {}
+            expiry_date_value = check_line.compute_expiry_date_value(cell_nb=7, row=row, to_write=to_write, context=context)
+            to_write.update({'expiry_date': expiry_date_value['expiry_date'], 'error_list': expiry_date_value['error_list']})
+
+            line_data = {'item_kit_id': item_kit_id,
                          'item_module': module,
-                         'item_kit_id': item_kit_id,
+                         'item_product_id': to_write['product_id'],
+                         'item_qty': to_write['qty'],
+                         'item_uom_id': to_write['product_uom'],
+                         'item_asset_id': to_write['asset_id'],
+                         'item_lot': batch,
+                         'item_exp': to_write['expiry_date'],
                          'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
                          'text_error': '\n'.join(to_write['error_list'])}
 
