@@ -398,6 +398,9 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                             if domain_value == True:
                                 fprint('...domain_value = True')
                                 field.set('readonly', '1')
+                                
+                                # remove attrs if present
+                                del field.attrib['attrs']
                             else:
                                 # find attrs
                                 attrs_text = field.get('attrs', False)
@@ -431,7 +434,10 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                 fprint('====== RETURNING OBJECT..')
                 fprint(fields_view)
                 return fields_view
-
+            
+            else:
+                # no domains
+                return fields_view
         else:
             return fields_view
 
