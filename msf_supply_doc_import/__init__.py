@@ -31,3 +31,4 @@ import product_list
 import check_line
 import wizard
 import import_tools
+import composition_kit
