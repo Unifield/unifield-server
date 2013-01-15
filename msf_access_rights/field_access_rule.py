@@ -39,7 +39,7 @@ class field_access_rule(osv.osv):
         'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
         'model_name': fields.char('Model Name', size=256, help='The technical name for the model. This is used to make searching for Field Access Rules easier.'),
         'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to'),
-        'domain_id': fields.many2one('ir.filters', 'Filter', domain='[("model_id","=",model_name),"!",("domain","ilike","ilike")]', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule. Note: Due to a technical constraint, you can only use Filters that do not use the "contains" or "like" operator.'),
+        'domain_id': fields.many2one('ir.filters', 'Filter', domain='[("model_id","=",model_name)]', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule. Note: Due to a technical constraint, all "like" or "ilike" operators will be automatically replaced with "=".'),
         'domain_text': fields.text('Advanced Filter', help='The Filter that chooses which records this rule applies to'),
         'group_ids': fields.many2many('res.groups', 'field_access_rule_groups_rel', 'field_access_rule_id', 'group_id', 'Groups', help='A list of groups that should be affected by this rule. If you leave this empty, this rule will apply to all groups.'),
         'field_access_rule_line_ids': fields.one2many('msf_access_rights.field_access_rule_line', 'field_access_rule', 'Field Access Rule Lines', help='A list of fields and their specific access and synchronization propagation rules that will be implemented by this rule. If you have left out any fields, users will have full write access, and all values will be synchronized when the record is created or editted.', required=True),
@@ -98,13 +98,14 @@ class field_access_rule(osv.osv):
 
     def onchange_domain_id(self, cr, uid, ids, domain_id):
         """
-        Returns the corresponding domain for the selected pre-defined domain filter
+        Returns the corresponding domain for the selected pre-defined domain filter after replacing like and ilike with '='
         """
         if domain_id:
             df = self.pool.get('ir.filters').browse(cr, uid, domain_id)
-            return {'value': {'domain_text': df.domain}}
+            df.domain = df.domain.replace("'ilike'", "'='").replace('"ilike"', '"="').replace("'like'","'='").replace('"like"','"="')
+            return {'value': {'domain_text': df.domain, 'status': 'validated', 'active': False}}
         else:
-            return {'value': {'domain_text': ''}}
+            return {'value': {'domain_text': '', 'status': 'validated', 'active': False}}
 
     def onchange_domain_text(self, cr, uid, ids, domain_text, context=None):
         if domain_text:
