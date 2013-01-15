@@ -79,6 +79,7 @@ class stock_partial_picking(osv.osv_memory):
         # objects
         pick_obj = self.pool.get('stock.picking')
         uom_obj = self.pool.get('product.uom')
+        prodlot_obj = self.pool.get('stock.production.lot')
         
         # save the wizard ids into context - for compatibility with cross_docking assertion on wizard_ids
         if 'wizard_ids' not in context:
@@ -94,6 +95,8 @@ class stock_partial_picking(osv.osv_memory):
       
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
+
+            prodlot_integrity = {}
             
             # integrity constraint
             integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, None, context=context)
@@ -112,6 +115,23 @@ class stock_partial_picking(osv.osv_memory):
 
                 calc_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, \
                                     move.quantity, move.move_id.product_uom.id)
+
+                # Add a check on prodlot quantity
+                if picking_type != 'in' and move.prodlot_id:
+                    if move.prodlot_id.id not in prodlot_integrity:
+                        prodlot_integrity.update({move.prodlot_id.id: {}})
+
+                    if move.location_id.id not in prodlot_integrity[move.prodlot_id.id]:
+                        prodlot_integrity[move.prodlot_id.id].update({move.location_id.id: 0.00})
+
+                    prodlot_integrity[move.prodlot_id.id][move.location_id.id] += calc_qty
+
+                    prodlot_qty = prodlot_obj.browse(cr, uid, move.prodlot_id.id, context={'location_id': move.location_id.id}).stock_available
+                    if prodlot_qty < calc_qty:
+                        raise osv.except_osv(_('Processing Error'), \
+                        _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                        %(move.quantity, move.product_uom.name, move.product_id.name,\
+                        move.prodlot_id.name, prodlot_qty))
 
                 #Adding a check whether any move line contains exceeding qty to original moveline
                 if calc_qty > move.move_id.product_qty:
@@ -140,6 +160,18 @@ class stock_partial_picking(osv.osv_memory):
                     
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context=context, move=move, partial_datas=partial_datas, pick=pick, partial=partial)
+
+            # Check prodlot qty integrity
+            for prodlot in prodlot_integrity:
+                for location in prodlot_integrity[prodlot]:
+                    tmp_prodlot = prodlot_obj.browse(cr, uid, prodlot, context={'location_id': location})
+                    prodlot_qty = tmp_prodlot.stock_available
+                    if prodlot_qty < prodlot_integrity[prodlot][location]:
+                        raise osv.except_osv(_('Processing Error'), \
+                        _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                        %(prodlot_integrity[prodlot][location], tmp_prodlot.product_id.name, tmp_prodlot.name,\
+                        prodlot_qty))
+
 
         res = pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return self.return_hook_do_partial(cr, uid, context=context, partial_datas=partial_datas, res=res)
