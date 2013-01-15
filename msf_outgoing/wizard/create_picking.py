@@ -476,6 +476,7 @@ class create_picking(osv.osv_memory):
         wrong_lot_type = False
         # validate the data
         for picking_data in data.values():
+            prodlot_integrity = {}
             for move_data in picking_data.values():
                 for list_data in move_data:
                     # product id must exist
@@ -483,6 +484,8 @@ class create_picking(osv.osv_memory):
                     prod = prod_obj.browse(cr, uid, prod_id, context=context)
                     # a production lot is defined, corresponding checks
                     if list_data['prodlot_id']:
+                        if list_data['location_id']:
+                            context.update({'location_id': list_data['location_id']})
                         lot = lot_obj.browse(cr, uid, list_data['prodlot_id'], context=context)
                         # a prod lot is defined, the product must be either perishable or batch_management
                         if not (prod.perishable or prod.batch_management):
@@ -497,6 +500,23 @@ class create_picking(osv.osv_memory):
                         if prod.batch_management and lot.type != 'standard':
                             wrong_lot_type = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type_need_standard',}, context=context)
+
+                        if list_data['location_id']:
+                            loc_id = list_data['location_id']
+                            # Add a check on prodlot quantity
+                            if lot.id not in prodlot_integrity:
+                                prodlot_integrity.update({lot.id: {}})
+                            if loc_id not in prodlot_integrity[lot.id]:
+                                prodlot_integrity[lot.id].update({loc_id: 0.00})
+                            prodlot_integrity[lot.id][loc_id] += list_data['product_qty']
+
+                            if lot.stock_available < list_data['product_qty']:
+                                uom = self.pool.get('product.uom').browse(cr, uid, list_data['product_uom']).name
+                                raise osv.except_osv(_('Processing Error'), \
+                                _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                                %(list_data['product_qty'], uom, prod.name,\
+                                 lot.name, lot.stock_available))
+                                 
                     # only mandatory at validation stage
                     elif validate:
                         # no production lot defined, corresponding checks
@@ -508,6 +528,17 @@ class create_picking(osv.osv_memory):
                         elif prod.perishable:
                             missing_lot = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'missing_date',}, context=context)
+
+                # Check prodlot qty integrity
+                for prodlot in prodlot_integrity:
+                    for location in prodlot_integrity[prodlot]:
+                        tmp_prodlot = lot_obj.browse(cr, uid, prodlot, context={'location_id': location})
+                        prodlot_qty = tmp_prodlot.stock_available
+                        if prodlot_qty < prodlot_integrity[prodlot][location]:
+                            raise osv.except_osv(_('Processing Error'), \
+                            _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                            %(prodlot_integrity[prodlot][location], tmp_prodlot.product_id.name, tmp_prodlot.name,\
+                            prodlot_qty))
         
         # if error, return False
         if missing_lot or lot_not_needed or wrong_lot_type:
@@ -559,6 +590,7 @@ class create_picking(osv.osv_memory):
                                                                                    'product_qty': move.quantity,
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
+                                                                                   'location_id': move.location_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    'composition_list_id': move.composition_list_id.id,
                                                                                    })
@@ -650,6 +682,7 @@ class create_picking(osv.osv_memory):
                                                                                'product_qty': move.quantity,
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
+                                                                               'location_id': move.location_id.id,
                                                                                'asset_id': move.asset_id.id,
                                                                                'composition_list_id': move.composition_list_id.id,
                                                                                })
