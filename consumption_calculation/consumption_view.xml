@@ -69,7 +69,8 @@
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id, remark)"
                                 attrs="{'required': [('date_mandatory', '=', True), ('batch_mandatory', '=', False)], 'readonly': ['|', ('batch_mandatory', '=', True), ('date_mandatory', '=', False)]}"/>
                             <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id, uom_id)"/>
-                            <button string="Split line" icon="terp-stock_effects-object-colorize" name="line_split" type="object" />
+                            <field name="move_id" invisible="1" />
+                            <button string="Split line" icon="terp-stock_effects-object-colorize" name="line_split" type="object" attrs="{'invisible': [('move_id', '!=', False)]}" />
                             <field name="remark" invisible="1" />
                             <field name="batch_mandatory" invisible="0" string="B.Num" readonly="1" />
                             <field name="date_mandatory" invisible="0" string="Exp" readonly="1" />

@@ -631,6 +631,8 @@ class real_average_consumption_line(osv.osv):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
+            if line.rac_id.created_ok:
+                raise osv.except_osv(_('Error'), _('You cannot split a line on an closed Real consumption report'))
             split_id = self.pool.get('real.average.consumption.split.line').create(cr, uid, {'line_id': line.id,
                                                                                              'orig_qty': line.consumed_qty,
                                                                                              'new_qty': 0.00}, context=context)
