@@ -257,11 +257,11 @@ def write(self, cr, uid, ids, vals, context=None):
                                     # and whose current value is different from the new value in the new values list
                                     if getattr(record, line.field.name, vals[line.field.name]) != vals[line.field.name]:
                                         # (in this case, values resolving to False, equate. For example, False == None)
-                                        if not bool(getattr(record, line.field.name, vals[line.field.name])) == False and bool(vals[line.field.name]) == False:
+                                        if not (bool(getattr(record, line.field.name, vals[line.field.name])) == False and bool(vals[line.field.name]) == False):
                                             # throw access denied error
                                             wprint('====== ACCESS_DENIED_FIELD: ' + str(line.field.name))
                                             wprint('====== VALS: ' + str(vals))
-                                            wprint('====== EXISTING VALS: %s' % [ str(line.field.name) + ': ' + str(getattr(record, line.field.name)) + ', ' for line in rule.field_access_rule_line_ids ])
+                                            wprint('====== EXISTING VALS: %s' % [ str(line.field.name) + ': ' + str(getattr(record, line.field.name, '[Attribute doesnt exist]')) + ', ' for line in rule.field_access_rule_line_ids ])
                                             raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
             # if syncing, sanitize editted rows that don't have sync_on_write permission
