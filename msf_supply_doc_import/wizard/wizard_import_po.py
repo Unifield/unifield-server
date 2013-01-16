@@ -29,11 +29,24 @@ from msf_supply_doc_import import check_line
 class wizard_import_po(osv.osv_memory):
     _name = 'wizard.import.po'
     _description = 'Import PO from Excel sheet'
-    
+
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if obj.message:
+                res[obj.id] = True
+        return res
+
     _columns = {
         'file': fields.binary(string='File to import', required=True),
         'message': fields.text(string='Message', readonly=True),
         'po_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
+        'data': fields.binary('Lines with errors'),
+        'filename': fields.char('Lines with errors', size=256),
+        'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
     }
     
     _defaults = {
@@ -45,7 +58,15 @@ class wizard_import_po(osv.osv_memory):
            Line, Product Code, Product Description, Quantity, UoM, Price, Delivery Requested Date, Currency, Comment
         """
     }
-    
+
+    def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
+        lines_not_imported = kwargs.get('line_with_error') # list of list
+        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
+                          ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
+        files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
+        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        return vals
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set po_id with the active_id value in context
@@ -58,6 +79,13 @@ class wizard_import_po(osv.osv_memory):
             res['po_id'] = po_id
             
         return res
+
+    def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
+        list_of_values = []
+        for cell_nb in range(len(row)):
+            cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context)
+            list_of_values.append(cell_data)
+        return list_of_values
 
     def get_cell_data(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = False
@@ -102,6 +130,7 @@ class wizard_import_po(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         purchase_obj = self.pool.get('purchase.order')
         purchase_line_obj = self.pool.get('purchase.order.line')
+        line_with_error = []
         
         for wiz_browse in self.browse(cr, uid, ids, context):
             if not wiz_browse.file:
@@ -231,23 +260,34 @@ class wizard_import_po(osv.osv_memory):
                                 complete_lines += 1
                 
                             except IndexError, e:
-                                error_log += "The line num %s in the Excel file got element outside the defined 8 columns. Details: %s" % (line_num, e)
+                                error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
+                                line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num, context))
                                 ignore_lines += 1
                                 continue
+                    else:
+                        # lines ignored if they don't have the same line number as the line of the wizard
+                        error_list.append("Line %s of the Excel file was added to the file of the lines with errors. It does not correspond to any line number." % (file_line_num))
+                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num, context))
+                        ignore_lines += 1
 #                except Exception, e:
 #                    error_log += "Line %s ignored: an error appeared in the Excel file. Details: %s\n" % (line_num, e)
 #                    ignore_lines += 1
 #                    continue
+        error_log += '\n'.join(error_list)
         if error_log:
             error_log = "Reported errors for ignored lines : \n" + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + ' second(s)'
-        wizard_vals = {'message': ''' Importation completed in %s!
+        message = ''' Importation completed in %s!
 # of imported lines : %s
 # of ignored lines: %s
 %s
-''' % (total_time ,complete_lines or 'No error !', ignore_lines, error_log)}
+''' % (total_time ,complete_lines or 'No error !', ignore_lines, error_log)
 #        try:
+        wizard_vals = {'message': message}
+        if line_with_error:
+            file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
+            wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         view_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'wizard_to_import_po_end')[1],
         return {'type': 'ir.actions.act_window',
