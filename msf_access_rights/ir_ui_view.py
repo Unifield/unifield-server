@@ -28,10 +28,12 @@ import psycopg2
 from lxml import etree
 
 class button():
-    def __init__(self, name, label, type):
+    def __init__(self, name, label, type, model_id, view_id):
         self.name = name
         self.label = label
         self.type = type
+        self.model_id = model_id
+        self.view_id = view_id
 
 class ir_ui_view(osv.osv):
     """
@@ -56,8 +58,14 @@ class ir_ui_view(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        # todo: generate button access rules
-        return super(ir_ui_view, self).create(cr, uid, vals, context=context)
+        """
+        Generate the button access rules for this view
+        """
+        view_id = super(ir_ui_view, self).create(cr, uid, vals, context=context)
+        model_id = self.pool.get('ir.model').search(cr, uid, [('model','=',vals['model'])])[0]
+        buttons = self.parse_view(vals['arch'], model_id, view_id)
+        self._write_button_objects(cr, uid, buttons)
+        return view_id
     
     def unlink(self, cr, uid, ids, context=None):
         # delete button access rules
@@ -68,36 +76,44 @@ class ir_ui_view(osv.osv):
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
     
-    def parse_view(self, view_xml_text):
+    def parse_view(self, view_xml_text, model_id, view_id):
         """
         Pass viewxml to extract button objects for each button in the view
         """
         button_object_list = []
         view_xml = etree.fromstring(view_xml_text)
         buttons = view_xml.xpath("//button")
+        
         for but in buttons:
+            
             name = but.attrib.get('name', '')
             label = but.attrib.get('label', '')
             type = but.attrib.get('type', '')
-            b = button(name, label, type)
-            button_object_list.append(b)
+            
+            button_object_list.append(button(name, label, type, model_id, view_id))
+            
         return button_object_list
     
     def parse_view_button(self, cr, uid, ids, context=None):
         records = self.browse(cr, uid, ids)
         for record in records:
-            buttons = self.parse_view(record.arch)
-            rules_pool = self.pool.get('msf_access_rights.button_access_rule')
+            
             model_pool = self.pool.get('ir.model')
-            for button in buttons:
-                model_id = model_pool.search(cr, uid, [('model','=',record.model)])
-                vals = {
-                    'name': button.name,
-                    'label': button.label,
-                    'type': button.type,
-                    'model_id': model_id[0],
-                    'view_id': record.id,
-                }
-                rules_pool.create(cr, uid, vals)
+            model_id = model_pool.search(cr, uid, [('model','=',record.model)])
+            buttons = self.parse_view(record.arch, model_id[0], record.id)
+            
+            self._write_button_objects(cr, uid, buttons)
+            
+    def _write_button_objects(self, cr, uid, buttons):
+        rules_pool = self.pool.get('msf_access_rights.button_access_rule')
+        for button in buttons:
+            vals = {
+                'name': button.name,
+                'label': button.label,
+                'type': button.type,
+                'model_id': button.model_id,
+                'view_id': button.view_id,
+            }
+            rules_pool.create(cr, uid, vals)
     
 ir_ui_view()
