@@ -43,7 +43,8 @@ class purchase_order_sync(osv.osv):
 
     _defaults = {
         'split_po': False,
-        'push_fo': False
+        'push_fo': False,
+        'sended_by_supplier': True,
     }
 
     def copy(self, cr, uid, id, default=None, context=None):

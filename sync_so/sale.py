@@ -60,7 +60,22 @@ class sale_order_sync(osv.osv):
         default.update(header_result)
 
         so_id = self.create(cr, uid, default , context=context)
-        
+
+        if 'order_type' in header_result:
+            if header_result['order_type'] == 'loan':
+                # UTP-392: Look for the PO of this loan, and update the reference of source document of that PO to this new FO
+                # First, search the original PO via the client_order_ref stored in the FO
+                ref = po_info.origin
+                if ref:
+                    name = self.browse(cr, uid, so_id, context).name
+                    vals = {'origin': name}
+                    ref = source + "." + ref
+                    po_object = self.pool.get('purchase.order')
+                    po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
+                    if po_ids:
+                        # link the FO loan to this PO loan
+                        po_object.write(cr, uid, po_ids, vals , context=context)
+                
         # reset confirmed_delivery_date to all lines
         so_line_obj = self.pool.get('sale.order.line')
         
