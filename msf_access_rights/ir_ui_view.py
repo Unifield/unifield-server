@@ -49,11 +49,15 @@ class ir_ui_view(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        print '======================= creating view'
         return super(ir_ui_view, self).create(cr, uid, vals, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
-        print '======================= deleting view'
+        # delete button access rules
+        pool = self.pool.get('msf_access_rights.button_access_rule')
+        for i in ids:
+            search = pool.search(cr, uid, [('view_id','=',i)])
+            pool.unlink(cr, uid, search)
+            
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
     
 ir_ui_view()
