@@ -416,6 +416,9 @@ class stock_picking(osv.osv):
             all_move_ids = [move.id for move in pick.move_lines]
             # related moves - swap if a backorder is created - openERP logic
             done_moves = []
+            # OUT moves to assign
+            to_assign_moves = []
+            second_assign_moves = []
             # average price computation
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
@@ -512,6 +515,7 @@ class stock_picking(osv.osv):
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
+                            second_assign_moves.append(out_move_id)
                             if update_out:
                                 # UF-1690 : Remove the location_dest_id from values
                                 out_values = values.copy()
@@ -546,6 +550,7 @@ class stock_picking(osv.osv):
                             if out_values.get('location_dest_id', False):
                                 out_values.pop('location_dest_id')
                             new_out_move = move_obj.copy(cr, uid, out_move_id, out_values, context=dict(context, keepLineNumber=True))
+                            to_assign_moves.append(new_out_move)
                             
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
@@ -581,6 +586,9 @@ class stock_picking(osv.osv):
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
                     # if split happened
                     if update_out:
+                        if out_move_id in to_assign_moves:
+                            to_assign_moves.remove(out_move_id)
+                            second_assign_moves.append(out_move_id)
                         # update out move - quantity is increased, to match the original qty
                         # diff_qty = quantity originally in OUT move - count
                         out_diff_qty = mirror_data['quantity'] - count
@@ -590,6 +598,9 @@ class stock_picking(osv.osv):
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
                     # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
                     if not update_out:
+                        if out_move_id in to_assign_moves:
+                            to_assign_moves.remove(out_move_id)
+                            second_assign_moves.append(out_move_id)
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                         # no split nor product change but out is updated (qty increased), force update out for update out picking
@@ -622,6 +633,20 @@ class stock_picking(osv.osv):
             # update the out version
             if update_pick_version:
                 self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
+
+            # Assign all updated out moves
+            for move in move_obj.browse(cr, uid, to_assign_moves):
+                if not move.product_qty and move.state not in ('done', 'cancel'):
+                    to_assign_moves.remove(move.id)
+                    move.unlink(context=dict(context, call_unlink=True))
+
+            for move in move_obj.browse(cr, uid, second_assign_moves):
+                if not move.product_qty and move.state not in ('done', 'cancel'):
+                    second_assign_moves.remove(move.id)
+                    move.unlink(context=dict(context, call_unlink=True))
+
+            move_obj.action_assign(cr, uid, second_assign_moves)
+            move_obj.action_assign(cr, uid, to_assign_moves)
 
         return {'type': 'ir.actions.act_window_close'}
     

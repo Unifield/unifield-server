@@ -431,7 +431,7 @@
         product_uom_qty: 15.0
         product_uos_qty: 15.0
         state: draft
-        type: make_to_order
+        type: make_to_stock
     order_policy: manual
     partner_id: cust1
     partner_invoice_id: addrc1
