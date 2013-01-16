@@ -100,18 +100,21 @@ class import_data(osv.osv_memory):
             ('product.supplierinfo', 'Supplier Info'),
             ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
+        'import_mode': fields.selection([('update', 'Update'), ('create', 'Create')], string='Update or create ?'),
     }
 
     _defaults = {
         'ignore': lambda *a : 1,
         'config_logo': _get_image,
         'debug': False,
+        'import_mode': lambda *a: 'create',
     }
 
     def _import(self, dbname, uid, ids, context=None):
         cr = pooler.get_db(dbname).cursor()
 
         obj = self.read(cr, uid, ids[0])
+        import_mode = obj.get('import_mode')
         
         objname = ""
         for sel in self._columns['object'].selection:
@@ -177,6 +180,7 @@ class import_data(osv.osv_memory):
         i = 1
         nb_error = 0
         nb_succes = 0
+        nb_update_success = 0
         col_datas = {}
         if self.pre_hook.get(impobj._name):
             # for headers mod.
@@ -234,9 +238,23 @@ class import_data(osv.osv_memory):
                 
                 if self.post_hook.get(impobj._name):
                     self.post_hook[impobj._name](impobj, cr, uid, data, row)
-               
-                impobj.create(cr, uid, data)
-                nb_succes += 1
+                
+                if import_mode == 'update':
+                    # Search if an object already exist. If not, create it.
+                    ids_to_update = []
+
+                    if impobj._name == 'product.product':
+                        ids_to_update = impobj.search(cr, uid, [('default_code', '=', data['default_code'])])
+                    
+                    if ids_to_update:
+                        impobj.write(cr, uid, ids_to_update, data)
+                        nb_update_success += 1
+                    else:
+                        impobj.create(cr, uid, data)
+                        nb_succes += 1
+                else:
+                    impobj.create(cr, uid, data)
+                    nb_succes += 1
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s'%e.value)
                 cr.commit()
@@ -253,7 +271,16 @@ class import_data(osv.osv_memory):
         if self.post_load_hook.get(impobj._name):
             self.post_load_hook[impobj._name](impobj, cr, uid)
         fileobj.close()
-        summary = '''Datas Import Summary: 
+        import_type = 'Import'
+        if import_mode == 'update':
+            import_type = 'Update'
+            summary = '''Datas Import Summary: 
+Object: %s
+Records updated: %s
+Records created: %s
+'''%(objname, nb_update_success, nb_succes)
+        else:
+            summary = '''Datas Import Summary: 
 Object: %s
 Records created: %s
 '''%(objname, nb_succes)
@@ -265,7 +292,7 @@ Find in attachment the rejected lines'''%(nb_error)
 
         request_obj = self.pool.get('res.request')
         req_id = request_obj.create(cr, uid,
-            {'name': "Import %s"%(objname,),
+            {'name': "%s %s"%(import_type, objname,),
             'act_from': uid,
             'act_to': uid,
             'body': summary,
@@ -315,5 +342,16 @@ class import_product(osv.osv_memory):
                 'target': 'new'}
 
 import_product()
+
+class update_product(osv.osv_memory):
+    _name = 'update_product'
+    _inherit = 'import_product'
+
+    _defaults = {
+        'object': lambda *a: 'product.product',
+        'import_mode': lambda *a: 'update',
+    }
+
+update_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
