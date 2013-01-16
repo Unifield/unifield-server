@@ -22,7 +22,17 @@
 	        <field name="view_id" ref="field_access_rule_full_tree_view"/>
     	</record>
 
-		<menuitem name="Field Access Rule Lines" action="field_access_rule_line_list" id="field_access_rule_line_list_menu" parent="field_access_rule_sync_access_rights" sequence="0" />
+		<menuitem name="Field Access Rule Lines" action="field_access_rule_line_list" id="field_access_rule_line_list_menu" parent="field_access_rule_sync_access_rights" sequence="1" />
+		
+		<!-- Button Access Rule List -->
+		<record id="button_access_rule_list" model="ir.actions.act_window">
+	        <field name="name">Button Access Rules</field>
+	        <field name="res_model">msf_access_rights.button_access_rule</field>
+	        <field name="view_mode">tree,form</field>
+	        <field name="view_id" ref="button_access_rule_list_view"/>
+    	</record>
+
+		<menuitem name="Button Access Rules" action="button_access_rule_list" id="button_access_rule_list_menu" parent="field_access_rule_sync_access_rights" sequence="2" />
 
 	</data>
 </openerp>

@@ -22,3 +22,5 @@ import osv_override
 
 import field_access_rule
 import field_access_rule_line
+
+import button_access_rule
