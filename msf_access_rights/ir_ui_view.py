@@ -25,6 +25,13 @@ from osv import osv
 from osv import fields
 from osv import orm
 import psycopg2
+from lxml import etree
+
+class button():
+    def __init__(self, name, label, type):
+        self.name = name
+        self.label = label
+        self.type = type
 
 class ir_ui_view(osv.osv):
     """
@@ -49,6 +56,7 @@ class ir_ui_view(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
+        # todo: generate button access rules
         return super(ir_ui_view, self).create(cr, uid, vals, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
@@ -59,5 +67,37 @@ class ir_ui_view(osv.osv):
             pool.unlink(cr, uid, search)
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
+    
+    def parse_view(self, view_xml_text):
+        """
+        Pass viewxml to extract button objects for each button in the view
+        """
+        button_object_list = []
+        view_xml = etree.fromstring(view_xml_text)
+        buttons = view_xml.xpath("//button")
+        for but in buttons:
+            name = but.attrib.get('name', '')
+            label = but.attrib.get('label', '')
+            type = but.attrib.get('type', '').title()
+            b = button(name, label, type)
+            button_object_list.append(b)
+        return button_object_list
+    
+    def parse_view_button(self, cr, uid, ids, context=None):
+        records = self.browse(cr, uid, ids)
+        for record in records:
+            buttons = self.parse_view(record.arch)
+            rules_pool = self.pool.get('msf_access_rights.button_access_rule')
+            model_pool = self.pool.get('ir.model')
+            for button in buttons:
+                model_id = model_pool.search(cr, uid, [('model','=',record.model)])
+                vals = {
+                    'name': button.name,
+                    'label': button.label,
+                    'type': button.type,
+                    'model_id': model_id[0],
+                    'view_id': record.id,
+                }
+                rules_pool.create(cr, uid, vals)
     
 ir_ui_view()
