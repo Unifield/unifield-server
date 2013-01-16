@@ -63,11 +63,33 @@ class ir_ui_view(osv.osv):
         """
         Update button access rules for this view
         """
-        # parse view
-        # get existing BARs for parsed bars
-        # update information and write
-        # create ones that were not found
+        rules_pool = self.pool.get('msf_access_rights.button_access_rule')
+        model_pool = self.pool.get('ir.model')
         
+        for i in ids:
+            buttons = self.parse_view(vals['arch'])
+            view = self.browse(cr, uid, i)
+            model_id = model_pool.search(cr, uid, [('model','=',view.model)])[0]
+            rule_id_list = []
+            
+            for button in buttons:
+                button.update({'view_id': i, 'model_id': model_id})
+                existing_button_search = rules_pool.search(cr, uid, [('view_id', '=', i),('name','=',button['name'])])
+                if existing_button_search:
+                    # exists so update it
+                    rules_pool.write(cr, uid, existing_button_search[0], {'name':button['name'], 'label':button['label'], 'type':button['type']})
+                    rule_id_list.append(existing_button_search[0])
+                else:
+                    # does not exist so create it
+                    rule_id_list.append(rules_pool.create(cr, uid, button))
+                    
+            rules_search = rules_pool.search(cr, uid, [('view_id', '=', i)])
+            for id in rule_id_list:
+                rules_search.remove(id)
+                
+            rules_pool.write(cr, uid, rules_search, {'active':0})
+            
+        super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
     
     def unlink(self, cr, uid, ids, context=None):
         # delete button access rules
@@ -78,7 +100,7 @@ class ir_ui_view(osv.osv):
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
     
-    def _button_dict(self, name, label, type, model_id, view_id):
+    def _button_dict(self, name, label, type, model_id=None, view_id=None):
         return {
             'name': name,
             'label': label,
@@ -87,7 +109,7 @@ class ir_ui_view(osv.osv):
             'view_id': view_id,
         }
     
-    def parse_view(self, view_xml_text, model_id, view_id):
+    def parse_view(self, view_xml_text, model_id=None, view_id=None):
         """
         Pass viewxml to extract button objects for each button in the view
         """
@@ -95,11 +117,11 @@ class ir_ui_view(osv.osv):
         view_xml = etree.fromstring(view_xml_text)
         buttons = view_xml.xpath("//button")
         
-        for but in buttons:
+        for button in buttons:
             
-            name = but.attrib.get('name', '')
-            label = but.attrib.get('label', '')
-            type = but.attrib.get('type', '')
+            name = button.attrib.get('name', '')
+            label = button.attrib.get('string', '')
+            type = button.attrib.get('type', '')
             
             button_object_list.append(self._button_dict(name, label, type, model_id, view_id))
             
