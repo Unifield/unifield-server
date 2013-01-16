@@ -31,10 +31,13 @@ class base_language_export(osv.osv_memory):
 
     def open_requests(self, cr, uid, ids, context=None):
         return {
-            'view_mode': 'tree',
+            'view_id': False,
+            'view_mode': 'tree,form',
             'view_type': 'form',
             'res_model': 'res.request',
             'type': 'ir.actions.act_window',
+            'target': 'crunch',
+            'context': {},
         }
 
     def _import(self, dbname, uid, ids, context=None):

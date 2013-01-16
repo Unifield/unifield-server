@@ -8,7 +8,7 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Export Translation">
-                <field name="lang" />
+                <field name="lang" required="1"/>
                 <field name="format" />
                 <group colspan="2">
                     <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
