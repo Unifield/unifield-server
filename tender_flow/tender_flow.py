@@ -979,7 +979,8 @@ class ir_values(osv.osv):
                 or v[2]['name'] == 'Purchase Order' \
                 or v[2]['name'] == 'Purchase Order (Merged)' \
                 or v[2]['name'] == 'Allocation report' \
-                or v[2]['name'] == 'Order impact vs. Budget' :
+                or v[2]['name'] == 'Order impact vs. Budget' \
+                or v[2]['name'] == 'Purchase Order Integration' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []

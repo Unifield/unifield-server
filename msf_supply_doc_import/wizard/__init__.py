@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,14 +19,4 @@
 #
 ##############################################################################
 
-# max number of lines to import per file
-MAX_LINES_NB = 300
-
-import tender
-import purchase_order
-import sale_order
-import initial_stock_inventory
-import stock_cost_reevaluation
-import product_list
-import check_line
-import wizard
+import wizard_import_po
