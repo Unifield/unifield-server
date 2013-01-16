@@ -23,6 +23,7 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
 from msf_supply_doc_import import check_line
 
@@ -61,8 +62,11 @@ class wizard_import_po(osv.osv_memory):
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
         lines_not_imported = kwargs.get('line_with_error') # list of list
-        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
-                          ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
+        header_index = kwargs.get('header_index')
+        data = header_index.items()
+        columns_header = []
+        for k,v in sorted(data, key=lambda tup: tup[1]):
+            columns_header.append((k, type(k)))
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
         return vals
@@ -141,6 +145,7 @@ class wizard_import_po(osv.osv_memory):
             list_line_nb = [line.line_number for line in po_line_browse]
             
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
+            line_ignored_num = []
             error_list = []
             error_log = ''
             line_num = 0
@@ -260,15 +265,19 @@ class wizard_import_po(osv.osv_memory):
                                 complete_lines += 1
                 
                             except IndexError, e:
-                                error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
-                                line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num, context))
-                                ignore_lines += 1
-                                continue
+                                if line_num not in line_ignored_num:
+                                    error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
+                                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num, context))
+                                    ignore_lines += 1
+                                    line_ignored_num.append(line_num)
+                                    continue
                     else:
                         # lines ignored if they don't have the same line number as the line of the wizard
-                        error_list.append("Line %s of the Excel file was added to the file of the lines with errors. It does not correspond to any line number." % (file_line_num))
-                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num, context))
-                        ignore_lines += 1
+                        if line_num not in line_ignored_num:
+                            error_list.append("Line %s of the Excel file was added to the file of the lines with errors. It does not correspond to any line number." % (file_line_num))
+                            line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num, context))
+                            ignore_lines += 1
+                            line_ignored_num.append(line_num)
 #                except Exception, e:
 #                    error_log += "Line %s ignored: an error appeared in the Excel file. Details: %s\n" % (line_num, e)
 #                    ignore_lines += 1
@@ -286,7 +295,7 @@ class wizard_import_po(osv.osv_memory):
 #        try:
         wizard_vals = {'message': message}
         if line_with_error:
-            file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
+            file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         view_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'wizard_to_import_po_end')[1],
