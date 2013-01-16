@@ -33,6 +33,7 @@
         'views/field_access_rule_view.xml',
         'views/field_access_rule_line_view.xml',
         'views/button_access_rule_view.xml',
+        'views/ir_ui_view_view.xml',
         'menu/menu.xml',
         'data/users.xml',
         'security/ir.model.access.csv',
