@@ -47,7 +47,7 @@ class button_access_rule(osv.osv):
     _columns = {
         'name': fields.char('Name', size=256, required=True),
         'label': fields.char('Label', size=256),
-        'type': fields.selection((('Workflow','workflow'), ('Object','object'), ('Action', 'action')), 'Button Type'),
+        'type': fields.selection((('workflow','Workflow'), ('object','Object'), ('action', 'Action')), 'Button Type'),
         'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
         'view_id': fields.many2one('ir.ui.view', 'View', help='The view to which this rule applies', required=True),
         'group_ids': fields.many2many('res.groups', 'button_access_rule_groups_rel', 'button_access_rule_id', 'group_id', 'Groups', help='A list of groups who have access to this button. If you leave this empty, everybody will have access.'),

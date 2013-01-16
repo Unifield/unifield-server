@@ -78,7 +78,7 @@ class ir_ui_view(osv.osv):
         for but in buttons:
             name = but.attrib.get('name', '')
             label = but.attrib.get('label', '')
-            type = but.attrib.get('type', '').title()
+            type = but.attrib.get('type', '')
             b = button(name, label, type)
             button_object_list.append(b)
         return button_object_list
