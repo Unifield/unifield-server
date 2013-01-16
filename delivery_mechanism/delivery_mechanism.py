@@ -363,8 +363,17 @@ class stock_picking(osv.osv):
             uom_name = data['product_uom'][1]
             present_qty = data['product_qty']
             new_qty = max(present_qty + diff_qty, 0)
-            move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
-                                                    'product_uos_qty': new_qty,}, context=context)
+            if new_qty > 0.00 and present_qty != 0.00:
+                new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                                                                   'product_uos_qty': diff_qty,}, context=context)
+                move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+#                if present_qty == 0.00:
+#                    move_obj.write(cr, uid, [out_move_id], {'state': 'draft'})
+#                    move_obj.unlink(cr, uid, out_move_id, context=context)
+            else:
+                move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                                                        'product_uos_qty': new_qty,}, context=context)
+    
             # log the modification
             # log creation message
             move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.')%(stock_move_name, picking_out_name, new_qty, uom_name))
@@ -639,12 +648,10 @@ class stock_picking(osv.osv):
                 if not move.product_qty and move.state not in ('done', 'cancel'):
                     to_assign_moves.remove(move.id)
                     move.unlink(context=dict(context, call_unlink=True))
-
             for move in move_obj.browse(cr, uid, second_assign_moves):
                 if not move.product_qty and move.state not in ('done', 'cancel'):
                     second_assign_moves.remove(move.id)
                     move.unlink(context=dict(context, call_unlink=True))
-
             move_obj.action_assign(cr, uid, second_assign_moves)
             move_obj.action_assign(cr, uid, to_assign_moves)
 
