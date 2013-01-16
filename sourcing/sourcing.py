@@ -152,6 +152,8 @@ class sourcing_line(osv.osv):
             result[obj.id]['state'] = obj.sale_order_line_id and obj.sale_order_line_id.state or False
             # display confirm button - display if state == draft and not proc or state == progress and proc
             result[obj.id]['display_confirm_button'] = (obj.state == 'draft' and obj.sale_order_id.state == 'validated')
+            # UTP-392: readonly for procurement method if it is a Loan type
+            result[obj.id]['loan_type'] = (obj.sale_order_id.order_type == 'loan')
             # sale_order_state
             result[obj.id]['sale_order_state'] = False
             if obj.sale_order_id:
@@ -290,6 +292,9 @@ class sourcing_line(osv.osv):
                                                       'sourcing.line': (_get_souring_lines_ids, ['sale_order_id'], 10)}),
         'display_confirm_button': fields.function(_get_sourcing_vals, method=True, type='boolean', string='Display Button', multi='get_vals_sourcing',),
         'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
+
+        # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed        
+        'loan_type': fields.function(_get_sourcing_vals, method=True, type='boolean', ),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
@@ -413,6 +418,10 @@ class sourcing_line(osv.osv):
                     
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
+
+        # UTP-392: if the FO is loan, then the sourcing lines accept only the make to stock procurement type! 
+        if 'loan_type' in context:
+            values.update({'type': 'make_to_stock'})
         
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
@@ -609,6 +618,14 @@ class sale_order(osv.osv):
             values.update({'priority': vals['priority']})
         if 'categ' in vals:
             values.update({'categ': vals['categ']})
+
+        # UTP-392: If the FO is a Loan, then all lines must be from Stock 
+        if 'order_type' in vals:
+            if vals['order_type'] == 'loan':
+                context['loan_type'] = True
+        if 'type' in vals:
+            values.update({'type': vals['type']})
+
 #        if 'state' in vals:
 #            values.update({'sale_order_state': vals['state']})
 #        if 'state_hidden_sale_order' in vals:
@@ -616,6 +633,9 @@ class sale_order(osv.osv):
         
         # for each sale order
         for so in self.browse(cr, uid, ids, context):
+            if so.order_type == 'loan':
+                context['loan_type'] = True
+                
             # for each sale order line
             for sol in so.order_line:
                 # update the sourcing line
@@ -904,6 +924,10 @@ class sale_order_line(osv.osv):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
             if bropro.type in ('consu', 'service', 'service_recep'):
                 vals['type'] = 'make_to_order'
+
+        # UTP-392: if the FO is loan, then the sourcing lines accept only the make to stock procurement type! 
+        if 'loan_type' in context:
+            vals.update({'type': 'make_to_stock'})
 
         # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
