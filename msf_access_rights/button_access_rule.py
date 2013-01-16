@@ -34,8 +34,15 @@ class button_access_rule(osv.osv):
 
     _name = "msf_access_rights.button_access_rule"
     
-    def _get_group_names(self):
-        pass
+    def _get_group_names(self, cr, uid, ids, field_name, arg, context):
+        res = dict.fromkeys(ids, '')
+        records = self.browse(cr, uid, ids)
+        for record in records:
+            group_names = ''
+            for g in record.group_ids:
+                group_names = group_names + g.name + ', '
+            res[record.id] = group_names
+        return res
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
