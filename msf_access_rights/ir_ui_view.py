@@ -27,14 +27,6 @@ from osv import orm
 import psycopg2
 from lxml import etree
 
-class button():
-    def __init__(self, name, label, type, model_id, view_id):
-        self.name = name
-        self.label = label
-        self.type = type
-        self.model_id = model_id
-        self.view_id = view_id
-
 class ir_ui_view(osv.osv):
     """
     Inherit the ir.ui.view model to delete button access rules when deleting a view
@@ -67,6 +59,16 @@ class ir_ui_view(osv.osv):
         self._write_button_objects(cr, uid, buttons)
         return view_id
     
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Update button access rules for this view
+        """
+        # parse view
+        # get existing BARs for parsed bars
+        # update information and write
+        # create ones that were not found
+        
+    
     def unlink(self, cr, uid, ids, context=None):
         # delete button access rules
         pool = self.pool.get('msf_access_rights.button_access_rule')
@@ -75,6 +77,15 @@ class ir_ui_view(osv.osv):
             pool.unlink(cr, uid, search)
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
+    
+    def _button_dict(self, name, label, type, model_id, view_id):
+        return {
+            'name': name,
+            'label': label,
+            'type': type,
+            'model_id': model_id,
+            'view_id': view_id,
+        }
     
     def parse_view(self, view_xml_text, model_id, view_id):
         """
@@ -90,7 +101,7 @@ class ir_ui_view(osv.osv):
             label = but.attrib.get('label', '')
             type = but.attrib.get('type', '')
             
-            button_object_list.append(button(name, label, type, model_id, view_id))
+            button_object_list.append(self._button_dict(name, label, type, model_id, view_id))
             
         return button_object_list
     
@@ -107,13 +118,6 @@ class ir_ui_view(osv.osv):
     def _write_button_objects(self, cr, uid, buttons):
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
         for button in buttons:
-            vals = {
-                'name': button.name,
-                'label': button.label,
-                'type': button.type,
-                'model_id': button.model_id,
-                'view_id': button.view_id,
-            }
-            rules_pool.create(cr, uid, vals)
+            rules_pool.create(cr, uid, button)
     
 ir_ui_view()
