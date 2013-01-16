@@ -52,5 +52,9 @@ class button_access_rule(osv.osv):
     _defaults = {
         'active': True,
     }
+    
+    _sql_constraints = [
+        ('name_view_unique', 'unique (name, view_id)', "The combination of Button Name and View ID must be unique - i.e. you cannot have two rules for the same button in the same view"),
+    ]
                
 button_access_rule()

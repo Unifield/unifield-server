@@ -10,8 +10,11 @@
             <field name="arch" type="xml">
                 <form string="Button Access Rule">
                     <field name="active" invisible='1' />
+                    <field name="view_id" />
                     <field name="name" />
                     <field name="model_id" />
+                    <field name="type" />
+                    <field name="group_names" />
                 </form>
             </field>
         </record>
@@ -29,6 +32,15 @@
                             help="Show only Button Access Rules marked as Inactive"/>
                         <field name="name" />
                         <field name="model_id" />
+                        <field name="group_ids" />
+                        <field name="type" />
+                        <field name="view_id" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                       <filter string="View" icon="terp-project" domain="[]" context="{'group_by':'view_id'}"/>
+                       <filter string="Model" icon="terp-project" domain="[]" context="{'group_by':'model_id'}"/>
+                       <filter string="Type" icon="terp-project" domain="[]" context="{'group_by':'type'}"/>
                     </group>
                 </search>
             </field>
@@ -41,11 +53,18 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-					<field name="name" default_focus='1' />
-					<field name="model_id" />
-					<field name="group_ids" />
-					<field name="comment" />
-					<field name="active" />
+                	<group colspan="4" col="6">
+						<field name="name" default_focus='1' />
+						<field name="label" />
+						<field name="type" />
+						<newline />
+						<field name="model_id" />
+						<field name="view_id" />
+					</group>
+					<separator string="Groups" colspan="4" />
+					<field name="group_ids" nolabel="1" />
+					<separator string="Comment" colspan="4" />
+					<field name="comment" nolabel="1" />
                 </form>
             </field>
         </record>
