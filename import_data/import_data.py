@@ -60,7 +60,7 @@ class import_data(osv.osv_memory):
         if row:
             for manda in sorted(col.keys()):
                 if manda != 0:
-                    row[col[manda]] = ' / '.join([row[col[manda-1]], row[col[manda]]])
+                    row[col[manda]] = ' | '.join([row[col[manda-1]], row[col[manda]]])
         return col
 
     def _del_product_cache(self, cr, uid):
@@ -124,6 +124,7 @@ class import_data(osv.osv_memory):
         fileobj.seek(0)
         impobj = self.pool.get(obj['object'])
         reader = csv.reader(fileobj, quotechar='"', delimiter=';')
+        headers = []
 
         errorfile = TemporaryFile('w+')
         writer = csv.writer(errorfile, quotechar='"', delimiter=';')
@@ -294,4 +295,25 @@ Find in attachment the rejected lines'''%(nb_error)
         return {'type': 'ir.actions.act_window_close'}
 
 import_data()
+
+class import_product(osv.osv_memory):
+    _name = 'import_product'
+    _inherit = 'import_data'
+
+    _defaults = {
+        'object': lambda *a: 'product.product',
+    }
+
+    def import_csv(self, cr, uid, ids, context=None):
+        super(import_product, self).import_csv(cr, uid, ids, context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'import_data', 'import_product_end')[1]
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'import_product',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'view_id': [view_id],
+                'target': 'new'}
+
+import_product()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

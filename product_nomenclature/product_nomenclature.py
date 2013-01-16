@@ -51,7 +51,7 @@ class product_nomenclature(osv.osv):
         for record in reads:
             name = record['name']
             if not context.get('nolevel') and record['parent_id']:
-                name = record['parent_id'][1] + ' / ' + name
+                name = record['parent_id'][1] + ' | ' + name
             if context.get('withnum') == 1:
                 name = "%s (%s)" % (name, record['number_of_products'])
             res.append((record['id'], name))
@@ -203,7 +203,7 @@ class product_nomenclature(osv.osv):
             raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
 
         parent_ids = None
-        for path in args[0][2].split('/'):
+        for path in args[0][2].split('|'):
             dom = [('name', '=ilike', path.strip())]
             if parent_ids is None:
                 dom.append(('parent_id', '=', False))
