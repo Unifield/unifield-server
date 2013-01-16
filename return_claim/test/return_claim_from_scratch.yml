@@ -162,6 +162,14 @@
   !python {model: return.claim}: |
     self.write(cr, uid, [context['claim_id_claim']], {'default_src_location_id_return_claim': context['common']['cross_docking']}, context=context)
 -
+  I remove the availability on the PICK
+-
+  !python {model: stock.picking}: |
+    out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_001_claim"))], context=context)
+    for pick in self.browse(cr, uid, out_ids, context=context):
+        for move in pick.move_lines:
+            self.pool.get('stock.move').cancel_assign(cr, uid, [move.id], context=context)
+-
   I load the products from origin
 -
   !python {model: return.claim}: |
@@ -170,7 +178,7 @@
   I do an integrity check
 -
   !python {model: return.claim}: |
-    self.check_product_lines_integrity(cr, uid, context['claim_id_claim'], context=context)
+    assert self.check_product_lines_integrity(cr, uid, context['claim_id_claim'], context=context), "Check integrity return False"
 -
   I open the add event wizard
 -
