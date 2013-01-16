@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    <record id="export_lang_background" model="ir.ui.view">
+        <field name="name">Export Lang Background</field>
+        <field name="model">base.language.export</field>
+        <field name="priority" eval="200" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Export Translation">
+                <field name="lang" />
+                <field name="format" />
+                <group colspan="2">
+                    <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
+                    <button icon="gtk-ok" name="act_getfile_background" string="_Export" type="object"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="export_lang_background_result" model="ir.ui.view">
+        <field name="name">Export Lang Background</field>
+        <field name="model">base.language.export</field>
+        <field name="priority" eval="200" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Export Translation">
+                <separator string="The file will be attached to a new request, please check the menu Administration > Customization > Low Level Objects > Requests > Requests" colspan="4"/>
+                <group colspan="2">
+                    <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wizard_lang_export_background" model="ir.actions.act_window">
+        <field name="name">Export Translation in Background</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">base.language.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="export_lang_background" />
+    </record>
+    <menuitem action="action_wizard_lang_export_background" id="menu_wizard_lang_export_background" parent="base.menu_translation_export"/>
+
+</data>
+</openerp>
