@@ -19,4 +19,9 @@
 #
 ##############################################################################
 
+PO_COLUMNS_FOR_INTEGRATION=[
+'Order Reference', 'Line', 'Product Code', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment', 'Supplier Reference',
+'Delivery Confirmed Date', 'Est. Transport Lead Time', 'Transport Mode', 'Arrival Date in the country', 'Incoterm', 'Destination Partner',
+'Destination Address']
+
 import wizard_import_po

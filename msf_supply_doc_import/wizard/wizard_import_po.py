@@ -26,6 +26,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
 from msf_supply_doc_import import check_line
+from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration
 
 class wizard_import_po(osv.osv_memory):
     _name = 'wizard.import.po'
@@ -53,11 +54,11 @@ class wizard_import_po(osv.osv_memory):
     _defaults = {
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
-        
         The file should be in XML 2003 format.
-        The columns should be in this order :
-           Line, Product Code, Product Description, Quantity, UoM, Price, Delivery Requested Date, Currency, Comment
-        """
+
+The columns should be in this values:
+%s
+""" % (', \n'.join(columns_for_po_integration), )
     }
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
@@ -81,7 +82,9 @@ class wizard_import_po(osv.osv_memory):
             po_id = context.get('active_id')
             res = super(wizard_import_po, self).default_get(cr, uid, fields, context=context)
             res['po_id'] = po_id
-            
+        columns_header = [(column, type(column)) for column in columns_for_po_integration]
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
         return res
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
@@ -114,11 +117,10 @@ class wizard_import_po(osv.osv_memory):
         """
         Check that the columns in the header will be taken into account.
         """
-        columns_imported = ['Order Reference', 'Line', 'Product Code', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment', 'Supplier Reference',
-                            'Delivery Confirmed Date', 'Est. Transport Lead Time', 'Transport Mode', 'Arrival Date in the country', 'Incoterm']
         for k,v in header_index.items():
-            if k not in columns_imported:
-                raise osv.except_osv(_('Error'), _('The column %s is not taken into account. Please remove it.' % k))
+            if k not in columns_for_po_integration:
+                raise osv.except_osv(_('Error'), _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
+                                                   % (k, ', \n'.join(columns_for_po_integration))))
 
     def import_file(self, cr, uid, ids, context=None):
         '''

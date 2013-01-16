@@ -102,17 +102,23 @@ class purchase_order(osv.osv):
         '''
         Launches the wizard to import lines from a file
         '''
-        if context is None:
-            context = {}
-        context.update({'active_id': ids[0]})
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.po',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context,
-                }
+        if context is None: context = {}
+        wiz_po_imp_id = self.pool.get("wizard.import.po").create(
+            cr, uid, {}, context=dict(context, active_ids=ids))
+        res = {
+            'name':_("Import PO for confirmation"),
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'wizard.import.po',
+            'res_id': wiz_po_imp_id,
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': dict(context, active_ids=ids)
+        }
+        return res
 
     def export_file(self, cr, uid, ids, context=None):
         datas = {'ids': ids}
