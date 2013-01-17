@@ -370,6 +370,7 @@ class sourcing_line(osv.osv):
                 # values to be saved to *sale order line*
                 vals = {}
                 solId = sourcingLine.sale_order_line_id.id
+                
                 # type
                 if 'type' in values:
                     type = values['type']
@@ -620,9 +621,9 @@ class sale_order(osv.osv):
             values.update({'categ': vals['categ']})
 
         # UTP-392: If the FO is a Loan, then all lines must be from Stock 
-        if 'order_type' in vals:
-            if vals['order_type'] == 'loan':
-                context['loan_type'] = True
+        if 'order_type' in vals and vals['order_type'] == 'loan':
+            context['loan_type'] = True
+                
         if 'type' in vals:
             values.update({'type': vals['type']})
 
@@ -630,6 +631,9 @@ class sale_order(osv.osv):
 #            values.update({'sale_order_state': vals['state']})
 #        if 'state_hidden_sale_order' in vals:
 #            values.update({'sale_order_state': vals['state_hidden_sale_order']})
+
+        # call to write the sale order first, then do extra actions to order lines and sourcing lines
+        res = super(sale_order, self).write(cr, uid, ids, vals, context)
         
         # for each sale order
         for so in self.browse(cr, uid, ids, context):
@@ -643,8 +647,12 @@ class sale_order(osv.osv):
                     self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
                     if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
                         self.pool.get('sourcing.line').write(cr, uid, sl.id, {'customer': so.partner_id.id}, context)
-        
-        return super(sale_order, self).write(cr, uid, ids, vals, context)
+                        
+                # UTP-392: if order_type is Loan ---> lines must be updated with from stock
+                if so.order_type == 'loan':
+                    self.pool.get('sale.order.line').write(cr, uid, sol.id, {'type': 'make_to_stock'}, context)
+      
+        return res
         
     
     def copy(self, cr, uid, id, default=None, context=None):

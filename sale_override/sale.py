@@ -1250,7 +1250,13 @@ class sale_order_line(osv.osv):
         """
         if context is None:
             context = {}
-        if not vals.get('product_id') and context.get('sale_id', []):
+        
+        # UTP-392: fixed from the previous code: check if the sale order line contains the product, and not only from vals!
+        product_id = vals.get('product_id')
+        if not product_id:
+            product_id = self.browse(cr, uid, ids, context=context)[0].product_id
+        
+        if not product_id and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
