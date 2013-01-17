@@ -98,7 +98,23 @@ class ir_ui_view(osv.osv):
                             rules_pool.write(cr, uid, existing_button_search[0], {'name':button['name'], 'label':button['label'], 'type':button['type']})
                             rule_id_list.append(existing_button_search[0])
                         else:
-                            # does not exist so create it
+                            # does not exist so create it (First convert group xml ids to db ids)
+                            if button['groups']:
+                                button['group_ids'] = []
+                                data_pool = self.pool.get('ir.model.data')
+                                for g in button['groups'].split(','):
+                                    g_split = g.strip().split('.',1)
+                                    if len(g_split) == 2:
+                                        try:
+                                            group = data_pool.get_object(cr, 1, g_split[0], g_split[1])
+                                            if group:
+                                                group_id = group.id
+                                                button['group_ids'].append(group_id)
+                                        except ValueError:
+                                            pass
+                                del button['groups']
+                                if button['group_ids']:
+                                    button['group_ids'] = [(6, 0, button['group_ids'])]
                             rule_id_list.append(rules_pool.create(cr, uid, button))
                             
                     rules_search = rules_pool.search(cr, uid, [('view_id', '=', i)])
@@ -119,11 +135,12 @@ class ir_ui_view(osv.osv):
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
     
-    def _button_dict(self, name, label, type, model_id=None, view_id=None):
+    def _button_dict(self, name, label, type, groups=None, model_id=None, view_id=None):
         return {
             'name': name,
             'label': label,
             'type': type,
+            'groups': groups,
             'model_id': model_id,
             'view_id': view_id,
         }
@@ -141,20 +158,11 @@ class ir_ui_view(osv.osv):
             name = button.attrib.get('name', '')
             label = button.attrib.get('string', '')
             type = button.attrib.get('type', '')
+            groups = button.attrib.get('groups','')
             
-            button_object_list.append(self._button_dict(name, label, type, model_id, view_id))
+            button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id))
             
         return button_object_list
-    
-    def parse_view_button(self, cr, uid, ids, context=None):
-        records = self.browse(cr, uid, ids)
-        for record in records:
-            
-            model_pool = self.pool.get('ir.model')
-            model_id = model_pool.search(cr, uid, [('model','=',record.model)])
-            buttons = self.parse_view(record.arch, model_id[0], record.id)
-            
-            self._write_button_objects(cr, uid, buttons)
             
     def _write_button_objects(self, cr, uid, buttons):
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')

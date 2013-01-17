@@ -14,10 +14,6 @@
 			                <field name="button_access_rules_ref" colspan="4" nolabel="1"/>
 			            </page>
 			        </notebook>
-			        
-			        <xpath expr="//notebook" position="after">
-		                <button name="parse_view_button" type="object" string="Generate Button Rules for View" />
-		            </xpath>
 		        </data>
 		    </field>
 		</record>
