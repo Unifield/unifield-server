@@ -40,7 +40,7 @@ class field_access_rule_line(osv.osv):
 		'value_not_synchronized_on_write': fields.boolean('Value NOT Synchronized on Write', help='If checked, the value for this field given by a synchronization or import is ignored when this record is editted.'),
 
 		'field_access_rule': fields.many2one('msf_access_rights.field_access_rule', 'Field Access Rule', ondelete='cascade', required=True),
-		'field_access_rule_model_id': fields.related('field_access_rule', 'model_id', type="integer", string='Parent Model ID')
+		'field_access_rule_model_id': fields.related('field_access_rule', 'model_id', type="integer", string='Field Model')
 	}
 
 	_defaults = {
@@ -81,8 +81,8 @@ class field_access_rule_line(osv.osv):
 	def onchange_field_access_rule(self, cr, uid, ids, field_access_rule, context=None):
 		if field_access_rule:
 			model_id = self.pool.get('msf_access_rights.field_access_rule').browse(cr, uid, field_access_rule).model_id.id
-			return {'value': {'field_access_rule_model_id': model_id}}
+			return {'value': {'field_access_rule_model_id': model_id, 'field': None}}
 		else:
-			return {'value': {'field_access_rule_model_id': None}}
+			return {'value': {'field_access_rule_model_id': None, 'field': None}}
 
 field_access_rule_line()
