@@ -98,6 +98,21 @@ class purchase_order(osv.osv):
             self.write(cr, uid, ids, vals, context=context)
         return True
 
+    def wizard_import_po_line(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        if context is None:
+            context = {}
+        context.update({'active_id': ids[0]})
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.po.line',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context,
+                }
+
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines from file
