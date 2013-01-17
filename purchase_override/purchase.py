@@ -184,6 +184,8 @@ class purchase_order(osv.osv):
         '''
         Avoid the saving of a PO with non service products on Service PO
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
         

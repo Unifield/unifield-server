@@ -89,14 +89,9 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        vals = {}
-        vals['order_line'] = []
-        for line in self.browse(cr, uid, ids, context=context):
-            line_browse_list = line.order_line
-            for var in line_browse_list:
-                vals['order_line'].append((2, var.id))
-            self.write(cr, uid, ids, vals, context=context)
-        return True
+        purchase_line_obj = self.pool.get('purchase.order.line')
+        pol_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', ids[0])])
+        return purchase_line_obj.unlink(cr, uid, pol_ids, context)
 
     def wizard_import_po_line(self, cr, uid, ids, context=None):
         '''
