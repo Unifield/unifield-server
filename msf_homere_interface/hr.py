@@ -114,13 +114,18 @@ class hr_employee(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         """
-        Delete local staff is not allowed except if 'unlink' is in context and its value is 'auto'
+        Delete local staff is not allowed except if:
+        - 'unlink' is in context and its value is 'auto'
+        - Payroll functionnality have been activated
         """
         # Some verification
         if not context:
             context = {}
         delete_local_staff = False
         if context.get('unlink', False) and context.get('unlink') == 'auto':
+            delete_local_staff = True
+        setup_id = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
+        if setup_id.payroll_ok:
             delete_local_staff = True
         # Browse all employee
         for emp in self.browse(cr, uid, ids):
