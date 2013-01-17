@@ -47,7 +47,7 @@
             <field name="arch" type="xml">
                 <form>
                     <group col="6" colspan="4">
-                        <field name="name" attrs="{'readonly':[('status','!=','not_validated')]}" default_focus='1' colspan="1" />
+                        <field name="name" default_focus='1' colspan="1" />
                         <field name="model_id" attrs="{'readonly':[('status','!=','not_validated')]}" on_change='onchange_model_id(model_id)'  colspan="1" />
                         <field name="model_name" readonly='1' colspan="1" />    
                         <button type='object' name='validate_button' string='Validate Model' icon='icons/camera_test' attrs="{'readonly':[('status','!=','not_validated')]}" colspan="6" />
