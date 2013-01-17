@@ -31,6 +31,7 @@ import netsvc
 
 import csv
 from tempfile import TemporaryFile
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
@@ -264,34 +265,23 @@ class real_average_consumption(osv.osv):
                 }
         
     def export_rac(self, cr, uid, ids, context=None):
-#        """
-#        Return an xml file to open with Excel
-#        """
-#        datas = {'ids': ids}
-#
-#        return {'type': 'ir.actions.report.xml',
-#                'report_name': 'real.consumption.xls',
-#                'datas': datas}
         '''
-        Creates a CSV file and launches the wizard to save it
+        Creates an XML file and launches the wizard to save it
         '''
         if context is None:
             context = {}
         rac = self.browse(cr, uid, ids[0], context=context)
-        
-        outfile = TemporaryFile('w+')
-        writer = csv.writer(outfile, quotechar='"', delimiter=',')
-        writer.writerow(['Product Code', 'Product Description', 'Product UoM', 'Batch Number', 'Expiry Date', 'Consumed Qty', 'Remark'])
-        
+        header_columns = [('Product Code', 'string'), ('Product Description','string'),('Product UoM', 'string'), ('Batch Number','string'), ('Expiry Date', 'string'), ('Consumed Qty','string'), ('Remark', 'string')]
+        list_of_lines = []
         for line in rac.line_ids:
-            writer.writerow([line.product_id.default_code and line.product_id.default_code.encode('utf-8'), line.product_id.name and line.product_id.name.encode('utf-8'), line.uom_id.name and line.uom_id.name.encode('utf-8'), line.prodlot_id and line.prodlot_id.name.encode('utf-8') or '', line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '',line.consumed_qty, line.remark and line.remark.encode('utf-8') or ''])
-        outfile.seek(0)    
-        file = base64.encodestring(outfile.read())
-        outfile.close()
+            list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.prodlot_id and line.prodlot_id.name, 
+                                  line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.consumed_qty, line.remark or ''])
+        instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
+        file = base64.encodestring(instanciate_class.get_xml())
         
         export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 
                                                                         'file': file, 
-                                                                        'filename': 'rac_%s.csv' % (rac.cons_location_id.name.replace(' ', '_')), 
+                                                                        'filename': 'rac_%s.xls' % (rac.cons_location_id.name.replace(' ', '_')), 
                                                                         'message': 'The RAC lines has been exported. Please click on Save As button to download the file'})
         
         return {'type': 'ir.actions.act_window',

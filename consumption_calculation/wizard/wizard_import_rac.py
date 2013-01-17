@@ -157,7 +157,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                 if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)]):
                                     batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
                                     error += """Line %s of the imported file: expiry date has been changed to %s which is the system BN date (was wrong in the file)
-                                    """ % (line_num, datetime.strptime(batch_read['life_date'], "%d-%b-%Y"))
+                                    """ % (line_num, time.strptime(batch_read['life_date'], '%Y-%m-%d').strftime('%d/%m/%Y'))
                                     just_info_ok = True
                 else:
                     product_id = False
