@@ -42,6 +42,16 @@ class stock_picking(osv.osv):
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No donation expense account defined for this PO Line: %s') % (order_line.name or '',))
             self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], {'account_id': account_id,})
+        # Delete invoice lines that come from a picking from scratch that have an intermission/section partner  and which reason type is different from deliver partner
+        # first fetch some values
+        try:
+            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        except ValueError:
+            rt_id = False
+        # then test move_line
+        if move_line.picking_id and move_line.picking_id.type == 'out' and move_line.reason_type_id.id != rt_id:
+            if move_line.picking_id and not move_line.picking_id.purchase_id and not move_line.picking_id.sale_id and move_line.picking_id.partner_id.partner_type in ['intermission', 'section']:
+                self.pool.get('account.invoice.line').unlink(cr, uid, [invoice_line_id])
         return res
 
     def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
