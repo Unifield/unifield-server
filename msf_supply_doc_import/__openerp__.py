@@ -47,7 +47,6 @@
     "test": [
         'test/data.yml',
         'test/import_so.yml',
-        'test/import_rfq.yml',
         'test/import_ir.yml',
         'test/import_tender.yml',
     ],
