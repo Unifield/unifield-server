@@ -57,7 +57,7 @@
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type)" 
-						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', False)]}" />
+						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, sale_order_id)" 
 						attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
