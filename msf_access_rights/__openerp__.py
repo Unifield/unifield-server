@@ -30,11 +30,13 @@
     server hierarchy for models and specific fields of models.
     """,
     "update_xml": [
+        'views/view_config_view.xml',
         'views/field_access_rule_view.xml',
         'views/field_access_rule_line_view.xml',
         'views/button_access_rule_view.xml',
         'views/ir_ui_view_view.xml',
         'menu/menu.xml',
+        'menu/view_config.xml',
         'data/users.xml',
         'security/ir.model.access.csv',
     ],

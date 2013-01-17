@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Max Mumford
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,12 +20,21 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import view_config
 
-import osv_override
+from osv import osv
+from osv import fields
 
-import field_access_rule
-import field_access_rule_line
+class view_config(osv.osv_memory):
+    _name = 'msf_access_rights.view_config'
+    _inherit = 'res.config' 
 
-import ir_ui_view
-import button_access_rule
+    def execute(self, cr, uid, ids, context=None):
+        """
+        Perform a write (With no updated values) on each view in the database to trigger the Button Access Rule creation process
+        """
+        view_pool = self.pool.get('ir.ui.view')
+        view_ids = view_pool.search(cr, uid, [])
+        for id in view_ids:
+            view_pool.write(cr, uid, id, {})
+        
+view_config()

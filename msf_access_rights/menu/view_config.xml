@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	
+		<!-- view_config wizard act_window -->
+		<record id="msf_access_rights.view_config_wizard_act_window" model="ir.actions.act_window">
+		    <field name="name">Generate Button Access Rules</field>
+		    <field name="type">ir.actions.act_window</field>
+		    <field name="res_model">msf_access_rights.view_config</field>
+		    <field name="view_type">form</field>
+		    <field name="view_id" ref="view_config_view_form"/>
+		    <field name="view_mode">form</field>
+		    <field name="target">new</field>
+		</record>
+		
+		<record id="msf_access_rights.view_config_wizard_todo" model="ir.actions.todo">
+		    <field name="action_id" ref="msf_access_rights.view_config_wizard_act_window"/>
+		</record>
+
+	</data>
+</openerp>
+

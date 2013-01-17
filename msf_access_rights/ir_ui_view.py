@@ -63,31 +63,50 @@ class ir_ui_view(osv.osv):
         """
         Update button access rules for this view
         """
+        if not isinstance(ids, list):
+            ids = [ids]
+        
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
         model_pool = self.pool.get('ir.model')
         
+        arch = vals.get('arch', False)
+        
         for i in ids:
-            buttons = self.parse_view(vals['arch'])
             view = self.browse(cr, uid, i)
-            model_id = model_pool.search(cr, uid, [('model','=',view.model)])[0]
-            rule_id_list = []
-            
-            for button in buttons:
-                button.update({'view_id': i, 'model_id': model_id})
-                existing_button_search = rules_pool.search(cr, uid, [('view_id', '=', i),('name','=',button['name'])])
-                if existing_button_search:
-                    # exists so update it
-                    rules_pool.write(cr, uid, existing_button_search[0], {'name':button['name'], 'label':button['label'], 'type':button['type']})
-                    rule_id_list.append(existing_button_search[0])
-                else:
-                    # does not exist so create it
-                    rule_id_list.append(rules_pool.create(cr, uid, button))
-                    
-            rules_search = rules_pool.search(cr, uid, [('view_id', '=', i)])
-            for id in rule_id_list:
-                rules_search.remove(id)
+            xml = arch or view.arch
+            if isinstance(xml, unicode):
+                xml = str(xml)
                 
-            rules_pool.write(cr, uid, rules_search, {'active':0})
+            try:
+                buttons = self.parse_view(xml)
+            except ValueError as e:
+                print '================= Error when parsing view %s' % i
+                print e
+                buttons = False
+                
+            if buttons:
+                model_search = model_pool.search(cr, uid, [('model','=',view.model)])
+                if model_search:
+                    model_id = model_search[0]
+                    rule_id_list = []
+                    
+                    for button in buttons:
+                        button.update({'view_id': i, 'model_id': model_id})
+                        existing_button_search = rules_pool.search(cr, uid, [('view_id', '=', i),('name','=',button['name'])])
+                        if existing_button_search:
+                            # exists so update it
+                            rules_pool.write(cr, uid, existing_button_search[0], {'name':button['name'], 'label':button['label'], 'type':button['type']})
+                            rule_id_list.append(existing_button_search[0])
+                        else:
+                            # does not exist so create it
+                            rule_id_list.append(rules_pool.create(cr, uid, button))
+                            
+                    rules_search = rules_pool.search(cr, uid, [('view_id', '=', i)])
+                    for id in rule_id_list:
+                        if rules_search.count(id):
+                            rules_search.remove(id)
+                        
+                    rules_pool.write(cr, uid, rules_search, {'active':0})
             
         super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
     

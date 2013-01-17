@@ -3,7 +3,7 @@
 	<data>
 	
 		<!-- Parent menu item -->
-		<menuitem name="Synchronization Access Rights" id="field_access_rule_sync_access_rights" parent="base.menu_security" />
+		<menuitem name="Sync Rules and Access Rights" id="msf_sync_access_rights" parent="base.menu_security" />
 
 		<!-- Field Access Rule List -->
 		<record id="field_access_rules_list" model="ir.actions.act_window">
@@ -12,7 +12,7 @@
 	        <field name="view_mode">tree,form</field>
     	</record>
 
-		<menuitem name="Field Access Rules" action="field_access_rules_list" id="field_access_rule_list_menu" parent="field_access_rule_sync_access_rights" sequence="0" />
+		<menuitem name="Field Access Rules" action="field_access_rules_list" id="field_access_rule_list_menu" parent="msf_sync_access_rights" sequence="0" />
 
 		<!-- Field Access Rule Line List -->
 		<record id="field_access_rule_line_list" model="ir.actions.act_window">
@@ -22,7 +22,7 @@
 	        <field name="view_id" ref="field_access_rule_full_tree_view"/>
     	</record>
 
-		<menuitem name="Field Access Rule Lines" action="field_access_rule_line_list" id="field_access_rule_line_list_menu" parent="field_access_rule_sync_access_rights" sequence="1" />
+		<menuitem name="Field Access Rule Lines" action="field_access_rule_line_list" id="field_access_rule_line_list_menu" parent="msf_sync_access_rights" sequence="1" />
 		
 		<!-- Button Access Rule List -->
 		<record id="button_access_rule_list" model="ir.actions.act_window">
@@ -32,7 +32,7 @@
 	        <field name="view_id" ref="button_access_rule_list_view"/>
     	</record>
 
-		<menuitem name="Button Access Rules" action="button_access_rule_list" id="button_access_rule_list_menu" parent="field_access_rule_sync_access_rights" sequence="2" />
+		<menuitem name="Button Access Rules" action="button_access_rule_list" id="button_access_rule_list_menu" parent="msf_sync_access_rights" sequence="2" />
 
 	</data>
 </openerp>
