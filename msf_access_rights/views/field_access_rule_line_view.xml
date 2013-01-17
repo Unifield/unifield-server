@@ -28,7 +28,7 @@
                 <tree editable="top" string="Field Access Rule Line">
                     <field name="field_access_rule" on_change="onchange_field_access_rule(field_access_rule)" />
                     <field name="field_access_rule_model_id" readonly='1' />
-                    <field name="field" on_change='onchange_field(field)' domain="[('model_id', '=', field_access_rule_model_id)]" attrs="{'readonly':[('field_access_rule','=','')]}" />
+                    <field name="field" on_change='onchange_field(field)' domain="[('model_id', '=', field_access_rule_model_id)]" attrs="{'readonly':[('field_access_rule','=','')]}" context="{'tree_view_ref' : 'base.view_model_fields_tree'}" />
                     <field name="field_name" readonly='1' />
                     <field name="write_access" />
                     <field name="value_not_synchronized_on_create" />
