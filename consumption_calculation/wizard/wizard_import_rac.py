@@ -156,8 +156,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                 # if the expiry date and batch exist, the expiry date indicated here and the one on the batch should be the same
                                 if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)]):
                                     batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
-                                    error += """Line %s in your Excel file: The date %s does not comply with the expiry date %s of the batch number %s
-                                    """ % (line_num, expiry_date, batch_read['life_date'], batch_read['name'])
+                                    error += """Line %s of the imported file: expiry date has been changed to %s which is the system BN date (was wrong in the file)
+                                    """ % (line_num, datetime.strptime(batch_read['life_date'], "%d-%b-%Y"))
                                     just_info_ok = True
                 else:
                     product_id = False
