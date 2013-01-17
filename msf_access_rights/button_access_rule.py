@@ -41,7 +41,7 @@ class button_access_rule(osv.osv):
             group_names = ''
             for g in record.group_ids:
                 group_names = group_names + g.name + ', '
-            res[record.id] = group_names
+            res[record.id] = group_names[:-2]
         return res
 
     _columns = {
