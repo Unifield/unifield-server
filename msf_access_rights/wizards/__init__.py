@@ -18,12 +18,5 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import wizards
 
-import osv_override
-
-import field_access_rule
-import field_access_rule_line
-
-import ir_ui_view
-import button_access_rule
+import view_config

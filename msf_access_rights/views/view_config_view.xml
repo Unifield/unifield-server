@@ -3,9 +3,9 @@
     <data>
 
         <!-- ir.ui.view.config wizard form -->
-        <record id="view_config_view_form" model="ir.ui.view">
+        <record id="view_config_wizard_install_view_form" model="ir.ui.view">
 		    <field name="name">Generate Button Access Rules</field>
-		    <field name="model">msf_access_rights.view_config</field>
+		    <field name="model">msf_access_rights.view_config_wizard_install</field>
 		    <field name="type">form</field>
 		    <field name="inherit_id" ref="base.res_config_view_base"/>
 		    <field name="arch" type="xml">

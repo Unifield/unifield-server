@@ -24,8 +24,8 @@
 from osv import osv
 from osv import fields
 
-class view_config(osv.osv_memory):
-    _name = 'msf_access_rights.view_config'
+class view_config_install(osv.osv_memory):
+    _name = 'msf_access_rights.view_config_wizard_install'
     _inherit = 'res.config' 
 
     def execute(self, cr, uid, ids, context=None):
@@ -37,4 +37,4 @@ class view_config(osv.osv_memory):
         for id in view_ids:
             view_pool.write(cr, uid, id, {})
         
-view_config()
+view_config_install()

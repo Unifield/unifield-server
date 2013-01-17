@@ -39,6 +39,7 @@
         'menu/view_config.xml',
         'data/users.xml',
         'security/ir.model.access.csv',
+        'wizards/wizards.xml',
     ],
     "test": [
         'tests/rules.yml'
