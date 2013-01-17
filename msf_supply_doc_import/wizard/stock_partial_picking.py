@@ -76,6 +76,54 @@ class stock_partial_picking(osv.osv_memory):
         return vals
         
 
+
+    def check_file_line_integrity(self, cr, uid, ids, row, product_id, product_uom_id, prodlot_name, expired_date, file_line_num, error_list, line_with_error, context=None):
+        '''
+        Check the integrity of the information on the Excel file line. Return False if the information is not correct
+        '''
+        product_obj = self.pool.get('product.product')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        cell_data = self.pool.get('import.cell.data')
+        
+        prodlot_id = False
+        
+        # integrity check on product
+        if not product_id:
+            error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product was not found in the database" % (file_line_num))
+            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+            return False, prodlot_id
+        
+        product = product_obj.browse(cr, uid, product_id, context)
+
+        # integrity check on uom
+        if not product_uom_id:
+            error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product UOM was not found in the database" % (file_line_num))
+            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+            return False, prodlot_id
+
+        # integrity check on batch if the product is batch mandatory (also for perishable)
+        if product.perishable:
+            # Error if no expiry date
+            if not expired_date:
+                error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found" % (file_line_num))
+                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                return False, prodlot_id
+
+            # Search or create a batch number
+            prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])
+            if prodlot_ids:
+                prodlot_id = prodlot_ids[0]
+            elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)]):
+                prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id})
+                error_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+                    % (file_line_num, prodlot_name, expired_date, product.default_code))
+            else:
+                # Batch number and expiry date don't match
+                error_list.append("Line %s of the Excel file: the batch %s already exists, check the product and the expiry date associated." % (file_line_num, prodlot_name))
+
+        return True, prodlot_id
+
+        
     def _import(self, dbname, uid, ids, context=None):
         """
         Read the file line of the xls file and update the values of the wizard.
@@ -91,134 +139,164 @@ class stock_partial_picking(osv.osv_memory):
         prodlot_obj = self.pool.get('stock.production.lot')
         move_obj = self.pool.get('stock.move.memory.in')
         cell_data = self.pool.get('import.cell.data')
-        list_line_values = []
-        for obj in self.read(cr, uid, ids, ['product_moves_in', 'file_to_import'], context):
-            file_to_import = obj['file_to_import']
-            if not file_to_import:
-                raise osv.except_osv(_('Error'), _('Nothing to import.'))
-            product_moves_in = obj['product_moves_in']
-            list_line_values = move_obj.read(cr, uid, product_moves_in)
-        ignore_lines, complete_lines = 0, 0
-        error_list = []
-        line_with_error = []
-        list_line_nb = [line['line_number'] for line in list_line_values]
+
+        line_cell = 0
+        product_cell = 1
+        qty_cell = 3
+        uom_cell = 4
+        lot_cell = 5
+        expiry_cell = 6
+
         error = ''
+        error_list = []
+        ignore_lines, complete_lines = 0, 0
+        line_with_error = []
+
         context.update({'import_in_progress': True})
-        for line in list_line_values:
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
-            # iterator on rows
-            rows = fileobj.getRows()
-            # ignore the first row
-            rows.next()
-            file_line_num = 1
-            first_same_line_nb = True
-            for row in rows:
-                # default values
-                line_data = {}
-                file_line_num += 1
-                # Check length of the row
-                if len(row) < 8:
-                    raise osv.except_osv(_('Error'), _("""You should have exactly the 8 first following columns in this order for all lines:
-    Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch, Expiry Date, Asset"""))
-                # Cell 0: Line Number
-                cell_nb = 0
-                line_number = cell_data.get_move_line_number(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                if line_number in list_line_nb:
-                    if line_number == line['line_number']:
-                        # Cell 3: Quantity To Process => we need it for the split
-                        cell_nb = 3
-                        product_qty = cell_data.get_product_qty(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                        try:
-                            if not first_same_line_nb:
-                                # if the line imported is not the first to update the line_number, we split it
-                                wizard_values = move_obj.split(cr, uid, line['id'], context)
-                                wiz_context = wizard_values.get('context')
-                                self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
-                                                                                {'quantity': product_qty}, context=wiz_context)
-                                self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                                error_list.append("Line %s of the Excel file produced a split for the line %s." % (file_line_num, line_number))
-                                # the line that will be updated changed, we take the last created
-                                new_line_id = move_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_pick_id', '=', ids[0])])[-1]
-                                line = move_obj.read(cr, uid, new_line_id)
+        
+        wizard_lines = False
+        file_to_import = False
+        for obj in self.browse(cr, uid, ids, context):
+            file_to_import = obj.file_to_import
+            wizard_lines = obj.product_moves_in
 
-                            # Cell 3: Quantity To Process
-                            if product_qty != line['quantity']:
-                                error_list.append("Line %s of the Excel file: The quantity changed from %s to %s" % (file_line_num, line['quantity'], product_qty))
-                                line_data.update({'quantity': product_qty})
-                                move_obj.write(cr, uid, [line['id']], line_data, context)
+        # Error if no file to import
+        if not file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-                            # Cell 1: Product Code
-                            cell_nb = 1
-                            product_id = cell_data.get_product_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                            if not product_id:
-                                error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product was not found in the database" % (file_line_num))
-                                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                                ignore_lines += 1
-                                continue
-                            elif product_id and product_id != line['product_id']:
-                                error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s."
-                                                  % (file_line_num, line_number, product_obj.read(cr, uid, line['product_id'], ['default_code'])['default_code'], product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
-                                # we change the product through the existing wizard
-                                wizard_values = move_obj.change_product(cr, uid, line['id'], context)
-                                wiz_context = wizard_values.get('context')
-                                self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': product_id}, context=wiz_context)
-                                self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                            # Cell 4: Product UOM
-                            cell_nb = 4
-                            product_uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                            if not product_uom_id:
-                                error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The product UOM was not found in the database" % (file_line_num))
-                                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                                ignore_lines += 1
-                                continue
-                            if product_uom_id and product_uom_id != line['product_uom']:
-                                error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (file_line_num, line_number))
-                                line_data.update({'product_uom': product_uom_id})
-                                move_obj.write(cr, uid, [line['id']], line_data, context)
-                            # Is the product batch mandatory?
-                            if product_obj.read(cr, uid, product_id, ['perishable'], context)['perishable']:
-                                prodlot_id = False
-                                # Cell 5: Batch, Prodlot
-                                cell_nb = 5
-                                prodlot_name = cell_data.get_prodlot_name(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                                # Cell 6: Expiry Date
-                                cell_nb = 6
-                                expired_date = cell_data.get_expired_date(cr, uid, ids, row, cell_nb, error_list, file_line_num, context)
-                                if not expired_date:
-                                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found" % (file_line_num))
-                                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                                    ignore_lines += 1
-                                    continue
-                                prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])
-                                if prodlot_ids:
-                                    prodlot_id = prodlot_ids[0]
-                                if not prodlot_id:
-                                    
-                                    if not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)]):
-                                        prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id})
-                                        error_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
-                                                          % (file_line_num, prodlot_name, expired_date, product_obj.read(cr, uid, product_id, ['default_code'])['default_code']))
-                                    else:
-                                        error_list.append("Line %s of the Excel file: the batch %s already exists, check the product and the expiry date associated." % (file_line_num, prodlot_name))
-                                line_data.update({'prodlot_id': prodlot_id})
-                                move_obj.write(cr, uid, [line['id']], line_data, context)
-                            first_same_line_nb = False
-                        except osv.except_osv as osv_error:
-                            osv_value = osv_error.value
-                            osv_name = osv_error.name
-                            error_list.append("Line %s in your Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_num, osv_name, osv_value))
-                            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                            ignore_lines += 1
-                        except Exception, e:
-                            error_list.append("Line %s in your Excel file was added to the file of the lines with errors: %s\n" % (file_line_num, e))
-                            line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                            ignore_lines += 1
-                        complete_lines += 1
-                else:
-                    # lines ignored if they don't have the same line number as the line of the wizard
-                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors. It does not correspond to any line number." % (file_line_num))
-                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                    ignore_lines += 1
+        # Error if no line in wizard
+        if not wizard_lines:
+            raise osv.except_osv(_('Error'), _('No file to process.'))
+
+        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
+
+        # iteration on rows
+        rows = fileobj.getRows()
+        # ignore the first row
+        rows.next()
+
+        file_line_num = 1
+        
+        nm_lines = {} # Dict containing data of lines not matching with wizard lines
+        matching_wiz_lines = [] # List of wizard lines matching with file lines
+        
+        for row in rows:
+            # default values
+            line_data = {}
+            file_line_num += 1
+            # Check length of the row
+            if len(row) < 8:
+                raise osv.except_osv(_('Error'), _("""You should have exactly the 8 first following columns in this order for all lines:
+Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch, Expiry Date, Asset"""))
+
+            # get values from row
+            line_values = cell_data.get_line_values(cr, uid, ids, row)
+            line_number = cell_data.get_move_line_number(cr, uid, ids, row, line_cell, error_list, file_line_num, context)
+            product_id = cell_data.get_product_id(cr, uid, ids, row, product_cell, error_list, file_line_num, context)
+            uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, uom_cell, error_list, file_line_num, context)
+            prodlot_name = cell_data.get_prodlot_name(cr, uid, ids, row, lot_cell, error_list, file_line_num, context)
+            expired_date = cell_data.get_expired_date(cr, uid, ids, row, expiry_cell, error_list, file_line_num, context)
+            product_qty = cell_data.get_product_qty(cr, uid, ids, row, qty_cell, error_list, file_line_num, context)
+
+            integrity, prodlot_id = self.check_file_line_integrity(cr, uid, ids, row, product_id, uom_id, prodlot_name, expired_date, file_line_num, error_list, line_with_error)
+            
+            if not integrity:
+                ignore_lines += 1
+                continue
+
+            line_found = False
+            # Search if a wizard line values match with file line values
+            wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                     ('id', 'not in', matching_wiz_lines),
+                                                     ('product_id', '=', product_id),
+                                                     ('line_number', '=', line_number),
+                                                     ('product_uom', '=', uom_id),
+                                                     ('quantity_ordered', '=', product_qty)])
+            for l in move_obj.browse(cr, uid, wiz_line_ids):
+                # If a line is found, pass to the next file line
+                if line_found:
+                    break
+
+                # Fill the line only if the quantity to process is 0.00
+                if l.quantity == 0.00:
+                    line_found = True                        
+                    move_obj.write(cr, uid, [l.id], {'quantity': product_qty,})
+                    matching_wiz_lines.append(l.id)
+                    complete_lines += 1
+                    
+            if not line_found:
+                if line_number not in nm_lines:
+                    nm_lines.update({line_number: []})
+                    
+                nm_lines[line_number].append({'file_line_num': file_line_num,
+                                              'product_id': product_id,
+                                              'uom_id': uom_id,
+                                              'product_qty': product_qty,
+                                              'prodlot_id': prodlot_id,
+                                              'expired_date': expired_date,
+                                              'line_values': line_values})
+                
+        for ln in nm_lines:
+            wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                     ('id', 'not in', matching_wiz_lines),
+                                                     ('line_number', '=', ln),])
+            if wiz_line_ids and len(nm_lines[ln]) <= len(wiz_line_ids):
+                for nml in nm_lines[ln]:
+                    leave_qty = nml.get('product_qty')
+                    while leave_qty > 0.00:
+                        last_move = False
+                        for wl in move_obj.browse(cr, uid, wiz_line_ids):
+                            last_move = wl.id
+                            available_qty = wl.quantity_ordered - wl.quantity
+                            if available_qty > 0.00:
+                                if available_qty > leave_qty:
+                                    leave_qty = 0.00
+                                    move_obj.write(cr, uid, [wl.id], {'quantity': wl.quantity + leave_qty})
+                                else:
+                                    leave_qty -= available_qty
+                                    move_obj.write(cr, uid, [wl.id], {'quantity': wl.quantity + available_qty})
+                        if leave_qty > 0.00:
+                            last_move = move_obj.browse(cr, uid, last_move)
+                            move_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity + leave_qty})
+                            leave_qty = 0.00
+                    complete_lines += 1
+            elif wiz_line_ids:
+                last_move = False
+                for nml in nm_lines[ln]:
+                    leave_qty = nml.get('product_qty')
+                    while leave_qty > 0.00:
+                        # Split the last line
+                        if not wiz_line_ids and last_move:
+                            wizard_values = move_obj.split(cr, uid, last_move, context)
+                            wiz_context = wizard_values.get('context')
+                            self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
+                                                                            {'quantity': leave_qty}, context=wiz_context)
+                            self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                            error_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (nml.get('file_line_num'), nml.get('line_number')))
+                            wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                                     ('id', 'not in', matching_wiz_lines),
+                                                                     ('line_number', '=', ln),])
+                            
+                        # Continue the process
+                        for wl in move_obj.browse(cr, uid, wiz_line_ids):
+                            last_move = wl.id
+                            available_qty = wl.quantity_ordered - wl.quantity
+                            if available_qty > 0.00:
+                                if available_qty > leave_qty:
+                                    move_obj.write(cr, uid, [wl.id], {'quantity': wl.quantity + leave_qty})
+                                    leave_qty = 0.00
+                                else:
+                                    leave_qty -= available_qty
+                                    move_obj.write(cr, uid, [wl.id], {'quantity': wl.quantity + available_qty})
+                            # Remove the wizard line from wizard to process
+                            wiz_line_ids.remove(last_move)
+                            matching_wiz_lines.append(last_move)
+                        if leave_qty > 0.00:
+                            last_move = move_obj.browse(cr, uid, last_move)
+                            move_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity + leave_qty})
+                            leave_qty = 0.00
+                    complete_lines += 1
+                    
         error += '\n'.join(error_list)
         message = '''Importation completed !
 # of imported lines : %s

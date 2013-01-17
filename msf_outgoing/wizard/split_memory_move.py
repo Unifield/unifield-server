@@ -119,6 +119,7 @@ class split_memory_move(osv.osv_memory):
                 default_val['quantity'] = 0.0
 
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
+            context.update({'new_memory_move_id': new_memory_move})
         
         # no data for type 'back'
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)
