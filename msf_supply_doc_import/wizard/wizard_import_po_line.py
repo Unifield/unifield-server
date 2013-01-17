@@ -296,7 +296,6 @@ The columns should be in this values:
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + ' second(s)'
         final_message = ''' 
-
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
