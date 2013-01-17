@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>Journal Items</Title>
+<Title>_('Journal Items')</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssH">
@@ -45,7 +45,7 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Ref.', 'Document Date', 'Posting Date', 'Period', 'Account', 'Third Party', 'Book. Debit', 'Book. Credit', 'Book. Currency', 'Out. Amount', 'Out. Currency', 'Reconcile', 'State']:
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Out. Amount'), _('Out. Currency'), _('Reconcile'), _('State')]:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
