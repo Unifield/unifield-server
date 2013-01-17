@@ -18,7 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
+import threading
+import pooler
 from osv import osv, fields
 from tools.translate import _
 import base64
@@ -49,6 +50,8 @@ class wizard_import_po(osv.osv_memory):
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
+        'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
+                                  string="State", required=True, readonly=True),
     }
     
     _defaults = {
@@ -58,7 +61,8 @@ class wizard_import_po(osv.osv_memory):
 
 The columns should be in this values:
 %s
-""" % (', \n'.join(columns_for_po_integration), )
+""" % (', \n'.join(columns_for_po_integration), ),
+        'state': lambda *a: 'draft',
     }
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
@@ -113,19 +117,40 @@ The columns should be in this values:
             header_dict.update({self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context): cell_nb})
         return header_dict
 
-    def check_header_values(self, header_index):
+    def check_header_values(self, cr, uid, ids, context, header_index):
         """
         Check that the columns in the header will be taken into account.
         """
         for k,v in header_index.items():
             if k not in columns_for_po_integration:
-                raise osv.except_osv(_('Error'), _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
-                                                   % (k, ', \n'.join(columns_for_po_integration))))
+                vals = {'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
+                                                   % (k, ', \n'.join(columns_for_po_integration))}
+                self.write(cr, uid, ids, vals, context)
+#                raise osv.except_osv(_('Error'), _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
+#                                                   % (k, ', \n'.join(columns_for_po_integration))))
 
-    def import_file(self, cr, uid, ids, context=None):
+    def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
+        """
+        Catch the file values on the form [{values of the 1st line}, {values of the 2nd line}...]
+        """
+        data = header_index.items()
+        columns_header = []
+        for k,v in sorted(data, key=lambda tup: tup[1]):
+            columns_header.append(k)
+        file_values = []
+        for row in rows:
+            line_values = {}
+            for cell in enumerate(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context)):
+                line_values.update({columns_header[cell[0]]: cell[1]})
+            file_values.append(line_values)
+        return file_values
+
+    def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
         '''
+        cr = pooler.get_db(dbname).cursor()
+        
         if context is None:
             context = {}
         context.update({'import_in_progress': True, 'noraise': True})
@@ -159,7 +184,7 @@ The columns should be in this values:
             # get first line
             first_row = next(reader_iterator)
             header_index = self.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=line_num, context=context)
-            self.check_header_values(header_index)
+            self.check_header_values(cr, uid, ids, context, header_index)
 
             for line in po_line_browse:
                 line_num += 1
@@ -167,6 +192,7 @@ The columns should be in this values:
                 rows.next()
                 file_line_num = 1
                 first_same_line_nb = True
+#                file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list, line_num, context)
                 for row in rows:
                     # default values
                     to_write = {
@@ -189,7 +215,6 @@ The columns should be in this values:
                     }
                     line_data = {}
                     file_line_num += 1
-                    # Cell 0: Line Number
                     # Line
                     cell_nb = header_index['Line']
                     line_number = int(self.get_cell_data(cr, uid, ids, row, cell_nb, to_write['error_list'], line_num, context))
@@ -295,23 +320,32 @@ The columns should be in this values:
 %s
 ''' % (total_time ,complete_lines or 'No error !', ignore_lines, error_log)
 #        try:
-        wizard_vals = {'message': message}
+        wizard_vals = {'message': message, 'state': 'done'}
         if line_with_error:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
-        view_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'wizard_to_import_po_end')[1],
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'wizard.import.po',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': ids[0],
-                'view_id': [view_id],
-                }
+        cr.commit()
+        cr.close()
 #        except Exception, e:
 #            raise osv.except_osv(_('Error !'), _('%s !') % e)
-        
+
+    def import_file(self, cr, uid, ids, context=None):
+        """
+        Launch a thread for importing lines.
+        """
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+        Otherwise, you can continue to use Unifield.""")
+        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
+
+    def dummy(self, cr, uid, ids, context=None):
+        """
+        This button is only for updating the view.
+        """
+        return False
+
     def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view

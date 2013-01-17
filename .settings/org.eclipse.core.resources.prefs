@@ -1,5 +1,7 @@
-#Wed Jan 16 11:52:36 CET 2013
+#Thu Jan 17 10:46:08 CET 2013
 eclipse.preferences.version=1
+encoding//account_corrections/wizard/analytic_distribution_wizard.py=utf-8
+encoding//analytic_distribution_supply/purchase.py=utf-8
 encoding//msf_supply_doc_export/msf_supply_doc_export.py=utf-8
 encoding//msf_supply_doc_import/__init__.py=utf-8
 encoding//msf_supply_doc_import/__openerp__.py=utf-8
@@ -8,6 +10,7 @@ encoding//msf_supply_doc_import/product_list.py=utf-8
 encoding//msf_supply_doc_import/purchase_order.py=utf-8
 encoding//msf_supply_doc_import/wizard/__init__.py=utf-8
 encoding//msf_supply_doc_import/wizard/wizard_import_po.py=utf-8
+encoding//order_nomenclature/order_nomenclature.py=utf-8
 encoding//purchase_override/purchase.py=utf-8
 encoding//purchase_override/wizard/split_order_line.py=utf-8
 encoding//tender_flow/tender_flow.py=utf-8
