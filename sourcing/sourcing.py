@@ -294,7 +294,7 @@ class sourcing_line(osv.osv):
         'need_sourcing': fields.function(_get_fake, method=True, type='boolean', string='Only for filtering', fnct_search=_search_need_sourcing),
 
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed        
-        'loan_type': fields.function(_get_sourcing_vals, method=True, type='boolean', ),
+        'loan_type': fields.function(_get_sourcing_vals, method=True, type='boolean', multi='get_vals_sourcing',),
     }
     _order = 'sale_order_id desc, line_number'
     _defaults = {
