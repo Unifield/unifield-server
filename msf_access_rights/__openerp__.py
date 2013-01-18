@@ -35,6 +35,7 @@
     "update_xml": [
         'views/field_access_rule_view.xml',
         'views/field_access_rule_line_view.xml',
+        'views/view_model_fields_tree.xml',
         'menu/menu.xml',
     ],
     "data": [
