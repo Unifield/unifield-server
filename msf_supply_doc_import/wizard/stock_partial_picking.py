@@ -286,8 +286,34 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                      ('id', 'not in', matching_wiz_lines),
                                                      ('line_number', '=', ln),])
             
-            # If the number of lines in wizard is the same as in file or less
-            if wiz_line_ids and len(nm_lines[ln]) <= len(wiz_line_ids):
+            # If the number of lines in wizard is the same as in file
+            # we search the best corresponding line and set values of file in wizard file
+            if wiz_line_ids and len(nm_lines[ln]) == len(wiz_line_ids):
+                for wl in move_obj.browse(cr, uid, wiz_line_ids):
+                    best_qty = 0.00
+                    index = 0
+                    best_index = False
+                    # Search the best file line
+                    for nml in nm_lines[ln]:
+                        if not best_qty:
+                            best_qty = wl.quantity_ordered - nml.get('product_qty')
+                        if min(wl.quantity_ordered - nml.get('product_qty'), best_qty) <= best_qty:
+                            best_qty = wl.quantity_ordered - nml.get('product_qty')
+                            best_index = index
+                        index += 1
+                    
+                    # Write the information in the best line
+                    best_fl = nm_lines[ln][best_index]
+                    move_obj.write(cr, uid, [wl.id], {'product_id': best_fl.get('product_id'),
+                                                      'product_uom': best_fl.get('uom_id'),
+                                                      'quantity': best_fl.get('product_qty'),
+                                                      'prodlot_id': best_fl.get('prodlot_id'),
+                                                      'expiry_date': best_fl.get('expired_date')})
+                    del nm_lines[ln][best_index]
+                    matching_wiz_lines.append(wl.id)
+                    complete_lines += 1
+                            
+            elif wiz_line_ids and len(nm_lines[ln]) < len(wiz_line_ids):
                 for nml in nm_lines[ln]:
                     # We will fill lines till the leave qty is 0.00
                     leave_qty = nml.get('product_qty')
@@ -345,6 +371,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             orig_move = move_obj.browse(cr, uid, orig_move.id)
                             av_qty = orig_move.quantity_ordered - orig_move.quantity
                             av_qty = max(av_qty, 1.00)
+                            if orig_move.product_id.id != nml.get('product_id') or orig_move.product_uom.id != nml.get('uom_id'):
+                                error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s. Maybe the product, the quantity and/or the UoM has been changed.") % (nml.get('file_line_num'), ln))
+                                ignore_lines += 1
+                                break
                             # Split the last move
                             wizard_values = move_obj.split(cr, uid, orig_move.id, context)
                             wiz_context = wizard_values.get('context')
@@ -353,13 +383,13 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
                             error_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (nml.get('file_line_num'), ln))
                             wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                                     ('product_id', '=', nml.get('product_id')),
+                                                                     ('product_uom', '=', nml.get('uom_id')),
                                                                      ('id', 'not in', matching_wiz_lines),
                                                                      ('line_number', '=', ln),])
                             split = True
                             # Update the last move with the last qty
-                            move_obj.write(cr, uid, [orig_move.id], {'quantity': orig_move.quantity,
-                                                                     'prodlot_id': nml.get('prodlot_id'),
-                                                                     'expiry_date': nml.get('expired_date')})
+                            move_obj.write(cr, uid, [orig_move.id], {'quantity': orig_move.quantity,})
                             
                         # Continue the process
                         for wl in move_obj.browse(cr, uid, wiz_line_ids):
@@ -384,9 +414,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                         leave_qty = 0.00
                                 if wl.quantity_ordered > 1.00:
                                     orig_move = wl
-                            # Remove the wizard line from wizard to process
-                            wiz_line_ids.remove(wl.id)
-                            matching_wiz_lines.append(wl.id)
+                                # Remove the wizard line from wizard to process
+                                wiz_line_ids.remove(wl.id)
+                                matching_wiz_lines.append(wl.id)
                         if leave_qty > 0.00 and last_move:
                             last_move = move_obj.browse(cr, uid, last_move.id)
                             move_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity + leave_qty,
@@ -403,14 +433,38 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             complete_lines += 1
                             
             elif not wiz_line_ids:
-#                wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
-#                                                         ('id', 'in', matching_wiz_lines),
-#                                                         ('quantity_ordered', '>', 1),
-#                                                         ('line_number', '=', ln),])
                 # TODO : Split the first line corresponding to this line_number with 1 as qty before added the 1 to this line
                 for nml in nm_lines[ln]:
-                    error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s.") % (nml.get('file_line_num'), ln))
-                    ignore_lines += 1
+                    wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                             ('quantity_ordered', '>', 1),
+                                                             ('product_id', '=', nml.get('product_id')),
+                                                             ('product_uom', '=', nml.get('uom_id')),
+                                                             ('line_number', '=', ln),])
+                    if not wiz_line_ids:
+                        error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s.") % (nml.get('file_line_num'), ln))
+                        ignore_lines += 1
+                    else:
+                        line_to_split = move_obj.browse(cr, uid, wiz_line_ids[0])
+                        # Split the last move
+                        wizard_values = move_obj.split(cr, uid, line_to_split.id, context)
+                        wiz_context = wizard_values.get('context')
+                        self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
+                                                                        {'quantity': 1.00}, context=wiz_context)
+                        self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                        error_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (nml.get('file_line_num'), ln))
+                        wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                                 ('product_id', '=', nml.get('product_id')),
+                                                                 ('product_uom', '=', nml.get('uom_id')),
+                                                                 ('id', 'not in', matching_wiz_lines),
+                                                                 ('line_number', '=', ln),])
+                        # Update the last move with the last qty
+                        move_obj.write(cr, uid, [line_to_split.id], {'quantity': line_to_split.quantity})
+                        new_wiz_line = wiz_line_ids[0]
+                        move_obj.write(cr, uid, [new_wiz_line], {'quantity': nml.get('product_qty'),
+                                                                 'prodlot_id': nml.get('prodlot_id'),
+                                                                 'expiry_date': nml.get('expired_date')})
+                        matching_wiz_lines.append(new_wiz_line)
+                        complete_lines += 1
                 
                     
         error += '\n'.join(error_list)
