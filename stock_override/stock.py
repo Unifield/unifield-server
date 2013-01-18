@@ -1272,11 +1272,12 @@ class ir_values(osv.osv):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        trans_obj = self.pool.get('ir.translation')
         new_values = values
-        Reception = self.tr_view(cr, 'Reception', context)
-        Labels = self.tr_view(cr, 'Labels', context)
-        Picking_Ticket = self.tr_view(cr, 'Picking Ticket', context)
-        Pre_Packing_List = self.tr_view(cr, 'Pre-Packing List', context)
+        Reception = trans_obj.tr_view(cr, 'Reception', context)
+        Labels = trans_obj.tr_view(cr, 'Labels', context)
+        Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
+        Pre_Packing_List = trans_obj.tr_view(cr, 'Pre-Packing List', context)
         move_accepted_values = {'client_action_multi': [],
                                     'client_print_multi': [],
                                     'client_action_relate': ['act_relate_picking'],
@@ -1309,7 +1310,7 @@ class ir_values(osv.osv):
         
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
-            Destruction_Report = self.tr_view(cr, 'Destruction Report', context)
+            Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
             for v in values:
                 if key == 'action' and v[1] in move_accepted_values[key2]:
                     new_values.append(v)

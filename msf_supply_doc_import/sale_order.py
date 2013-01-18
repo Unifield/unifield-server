@@ -198,7 +198,7 @@ That means Not price, Neither Delivery requested date. """))
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if context.get('_terp_view_name', False) == self.pool.get('ir.values').tr_view(cr, 'Internal Requests', context):
+        if context.get('_terp_view_name', False) == self.pool.get('ir.translation').tr_view(cr, 'Internal Requests', context):
             return self.import_internal_req(cr, uid, ids, context=context)
 
         product_obj = self.pool.get('product.product')

@@ -182,15 +182,12 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
-    def tr_view(self, cr, name, context):
-        if not context or not context.get('lang'):
-            return name
-        return self.pool.get('ir.translation')._get_source(cr, 1, False, 'view', context['lang'], name)
 
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        trans_obj = self.pool.get('ir.translation')
 # already defined in the module tender_flow
 #        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'purchase.order' in [x[0] for x in models]:
 #            new_act = []
@@ -204,8 +201,8 @@ class ir_values(osv.osv):
 #                    new_act.append(v)
 #                values = new_act
         
-        Internal_Requests = self.tr_view(cr, 'Internal Requests', context)
-        Field_Orders = self.tr_view(cr, 'Sales Orders', context)
+        Internal_Requests = trans_obj.tr_view(cr, 'Internal Requests', context)
+        Field_Orders = trans_obj.tr_view(cr, 'Sales Orders', context)
         if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
             new_act = []
             #field_orders_view = data_obj.get_object_reference(cr, uid, 'procurement_request', 'action_procurement_request')[1]
@@ -234,12 +231,12 @@ class ir_values(osv.osv):
             
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
-            Picking_Tickets = self.tr_view(cr, 'Picking Tickets', context)
-            Picking_Ticket = self.tr_view(cr, 'Picking Ticket', context)
-            Pre_Packing_Lists = self.tr_view(cr, 'Pre-Packing Lists', context)
-            Pre_Packing_List = self.tr_view(cr, 'Pre-Packing List', context)
-            Delivery_Orders = self.tr_view(cr, 'Delivery Orders', context)
-            Delivery_Order = self.tr_view(cr, 'Delivery Order', context)
+            Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
+            Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
+            Pre_Packing_Lists = trans_obj.tr_view(cr, 'Pre-Packing Lists', context)
+            Pre_Packing_List = trans_obj.tr_view(cr, 'Pre-Packing List', context)
+            Delivery_Orders = trans_obj.tr_view(cr, 'Delivery Orders', context)
+            Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
             for v in values:
                 if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
                 or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
@@ -248,12 +245,12 @@ class ir_values(osv.osv):
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
             new_act = []
-            Packing_Lists = self.tr_view(cr, 'Packing Lists', context)
-            Packing_List = self.tr_view(cr, 'Packing List', context)
-            Shipment_Lists = self.tr_view(cr, 'Shipment Lists', context)
-            Shipment_List = self.tr_view(cr, 'Shipment List', context)
-            Shipments = self.tr_view(cr, 'Shipments', context)
-            Shipment = self.tr_view(cr, 'Shipment', context)
+            Packing_Lists = trans_obj.tr_view(cr, 'Packing Lists', context)
+            Packing_List = trans_obj.tr_view(cr, 'Packing List', context)
+            Shipment_Lists = trans_obj.tr_view(cr, 'Shipment Lists', context)
+            Shipment_List = trans_obj.tr_view(cr, 'Shipment List', context)
+            Shipments = trans_obj.tr_view(cr, 'Shipments', context)
+            Shipment = trans_obj.tr_view(cr, 'Shipment', context)
             for v in values:
 
                 if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in (Packing_Lists, Packing_List) :

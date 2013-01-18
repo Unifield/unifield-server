@@ -481,3 +481,15 @@ class picking_tools(osv.osv):
         return True
     
 picking_tools()
+    
+
+class ir_translation(osv.osv):
+    _name = 'ir.translation'
+    _inherit = 'ir.translation'
+
+    def tr_view(self, cr, name, context):
+        if not context or not context.get('lang'):
+            return name
+        return self._get_source(cr, 1, False, 'view', context['lang'], name)
+
+ir_translation()
