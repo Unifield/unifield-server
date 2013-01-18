@@ -267,15 +267,21 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     while leave_qty > 0.00:
                         # Split the last line
                         if not wiz_line_ids and last_move:
-                            wizard_values = move_obj.split(cr, uid, last_move, context)
+                            av_qty = last_move.quantity_ordered - last_move.quantity
+                            if av_qty <= 0.00:
+                                av_qty = 1.00
+                            # Split the last move
+                            wizard_values = move_obj.split(cr, uid, last_move.id, context)
                             wiz_context = wizard_values.get('context')
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
-                                                                            {'quantity': leave_qty}, context=wiz_context)
+                                                                            {'quantity': av_qty}, context=wiz_context)
                             self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
                             error_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (nml.get('file_line_num'), nml.get('line_number')))
                             wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                                      ('id', 'not in', matching_wiz_lines),
                                                                      ('line_number', '=', ln),])
+                            # Update the last move with the last qty
+                            move_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity})
                             
                         # Continue the process
                         for wl in move_obj.browse(cr, uid, wiz_line_ids):
@@ -296,6 +302,12 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             move_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity + leave_qty})
                             leave_qty = 0.00
                     complete_lines += 1
+            elif not wiz_line_ids:
+                # TODO : Split the first line corresponding to this line_number with 1 as qty before added the 1 to this line
+                for nml in nm_lines[ln]:
+                    error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s.") % (nml.get('file_line_num'), ln))
+                    ignore_lines += 1
+                
                     
         error += '\n'.join(error_list)
         message = '''Importation completed !
