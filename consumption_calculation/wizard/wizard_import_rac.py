@@ -214,8 +214,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     # if errors are found and a text_error was already existing we add it the line after
                     text_error = line_obj.read(cr, uid, line_id,['text_error'], context)['text_error'] + '\n'+ '\n'.join(list_message)
                     line_obj.write(cr, uid, line_id, {'text_error': text_error}, context)
-                if consumed_qty or product_id==product_tbd and error or list_message:
-                    lines_to_correct += 1
+                if error or list_message:
+                    if consumed_qty or product_id==product_tbd:
+                        lines_to_correct += 1
             except IndexError, e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += "Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n" % (line_num, e)
