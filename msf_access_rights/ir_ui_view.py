@@ -155,6 +155,10 @@ class ir_ui_view(osv.osv):
         
         for button in buttons:
             
+            # ignore buttons with the position attribute
+            if button.attrib.get('position', False):
+                continue
+            
             name = button.attrib.get('name', '')
             label = button.attrib.get('string', '')
             type = button.attrib.get('type', '')
