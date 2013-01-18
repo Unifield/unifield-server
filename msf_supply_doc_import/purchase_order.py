@@ -57,28 +57,28 @@ class purchase_order(osv.osv):
             res = False
         return res
 
-    def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for var in self.browse(cr, uid, ids, context=context):
-            res[var.id] = False
-            if var.order_line:
-                for var in var.order_line:
-                    if var.to_correct_ok:
-                        res[var.id] = True
-        return res
+#    def _get_import_error(self, cr, uid, ids, fields, arg, context=None):
+#        if context is None:
+#            context = {}
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        res = {}
+#        for var in self.browse(cr, uid, ids, context=context):
+#            res[var.id] = False
+#            if var.order_line:
+#                for var in var.order_line:
+#                    if var.to_correct_ok:
+#                        res[var.id] = True
+#        return res
 
     _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml',
-                                        help="""* You can use the template of the export for the format that you need to use.
-                                                * The file should be in XML Spreadsheet 2003 format.
-                                                * You can import up to %s lines each time,
-                                                else you have to split the lines in several files and import each one by one.
-                                                """ % MAX_LINES_NB),
-        'import_error_ok': fields.function(_get_import_error, method=True, type="boolean", string="Error in Import", store=True),
+#        'file_to_import': fields.binary(string='File to import', filters='*.xml',
+#                                        help="""* You can use the template of the export for the format that you need to use.
+#                                                * The file should be in XML Spreadsheet 2003 format.
+#                                                * You can import up to %s lines each time,
+#                                                else you have to split the lines in several files and import each one by one.
+#                                                """ % MAX_LINES_NB),
+#        'import_error_ok': fields.function(_get_import_error, method=True, type="boolean", string="Error in Import", store=True),
     }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -104,7 +104,7 @@ class purchase_order(osv.osv):
                 'res_model': 'wizard.import.po.line',
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'new',
+                'target': 'crush',
                 'context': context,
                 }
 

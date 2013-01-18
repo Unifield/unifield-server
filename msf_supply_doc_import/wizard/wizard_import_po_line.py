@@ -50,7 +50,7 @@ class wizard_import_po_line(osv.osv_memory):
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
-        'percent_completed': fields.float('% completed'),
+        'percent_completed': fields.integer('% completed', readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
@@ -276,13 +276,14 @@ The columns should be in this values:
                     purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
 
                     # write order line on PO
-                    purchase_line_obj.create(cr, uid, to_write, context=context)
-                    vals['order_line'].append((0, 0, to_write))
-                    if to_write['error_list']:
-                        lines_to_correct += 1
-                    complete_lines += 1
+                    if purchase_obj._check_service(cr, uid, po_id, vals, context=context):
+                        purchase_line_obj.create(cr, uid, to_write, context=context)
+                        vals['order_line'].append((0, 0, to_write))
+                        if to_write['error_list']:
+                            lines_to_correct += 1
+                        complete_lines += 1
 
-                    percent_completed = float(line_num)/float(total_line_num)*100
+                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                 except IndexError, e:
                     error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
@@ -292,7 +293,6 @@ The columns should be in this values:
                     continue
                 except Exception, e:
                     message += """Line %s: Uncaught error: %s""" % (line_num, e)
-        purchase_obj._check_service(cr, uid, po_id, vals, context=context)
         error_log += '\n'.join(error_list)
         if error_log:
             error_log = "Reported errors for ignored lines : \n" + error_log
@@ -317,6 +317,8 @@ Importation completed in %s!
         if msg_to_return:
             purchase_obj.log(cr, uid, po_id, _(msg_to_return), 
                              context={'view_id': obj_data.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]})
+        # we reactivate the PO
+        purchase_obj.write(cr, uid, po_id, {'active': True}, context)
         cr.commit()
         cr.close()
 
@@ -325,10 +327,15 @@ Importation completed in %s!
         """
         Launch a thread for importing lines.
         """
+        purchase_obj = self.pool.get('purchase.order')
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+            # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
+            purchase_obj.write(cr, uid, po_id, {'active': False}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-        Otherwise, you can continue to use Unifield.""")
+Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
@@ -337,15 +344,30 @@ Importation completed in %s!
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        purchase_obj = self.pool.get('purchase.order')
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+            po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
         for wiz_read in self.read(cr, uid, ids, ['state']):
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': 'Import in progress... \n Please "Update" later.'})
+                self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
         return False
 
     def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''
-        return {'type': 'ir.actions.act_window_close'}
-    
+        if isinstance(ids, (int, long)):
+            ids=[ids]
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'target': 'crush',
+                'res_id': po_id,
+                'context': context,
+                }
+
 wizard_import_po_line()
