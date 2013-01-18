@@ -399,11 +399,15 @@ class real_average_consumption(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
             if var.line_ids:
                 for var in var.line_ids:
-                    if var.to_correct_ok and not var.just_info_ok:
+                    if var.consumed_qty or var.product_id.id==product_tbd or var.uom_id.id==uom_tbd and var.to_correct_ok and not var.just_info_ok:
                         raise osv.except_osv(_('Warning !'), _('Some lines need to be fixed before.'))
         return True
 
@@ -414,7 +418,7 @@ class real_average_consumption_line(osv.osv):
     _name = 'real.average.consumption.line'
     _description = 'Real average consumption line'
     _rec_name = 'product_id'
-    _order = 'ref'
+    _order = 'id, ref'
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}

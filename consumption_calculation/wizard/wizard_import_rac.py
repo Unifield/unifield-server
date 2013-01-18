@@ -71,6 +71,7 @@ class wizard_import_rac(osv.osv_memory):
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('real.average.consumption.line')
         obj_data = self.pool.get('ir.model.data')
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
 
         import_rac = self.browse(cr, uid, ids[0], context)
         rac_id = import_rac.rac_id.id
@@ -135,7 +136,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                         if row[3]:
                             lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])])
                             if not lot and consumed_qty:
-                                error += "Please assign a Batch Number with an Expiry Date.\n"
+                                error +=  "Line %s of the imported file: Batch Number %s not found. \n" % (line_num, row[3])
                             elif lot:
                                 batch = lot[0]
                     if prod.perishable:
@@ -184,9 +185,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if row.cells[6] and row.cells[6].data:
                     remark = row.cells[6].data
                 error += '\n'.join(to_write['error_list'])
-                if consumed_qty and error:
-                    lines_to_correct += 1
-                if not consumed_qty:
+                if not consumed_qty and not product_id==product_tbd:
                      # If the line doesn't have quantity we do not check it.
                     error = None
                 line_data = {'batch_mandatory': batch_mandatory,
@@ -215,8 +214,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     # if errors are found and a text_error was already existing we add it the line after
                     text_error = line_obj.read(cr, uid, line_id,['text_error'], context)['text_error'] + '\n'+ '\n'.join(list_message)
                     line_obj.write(cr, uid, line_id, {'text_error': text_error}, context)
-                    if not error and consumed_qty:
-                        lines_to_correct += 1
+                if consumed_qty or product_id==product_tbd and error or list_message:
+                    lines_to_correct += 1
             except IndexError, e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += "Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n" % (line_num, e)
@@ -234,7 +233,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
 # of lines to correct: %s
 # of ignored lines: %s
 %s
-''' % (total_time ,complete_lines, lines_to_correct or 'No error !', ignore_lines, error_log)}
+''' % (total_time ,complete_lines, lines_to_correct, ignore_lines, error_log)}
         try:
             self.write(cr, uid, ids, vals, context=context)
             
