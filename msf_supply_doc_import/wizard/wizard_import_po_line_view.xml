@@ -10,6 +10,7 @@
                 <form string="Import of lines">
                     <separator colspan="4" string="File to import" />
                     <field name="file" />
+                    <field name="percent_completed" widget="progressbar" attrs="{'invisible':[('state', '=', 'draft')]}"/>
                     
                     <separator colspan="12" string="Information" />
                     <field name="message" colspan="4" nolabel="1" />

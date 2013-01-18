@@ -50,6 +50,7 @@ class wizard_import_po_line(osv.osv_memory):
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
+        'percent_completed': fields.float('% completed'),
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
@@ -192,6 +193,7 @@ The columns should be in this values:
             rows.next()
             line_num = 0
             to_write = {}
+            total_line_num = len([row for row in fileobj.getRows()])
             for row in rows:
                 line_num += 1
                 # default values
@@ -272,12 +274,16 @@ The columns should be in this values:
                     })
                     # we check consistency on the model of on_change functions to call for updating values
                     purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
-    
+
+                    # write order line on PO
+                    purchase_line_obj.create(cr, uid, to_write, context=context)
                     vals['order_line'].append((0, 0, to_write))
                     if to_write['error_list']:
                         lines_to_correct += 1
                     complete_lines += 1
-    
+
+                    percent_completed = float(line_num)/float(total_line_num)*100
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                 except IndexError, e:
                     error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -286,9 +292,6 @@ The columns should be in this values:
                     continue
                 except Exception, e:
                     message += """Line %s: Uncaught error: %s""" % (line_num, e)
-
-        # write order line on PO
-        purchase_obj.write(cr, uid, po_id, vals, context=context)
         purchase_obj._check_service(cr, uid, po_id, vals, context=context)
         error_log += '\n'.join(error_list)
         if error_log:
