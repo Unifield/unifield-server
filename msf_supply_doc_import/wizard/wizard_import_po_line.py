@@ -164,10 +164,6 @@ The columns should be in this values:
         vals = {'order_line': []}
         
         for wiz_browse in self.browse(cr, uid, ids, context):
-            if not wiz_browse.file:
-                self.write(cr, uid, ids, {'message': 'Nothing to import.'})
-                cr.commit()
-                return cr.close()
             po_browse = wiz_browse.po_id
             po_id = po_browse.id
             
@@ -178,15 +174,7 @@ The columns should be in this values:
             message = ''
             line_num = 0
             
-            try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
-            except osv.except_osv as osv_error:
-                osv_value = osv_error.value
-                osv_name = osv_error.name
-                message += "%s: %s\n" % (osv_name, osv_value)
-                self.write(cr, uid, ids, {'message': message})
-                cr.commit()
-                return cr.close()
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
             # iterator on rows
             reader = fileobj.getRows()
             reader_iterator = iter(reader)
@@ -346,19 +334,17 @@ Importation completed in %s!
         Launch a thread for importing lines.
         """
         purchase_obj = self.pool.get('purchase.order')
-        try:
-            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-            thread.start()
-            msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
-            for wiz_obj in self.read(cr, uid, ids, ['po_id']):
-                po_id = wiz_obj['po_id']
-                # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
-                purchase_obj.write(cr, uid, po_id, {'active': False}, context)
-        except osv.except_osv as osv_error:
-            osv_value = osv_error.value
-            osv_name = osv_error.name
-            msg_to_return = " %s: %s\n" % (osv_name, osv_value)
+        for wiz_obj in self.read(cr, uid, ids, ['po_id', 'file']):
+            po_id = wiz_obj['po_id']
+            if not wiz_obj['file']:
+                raise osv.except_osv(_('Error'), _("""Nothing to import"""))
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_obj['file']))
+            # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
+            purchase_obj.write(cr, uid, po_id, {'active': False}, context)
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
