@@ -122,9 +122,11 @@ The columns should be in this values:
         """
         for k,v in header_index.items():
             if k not in columns_for_po_line_import:
-                vals = {'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
-                                                   % (k, ', \n'.join(columns_for_po_line_import))}
+                vals = {'state': 'draft',
+                        'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' % (k, ','.join(columns_for_po_line_import))}
                 self.write(cr, uid, ids, vals, context)
+                self.pool.get('purchase.order').write(cr, uid, context['po_id'], {'active': True}, context)
+                return True
 #                raise osv.except_osv(_('Error'), _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
 #                                                   % (k, ', \n'.join(columns_for_po_line_import))))
 
@@ -173,23 +175,16 @@ The columns should be in this values:
             error_log = ''
             message = ''
             line_num = 0
+            header_index = context['header_index']
             
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
+            file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
             # iterator on rows
-            reader = fileobj.getRows()
-            reader_iterator = iter(reader)
-            # get first line
-            first_row = next(reader_iterator)
-            header_index = self.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=line_num, context=context)
-            self.check_header_values(cr, uid, ids, context, header_index)
-
-            # iterator on rows
-            rows = fileobj.getRows()
+            rows = file_obj.getRows()
             # ignore the first row
             rows.next()
             line_num = 0
             to_write = {}
-            total_line_num = len([row for row in fileobj.getRows()])
+            total_line_num = len([row for row in file_obj.getRows()])
             for row in rows:
                 line_num += 1
                 # default values
@@ -279,8 +274,6 @@ The columns should be in this values:
                             lines_to_correct += 1
                         complete_lines += 1
 
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                 except IndexError, e:
                     error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -298,7 +291,8 @@ The columns should be in this values:
                     message += """Line %s: Uncaught error: %s""" % (line_num, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
-                complete_lines += 1
+                percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                self.write(cr, uid, ids, {'percent_completed':percent_completed})
         error_log += '\n'.join(error_list)
         if error_log:
             error_log = "Reported errors for ignored lines : \n" + error_log
@@ -340,10 +334,19 @@ Importation completed in %s!
                 return self.write(cr, uid, ids, {'message': "Nothing to import"})
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                # iterator on rows
+                reader = fileobj.getRows()
+                reader_iterator = iter(reader)
+                # get first line
+                first_row = next(reader_iterator)
+                header_index = self.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
+                context.update({'po_id': po_id, 'header_index': header_index})
+                if self.check_header_values(cr, uid, ids, context, header_index):
+                    return False
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
-                message += "%s: %s\n" % (osv_name, osv_value)
+                message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
             purchase_obj.write(cr, uid, po_id, {'active': False}, context)
