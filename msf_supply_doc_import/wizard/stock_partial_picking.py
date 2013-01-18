@@ -205,7 +205,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 continue
 
             line_found = False
-            # Search if a wizard line values match with file line values
+            # Search if the file line matches with a wizard line
             wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                      ('id', 'not in', matching_wiz_lines),
                                                      ('product_id', '=', product_id),
@@ -230,6 +230,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 if line_number not in nm_lines:
                     nm_lines.update({line_number: []})
                     
+                # If the file line does not match with a wizard line
+                # add it to a list of lines to process after (sort in dict with the line_number)
                 nm_lines[line_number].append({'file_line_num': file_line_num,
                                               'product_id': product_id,
                                               'uom_id': uom_id,
@@ -239,6 +241,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                               'line_values': line_values})
                 
         # Process all lines not matching
+        
+        # First, search if a wizard line exists for the same line number and the same qty
+        # but with a different product or a different UoM
         for ln in nm_lines:
             index = 0
             for nml in nm_lines[ln]:
@@ -280,8 +285,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 # Increase the index
                 index += 1
             
-        # Process all lines with only qty changed
+        # Process all remaining non matching lines
         for ln in nm_lines:
+            # Search all wizard lines with the same line_number than the file line
             wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                      ('id', 'not in', matching_wiz_lines),
                                                      ('line_number', '=', ln),])
@@ -293,7 +299,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     best_qty = 0.00
                     index = 0
                     best_index = False
-                    # Search the best file line
+                    # Search the best corresponding file line
                     for nml in nm_lines[ln]:
                         if not best_qty:
                             best_qty = wl.quantity_ordered - nml.get('product_qty')
@@ -314,6 +320,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     complete_lines += 1
                             
             elif wiz_line_ids and len(nm_lines[ln]) < len(wiz_line_ids):
+                # If the # of lines in file is smaller than the # of lines if wizard,
+                # fill the wizard lines one after the other
                 for nml in nm_lines[ln]:
                     # We will fill lines till the leave qty is 0.00
                     leave_qty = nml.get('product_qty')
@@ -357,7 +365,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         if leave_qty <= 0.00:
                             complete_lines += 1
                     
-            # If the # of file lines is more than the # of wizard lines
+            # If the # of file lines is bigger than the # of wizard lines
             # we need to split lines
             elif wiz_line_ids:
                 last_move = False
@@ -366,8 +374,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 for nml in nm_lines[ln]:
                     leave_qty = nml.get('product_qty')
                     while leave_qty > 0.00:
-                        # Split the last line
                         if not wiz_line_ids and orig_move:
+                            # Get the quantity to split according to available (ordered qty - processed qty) in the wizard line
                             orig_move = move_obj.browse(cr, uid, orig_move.id)
                             av_qty = orig_move.quantity_ordered - orig_move.quantity
                             av_qty = max(av_qty, 1.00)
@@ -375,7 +383,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s. Maybe the product, the quantity and/or the UoM has been changed.") % (nml.get('file_line_num'), ln))
                                 ignore_lines += 1
                                 break
-                            # Split the last move
+                            # Split the last line
                             wizard_values = move_obj.split(cr, uid, orig_move.id, context)
                             wiz_context = wizard_values.get('context')
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
@@ -417,6 +425,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 # Remove the wizard line from wizard to process
                                 wiz_line_ids.remove(wl.id)
                                 matching_wiz_lines.append(wl.id)
+                                
+                        # If there is leave qty, add it to the last written wizard line
                         if leave_qty > 0.00 and last_move:
                             last_move = move_obj.browse(cr, uid, last_move.id)
                             move_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity + leave_qty,
@@ -433,17 +443,21 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             complete_lines += 1
                             
             elif not wiz_line_ids:
-                # TODO : Split the first line corresponding to this line_number with 1 as qty before added the 1 to this line
+                # If there is no wizard lines available although there are some file lines to process
                 for nml in nm_lines[ln]:
+                    # Search if an already process wizard line is available for split
                     wiz_line_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                              ('quantity_ordered', '>', 1),
                                                              ('product_id', '=', nml.get('product_id')),
                                                              ('product_uom', '=', nml.get('uom_id')),
                                                              ('line_number', '=', ln),])
+                    
                     if not wiz_line_ids:
+                        # No wizard lines available : return an error
                         error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s.") % (nml.get('file_line_num'), ln))
                         ignore_lines += 1
                     else:
+                        # A line is available, we will split it to have a new wizard line to process
                         line_to_split = move_obj.browse(cr, uid, wiz_line_ids[0])
                         # Split the last move
                         wizard_values = move_obj.split(cr, uid, line_to_split.id, context)
