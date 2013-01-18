@@ -297,7 +297,7 @@ The columns should be in this values:
                 except Exception, e:
                     message += """Line %s: Uncaught error: %s""" % (line_num, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    break
+                    continue
                 complete_lines += 1
         error_log += '\n'.join(error_list)
         if error_log:
