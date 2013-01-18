@@ -338,11 +338,11 @@ Importation completed in %s!
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
-        for wiz_obj in self.read(cr, uid, ids, ['po_id', 'file']):
-            po_id = wiz_obj['po_id']
-            if not wiz_obj['file']:
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
+            po_id = wiz_read['po_id']
+            if not wiz_read['file']:
                 raise osv.except_osv(_('Error'), _("""Nothing to import"""))
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_obj['file']))
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
             # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
             purchase_obj.write(cr, uid, po_id, {'active': False}, context)
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
@@ -354,10 +354,10 @@ Otherwise, you can continue to use Unifield.""")
         if isinstance(ids, (int, long)):
             ids = [ids]
         purchase_obj = self.pool.get('purchase.order')
-        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
-            po_id = wiz_obj['po_id']
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+            po_id = wiz_read['po_id']
             po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
-        for wiz_read in self.read(cr, uid, ids, ['state']):
             if wiz_read['state'] != 'done':
                 self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
         return False
