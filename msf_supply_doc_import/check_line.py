@@ -106,7 +106,7 @@ def product_value(cr, uid, **kwargs):
                 p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                 if not p_ids:
                     comment += ' Code: %s' % (product_code)
-                    msg = 'The Product\'s Code is not found in the database.'
+                    msg = 'Product code doesn\'t exist in the DB.'
                 else:
                     default_code = p_ids[0]
                     proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method

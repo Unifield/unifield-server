@@ -501,7 +501,7 @@ class real_average_consumption_line(osv.osv):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)")%(obj.product_id.name, obj.consumed_qty, product_qty))
                 elif context.get('import_in_progress'):
-                    error_message.append("Product: %s, Qty Consumed (%s) can't be greater than the Indicative Stock (%s)" % (obj.product_id.name, obj.consumed_qty, product_qty))
+                    error_message.append("Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)" % (context.get('line_num', False), obj.consumed_qty, product_qty))
                     context.update({'error_message': error_message})
                     # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
                     prodlot_id = None
@@ -727,7 +727,7 @@ class real_average_consumption_line(osv.osv):
             v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
         
         return {'value': v, 'domain': d}
-    
+
 real_average_consumption_line()
 
 
