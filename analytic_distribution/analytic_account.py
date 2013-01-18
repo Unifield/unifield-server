@@ -31,7 +31,6 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
-
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns the good value according to the doc type
@@ -77,6 +76,7 @@ class analytic_account(osv.osv):
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
     }
+
     def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -182,7 +182,8 @@ class analytic_account(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
-        No description found
+        Change search behaviour to not include FP that are closed by a contract.
+        FIXME: this method do others things that not have been documented. Please complete here what method do.
         """
         if context and 'search_by_ids' in context and context['search_by_ids']:
             args2 = args[-1][2]
@@ -201,7 +202,16 @@ class analytic_account(osv.osv):
                     fp_ids.append(adl.get('funding_pool_ids'))
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
-        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        res = super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        display_fp = False
+        if context.get('display_fp_closed_by_a_contract', False) and context.get('display_fp_closed_by_a_contract') == True:
+            display_fp = True
+        if not display_fp:
+            # Search all FP closed by a contract
+            blocked_ids = self.is_blocked_by_a_contract(cr, uid, res)
+            if blocked_ids:
+                return [x for x in res if x not in blocked_ids]
+        return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
