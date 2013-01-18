@@ -188,6 +188,7 @@ class rml_parse(object):
             'setHtmlImage' : self.set_html_image,
             'strip_name' : self._strip_name,
             'time' : time,
+            'getSel': self.getSel,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -203,6 +204,23 @@ class rml_parse(object):
         self.default_lang = {}
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
+
+    def getSel(self, o, field):
+        """
+        Returns the fields.selection label
+        """
+        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+        name = '%s,%s' % (o._name, field)
+        if self.localcontext.get('lang'):
+            tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [
+                ('type', '=', 'selection'), ('name', '=', name), ('src', '=', res), ('lang', '=', self.localcontext['lang'])
+            ])
+            if tr_ids:
+                value = self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+                if value:
+                    return value
+        return res
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
