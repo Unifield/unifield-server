@@ -43,7 +43,7 @@ class account_analytic_line(osv.osv):
         # otherwise duplicate entries will be created and these entries will be messed up in the later update
         if 'do_not_create_analytic_line' in context:
             if 'sync_data' in context:
-                return True
+                return False
             del context['do_not_create_analytic_line']
         
         # continue the create request if it comes from a normal requester

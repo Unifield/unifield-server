@@ -440,6 +440,32 @@ class partner(osv.osv):
 
 partner()
 """
+
+def message_write_reference(model, cr, uid, source, write_info, context=None):
+    model_name = write_info.model
+    xml_id =  write_info.xml_id
+    reference_field = write_info.field
+    reference_xml_id = write_info.reference
+    if not reference_xml_id:
+        return
+    
+    reference_ir_record = model.pool.get('ir.model.data').get_ir_record(cr, uid, reference_xml_id, context=context)
+    if not reference_ir_record:
+        return
+    
+    reference = reference_ir_record.model + ',' + str(reference_ir_record.res_id)
+    
+    if model_name != model._name:
+        return "Model not consistant"
+        
+    res_id = model.pool.get("ir.model.data").get_record(cr, uid, xml_id, context=context)
+    if not res_id:
+        return "Object %s %s does not exist in destination" % (model_name, xml_id)
+
+    return old_write(model, cr, uid, [res_id], {reference_field: reference}, context=context)    
+    
+orm.message_write_reference = message_write_reference
+
 #record modification of m2o if the corresponding o2m is modified
 def modif_o2m(model,cr,uid,id,values,context=None):
     fields_ref = model.fields_get(cr, uid, context=context)
