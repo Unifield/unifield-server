@@ -186,7 +186,7 @@ class WebKitParser(report_sxw):
     def translate_call(self, src):
         """Translate String."""
         ir_translation = self.pool.get('ir.translation')
-        res = ir_translation._get_source(self.parser_instance.cr, self.parser_instance.uid, self.name, 'report', self.localcontext.get('lang', 'en_US'), src)
+        res = ir_translation._get_source(self.parser_instance.cr, self.parser_instance.uid, self.report_xml.report_file and "addons/%s"%self.report_xml.report_file or self.name, 'report', self.localcontext.get('lang', 'en_US'), src)
         if not res :
             return src
         return res 
@@ -232,6 +232,7 @@ class WebKitParser(report_sxw):
         if report_xml.report_type != 'webkit':
             return super(WebKitParser,self).create_single_pdf(cursor, uid, ids, data, report_xml, context=context)
 
+        self.report_xml = report_xml
         self.parser_instance = self.parser(
                                             cursor,
                                             uid,
@@ -294,6 +295,7 @@ class WebKitParser(report_sxw):
         #default_filters=['unicode', 'entity'] can be used to set global filter
         body_mako_tpl = mako_template(template)
         helper = WebKitHelper(cursor, uid, report_xml.id, context)
+        self.localcontext.update({'lang': context.get('lang')})
         self.parser_instance.localcontext.update({'setLang':self.setLang})
         self.parser_instance.localcontext.update({'formatLang':self.formatLang})
         try :
