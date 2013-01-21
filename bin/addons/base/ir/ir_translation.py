@@ -134,7 +134,7 @@ class ir_translation(osv.osv):
         return len(ids)
 
     @tools.cache(skiparg=3)
-    def _get_source(self, cr, uid, name, types, lang, source=None):
+    def _get_source(self, cr, uid, name, types, lang, source=None, false_if_no_trad = False):
         """
         Returns the translation for the given combination of name, type, language
         and source. All values passed to this method should be unicode (not byte strings),
@@ -175,6 +175,8 @@ class ir_translation(osv.osv):
         res = cr.fetchone()
         trad = res and res[0] or u''
         if source and not trad:
+            if false_if_no_trad:
+                return False
             return tools.ustr(source)
         return trad
 
