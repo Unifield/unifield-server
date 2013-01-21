@@ -20,6 +20,7 @@
 ##############################################################################
 import wizards
 
+import button_osv_override
 import osv_override
 
 import field_access_rule
