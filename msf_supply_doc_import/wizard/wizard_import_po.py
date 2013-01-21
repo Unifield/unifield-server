@@ -48,8 +48,10 @@ class wizard_import_po(osv.osv_memory):
         'message': fields.text(string='Message', readonly=True),
         'po_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
         'data': fields.binary('Lines with errors'),
+        'filename_template': fields.char('Templates', size=256),
         'filename': fields.char('Lines with errors', size=256),
         'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
+        'percent_completed': fields.integer('% completed', readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
