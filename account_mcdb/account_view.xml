@@ -129,7 +129,7 @@
                         <separator orientation="vertical"/>
                         <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                        <filter string="Register Name" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                     </group>
