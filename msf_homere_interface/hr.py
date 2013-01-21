@@ -93,6 +93,25 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
     }
 
+    def _check_unicity(self, cr, uid, ids, context=None):
+        """
+        Check that identification_id is not used yet.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Search if no one use this identification_id
+        for e in self.browse(cr, uid, ids):
+            if e.identification_id:
+                same = self.search(cr, uid, [('identification_id', '=', e.identification_id)])
+                if same and len(same) > 1:
+                    return False
+        return True
+
+    _constraints = [
+        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+    ]
+
     def check_identification_id(self, cr, uid, ids, vals, context=None):
         """
         Check that no employee have the same identification number.
