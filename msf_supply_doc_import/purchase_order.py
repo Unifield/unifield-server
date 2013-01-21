@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 import logging
 import tools
+from mx.DateTime import *
 from os import path
 from tools.translate import _
 import base64
@@ -118,6 +119,55 @@ class purchase_order(osv.osv):
                 'view_mode': 'form',
                 'target': 'crush',
                 'context': context,
+                }
+
+    def export_po_integration(self, cr, uid, ids, context=None):
+        '''
+        Creates an XML file and launches the wizard to save it
+        '''
+        if context is None:
+            context = {}
+        po = self.browse(cr, uid, ids[0], context=context)
+        header_columns = [(column, 'string') for column in columns_for_po_integration]
+        header_index = {}
+        [header_index.update({value: index})for (index, value) in enumerate(columns_for_po_integration)]
+        list_of_lines = []
+        for line in po.order_line:
+            new_list = []
+            new_list.insert(header_index['Order Reference'], po.name)
+            new_list.insert(header_index['Line'], line.line_number)
+            new_list.insert(header_index['Product Code'], line.product_id.default_code)
+            new_list.insert(header_index['Product Code'], line.product_id.name)
+            new_list.insert(header_index['Quantity'], line.product_qty)
+            new_list.insert(header_index['UoM'], line.product_uom)
+            new_list.insert(header_index['Price'], line.price_unit)
+            new_list.insert(header_index['Delivery requested date'], line.date_planned and strptime(line.date_planned,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
+            new_list.insert(header_index['Currency'], line.currency_id.name)
+            new_list.insert(header_index['Comment'], line.comment)
+            new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')
+            new_list.insert(header_index['Delivery Confirmed Date'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
+            new_list.insert(header_index['Est. Transport Lead Time'], po.est_transport_lead_time or '')
+            new_list.insert(header_index['Transport Mode'], po.transport_type or '')
+            new_list.insert(header_index['Arrival Date in the country'], po.arrival_date and strptime(po.arrival_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
+            new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name or '')
+            new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
+            new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or '')
+            new_list.insert(header_index['Notes'], po.notes)
+            list_of_lines.append(new_list)
+        instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
+        file = base64.encodestring(instanciate_class.get_xml())
+        
+        export_id = self.pool.get('wizard.export.po').create(cr, uid, {'po_id': ids[0], 
+                                                                        'file': file, 
+                                                                        'filename': 'po_%s.xls' % (po.name.replace(' ', '_')), 
+                                                                        'message': 'The PO has been exported. Please click on Save As button to download the file'})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.export.po',
+                'res_id': export_id,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
                 }
 
     def import_file(self, cr, uid, ids, context=None):

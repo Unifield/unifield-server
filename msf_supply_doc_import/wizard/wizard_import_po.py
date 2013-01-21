@@ -367,4 +367,31 @@ The columns should be in this values:
     
 wizard_import_po()
 
+
+class wizard_export_po(osv.osv_memory):
+    _name = 'wizard.export.po'
+    _description = 'Export PO for integration'
+    
+    _columns = {
+        'po_id': fields.many2one('purchase.order', string='PO'),
+        'file': fields.binary(string='File to export', required=True, readonly=True),
+        'filename': fields.char(size=128, string='Filename', required=True),
+        'message': fields.char(size=256, string='Message', readonly=True),
+    }
+    
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Return to the initial view
+        '''
+        res_id = self.browse(cr, uid, ids[0], context=context).po_id.id
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'res_id': res_id}   
+        
+wizard_export_po()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
