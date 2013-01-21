@@ -260,6 +260,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                             'quantity': nml.get('product_qty'),
                                                             'prodlot_id': nml.get('prodlot_id'),
                                                             'expiry_date': nml.get('expired_date')})
+                    error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (nml.get('file_line_num'), ln))
                     matching_wiz_lines.append(wiz_line_id)
                     complete_lines += 1
                     del nm_lines[ln][index]
@@ -278,6 +279,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                             'quantity': nml.get('product_qty'),
                                                             'prodlot_id': nml.get('prodlot_id'),
                                                             'expiry_date': nml.get('expired_date')})
+                    move_product_id = move_obj.browse(cr, uid, wiz_line_id)
+                    error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s." % 
+                                      (nml.get('file_line_num'), ln, move_product_id.product_id.default_code, product_obj.browse(cr, uid, nml.get('product_id')).default_code))
                     matching_wiz_lines.append(wiz_line_id)
                     complete_lines += 1
                     del nm_lines[ln][index]
@@ -377,7 +381,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         if not wiz_line_ids and orig_move:
                             # Get the quantity to split according to available (ordered qty - processed qty) in the wizard line
                             orig_move = move_obj.browse(cr, uid, orig_move.id)
-                            av_qty = orig_move.quantity_ordered - orig_move.quantity
+                            av_qty = orig_move.quantity_ordered - min(orig_move.quantity, 1.00)
                             av_qty = max(av_qty, 1.00)
                             if orig_move.product_id.id != nml.get('product_id') or orig_move.product_uom.id != nml.get('uom_id'):
                                 error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s. Maybe the product, the quantity and/or the UoM has been changed.") % (nml.get('file_line_num'), ln))
@@ -401,6 +405,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             
                         # Continue the process
                         for wl in move_obj.browse(cr, uid, wiz_line_ids):
+                            if leave_qty == 0.00:
+                                continue
                             available_qty = wl.quantity_ordered - wl.quantity
                             if available_qty > 0.00 and nml.get('product_id') == wl.product_id.id and nml.get('uom_id') == wl.product_uom.id:
                                 if available_qty > leave_qty:
