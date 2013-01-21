@@ -62,9 +62,11 @@
 						<field name="view_id" readonly='1' />
 					</group>
 					<separator string="Groups" colspan="4" />
-					<field name="group_ids" nolabel="1" />
+					<field name="group_ids" nolabel="1" colspan="2" />
 					<separator string="Comment" colspan="4" />
-					<field name="comment" nolabel="1" />
+					<field name="comment" nolabel="1" colspan="2" />
+					<newline />
+					<field name="active" />
                 </form>
             </field>
         </record>

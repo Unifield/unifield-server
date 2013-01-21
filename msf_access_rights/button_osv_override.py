@@ -163,6 +163,40 @@ osv.object_proxy.execute_cr = execute_cr
 super_execute_workflow_cr = osv.object_proxy.exec_workflow_cr
 
 def exec_workflow_cr(self, cr, uid, obj, method, *args):
-    super_execute_workflow_cr(self, cr, uid, obj, method, *args)
+    if '.' in method:
+        module_name = obj.split('.')[0]
+    else:
+        module_name = obj
+    
+    if module_name in module_whitelist or method in method_whitelist:
+        return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
+    else:
+        # load button access rights for this method
+        pool = pooler.get_pool(cr.dbname) 
+        object_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
+        rules_pool = pool.get('msf_access_rights.button_access_rule')
+        rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
+        
+        # do we have rules?
+        if rules_search:
+            rule = rules_pool.browse(cr, uid, rules_search[0])
+            
+            # does user have access? 
+            access = False
+            if rule.group_ids:
+                user = pool.get('res.users').read(cr, 1, uid)
+                if set(user['groups_id']).intersection(rule.group_ids):
+                    access = True
+            else:
+                access = True
+            
+            if access:
+                # execute workflow as admin
+                return super_execute_workflow_cr(self, cr, 1, obj, method, *args)
+            else:
+                # throw access denied
+                raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
+        else:
+            return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
     
 osv.object_proxy.exec_workflow_cr = exec_workflow_cr
