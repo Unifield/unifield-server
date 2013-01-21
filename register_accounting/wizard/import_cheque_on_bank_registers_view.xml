@@ -104,7 +104,7 @@
                             <field name="ref"/>
                             <field name="supplier_ref"/>
                             <field name="account_id"/>
-                            <field name="partner_id"/>
+                            <field name="partner_txt"/>
                             <field name="document_date"/>
                             <field name="date"/>
                             <field name="date_maturity"/>
