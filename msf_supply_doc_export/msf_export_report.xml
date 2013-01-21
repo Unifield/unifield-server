@@ -15,18 +15,6 @@
          />
 
         <report
-            id="report_po_integration_xls"
-            string="Purchase Order Integration"
-            model="purchase.order"
-            name="po.integration_xls"
-            file="msf_supply_doc_export/report/report_po_integration_xls.mako"
-            report_type="webkit"
-            header="False"
-            auto="False"
-            menu="True"
-         />
-
-        <report
             id="report_request_for_quotation_xls"
             string="Request For Quotation Excel Export"
             model="purchase.order"

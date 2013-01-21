@@ -141,7 +141,6 @@ class purchase_order(osv.osv):
             new_list.insert(header_index['Quantity'], line.product_qty)
             new_list.insert(header_index['UoM'], line.product_uom)
             new_list.insert(header_index['Price'], line.price_unit)
-            new_list.insert(header_index['Delivery requested date'], line.date_planned and strptime(line.date_planned,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
             new_list.insert(header_index['Currency'], line.currency_id.name)
             new_list.insert(header_index['Comment'], line.comment)
             new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')

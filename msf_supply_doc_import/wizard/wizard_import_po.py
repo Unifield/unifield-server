@@ -155,7 +155,7 @@ The columns should be in this values:
         
         if context is None:
             context = {}
-        context.update({'import_in_progress': True, 'noraise': True})
+        context.update({'import_in_progress': True})
         start_time = time.time()
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')

@@ -19,8 +19,9 @@
 #
 ##############################################################################
 
+# if you update a file in PO_COLUMNS_FOR_INTEGRATION, you also need to modify the method export_po_integration.
 PO_COLUMNS_FOR_INTEGRATION=[
-'Order Reference', 'Line', 'Product Code', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment', 'Supplier Reference',
+'Order Reference', 'Line', 'Product Code', 'Quantity', 'UoM', 'Price', 'Currency', 'Comment', 'Supplier Reference',
 'Delivery Confirmed Date', 'Est. Transport Lead Time', 'Transport Mode', 'Arrival Date in the country', 'Incoterm', 'Destination Partner',
 'Destination Address', 'Notes']
 
