@@ -185,6 +185,8 @@ class analytic_account(osv.osv):
         Change search behaviour to not include FP that are closed by a contract.
         FIXME: this method do others things that not have been documented. Please complete here what method do.
         """
+        if not context:
+            context = {}
         if context and 'search_by_ids' in context and context['search_by_ids']:
             args2 = args[-1][2]
             del args[-1]
@@ -204,7 +206,7 @@ class analytic_account(osv.osv):
                 args[i] = ('id', 'in', fp_ids)
         res = super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
         display_fp = False
-        if context.get('display_fp_closed_by_a_contract', False) and context.get('display_fp_closed_by_a_contract') == True:
+        if 'display_fp_closed_by_a_contract' in context and context.get('display_fp_closed_by_a_contract') == True:
             display_fp = True
         if not display_fp:
             # Search all FP closed by a contract
