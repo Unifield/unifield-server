@@ -30,7 +30,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from check_line import *
 from msf_supply_doc_import import MAX_LINES_NB
-from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_import
+from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration
 
 
 class purchase_order(osv.osv):
@@ -107,7 +107,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         context.update({'active_id': ids[0]})
-        columns_header = [(column, type(column)) for column in columns_for_po_import]
+        columns_header = [(column, type(column)) for column in columns_for_po_integration]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml()),
                                                                             'filename_template': 'template.xls'}, context)
