@@ -66,12 +66,12 @@
     
 ## we loop over the tender_line_ids
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Price</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Delivery requested date</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
     </Row>
     % for line in o.tender_line_ids:
     <Row>

@@ -1272,8 +1272,8 @@ class ir_values(osv.osv):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        trans_obj = self.pool.get('ir.translation')
         new_values = values
-        
         move_accepted_values = {'client_action_multi': [],
                                     'client_print_multi': [],
                                     'client_action_relate': ['act_relate_picking'],
@@ -1306,10 +1306,11 @@ class ir_values(osv.osv):
         
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
+            Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
             for v in values:
                 if key == 'action' and v[1] in move_accepted_values[key2]:
-                    new_values.append(v)          
-                elif context.get('_terp_view_name', False) == 'Destruction Report':
+                    new_values.append(v)
+                elif context.get('_terp_view_name', False) == Destruction_Report:
                     new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []

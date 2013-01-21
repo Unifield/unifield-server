@@ -56,13 +56,13 @@
 <Table >
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Initial Average Cost</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Location</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Batch</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Initial Average Cost')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Location')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
     </Row>
     ## we loop over the stock_initial_inventory_line
     % for line in o.inventory_line_id:

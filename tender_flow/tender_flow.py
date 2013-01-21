@@ -975,18 +975,18 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in po_accepted_values[key2] \
-                or v[2]['name'] == 'Purchase Order Excel Export' \
-                or v[2]['name'] == 'Purchase Order' \
-                or v[2]['name'] == 'Purchase Order (Merged)' \
-                or v[2]['name'] == 'Allocation report' \
-                or v[2]['name'] == 'Order impact vs. Budget' :
+                or v[1] == 'Purchase Order Excel Export' \
+                or v[1] == 'Purchase Order' \
+                or v[1] == 'Purchase Order (Merged)' \
+                or v[1] == 'Allocation report' \
+                or v[1] == 'Order impact vs. Budget' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                or v[2]['name'] == 'Request for Quotation' \
-                or v[2]['name'] == 'Request For Quotation Excel Export' :
+                or v[1] == 'Request for Quotation' \
+                or v[1] == 'Request For Quotation Excel Export' :
                     new_values.append(v)
  
         return new_values
