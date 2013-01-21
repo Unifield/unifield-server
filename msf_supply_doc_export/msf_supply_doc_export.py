@@ -217,7 +217,7 @@ class ir_values(osv.osv):
         elif context.get('_terp_view_name') and context['_terp_view_name'] == Internal_Requests and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if v[1] == 'Import lines':
+                if v[1] == 'action_open_wizard_import':
                     new_act.append(v)
             values = new_act
         
@@ -252,7 +252,6 @@ class ir_values(osv.osv):
             Shipments = trans_obj.tr_view(cr, 'Shipments', context)
             Shipment = trans_obj.tr_view(cr, 'Shipment', context)
             for v in values:
-
                 if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in (Packing_Lists, Packing_List) :
                     new_act.append(v)
                 elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):

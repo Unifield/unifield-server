@@ -1274,10 +1274,6 @@ class ir_values(osv.osv):
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
         trans_obj = self.pool.get('ir.translation')
         new_values = values
-        Reception = trans_obj.tr_view(cr, 'Reception', context)
-        Labels = trans_obj.tr_view(cr, 'Labels', context)
-        Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
-        Pre_Packing_List = trans_obj.tr_view(cr, 'Pre-Packing List', context)
         move_accepted_values = {'client_action_multi': [],
                                     'client_print_multi': [],
                                     'client_action_relate': ['act_relate_picking'],
@@ -1285,25 +1281,25 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         incoming_accepted_values = {'client_action_multi': ['act_stock_return_picking', 'action_stock_invoice_onshipping'],
-                                    'client_print_multi': [Reception],
+                                    'client_print_multi': ['Reception'],
                                     'client_action_relate': ['View_log_stock.picking'],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': [Labels],
+                                    'client_print_multi': ['Labels'],
                                     'client_action_relate': [],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
         
         delivery_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': [Labels],
+                                    'client_print_multi': ['Labels'],
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
         
         picking_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': [Picking_Ticket, Pre_Packing_List, Labels],
+                                    'client_print_multi': ['Picking Ticket', 'Pre-Packing List', 'Labels'],
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}

@@ -490,6 +490,14 @@ class ir_translation(osv.osv):
     def tr_view(self, cr, name, context):
         if not context or not context.get('lang'):
             return name
-        return self._get_source(cr, 1, False, 'view', context['lang'], name)
+        tr = self._get_source(cr, 1, False, 'view', context['lang'], name, True)
+        if not tr:
+            # sometimes de view name is empty and so the action name is used as view name
+            tr2 = self._get_source(cr, 1, 'ir.actions.act_window,name', 'model', context['lang'], name)
+            if tr2:
+                return tr2
+            return name
+        return tr
+
 
 ir_translation()
