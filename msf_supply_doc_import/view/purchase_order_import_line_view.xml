@@ -26,7 +26,6 @@
                 </group>
                 <separator string="Vertical Integration" colspan="4"/>
                 <button name="wizard_import_file" string="Import the file (Vertical Integration)" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
-                <button name="export_file" string="Export PO" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
                 </xpath>
                 </data>
             </field>

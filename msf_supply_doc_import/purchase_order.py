@@ -113,12 +113,6 @@ class purchase_order(osv.osv):
                 'context': context,
                 }
 
-    def export_file(self, cr, uid, ids, context=None):
-        datas = {'ids': ids}
-        return {'type': 'ir.actions.report.xml',
-                'report_name': 'po.integration_xls',
-                'datas': datas}
-
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines from file
