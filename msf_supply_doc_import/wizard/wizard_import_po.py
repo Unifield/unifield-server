@@ -147,11 +147,11 @@ The columns should be in this values:
             file_values.append(line_values)
         return file_values
 
-    def _import(self, dbname, uid, ids, context=None):
+    def import_file(self, cr, uid, ids, context=None):
         '''
         Import file
         '''
-        cr = pooler.get_db(dbname).cursor()
+        #cr = pooler.get_db(dbname).cursor()
         
         if context is None:
             context = {}
@@ -327,20 +327,20 @@ The columns should be in this values:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
-        cr.commit()
-        cr.close()
+#        cr.commit()
+#        cr.close()
 #        except Exception, e:
 #            raise osv.except_osv(_('Error !'), _('%s !') % e)
 
-    def import_file(self, cr, uid, ids, context=None):
-        """
-        Launch a thread for importing lines.
-        """
-        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-        thread.start()
-        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-        Otherwise, you can continue to use Unifield.""")
-        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
+#    def import_file(self, cr, uid, ids, context=None):
+#        """
+#        Launch a thread for importing lines.
+#        """
+#        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+#        thread.start()
+#        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+#        Otherwise, you can continue to use Unifield.""")
+#        return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
         """
@@ -352,7 +352,18 @@ The columns should be in this values:
         '''
         Return to the initial view
         '''
-        return {'type': 'ir.actions.act_window_close'}
+        if isinstance(ids, (int, long)):
+            ids=[ids]
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form, tree',
+                'target': 'crush',
+                'res_id': po_id,
+                'context': context,
+                }
     
 wizard_import_po()
 
