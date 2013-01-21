@@ -25,6 +25,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+# For the the time logger function------
 import time
 from msf_supply_doc_import import check_line
 from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
@@ -44,7 +45,7 @@ class wizard_import_po_line(osv.osv_memory):
         return res
 
     _columns = {
-        'file': fields.binary(string='File to import', required=True),
+        'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'po_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
         'data': fields.binary('Lines with errors'),
@@ -67,17 +68,6 @@ The columns should be in this values:
         'state': lambda *a: 'draft',
     }
 
-    def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
-        lines_not_imported = kwargs.get('line_with_error') # list of list
-        header_index = kwargs.get('header_index')
-        data = header_index.items()
-        columns_header = []
-        for k,v in sorted(data, key=lambda tup: tup[1]):
-            columns_header.append((k, type(k)))
-        files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
-        return vals
-
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set po_id with the active_id value in context
@@ -89,6 +79,23 @@ The columns should be in this values:
             res = super(wizard_import_po_line, self).default_get(cr, uid, fields, context=context)
             res['po_id'] = po_id
         return res
+
+    def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
+        lines_not_imported = kwargs.get('line_with_error') # list of list
+        header_index = kwargs.get('header_index')
+        data = header_index.items()
+        columns_header = []
+        start = time.time()
+        for k,v in sorted(data, key=lambda tup: tup[1]):
+            columns_header.append((k, type(k)))
+        end = time.time()
+        print "Get header columns = %s" % str(round(end-start))
+        start_class = time.time()
+        files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
+        end_class = time.time()
+        print "Get class = %s" % str(round(end_class-start_class))
+        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        return vals
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         list_of_values = []
@@ -187,6 +194,7 @@ The columns should be in this values:
             total_line_num = len([row for row in file_obj.getRows()])
             for row in rows:
                 line_num += 1
+                percent_completed = float(line_num)/float(total_line_num-1)*100.0
                 # default values
                 to_write = {
                     'error_list': [],
@@ -214,6 +222,7 @@ The columns should be in this values:
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 try:
                     if not check_line.check_empty_line(row=row, col_count=col_count):
@@ -221,41 +230,41 @@ The columns should be in this values:
     
                     # Cell 0: Product Code
                     p_value = {}
-                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, cell_nb=header_index['Product Code'],product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
                                      'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
     
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(product_obj=product_obj, cell_nb=header_index['Quantity'], row=row, to_write=to_write, context=context)
                     to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'],
                                      'warning_list': qty_value['warning_list']})
     
                     # Cell 3: UOM
                     uom_value = {}
-                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, cell_nb=header_index['UoM'], product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
     
                     # Cell 4: Price
                     price_value = {}
-                    price_value = check_line.compute_price_value(row=row, to_write=to_write, price='Cost Price', context=context)
+                    price_value = check_line.compute_price_value(row=row, to_write=to_write, cell_nb=header_index['Price'], price='Cost Price', context=context)
                     to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
                                      'warning_list': price_value['warning_list'], 'price_unit_defined': price_value['price_unit_defined']})
     
                     # Cell 5: Delivery Request Date
                     date_value = {}
-                    date_value = check_line.compute_date_value(row=row, to_write=to_write, context=context)
+                    date_value = check_line.compute_date_value(cell_nb=header_index['Delivery requested date'], row=row, to_write=to_write, context=context)
                     to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
     
                     # Cell 6: Currency
                     curr_value = {}
-                    curr_value = check_line.compute_currency_value(cr, uid, cell=6, browse_purchase=po_browse,
+                    curr_value = check_line.compute_currency_value(cr, uid, cell_nb=header_index['Currency'], browse_purchase=po_browse,
                                                         currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
     
                     # Cell 7: Comment
                     c_value = {}
-                    c_value = check_line.comment_value(row=row, cell=7, to_write=to_write, context=context)
+                    c_value = check_line.comment_value(row=row, cell_nb=header_index['Comment'], to_write=to_write, context=context)
                     to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                     to_write.update({
                         'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
@@ -291,8 +300,9 @@ The columns should be in this values:
                     message += """Line %s: Uncaught error: %s""" % (line_num, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
-                percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                finally:
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
+        
         error_log += '\n'.join(error_list)
         if error_log:
             error_log = "Reported errors for ignored lines : \n" + error_log
@@ -313,10 +323,6 @@ Importation completed in %s!
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
-        msg_to_return = check_line.get_log_message(to_write=to_write, obj=po_browse)
-        if msg_to_return:
-            purchase_obj.log(cr, uid, po_id, _(msg_to_return), 
-                             context={'view_id': obj_data.get_object_reference(cr, uid, 'purchase', 'purchase_order_form')[1]})
         # we reactivate the PO
         purchase_obj.write(cr, uid, po_id, {'active': True}, context)
         cr.commit()

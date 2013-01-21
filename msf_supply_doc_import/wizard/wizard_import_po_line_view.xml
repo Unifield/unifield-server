@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <form string="Import of lines">
                     <separator colspan="4" string="File to import" />
-                    <field name="file" filename="filename_template" attrs="{'readonly':[('state', '!=', 'draft')]}"/>
+                    <field name="file" filename="filename_template" />
                     <field name="percent_completed" widget="progressbar" attrs="{'invisible':[('state', '=', 'draft')]}"/>
                     <field name="filename_template" invisible="1"  />
                     <field name="filename" invisible="1"  />
