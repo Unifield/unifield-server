@@ -288,7 +288,7 @@ class product_attributes(osv.osv):
         '''
         for product in self.browse(cr, uid, ids, context=context):
             if product.active:
-                raise osv.except_osv(_('Error'), _('The product is already active.'))
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
         
         self.write(cr, uid, ids, {'active': True}, context=context)
         
@@ -299,9 +299,22 @@ class product_attributes(osv.osv):
         De-activate product. 
         Check if the product is not used in any document in Unifield
         '''
+        internal_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+        
+        c = context.copy()
+        c.update({'location_id': internal_loc})
+        
         for product in self.browse(cr, uid, ids, context=context):
+            has_stock = False
+            
             if not product.active:
-                raise osv.except_osv(_('Error'), _('The product is already inactive.'))
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
+            
+            # Check if the product has stock in internal locations
+            if product.qty_available:
+                has_stock = True
+                # TODO : Raise to remove (open the wizard instead)
+                raise osv.except_osv(_('Error'), _('Can\'t de-activate the product : The product [%s] %s has available stock in Internal locations') % (product.default_code, product.name))
                 
         self.write(cr, uid, ids, {'active': False}, context=context)
         
