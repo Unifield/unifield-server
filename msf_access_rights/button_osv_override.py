@@ -46,7 +46,8 @@ def groups_to_names(cr, pool, groups):
             data_id = data_pool.create(cr, 1, {'name':group.name.replace(' ','_') + '_' + random_string(), 'module':'base', 'model': 'res.groups', 'res_id': group.id})
             group_xml_ids.append(data_pool.browse(cr, 1, data_id))
     
-    return ','.join([g.name for g in group_xml_ids])
+    ret = ','.join([g.module + '.' + g.name if g.module else g.name for g in group_xml_ids])    
+    return ret
 
 def random_string():
     return ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
@@ -62,7 +63,7 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
     fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
     view_id = view_id or fields_view.get('view_id', False)
 
-    if uid != 1:
+    if uid != 0:
 
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
         rules_search = rules_pool.search(cr, 1, [('view_id', '=', view_id)]) # TODO: extend to get all inherited views too
@@ -150,7 +151,7 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
         
         # do we have rules?
         if rules_search:
-            rule = rules_pool.browse(cr, uid, rules_search[0])
+            rule = rules_pool.browse(cr, 1, rules_search[0])
             
             # does user have access? 
             access = False
@@ -199,7 +200,7 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
         
         # do we have rules?
         if rules_search:
-            rule = rules_pool.browse(cr, uid, rules_search[0])
+            rule = rules_pool.browse(cr, 1, rules_search[0])
             
             # does user have access? 
             access = False
