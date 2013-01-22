@@ -41,8 +41,8 @@ class SpreadsheetCreator(object):
         self.datas = datas
         self.title = title
 
-    def get_xml(self):
+    def get_xml(self, default_filters=[]):
         f, filename = file_open('addons/spreadsheet_xml/report/spreadsheet_writer_xls.mako', pathinfo=True)
         f[0].close()
-        tmpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8')
+        tmpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8', default_filters=default_filters)
         return tmpl.render(objects=self.datas, headers=self.headers, title= self.title)
