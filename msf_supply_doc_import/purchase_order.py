@@ -356,7 +356,7 @@ class purchase_order_line(osv.osv):
         to_write = kwargs['to_write']
         order_id = to_write['order_id']
         text_error = to_write['text_error']
-        price_unit_defined = to_write['price_unit_defined']
+        price_unit_defined = to_write.get('price_unit_defined', False)
         po_obj = self.pool.get('purchase.order')
         po = po_obj.browse(cr, uid, order_id, context=context)
         # on_change functions to call for updating values
@@ -374,7 +374,8 @@ class purchase_order_line(osv.osv):
                                             partner_id, date_order, fiscal_position, date_planned=False,
                                             name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
                                             nomen_manda_0=False, comment=False, context=context)
-            price_unit = res.get('value', {}).get('price_unit', False)
+            if not context.get('po_integration'):
+                price_unit = res.get('value', {}).get('price_unit', False)
             uom = res.get('value', {}).get('product_uom', False)
             warning_msg = res.get('warning', {}).get('message', '')
             text_error += '\n %s' % warning_msg

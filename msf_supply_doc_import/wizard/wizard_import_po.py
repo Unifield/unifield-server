@@ -22,6 +22,7 @@ import threading
 import pooler
 from osv import osv, fields
 from tools.translate import _
+from mx import DateTime
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
@@ -97,19 +98,9 @@ The columns should be in this values:
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         list_of_values = []
         for cell_nb in range(len(row)):
-            cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context)
+            cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
             list_of_values.append(cell_data)
         return list_of_values
-
-    def get_cell_data(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = False
-        try:
-            line_content = row.cells
-        except ValueError, e:
-            line_content = row.cells
-        if line_content and row.cells[cell_nb] and row.cells[cell_nb].data:
-            cell_data = row.cells[cell_nb].data
-        return cell_data
 
     def get_header_index(self, cr, uid, ids, row, error_list, line_num, context):
         """
@@ -117,7 +108,7 @@ The columns should be in this values:
         """
         header_dict = {}
         for cell_nb in range(len(row.cells)):
-            header_dict.update({self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context): cell_nb})
+            header_dict.update({row.cells and row.cells[cell_nb] and row.cells[cell_nb].data: cell_nb})
         return header_dict
 
     def check_header_values(self, cr, uid, ids, context, header_index):
@@ -158,7 +149,7 @@ The columns should be in this values:
         }
         # Line
         cell_nb = header_index['Line*']
-        line_number = int(self.get_cell_data(cr, uid, ids, row, cell_nb, to_write['error_list'], line_num=False, context=context))
+        line_number = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
         to_write.update({'line_number': line_number})
 
         # Quantity
@@ -178,15 +169,18 @@ The columns should be in this values:
         # UOM
         uom_value = {}
         cell_nb = header_index['UoM*']
-        uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, cell_nb=cell_nb, row=row, to_write=to_write, context=context)
-        to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)])
+        if product_uom:
+            to_write.update({'product_uom': product_uom[0]})
+        else:
+            to_write.update({'error_list': to_write['error_list'].append('The UOM %s was not found in the DataBase.' % cell_data)})
 
         # Price
         price_value = {}
         cell_nb = header_index['Price*']
-        price_value = check_line.compute_price_value(row=row, to_write=to_write, cell_nb=cell_nb, price='Cost Price', context=context)
-        to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
-                         'warning_list': price_value['warning_list'], 'price_unit_defined': price_value['price_unit_defined']})
+        price_unit = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
+        to_write.update({'price_unit': price_unit})
 
         #  Currency
         curr_value = {}
@@ -197,7 +191,9 @@ The columns should be in this values:
 
         # Delivery Confirmed Date
         cell_nb = header_index['Delivery Confirmed Date*']
-        delivery_confirmed_date = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list=to_write['error_list'], line_num=False, context=context)
+        delivery_confirmed_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if delivery_confirmed_date:
+            delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
         to_write.update({'delivery_confirmed_date': delivery_confirmed_date})
 
         #  Comment
@@ -212,7 +208,8 @@ The columns should be in this values:
             'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
         })
         # we check consistency on the model of on_change functions to call for updating values
-        purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
+        context.update({'po_integration': True})
+        check = purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
 
         return to_write
 
@@ -226,6 +223,8 @@ The columns should be in this values:
         if context is None:
             context = {}
         pol_obj = self.pool.get('purchase.order.line')
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
         context.update({'import_in_progress': True})
         start_time = time.time()
         line_with_error = []
@@ -242,7 +241,9 @@ The columns should be in this values:
             matching_po_lines = [] # List of po lines matching with file lines
             line_ignored_num = []
             error_list = []
+            notif_list = []
             error_log = ''
+            notif_log = ''
             
             fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
             # iterator on rows
@@ -262,98 +263,236 @@ The columns should be in this values:
                 file_line_num += 1
                 try:
                     to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
+                    if to_write['error_list']:
+                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s' % (file_line_num, ' '.join(to_write['error_list']))
+                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
+                        ignore_lines += 1
+                        continue
+                    else:
+                        product_id = to_write['product_id']
+                        line_number = to_write['line_number']
+                        product_uom = to_write['product_uom']
+                        price_unit = to_write['price_unit']
+                        product_qty = to_write['product_qty']
+                        line_found = False
+                        # We ignore the lines with a line number that does not correspond to any line number of the PO line
+                        if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
+                            error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number does not exist for %s' % (file_line_num, po_browse.name)
+                            line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
+                            ignore_lines += 1
+                            continue
+                        # Search if the file line matches with a po line
+                        po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', po_id),
+                                                                ('id', 'not in', matching_po_lines),
+                                                                ('product_id', '=', product_id),
+                                                                ('line_number', '=', line_number),
+                                                                ('product_uom', '=', product_uom),
+                                                                ('price_unit', '=', price_unit),
+                                                                ('product_qty', '=', product_qty)])
+                        for l in pol_obj.browse(cr, uid, po_line_ids):
+                            # If a line is found, pass to the next file line
+                            if line_found:
+                                break
+                            line_found = True
+                            matching_po_lines.append(l.id)
+                            complete_lines += 1
+    
+                        if not line_found:
+                            if line_number not in nm_lines:
+                                nm_lines.update({line_number: []})
+                                
+                            # If the file line does not match with a wizard line
+                            # add it to a list of lines to process after (sort in dict with the line_number)
+                            nm_lines[line_number].append({'file_line_num': file_line_num,
+                                                          'product_uom': product_uom,
+                                                          'product_id': product_id,
+                                                          'price_unit': price_unit,
+                                                          'product_qty': product_qty,
+                                                          })
+    
+                        # Process all lines not matching
+                        
+                        # FIRST LOOP, search if a po line exists for the same line number, the same qty, the same price unit
+                        # but with a different product or a different UoM
+                        for ln in nm_lines:
+                            index = 0
+                            for nml in nm_lines[ln]:
+                                # Search if a line exist with the same product/line_number/price_unit/quantity (only UoM is changed)
+                                uom_change_ids = pol_obj.search(cr, uid, [('id', 'not in', matching_po_lines),
+                                                                          ('order_id', '=', po_id),
+                                                                          ('line_number', '=', ln),
+                                                                          #('product_uom', '=',  nml.get('product_uom')),
+                                                                          ('product_id', '=',  nml.get('product_id')),
+                                                                          ('price_unit', '=', nml.get('price_unit')),
+                                                                          ('product_qty', '=',nml.get('product_qty')),
+                                                                          ])
+                                if uom_change_ids:
+                                    # The UoM has changed
+                                    po_line_id = uom_change_ids[0]
+                                    notif_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (nml.get('file_line_num'), ln))
+                                    pol_obj.write(cr, uid, [po_line_id], {'product_uom': nml.get('product_uom')})
+                                    matching_po_lines.append(po_line_id)
+                                    complete_lines += 1
+                                    del nm_lines[ln][index]
+                                    continue
+                                    
+                                # Search if a line exist with the same UoM/line_number/quantity/price unit (only product is changed)
+                                prod_change_ids = pol_obj.search(cr, uid, [('id', 'not in', matching_po_lines),
+                                                                          ('order_id', '=', po_id),
+                                                                          ('line_number', '=', ln),
+                                                                          ('product_uom', '=',  nml.get('product_uom')),
+                                                                          #('product_id', '=',  nml.get('product_id')),
+                                                                          ('price_unit', '=', nml.get('price_unit')),
+                                                                          ('product_qty', '=',nml.get('product_qty')),
+                                                                          ])
+                                if prod_change_ids:
+                                    # The product has changed
+                                    po_line_id = prod_change_ids[0]
+                                    pol_product_id = pol_obj.browse(cr, uid, po_line_id)
+                                    notif_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s." % 
+                                                      (nml.get('file_line_num'), ln, pol_product_id.product_id.default_code, product_obj.browse(cr, uid, nml.get('product_id')).default_code))
+                                    pol_obj.write(cr, uid, [po_line_id], {'product_id': nml.get('product_id')})
+                                    matching_po_lines.append(po_line_id)
+                                    complete_lines += 1
+                                    del nm_lines[ln][index]
+                                    continue
+                                
+                                # Search if a line exist with the same Product/UoM/line_number/quantity (only price unit is changed)
+                                price_change_ids = pol_obj.search(cr, uid, [('id', 'not in', matching_po_lines),
+                                                                          ('order_id', '=', po_id),
+                                                                          ('line_number', '=', ln),
+                                                                          ('product_uom', '=',  nml.get('product_uom')),
+                                                                          ('product_id', '=',  nml.get('product_id')),
+                                                                          #('price_unit', '=', nml.get('price_unit')),
+                                                                          ('product_qty', '=',nml.get('product_qty')),
+                                                                          ])
+                                if price_change_ids:
+                                    # The price has changed
+                                    po_line_id = price_change_ids[0]
+                                    pol_price = pol_obj.browse(cr, uid, po_line_id)
+                                    notif_list.append("Line %s of the Excel file: The price unit did not match with the existing price of the line %s so we change the price from %s to %s." % 
+                                                      (nml.get('file_line_num'), ln, pol_price.price_unit, price_unit))
+                                    pol_obj.write(cr, uid, [po_line_id], {'price_unit': price_unit})
+                                    matching_po_lines.append(po_line_id)
+                                    complete_lines += 1
+                                    del nm_lines[ln][index]
+                                    continue
+                                
+                                # Search if a line exist with the same Product/UoM/line_number/quantity (only price unit is changed)
+                                product_qty_change_ids = pol_obj.search(cr, uid, [('id', 'not in', matching_po_lines),
+                                                                                  ('order_id', '=', po_id),
+                                                                                  ('line_number', '=', ln),
+                                                                                  ('product_uom', '=',  nml.get('product_uom')),
+                                                                                  ('product_id', '=',  nml.get('product_id')),
+                                                                                  ('price_unit', '=', nml.get('price_unit')),
+                                                                                  #('product_qty', '=',nml.get('product_qty')),
+                                                                                  ])
+                                if product_qty_change_ids:
+                                    # The product_qty has changed
+                                    po_line_id = product_qty_change_ids[0]
+                                    pol_price = pol_obj.browse(cr, uid, po_line_id)
+                                    notif_list.append("Line %s of the Excel file: The quantity unit did not match with the existing quantity of the line %s so we change the quantity from %s to %s." % 
+                                                      (nml.get('file_line_num'), ln, pol_price.product_qty, product_qty))
+                                    pol_obj.write(cr, uid, [po_line_id], {'product_qty': product_qty})
+                                    matching_po_lines.append(po_line_id)
+                                    complete_lines += 1
+                                    del nm_lines[ln][index]
+                                    continue
+                                # Increase the index
+                                index += 1
+    
+                        # SECOND LOOP: Process all remaining non matching lines
+                        for ln in nm_lines:
+                            # Search all po lines with the same line_number than the file line
+                            # we suppose here that the po_line_ids found have product_uom or product_id or price_unit or product_qty different than the line
+                            # in the file with the same line_number
+                            po_line_ids = pol_obj.search(cr, uid, [('id', 'not in', matching_po_lines),
+                                                                   ('order_id', '=', po_id),
+                                                                   ('line_number', '=', ln),])
+    #                        # If the number of lines in po is the same as in file
+    #                        # we search the best corresponding line and set values of file in po file
+    #                        if po_line_ids and len(nm_lines[ln]) == len(po_line_ids):
+    #                            for poline in pol_obj.browse(cr, uid, po_line_ids):
+    #                                best_qty = 0.00
+    #                                index = 0
+    #                                best_index = False
+    #                                # Search the best corresponding file line
+    #                                for nml in nm_lines[ln]:
+    #                                    if not best_qty:
+    #                                        best_qty = poline.product_qty - nml.get('product_qty')
+    #                                    if min(poline.product_qty - nml.get('product_qty'), best_qty) <= best_qty:
+    #                                        best_qty = poline.product_qty - nml.get('product_qty')
+    #                                        best_index = index
+    #                                    index += 1
+    #                                
+    #                                # Write the information in the best line
+    #                                best_fl = nm_lines[ln][best_index]
+    #                                pol_obj.write(cr, uid, [poline.id], {'product_id': best_fl.get('product_id'),
+    #                                                                     'product_uom': best_fl.get('uom_id'),
+    #                                                                     'product_qty': best_fl.get('product_qty')})
+    #                                del nm_lines[ln][best_index]
+    #                                matching_po_lines.append(poline.id)
+    #                                complete_lines += 1
+    #
+    #                        elif po_line_ids and len(nm_lines[ln]) < len(po_line_ids):
+    #                            # If the # of lines in file is smaller than the # of lines if po,
+    #                            # fill the po lines one after the other
+    #                            for nml in nm_lines[ln]:
+    #                                # We will fill lines till the leave qty is 0.00
+    #                                leave_qty = nml.get('product_qty')
+    #                                while leave_qty > 0.00:
+    #                                    last_move = False
+    #                                    for poline in pol_obj.browse(cr, uid, po_line_ids):
+    #                                        available_qty = poline.quantity_ordered - poline.quantity
+    #                                        # Only for wizard lines with a possibility to accept more qty
+    #                                        if available_qty > 0.00 and nml.get('product_id') == poline.product_id.id and nml.get('uom_id') == poline.product_uom.id:
+    #                                            last_move = poline.id
+    #                                            # All the qty of the file line goes to the wizard line
+    #                                            if available_qty > leave_qty:
+    #                                                pol_obj.write(cr, uid, [poline.id], {'quantity': poline.quantity + leave_qty,
+    #                                                                                  'prodlot_id': nml.get('prodlot_id'),
+    #                                                                                  'expiry_date': nml.get('expired_date')})
+    #                                                leave_qty = 0.00
+    #                                            else:
+    #                                                # The qty of the file line can't be include to only one wizard line
+    #                                                # so, we will put it on some wizard lines
+    #                                                leave_qty -= available_qty
+    #                                                pol_obj.write(cr, uid, [poline.id], {'quantity': poline.quantity + available_qty,
+    #                                                                                  'prodlot_id': nml.get('prodlot_id'),
+    #                                                                                  'expiry_date': nml.get('expired_date')})
+    #                                                matching_po_lines.append(poline.id)
+    #                                    
+    #                                    # If the total qty in file is more than the qty in wizard,
+    #                                    # Put the more qty in the last wizard lines
+    #                                    if leave_qty > 0.00 and last_move:
+    #                                        last_move = pol_obj.browse(cr, uid, last_move)
+    #                                        pol_obj.write(cr, uid, [last_move.id], {'quantity': last_move.quantity + leave_qty,
+    #                                                                                 'prodlot_id': nml.get('prodlot_id'),
+    #                                                                                 'expiry_date': nml.get('expired_date')})
+    #                                        matching_po_lines.append(poline.id)
+    #                                        leave_qty = 0.00
+    #                                    
+    #                                    if not last_move:
+    #                                        error_list.append(_("Line %s of the Excel file not corresponding to a line in Incoming Shipment for the line %s. Maybe the product, the quantity and/or the UoM has been changed.") % (nml.get('file_line_num'), ln))
+    #                                        ignore_lines += 1
+    #                                        break
+    #                                    
+    #                                    if leave_qty <= 0.00:
+    #                                        complete_lines += 1
                 except IndexError, e:
                     if line_num not in line_ignored_num:
-                        error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s" % (line_num, len(header_index.items()), e)
+                        error_log += "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s" % (line_num, len(header_index.items()), e)
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb, error_list, line_num=False, context=context))
                         ignore_lines += 1
                         line_ignored_num.append(line_num)
-
-                if to_write['error_list']:
-                    error_log += 'The line num %s in the Excel file was added to the file of the lines with errors: %s' % (file_line_num, ' '.join(to_write['error_list']))
-                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
-                    ignore_lines += 1
-                else:
-                    product_id = to_write['product_id']
-                    line_number = to_write['line_number']
-                    product_uom = to_write['product_uom']
-                    price_unit = to_write['price_unit']
-                    product_qty = to_write['product_qty']
-                    line_found = False
-                    # Search if the file line matches with a po line
-                    po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', po_id),
-                                                            ('id', 'not in', matching_po_lines),
-                                                            ('product_id', '=', product_id),
-                                                            ('line_number', '=', line_number),
-                                                            ('product_uom', '=', product_uom),
-                                                            ('price_unit', '=', price_unit),
-                                                            ('product_qty', '=', product_qty)])
-                    for l in pol_obj.browse(cr, uid, po_line_ids):
-                        # If a line is found, pass to the next file line
-                        if line_found:
-                            break
-                        line_found = True
-                        matching_po_lines.append(l.id)
-                        complete_lines += 1
-
-                    if not line_found:
-                        if line_number not in nm_lines:
-                            nm_lines.update({line_number: []})
-                            
-                        # If the file line does not match with a wizard line
-                        # add it to a list of lines to process after (sort in dict with the line_number)
-                        nm_lines[line_number].append({'file_line_num': file_line_num,
-                                                      'product_id': product_id,
-                                                      'product_uom': product_uom,
-                                                      'product_qty': product_qty})
-
-                    # Process all lines not matching
-                    
-                    # First, search if a po line exists for the same line number, the same qty, the same price unit
-                    # but with a different product or a different UoM
-                    for ln in nm_lines:
-                        index = 0
-                        for nml in nm_lines[ln]:
-                            # Search if a line exist with the same product/line_number/price_unit/quantity (only UoM is changed)
-                            uom_change_ids = pol_obj.search(cr, uid, [('order_id', '=', po_id),
-                                                                      ('id', 'not in', matching_po_lines),
-                                                                      ('product_id', '=',  nml.get('product_id')),
-                                                                      ('line_number', '=', ln),
-                                                                      ('price_unit', '=', price_unit),
-                                                                      ('product_qty', '=',nml.get('product_qty'))])
-                            if uom_change_ids:
-                                # The UoM has changed
-                                po_line_id = uom_change_ids[0]
-                                pol_obj.write(cr, uid, [po_line_id], {'product_uom': nml.get('uom_id'),
-                                                                      'quantity': nml.get('product_qty')})
-                                error_list.append("Line %s of the Excel file: The product UOM did not match with the existing product of the line %s so we change the product UOM." % (nml.get('file_line_num'), ln))
-                                matching_wiz_lines.append(po_line_id)
-                                complete_lines += 1
-                                del nm_lines[ln][index]
-                                continue
-                                
-                            # Search if a line exist with the same UoM/line_number/quantity (only product is changed)
-                            prod_change_ids = pol_obj.search(cr, uid, [('order_id', '=', po_id),
-                                                                      ('id', 'not in', matching_po_lines),
-                                                                      ('product_uom', '=',  nml.get('product_uom')),
-                                                                      ('line_number', '=', ln),
-                                                                      ('price_unit', '=', price_unit),
-                                                                      ('product_qty', '=',nml.get('product_qty'))])
-                            if prod_change_ids:
-                                # The product has changed
-                                po_line_id = prod_change_ids[0]
-                                pol_obj.write(cr, uid, [po_line_id], {'product_id': nml.get('product_id'),
-                                                                        'quantity': nml.get('product_qty')})
-                                pol_product_id = pol_obj.browse(cr, uid, po_line_id)
-                                error_list.append("Line %s of the Excel file: The product did not match with the existing product of the line %s so we change the product from %s to %s." % 
-                                                  (nml.get('file_line_num'), ln, pol_product_id.product_id.default_code, product_obj.browse(cr, uid, nml.get('product_id')).default_code))
-                                matching_wiz_lines.append(po_line_id)
-                                complete_lines += 1
-                                del nm_lines[ln][index]
-                                continue
-                            # Increase the index
-                            index += 1
-
+                        continue
+                except osv.except_osv as osv_error:
+                    osv_value = osv_error.value
+                    osv_name = osv_error.name
+                    error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_num, osv_name, osv_value)
+                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_num, context=context))
+                    ignore_lines = 1
+                    continue
 
 #            else:
 #                # lines ignored if they don't have the same line number as the line of the wizard
@@ -368,15 +507,20 @@ The columns should be in this values:
 #                    ignore_lines += 1
 #                    continue
         error_log += '\n'.join(error_list)
+        notif_log += '\n'.join(notif_list)
         if error_log:
             error_log = "Reported errors for ignored lines : \n" + error_log
+        if notif_log:
+            notif_log = "The following lines were modified: \n" + notif_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + ' second(s)'
         message = ''' Importation completed in %s!
 # of imported lines : %s
 # of ignored lines: %s
 %s
-''' % (total_time ,complete_lines, ignore_lines, error_log)
+
+%s
+''' % (total_time ,complete_lines, ignore_lines, error_log, notif_log)
 #        try:
         wizard_vals = {'message': message, 'state': 'done'}
         if line_with_error:
@@ -403,6 +547,24 @@ The columns should be in this values:
         This button is only for updating the view.
         """
         return False
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
+        I come back on the home page. Here, I come back on the PO on which I opened the wizard.
+        '''
+        if isinstance(ids, (int, long)):
+            ids=[ids]
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form, tree',
+                'target': 'crush',
+                'res_id': po_id,
+                'context': context,
+                }
 
     def close_import(self, cr, uid, ids, context=None):
         '''
