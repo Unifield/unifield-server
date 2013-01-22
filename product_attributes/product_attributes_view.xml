@@ -97,12 +97,16 @@
                                  -->
                             </group>
 
-                            <group colspan="2" col="2" name="status">
-                                <separator string="Status" colspan="2"/>
-                                <field name="categ_id" readonly="1"/>
-                                <field name="international_status" required="1"/>
-                                <field name="state"/>
-                                <field name="active"/>
+                            <group colspan="2" col="3" name="status">
+                                <separator string="Status" colspan="3"/>
+                                <field name="categ_id" readonly="1" colspan="3"/>
+                                <field name="international_status" required="1" colspan="3"/>
+                                <field name="state" colspan="3"/>
+                                <field name="active" readonly="1"/>
+                                <group colspan="1" col="1">
+	                                <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
+	                                <button name="deactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': [('active', '=', True)]}" />
+                                </group>
                             </group>
 
                             <group colspan="2" col="2" name="quality">

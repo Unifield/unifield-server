@@ -282,6 +282,24 @@ class product_attributes(osv.osv):
                 vals.update({'duplicate_ok': False})
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
     
+    def deactivate_product(self, cr, uid, ids, context=None):
+        '''
+        De-activate or re-activate the product. 
+        Check if the product is not used in any document in Unifield
+        '''
+        to_activate = []
+        to_deactivate = []
+        for product in self.browse(cr, uid, ids, context=context):
+            if product.active:
+                to_deactivate.append(product.id)
+            else:
+                to_activate.append(product.id)
+                
+        self.write(cr, uid, to_activate, {'active': True}, context=context)
+        self.write(cr, uid, to_deactivate, {'active': False}, context=context)
+        
+        return True
+    
     def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
         '''
         batch management is modified -> modification of Expiry Date Mandatory (perishable)
