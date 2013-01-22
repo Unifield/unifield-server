@@ -27,31 +27,6 @@ import pooler
 import random
 import string
 
-def groups_to_names(cr, pool, groups):
-    data_pool = pool.get('ir.model.data')
-    group_ids = [group.id for group in groups]
-    
-    # get groups xml ids
-    group_xml_ids_search = data_pool.search(cr, 1, [('model','=','res.groups'),('res_id','in',group_ids)])
-    group_xml_ids = data_pool.browse(cr, 1, group_xml_ids_search)
-    
-    # create xml_id for groups that do not have one
-    for group in groups:
-        create_xml_id = True
-        for g in group_xml_ids:
-            if group.id == g.res_id:
-                create_xml_id = False
-        
-        if create_xml_id:
-            data_id = data_pool.create(cr, 1, {'name':group.name.replace(' ','_') + '_' + random_string(), 'module':'base', 'model': 'res.groups', 'res_id': group.id})
-            group_xml_ids.append(data_pool.browse(cr, 1, data_id))
-    
-    ret = ','.join([g.module + '.' + g.name if g.module else g.name for g in group_xml_ids])    
-    return ret
-
-def random_string():
-    return ''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(10))
-
 super_fields_view_get = orm.orm.fields_view_get
 
 def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -63,7 +38,7 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
     fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
     view_id = view_id or fields_view.get('view_id', False)
 
-    if uid != 0:
+    if uid != 1:
 
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
         rules_search = rules_pool.search(cr, 1, [('view_id', '=', view_id)]) # TODO: extend to get all inherited views too
@@ -86,18 +61,23 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
                 if not button_name: 
                     continue
                 
-                # add / edit groups attribute to include groups defined in the rule
-                rules_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
-                for rule in rules_for_button:
+                # check if rule gives user access to button
+                rule_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
+                if rule_for_button:
+                    rule = rule_for_button[0]
+                    access = False
+                    
                     if rule.group_ids:
-                        if button.attrib.get('groups', False):
-                            # append to existing
-                            existing_groups = button.attrib.get('groups','')
-                            button.attrib['groups'] = existing_groups + ',' + groups_to_names(cr, self.pool, rule.group_ids)
-                        else:
-                            # create groups tag
-                            button.attrib['groups'] = groups_to_names(cr, self.pool, rule.group_ids)
-                
+                        user = self.pool.get('res.users').read(cr, 1, uid)
+                        if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
+                            access = True
+                            
+                    if access:
+                        if button.attrib.count('invisible'):
+                            del button.attrib['invisible']
+                    else:
+                        button.attrib['invisible'] = '1'
+                            
             fields_view['arch'] = etree.tostring(view_xml)
             
             return fields_view
