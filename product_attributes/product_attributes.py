@@ -306,6 +306,12 @@ class product_attributes(osv.osv):
         
         for product in self.browse(cr, uid, ids, context=context):
             has_stock = False
+            has_po_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
+                                                                                ('order_id.rfq_ok', '=', False),
+                                                                                ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+            has_rfq_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
+                                                                                ('order_id.rfq_ok', '=', True),
+                                                                                ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context) 
             
             if not product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
@@ -315,6 +321,16 @@ class product_attributes(osv.osv):
                 has_stock = True
                 # TODO : Raise to remove (open the wizard instead)
                 raise osv.except_osv(_('Error'), _('Can\'t de-activate the product : The product [%s] %s has available stock in Internal locations') % (product.default_code, product.name))
+            
+            # Check if the product is in some purchase order lines
+            if has_po_line:
+                # TODO : Raise to remove (open the wizard instead)
+                raise osv.except_osv(_('Error'), _('Can\'t de-activate the product : The product [%s] %s is present in one or some Purchase order lines which are not draft/cancelled/done.') % (product.default_code, product.name))
+
+            # Check if the product is in some request for quotation lines            
+            if has_rfq_line:
+                # TODO : Raise to remove (open the wizard instead)
+                raise osv.except_osv(_('Error'), _('Can\'t de-activate the product : The product [%s] %s is present in one or some Request for Quotation which are not draft/cancelled/done.') % (product.default_code, product.name))
                 
         self.write(cr, uid, ids, {'active': False}, context=context)
         
