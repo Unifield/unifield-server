@@ -19,10 +19,15 @@
 #
 ##############################################################################
 
-# if you update a file in PO_COLUMNS_FOR_INTEGRATION, you also need to modify the method export_po_integration.
-PO_COLUMNS_FOR_INTEGRATION=[
-'Order Reference', 'Line', 'Product Code', 'Quantity', 'UoM', 'Price', 'Currency', 'Comment', 'Supplier Reference',
-'Delivery Confirmed Date', 'Est. Transport Lead Time', 'Transport Mode', 'Arrival Date in the country', 'Incoterm', 'Destination Partner',
-'Destination Address', 'Notes']
+# if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, you also need to modify the method export_po_integration.
+PO_COLUMNS_HEADER_FOR_INTEGRATION=[
+('Line*', 'number'), ('Product Code*', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), 
+('Currency*', 'string'), ('Delivery Confirmed Date*', 'string'), ('Order Reference*', 'string'), ('Delivery Confirmed Date (PO)*', 'string'),
+('Comment', 'string'),
+('Supplier Reference', 'string'), ('Origin', 'string'), ('Notes', 'string'), ('Est. Transport Lead Time', 'number'), ('Transport Mode', 'string'), 
+('Destination Partner', 'string'), ('Destination Address', 'string'), ('Invoicing Address', 'string'), ('Arrival Date in the country', 'string'),
+('Incoterm', 'string'), ('Notes (PO)', 'string')]
+
+PO_COLUMNS_FOR_INTEGRATION = [x for (x, y) in PO_COLUMNS_HEADER_FOR_INTEGRATION]
 
 import wizard_import_po

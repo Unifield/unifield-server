@@ -136,9 +136,9 @@ def quantity_value(**kwargs):
         if not row.cells[cell_nb]:
             warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
         else:
-            if row.cells[cell_nb].type in ['int', 'float']:
-                product_qty = row.cells[cell_nb].data
-            else:
+            try:
+                product_qty = float(row.cells[cell_nb].data)
+            except ValueError, e:
                 error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
     # if the cell is empty
     except IndexError:
@@ -209,13 +209,14 @@ def compute_price_value(**kwargs):
                 warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
             else:
                 error_list.append('The Price and Product not found.')
-        elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
-            error_list.append('The Price Unit was not a number and no product was found.')
-        elif row.cells[cell_nb].type in ['int', 'float']:
-            price_unit_defined = True
-            price_unit = row.cells[cell_nb].data
         else:
-            error_list.append('The Price Unit was not defined properly.')
+            try:
+                price_unit = float(row.cells[cell_nb].data)
+            except ValueError, e:
+                if not default_code:
+                    error_list.append('The Price Unit was not a number and no product was found.')
+                else:
+                    error_list.append('The Price Unit was not defined properly.')
     # if nothing is found at the line index (empty cell)
     except IndexError:
         if default_code:

@@ -31,7 +31,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from check_line import *
 from msf_supply_doc_import import MAX_LINES_NB
-from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration
+from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION
 
 
 class purchase_order(osv.osv):
@@ -128,30 +128,34 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         po = self.browse(cr, uid, ids[0], context=context)
-        header_columns = [(column, 'string') for column in columns_for_po_integration]
+        header_columns = PO_COLUMNS_HEADER_FOR_INTEGRATION
+        #header_columns = [(column, 'string') for column in columns_for_po_integration]
         header_index = {}
         [header_index.update({value: index})for (index, value) in enumerate(columns_for_po_integration)]
         list_of_lines = []
         for line in po.order_line:
             new_list = []
-            new_list.insert(header_index['Order Reference'], po.name)
-            new_list.insert(header_index['Line'], line.line_number)
-            new_list.insert(header_index['Product Code'], line.product_id.default_code)
-            new_list.insert(header_index['Product Code'], line.product_id.name)
-            new_list.insert(header_index['Quantity'], line.product_qty)
-            new_list.insert(header_index['UoM'], line.product_uom)
-            new_list.insert(header_index['Price'], line.price_unit)
-            new_list.insert(header_index['Currency'], line.currency_id.name)
+            new_list.insert(header_index['Line*'], line.line_number)
+            new_list.insert(header_index['Product Code*'], line.product_id.default_code)
+            new_list.insert(header_index['Quantity*'], line.product_qty)
+            new_list.insert(header_index['UoM*'], line.product_uom.name)
+            new_list.insert(header_index['Price*'], line.price_unit)
+            new_list.insert(header_index['Currency*'], line.currency_id.name)
+            new_list.insert(header_index['Delivery Confirmed Date*'], line.confirmed_delivery_date and strptime(line.confirmed_delivery_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
+            new_list.insert(header_index['Order Reference*'], po.name)
+            new_list.insert(header_index['Delivery Confirmed Date (PO)*'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
+            new_list.insert(header_index['Origin'], line.origin)
             new_list.insert(header_index['Comment'], line.comment)
+            new_list.insert(header_index['Notes'], line.notes)
             new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')
-            new_list.insert(header_index['Delivery Confirmed Date'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
+            new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
+            new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or po.dest_address_id.city or '')
+            new_list.insert(header_index['Invoicing Address'], po.invoice_address_id and po.invoice_address_id.name or '')
             new_list.insert(header_index['Est. Transport Lead Time'], po.est_transport_lead_time or '')
             new_list.insert(header_index['Transport Mode'], po.transport_type or '')
             new_list.insert(header_index['Arrival Date in the country'], po.arrival_date and strptime(po.arrival_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
             new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name or '')
-            new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
-            new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or '')
-            new_list.insert(header_index['Notes'], po.notes)
+            new_list.insert(header_index['Notes (PO)'], po.notes)
             list_of_lines.append(new_list)
         instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
         file = base64.encodestring(instanciate_class.get_xml())
