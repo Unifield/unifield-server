@@ -41,7 +41,7 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
     if uid != 1:
 
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
-        rules_search = rules_pool.search(cr, 1, [('view_id', '=', view_id)]) # TODO: extend to get all inherited views too
+        rules_search = rules_pool.search(cr, 1, ['|',('view_id', '=', view_id),('inherit_id', '=', view_id)]) # TODO: extend to get all inherited views too
 
         # if have rules
         if rules_search:

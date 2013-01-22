@@ -3,7 +3,7 @@
 	<data>
 	
 		<!-- Parent menu item -->
-		<menuitem name="Sync Rules and Access Rights" id="msf_sync_access_rights" parent="base.menu_security" />
+		<menuitem name="Sync and Access Rules" id="msf_sync_access_rights" parent="base.menu_security" />
 
 		<!-- Field Access Rule List -->
 		<record id="field_access_rules_list" model="ir.actions.act_window">

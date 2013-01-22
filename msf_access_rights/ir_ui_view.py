@@ -38,10 +38,10 @@ class ir_ui_view(osv.osv):
     
     def _get_button_access_rules(self, cr, uid, ids, field_name, arg, context):
         res = dict.fromkeys(ids)
-        records = self.browse(cr, uid, ids)
+        records = self.browse(cr, 1, ids)
         pool = self.pool.get('msf_access_rights.button_access_rule')
         for record in records:
-            search = pool.search(cr, uid, [('view_id','=',record.id)])
+            search = pool.search(cr, 1, [('view_id','=',record.id)])
             res[record.id] = search
         return res
 
@@ -54,9 +54,9 @@ class ir_ui_view(osv.osv):
         Generate the button access rules for this view
         """
         view_id = super(ir_ui_view, self).create(cr, uid, vals, context=context)
-        model_id = self.pool.get('ir.model').search(cr, uid, [('model','=',vals['model'])])[0]
-        buttons = self.parse_view(vals['arch'], model_id, view_id)
-        self._write_button_objects(cr, uid, buttons)
+        model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',vals['model'])])[0]
+        buttons = self.parse_view(vals['arch'], model_id, view_id, vals.get('inherit_id', None))
+        self._write_button_objects(cr, 1, buttons)
         return view_id
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -73,7 +73,7 @@ class ir_ui_view(osv.osv):
         
         for i in ids:
             # get old view xml
-            view = self.browse(cr, uid, i)
+            view = self.browse(cr, 1, i)
             xml = arch or view.arch
             if isinstance(xml, unicode):
                 xml = str(xml)
@@ -88,7 +88,7 @@ class ir_ui_view(osv.osv):
                 
             # if we have some buttons we need to create/update Button Access Rule's from them
             if buttons:
-                model_search = model_pool.search(cr, uid, [('model','=',view.model)])
+                model_search = model_pool.search(cr, 1, [('model','=',view.model)])
                 
                 if model_search:
                     model_id = model_search[0]
@@ -96,13 +96,13 @@ class ir_ui_view(osv.osv):
                     
                     # for each button in the old view, update it with the new view_id and model_id
                     for button in buttons:
-                        button.update({'view_id': i, 'model_id': model_id})
+                        button.update({'view_id': i, 'model_id': model_id, 'inherit_id': vals.get('inherit_id', None)})
                         
                         # look for existing BAR's with the same name and view_id
-                        existing_button_search = rules_pool.search(cr, uid, [('view_id', '=', i),('name','=',button['name']),'|',('active','=',True),('active','=',False)])
+                        existing_button_search = rules_pool.search(cr, 1, [('view_id', '=', i),('name','=',button['name']),'|',('active','=',True),('active','=',False)])
                         if existing_button_search:
                             # a BAR exists so update it with the new view information and append the id to the list of existing BAR's
-                            rules_pool.write(cr, uid, existing_button_search[0], {'label':button['label'], 'type':button['type'], 'model_id': model_id, 'active':True})
+                            rules_pool.write(cr, 1, existing_button_search[0], {'label':button['label'], 'type':button['type'], 'model_id': model_id, 'inherit_id': button['inherit_id'], 'active':True})
                             rule_id_list.append(existing_button_search[0])
                         else:
                             # does not exist so create it (First convert group xml ids to db ids)
@@ -123,14 +123,14 @@ class ir_ui_view(osv.osv):
                                 if button['group_ids']:
                                     button['group_ids'] = [(6, 0, button['group_ids'])]
                             # create BAR and append it's ID to the list of BAR's
-                            rule_id_list.append(rules_pool.create(cr, uid, button))
+                            rule_id_list.append(rules_pool.create(cr, 1, button))
                             
                     # now we have a list of buttons, of corresponding BAR's, and of all existing BAR's. Set inactive each BAR which is now un-needed
-                    rules_search = rules_pool.search(cr, uid, [('view_id', '=', i)])
+                    rules_search = rules_pool.search(cr, 1, [('view_id', '=', i)])
                     for id in rule_id_list:
                         if rules_search.count(id):
                             rules_search.remove(id)
-                    rules_pool.write(cr, uid, rules_search, {'active':0})
+                    rules_pool.write(cr, 1, rules_search, {'active':0})
         
         # perform the final writes to the views    
         super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
@@ -144,7 +144,7 @@ class ir_ui_view(osv.osv):
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
     
-    def _button_dict(self, name, label, type, groups=None, model_id=None, view_id=None):
+    def _button_dict(self, name, label, type, groups=None, model_id=None, view_id=None, inherit_id=None):
         return {
             'name': name,
             'label': label,
@@ -152,9 +152,10 @@ class ir_ui_view(osv.osv):
             'groups': groups,
             'model_id': model_id,
             'view_id': view_id,
+            'inherit_id': inherit_id,
         }
     
-    def parse_view(self, view_xml_text, model_id=None, view_id=None):
+    def parse_view(self, view_xml_text, model_id=None, view_id=None, inherit_id=None):
         """
         Pass viewxml to extract button objects for each button in the view
         """
@@ -173,7 +174,7 @@ class ir_ui_view(osv.osv):
             type = button.attrib.get('type', '')
             groups = button.attrib.get('groups','')
             
-            button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id))
+            button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id, inherit_id))
             
         return button_object_list
             
