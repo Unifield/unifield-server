@@ -40,6 +40,11 @@
     'demo_xml': [
         'product_remove_demo.xml',
     ],
+    'test': [
+        'test/deactivate_product.yml',
+        'test/deactivate_with_stock.yml',
+        'test/deactivate_product_po_draft.yml',
+    ],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',
