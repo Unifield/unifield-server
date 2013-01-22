@@ -53,6 +53,30 @@ class analytic_account(osv.osv):
                 arg.append(('date', '=', False))
         return arg
 
+    def _search_closed_by_a_fp(self, cr, uid, ids, name, args, context=None):
+        """
+        UTP-423: Do not display analytic accounts linked to a soft/hard closed contract.
+        """
+        res = [('id', 'not in', [])]
+        if args and args[0] and len(args[0]) == 3:
+            if args[0][1] != '=':
+                raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
+            # Search all fp_ids from soft_closed contract
+            sql="""SELECT a.id
+                FROM account_analytic_account a, financing_contract_contract fcc, financing_contract_funding_pool_line fcfl
+                WHERE fcfl.contract_id = fcc.id
+                AND fcfl.funding_pool_id = a.id
+                AND fcc.state in ('soft_closed', 'hard_closed');"""
+            cr.execute(sql)
+            sql_res = cr.fetchall()
+            if sql_res:
+                aa_ids = self.is_blocked_by_a_contract(cr, uid, [x and x[0] for x in sql_res])
+                if aa_ids:
+                    if isinstance(aa_ids, (int, long)):
+                        aa_ids = [aa_ids]
+                    res = [('id', 'not in', aa_ids)]
+        return res
+
     _columns = {
         'name': fields.char('Name', size=128, required=True),
         'code': fields.char('Code', size=24),
@@ -70,6 +94,7 @@ class analytic_account(osv.osv):
         'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
+        'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
     }
 
     _defaults ={
@@ -182,7 +207,6 @@ class analytic_account(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
-        Change search behaviour to not include FP that are closed by a contract.
         FIXME: this method do others things that not have been documented. Please complete here what method do.
         """
         if not context:
@@ -205,14 +229,6 @@ class analytic_account(osv.osv):
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
         res = super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
-        display_fp = False
-        if 'display_fp_closed_by_a_contract' in context and context.get('display_fp_closed_by_a_contract') == True:
-            display_fp = True
-        if not display_fp:
-            # Search all FP closed by a contract
-            blocked_ids = self.is_blocked_by_a_contract(cr, uid, res)
-            if blocked_ids:
-                return [x for x in res if x not in blocked_ids]
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
