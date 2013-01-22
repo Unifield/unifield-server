@@ -37,7 +37,7 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
     context = context or {}
     fields_view = super_fields_view_get(self, cr, uid, view_id, view_type, context, toolbar, submenu)
     view_id = view_id or fields_view.get('view_id', False)
-
+    
     if uid != 1:
 
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
@@ -61,6 +61,10 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
                 if not button_name: 
                     continue
                 
+                # if user already has access to the button, skip the rule checks
+                if button.attrib.get('invisible', '') == '1':
+                    continue
+                
                 # check if rule gives user access to button
                 rule_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
                 if rule_for_button:
@@ -71,9 +75,11 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
                         user = self.pool.get('res.users').read(cr, 1, uid)
                         if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
                             access = True
+                    else:
+                        access = True
                             
                     if access:
-                        if button.attrib.count('invisible'):
+                        if 'invisible' in button.attrib:
                             del button.attrib['invisible']
                     else:
                         button.attrib['invisible'] = '1'
@@ -115,6 +121,10 @@ super_execute_cr = osv.object_proxy.execute_cr
 
 
 def execute_cr(self, cr, uid, obj, method, *args, **kw):
+    
+    if uid == 1:
+        return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
+    
     if '.' in method:
         module_name = obj.split('.')[0]
     else:
@@ -137,7 +147,7 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
             access = False
             if rule.group_ids:
                 user = pool.get('res.users').read(cr, 1, uid)
-                if set(user['groups_id']).intersection(rule.group_ids):
+                if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
                     access = True
             else:
                 access = True
@@ -164,6 +174,10 @@ osv.object_proxy.execute_cr = execute_cr
 super_execute_workflow_cr = osv.object_proxy.exec_workflow_cr
 
 def exec_workflow_cr(self, cr, uid, obj, method, *args):
+
+    if uid == 1:
+        return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
+
     if '.' in method:
         module_name = obj.split('.')[0]
     else:
@@ -186,7 +200,7 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
             access = False
             if rule.group_ids:
                 user = pool.get('res.users').read(cr, 1, uid)
-                if set(user['groups_id']).intersection(rule.group_ids):
+                if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
                     access = True
             else:
                 access = True
