@@ -44,6 +44,7 @@ class incoming_import_xml_line(osv.osv_memory):
         'quantity': fields.float(digits=(16,2), string='Quantity'),
         'prodlot_id': fields.many2one('stock.production.lot', string='Batch'),
         'expiry_date': fields.date(string='Expiry date'),
+        'line_values': fields.text(string='Line values'),
     }
     
     
@@ -73,8 +74,13 @@ class stock_partial_picking(osv.osv_memory):
                                                 * The file should be in XML Spreadsheet 2003 format."""),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
-        'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
+        #'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
+        'import_error_ok': fields.boolean(string='error'),
         'message': fields.text('Report of lines\' import', readonly=True),
+    }
+    
+    _defaults = {
+        'import_error_ok': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -97,7 +103,7 @@ class stock_partial_picking(osv.osv_memory):
         
 
 
-    def check_file_line_integrity(self, cr, uid, ids, row, product_id, product_uom_id, prodlot_name, expired_date, file_line_num, error_list, line_with_error, context=None):
+    def check_file_line_integrity(self, cr, uid, ids, row, product_id, product_uom_id, prodlot_name, expired_date, file_line_num, error_list, info_list, line_with_error, context=None):
         '''
         Check the integrity of the information on the Excel file line. Return False if the information is not correct
         '''
@@ -135,11 +141,14 @@ class stock_partial_picking(osv.osv_memory):
                 prodlot_id = prodlot_ids[0]
             elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)]):
                 prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id})
-                error_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+                info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
                     % (file_line_num, prodlot_name, expired_date, product.default_code))
+                
             else:
                 # Batch number and expiry date don't match
                 error_list.append("Line %s of the Excel file: the batch %s already exists, check the product and the expiry date associated." % (file_line_num, prodlot_name))
+                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                return False, prodlot_id
 
         return True, prodlot_id
 
@@ -155,8 +164,6 @@ class stock_partial_picking(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        product_obj = self.pool.get('product.product')
-        prodlot_obj = self.pool.get('stock.production.lot')
         move_obj = self.pool.get('stock.move.memory.in')
         cell_data = self.pool.get('import.cell.data')
         import_obj = self.pool.get('incoming.import.xml.line')
@@ -170,8 +177,12 @@ class stock_partial_picking(osv.osv_memory):
 
         error = ''
         error_list = []
+        info = ''
+        info_list = []
         ignore_lines, complete_lines = 0, 0
         line_with_error = []
+        
+        
 
         context.update({'import_in_progress': True})
         
@@ -219,7 +230,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
             expired_date = cell_data.get_expired_date(cr, uid, ids, row, expiry_cell, error_list, file_line_num, context)
             product_qty = cell_data.get_product_qty(cr, uid, ids, row, qty_cell, error_list, file_line_num, context)
 
-            integrity, prodlot_id = self.check_file_line_integrity(cr, uid, ids, row, product_id, uom_id, prodlot_name, expired_date, file_line_num, error_list, line_with_error)
+            integrity, prodlot_id = self.check_file_line_integrity(cr, uid, ids, row, product_id, uom_id, prodlot_name, expired_date, file_line_num, error_list, info_list, line_with_error)
             
             if not integrity:
                 ignore_lines += 1
@@ -259,15 +270,15 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                             'uom_id': uom_id,
                                             'quantity': product_qty,
                                             'prodlot_id': prodlot_id,
-                                            'expiry_date': expired_date})
+                                            'expiry_date': expired_date,
+                                            'line_values': line_values})
                 
         for ln in line_numbers:
             line_ids = import_obj.search(cr, uid, [('wizard_id', '=', obj.id),
                                                    ('line_number', '=', ln)], order='quantity desc')
             
             move_nb = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
-                                                     ('id', 'not in', matching_wiz_lines),
-                                                     ('line_number', '=', ln)], count=1)
+                                                 ('line_number', '=', ln)], count=1)
             
             less = False
             if move_nb > len(line_ids):
@@ -275,6 +286,10 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
             
             current_move_id = False
             for l in import_obj.browse(cr, uid, line_ids):
+                if not move_nb:
+                    error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors: No matching line found in the Incoming shipment for the line number %s.") % (l.file_line_number, l.line_number))
+                    line_with_error.append(list(l.line_values))
+                    
                 move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                      ('id', 'not in', matching_wiz_lines),
                                                      ('line_number', '=', ln)], order='quantity_ordered desc')
@@ -316,12 +331,13 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             
                         if l.uom_id.id != m.product_uom.id:
                             if l.uom_id.category_id.id != m.product_uom.category_id.id:
-                                error_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line. But we can't change it because %s is not compatible with %s. So, the line was ignored.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
+                                error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors: The product UOM did not match with the existing product UoM of the line. But we can't change it because %s is not compatible with %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
+                                line_with_error.append(list(l.line_values))
                                 current_move_id = False
                                 ignore_lines += 1
                                 break
                             else:
-                                error_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
+                                info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
                                 data.update({'product_uom': l.uom_id.id})
                         
                         if m.quantity_ordered >= 2.00 and ((not m.quantity and leave_qty < (m.quantity_ordered - m.quantity)) or m.quantity):
@@ -331,7 +347,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
                                                                             {'quantity': min(leave_qty, m.quantity_ordered-1)}, context=wiz_context)
                             self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                            error_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
+                            info_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
                             new_move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                                     ('id', 'not in', matching_wiz_lines),
                                                                     ('id', 'not in', move_ids),
@@ -343,7 +359,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         leave_qty = 0.00
                         if l.product_id.id != m.product_id.id:
                             # Call the change product wizard
-                            error_list.append(_("Line %s of the Excel file. The product did not match with the existing product of the line %s, so we change the product from %s to %s.") % (l.file_line_number, l.line_number, m.product_id.default_code, l.product_id.default_code))
+                            info_list.append(_("Line %s of the Excel file. The product did not match with the existing product of the line %s, so we change the product from %s to %s.") % (l.file_line_number, l.line_number, m.product_id.default_code, l.product_id.default_code))
                             wizard_values = move_obj.change_product(cr, uid, new_move_id, context)
                             wiz_context = wizard_values.get('context')
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
@@ -359,17 +375,22 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     complete_lines += 1
                     
         error += '\n'.join(error_list)
+        info += '\n'.join(info_list)
         message = '''Importation completed !
 # of imported lines : %s
 # of ignored lines : %s
 
 Reported errors :
 %s
-                '''  % (complete_lines, ignore_lines, error or 'No error !')
+
+%s
+%s
+                '''  % (complete_lines, ignore_lines, error or 'No error !', info and 'Reported information :' or '', info or '')
         vals = {'message': message}
         if line_with_error:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
             vals.update(file_to_export)
+            vals.update({'import_error_ok': True})
         self.write(cr, uid, ids, vals, context=context)
         self.check_lines(cr, uid, ids, context)
         cr.commit()
