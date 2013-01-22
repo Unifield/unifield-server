@@ -282,21 +282,28 @@ class product_attributes(osv.osv):
                 vals.update({'duplicate_ok': False})
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
     
-    def deactivate_product(self, cr, uid, ids, context=None):
+    def reactivate_product(self, cr, uid, ids, context=None):
         '''
-        De-activate or re-activate the product. 
-        Check if the product is not used in any document in Unifield
+        Re-activate product.
         '''
-        to_activate = []
-        to_deactivate = []
         for product in self.browse(cr, uid, ids, context=context):
             if product.active:
-                to_deactivate.append(product.id)
-            else:
-                to_activate.append(product.id)
+                raise osv.except_osv(_('Error'), _('The product is already active.'))
+        
+        self.write(cr, uid, ids, {'active': True}, context=context)
+        
+        return True
+    
+    def deactivate_product(self, cr, uid, ids, context=None):
+        '''
+        De-activate product. 
+        Check if the product is not used in any document in Unifield
+        '''
+        for product in self.browse(cr, uid, ids, context=context):
+            if not product.active:
+                raise osv.except_osv(_('Error'), _('The product is already inactive.'))
                 
-        self.write(cr, uid, to_activate, {'active': True}, context=context)
-        self.write(cr, uid, to_deactivate, {'active': False}, context=context)
+        self.write(cr, uid, ids, {'active': False}, context=context)
         
         return True
     

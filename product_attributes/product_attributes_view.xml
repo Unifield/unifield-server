@@ -105,7 +105,7 @@
                                 <field name="active" readonly="1"/>
                                 <group colspan="1" col="1">
 	                                <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
-	                                <button name="deactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': [('active', '=', True)]}" />
+	                                <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': [('active', '=', True)]}" />
                                 </group>
                             </group>
 
