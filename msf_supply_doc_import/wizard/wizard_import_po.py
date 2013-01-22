@@ -126,9 +126,10 @@ The columns should be in this values:
         """
         for k,v in header_index.items():
             if k not in columns_for_po_integration:
-                vals = {'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
+                vals = {'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s' 
                                                    % (k, ', \n'.join(columns_for_po_integration))}
-                self.write(cr, uid, ids, vals, context)
+                return self.write(cr, uid, ids, vals, context), False
+        return True, True
 
     def get_po_row_values(self, cr, uid, ids, row, po_browse, header_index, context=None):
         product_obj = self.pool.get('product.product')
@@ -156,43 +157,48 @@ The columns should be in this values:
             'confirmed_delivery_date': False,
         }
         # Line
-        cell_nb = header_index['Line']
+        cell_nb = header_index['Line*']
         line_number = int(self.get_cell_data(cr, uid, ids, row, cell_nb, to_write['error_list'], line_num=False, context=context))
         to_write.update({'line_number': line_number})
 
         # Quantity
         qty_value = {}
-        cell_nb = header_index['Quantity']
+        cell_nb = header_index['Quantity*']
         qty_value = check_line.quantity_value(product_obj=product_obj, cell_nb=cell_nb, row=row, to_write=to_write, context=context)
         to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'],
                          'warning_list': qty_value['warning_list']})
     
         # Product Code
         p_value = {}
-        cell_nb = header_index['Product Code']
+        cell_nb = header_index['Product Code*']
         p_value = check_line.product_value(cr, uid, cell_nb=cell_nb, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
         to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
                          'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
         # UOM
         uom_value = {}
-        cell_nb = header_index['UoM']
+        cell_nb = header_index['UoM*']
         uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, cell_nb=cell_nb, row=row, to_write=to_write, context=context)
         to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
 
         # Price
         price_value = {}
-        cell_nb = header_index['Price']
+        cell_nb = header_index['Price*']
         price_value = check_line.compute_price_value(row=row, to_write=to_write, cell_nb=cell_nb, price='Cost Price', context=context)
         to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
                          'warning_list': price_value['warning_list'], 'price_unit_defined': price_value['price_unit_defined']})
 
         #  Currency
         curr_value = {}
-        cell_nb = header_index['Currency']
+        cell_nb = header_index['Currency*']
         curr_value = check_line.compute_currency_value(cr, uid, cell_nb=cell_nb, browse_purchase=po_browse,
                                             currency_obj=currency_obj, row=row, to_write=to_write, context=context)
         to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
+
+        # Delivery Confirmed Date
+        cell_nb = header_index['Delivery Confirmed Date*']
+        delivery_confirmed_date = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list=to_write['error_list'], line_num=False, context=context)
+        to_write.update({'delivery_confirmed_date': delivery_confirmed_date})
 
         #  Comment
         c_value = {}
@@ -245,7 +251,9 @@ The columns should be in this values:
             # get first line
             first_row = next(reader_iterator)
             header_index = self.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=False, context=context)
-            self.check_header_values(cr, uid, ids, context, header_index)
+            (res1, res2) = self.check_header_values(cr, uid, ids, context, header_index)
+            if not res2:
+                return False
             
             rows = fileobj.getRows()
             rows.next()
