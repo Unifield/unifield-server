@@ -62,6 +62,7 @@ class stock_partial_picking(osv.osv_memory):
 
     # @@@override stock>wizard>stock_partial_picking.py>stock_partial_picking
     def do_partial(self, cr, uid, ids, context=None):
+        print "do partial overrid"
         """ Makes partial moves and pickings done.
         @param self: The object pointer.
         @param cr: A database cursor
@@ -91,7 +92,6 @@ class stock_partial_picking(osv.osv_memory):
         }
 
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
-      
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
             
@@ -125,12 +125,24 @@ class stock_partial_picking(osv.osv_memory):
                     raise osv.except_osv(_('Processing Error'), \
                             _('Can not process empty lines !'))
 
-                partial_datas['move%s' % (move.move_id.id)] = {
-                    'product_id': move.product_id.id, 
-                    'product_qty': calc_qty, 
-                    'product_uom': move.move_id.product_uom.id, 
-                    'prodlot_id': move.prodlot_id.id, 
-                }
+                if partial_datas.has_key('move%s'%(move.move_id.id)) and move.quantity > 0:
+                    new_move_id = self.pool.get('stock.move').copy(cr, uid, move.move_id.id,{'product_qty': calc_qty, 'state':'assigned' })
+                    self.pool.get('stock.move').write(cr, uid, [move.move_id.id], {'product_qty':move.move_id.product_qty - calc_qty })
+                    new_move = self.pool.get('stock.move').browse(cr, uid, new_move_id)
+                    partial_datas['move%s' % (new_move_id)] = {
+                        'product_id': move.product_id.id, 
+                        'product_qty': calc_qty, 
+                        'product_uom': move.move_id.product_uom.id, 
+                        'prodlot_id': move.prodlot_id.id, 
+                    }
+
+                else:
+                    partial_datas['move%s' % (move.move_id.id)] = {
+                        'product_id': move.product_id.id, 
+                        'product_qty': calc_qty, 
+                        'product_uom': move.move_id.product_uom.id, 
+                        'prodlot_id': move.prodlot_id.id, 
+                    }
 
                 if (picking_type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                     partial_datas['move%s' % (move.move_id.id)].update({
@@ -144,7 +156,6 @@ class stock_partial_picking(osv.osv_memory):
         res = pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return self.return_hook_do_partial(cr, uid, context=context, partial_datas=partial_datas, res=res)
     #@@@override end
-
 
 
 stock_partial_picking()
