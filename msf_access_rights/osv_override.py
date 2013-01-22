@@ -29,8 +29,8 @@ import copy
 debug = False # set to True to allow ANY debug printing
 
 # set the following 5 flags to True to allow their specific debug messages. debug must also be set to True
-create_debug = False
-write_debug = False
+create_debug = True
+write_debug = True
 fields_debug = False
 
 sync_debug = False
@@ -53,7 +53,7 @@ def fprint(string):
         dprint(string)
 
 def _get_instance_level(self, cr, uid):
-    instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+    instance = self.pool.get('res.users').browse(cr, 1, uid).company_id.instance_id
     
     instance_level = getattr(instance, 'level', False)
     
@@ -65,7 +65,7 @@ def _get_instance_level(self, cr, uid):
     return False
 
 
-def _record_matches_domain(self, cr, uid, record_id, domain):
+def _record_matches_domain(self, cr, record_id, domain):
     """
     Make a search with domain + id = id. If we get the ID in the result, the domain matches the record
     """
@@ -80,7 +80,7 @@ def _record_matches_domain(self, cr, uid, record_id, domain):
     if isinstance(domain, bool):
         return True
 
-    return bool(self.search(cr, uid, domain))
+    return bool(self.search(cr, 1, domain))
 
 class _SetToDefaultFlag:
     pass
@@ -92,7 +92,7 @@ def create(self, cr, uid, vals, context=None):
     If rules defined for current user and model, create each record then check domain for each record.
     If domain matches, for each field with value_not_synchronized_on_create in the rule, update created field with default values.
     """
-
+    
     cprint('')
     cprint('=================== CREATE OVERRIDE')
     cprint('=== CONTEXT: ')
@@ -135,11 +135,11 @@ def create(self, cr, uid, vals, context=None):
 
                 # get rules for this model
                 model_name = self._name
-                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
                 groups = [x.id for x in user.groups_id]
 
                 rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-                rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
                 
                 defaults = self.pool.get(model_name)._defaults
 
@@ -151,7 +151,7 @@ def create(self, cr, uid, vals, context=None):
                 # do we have rules that apply to this user and model?
                 if rules_search:
 
-                    rules = rules_pool.browse(cr, uid, rules_search)
+                    rules = rules_pool.browse(cr, 1, rules_search)
 
                     # for each rule, check the record against the rule domain.
                     for rule in rules:
@@ -161,7 +161,7 @@ def create(self, cr, uid, vals, context=None):
                         is_match = True
 
                         if rule.domain_text:
-                            is_match = _record_matches_domain(self, cr, uid, create_result, rule.domain_text)
+                            is_match = _record_matches_domain(self, cr, create_result, rule.domain_text)
                         
                         cprint('=== IS_MATCH: ' + str(is_match))
 
@@ -198,7 +198,7 @@ def write(self, cr, uid, ids, vals, context=None):
     Check if user has write_access for each field in target record with applicable Field Access Rules. If not, throw exception.
     Also if syncing, check if field value should be synced on write, based on Field Access Rules.
     """
-
+    
     context = context or {}
 
     if debug and sync_debug:
@@ -223,11 +223,11 @@ def write(self, cr, uid, ids, vals, context=None):
 
         # get rules for this model
         model_name = self._name
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
         groups = [x.id for x in user.groups_id]
 
         rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-        rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+        rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
         wprint('=== INSTANCE_LEVEL: ' + instance_level)
         wprint('=== MODEL: ' + model_name)
@@ -239,13 +239,13 @@ def write(self, cr, uid, ids, vals, context=None):
         # if have rules
         if rules_search:
 
-            rules = rules_pool.browse(cr, uid, rules_search, context=context)
-            current_records = self.browse(cr, uid, ids, context=context)
+            rules = rules_pool.browse(cr, 1, rules_search, context=context)
+            current_records = self.browse(cr, 1, ids, context=context)
 
             # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
             for record in current_records:
                 for rule in rules:
-                    if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
+                    if _record_matches_domain(self, cr, record.id, rule.domain_text):
 
                         # rule applies for this record so throw exception if we are trying to edit a field without write_access
                         # for each rule
@@ -275,7 +275,7 @@ def write(self, cr, uid, ids, vals, context=None):
 
                     # iterate over rules and see if they match the current record
                     for rule in rules:
-                        if _record_matches_domain(self, cr, uid, record.id, rule.domain_text):
+                        if _record_matches_domain(self, cr, record.id, rule.domain_text):
 
                             wprint('=== MATCHING RULE ID: %s' % rule.id)
 
@@ -327,18 +327,18 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         fprint('=================== FIELDS_VIEW_GET OVERRIDE')
 
         # get instance level. if not set, log warning, then return normal fields_view
-        instance_level = _get_instance_level(self, cr, uid)
+        instance_level = _get_instance_level(self, cr, 1)
         if not instance_level:
             logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company object, no Field Access Rules can be respected!')
             return fields_view
 
         # get rules for this model
         model_name = self._name
-        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
         groups = [x.id for x in user.groups_id]
 
         rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-        rules_search = rules_pool.search(cr, uid, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+        rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
         fprint('=== INSTANCE_LEVEL: ' + instance_level)
         fprint('=== MODEL: ' + model_name)
@@ -348,7 +348,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
 
         # if have rules
         if rules_search:
-            rules = rules_pool.browse(cr, uid, rules_search, context=context)
+            rules = rules_pool.browse(cr, 1, rules_search, context=context)
 
             # get a dictionary of domains with field names as the key and the value being a concatenation of rule domains, or True if universal
             domains = {}
