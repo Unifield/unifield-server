@@ -1025,7 +1025,7 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="prodlot_id" />
                                     <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
-                                     <button name="%(stock.track_line)d" string="Split in production lots 333" type="action"
+                                     <button name="%(stock.track_line)d" string="Split in production" type="action"
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}"
                                         states="draft,done,cancel"

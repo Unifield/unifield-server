@@ -62,7 +62,6 @@ class stock_partial_picking(osv.osv_memory):
 
     # @@@override stock>wizard>stock_partial_picking.py>stock_partial_picking
     def do_partial(self, cr, uid, ids, context=None):
-        print "do partial overrid"
         """ Makes partial moves and pickings done.
         @param self: The object pointer.
         @param cr: A database cursor
