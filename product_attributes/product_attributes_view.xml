@@ -518,6 +518,15 @@
             res_model="purchase.order"
             src_model="product.product"
             groups=""/>
+            
+        <!-- Add a link to see all inactivated products -->
+        <act_window
+        	context="{}"
+        	domain="[('active', '=', False)]"
+        	id="unactive_product_list"
+        	name="Inactivated products"
+        	res_model="product.product"
+        	src_model="product.product" />
 
 
 
