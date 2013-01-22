@@ -37,6 +37,7 @@ class res_currency_rate(osv.osv):
       for rate in self.browse(cr, uid, ids):
           rate_ids = self.search(cr, uid, [('name', '=', rate.name), ('currency_id', '=', rate.currency_id.id)])
           if rate_ids and len(rate_ids) > 1:
+              raise osv.except_osv('Error', 'You can not have more than one rate valid for a currency on a given date.')
               return False
       return True
 
