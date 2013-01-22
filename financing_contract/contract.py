@@ -85,9 +85,10 @@ class financing_contract_contract(osv.osv):
             WHERE distribution_id = analytic_distribution_id
             AND fp.analytic_id in %s
             AND fp.cost_center_id in %s"""
-            sql += """\nAND (%s)
-            AND absl.id in (SELECT st.id FROM account_bank_statement_line st LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id WHERE rel.move_id is null)
-            ORDER BY absl.id;""" % ' OR '.join(distrib_domain)
+            if distrib_domain:
+                sql += """\nAND (%s)""" % ' OR '.join(distrib_domain)
+            sql += """AND absl.id in (SELECT st.id FROM account_bank_statement_line st LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id WHERE rel.move_id is null)
+                ORDER BY absl.id;"""
             cr.execute(sql, (tuple(fp_ids), tuple(cc_ids)))
             sql_res = cr.fetchall()
             if sql_res:
