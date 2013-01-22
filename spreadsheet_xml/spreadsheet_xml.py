@@ -25,9 +25,9 @@ class SpreadsheetCell(SpreadsheetTools):
                 dtype = self.get(data, 'Type')
                 self.data = data.text
                 if dtype == 'Number':
-                    if '.' in self.data:
+                    if not self.data or '.' in self.data:
                         self.type = 'float'
-                        self.data = float(self.data)
+                        self.data = float(self.data or 0.0)
                     else:
                         self.type = 'int'
                         self.data = int(self.data)
