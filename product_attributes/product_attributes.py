@@ -311,6 +311,7 @@ class product_attributes(osv.osv):
         c.update({'location_id': internal_loc})
         
         for product in self.browse(cr, uid, ids, context=context):
+            opened_object = False
             # Raise an error if the product is already inactive
             if not product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
@@ -320,19 +321,30 @@ class product_attributes(osv.osv):
                                                                                 ('order_id.rfq_ok', '=', False),
                                                                                 ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
             if has_po_line:
-                return False
+                opened_object = True
 
             # Check if the product is in some request for quotation lines
             has_rfq_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
                                                                                 ('order_id.rfq_ok', '=', True),
                                                                                 ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context) 
             if has_rfq_line:
-                return False
+                opened_object = True
             
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
-            if has_stock:
-                return {'type': 'ir.actions.act_window'}
+            
+            if has_stock or opened_object:
+                # Create the error wizard
+                wizard_id = self.pool.get('product.deactivation.error').create(cr, uid, {'product_id': product.id,
+                                                                                         'stock_exist': has_stock and True or False,
+                                                                                         'opened_object': opened_object}, context=context)
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'product.deactivation.error',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wizard_id,
+                        'target': 'new',
+                        'context': context}
                 
         self.write(cr, uid, ids, {'active': False}, context=context)
         
