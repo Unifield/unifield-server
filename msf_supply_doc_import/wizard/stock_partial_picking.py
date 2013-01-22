@@ -261,27 +261,47 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                             'prodlot_id': prodlot_id,
                                             'expiry_date': expired_date})
                 
-        
         for ln in line_numbers:
             line_ids = import_obj.search(cr, uid, [('wizard_id', '=', obj.id),
                                                    ('line_number', '=', ln)], order='quantity desc')
+            
+            move_nb = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                     ('id', 'not in', matching_wiz_lines),
+                                                     ('line_number', '=', ln)], count=1)
+            
+            less = False
+            if move_nb > len(line_ids):
+                less = True
             
             current_move_id = False
             for l in import_obj.browse(cr, uid, line_ids):
                 move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
                                                      ('id', 'not in', matching_wiz_lines),
                                                      ('line_number', '=', ln)], order='quantity_ordered desc')
+                
+                if not move_ids:
+                    move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                         ('line_number', '=', ln)], order='quantity_ordered desc')
         
                 leave_qty = l.quantity
+                if not move_ids:
+                    current_move_id = False
+                
                 for m in move_obj.browse(cr, uid, move_ids):
+                    if leave_qty == 0.00:
+                        continue
                     current_move_id = m.id
-                    if not l.prodlot_id and not l.expiry_date and l.product_id.id == m.product_id.id and l.uom_id.id == m.product_uom.id:
+                    if not m.quantity and not l.prodlot_id and not l.expiry_date and l.product_id.id == m.product_id.id and l.uom_id.id == m.product_uom.id:
                         # Quantity of file line can be added to the move
                         if leave_qty > (m.quantity_ordered - m.quantity):
                             # If there is more than the available quantity
-                            move_obj.write(cr, uid, [m.id], {'quantity': leave_qty})
+                            if not less:
+                                move_obj.write(cr, uid, [m.id], {'quantity': leave_qty})
+                                leave_qty = 0.00
+                            else:
+                                move_obj.write(cr, uid, [m.id], {'quantity': m.quantity_ordered})
+                                leave_qty -= m.quantity_ordered
                             matching_wiz_lines.append(m.id)
-                            leave_qty = 0.00
                         else:
                             # If there is no need to split the move, just add the line quantity
                             move_obj.write(cr, uid, [m.id], {'quantity': m.quantity + leave_qty})
@@ -298,6 +318,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             if l.uom_id.category_id.id != m.product_uom.category_id.id:
                                 error_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line. But we can't change it because %s is not compatible with %s. So, the line was ignored.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
                                 current_move_id = False
+                                ignore_lines += 1
                                 break
                             else:
                                 error_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
@@ -334,7 +355,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 if current_move_id and leave_qty:
                     current_move = move_obj.browse(cr, uid, current_move_id)
                     move_obj.write(cr, uid, [current_move_id], {'quantity': current_move.quantity + leave_qty})
-                
+                if not leave_qty:
+                    complete_lines += 1
                     
         error += '\n'.join(error_list)
         message = '''Importation completed !
