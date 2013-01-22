@@ -70,6 +70,8 @@
                                 <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                                 <newline/>
                                 <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
+                        <newline />
+                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                         </group>
                         <newline/>
 
