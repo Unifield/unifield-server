@@ -380,4 +380,21 @@ class product_attributes(osv.osv):
 
 product_attributes()
 
+
+class product_deactivation_error(osv.osv_memory):
+    _name = 'product.deactivation.error'
+    
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True),
+        'stock_exist': fields.boolean(string='Stocks exist (internal locations)', readonly=True),
+        'opened_object': fields.boolean(string='Product is contains in opened documents', readonly=True),
+    }
+    
+    _defaults = {
+        'stock_exist': False,
+        'opened_object': False,
+    }
+    
+product_deactivation_error()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
