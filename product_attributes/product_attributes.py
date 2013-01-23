@@ -316,24 +316,22 @@ class product_attributes(osv.osv):
             if not product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
             
-            # Check if the product is in some purchase order lines
+            # Check if the product is in some purchase order lines or request for quotation lines
             has_po_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
-                                                                                ('order_id.rfq_ok', '=', False),
                                                                                 ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
             if has_po_line:
-                opened_object = True
-
-            # Check if the product is in some request for quotation lines
-            has_rfq_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
-                                                                                 ('order_id.rfq_ok', '=', True),
-                                                                                 ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context) 
-            if has_rfq_line:
                 opened_object = True
                 
             # Check if the product is in some tender lines
             has_tender_line = self.pool.get('tender.line').search(cr, uid, [('product_id', '=', product.id),
                                                                             ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             if has_tender_line:
+                opened_object = True
+                
+            # Check if the product is in field order lines or in internal request lines
+            has_fo_line = self.pool.get('sale.order.line').search(cr, uid, [('product_id', '=', product.id),
+                                                                            ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            if has_fo_line:
                 opened_object = True
             
             # Check if the product has stock in internal locations

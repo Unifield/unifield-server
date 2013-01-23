@@ -190,7 +190,7 @@ class purchase_order(osv.osv):
         
         if inactive_lines:
             line = self.pool.get('purchase.order.line').browse(cr, uid, inactive_lines[0])
-            obj = line.rfq_ok and 'Request for quotation' or 'Purchase order'
+            obj = line.rfq_ok and _('Request for quotation') or _('Purchase order')
             raise osv.except_osv(_('Error'), _('You cannot validate the %s %s because it contains a line with the inactive product [%s] %s')  
                                  % (object, line.order_id.name, line.product_id.default_code, line.product_id.name))
         
