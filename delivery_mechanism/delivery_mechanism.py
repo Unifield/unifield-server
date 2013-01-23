@@ -39,7 +39,7 @@ class stock_move(osv.osv):
                 'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 }
     _defaults = {'line_number': 0,}
-    _order = 'line_number'
+    _order = 'line_number, date_expected desc, id'
     
     def create(self, cr, uid, vals, context=None):
         '''
