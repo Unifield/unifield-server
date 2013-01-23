@@ -325,8 +325,8 @@ class product_attributes(osv.osv):
 
             # Check if the product is in some request for quotation lines
             has_rfq_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
-                                                                                ('order_id.rfq_ok', '=', True),
-                                                                                ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context) 
+                                                                                 ('order_id.rfq_ok', '=', True),
+                                                                                 ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context) 
             if has_rfq_line:
                 opened_object = True
             
