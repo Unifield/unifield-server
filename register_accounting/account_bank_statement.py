@@ -643,6 +643,17 @@ class account_bank_statement_line(osv.osv):
             cr.execute(sql)
             ids += [x[0] for x in cr.fetchall()]
             filterok = True
+
+        # Case with IN
+
+# If args[0][1] == 'in', so create a SQL request like this:
+# SELECT st.id
+# FROM account_bank_statement_line st 
+#     LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+#     LEFT JOIN account_move am ON am.id = rel.statement_id
+# WHERE (rel.statement_id is null OR am.state != 'posted')
+# ORDER BY st.id;
+
         # Non expected case
         if not filterok:
             raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))

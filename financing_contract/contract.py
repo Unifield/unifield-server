@@ -59,16 +59,12 @@ class financing_contract_contract(osv.osv):
         """
         Search all draft/temp posted register lines that have an analytic distribution in which funding pool lines have an analytic account set to those given in contract.
         """
-        res = False
+        res = []
         for c in self.browse(cr, uid, ids):
             # Create domain to find analytic lines
             domain = []
-            distrib_domain = []
             for actual in c.actual_line_ids:
                 domain += self.pool.get('financing.contract.format.line')._get_analytic_domain(cr, uid, actual, 'allocated_real')
-                for el in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in actual.account_destination_ids]:
-                    if el[0] and el[1]:
-                        distrib_domain += ["(fp.destination_id = %s AND absl.account_id = %s)" % (el[1], el[0])]
             # Find analytic lines
             al_ids = self.pool.get('account.analytic.line').search(cr, uid, domain)
             move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] and x.get('move_id')[0] for x in self.pool.get('account.analytic.line').read(cr, uid, al_ids, ['move_id'])]
@@ -78,18 +74,19 @@ class financing_contract_contract(osv.osv):
                 res = absl_ids
             # Search draft posted statement lines
             fp_ids = [x and x.funding_pool_id and x.funding_pool_id.id for x in c.funding_pool_ids]
-            cc_ids = [x.id for x in c.cost_center_ids]
-            sql = """
-            SELECT absl.id
+            sql = """SELECT absl.id
             FROM account_bank_statement_line AS absl, funding_pool_distribution_line AS fp
             WHERE distribution_id = analytic_distribution_id
             AND fp.analytic_id in %s
-            AND fp.cost_center_id in %s"""
-            if distrib_domain:
-                sql += """\nAND (%s)""" % ' OR '.join(distrib_domain)
-            sql += """AND absl.id in (SELECT st.id FROM account_bank_statement_line st LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id WHERE rel.move_id is null)
-                ORDER BY absl.id;"""
-            cr.execute(sql, (tuple(fp_ids), tuple(cc_ids)))
+            AND absl.id in (
+                SELECT st.id
+                FROM account_bank_statement_line st
+                    LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+                    LEFT JOIN account_move am ON am.id = rel.statement_id
+                WHERE (rel.statement_id is null OR am.state != 'posted')
+                ORDER BY st.id
+            ) ORDER BY absl.id"""
+            cr.execute(sql, (tuple(fp_ids),))
             sql_res = cr.fetchall()
             if sql_res:
                 res += [x and x[0] for x in sql_res]
