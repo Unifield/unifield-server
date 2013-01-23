@@ -235,15 +235,17 @@ class account_analytic_line(osv.osv):
                 new_cost_center_id = vals['cost_center_id']
             else:
                 new_cost_center_id = old_cost_center_id
-                
-            if not old_cost_center_id == new_cost_center_id:
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, old_cost_center_id, context=context)
-                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
-                generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name)
+            
+            old_cost_center = self.pool.get('account.analytic.account').browse(cr, uid, old_cost_center_id, context=context)
+            old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center.code, context=context)
+            new_cost_center = self.pool.get('account.analytic.account').browse(cr, uid, new_cost_center_id, context=context)
+            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center.code, context=context)
+            
+            if not old_destination_name == new_destination_name:
+                # Send delete message, but not to parents of the current instance
+                generate_message_for_destination(self, cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
             elif 'distrib_line_id' in vals:
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, new_cost_center_id, context=context)
-                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
-                self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', destination_name, xml_id, instance_name)
+                self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', new_destination_name, xml_id, instance_name)
             
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)

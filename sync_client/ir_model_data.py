@@ -364,7 +364,7 @@ def write(model,cr,uid,ids,values,context=None):
     
 orm.write = write
 
-def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name):
+def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name, send_to_parent_instances):
     instance_obj = self.pool.get('msf.instance')
     
     if not destination_name:
@@ -379,13 +379,15 @@ def generate_message_for_destination(self, cr, uid, destination_name, xml_id, in
                 'destination_name': destination_name
         }
         self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
-    # generate message for parent instance
-    instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
-    if instance_ids:
-        instance_record = instance_obj.browse(cr, uid, instance_ids[0])
-        parent = instance_record.parent_id and instance_record.parent_id.instance or False
-        if parent:
-            generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name)
+        
+    if destination_name != instance_name or send_to_parent_instances:
+        # generate message for parent instance
+        instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
+        if instance_ids:
+            instance_record = instance_obj.browse(cr, uid, instance_ids[0])
+            parent = instance_record.parent_id and instance_record.parent_id.instance or False
+            if parent:
+                generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name, send_to_parent_instances)
 
 old_unlink = orm.unlink
 
@@ -404,7 +406,7 @@ def unlink(self, cr, uid, ids, context=None):
         destination_names = self.get_destination_name(cr, uid, ids, self._delete_owner_field, context=context)
         for i, xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
             xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-            generate_message_for_destination(self, cr, uid, destination_names[i], xml_id, instance_name)
+            generate_message_for_destination(self, cr, uid, destination_names[i], xml_id, instance_name, send_to_parent_instances=True)
             
     #raise osv.except_osv(_('Error !'), "Cannot Delete")
     uid = old_uid
