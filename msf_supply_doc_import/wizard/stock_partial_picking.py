@@ -353,6 +353,12 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                                     ('id', 'not in', move_ids),
                                                                     ('line_number', '=', ln)])
                             new_move_id = new_move_ids[0]
+                        elif m.quantity_ordered <= 1.00:
+                            error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors: A line with the line number %s was found in the incoming shipment and need a split of the incoming shipment line but the quantity in the incoming shipment line (%s %s) cannot be split.") % (l.file_line_number, l.line_number, m.quantity_ordered, m.product_uom.name))
+                            line_with_error.append(list(l.line_values))
+                            current_move_id = False
+                            ignore_lines += 1
+                            break
                         else:
                             new_move_id = m.id
                         move_obj.write(cr, uid, [new_move_id], data)
