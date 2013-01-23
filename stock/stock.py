@@ -764,6 +764,10 @@ class stock_picking(osv.osv):
         - allow to choose wether or not an exception should be raised in case of no stock move
         '''
         return True
+    
+    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
+        pick = kwargs['pick']
+        return [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
 
     def action_assign(self, cr, uid, ids, context=None, *args):
         """ Changes state of picking to available if all moves are confirmed.
@@ -772,8 +776,8 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
+        for pick in self.browse(cr, uid, ids): 
+            move_ids = self._hook_get_move_ids(cr, uid, pick=pick)
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
