@@ -134,11 +134,19 @@ class analytic_line(osv.osv):
         """
         Check date for given date and given account_id
         """
+        # Some verifications
+        if not context:
+            context = {}
+        # Default behaviour
+        res = super(analytic_line, self).create(cr, uid, vals, context=context)
+        # Check date
         self._check_date(cr, uid, vals, context=context)
-        sql = """SELECT fcfl.id
-        FROM account_analytic_account a, financing_contract_contract fcc, financing_contract_funding_pool_line fcfl
-        WHERE fcfl.contract_id = fcc.id
-        AND fcfl.funding_pool_id = a.id
+        # Check soft/hard closed contract
+        sql = """SELECT fcc.id
+        FROM financing_contract_funding_pool_line fcfpl, account_analytic_account a, financing_contract_format fcf, financing_contract_contract fcc
+        WHERE fcfpl.funding_pool_id = a.id
+        AND fcfpl.contract_id = fcf.id
+        AND fcc.format_id = fcf.id
         AND a.id = %s
         AND fcc.state in ('soft_closed', 'hard_closed');"""
         cr.execute(sql, tuple([vals.get('account_id')]))
@@ -147,7 +155,7 @@ class analytic_line(osv.osv):
             account = self.pool.get('account.analytic.account').browse(cr, uid, vals.get('account_id'))
             contract = self.pool.get('financing.contract.contract').browse(cr, uid, sql_res[0][0])
             raise osv.except_osv(_('Warning'), _('Selected Funding Pool analytic account (%s) is blocked by a soft/hard closed contract: %s') % (account and account.code or '', contract and contract.name or ''))
-        return super(analytic_line, self).create(cr, uid, vals, context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         """
