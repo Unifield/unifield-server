@@ -779,6 +779,8 @@ def trans_generate(lang, modules, cr):
                 src_file.close()
             if module in installed_modules:
                 frelativepath = str("addons" + frelativepath)
+            if os.path.sep != '/':
+                frelativepath = '/'.join(frelativepath.split(os.path.sep))
             ite = re_dquotes.finditer(code_string)
             code_offset = 0
             code_line = 1
