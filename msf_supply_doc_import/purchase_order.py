@@ -140,7 +140,6 @@ class purchase_order(osv.osv):
             new_list.insert(header_index['Quantity*'], line.product_qty)
             new_list.insert(header_index['UoM*'], line.product_uom.name)
             new_list.insert(header_index['Price*'], line.price_unit)
-            new_list.insert(header_index['Currency*'], line.currency_id.name)
             new_list.insert(header_index['Delivery Confirmed Date*'], line.confirmed_delivery_date and strptime(line.confirmed_delivery_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
             new_list.insert(header_index['Order Reference*'], po.name)
             new_list.insert(header_index['Delivery Confirmed Date (PO)*'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
