@@ -107,7 +107,6 @@ def create(self, cr, uid, vals, context=None):
     context = context or {}
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
-    # TODO: remove the testing lines below
     if debug and sync_debug:
         context['sync_data'] = True
         
@@ -115,7 +114,7 @@ def create(self, cr, uid, vals, context=None):
         real_uid = uid
         uid = 0
         
-    if (uid != 1 or context.get('applyToAdmin', False)) and context.get('sync_data'):
+    if context.get('sync_data'):
         
         if debug and user_debug: 
             uid = real_uid
@@ -133,7 +132,7 @@ def create(self, cr, uid, vals, context=None):
 
             if instance_level:
 
-                # get rules for this model
+                # get rules for this model, instance and user
                 model_name = self._name
                 user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
                 groups = [x.id for x in user.groups_id]
@@ -181,10 +180,8 @@ def create(self, cr, uid, vals, context=None):
             else:
                 logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company, no Field Access Rules can be respected!')
                 return create_result
-
         else:
             return False
-
     else:
         res = super_create(self, cr, uid, vals, context)
         return res
@@ -200,6 +197,9 @@ def write(self, cr, uid, ids, vals, context=None):
     """
     
     context = context or {}
+    
+    if not isinstance(ids, list):
+        ids = [ids]
 
     if debug and sync_debug:
         context['sync_data'] = True
@@ -208,45 +208,44 @@ def write(self, cr, uid, ids, vals, context=None):
         real_uid = uid
         uid = 0
     
-    if (uid != 1 or context.get('applyToAdmin', False)):
-        
-        if debug and user_debug:
-            uid = real_uid
+    if debug and user_debug:
+        uid = real_uid
 
-        wprint('================== WRITE OVERRIDE')
+    wprint('================== WRITE OVERRIDE')
 
-        # get instance level. if not set, log warning, then return normal write
-        instance_level = _get_instance_level(self, cr, uid)
-        if not instance_level:
-            logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company object, no Field Access Rules can be respected!')
-            return super_write(self, cr, uid, ids, vals, context=context)
+    # get instance level. if not set, log warning, then return normal write
+    instance_level = _get_instance_level(self, cr, uid)
+    if not instance_level:
+        logging.getLogger(self._name).warn('No instance name defined! Until one has been defined in the current users company object, no Field Access Rules can be respected!')
+        return super_write(self, cr, uid, ids, vals, context=context)
 
-        # get rules for this model
-        model_name = self._name
-        user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-        groups = [x.id for x in user.groups_id]
+    # get rules for this model
+    model_name = self._name
+    user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
+    groups = [x.id for x in user.groups_id]
 
-        rules_pool = self.pool.get('msf_access_rights.field_access_rule')
-        rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+    rules_pool = self.pool.get('msf_access_rights.field_access_rule')
+    rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
-        wprint('=== INSTANCE_LEVEL: ' + instance_level)
-        wprint('=== MODEL: ' + model_name)
-        wprint('=== USER: ' + str(user))
-        wprint('=== GROUPS: ' + str(groups))
-        wprint('=== RULES_SEARCH: ' + str(rules_search))
-        wprint('=== IDS: ' + str(ids))
+    wprint('=== INSTANCE_LEVEL: ' + instance_level)
+    wprint('=== MODEL: ' + model_name)
+    wprint('=== USER: ' + str(user))
+    wprint('=== GROUPS: ' + str(groups))
+    wprint('=== RULES_SEARCH: ' + str(rules_search))
+    wprint('=== IDS: ' + str(ids))
 
-        # if have rules
-        if rules_search:
+    # if have rules
+    if rules_search:
 
-            rules = rules_pool.browse(cr, 1, rules_search, context=context)
-            current_records = self.browse(cr, 1, ids, context=context)
+        rules = rules_pool.browse(cr, 1, rules_search, context=context)
+        current_records = self.browse(cr, 1, ids, context=context)
 
-            # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
+        # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
+        if uid != 1:
             for record in current_records:
                 for rule in rules:
                     if _record_matches_domain(self, cr, record.id, rule.domain_text):
-
+    
                         # rule applies for this record so throw exception if we are trying to edit a field without write_access
                         # for each rule
                         for line in rule.field_access_rule_line_ids:
@@ -264,48 +263,46 @@ def write(self, cr, uid, ids, vals, context=None):
                                             wprint('====== EXISTING VALS: %s' % [ str(line.field.name) + ': ' + str(getattr(record, line.field.name, '[Attribute doesnt exist]')) + ', ' for line in rule.field_access_rule_line_ids ])
                                             raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
-            # if syncing, sanitize editted rows that don't have sync_on_write permission
-            if context.get('sync_data') or user.login == 'msf_access_rights_benchmarker':
+        # if syncing, sanitize editted rows that don't have sync_on_write permission
+        if context.get('sync_data') or user.login == 'msf_access_rights_benchmarker':
 
-                wprint('====== SYNCING')
+            wprint('====== SYNCING')
 
-                # iterate over current records 
-                for record in current_records:
-                    new_values = copy.deepcopy(vals)
+            # iterate over current records 
+            for record in current_records:
+                new_values = copy.deepcopy(vals)
 
-                    # iterate over rules and see if they match the current record
-                    for rule in rules:
-                        if _record_matches_domain(self, cr, record.id, rule.domain_text):
+                # iterate over rules and see if they match the current record
+                for rule in rules:
+                    if _record_matches_domain(self, cr, record.id, rule.domain_text):
 
-                            wprint('=== MATCHING RULE ID: %s' % rule.id)
+                        wprint('=== MATCHING RULE ID: %s' % rule.id)
 
-                            # for each rule, if value has changed and value_not_synchronized_on_write then delete key from new_values
-                            for line in rule.field_access_rule_line_ids:
-                                # if value_not_synchronized_on_write
-                                if line.value_not_synchronized_on_write:
-                                    # if we have a new value for the field
-                                    if line.field.name in new_values:
-                                        # if the current field value is different from the new field value
-                                        if new_values[line.field.name] != getattr(record, line.field.name):
-                                            # remove field from new_values
-                                            del new_values[line.field.name]
+                        # for each rule, if value has changed and value_not_synchronized_on_write then delete key from new_values
+                        for line in rule.field_access_rule_line_ids:
+                            # if value_not_synchronized_on_write
+                            if line.value_not_synchronized_on_write:
+                                # if we have a new value for the field
+                                if line.field.name in new_values:
+                                    # if the current field value is different from the new field value
+                                    if new_values[line.field.name] != getattr(record, line.field.name):
+                                        # remove field from new_values
+                                        del new_values[line.field.name]
 
-                            if len(new_values) != len(vals):
-                                wprint('=== REMOVED KEYS..')
-                                wprint(list(set(vals) - set(new_values)))
-                    
-                    # if we still have new values to write, write them for the current record
-                    if new_values:
-                        super_write(self, cr, uid, ids, new_values, context=context)
-            
-            else:
-                return super_write(self, cr, uid, ids, vals, context=context)
-
+                        if len(new_values) != len(vals):
+                            wprint('=== REMOVED KEYS..')
+                            wprint(list(set(vals) - set(new_values)))
+                
+                # if we still have new values to write, write them for the current record
+                if new_values:
+                    super_write(self, cr, uid, ids, new_values, context=context)
+        
         else:
             return super_write(self, cr, uid, ids, vals, context=context)
 
     else:
         return super_write(self, cr, uid, ids, vals, context=context)
+
 
 orm.orm.write = write
 
