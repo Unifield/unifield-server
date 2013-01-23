@@ -207,10 +207,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                       or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                       or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
