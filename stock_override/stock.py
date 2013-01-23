@@ -523,6 +523,14 @@ class stock_picking(osv.osv):
             else:
                 inv_type = 'out_invoice'
         return inv_type
+    
+    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
+        move_obj = self.pool.get('stock.move')
+        pick = kwargs['pick']
+        move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), 
+                                             ('state', 'in', ('waiting', 'confirmed'))], order='product_qty desc')
+        
+        return move_ids
 
     def is_invoice_needed(self, cr, uid, sp=None):
         """
