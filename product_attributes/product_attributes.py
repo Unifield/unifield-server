@@ -329,6 +329,12 @@ class product_attributes(osv.osv):
                                                                                  ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context) 
             if has_rfq_line:
                 opened_object = True
+                
+            # Check if the product is in some tender lines
+            has_tender_line = self.pool.get('tender.line').search(cr, uid, [('product_id', '=', product.id),
+                                                                            ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            if has_tender_line:
+                opened_object = True
             
             # Check if the product has stock in internal locations
             has_stock = product.qty_available

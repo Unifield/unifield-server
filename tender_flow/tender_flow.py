@@ -115,6 +115,25 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the tender contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
+                                                                       ('tender_id', 'in', ids),
+                                                                       ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            line = self.pool.get('tender.line').browse(cr, uid, inactive_lines[0])
+            raise osv.except_osv(_('Error'), _('You cannot generate RfQs from the tender %s because it contains a line with the inactive product [%s] %s')  
+                                 % (line.tender_id.name, line.product_id.default_code, line.product_id.name))
+        
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
+    ]
 
     def create(self, cr, uid, vals, context=None):
         '''

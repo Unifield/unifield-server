@@ -49,6 +49,8 @@
         'test/deactivate_product_rfq_draft.yml',
         'test/deactivate_product_sent_rfq.yml',
         'test/deactivate_product_send_rfq.yml',
+        'test/deactivate_product_tender_draft.yml',
+        'test/deactivate_product_tender_gen_rfq.yml',
     ],
     'installable': True,
     'active': False,
