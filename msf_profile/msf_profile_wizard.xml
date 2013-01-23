@@ -1,18 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
-    <record id="export_lang_background" model="ir.ui.view">
-        <field name="name">Export Lang Background</field>
+    <record id="base.wizard_lang_export" model="ir.ui.view">
+        <field name="name">Export Translations</field>
         <field name="model">base.language.export</field>
-        <field name="priority" eval="200" />
         <field name="type">form</field>
         <field name="arch" type="xml">
-            <form string="Export Translation">
-                <field name="lang" required="1"/>
-                <field name="format" />
-                <group colspan="2">
-                    <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
-                    <button icon="gtk-ok" name="act_getfile_background" string="_Export" type="object"/>
+            <form string="Export Translations">
+                <group col="8">
+                    <group colspan="3">
+                        <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                        <newline/>
+                        <label colspan="4" width="220" string="OpenERP translations (core, modules, clients) are managed through Launchpad.net, our open source project management facility. We use their online interface to synchronize all translations efforts."/>
+                        <label colspan="4" width="220" string="To improve or expand the official translations, you should use directly Lauchpad's web interface (Rosetta). If you need to perform mass translation, Launchpad also allows uploading full .po files at once"/>
+                        <label colspan="4" width="220"/>
+                        <label colspan="4" width="220" string="To browse official translations, you can start with these links:"/>
+                        <label colspan="4" width="220" string="https://help.launchpad.net/Translations"/>
+                        <label colspan="4" width="220" string="https://translations.launchpad.net/openobject"/>
+                    </group>
+                    <separator orientation="vertical" rowspan="15"/>
+                    <group colspan="4">
+                        <field name="lang" required="1"/>
+                        <field name="format" />
+                        <newline />
+                        <group colspan="4">
+                            <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
+                            <button icon="gtk-ok" name="act_getfile_background" string="_Export" type="object"/>
+                        </group>
+                    </group>
                 </group>
             </form>
         </field>
@@ -33,16 +48,48 @@
         </field>
     </record>
 
-    <record id="action_wizard_lang_export_background" model="ir.actions.act_window">
-        <field name="name">Export Translation in Background</field>
+    <record id="import_lang_background" model="ir.ui.view">
+        <field name="name">Import Lang Background</field>
+        <field name="model">base.language.import</field>
+        <field name="priority" eval="200" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import Translation">
+                <field name="name" required="1"/>
+                <field name="code" />
+                <field name="data" />
+                <group colspan="2">
+                    <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
+                    <button icon="gtk-ok" name="import_lang_background" string="_Import" type="object"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="import_lang_background_result" model="ir.ui.view">
+        <field name="name">Import Lang Background</field>
+        <field name="model">base.language.import</field>
+        <field name="priority" eval="200" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import Translation">
+                <separator string="The file will be attached to a new request, please check the menu Administration > Customization > Low Level Objects > Requests > Requests" colspan="4"/>
+                <group colspan="2">
+                    <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_wizard_lang_import_background" model="ir.actions.act_window">
+        <field name="name">Import Translation in Background</field>
         <field name="type">ir.actions.act_window</field>
-        <field name="res_model">base.language.export</field>
+        <field name="res_model">base.language.import</field>
         <field name="view_type">form</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="view_id" ref="export_lang_background" />
+        <field name="view_id" ref="import_lang_background" />
     </record>
-    <menuitem action="action_wizard_lang_export_background" id="menu_wizard_lang_export_background" parent="base.menu_translation_export"/>
-
+    <menuitem action="action_wizard_lang_import_background" id="menu_wizard_lang_import_background" parent="base.menu_translation_export"/>
 </data>
 </openerp>
