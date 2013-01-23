@@ -869,7 +869,7 @@ class stock_move(osv.osv):
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
             r = res.pop(0)
-            move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
+            move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
             if r[2]:
                 done.append(move_id)
             else:
