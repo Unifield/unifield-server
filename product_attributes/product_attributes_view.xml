@@ -578,7 +578,7 @@
         <menuitem id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
         <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
 
-
+	<!-- status -->
 	<record id="product_status_search" model="ir.ui.view">
 	    <field name="name">product.status.search</field>
 	    <field name="model">product.status</field>
@@ -589,6 +589,16 @@
 	        </search>
 	    </field>
 	</record>
+	<record id="product_status_tree" model="ir.ui.view">
+	    <field name="name">product.status.tree</field>
+	    <field name="model">product.status</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Status" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
 	<record id="product_status_action" model="ir.actions.act_window">
             <field name="name">Status</field>
             <field name="type">ir.actions.act_window</field>
@@ -601,6 +611,7 @@
                   action="product_status_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
+	<!-- international status -->
 	<record id="product_international_status_search" model="ir.ui.view">
 	    <field name="name">product.international.status.search</field>
 	    <field name="model">product.international.status</field>
@@ -611,6 +622,16 @@
 	        </search>
 	    </field>
 	</record>
+	<record id="product_international_status_tree" model="ir.ui.view">
+	    <field name="name">product.international.status.tree</field>
+	    <field name="model">product.international.status</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="International status" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
 	<record id="product_international_status_action" model="ir.actions.act_window">
             <field name="name">International status</field>
             <field name="type">ir.actions.act_window</field>
@@ -623,6 +644,7 @@
                   action="product_international_status_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
+	<!-- heat sensitive -->
 	<record id="product_heat_sensitive_search" model="ir.ui.view">
 	    <field name="name">product.heat_sensitive.search</field>
 	    <field name="model">product.heat_sensitive</field>
@@ -633,6 +655,16 @@
 	        </search>
 	    </field>
 	</record>
+	<record id="product_heat_sensitive_tree" model="ir.ui.view">
+	    <field name="name">product.heat_sensitive.tree</field>
+	    <field name="model">product.heat_sensitive</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Heat sensitive" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
 	<record id="product_heat_sensitive_action" model="ir.actions.act_window">
             <field name="name">Heat sensitive</field>
             <field name="type">ir.actions.act_window</field>
@@ -645,6 +677,7 @@
                   action="product_heat_sensitive_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
+	<!-- Cold chain -->
 	<record id="product_cold_chain_search" model="ir.ui.view">
 	    <field name="name">product.cold_chain.search</field>
 	    <field name="model">product.cold_chain</field>
@@ -655,6 +688,16 @@
 	        </search>
 	    </field>
 	</record>
+	<record id="product_cold_chain_tree" model="ir.ui.view">
+	    <field name="name">product.cold_chain.tree</field>
+	    <field name="model">product.cold_chain</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Cold chain" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
 	<record id="product_cold_chain_action" model="ir.actions.act_window">
             <field name="name">Cold chain</field>
             <field name="type">ir.actions.act_window</field>
@@ -663,7 +706,7 @@
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="product_cold_chain_search" />
         </record>
-        <menuitem id="menu_cold_chain_product"
+	<menuitem id="menu_cold_chain_product"
                   action="product_cold_chain_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
