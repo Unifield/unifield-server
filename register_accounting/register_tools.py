@@ -309,7 +309,7 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
                     if el == 'ending_id':
                         starting_vals.update({'number': 0.0,})
                     cashbox_line_obj.create(cr, uid, starting_vals, context=context)
-            # update new register balance_end
+            # update new register balance_start
             balance = st_obj._get_starting_balance(cr, uid, [next_reg_id], context=context)[next_reg_id].get('balance_start', False)
             if balance:
                 st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)

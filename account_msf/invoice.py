@@ -37,6 +37,10 @@ class account_invoice_line(osv.osv):
         'move_lines': fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
     }
 
+    _defaults = {
+        'price_unit': lambda *a: 0.00,
+    }
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         """
         Copy an invoice line without its move lines
@@ -100,6 +104,19 @@ class account_invoice(osv.osv):
             res[i.id] = getattr(i, name, False) and getattr(getattr(i, name, False), 'id', False) or False
         return res
 
+    def _get_have_donation_certificate(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        If this invoice have a stock picking in which there is a Certificate of Donation, return True. Otherwise return False.
+        """
+        res = {}
+        for i in self.browse(cr, uid, ids):
+            res[i.id] = False
+            if i.picking_id:
+                a_ids = self.pool.get('ir.attachment').search(cr, uid, [('res_model', '=', 'stock.picking'), ('res_id', '=', i.picking_id.id), ('description', '=', 'Certificate of Donation')])
+                if a_ids:
+                    res[i.id] = True
+        return res
+
     _columns = {
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
@@ -111,6 +128,8 @@ class account_invoice(osv.osv):
         'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
+        'picking_id': fields.many2one('stock.picking', string="Picking"),
+        'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
     }
 
     _defaults = {
@@ -133,6 +152,7 @@ class account_invoice(osv.osv):
             debit_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_debit_note_form')
             inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
             intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+            supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
         except ValueError:
             return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
@@ -150,6 +170,13 @@ class account_invoice(osv.osv):
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
                 context.update(el[2])
+        # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
+        # filled with all the information; this leaded to having a "Sale" journal in the supplier
+        # invoice if it was saved after coming from this link. Here's the fix.
+        if (not context.get('journal_type', False) and context.get('type', False) == 'in_invoice'):
+            supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
+            context.update({'journal_type': 'purchase',
+                            'view_id': supplier_view_id})
         return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
 
     def onchange_partner_id(self, cr, uid, ids, type, partner_id,\
@@ -158,6 +185,7 @@ class account_invoice(osv.osv):
         Update fake_account_id field regarding account_id result.
         Get default donation account for Donation invoices.
         Get default intermission account for Intermission Voucher IN/OUT invoices.
+        Get default currency from partner if this one is linked to a pricelist.
         """
         res = super(account_invoice, self).onchange_partner_id(cr, uid, ids, type, partner_id, date_invoice, payment_term, partner_bank_id, company_id)
         if is_inkind_donation and partner_id:
@@ -172,6 +200,20 @@ class account_invoice(osv.osv):
             res['value']['account_id'] = account_id
         if res.get('value', False) and 'account_id' in res['value']:
             res['value'].update({'fake_account_id': res['value'].get('account_id')})
+        if partner_id and type:
+            p = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if p:
+                c_id = False
+                if type in ['in_invoice', 'out_refund'] and p.property_product_pricelist_purchase:
+                    c_id = p.property_product_pricelist_purchase.currency_id.id
+                elif type in ['out_invoice', 'in_refund'] and p.property_product_pricelist:
+                    c_id = p.property_product_pricelist.currency_id.id
+                if c_id:
+                    if not res.get('value', False):
+                        res['value'] = {'currency_id': c_id}
+                    else:
+                        res['value'].update({'currency_id': c_id})
+
         return res
 
     def _refund_cleanup_lines(self, cr, uid, lines):
@@ -213,6 +255,30 @@ class account_invoice(osv.osv):
                 'context': context,
                 'target': 'new',
             }
+
+    def button_donation_certificate(self, cr, uid, ids, context=None):
+        """
+        """
+        for inv in self.browse(cr, uid, ids):
+            pick_id = inv.picking_id and inv.picking_id.id or ''
+            domain = "[('res_model', '=', 'stock.picking'), ('res_id', '=', " + str(pick_id) + "), ('description', '=', 'Certificate of Donation')]"
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_tree_2')
+            view_id = view_id and view_id[1] or False
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_attachment_search_2')
+            search_view_id = search_view_id and search_view_id[1] or False
+            return {
+                'name': "Certificate of Donation",
+                'type': 'ir.actions.act_window',
+                'res_model': 'ir.attachment',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'view_id': [view_id],
+                'search_view_id': search_view_id,
+                'domain': domain,
+                'context': context,
+                'target': 'current',
+            }
+        return False
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
@@ -323,6 +389,7 @@ class account_invoice(osv.osv):
                 tmp_res = self.pool.get('account.move').reverse(cr, uid, [move_id], strftime('%Y-%m-%d'))
                 # If success change invoice to cancel and detach move_id
                 if tmp_res:
+                    # Change invoice state
                     self.write(cr, uid, [i.id], {'state': 'cancel', 'move_id':False})
                 continue
             to_cancel.append(i.id)

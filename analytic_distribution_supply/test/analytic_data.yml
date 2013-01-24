@@ -71,7 +71,7 @@
     mes_type: fixed
     name: Camembert
     name_template: Camembert
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_id: res_partner_africom0
     seller_ids:
@@ -92,6 +92,7 @@
     weight: 0.0
     weight_net: 0.0
     property_account_expense: account_account_expense0
+    international_status: itc
 -
   I create a second product
 -
@@ -102,7 +103,7 @@
     mes_type: fixed
     name: Book
     name_template: Book
-    procure_method: make_to_stock
+    procure_method: make_to_order
     seller_delay: '1'
     seller_id: res_partner_mission_42
     seller_ids:
@@ -123,6 +124,7 @@
     weight: 0.0
     weight_net: 0.0
     property_account_expense: account_account_expense0
+    
 -
   I create a link between 6101 expense account and Operation destination
 -

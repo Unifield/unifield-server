@@ -51,14 +51,20 @@
     parent_id: product_nomenclature_test2
     
     
-- 
+-
+  Creating a product.category record
+-
+  !record {model: product.category, id: product_category_test1}:
+    name: Test 1
+    family_id: product_nomenclature_test2
+-
   Creating a product.product record
 - 
   !record {model: product.product, id: product_product_testproduct0}:
     alert_time: 0.0
     categ_id: product.cat0
     cost_method: standard
-    default_code: test
+    default_code: test3
     life_time: 0.0
     mes_type: fixed
     name: test product
@@ -84,6 +90,7 @@
     weight: 0.0
     weight_net: 0.0
     perishable: True
+    international_status: itc
     
 - 
   Creating a ir.sequence record
@@ -132,7 +139,7 @@
   !record {model: purchase.order.line, id: purchase_order_line_testproduct0}:
     company_id: base.main_company
     date_planned: !eval "'%s-08-29'%(time.strftime('%Y'),)"
-    default_code: test
+    default_code: test3
     default_name: test product
     internal_code: test
     internal_name: test product

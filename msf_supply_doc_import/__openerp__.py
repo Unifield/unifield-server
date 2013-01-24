@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2012 TeMPO Consulting, MSF, Smile. All Rights Reserved
+#    Copyright (C) 2012 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,27 +20,37 @@
 ##############################################################################
 
 {
-    "name" : "Import Files in Excel Format",
-    "version" : "0.1",
-    "description" : "This module enables to import file in xls format",
-    "author" : "MSF - TeMPO Consulting - Smile",
-    "category" : "Sale",
-    "depends" : ["sale", "purchase", "tender_flow", "msf_supply_doc_export", "spreadsheet_xml"],
-    "init_xml" : [],
-    "update_xml" : [
+    "name": "Import Files in Excel Format",
+    "version": "0.1",
+    "description": "This module enables to import file in xls format",
+    "author": "MSF - TeMPO Consulting",
+    "category": "Sale",
+    "depends": ["sale", "purchase", "tender_flow", "msf_supply_doc_export", "spreadsheet_xml"],
+    "init_xml": [],
+    "update_xml": [
         'view/sale_order_import_lines_view.xml',
         'view/internal_request_import_line_view.xml',
         'view/tender_import_line_view.xml',
         'view/purchase_order_import_line_view.xml',
-        
+        'view/initial_stock_inventory_line_view.xml',
+        'view/stock_cost_reevaluation_view.xml',
+        'view/product_list_view.xml',
         'data/msf_supply_doc_import_data.xml',
+        'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',
         'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
         'workflow/procurement_request_workflow.xml',
     ],
-    "demo_xml" : [],
-    "test": [],
+    "demo_xml": [],
+    "test": [
+        'test/data.yml',
+        'test/import_po.yml',
+        'test/import_so.yml',
+        'test/import_rfq.yml',
+        'test/import_ir.yml',
+        'test/import_tender.yml',
+    ],
     "installable": True,
     "active": False
 }

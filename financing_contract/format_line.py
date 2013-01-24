@@ -127,6 +127,9 @@ class financing_contract_format_line(osv.osv):
             # No domain for those
             return False
         else:
+            # last domain: get only non-corrected lines.
+            non_corrected_domain = [('is_reallocated', '=', False),
+                                    ('is_reversal', '=', False)]
             format = browse_line.format_id
             if format.eligibility_from_date and format.eligibility_to_date:
                 general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
@@ -135,7 +138,7 @@ class financing_contract_format_line(osv.osv):
                 account_domain = self._create_account_destination_domain(account_destination_ids)
                 # create the final domain
                 date_domain = eval(general_domain['date_domain'])
-                return [date_domain[0], date_domain[1]] + account_domain + [eval(general_domain['funding_pool_domain']), eval(general_domain['cost_center_domain'])]
+                return [date_domain[0], date_domain[1]] + account_domain + non_corrected_domain + [eval(general_domain['funding_pool_domain']), eval(general_domain['cost_center_domain'])]
             else:
                 # Dates are not set (since we are probably in a donor).
                 # Return False
@@ -232,7 +235,8 @@ class financing_contract_format_line(osv.osv):
                                                                               analytic_line.amount_currency or 0.0,
                                                                               round=False,
                                                                               context=date_context)
-                        real_sum = abs(real_sum)
+                        # Invert the result from the lines (positive for out, negative for in)
+                        real_sum = -real_sum
                         res[line.id] = real_sum
         return res
     

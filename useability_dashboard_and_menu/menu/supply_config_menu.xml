@@ -11,6 +11,35 @@
         parent="purchase.menu_product_in_config_purchase" 
         sequence="10" />
         
+        <!-- ASSET TYPE -->
+        
+        <menuitem id="menu_asset_type_sales" 
+        name="Asset Types" 
+        action="product_asset.asset_type_normal_action"
+        parent="purchase.menu_product_in_config_purchase"
+        sequence="20" />
+        
+        <!-- UOM -->
+        <menuitem id="menu_uom" 
+        name="Unit Of Measure" 
+        parent="purchase.menu_product_in_config_purchase" 
+        sequence="30" />
+        
+         <menuitem
+             action="product.product_uom_categ_form_action" 
+             name="Units of Measure Categories"
+             id="stock.menu_stock_uom_categ_form_action"
+             parent="menu_uom" 
+             sequence="1"/>
+        
+         <menuitem
+              action="product.product_uom_form_action" 
+              name="Units of Measure"
+              id="stock.menu_stock_uom_form_action"
+              parent="menu_uom" 
+              sequence="2" />
+        
+        
     <!-- PARTNER -->
         <menuitem id="base.menu_config_address_book" 
         name="Partner" 
@@ -59,19 +88,9 @@
             <field name="help">If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales.</field>
         </record>
         
-        <menuitem id="menu_asset_type" 
-        name="Asset Types" 
-        parent="menu_supply_config" 
-        sequence="11" />
-        
-        <menuitem id="product_asset.menu_asset_type_sales" 
-        name="Asset Types" 
-        parent="menu_asset_type"  />
-        
         <!-- PURCHASE CONFIG -->
         <menuitem id="purchase.menu_purchase_config_purchase" 
         name="Purchase Configuration" 
-        groups="purchase.group_purchase_manager"
         parent="menu_supply_config" 
         sequence="20" />
         
@@ -109,7 +128,6 @@
                   
                 <menuitem id="msf_outgoing.menu_action_pack_type_tree" 
                 action="msf_outgoing.action_pack_type_tree" 
-                groups="base.group_extended"
                 parent="menu_reg_wh_mngt"
                 sequence="12" />
                 
@@ -141,8 +159,12 @@
                 <menuitem action="msf_outgoing.action_labels_tree" 
                 id="msf_outgoing.menu_report_custo_labels" 
                 parent="menu_report_cust" 
-                 sequence="7"/>
-    
+                sequence="7"/>
+
+            <record id="stock.action_location_form" model="ir.actions.act_window">
+                <field name="context">{'full':1, 'search_default_in_location':1, 'from_advanced_menu': 1}</field>
+            </record>
+
     <!-- TOOLS -->
         <menuitem id="menu_tools" 
         name="Tools" 

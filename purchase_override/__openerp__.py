@@ -27,8 +27,7 @@
         Add hooks to purchase class
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
+    "init_xml": [],
     "depends" : [
         "purchase",
         "account_override",
@@ -43,7 +42,9 @@
         "purchase_workflow.xml",
         "purchase_report.xml",
         "wizard/split_order_line_view.xml",
+        "wizard/order_change_currency_view.xml",
         "security/ir.model.access.csv",
+        "purchase_sequence.xml",
     ],
     "demo_xml": [
     ],

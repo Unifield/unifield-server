@@ -36,24 +36,36 @@ class account_analytic_journal(osv.osv):
         Get all analytic journal type
         """
         return [
-            ('sale','Sale'),
-            ('purchase','Purchase'),
             ('cash','Cash'),
-            ('general','General'),
-            ('situation','Situation'),
-            ('engagement', 'Engagement'),
-            ('hq', 'HQ'),
             ('correction', 'Correction'),
             ('cur_adj', 'Currency Adjustement'),
+            ('engagement', 'Engagement'),
+            ('extra', 'OD-Extra Accounting'),
+            ('general','General'),
+            ('hq', 'HQ'),
             ('hr', 'HR'),
             ('inkind', 'In-kind Donation'),
             ('intermission', 'Intermission'),
+            ('purchase','Purchase'),
+            ('sale','Sale'),
+            ('situation','Situation'),
         ]
 
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
 (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
     }
+
+    def name_get(self, cr, user, ids, context=None):
+        """
+        Get code for Journals
+        """
+        result = self.read(cr, user, ids, ['code'])
+        res = []
+        for rs in result:
+            txt = rs.get('code', '')
+            res += [(rs.get('id'), txt)]
+        return res
 
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

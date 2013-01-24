@@ -104,7 +104,6 @@ class wizard_import_list(osv.osv_memory):
         if context is None:
             context = {}
         list_line_obj = self.pool.get('sale.order.line')
-        list_obj = self.pool.get('sale.order')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         model_data_obj = self.pool.get('ir.model.data')

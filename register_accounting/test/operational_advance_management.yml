@@ -14,7 +14,7 @@
  !record {model: account.bank.statement, id: account_bank_statement_7}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cash_0
-    name: 
+    name: account_bank_statement_7
     period_id: register_accounting.current_period
     user_id: base.user_root
     starting_details_ids:
@@ -53,6 +53,7 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_supplier_0
+    international_status: itc
 -
   I create an invoice with an amount of 400 EUR, a description "Food for staff" and the 6101 Expense Account
 -
@@ -210,7 +211,7 @@
  !record {model: account.bank.statement, id: account_bank_statement_8}:
     date: !eval time.strftime('%Y-%m-%d')
     journal_id: account_journal_cash_0
-    name: 
+    name: account_bank_statement_8
     period_id: period_0001
     user_id: base.user_root
     starting_details_ids:
@@ -285,7 +286,7 @@
     name: CC Line 1
     percentage: 100
     currency_id: 1
-    analytic_id: analytic_distribution.analytic_account_project_dummy
+    analytic_id: analytic_account_project_dummy
     distribution_id: analytic_distrib1
     destination_id: analytic_distribution.analytic_account_destination_operation
 -
@@ -297,7 +298,7 @@
     currency_id: 1
     analytic_id: analytic_distribution.analytic_account_msf_private_funds
     distribution_id: analytic_distrib1
-    cost_center_id: analytic_distribution.analytic_account_project_dummy
+    cost_center_id: analytic_account_project_dummy
     destination_id: analytic_distribution.analytic_account_destination_operation
 -
   I register an expense of 400 EUR and select a Supplier as a Third Party

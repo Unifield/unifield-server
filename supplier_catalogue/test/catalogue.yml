@@ -78,7 +78,7 @@
     info_ids = self.search(cr, uid, [('product_id', '=', ref_product), ('name', '=', ref('supplier1'))])
     assert len(info_ids) == 1, "Number of supplier info not correct :: result %s (expected 1)" % len(info_ids)
     for info in self.browse(cr, uid, info_ids):
-      assert info.delay == 10, "Delay is not correct :: result: %s (expected 10)" % info.delay
+      assert int(info.delay) == 10, "Delay is not correct :: result: %s (expected 10)" % info.delay
       assert len(info.pricelist_ids) == 3, "Number of lines in supplier info not correct :: result %s (expected 3)" % len(info.pricelist_ids)
       for line in info.pricelist_ids:
         assert line.currency_id.id == ref('base.EUR'), "Currency of the line is not correct :: result %s (expected EUR)" % line.currency_id.name
@@ -130,5 +130,11 @@
     info_ids = self.search(cr, uid, [('product_id', '=', ref_product), ('name', '=', ref('supplier1'))])
     assert len(info_ids) == 1, "Number of supplier info not correct :: result %s (expected 1)" % len(info_ids)
     for info in self.browse(cr, uid, info_ids):
-      assert info.delay == 10, "Delay is not correct :: result: %s (expected 10)" % info.delay
+      assert int(info.delay) == 10, "Delay is not correct :: result: %s (expected 10)" % info.delay
       assert len(info.pricelist_ids) == 2, "Number of lines in supplier info not correct :: result %s (expected 2)" % len(info.pricelist_ids)
+-
+  Try to duplicate a partner with a catalogue
+-
+  !python {model: res.partner}: |
+     self.copy(cr, uid, ref('supplier1'), context=context)
+

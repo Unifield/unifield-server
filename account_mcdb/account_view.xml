@@ -8,7 +8,7 @@
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account Entries" min_rows="100">
+                <tree string="Account Entries" min_rows="100" hide_new_button="1">
                     <field name="instance_id"/>
                     <field name="journal_id"/>
                     <field name="move_id"/>
@@ -48,7 +48,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Line" min_rows="100">
+                <tree string="Analytic Line" min_rows="100" editable="bottom" hide_delete_button="1">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     <field name="instance_id"/>
@@ -101,12 +101,13 @@
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
-                            <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
                         </field>
                     </group>
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="journal_id" widget="selection" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                        <field name="instance_id"/>
+                        <field name="journal_id" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                        <field name="journal_type"/>
                         <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
                     </group>
                     <newline/>

@@ -76,8 +76,6 @@ class real_average_consumption(osv.osv):
             context = {}
         if not 'picking_id' in default:
             default['picking_id'] = False
-        if not 'valid_ok' in default:
-            default['valid_ok'] = False
 
         default['name'] = self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')
 
@@ -108,7 +106,6 @@ class real_average_consumption(osv.osv):
         'sublist_id': fields.many2one('product.list', string='List/Sublist'),
         'line_ids': fields.one2many('real.average.consumption.line', 'rac_id', string='Lines'),
         'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True),
-        'valid_ok': fields.boolean(string='Create and process out moves'),
         'created_ok': fields.boolean(string='Out moves created'),
         'nb_lines': fields.function(_get_nb_lines, method=True, type='integer', string='# lines', readonly=True,),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type'),
@@ -122,7 +119,6 @@ class real_average_consumption(osv.osv):
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
-        'valid_ok': lambda *a: True,
     }
 
     _sql_constraints = [
@@ -176,8 +172,6 @@ class real_average_consumption(osv.osv):
        
         # check and update lines
         for rac in self.browse(cr, uid, ids, context=context):
-            if not rac.valid_ok:
-                raise osv.except_osv(_('Error'), _('Please check the last checkbox before processing the lines'))
             if DateFrom(rac.period_to) > now():
                 raise osv.except_osv(_('Error'), _('"Period to" can\'t be in the future.'))
 
@@ -205,21 +199,22 @@ class real_average_consumption(osv.osv):
             
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
             for line in rac.line_ids:
-                move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
-                                                    'picking_id': picking_id,
-                                                    'product_uom': line.uom_id.id,
-                                                    'product_id': line.product_id.id,
-                                                    'date_expected': date,
-                                                    'date': date,
-                                                    'product_qty': line.consumed_qty,
-                                                    'prodlot_id': line.prodlot_id.id,
-                                                    'expiry_date': line.expiry_date,
-                                                    'location_id': rac.cons_location_id.id,
-                                                    'location_dest_id': rac.activity_id.id,
-                                                    'state': 'done',
-                                                    'reason_type_id': reason_type_id})
-                move_ids.append(move_id)
-                line_obj.write(cr, uid, [line.id], {'move_id': move_id})
+                if line.consumed_qty != 0.00:
+                    move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
+                                                        'picking_id': picking_id,
+                                                        'product_uom': line.uom_id.id,
+                                                        'product_id': line.product_id.id,
+                                                        'date_expected': date,
+                                                        'date': date,
+                                                        'product_qty': line.consumed_qty,
+                                                        'prodlot_id': line.prodlot_id.id,
+                                                        'expiry_date': line.expiry_date,
+                                                        'location_id': rac.cons_location_id.id,
+                                                        'location_dest_id': rac.activity_id.id,
+                                                        'state': 'done',
+                                                       'reason_type_id': reason_type_id})
+                    move_ids.append(move_id)
+                    line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
             self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
 
@@ -329,8 +324,8 @@ class real_average_consumption(osv.osv):
             for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already on the report
                 if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
+                    batch_mandatory = product.batch_management
+                    date_mandatory = product.perishable
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
                               'consumed_qty': 0.00,
@@ -376,7 +371,7 @@ class real_average_consumption_line(osv.osv):
     _name = 'real.average.consumption.line'
     _description = 'Real average consumption line'
     _rec_name = 'product_id'
-    _order = 'id desc'
+    _order = 'ref'
 
     def _get_checks_all(self, cr, uid, ids, name, arg, context=None):
         result = {}
@@ -407,14 +402,18 @@ class real_average_consumption_line(osv.osv):
             if obj.rac_id.created_ok:
                 continue
 
+            # Prevent negative consumption qty.
+            if obj.consumed_qty < 0.00:
+                raise osv.except_osv(_('Error'), _('The consumed qty. must be positive or 0.00'))
+
             location = obj.rac_id.cons_location_id.id
             prodlot_id = None
             expiry_date = None
 
-            batch_mandatory = obj.product_id.batch_management or obj.product_id.perishable
-            date_mandatory = not obj.product_id.batch_management and obj.product_id.perishable
+            batch_mandatory = obj.product_id.batch_management
+            date_mandatory = obj.product_id.perishable
         
-            if batch_mandatory:
+            if batch_mandatory and obj.consumed_qty != 0.00:
                 if not obj.prodlot_id and not context.get('noraise'):
                     raise osv.except_osv(_('Error'), 
                         _("Product: %s, You must assign a Batch Number")%(obj.product_id.name,))
@@ -422,15 +421,15 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-#            if date_mandatory:
-#                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
-#                                                    ('type', '=', 'internal'),
-#                                                    ('product_id', '=', obj.product_id.id)])
-#                expiry_date = obj.expiry_date
-#                if not prod_ids:
-#                    raise osv.except_osv(_('Error'), 
-#                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
-#                prodlot_id = prod_ids[0]
+            if date_mandatory and not batch_mandatory:
+                prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
+                                                    ('type', '=', 'internal'),
+                                                    ('product_id', '=', obj.product_id.id)])
+                expiry_date = obj.expiry_date
+                if not prod_ids:
+                    raise osv.except_osv(_('Error'), 
+                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
+                prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
@@ -443,8 +442,14 @@ class real_average_consumption_line(osv.osv):
 
         return True
 
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
+        'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True, 
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'real.average.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20)}),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'product_qty': fields.float(digits=(16,2), string='Indicative stock', readonly=True),
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
@@ -584,10 +589,10 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             qty_available = product.qty_available
                 
-            if product.batch_management or product.perishable:
-                v.update({'batch_mandatory': True})
-            if not product.batch_management and product.perishable:
-                v.update({'date_mandatory': True})
+            if product.batch_management:
+                v.update({'batch_mandatory': True, 'remark': 'You must assign a batch'})
+            if product.perishable:
+                v.update({'date_mandatory': True, 'remark': 'You must assign an expiry date'})
 
             uom = product.uom_id.id
             v.update({'uom_id': uom})
@@ -815,6 +820,7 @@ monthly_review_consumption()
 class monthly_review_consumption_line(osv.osv):
     _name = 'monthly.review.consumption.line'
     _description = 'Monthly review consumption line'
+    _order = 'ref'
     
     def _get_amc(self, cr, uid, ids, field_name, arg, ctx=None):
         '''
@@ -891,8 +897,14 @@ class monthly_review_consumption_line(osv.osv):
                 
         return result.keys()
     
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('monthly.review.consumption.line').search(cr, uid, [('name', 'in', ids)], context=context)
+    
     _columns = {
         'name': fields.many2one('product.product', string='Product', required=True),
+        'ref': fields.related('name', 'default_code', type='char', size=64, readonly=True,
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
         'amc': fields.function(_get_amc, string='AMC', method=True, readonly=True, 
                                store={'monthly.review.consumption': (_get_mrc_change, ['period_from', 'period_to'], 20),
                                       'monthly.review.consumption.line': (lambda self, cr, uid, ids, c=None: ids, [],20),}),
@@ -1158,6 +1170,8 @@ class product_product(osv.osv):
         loss_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
         discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
         return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        return_good_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
 
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
@@ -1194,7 +1208,7 @@ class product_product(osv.osv):
         out_move_ids = move_obj.search(cr, uid, domain, context=context)
         
         for move in move_obj.browse(cr, uid, out_move_ids, context=context):
-            if move.reason_type_id.id == return_id and move.location_id.usage == 'customer':
+            if move.reason_type_id.id in (return_id, return_good_id, replacement_id) and move.location_id.usage == 'customer':
                 res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
             elif move.location_dest_id.usage == 'customer':
                 res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)

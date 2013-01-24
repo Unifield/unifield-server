@@ -58,6 +58,7 @@
             <field name="arch" type="xml">
 				<xpath expr="//field[@name='name']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+                <attribute name="on_change">onchange_supplier(name)</attribute>
             	</xpath>
             	<xpath expr="//field[@name='product_name']" position="attributes">
             		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
@@ -152,8 +153,8 @@
         			</xpath>
         			
 	        		<xpath expr="/form//field[@name='active']" position="after">
-	        			<field name="is_section_currency" />
-	        			<field name="is_esc_currency" />
+	        			<field name="is_section_currency" invisible="1" />
+	        			<field name="is_esc_currency" invisible="1" />
 	        		</xpath>
         		</data>
         	</field>
@@ -161,15 +162,7 @@
         
         
         <!-- Remove pricelists configuration menu entries -->
-        <delete model="ir.ui.menu" id="product.menu_product_pricelist_main" />
-        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action" />
-        <delete model="ir.ui.menu" id="product.menu_product_pricelist_action2" />
-<!--        <delete model="ir.ui.menu" id="product.menu_product_price_type" /> -->
-        <delete model="ir.ui.menu" id="product.menu_product_pricelist_type_action2" />
-<!--        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" /> -->
-        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
 		
 	</data>

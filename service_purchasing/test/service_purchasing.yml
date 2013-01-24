@@ -25,18 +25,20 @@
   Creating a product.product record service with reception
 - 
   !record {model: product.product, id: product_service_recep_p1}:
-    default_code: P0
+    default_code: P9
     name: product 0 test
     type: service_recep
     procure_method: make_to_order
+    international_status: itc
     
 - 
   Creating a product.product record stockable
 - 
   !record {model: product.product, id: product_stockable_p2}:
-    default_code: P1
+    default_code: P15
     name: product 1 test
     type: product
+    international_status: itc
   
 -
  0. I create a Sale order and trigger it to Outgoing shipment in
@@ -226,14 +228,14 @@
 
 -
   !python {model: purchase.order}: |
-    from osv.orm import except_orm
+    from osv.osv import except_osv
     po = self.browse(cr, uid, ref("purchase_order_po3"), context=context)
     try:
       po.write({'categ':'service'}, context=context)
-    except except_orm as e:
+    except except_osv as e:
       # ok the constraint is triggered
       pass
     else:
-      assert False, 'The constraint: "Purchase Order of type Category Service should contain only Service with Reception Products." has not been triggered'
+      assert False, 'The constraint about Purchase Order of type Category Service with not only Service with Reception Products has not been triggered'
       
     

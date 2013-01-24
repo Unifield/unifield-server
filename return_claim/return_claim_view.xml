@@ -192,7 +192,7 @@
                         <separator orientation="vertical" />
                         <field name="state" select="1" />
                         <newline />
-                        <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                        <group expand="0" string="Group By..." colspan="4" col="10">
                             <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
                             <separator orientation="vertical"/>
                             <filter string="Creation Date" icon="terp-go-month" domain="[]" context="{'group_by':'creation_date_return_claim'}"/>

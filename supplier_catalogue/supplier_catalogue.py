@@ -27,7 +27,12 @@ from tools.translate import _
 from mx.DateTime import DateFrom, now, RelativeDate
 from datetime import date
 
+import decimal_precision as dp
+
 import time
+
+import base64
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
@@ -250,6 +255,7 @@ class supplier_catalogue(osv.osv):
         'active': fields.boolean(string='Active'),
         'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
+        'file_to_import': fields.binary(string='File to import', filters='*.xml', help="The file should be in XML Spreadsheet 2003 format. The columns should be in this order : Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."),
     }
     
     _defaults = {
@@ -318,19 +324,160 @@ class supplier_catalogue(osv.osv):
         '''
         if not context:
             context = {}
-        
-        # TODO: To implement
-        raise osv.except_osv(_('Error'), _('Not implemented !'))    
-        
-        res_id = self.pool.get('catalogue.import.lines').create(cr, uid, {'catalogue_id': ids[0]}, context=context)
+        vals = {}
+        vals['line_ids'] = []
+        msg_to_return = _("All lines successfully imported")
+
+        sup_cat = self.pool.get('supplier.catalogue')
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        obj_data = self.pool.get('ir.model.data')
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not obj.file_to_import:
+                raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+            reader = fileobj.getRows()
+
+            reader.next()
+            line_num = 1
+            for row in reader:
+                to_correct_ok = False
+                row_len = len(row)
+                if row_len != 8:
+                    raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
+                comment = []
+                p_comment = False
+                #Product code
+                product_code = row.cells[0].data
+                if not product_code :
+                    default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                    to_correct_ok = True
+                else:
+                    try:
+                        product_code = product_code.strip()
+                        code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                        if not code_ids:
+                            default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                            to_correct_ok = True
+                        else:
+                            default_code = code_ids[0]
+                    except Exception:
+                         default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                         to_correct_ok = True
+
+                #Product Description
+                p_descr = row.cells[1].data
+
+                #Product UoM
+                p_uom = row.cells[2].data
+                if not p_uom:
+                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                    to_correct_ok = True
+                else:
+                    try:
+                        uom_name = p_uom.strip()
+                        uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
+                        if not uom_ids:
+                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                            to_correct_ok = True
+                        else:
+                            uom_id = uom_ids[0]
+                    except Exception:
+                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                         to_correct_ok = True
+
+                #Product Min Qty
+                if not row.cells[3].data :
+                    p_min_qty = 1.0
+                else:
+                    if row.cells[3].type in ['int', 'float']:
+                        p_min_qty = row.cells[3].data
+                    else:
+                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Qty"') )
+
+                #Product Unit Price
+                if not row.cells[4].data :
+                    p_unit_price = 1.0
+                    to_correct_ok = True
+                    comment.append('Unit Price defined automatically as 1.00')
+                else:
+                    if row.cells[4].type in ['int', 'float']:
+                        p_unit_price = row.cells[4].data
+                    else:
+                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Unit Price"') )
+
+                #Product Rounding
+                if not row.cells[5].data:
+                    p_rounding = False
+                else:
+                    if row.cells[5] and row.cells[5].type in ['int', 'float']:
+                        p_rounding = row.cells[5].data
+                    else:
+                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Rounding"') )
+
+                #Product Min Order Qty
+                if not row.cells[6].data:
+                    p_min_order_qty = 0
+                else:
+                    if row.cells[6].type in ['int', 'float']:
+                        p_min_order_qty = row.cells[6].data
+                    else:
+                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Order Qty"') )
+
+                #Product Comment
+                if row.cells[7].data:
+                    comment.append(str(row.cells[7].data))
+                if comment:
+                    p_comment = ', '.join(comment)
+                line_num += 1
+
+                to_write = {
+                    'to_correct_ok': to_correct_ok, 
+                    'product_id': default_code,
+                    'product_description': p_descr,
+                    'min_qty': p_min_qty,
+                    'line_uom_id': uom_id,
+                    'unit_price': p_unit_price,
+                    'rounding': p_rounding,
+                    'min_order_qty': p_min_order_qty,
+                    'comment': p_comment,
+                }
+
+                vals['line_ids'].append((0, 0, to_write))
+
+            self.write(cr, uid, ids, vals, context=context)
+
+            # TODO: To implement
+
             
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'catalogue.import.lines',
-                'view_mode': 'form',
-                'view_type': 'form',
-                'target': 'new',
-                'res_id': res_id,
-                'context': context}
+            #res_id = self.pool.get('catalogue.import.lines').create(cr, uid, {'catalogue_id': ids[0]}, context=context)
+
+            for line in obj.line_ids:
+                if line.to_correct_ok:
+                    msg_to_return = _("The import of lines had errors, please correct the red lines below")
+            
+        return self.log(cr, uid, obj.id, msg_to_return,)
+
+    def check_lines_to_fix(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        message = ''
+        plural= ''
+        for var in self.browse(cr, uid, ids, context=context):
+            if var.line_ids:
+                for var in var.line_ids:
+                    if var.to_correct_ok:
+                        line_num = var.line_number
+                        if message:
+                            message += ', '
+                        message += str(line_num)
+                        if len(message.split(',')) > 1:
+                            plural = 's'
+        if message:
+            raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
+        return True
     
 supplier_catalogue()
 
@@ -369,6 +516,11 @@ class supplier_catalogue_line(osv.osv):
                                                   'catalogue_id': vals['catalogue_id'],
                                                   },
                                                   context=context)
+        
+        # Pass 'no_store_function' to False to compute the sequence on the pricelist.partnerinfo object
+        create_context = context.copy()
+        if context.get('no_store_function'):
+            create_context['no_store_function'] = False
             
         price_id = price_obj.create(cr, uid, {'name': catalogue.name,
                                               'suppinfo_id': sup_id,
@@ -380,7 +532,7 @@ class supplier_catalogue_line(osv.osv):
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_from': catalogue.period_from,
                                               'valid_till': catalogue.period_to,}, 
-                                              context=context)
+                                              context=create_context)
         
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})
@@ -401,7 +553,16 @@ class supplier_catalogue_line(osv.osv):
         '''
         if context is None:
             context = {}
-        for line in self.browse(cr, uid, ids, context=context):            
+
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        obj_data = self.pool.get('ir.model.data')
+        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+        prod_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+
+        for line in self.browse(cr, uid, ids, context=context):    
+            if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  
+                vals['to_correct_ok'] = False
             # If product is changed
             if 'product_id' in vals and vals['product_id'] != line.product_id.id:
                 c = context.copy()
@@ -472,19 +633,21 @@ class supplier_catalogue_line(osv.osv):
         return True
     
     _columns = {
+        'line_number': fields.integer(string='Line'),
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
                                   help='Minimal order quantity to get this unit price.'),
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
                                   help='UoM of the product used to get this unit price.'),
-        'unit_price': fields.float(digits=(16,2), string='Unit Price', required=True),
+        'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                    help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
         'comment': fields.char(size=64, string='Comment'),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
+        'to_correct_ok': fields.boolean('To correct'),
     }
     
     _constraints = [
@@ -502,6 +665,8 @@ class supplier_catalogue_line(osv.osv):
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v.update({'line_uom_id': product.uom_id.id})
+        else:
+            return {}
         
         return {'value': v}
     

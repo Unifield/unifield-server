@@ -11,16 +11,6 @@
             <field name="category">OC</field>
         </record>
         
-        <record id="analytic_account_project_dummy" model="account.analytic.account">
-            <field name="name">Dummy</field>
-            <field name="code">cc-dummy</field>
-            <field name="type">normal</field>
-            <field name="active">True</field>
-            <field name="category">OC</field>
-            <field name="parent_id" ref="analytic_account_project" />
-            <field name="for_fx_gain_loss" eval="True"/>
-        </record>
-        
         <record id="analytic_account_project_intermission" model="account.analytic.account">
             <field name="name">Intermission</field>
             <field name="code">cc-intermission</field>

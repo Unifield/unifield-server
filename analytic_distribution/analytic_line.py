@@ -61,7 +61,7 @@ class analytic_line(osv.osv):
             for cc in cost_center_ids:
                 for t in tuple_list:
                     if res:
-                        res.append('|')
+                        res = ['|'] + res
                     res.append('&')
                     res.append('&')
                     res.append(('cost_center_id', '=', cc))
@@ -69,14 +69,23 @@ class analytic_line(osv.osv):
                     res.append(('destination_id', '=', t[1]))
         return res
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.analytic.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center'),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
         'commitment_line_id': fields.many2one('account.commitment.line', string='Commitment Voucher Line', ondelete='cascade'),
         'from_write_off': fields.boolean(string='From write-off account line?', readonly=True, help="Indicates that this line come from a write-off account line."),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination"),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
+        'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
+        'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
+            help="Indicates the Journal Type of the Analytic journal item"),
     }
 
     _defaults = {
@@ -94,12 +103,13 @@ class analytic_line(osv.osv):
         if context.get('display_fp', False) and context.get('display_fp') is True:
             is_funding_pool_view = True
         view = super(analytic_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type=='tree' and is_funding_pool_view:
+        if view_type in ('tree', 'search') and is_funding_pool_view:
             tree = etree.fromstring(view['arch'])
             # Change OC field
-            fields = tree.xpath('/tree/field[@name="account_id"]')
+            fields = tree.xpath('/' + view_type + '//field[@name="account_id"]')
             for field in fields:
                 field.set('string', _("Funding Pool"))
+                field.set('domain', "[('category', '=', 'FUNDING'), ('type', '<>', 'view')]")
             view['arch'] = etree.tostring(tree)
         return view
 
@@ -124,8 +134,28 @@ class analytic_line(osv.osv):
         """
         Check date for given date and given account_id
         """
+        # Some verifications
+        if not context:
+            context = {}
+        # Default behaviour
+        res = super(analytic_line, self).create(cr, uid, vals, context=context)
+        # Check date
         self._check_date(cr, uid, vals, context=context)
-        return super(analytic_line, self).create(cr, uid, vals, context=context)
+        # Check soft/hard closed contract
+        sql = """SELECT fcc.id
+        FROM financing_contract_funding_pool_line fcfpl, account_analytic_account a, financing_contract_format fcf, financing_contract_contract fcc
+        WHERE fcfpl.funding_pool_id = a.id
+        AND fcfpl.contract_id = fcf.id
+        AND fcc.format_id = fcf.id
+        AND a.id = %s
+        AND fcc.state in ('soft_closed', 'hard_closed');"""
+        cr.execute(sql, tuple([vals.get('account_id')]))
+        sql_res = cr.fetchall()
+        if sql_res:
+            account = self.pool.get('account.analytic.account').browse(cr, uid, vals.get('account_id'))
+            contract = self.pool.get('financing.contract.contract').browse(cr, uid, sql_res[0][0])
+            raise osv.except_osv(_('Warning'), _('Selected Funding Pool analytic account (%s) is blocked by a soft/hard closed contract: %s') % (account and account.code or '', contract and contract.name or ''))
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -218,6 +248,12 @@ class analytic_line(osv.osv):
         # Process regarding account_type
         if account_type == 'OC':
             for aline in self.browse(cr, uid, ids):
+                # Verify that:
+                # - the line doesn't have any draft/open contract
+                check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aline.account_id.id])
+                if check_accounts and aline.account_id.id in check_accounts:
+                    continue
+
                 if aline.account_id and aline.account_id.id == msf_private_fund:
                     res.append(aline.id)
                 elif aline.account_id and aline.cost_center_id and aline.account_id.cost_center_ids:

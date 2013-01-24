@@ -10,8 +10,9 @@
                 <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Product Moves" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
 					<field name="line_number" readonly="True" />
                     <field name="product_id" readonly="True" />
+                    <field name="location_supplier_customer_mem_out" invisible="True" />
                     <field name="asset_id" domain="[('product_id', '=', product_id)]"
-							attrs="{'readonly': [('asset_check', '=', False)]}" />
+							attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}" />
 					<field name="asset_check" invisible="True" />
 					<field name="composition_list_id" domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
 							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
@@ -55,7 +56,7 @@
                     <field name="composition_list_id" readonly="True" />
                     <field name="quantity_ordered" readonly="True" />
                     <field name="product_uom" readonly="True" string="UOM" />
-                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
                     <field name="qty_to_return" />
                     <field name="lot_check" />
                    	<field name="exp_check" />
@@ -80,7 +81,7 @@
                     <field name="composition_list_id" readonly="True" />
                     <field name="quantity" string="Quantity" readonly="1" />
                     <field name="product_uom" readonly="True" string="UOM" />
-                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]"  groups="base.group_extended" />
+                    <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
                     <field name="qty_per_pack" />
 					<field name="from_pack" />
 					<field name="to_pack" />
@@ -104,11 +105,11 @@
                 <tree editable="bottom" hide_new_button="True" hide_delete_button="True" string="Pack Families" colors="red:integrity_status not in ('ok', 'empty');green:integrity_status in ('ok');">
                     <field name="from_pack" readonly="True" />
                     <field name="to_pack" readonly="True" />
-                    <field name="pack_type" />
+                    <field name="pack_type" on_change="onchange_pack_type(pack_type)" />
                     <field name="length" />
                     <field name="width" />
                     <field name="height" />
-					<field name="weight" />
+					<field name="weight" required="1"/>
 					<field name="integrity_status" />
                 </tree>
             </field>

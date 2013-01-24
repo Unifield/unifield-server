@@ -27,7 +27,7 @@ class account_move_line_activable(osv.osv):
     _inherit = "account.move.line"
     
     def _check_date(self, cr, uid, vals, context=None, check=True):
-        if 'date' in vals and vals['date'] is not False:
+        if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
             account_obj = self.pool.get('account.account')
             account = account_obj.browse(cr, uid, vals['account_id'])
             if vals['date'] < account.activation_date \

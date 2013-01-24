@@ -176,6 +176,16 @@ class fields_tools(osv.osv):
         name = [x[1] for x in list if x[0] == key][0]
         return name
     
+    def get_ids_from_browse_list(self, cr, uid, browse_list=False, context=None):
+        '''
+        return the list of ids corresponding to browse list in parameter
+        '''
+        if not browse_list:
+            return []
+        
+        result = [x.id for x in browse_list]
+        return result
+    
 fields_tools()
     
 
@@ -253,6 +263,103 @@ class sequence_tools(osv.osv):
     sequence tools
     '''
     _name = 'sequence.tools'
+    
+    def reorder_sequence_number(self, cr, uid, base_object, base_seq_field, dest_object, foreign_field, foreign_ids, seq_field, context=None):
+        '''
+        receive a browse list corresponding to one2many lines
+        recompute numbering corresponding to specified field
+        compute next number of sequence
+        
+        we must make sure we reorder in conservative way according to original order
+        
+        *not used presently*
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(foreign_ids, (int, long)):
+            foreign_ids = [foreign_ids]
+            
+        # objects
+        base_obj = self.pool.get(base_object)
+        dest_obj = self.pool.get(dest_object)
+        seq_obj = self.pool.get('ir.sequence')
+        
+        for foreign_id in foreign_ids:
+            # will be ordered by default according to db id, it's what we want according to user sequence
+            item_ids = dest_obj.search(cr, uid, [(foreign_field, '=', foreign_id)], context=context)
+            if item_ids:
+                # read line number and id from items
+                item_data = dest_obj.read(cr, uid, item_ids, [seq_field], context=context)
+                # check the line number: data are ordered according to db id, so line number must be equal to index+1
+                for i in range(len(item_data)):
+                    if item_data[i][seq_field] != i+1:
+                        dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: i+1}, context=context)
+                # reset sequence to length + 1 all time, checking if needed would take much time
+                # get the sequence id
+                seq_id = base_obj.read(cr, uid, foreign_id, [base_seq_field], context=context)[base_seq_field][0]
+                # we reset the sequence to length+1
+                self.reset_next_number(cr, uid, [seq_id], value=len(item_ids)+1, context=context)
+        
+        return True
+    
+    def reorder_sequence_number_from_unlink(self, cr, uid, ids, base_object, base_seq_field, dest_object, foreign_field, seq_field, context=None):
+        '''
+        receive a browse list corresponding to one2many lines
+        recompute numbering corresponding to specified field
+        compute next number of sequence
+        
+        for unlink, only items with id > min(deleted id) are resequenced + reset the sequence value
+        
+        we must make sure we reorder in conservative way according to original order
+        
+        this method is called from methods of **destination object**
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        # if no ids as parameter return Tru
+        if not ids:
+            return True
+            
+        # objects
+        base_obj = self.pool.get(base_object)
+        dest_obj = self.pool.get(dest_object)
+        seq_obj = self.pool.get('ir.sequence')
+        
+        # find the corresponding base ids
+        base_ids = [x[foreign_field][0] for x in dest_obj.read(cr, uid, ids, [foreign_field], context=context) if x[foreign_field]]
+        # simulate unique sql
+        foreign_ids = set(base_ids)
+        
+        for foreign_id in foreign_ids:
+            # will be ordered by default according to db id, it's what we want according to user sequence
+            # reorder only ids bigger than min deleted + do not select deleted ones
+            item_ids = dest_obj.search(cr, uid, [('id', '>', min(ids)), (foreign_field, '=', foreign_id), ('id', 'not in', ids)], context=context)
+            # start numbering sequence
+            start_num = 0
+            # if deleted object is not the first one, we find the numbering value of previous one
+            before_ids = dest_obj.search(cr, uid, [('id', '<', min(ids)), (foreign_field, '=', foreign_id)], context=context)
+            if before_ids:
+                # we read the numbering value of previous value (biggest id)
+                start_num = dest_obj.read(cr, uid, max(before_ids), [seq_field], context=context)[seq_field]
+            if item_ids:
+                # read line number and id from items
+                item_data = dest_obj.read(cr, uid, item_ids, [seq_field], context=context)
+                # check the line number: data are ordered according to db id, so line number must be equal to index+1
+                for i in range(len(item_data)):
+                    # numbering value
+                    start_num = start_num+1
+                    if item_data[i][seq_field] != start_num:
+                        dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
+            
+            # reset sequence to start_num + 1 all time, checking if needed would take much time
+            # get the sequence id
+            seq_id = base_obj.read(cr, uid, foreign_id, [base_seq_field], context=context)[base_seq_field][0]
+            # we reset the sequence to length+1, whether or not items
+            self.reset_next_number(cr, uid, [seq_id], value=start_num+1, context=context)
+        
+        return True
     
     def reset_next_number(self, cr, uid, seq_ids, value=1, context=None):
         '''
@@ -374,3 +481,23 @@ class picking_tools(osv.osv):
         return True
     
 picking_tools()
+    
+
+class ir_translation(osv.osv):
+    _name = 'ir.translation'
+    _inherit = 'ir.translation'
+
+    def tr_view(self, cr, name, context):
+        if not context or not context.get('lang'):
+            return name
+        tr = self._get_source(cr, 1, False, 'view', context['lang'], name, True)
+        if not tr:
+            # sometimes de view name is empty and so the action name is used as view name
+            tr2 = self._get_source(cr, 1, 'ir.actions.act_window,name', 'model', context['lang'], name)
+            if tr2:
+                return tr2
+            return name
+        return tr
+
+
+ir_translation()

@@ -215,23 +215,23 @@
       </tr>
     </blockTable>
     <section>
-      [[repeatIn(o.account_ids,'line')]]
+      [[repeatIn(o.tuple_destination_account_ids,'line')]]
       <blockTable colWidths="40.0,180.0,80.0,80.0,140.0" style="Table5">
         <tr>
           <td>
-            <para style="P16" alignment="LEFT">[[ line.code ]]</para>
+            <para style="P16" alignment="LEFT">[[ line.account_id and line.account_id.code ]]</para>
           </td>
           <td>
-            <para style="P11" alignment="LEFT">[[ line.name ]]</para>
+            <para style="P11" alignment="LEFT">[[ line.account_id and line.account_id.name ]]</para>
           </td>
           <td>
-            <para style="P11" alignment="LEFT">[[ formatLang(line.activation_date,  date=True) ]] </para>
+            <para style="P11" alignment="LEFT">[[ line.account_id and line.account_id.activation_date and formatLang(line.account_id.activation_date,  date=True) ]] </para>
           </td>
           <td>
-            <para style="P29" alignment="LEFT">[[ line.inactivation_date != 'False' and formatLang(line.inactivation_date,  date=True) or ' ' ]]</para>
+            <para style="P29" alignment="LEFT">[[ line.account_id and line.account_id.inactivation_date and line.account_id.inactivation_date != 'False' and formatLang(line.account_id.inactivation_date,  date=True) or ' ' ]]</para>
           </td>
           <td>
-            <para style="P28" alignment="LEFT">[[ line.note ]]</para>
+            <para style="P28" alignment="LEFT">[[ line.account_id and line.account_id.note ]]</para>
           </td>
         </tr>
       </blockTable>

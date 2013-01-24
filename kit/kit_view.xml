@@ -7,7 +7,7 @@
             <field name="model">composition.kit</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-            	<form string="Kit Composition" hide_duplicate_button="1" >
+            	<form string="Kit Composition" > <!-- the hide_duplicate_button="1" is defined in the fields view get as "Theoretical Kit Composition" and "Kit Composition List have the same view" -->
             		<group col="6" colspan="4">
             			<group col="4" colspan="4">
 	                        <field name="composition_type" invisible="True" />
@@ -30,7 +30,8 @@
 	                        	domain="[('product_id', '=', composition_product_id)]" attrs="{'required': [('composition_type', '=', 'real'), ('composition_expiry_check', '=', True)], 'invisible': ['|', ('composition_expiry_check', '=', False), ('composition_type', '!=', 'real')], 'readonly': [('state', '!=', 'draft')]}" />
 	                        <field name="composition_exp" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
 	                        <field name="active" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" colspan="1" />
-	                        <button colspan="6" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
+	                        <button colspan="2" name="reset_to_version" type="object" string="Load items from Version" icon="gtk-sort-descending" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
+	                        <button colspan="2" name="modify_expiry_date" string="Modify Expiry Date" type="object" icon="terp-go-today" attrs="{'invisible': [('composition_type', '!=', 'real')]}" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -56,10 +57,13 @@
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
 				            		<field name="item_qty" />
 				            		<field name="item_uom_id" />
+				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
+				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 				            		<field name="item_lot"
 				            			on_change="on_lot_change(item_product_id, item_lot, context)" 
 				            			attrs="{'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
 				            		<field name="item_exp" attrs="{'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+				            		<field name="hidden_asset_mandatory" invisible="True" />
 				            		<field name="hidden_batch_management_mandatory" />
 				            		<field name="hidden_perishable_mandatory" />
 				            	</tree>
@@ -73,13 +77,13 @@
                     	<field name="state" colspan="3" />
                     </group>
                     <group col="7" colspan="2">
-                    	<button name="reset_to_version" type="object" string="Reset to Version" icon="gtk-clear" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'draft')]}" />
+                    	<button name="action_cancel" string="Cancel" type="object" icon="gtk-cancel" attrs="{'invisible': [('state', 'not in', ['draft'])]}" />
+                    	<button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
+                        <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
                     	<button name="mark_as_completed" string="Mark as Completed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('active', '=', False)]}" />
                     	<button name="substitute_items" type="object" string="Substitute Items" icon="terp-stock_effects-object-colorize" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="de_kitting" string="De-Kitting" type="object" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
                         <button name="close_kit" string="Close" type="object" icon="gtk-close" attrs="{'invisible': ['|', ('composition_type', '!=', 'real'), ('state', '!=', 'completed')]}" />
-                        <button name="mark_as_inactive" string="Mark as Inactive" type="object" icon="gtk-missing-image" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', False)]}" />
-                        <button name="mark_as_active" string="Mark as Active" type="object" icon="gtk-redo" attrs="{'invisible': ['|', ('composition_type', '!=', 'theoretical'), ('active', '=', True)]}" />
                     </group>
             	</form>
             </field>
@@ -114,6 +118,7 @@
                     <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
                     <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
                     <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                     <separator orientation="vertical" />
@@ -139,7 +144,7 @@
 							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 					</group>
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10" >
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
 	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
@@ -161,6 +166,7 @@
                     <filter icon="gtk-execute" name="in_production" string="In Production" domain="[('state','=', 'in_production')]" separator="1" />
                     <filter icon="terp-camera_test" name="completed" string="Completed" domain="[('state','=', 'completed')]" separator="1" />
                     <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+                    <filter icon="gtk-cancel" name="cancel" string="Canceled" domain="[('state','=', 'cancel')]" separator="1" />
                     <separator orientation="vertical" />
                     <field name="composition_product_id" domain="[('type', '=', 'product'), ('subtype', '=', 'kit')]" select="1" />
                     <field name="composition_version_id"
@@ -189,7 +195,7 @@
 							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 					</group>
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
 	                    <filter string="Product" icon="terp-product" domain="[]" context="{'group_by':'composition_product_id'}" />
 	                    <filter string="Version" icon="gtk-select-font" domain="[]" context="{'group_by':'composition_version'}" />
 	                    <filter string="State" icon="gtk-execute" domain="[]" context="{'group_by':'state'}"/>
@@ -217,6 +223,7 @@
            						<field name="item_product_id" readonly="True" />
 		                        <field name="item_qty" readonly="True" />
 		                        <field name="item_uom_id" readonly="True" />
+		                        <field name="item_asset_id" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 		                        <field name="item_lot" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
             					<field name="item_exp" attrs="{'invisible': [('item_kit_type', '!=', 'real')]}" readonly="True" />
 	                        </page>
@@ -241,6 +248,7 @@
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
             		<field name="item_qty" readonly="True" />
             		<field name="item_uom_id" readonly="True" />
+            		<field name="item_asset_id" readonly="True" />
             		<field name="item_lot" readonly="True" />
             		<field name="item_exp" readonly="True" />
             		<field name="hidden_batch_management_mandatory" />
@@ -261,7 +269,7 @@
                     <field name="item_module" select="1" />
                     <field name="item_product_id" select="1" />
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
                   		<filter string="Kit" icon="gtk-dnd-multiple" domain="[]" context="{'group_by':'item_kit_id'}" />
                   		<separator orientation="vertical"/>
                   		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
@@ -284,7 +292,7 @@
                     <field name="item_lot" select="1" />
                     <field name="item_exp" select="1" />
 					<newline />
-                  	<group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
+                  	<group expand="0" string="Group By..." colspan="4" col="10">
                   		<filter string="Kit" icon="gtk-dnd-multiple" domain="[]" context="{'group_by':'item_kit_id'}" />
                   		<separator orientation="vertical"/>
                   		<filter string="Module" icon="gtk-directory" domain="[]" context="{'group_by':'item_module'}" />
@@ -380,6 +388,23 @@
 				</data>
 			</field>
 		</record>
+		
+        <record id="view_order_form_inherit" model="ir.ui.view">
+            <field name="name">sale.order.form.inherit</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="priority" eval="4"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
+                    	<field name="kit_pol_check_sale_order_line" invisible="True" />
+                    	<field name="so_state_stored" invisible="True" />
+                        <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check_sale_order_line', '=', False), ('so_state_stored', 'not in', ['draft', 'validated'])]}" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
 		
 		<record id="purchase_order_line_form_view" model="ir.ui.view">
             <field name="name">purchase.order.line.form.view</field>

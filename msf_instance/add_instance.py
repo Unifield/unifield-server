@@ -25,8 +25,20 @@ class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
     _inherit = 'account.analytic.journal'
     
+    def _get_current_instance(self, cr, uid, ids, name, args, context=None):
+        """
+        Get True if the journal was created by this instance.
+        NOT TO BE SYNCHRONIZED!!!
+        """
+        res = {}
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        for journal in self.browse(cr, uid, ids, context=context):
+            res[journal.id] = (current_instance_id == journal.instance_id.id)
+        return res
+    
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
     
     _defaults = {
@@ -56,8 +68,20 @@ class account_journal(osv.osv):
     _name = 'account.journal'
     _inherit = 'account.journal'
     
+    def _get_current_instance(self, cr, uid, ids, name, args, context=None):
+        """
+        Get True if the journal was created by this instance.
+        NOT TO BE SYNCHRONIZED!!!
+        """
+        res = {}
+        current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+        for journal in self.browse(cr, uid, ids, context=context):
+            res[journal.id] = (current_instance_id == journal.instance_id.id)
+        return res
+    
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
     
     _defaults = {
@@ -68,6 +92,52 @@ class account_journal(osv.osv):
         ('code_company_uniq', 'unique (code, company_id, instance_id)', 'The code of the journal must be unique per company and instance !'),
         ('name_company_uniq', 'unique (name, company_id, instance_id)', 'The name of the journal must be unique per company and instance !'),
     ]
+    
+    # SP-72: in order to always get an analytic journal with the same instance, 
+    # the create and write check and replace with the "good" journal if necessary.
+    def create(self, cr, uid, vals, context=None):
+        analytic_obj = self.pool.get('account.analytic.journal')
+        if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
+            analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
+            
+            instance_id = False
+            if 'instance_id' in vals:
+                instance_id = vals['instance_id']
+            else:
+                instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
+            
+            if analytic_journal and \
+               analytic_journal.name and \
+               analytic_journal.instance_id and \
+               analytic_journal.instance_id.id != instance_id:
+                # replace the journal with the one with the same name, and the wanted instance
+                new_journal_ids = analytic_obj.search(cr, uid, [('name','=', analytic_journal.name),
+                                                                ('instance_id','=',instance_id)], context=context)
+                if len(new_journal_ids) > 0:
+                    vals['analytic_journal_id'] = new_journal_ids[0]
+        return super(account_journal, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        analytic_obj = self.pool.get('account.analytic.journal')
+        if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
+            analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
+            
+            instance_id = False
+            if 'instance_id' in vals:
+                instance_id = vals['instance_id']
+            else:
+                instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
+            
+            if analytic_journal and \
+               analytic_journal.name and \
+               analytic_journal.instance_id and \
+               analytic_journal.instance_id.id != instance_id:
+                # replace the journal with the one with the same name, and the wanted instance
+                new_journal_ids = analytic_obj.search(cr, uid, [('name','=', analytic_journal.name),
+                                                                ('instance_id','=',instance_id)], context=context)
+                if len(new_journal_ids) > 0:
+                    vals['analytic_journal_id'] = new_journal_ids[0]
+        return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_journal()
 
@@ -93,25 +163,89 @@ class account_analytic_line(osv.osv):
 
 account_analytic_line()
 
+class account_journal_fake(osv.osv):
+    """ Workaround class used in account.move search view, because context is lost in m2o search view """
+
+    _inherit = 'account.journal'
+    _name = 'account.journal.fake'
+    _table = 'account_journal'
+
+    def name_get(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
+
+        ret = []
+        for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+            ret.append((journal['id'], '%s / %s'%(journal['instance_id'] and journal['instance_id'][1] or '', journal['code'])))
+
+        return ret
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        return self.pool.get('account.journal').fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+account_journal_fake()
+
+def _get_journal_id_fake(self, cr, uid, ids, field_name, args, context=None):
+    res = {}
+    if not ids:
+        return res
+    for i in self.read(cr, uid, ids, ['journal_id']):
+        res[i['id']] = i['journal_id']
+    return res
+
+def _search_journal_id_fake(self, cr, uid, obj, name, args, context=None):
+    res = []
+    for arg in args:
+        if arg[0] == 'journal_id_fake':
+            res.append(('journal_id', arg[1], arg[2]))
+        else:
+            res.append(arg)
+    return res
+
+
 class account_move(osv.osv):
     _name = 'account.move'
     _inherit = 'account.move'
-    
+   
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'journal_id_fake': fields.function(_get_journal_id_fake, method=True, string='Journal', type='many2one', relation='account.journal.fake', fnct_search=_search_journal_id_fake)
     }
     
+    def onchange_filter_journal(self, cr, uid, ids, instance_id, journal_id, context=None):
+        value = {}
+        dom = []
+        if instance_id:
+            dom = [('instance_id', '=', instance_id)]
+            if journal_id and not self.pool.get('account.journal').search(cr, uid, [('id', '=', journal_id), ('instance_id', '=', instance_id)]):
+                    value['journal_id_fake'] = False
+
+        return {'domain': {'journal_id_fake': dom}, 'value': value}
+
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals['instance_id'] = journal.instance_id.id
+            vals['instance_id'] = journal and journal.instance_id and journal.instance_id.id or False
         return super(account_move, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals['instance_id'] = journal.instance_id.id
+            vals['instance_id'] = journal and journal.instance_id and journal.instance_id.id or False
         return super(account_move, self).write(cr, uid, ids, vals, context=context)
+
+    def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
+        """
+        Change msf instance @journal_id change
+        """
+        res = super(account_move, self).onchange_journal_id(cr, uid, ids, journal_id, context)
+        if journal_id:
+            journal_data = self.pool.get('account.journal').read(cr, uid, [journal_id], ['instance_id'])
+            if journal_data and journal_data[0] and journal_data[0].get('instance_id', False):
+                if 'value' not in res:
+                    res['value'] = {}
+                res['value'].update({'instance_id': journal_data[0].get('instance_id')})
+        return res
 
 account_move()
 
@@ -121,8 +255,12 @@ class account_move_line(osv.osv):
     
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'journal_id_fake': fields.function(_get_journal_id_fake, method=True, string='Journal', type='many2one', relation='account.journal.fake', fnct_search=_search_journal_id_fake)
     }
-    
+
+    def onchange_filter_journal(self, cr, uid, ids, instance_id, journal_id, context=None):
+        return self.pool.get('account.move').onchange_filter_journal(cr, uid, ids, instance_id, journal_id, context)
+
     def create(self, cr, uid, vals, context=None, check=True):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').browse(cr, uid, vals['journal_id'], context=context)

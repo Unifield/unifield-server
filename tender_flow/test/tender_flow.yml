@@ -63,6 +63,7 @@
     weight: 0.0
     weight_net: 0.0
     product_tmpl_id: product_template_p0
+    international_status: itc
     
     
 - 
@@ -146,7 +147,7 @@
       
       sourcing.write({'type':'make_to_order', 'supplier':ref("res_partner_1"), 'po_cft':'cft',})
       
-      assert int(sol.supplier) == ref("res_partner_1"), 'sol supplier is wrong after update of sourcing line (%i, %i)'%(sol.supplier, ref("product_supplierinfo_1"))
+      assert not sol.supplier, 'sol supplier is wrong after update of sourcing line (%s, %s)'%(sol.supplier, False)
       assert sol.type == 'make_to_order', 'sol type is wrong after update of sourcing line (%s, %s)'%(sol.type, 'make_to_order')
       assert sol.po_cft == 'cft', 'po_cft is wrong after update of sourcing line (%s, %s)'%(sol.po_cft, 'cft')
       
@@ -253,6 +254,8 @@
     assert ids, 'ids is empty'
     tender = self.browse(cr, uid, ids[0])
     assert tender.tender_line_ids[0].price_unit == 10024, 'price_unit has not been updated. %s-10024'%tender.tender_line_ids[0].price_unit
+    # update context in order analytic distribution not to be tested
+    context.update({'update_mode': 'init'})
     po_id = self.create_po(cr, uid, tender.id, context=context)
     
     import netsvc
@@ -268,8 +271,8 @@
     so_obj = self.pool.get('sale.order')
     so = so_obj.browse(cr, uid, ref("sale_order_tender_so0"))
     so_ids = po_obj.search(cr, uid, [])
-    ids = po_obj.search(cr, uid, [('origin', '=', so.name + '/' + tender.name),('id', '=', po_id)])
+    ids = po_obj.search(cr, uid, [('origin', '=', so.name + ';' + tender.name),('id', '=', po_id)])
     assert ids, 'The origin of the generated purchase order is not correct'
     po = po_obj.browse(cr, uid, ids[0])
-    assert po.state in ('approved', 'confirmed',), 'the state of purchase order is wrong. %s-approved'%po.state # state depends on the installation or not of double validation module for purchase order
+    assert po.state == 'draft', 'the state of purchase order is wrong. %s-draft'%po.state # state depends on the installation or not of double validation module for purchase order
     

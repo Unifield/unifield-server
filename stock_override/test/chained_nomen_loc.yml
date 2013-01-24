@@ -1,9 +1,4 @@
 -
-  I create a product category
--
-  !record {model: product.category, id: prod_cat1}:
-    name: Categ1
--
   Creating a product.nomenclature record
 -
   !record {model: product.nomenclature, id: product_nomenclature_nomenclaturetest0}:
@@ -56,6 +51,18 @@
     name: nomenclature test 4
     parent_id: product_nomenclature_nomenclaturetest12
 -
+  I create a product category
+-
+  !record {model: product.category, id: prod_cat2}:
+    name: Categ1
+    family_id: product_nomenclature_nomenclaturetest12
+-
+  I create a product category
+-
+  !record {model: product.category, id: prod_cat1}:
+    name: Categ1
+    family_id: product_nomenclature_nomenclaturetest02
+-
   I create the product P1
 -
   !record {model: product.product, id: product1}:
@@ -78,6 +85,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest01
     nomen_manda_2: product_nomenclature_nomenclaturetest02
     nomen_manda_3: product_nomenclature_nomenclaturetest03
+    international_status: itc
 -
   I create the product P2
 -
@@ -101,6 +109,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest11
     nomen_manda_2: product_nomenclature_nomenclaturetest12
     nomen_manda_3: product_nomenclature_nomenclaturetest13
+    international_status: itc
 -
   I create a stock location with chained options
 -

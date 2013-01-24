@@ -4,10 +4,10 @@
   I create a Cash Register with Opening and Closing balance 1500.
 -
  !record {model: account.bank.statement, id: account_bank_statement_1}:
-    date: !eval time.strftime('%Y-05-10')
+    date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
     journal_id: account_journal_cash_0
-    name: 
-    period_id: period_5
+    name: account_bank_statement_1
+    period_id: period_12
     user_id: base.user_root
     starting_details_ids:
       -  pieces: 100.0
@@ -41,24 +41,24 @@
     line_ids:
       - account_id: account_account_receivable0
         amount: -500.0
-        date: !eval time.strftime('%Y-05-10')
-        document_date: !eval time.strftime('%Y-05-10')
+        date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
+        document_date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
         name: test1
         partner_id: res_partner_supplier_wood_0
         sequence: 0.0
         type: general
       - account_id: account_account_receivable0
         amount: -380.0
-        date: !eval time.strftime('%Y-05-10')
-        document_date: !eval time.strftime('%Y-05-10')
+        date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
+        document_date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
         name: test2
         partner_id: res_partner_john_doe
         sequence: 1.0
         type: general
       - account_id: account_account_receivable0
         amount: -320.0
-        date: !eval time.strftime('%Y-05-10')
-        document_date: !eval time.strftime('%Y-05-10')
+        date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
+        document_date: !eval (DateTime.now()+DateTime.RelativeDateTime(month=12, day=10)).strftime('%Y-%m-%d')
         name: test3
         partner_id: res_partner_supplier_wood_0
         sequence: 2.0
@@ -117,20 +117,20 @@
     assert bank_data.move_line_ids, "Move lines not created for bank statement"
     for line in bank_data.move_line_ids:
       assert line.move_id.state == 'posted', "Move state is not posted"
--
-  I launch the "Cash Discrepancy Case" wizard and do a write-off
--
-  !record {model: cashbox.write.off, id: cashbox_write_off_1}: 
-    choice: writeoff
-    account_id: account_account_expense0
--
-  I check that the amount is 50.0
--
-  !python {model: cashbox.write.off}: |
-    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref('account_bank_statement_1')})
-    result['amount'] == 50.0
--
-  I click on the 'Ok' button to do the write-off
--
-  !python {model: cashbox.write.off, id: cashbox_write_off_1}: |
-    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref("account_bank_statement_1")})
+#-
+#  I launch the "Cash Discrepancy Case" wizard and do a write-off
+#-
+#  !record {model: cashbox.write.off, id: cashbox_write_off_1}: 
+#    choice: writeoff
+#    account_id: account_account_expense0
+#-
+#  I check that the amount is 50.0
+#-
+#  !python {model: cashbox.write.off}: |
+#    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref('account_bank_statement_1')})
+#    result['amount'] == 50.0
+#-
+#  I click on the 'Ok' button to do the write-off
+#-
+#  !python {model: cashbox.write.off, id: cashbox_write_off_1}: |
+#    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref("account_bank_statement_1")})

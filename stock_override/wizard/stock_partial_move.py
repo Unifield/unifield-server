@@ -22,6 +22,111 @@
 from osv import fields, osv
 from tools.translate import _
 import time
+
+from msf_outgoing import INTEGRITY_STATUS_SELECTION
+
+
+class stock_partial_move_memory_out(osv.osv_memory):
+    _inherit = "stock.move.memory.out"
+    
+    def _validate_item_out(self, cr, uid, id, context=None):
+        '''
+        validate the from stock objects for lot and expiry date
+        
+        - lot AND expiry date are mandatory for batch management products
+        - expiry date is mandatory for perishable products
+        
+        return corresponding key error for selection
+        
+        out, picking, ppl,.. need different validation function, validate_item function can be overriden in inherited classes
+        '''
+        # objects
+        prod_obj = self.pool.get('product.product')
+        lot_obj = self.pool.get('stock.production.lot')
+        # browse the object
+        item = self.browse(cr, uid, id, context=context)
+        # picking type
+        picking_real_type = item.move_id.picking_id.type
+        # by default we return empty result
+        result = 'empty'
+        # validation is only needed if the line has been selected (qty > 0)
+        if item.quantity != 0:
+            # product management type - cannot use hidden checks, because validate is called within get_vals function, would result in infinite loop
+            data = prod_obj.read(cr, uid, [item.product_id.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
+            management = data['batch_management']
+            perishable = data['perishable']
+            type = data['type']
+            subtype = data['subtype']
+            if management:
+                if not item.prodlot_id:
+                    # lot is needed
+                    result = 'missing_lot'
+                else:
+                    data = lot_obj.read(cr, uid, [item.prodlot_id.id], ['life_date','name','type'], context=context)
+                    lot_type = data[0]['type']
+                    if lot_type != 'standard':
+                        result = 'wrong_lot_type_need_standard'
+            elif perishable:
+                if not item.expiry_date:
+                    # expiry date is needed
+                    result = 'missing_date'
+            else:
+                # no lot needed
+                if item.prodlot_id:
+                    result = 'no_lot_needed'
+            # asset check - asset is not mandatory for moves performed internally
+            if type == 'product' and subtype == 'asset':
+                if picking_real_type in ['out', 'in']:
+                    if not item.asset_id:
+                        result = 'missing_asset'
+            else:
+                if item.asset_id:
+                    result = 'not_asset_needed'
+            # quantity check cannot be negative
+            if item.quantity <= 0:
+                result = 'must_be_greater_than_0'
+            # for internal or simple out, cannot process more than specified in stock move
+            if picking_real_type in ['out', 'internal']:
+                if item.quantity > item.quantity_ordered:
+                    result = 'greater_than_available'
+                
+        # we return the found result
+        return result
+    
+    def validate_item(self, cr, uid, id, context=None):
+        '''
+        validation interface to allow modifying behavior in inherited classes
+        '''
+        return self._validate_item_out(cr, uid, id, context=context)
+    
+    def _vals_get_stock_override(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            # integrity_status_func_substitute_item
+            result[obj.id].update({'integrity_status_func_stock_memory_move': self.validate_item(cr, uid, obj.id, context=context)})
+
+        return result
+    
+    _columns = {'integrity_status_func_stock_memory_move': fields.function(_vals_get_stock_override, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_stock_override', store=False, readonly=True),
+                }
+    
+stock_partial_move_memory_out()
+    
+class stock_partial_move_memory_in(osv.osv_memory):
+    _inherit = "stock.move.memory.out"
+    _name = "stock.move.memory.in"
+    
+stock_partial_move_memory_in()
     
 class stock_partial_move(osv.osv_memory):
     _inherit = "stock.partial.move"
@@ -86,7 +191,7 @@ class stock_partial_move(osv.osv_memory):
             }
             
             moves_ids_final.append(move.id)
-            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average'):
+            if (move.picking_id.type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                 partial_datas['move%s' % (move.id)].update({
                     'product_price' : p_moves[move.id].cost,
                     'product_currency': p_moves[move.id].currency.id,

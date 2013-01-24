@@ -189,13 +189,16 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         if context.get('out',False):
             return {'type': 'ir.actions.act_window_close'}
 
-
         certif = False
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type in ['in','internal','out']:
+            if pick.type in ['in','out']:
                 if not context.get('yesorno',False) :
                     for move in pick.move_lines:
                         if move.state == 'confirmed':

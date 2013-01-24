@@ -65,9 +65,16 @@ class split_sale_order_line_wizard(osv.osv_memory):
             else:
                 # Change the qty of the old line
                 line_obj.write(cr, uid, [split.sale_line_id.id], {'product_uom_qty': split.original_qty - split.new_line_qty}, context=context)
+                # copy data
+                so_copy_data = {'parent_line_id': split.sale_line_id.id,
+                                'product_uom_qty': split.new_line_qty}
+                # following new sequencing policy, we check if resequencing occur (behavior 1).
+                # if not (behavior 2), the split line keeps the same line number as original line
+                if not line_obj.allow_resequencing(cr, uid, [split.sale_line_id.id], context=context):
+                    # set default value for line_number as the same as original line
+                    so_copy_data.update({'line_number': split.sale_line_id.line_number})
                 # Create the new line
-                new_line_id = line_obj.copy(cr, uid, split.sale_line_id.id, {'parent_line_id': split.sale_line_id.id,
-                                                                             'product_uom_qty': split.new_line_qty}, context=context)
+                new_line_id = line_obj.copy(cr, uid, split.sale_line_id.id, so_copy_data, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -81,4 +88,3 @@ class split_sale_order_line_wizard(osv.osv_memory):
 
 split_sale_order_line_wizard()
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

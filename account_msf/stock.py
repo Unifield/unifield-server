@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+import time
 from tools.translate import _
 
 class stock_picking(osv.osv):
@@ -30,6 +31,7 @@ class stock_picking(osv.osv):
 
     def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
         """
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
@@ -40,15 +42,29 @@ class stock_picking(osv.osv):
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No donation expense account defined for this PO Line: %s') % (order_line.name or '',))
             self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], {'account_id': account_id,})
+        # Delete invoice lines that come from a picking from scratch that have an intermission/section partner  and which reason type is different from deliver partner
+        # first fetch some values
+        try:
+            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        except ValueError:
+            rt_id = False
+        # then test move_line
+        if move_line.picking_id and move_line.picking_id.type == 'out' and move_line.reason_type_id.id != rt_id:
+            if move_line.picking_id and not move_line.picking_id.purchase_id and not move_line.picking_id.sale_id and move_line.picking_id.partner_id.partner_type in ['intermission', 'section']:
+                self.pool.get('account.invoice.line').unlink(cr, uid, [invoice_line_id])
         return res
 
     def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
         """
         Update journal by an inkind journal if we come from an inkind donation PO.
         Update partner account
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind')])
+        if not invoice_vals.get('date_invoice',False):
+            invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())  
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'),
+                                                                        ('is_current_instance', '=', True)])
         if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind":
             if not journal_ids:
                 raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
@@ -59,6 +75,17 @@ class stock_picking(osv.osv):
         if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
             invoice_vals.update({'is_intermission': True})
         return invoice_vals
+
+    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
+        """
+        Add a link between stock picking and invoice
+        """
+        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
+        for pick in self.browse(cr, uid, [x for x in res]):
+            inv_id = res[pick.id]
+            if inv_id:
+                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'picking_id': pick.id})
+        return res
 
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -55,7 +55,7 @@ class stock_partial_picking(osv.osv_memory):
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
             pick_type = self.get_picking_type(cr, uid, pick, context=context)
             for m in pick.move_lines:
-                if m.state in ('done', 'cancel', 'confirmed'):
+                if m.state in ('done', 'cancel', 'confirmed') or  m.product_qty == 0.00 :
                     continue
                 result.append(self.__create_partial_picking_memory(m, pick_type))
         return result
@@ -91,8 +91,18 @@ class stock_partial_picking(osv.osv_memory):
         }
 
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+      
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
+            
+            # integrity constraint
+            integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, None, context=context)
+            if not integrity_check:
+                # the windows must be updated to trigger tree colors
+                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
+
+            if not moves_list:
+                    raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.')) 
 
             for move in moves_list:
                 #Adding a check whether any line has been added with new qty
@@ -113,8 +123,7 @@ class stock_partial_picking(osv.osv_memory):
                 #Adding a check whether any move line contains qty less than zero
                 if calc_qty <= 0:
                     raise osv.except_osv(_('Processing Error'), \
-                            _('Can not process quantity %d for Product %s !') \
-                            %(move.quantity, move.product_id.name))
+                            _('Can not process empty lines !'))
 
                 partial_datas['move%s' % (move.move_id.id)] = {
                     'product_id': move.product_id.id, 
@@ -123,7 +132,7 @@ class stock_partial_picking(osv.osv_memory):
                     'prodlot_id': move.prodlot_id.id, 
                 }
 
-                if (picking_type == 'in') and (move.product_id.cost_method == 'average'):
+                if (picking_type == 'in') and (move.product_id.cost_method == 'average') and not move.location_dest_id.cross_docking_location_ok:
                     partial_datas['move%s' % (move.move_id.id)].update({
                                                     'product_price' : move.cost, 
                                                     'product_currency': move.currency.id, 
@@ -131,9 +140,11 @@ class stock_partial_picking(osv.osv_memory):
                     
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context=context, move=move, partial_datas=partial_datas, pick=pick, partial=partial)
-            
+
         res = pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return self.return_hook_do_partial(cr, uid, context=context, partial_datas=partial_datas, res=res)
     #@@@override end
+
+
 
 stock_partial_picking()

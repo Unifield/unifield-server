@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 import re
+from tools.translate import _
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -66,21 +67,18 @@ class product_attributes_template(osv.osv):
     
     _defaults = {
         'type': 'product',
+        'cost_method': lambda *a: 'average',
     }
     
 product_attributes_template()
 
 
 class product_country_restriction(osv.osv):
-    _name = 'res.country'
-    _inherit = 'res.country'
+    _name = 'res.country.restriction'
     
     _columns = {
-        'is_restrictive': fields.boolean(string='Is restrictive ?'),
-    }
-    
-    _defaults = {
-        'is_restrictive': lambda *a: False,
+        'name': fields.char(size=128, string='Restriction'),
+        'product_ids': fields.one2many('product.product', 'country_restriction', string='Products'),
     }
     
 product_country_restriction()
@@ -145,11 +143,13 @@ class product_attributes(osv.osv):
         return [('id', 'in', ids)] 
     
     _columns = {
+        'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
-        'international_status': fields.selection([('',''),('itc','Approved (ITC)'),('esc', 'Approved (ESC)'),('temp','Temporary'),('local','Not approved (Local)')], 'International Status'),
+        'international_status': fields.selection([('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
+                                                 string='Product Creator', required=True),
         'state': fields.selection([('',''),
             ('draft','Introduction'),
             ('sellable','Normal'),
@@ -168,7 +168,7 @@ class product_attributes(osv.osv):
             ('important','3-Important'),
             ('medium','4-Medium'),
             ('common','5-Common'),
-            ('other','X-Other')], 'Criticism'),
+            ('other','X-Other')], 'Criticality'),
         'narcotic': fields.boolean('Narcotic/Psychotropic'),
         'abc_class': fields.selection([('',''),
             ('a','A'),
@@ -188,28 +188,33 @@ class product_attributes(osv.osv):
             ('KR','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
             ('*','Keep Cool'),
             ('**','Keep Cool, airfreight'),
-            ('***','Cold chain, 0° to 8°C strict')], 'Heat-sensitive item'),
+            ('***','Cold chain, 0° to 8°C strict')], string='Temperature sensitive item'),
         'cold_chain': fields.selection([('',''),
-            ('*0','*0 Problem if any window blue'),
-            ('*0F','*0F Problem if any window blue or F'),
-            ('*A','*A Problem if A and D totally blue'),
-            ('*AF','*AF Problem if A and D totally blue or F'),
-            ('*B','*B Problem if B and D totally blue'),
-            ('*BF','*BF Problem if B and D totally blue or F'),
-            ('*C','*C Problem if C and D totally blue'),
-            ('*CF','*CF Problem if C and D totally blue or F'),
-            ('*F','*F CANNOT be frozen; check FreezeWatch')], 'Cold Chain'),
-        'sterilized': fields.boolean('Sterilized'),
-        'single_use': fields.boolean('Single Use'),
+            ('3*','3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)'),
+            ('6*0','6*0 Cold Chain *0 - Problem if any window blue'),
+            ('7*0F','7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM'),
+            ('8*A','8*A Cold Chain *A - Problem if B, C and/or D totally blue'),
+            ('9*AF','9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM'),
+            ('10*B','10*B Cold Chain *B - Problem if C and/or D totally blue'),
+            ('11*BF','11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM'),
+            ('12*C','12*C Cold Chain *C - Problem if D totally blue'),
+            ('13*CF','13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM'),
+            ('14*D','14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)'),
+            ('15*F','15*F Cold Chain *F - Cannot be frozen: check Freeze-tag '),
+            ('16*25','16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)'),
+            ('17*25F','17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag '),
+            ], 'Cold Chain'),
+        'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
+        'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
         'med_device_class': fields.selection([('',''),
             ('I','Class I (General controls)'),
             ('II','Class II (General control with special controls)'),
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
-        'closed_article': fields.boolean('Closed Article'),
+        'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
         'dangerous_goods': fields.boolean('Dangerous Goods'),
         'restricted_country': fields.boolean('Restricted in the Country'),
-        'country_restriction': fields.many2one('res.country', 'Country Restriction', domain=[('is_restrictive', '=', True)]),
+        'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -225,17 +230,17 @@ class product_attributes(osv.osv):
         'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
+        'controlled_substance': fields.boolean(string='Controlled substance'),
     }
     
     _defaults = {
+        'international_status': 'itc',
+        'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
         'short_shelf_life': False,
         'narcotic': False,
         'composed_kit': False,
-        'sterilized': False,
-        'single_use': False,
-        'closed_article': False,
         'dangerous_goods': False,
         'restricted_country': False,
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
@@ -256,6 +261,11 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
+        if 'default_code' in vals:
+            if vals['default_code'] == 'XXX':
+                vals.update({'duplicate_ok': True})
+            else:
+                vals.update({'duplicate_ok': False})
         return super(product_attributes, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -265,6 +275,11 @@ class product_attributes(osv.osv):
             vals['track_outgoing'] = vals['batch_management']
             if vals['batch_management']:
                 vals['perishable'] = True
+        if 'default_code' in vals:
+            if vals['default_code'] == 'XXX':
+                vals.update({'duplicate_ok': True})
+            else:
+                vals.update({'duplicate_ok': False})
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
     
     def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
@@ -274,6 +289,34 @@ class product_attributes(osv.osv):
         if batch_management:
             return {'value': {'perishable': True}}
         return {}
+    
+    def copy(self, cr, uid, id, default=None, context=None):
+        product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
+        if product_xxx:
+            raise osv.except_osv(_('Warning'), _('A product with a code "XXX" already exists please edit this product to change its Code.'))
+        product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
+        if default is None:
+            default = {}
+        copy_pattern = _("%s (copy)")
+        copydef = dict(name=(copy_pattern % product2copy['name']),
+                       default_code="XXX",
+                       # we set international_status to "temp" so that it won't be synchronized with this status
+                       international_status='temp',
+                       )
+        copydef.update(default)
+        return super(product_attributes, self).copy(cr, uid, id, copydef, context)
+    
+    def onchange_code(self, cr, uid, ids, default_code):
+        '''
+        Check if the code already exists
+        '''
+        res = {}
+        if default_code:
+            cr.execute("SELECT * FROM product_product pp where pp.default_code = '%s'" % default_code)
+            duplicate = cr.fetchall()
+            if duplicate:
+                res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
+        return res
     
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])

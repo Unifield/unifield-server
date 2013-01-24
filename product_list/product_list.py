@@ -22,6 +22,7 @@
 from osv import osv, fields
 
 import time
+import logging
 
 
 class product_list(osv.osv):
@@ -131,11 +132,17 @@ product_list()
 class product_list_line(osv.osv):
     _name = 'product.list.line'
     _description = 'Line of product list'
+    _order = 'ref'
+
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('product.list.line').search(cr, uid, [('name', 'in', ids)], context=context)
     
     _columns = {
         'name': fields.many2one('product.product', string='Product Description', required=True),
         'list_id': fields.many2one('product.list', string='List', ondelete='cascade'),
-        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char'),
+        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char', size=64, 
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'product.list.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
         'comment': fields.char(size=256, string='Comment'),
     }
 
@@ -167,8 +174,14 @@ class old_product_list_line(osv.osv):
     _inherit = 'product.list.line'
     _order = 'removal_date'
 
+    def _get_product(self, cr, uid, ids, context=None):
+        return self.pool.get('old.product.list.line').search(cr, uid, [('name', 'in', ids)], context=context)
+
     _columns = {
         'removal_date': fields.date(string='Removal date', readonly=True),
+        'ref': fields.related('name', 'default_code', string='Product Code', readonly=True, type='char', size=64,
+                              store={'product.product': (_get_product, ['default_code'], 10),
+                                     'old.product.list.line': (lambda self, cr, uid, ids, c=None: ids, ['name'], 20)}),
     }
 
     _defaults = {
@@ -230,8 +243,13 @@ class product_product(osv.osv):
     _columns = {
         'list_ids': fields.function(_get_list_sublist, fnct_search=_search_list_sublist, 
                                     type='many2many', relation='product.list', method=True, string='Lists'),
-        'default_code' : fields.char('CODE', size=14),
+        # we can't write the default_code required because it is used in the product addons
+        'default_code' : fields.char('CODE', size=14, select=True),
     }
+
+    _sql_constraints = [
+        ('default_code', "unique(default_code)", 'The "Product Code" must be unique'),
+    ]
 
 product_product()
 

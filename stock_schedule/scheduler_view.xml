@@ -181,16 +181,14 @@
         <!-- REWORKING OF TRACEABILITY MENU -->
         <record id="stock.action_production_lot_form" model="ir.actions.act_window">
             <field name="name">Batch numbers</field>
+            <field name="context">{'full':'1',"search_default_real":1}</field>
             <field name="help">This is the list of all the batch numbers you recorded. When you select a lot, you can get the upstream or downstream traceability of the products contained in batch. By default, the list is filtred on the batch numbers that are available in your warehouse but you can uncheck the 'Available' button to get all the batch numbers you produced, received or delivered to customers.</field>
         </record>
 
         <menuitem id="stock.menu_action_production_lot_form" action="stock.action_production_lot_form" sequence="-10" parent="stock.menu_traceability" />
 
         <!-- DELETE PRODUCTS -->
-        <delete model="ir.ui.menu" id="stock.menu_stock_product" />
-        <delete model="ir.ui.menu" id="stock.menu_product_by_category_stock_form" />
-        <delete model="ir.ui.menu" id="stock.menu_stock_products_menu" />
-
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
 
         <menuitem id="stock_automatic_procurements_menu"
                   name="Replenishment Rules"

@@ -1,6 +1,30 @@
 <openerp>
 	<data noupdate="1">
 		<!-- TIME FOR CREATION OF PRODUCTS - YOUPI -->
+        <record model="product.category" id="water_sanitation">
+            <field name="name">Water sanitation</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_camps_watersanitation" />
+        </record>
+        
+        <record model="product.category" id="progsuppkits">
+            <field name="name">Program support kits</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_kits_progsuppkits" />
+        </record>
+        
+        <record model="product.category" id="progsupp_coldchain">
+            <field name="name">Program support cold chain</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_programsupport_coldchain" />
+        </record>
+        
+        <record model="product.category" id="sparepartsyamaha">
+            <field name="name">Spare Parts Yamaha</field>
+            <field name="family_id" ref="product_nomenclature.nomen_log_transport_sparepartsyamaha" />
+        </record>
+        
+        <record model="product.category" id="camps_reparing">
+            <field name="name">Camps reparing</field>
+            <field name="family_id" ref="product_nomenclature.nomen_service_camps_reparing" />
+        </record>
 		
     	<record model="product.product" id="product_nomenclature_01">
     	
@@ -12,7 +36,7 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_infusions" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_infusions_dex" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -31,7 +55,7 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_infusions" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_infusions_dex" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -50,7 +74,7 @@
 			<field name="nomen_manda_2" ref="nomen_med_drugs_oraldrugs" />
 			<field name="nomen_manda_3" ref="nomen_med_drugs_oraldrugs_halo" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -72,7 +96,7 @@
 			<field name="nomen_sub_0" ref="nomeno0_med_200" />
 			
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -94,7 +118,7 @@
 			<field name="nomen_sub_0" ref="nomeno0_med_400" />
 			
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -114,7 +138,7 @@
 			<field name="nomen_manda_3" ref="nomen_med_kits_medicalkits_cholera" />
 			
 		
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -136,7 +160,7 @@
 			<field name="nomen_sub_0" ref="nomeno0_med_module" />
 			<field name="nomen_sub_1" ref="nomeno1_med_noinf" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -155,7 +179,7 @@
 			<field name="nomen_manda_2" ref="nomen_med_kits_dentalinstbox" />
 			<field name="nomen_manda_3" ref="nomen_med_kits_dentalinstbox_dental" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -177,7 +201,7 @@
 			<field name="nomen_sub_0" ref="nomeno0_med_su" />
 			<field name="nomen_sub_1" ref="nomeno1_med_nonster" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -199,7 +223,7 @@
 			<field name="nomen_sub_0" ref="nomeno0_med_su" />
 			<field name="nomen_sub_1" ref="nomeno1_med_nonster" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -220,7 +244,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_leatpro" />
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -239,7 +263,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_administration_teamlife" />
 			<field name="nomen_manda_3" ref="nomen_log_administration_teamlife_glo" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -260,7 +284,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_2" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -281,7 +305,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_4" />
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -302,7 +326,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_4" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -323,7 +347,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_flexi" />
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -342,7 +366,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_camps_watersanitation" />
 			<field name="nomen_manda_3" ref="nomen_log_camps_watersanitation_tank" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -363,7 +387,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_module" />
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -384,7 +408,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_module" />
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -405,7 +429,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_programsupport_coldchain_electro" />
 
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -426,7 +450,7 @@
 			
 			<field name="nomen_sub_0" ref="nomeno0_log_programsupport_coldchain_electro" />
 	
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -445,7 +469,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_programsupport_coldchain" />
 			<field name="nomen_manda_3" ref="nomen_log_programsupport_coldchain_box" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -464,7 +488,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_transport_sparepartsyamaha" />
 			<field name="nomen_manda_3" ref="nomen_log_transport_sparepartsyamaha_carbu" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -483,7 +507,7 @@
 			<field name="nomen_manda_2" ref="nomen_log_transport_sparepartsyamaha" />
 			<field name="nomen_manda_3" ref="nomen_log_transport_sparepartsyamaha_spring" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -502,7 +526,7 @@
 			<field name="nomen_manda_2" ref="nomen_service_camps_reparing" />
 			<field name="nomen_manda_3" ref="nomen_service_camps_reparing_XXX" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />
@@ -529,7 +553,7 @@
 			<field name="nomen_sub_4" ref="XXX" />
 			<field name="nomen_sub_5" ref="XXX" />
 			
-			<field name="procure_method">make_to_stock</field>
+			<field name="procure_method">make_to_order</field>
 			<field name="supply_method">buy</field>
 			<field name="type">consu</field>
 			<field name="uom_id" ref="product.product_uom_unit" />

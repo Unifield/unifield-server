@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 
+import decimal_precision as dp
+
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -100,10 +102,10 @@ class purchase_order(osv.osv):
         'transport_mode': fields.selection([('regular_air', 'Air regular'), ('express_air', 'Air express'), 
                                             ('ffc_air', 'Air FFC'), ('sea', 'Sea'),
                                             ('road', 'Road'), ('hand', 'Hand carry'),], string='Transport mode'),
-        'transport_cost': fields.float(digits=(16,2), string='Transport cost'),
+        'transport_cost': fields.float(string='Transport cost', digits_compute=dp.get_precision('Purchase Price')),
         'transport_currency_id': fields.many2one('res.currency', string='Currency'),
-        'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total incl. transport", type='float', readonly=True, multi='cost'),
-        'func_total_price_include_transport': fields.function(_get_include_transport, method=True, string="Functionnal total incl. transport", type='float', readonly=True, multi='cost'),
+        'total_price_include_transport': fields.function(_get_include_transport, method=True, string="Total incl. transport", type='float', digits_compute=dp.get_precision('Purchase Price'), readonly=True, multi='cost'),
+        'func_total_price_include_transport': fields.function(_get_include_transport, method=True, string="Functionnal total incl. transport", type='float', digits_compute=dp.get_precision('Purchase Price'), readonly=True, multi='cost'),
         'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
         'transport_order_id': fields.many2one('purchase.order', string='Linked Purchase Order', domain=[('categ', '!=', 'transport')]),
         'picking_transport_ids': fields.one2many('stock.picking', 'transport_order_id', string='Linked deliveries'),
@@ -158,6 +160,19 @@ class purchase_order(osv.osv):
             res['domain'].update({'transport_currency_id': [('id', '=', currency_id)]})
         else:
             res['domain'].update({'transport_currency_id': [('id', 'in', [])]})
+            
+        if res.get('value', {}).get('pricelist_id') and part:
+            if ids:
+                if isinstance(ids, (int, long)):
+                    ids = [ids]
+            
+                order = self.pool.get('purchase.order').browse(cr, uid, ids[0])
+                partner = self.pool.get('res.partner').browse(cr, uid, part)
+                pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'purchase'), ('in_search', '=', partner.partner_type)])
+                pricelist_id = res['value'].pop('pricelist_id')
+                if order.pricelist_id.id not in pricelist_ids:
+                    res.update({'warning': {'title': 'Warning',
+                                        'message': 'The currency used on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
 
         return res
 

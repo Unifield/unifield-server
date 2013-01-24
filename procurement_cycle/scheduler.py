@@ -162,7 +162,7 @@ Created documents : \n'''
         product = product_obj.browse(cr, uid, product_id[0], context=context)
             
         newdate = datetime.today()
-        quantity_to_order = self._compute_quantity(cr, uid, cycle, product.id, location_id, d_values, context=context)
+        quantity_to_order = self._compute_quantity(cr, uid, cycle, product, location_id, d_values, context=context)
             
         # Create a procurement only if the quantity to order is more than 0.00
         if quantity_to_order <= 0.00:
@@ -186,7 +186,7 @@ Created documents : \n'''
         
         return proc_id
     
-    def _compute_quantity(self, cr, uid, cycle_id, product_id, location_id, d_values=None, context=None):
+    def _compute_quantity(self, cr, uid, cycle_id, product, location_id, d_values=None, context=None):
         '''
         Compute the quantity of product to order like thid :
             [Delivery lead time (from supplier tab of the product or by default or manually overwritten) x Monthly Consumption]
@@ -195,24 +195,16 @@ Created documents : \n'''
         '''
         if d_values is None:
             d_values = {}
-        product_obj = self.pool.get('product.product')
         
-        product = product_obj.browse(cr, uid, product_id, context=context)
-
-        
-        # Get the delivery lead time
-        delivery_leadtime = product.seller_delay and product.seller_delay != 'N/A' and round(int(product.seller_delay)/30.0, 2) or 1
+        # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
+        delivery_leadtime = product.procure_delay and round(int(product.procure_delay)/30.0, 2) or 1
+        # Get the leadtime of the rule if defined
         if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
             delivery_leadtime = d_values.get('leadtime')
-        else:
-            sequence = False
-            for supplier_info in product.seller_ids:
-                if sequence and supplier_info.sequence < sequence:
-                    sequence = supplier_info.sequence
-                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
-                elif not sequence:
-                    sequence = supplier_info.sequence
-                    delivery_leadtime = round(supplier_info.delay/30.0, 2)
+        elif product.seller_ids:
+            # Get the supplier lead time if supplier is defined
+            # The seller delay is defined in days, so divide it by 30.0 to have a LT in months
+            delivery_leadtime = product.seller_delay and round(int(product.seller_delay)/30.0, 2) or 1
                 
         # Get the monthly consumption
         monthly_consumption = 0.00
@@ -225,10 +217,10 @@ Created documents : \n'''
             monthly_consumption = d_values.get('manual_consumption', 0.00)
             
         # Get the order coverage
-        order_coverage = d_values.get('coverage', 3)
+        order_coverage = d_values.get('coverage', 0.00)
         
         # Get the projected available quantity
-        available_qty = self.get_available(cr, uid, product_id, location_id, monthly_consumption, d_values)
+        available_qty = self.get_available(cr, uid, product.id, location_id, monthly_consumption, d_values)
         
         qty_to_order = (delivery_leadtime * monthly_consumption) + (order_coverage * monthly_consumption) - available_qty
         
@@ -271,7 +263,7 @@ Created documents : \n'''
                                                                                        'location': location_id,
                                                                                        'compute_child': True,})
             
-        available_stock = product.qty_available - picked_resa.get(product.id)
+        available_stock = product.qty_available + picked_resa.get(product.id)
             
         quantity_on_order = product_obj.get_product_available(cr, uid, [product_id], context={'states': ['confirmed'],
                                                                                               'what': ('in, out'), 
@@ -285,8 +277,8 @@ Created documents : \n'''
         safety_time = d_values.get('safety_time', 0)
         
         # Get the expiry quantity
-        expiry_quantity = product_obj.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values)
-        expiry_quantity = expiry_quantity and available_stock - expiry_quantity or 0.00
+        expiry_quantity = product_obj.get_expiry_qty(cr, uid, product_id, location_id, monthly_consumption, d_values, context=context)
+        expiry_quantity = expiry_quantity and expiry_quantity or 0.00
 
         
         # Set this part of algorithm as comments because this algorithm seems to be equal to virtual stock

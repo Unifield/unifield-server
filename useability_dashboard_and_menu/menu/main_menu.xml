@@ -12,7 +12,6 @@
        <menuitem id="base.menu_purchase_root" 
                  name="Purchases"
                  icon="terp-purchase"
-                 groups="purchase.group_purchase_manager,purchase.group_purchase_user"
                  web_icon="images/purchases.png"
                  web_icon_hover="images/purchases-hover.png"
                  sequence="2"/>
@@ -34,7 +33,6 @@
         <menuitem id="stock.menu_stock_root" 
                   name="Warehouse"
                   icon="terp-stock"
-                  groups="stock.group_stock_manager,stock.group_stock_user" 
                   web_icon="images/warehouse.png"
                   web_icon_hover="images/warehouse-hover.png"
                   sequence="5"/>
@@ -52,6 +50,7 @@
                   name="Supply Configuration" 
                   web_icon="images/supply.png"
                   web_icon_hover="images/supply_hover.png"
+                  action="product_nomenclature.product_nomenclature_action_form"
                   sequence="7"
                   />
                   
@@ -64,7 +63,6 @@
                   
         <menuitem id="account.menu_finance" name="Accounting"
                   icon="terp-account" 
-                  groups="account.group_account_user,account.group_account_manager,account.group_account_invoice"
                   web_icon="images/accounting.png"
                   web_icon_hover="images/accounting-hover.png"
                   sequence="9"/>
@@ -74,6 +72,7 @@
                   icon="terp-hr" 
                   web_icon="images/hr.png"
                   web_icon_hover="images/hr-hover.png"
+                  action="hr.open_view_employee_list_my"
                   sequence="10"/>
                   
     </data>

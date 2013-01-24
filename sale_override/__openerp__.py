@@ -27,8 +27,7 @@
         Add hooks to sale class
     """,
     "website": "http://unifield.msf.org",
-    "init_xml": [
-    ],
+    "init_xml": [],
     "depends" : [
         "sale",
         "stock_override",
@@ -37,6 +36,7 @@
         "sale_view.xml",
         "sale_workflow.xml",
         "wizard/split_order_line_view.xml",
+        "wizard/order_change_currency_view.xml",
         "sale_sequence.xml",
         "report/sale_report_view.xml",
     ],

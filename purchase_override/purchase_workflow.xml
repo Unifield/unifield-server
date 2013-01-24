@@ -115,6 +115,7 @@
             <field name="act_from" ref="purchase.act_confirmed" />
             <field name="act_to" ref="act_confirmed_wait" />
             <field name="signal">purchase_confirmed_wait</field>
+            <field name="condition">check_if_product()</field>
         </record>
         
         <!-- TRIGGER_SO_PO state -->

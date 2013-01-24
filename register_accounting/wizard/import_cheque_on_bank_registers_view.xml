@@ -26,9 +26,6 @@
                         <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_id" select='1'>
-                            <filter help="Next Partner Entries to reconcile" name="next_partner" string="Next Partner to reconcile" 
-                                context="{'next_partner_only': 1}" icon="terp-gtk-jump-to-ltr" 
-                                domain="[('account_id.reconcile','=',True),('reconcile_id','=',False)]"/>
                         </field>
                     </group>
                     <newline/>
@@ -64,6 +61,7 @@
             <field name="priority" eval="17" />
             <field name="arch" type="xml">
                 <tree string="Account Entry Lines" noteditable="1" editable="top">
+                    <field name="cheque_number"/>
                     <field name="invoice"/>
                     <field name="name"/>
                     <field name="supplier_invoice_ref"/>
@@ -102,6 +100,7 @@
                     <field name="imported_lines_ids" colspan="4" nolabel="1" 
                         attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
                         <tree editable="bottom" hide_new_button="1">
+                            <field name="cheque_number"/>
                             <field name="ref"/>
                             <field name="supplier_ref"/>
                             <field name="account_id"/>

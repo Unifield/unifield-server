@@ -48,14 +48,15 @@
   We check if no invoices has been created by the confirmation of regular1
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular1')])
+    po_name = self.pool.get('purchase.order').browse(cr, uid, ref('regular1')).name
+    invoice_ids = self.search(cr, uid, [('origin', '=', po_name)])
     assert not invoice_ids, ('Invoice created from Regular PO with internal supplier')
 -
   We check if generated stock moves have good data
 -
   !python {model: stock.move}: |
     move_ids = self.search(cr, uid, [('purchase_line_id', 'in', [ref('regular1_l1'), ref('regular1_l2')])])
-    reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
+    reason_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
     assert move_ids, ('No generated stock moves from Regular PO with internal supplier')
     for move in self.browse(cr, uid, move_ids):
       assert move.order_priority == 'normal', ('Generated move hasn\'t the good priority')
@@ -109,7 +110,8 @@
   We check if invoice has been created by the confirmation of regular2
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular2')])
+    po_name = self.pool.get('purchase.order').browse(cr, uid, ref('regular2')).name
+    invoice_ids = self.search(cr, uid, [('origin', '=', po_name)])
     assert invoice_ids, ('No invoice created from Regular PO with external supplier')
 -
   We check if generated stock moves have good data
@@ -440,7 +442,7 @@
     name: List7
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
-    invoice_method: order
+    invoice_method: picking
     location_id: stock.stock_location_stock
     partner_address_id: localmarket_addr
     partner_id: localmarket
@@ -485,7 +487,7 @@
 -
   !python {model: account.invoice}: |
     invoice_ids = self.search(cr, uid, [('origin', '=', 'List7')])
-    assert invoice_ids, ("No invoices generated from Purchase List")
+    assert not invoice_ids, ("Invoices generated from Purchase List. This should not because of picking invoice method!")
     for invoice in self.browse(cr, uid, invoice_ids):
       assert invoice.purchase_list, ("Purchase list isn't checked in Invoice")
 -
@@ -547,7 +549,8 @@
   We check if invoice has been created by the confirmation
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('name', '=', 'Direct8')])
+    po_name = self.pool.get('purchase.order').browse(cr, uid, ref('direct8')).name
+    invoice_ids = self.search(cr, uid, [('origin', '=', po_name)])
     assert invoice_ids, ('No invoice created from Direct Purchase Order')
 -
   We check if stock moves has been generated with good data
@@ -591,7 +594,8 @@
   We check if invoice has been created by the confirmation
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('name', '=', 'Direct9')])
+    po_name = self.pool.get('purchase.order').browse(cr, uid, ref('direct9')).name
+    invoice_ids = self.search(cr, uid, [('origin', '=', po_name)])
     assert invoice_ids, ('No invoice created from Direct Purchase Order Direct9')
 -
   We create a direct po with a internal partner
@@ -683,7 +687,8 @@
   We check if invoices has been created by the confirmation of regular11
 -
   !python {model: account.invoice}: |
-    invoice_ids = self.search(cr, uid, [('origin', '=', 'Regular11')])
+    po_name = self.pool.get('purchase.order').browse(cr, uid, ref('regular11')).name
+    invoice_ids = self.search(cr, uid, [('origin', '=', po_name)])
     assert invoice_ids, ('No invoice created from Regular PO with internal supplier')
 -
   Try to create a PO to the main company

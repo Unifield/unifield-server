@@ -62,9 +62,6 @@ class product_supplierinfo(osv.osv):
         if count:
             return res
         
-        if count:
-            return res
-        
         if isinstance(res, (int, long)):
             res = [res]
         
@@ -86,6 +83,18 @@ class product_supplierinfo(osv.osv):
                 res[x.id] = False
         
         return res
+
+    def _get_seller_delay(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the supplier lt
+        '''
+        res = {}
+        for price in self.browse(cr, uid, ids, context=context):
+            product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
+            product = self.pool.get('product.product').browse(cr, uid, product_id)
+            res[price.id] = (price.name and price.name.supplier_lt) or (product_id and int(product[0].procure_delay)) or 1
+
+        return res
     
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
@@ -93,7 +102,22 @@ class product_supplierinfo(osv.osv):
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
         'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
                                       help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
+        'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
+
     }
+
+    def onchange_supplier(self, cr, uid, ids, supplier_id):
+        '''
+        Set the Indicative delivery LT
+        '''
+        v = {}
+
+        if supplier_id:
+            supplier = self.pool.get('res.partner').browse(cr, uid, supplier_id)
+            v.update({'delay': supplier.supplier_lt})
+
+        return {'value': v}
+
     
     # Override the original method
     def price_get(self, cr, uid, supplier_ids, product_id, product_qty=1, context=None):
@@ -136,6 +160,7 @@ class pricelist_partnerinfo(osv.osv):
         if context.get('partner_id', False) and isinstance(context['partner_id'], (int, long)):
             partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)
             res['currency_id'] = partner.property_product_pricelist_purchase.currency_id.id
+            res['partner_id'] = partner.id
         
         return res
     
@@ -149,11 +174,15 @@ class pricelist_partnerinfo(osv.osv):
         '''
         if context is None:
             context = {}
-        info = self.browse(cr, uid, info_id, context=context)
-        if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
-            raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked ' \
-                                               'to a supplier catalogue line ! Please remove the corresponding ' \
-                                               'supplier catalogue line to remove this supplier information.'))
+            
+        if isinstance(info_id, (int, long)):
+            info_id = [info_id]
+
+        for info in self.browse(cr, uid, info_id, context=context):
+            if info.suppinfo_id.catalogue_id and not context.get('product_change', False):
+                raise osv.except_osv(_('Error'), _('You cannot remove a supplier pricelist line which is linked ' \
+                                                   'to a supplier catalogue line ! Please remove the corresponding ' \
+                                                   'supplier catalogue line to remove this supplier information.'))
         
         return super(pricelist_partnerinfo, self).unlink(cr, uid, info_id, context=context)
     
@@ -182,25 +211,74 @@ class pricelist_partnerinfo(osv.osv):
                 return False
             
         return True
-    
+
+    def _get_supplierinfo(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = self.pool.get('pricelist.partnerinfo').search(cr, uid, [('suppinfo_id', 'in', ids)], context=context)
+        return result
+
+    def _get_sequence(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if line.suppinfo_id:
+                res[line.id] = line.suppinfo_id.sequence
+        return res
+
     _columns = {
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'rounding': fields.float(digits=(16,2), string='Rounding', 
                                  help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16, 2), string='Min. Order Qty'),
         'valid_from': fields.date(string='Valid from'),
+        'partner_id': fields.related('suppinfo_id', 'name', string='Partner', type='many2one', relation='res.partner'),
+        'product_id': fields.related('suppinfo_id', 'product_id', string='Product', type='many2one', relation='product.template'),
+        'sequence': fields.function(_get_sequence, method=True, string='Sequence', type='integer',
+                                    store={'pricelist.partnerinfo': (lambda self, cr, uid, ids, c={}: ids, [], 20),
+                                           'product.supplierinfo': (_get_supplierinfo, ['sequence'], 20),
+                                        })
     }
-    
+
     _constraints = [
         (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_quantity']),
     ]
-    
+
 pricelist_partnerinfo()
 
 
 class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
+    
+    def _get_partner_info_price(self, cr, uid, product, partner_id, product_qty, currency_id,
+                                          order_date, product_uom_id, context=None):
+        '''
+        Returns the pricelist_information from product form
+        '''
+        if not context:
+            context = {}
+            
+        partner_price = self.pool.get('pricelist.partnerinfo')
+        info_prices = []
+                
+        domain = [('min_quantity', '<=', product_qty),
+                  ('uom_id', '=', product_uom_id),
+                  ('partner_id', '=', partner_id),
+                  ('product_id', '=', product.product_tmpl_id.id),
+                  '|', ('valid_from', '<=', order_date),
+                  ('valid_from', '=', False),
+                  '|', ('valid_till', '>=', order_date),
+                  ('valid_till', '=', False)]
+        
+        domain_cur = [('currency_id', '=', currency_id)]
+        domain_cur.extend(domain)
+        
+        info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+        if not info_prices:
+            info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
+        
+        return info_prices
     
     def _get_partner_price(self, cr, uid, product_ids, partner_id, product_qty, currency_id,
                                           order_date, product_uom_id, context=None):
@@ -209,6 +287,7 @@ class product_product(osv.osv):
         '''
         res = {}
         one_product = False
+        cur_obj = self.pool.get('res.currency')
         partner_price = self.pool.get('pricelist.partnerinfo')
         suppinfo_obj = self.pool.get('product.supplierinfo')
         prod_obj = self.pool.get('product.product')
@@ -222,30 +301,14 @@ class product_product(osv.osv):
             product_ids = [product_ids]
             
         for product in prod_obj.browse(cr, uid, product_ids, context=context):
-            info_prices = []            
-            sequence_ids = suppinfo_obj.search(cr, uid, [('name', '=', partner_id),
-                                                         ('product_id', '=', product.product_tmpl_id.id)], 
-                                                         order='sequence asc', context=context)
-                
-            domain = [('min_quantity', '<=', product_qty),
-                      ('uom_id', '=', product_uom_id),
-                      ('currency_id', '=', currency_id),
-                      '|', ('valid_from', '<=', order_date),
-                      ('valid_from', '=', False),
-                      '|', ('valid_till', '>=', order_date),
-                      ('valid_till', '=', False)]
-            
-            if sequence_ids:
-                min_seq = suppinfo_obj.browse(cr, uid, sequence_ids[0], context=context).sequence
-                domain.append(('suppinfo_id.sequence', '=', min_seq))
-                domain.append(('suppinfo_id', 'in', sequence_ids))
-            
-                info_prices = partner_price.search(cr, uid, domain, order='min_quantity desc, id desc', limit=1, context=context)
+            info_prices = self._get_partner_info_price(cr, uid, product, partner_id, product_qty, currency_id,
+                                                       order_date, product_uom_id, context=context)
                 
             if info_prices:
     #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
                 info = partner_price.browse(cr, uid, info_prices[0], context=context)
-                res[product.id] = (info.price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
+                price = cur_obj.compute(cr, uid, info.currency_id.id, currency_id, info.price, round=False, context=context)
+                res[product.id] = (price, info.rounding or 1.00, info.suppinfo_id.min_qty or 0.00) 
             else:
                 res[product.id] = (False, 1.0, 1.0)
                         
@@ -399,6 +462,36 @@ class res_currency(osv.osv):
                     po_currency_id = price_obj.browse(cr, uid, arg[2]).currency_id.id
                     dom.append(('id', 'in', [func_currency_id, po_currency_id]))
         return dom
+    
+    def _get_partner_currency(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = True
+            
+        return res
+    
+    def _src_partner_currency(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns currencies according to partner type
+        '''
+        user_obj = self.pool.get('res.users')
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'partner_currency':
+                if arg[1] != '=':
+                    raise osv.except_osv(_('Error !'), _('Bad operator !'))
+                elif arg[2]:
+                    partner = self.pool.get('res.partner').browse(cr, uid, arg[2], context=context)
+                    if partner.partner_type in ('internal', 'intermission'):
+                        func_currency_id = user_obj.browse(cr, uid, uid, context=context).company_id.currency_id.id
+                        dom.append(('id', '=', func_currency_id))
+                    elif partner.partner_type == 'section':
+                        dom.append(('is_section_currency', '=', True))
+                    elif partner.partner_type == 'esc':
+                        dom.append(('is_esc_currency', '=', True))
+                        
+        return dom
 
     _columns = {
         'is_section_currency': fields.boolean(string='Functional currency', 
@@ -407,6 +500,8 @@ class res_currency(osv.osv):
                                         help='If this box is checked, this currency is used as a currency for at least one ESC.'),
         'is_po_functional': fields.function(_get_in_search, fnct_search=_search_in_search, method=True,
                                             type='boolean', string='transport PO currencies'),
+        'partner_currency': fields.function(_get_partner_currency, fnct_search=_src_partner_currency, type='boolean', method=True,
+                                            string='Partner currency', store=False, help='Only technically to filter currencies according to partner type'),
     }
 
     def write(self, cr, uid, ids, values, context=None):

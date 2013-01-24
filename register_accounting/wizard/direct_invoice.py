@@ -27,7 +27,6 @@ from tools.translate import _
 from datetime import datetime
 import decimal_precision as dp
 import time
-import netsvc
 from ..register_tools import open_register_view
 from ..register_tools import _get_date_in_period
 
@@ -57,6 +56,18 @@ class wizard_account_invoice(osv.osv):
         'document_date': lambda *a: time.strftime('%Y-%m-%d'),
         'state': lambda *a: 'draft',
     }
+
+    def check_analytic_distribution(self, cr, uid, ids):
+        """
+        Check that all line have a valid analytic distribution state
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for w in self.browse(cr, uid, ids):
+            for l in w.invoice_line:
+                if l.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Warning'), _('Analytic distribution is not valid for this line: %s') % (l.name or '',))
+        return True
 
     def compute_wizard(self, cr, uid, ids, context=None):
         """
@@ -89,6 +100,7 @@ class wizard_account_invoice(osv.osv):
         """
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
+        self.check_analytic_distribution(cr, uid, ids)
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
         for val in inv:
@@ -104,12 +116,13 @@ class wizard_account_invoice(osv.osv):
         amount = 0
         if inv['invoice_line']:
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'], 
-                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id']):
+                ['product_id','account_id', 'account_analytic_id', 'quantity', 'price_unit','price_subtotal','name', 'uos_id','analytic_distribution_id']):
                 vals['invoice_line'].append( (0, 0,
                     {
                         'product_id': line['product_id'] and line['product_id'][0] or False,
                         'account_id': line['account_id'] and line['account_id'][0] or False,
                         'account_analytic_id': line['account_analytic_id'] and line['account_analytic_id'][0] or False,
+                        'analytic_distribution_id': line['analytic_distribution_id'] and line['analytic_distribution_id'][0] or False,
                         'quantity': line['quantity'] ,
                         'price_unit': line['price_unit'] ,
                         'price_subtotal': line['price_subtotal'],
@@ -128,15 +141,10 @@ class wizard_account_invoice(osv.osv):
         register = self.pool.get('account.bank.statement').browse(cr, uid, [inv['register_id'][0]], context=context)[0]
         period = register and register.period_id and register.period_id.id or False
         vals.update({'date_invoice': vals['date_invoice'] or time.strftime('%Y-%m-%d')})
+        vals.update({'register_posting_date': vals['register_posting_date'] or time.strftime('%Y-%m-%d')})
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
-        
-        # Approve invoice
-        netsvc.LocalService("workflow").trg_validate(uid, 'account.invoice', inv_id, 'invoice_open', cr)
-       
-        # Make an invoice number
-        inv_number = inv_obj.read(cr, uid, inv_id, ['number'])['number']
         
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {
@@ -149,20 +157,19 @@ class wizard_account_invoice(osv.osv):
             'invoice_id': inv_id,
             'partner_type': 'res.partner,%d'%(vals['partner_id'], ),
             'statement_id': inv['register_id'][0],
-            'name': inv_number,
+            'name': 'Direct Invoice',
         })
         
-        # Hard post the line
-        absl_obj.button_hard_posting(cr, uid, [reg_line_id], context=context)
+        # Temp post the line
+        absl_obj.button_temp_posting(cr, uid, [reg_line_id], context=context)
         
         # Link invoice and register_line
         res_inv = inv_obj.write(cr, uid, [inv_id], {'register_line_ids': [(4, reg_line_id)]}, context=context)
         
         # Do reconciliation
-        inv_obj.action_reconcile_direct_invoice(cr, uid, [inv_id], context=context)
+        # Moved since UF-1471. This is now down when you hard post the linked register line.
 
         # Delete the wizard
-        # TODO: correct this to work
         self.unlink(cr, uid, ids, context=context)
 
         return open_register_view(self, cr, uid,inv['register_id'][0])
@@ -186,12 +193,14 @@ class wizard_account_invoice(osv.osv):
             amount += line.price_subtotal
         # Get analytic_distribution_id
         distrib_id = invoice.analytic_distribution_id and invoice.analytic_distribution_id.id
+        account_id = invoice.account_id and invoice.account_id.id
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
             'direct_invoice_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
+            'account_id': account_id or False,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

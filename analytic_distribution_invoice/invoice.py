@@ -27,6 +27,35 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _check_analytic_distribution_state(self, cr, uid, ids, context=None):
+        """
+        Check if analytic distribution is valid
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for inv in self.browse(cr, uid, ids, context=context):
+            for invl in inv.invoice_line:
+                if inv.from_yml_test or invl.from_yml_test:
+                    continue
+                if invl.analytic_distribution_state != 'valid':
+                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
+        return True
+
+    def button_close_direct_invoice(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution before closing pop-up
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self._check_analytic_distribution_state(cr, uid, ids, context)
+        if context.get('from_register', False):
+            return {'type': 'ir.actions.act_window_close'}
+        return True
+
     def _hook_fields_for_refund(self, cr, uid, *args):
         """
         Add these fields to result:
@@ -34,6 +63,7 @@ class account_invoice(osv.osv):
         """
         res = super(account_invoice, self)._hook_fields_for_refund(cr, uid, args)
         res.append('analytic_distribution_id')
+        res.append('document_date')
         return res
 
     def _hook_fields_m2o_for_refund(self, cr, uid, *args):
@@ -81,16 +111,23 @@ class account_invoice(osv.osv):
                     el[2]['order_line_id'] = el[2].get('order_line_id', False) and el[2]['order_line_id'][0] or False
         return res
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
         """
         Reverse lines for given invoice
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
         for inv in self.browse(cr, uid, ids):
-            ana_line_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id', 'in', [x.id for x in inv.move_id.line_id])])
-            self.pool.get('account.analytic.line').reverse(cr, uid, ana_line_ids)
-        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
+            # Check for dates (refund must be done after invoice)
+            if date and date < inv.date_invoice:
+                raise osv.except_osv(_('Error'), _("Posting date for the refund is before the invoice's posting date!"))
+            if document_date and document_date < inv.document_date:
+                raise osv.except_osv(_('Error'), _("Document date for the refund is before the invoice's document date!"))
+        new_ids = super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
+        # add document date
+        if document_date:
+            self.write(cr, uid, new_ids, {'document_date': document_date})
+        return new_ids
 
     def copy(self, cr, uid, id, default=None, context=None):
         """
@@ -117,14 +154,7 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Browse invoice and all invoice lines to detect a non-valid line
-        for inv in self.browse(cr, uid, ids, context=context):
-            for invl in inv.invoice_line:
-                if inv.from_yml_test or invl.from_yml_test:
-                    continue
-                if invl.analytic_distribution_state != 'valid':
-                    raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for "%s"') % invl.name)
-        # FIXME: copy invoice analytic distribution header if valid and no analytic_distribution_id
-        # FIXME: what about analytic accountancy?
+        self._check_analytic_distribution_state(cr, uid, ids)
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context, args)
 
 account_invoice()

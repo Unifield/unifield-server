@@ -16,8 +16,7 @@
 				  id="procurement.menu_stock_proc_schedulers" 
 				  parent="procurement.menu_stock_sched"
 				  string="POs Creation" 
-				  sequence="20" 
-				  groups="stock.group_stock_manager"/>
+				  sequence="20" />
 				  
 		
     	<record id="procurement_rules_report_tree_view" model="ir.ui.view">
@@ -44,7 +43,7 @@
     		<field name="type">search</field>
     		<field name="arch" type="xml">
     			<search string="Replenishment Rules Analysis" >
-    				<field name="product_id" />
+    				<field name="product_id" domain="[('type', 'not in', ['service', 'service_recep', 'consu'])]" />
     				<field name="location_id" />
     				<field name="auto_supply_ok" />
     				<field name="order_cycle_ok" />

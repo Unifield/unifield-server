@@ -204,6 +204,15 @@
     sign: 1
     report_type: asset
 -
+  I create a Dummy CC analytic account
+-
+  !record {model: account.analytic.account, id: analytic_account_project_dummy}:
+    name: Dummy
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    for_fx_gain_loss: True
+-
   I create a transfer account
 -
   !record {model: account.account, id: account_account_transfer_0}:
@@ -577,6 +586,7 @@
     type: cur_adj
     view_id: account_journal_view0
     default_debit_account_id: account_account_adjustement0
+    default_credit_account_id: account_account_adjustement0
     allow_date: 0
     analytic_journal_id: account_analytic_journal_adjustement_0
 -
@@ -699,3 +709,4 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_supplier_wood_0
+    international_status: itc

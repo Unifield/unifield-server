@@ -114,6 +114,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # Change the qty of the old line
                 po_line_obj.write(cr, uid, [split.purchase_line_id.id], {'product_qty': split.original_qty - split.new_line_qty,
                                                                          'price_unit': split.purchase_line_id.price_unit,}, context=context)
+                
                 # we treat two different cases
                 # 1) the check box impact corresponding Fo is checked
                 #    we create a Fo line by copying related Fo line. we then execute procurement creation function, and process the procurement
@@ -121,14 +122,18 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 # if Internal Request, we do not update corresponding Internal Request
                 if split.corresponding_so_line_id_split_po_line_wizard and split.impact_so_split_po_line_wizard and not split.corresponding_so_id_split_po_line_wizard.procurement_request:
                     # copy the original sale order line, reset po_cft to 'po' (we don't want a new tender if any)
-                    copy_data = {'po_cft': 'po',
-                                 'product_uom_qty': split.new_line_qty,
-                                 'product_uos_qty': split.new_line_qty,
-                                 'so_back_update_dest_po_id_sale_order_line': split.purchase_line_id.order_id.id,
-                                 }
-                    new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, copy_data, context=dict(context, keepDateAndDistrib=True))
+                    so_copy_data = {'line_number': split.corresponding_so_line_id_split_po_line_wizard.line_number, # the Fo is not draft anyway, following sequencing policy, split Fo line maintains original one
+                                    'po_cft': 'po',
+                                    'product_uom_qty': split.new_line_qty,
+                                    'product_uos_qty': split.new_line_qty,
+                                    'so_back_update_dest_po_id_sale_order_line': split.purchase_line_id.order_id.id,
+                                    'so_back_update_dest_pol_id_sale_order_line': split.purchase_line_id.id,
+                                    }
+                    new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, so_copy_data, context=dict(context, keepDateAndDistrib=True))
                     # call the new procurement creation method
                     so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)
+                    # run the procurement, the make_po function detects the link to original po
+                    # and force merge the line to this po (even if it is not draft anymore)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
                     new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)
@@ -136,17 +141,27 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
                     # if original po line is confirmed, we action_confirm new line
                     if split.purchase_line_id.state == 'confirmed':
+                        # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
                         new_po_ids = po_line_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
                         po_line_obj.action_confirm(cr, uid, new_po_ids, context=context)
                 else:
                     # 2) the check box impact corresponding Fo is not check or does not apply (po from scratch or from replenishment),
                     #    a new line is simply created
                     # Create the new line
-                    new_line_id = po_line_obj.copy(cr, uid, split.purchase_line_id.id, {'parent_line_id': split.purchase_line_id.id,
-                                                                                        'change_price_manually': split.purchase_line_id.change_price_manually,
-                                                                                        'price_unit': split.purchase_line_id.price_unit,
-                                                                                        'line_number': None,
-                                                                                        'product_qty': split.new_line_qty}, context=context)
+                    po_copy_data = {'parent_line_id': split.purchase_line_id.id,
+                                    'change_price_manually': split.purchase_line_id.change_price_manually,
+                                    'price_unit': split.purchase_line_id.price_unit,
+                                    'product_qty': split.new_line_qty}
+                    # following new sequencing policy, we check if resequencing occur (behavior 1).
+                    # if not (behavior 2), the split line keeps the same line number as original line
+                    if not po_line_obj.allow_resequencing(cr, uid, [split.purchase_line_id.id], context=context):
+                        # set default value for line_number as the same as original line
+                        po_copy_data.update({'line_number': split.purchase_line_id.line_number})
+                    # copy original line
+                    new_line_id = po_line_obj.copy(cr, uid, split.purchase_line_id.id, po_copy_data, context=context)
+                    # if original po line is confirmed, we action_confirm new line
+                    if split.purchase_line_id.state == 'confirmed':
+                        po_line_obj.action_confirm(cr, uid, [new_line_id], context=context)
                 
         return {'type': 'ir.actions.act_window_close'}
 
