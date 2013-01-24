@@ -242,7 +242,8 @@ class account_analytic_line(osv.osv):
             new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center.code, context=context)
             
             if not old_destination_name == new_destination_name:
-                generate_message_for_destination(self, cr, uid, old_destination_name, xml_id, instance_name)
+                # Send delete message, but not to parents of the current instance
+                generate_message_for_destination(self, cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
             elif 'distrib_line_id' in vals:
                 self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', new_destination_name, xml_id, instance_name)
             
