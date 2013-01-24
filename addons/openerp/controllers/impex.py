@@ -469,8 +469,7 @@ class ImpEx(SecuredController):
             fields_order = fields.keys()
             fields_order.sort(lambda x,y: str_comp(fields[x].get('string', ''), fields[y].get('string', '')))
             for field in fields_order:
-                if (fields[field].get('type','') not in ('reference',))\
-                            and (not fields[field].get('readonly')\
+                if (not fields[field].get('readonly')\
                             or not dict(fields[field].get('states', {}).get(
                             'draft', [('readonly', True)])).get('readonly',True)):
 
