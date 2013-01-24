@@ -173,6 +173,10 @@
 
                             <group colspan="2" col="2">
                                 <field name="supply_source_ids" colspan="2" nolabel="1" context="{'from_product':True}">
+					<tree>
+                                    		<field name="source" />
+					</tree>
+
                                 </field>
                             </group>
 
@@ -392,7 +396,7 @@
             <field name="model">product.supply.source</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Supply Source"  >
+                <tree string="Supply Source" hide_new_button="context.get('from_product')" >
                     <field name="source" nolabel="1"/>
                 </tree>
             </field>
