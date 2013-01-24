@@ -23,6 +23,7 @@
 ##############################################################################
 from osv import osv
 from osv import fields
+from tools.misc import ustr
 
 class res_currency_rate(osv.osv):
     _name = 'res.currency.rate'
@@ -66,7 +67,7 @@ class res_currency(osv.osv):
             AND (active in ('t', 'f'))"""
             if c.currency_table_id:
                 sql += """\nAND currency_table_id = %s""" % c.currency_table_id.id
-            cr.execute(sql, (('%' + c.name + '%'), ('%' + c.currency_name + '%')))
+            cr.execute(sql, (('%' + ustr(c.name) + '%'), ('%' + ustr(c.currency_name) + '%')))
             bad_ids = cr.fetchall()
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
