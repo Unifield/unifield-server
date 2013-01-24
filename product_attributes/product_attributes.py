@@ -465,7 +465,7 @@ class product_deactivation_error(osv.osv_memory):
 product_deactivation_error()
 
 class product_deactivation_error_line(osv.osv_memory):
-    _name = 'product.deactivation.error'
+    _name = 'product.deactivation.error.line'
     
     _columns = {
         'error_id': fields.many2one('product.deactivation.error', string='Error', readonly=True),
@@ -474,6 +474,25 @@ class product_deactivation_error_line(osv.osv_memory):
         'doc_ref': fields.char(size=64, string='Reference'),
         'doc_id': fields.integer(string='Internal Reference'),
     }
+    
+    def open_doc(self, cr, uid, ids, context=None):
+        '''
+        Open the associated documents
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            return {'type': 'ir.actions.act_window',
+                    'res_model': line.internal_tye,
+                    'res_id': line.doc_id,
+                    'view_mode': 'form,tree',
+                    'view_type': 'form',
+                    'target': 'current',
+                    'context': context}
 
 product_deactivation_error_line()
 
