@@ -304,8 +304,15 @@ class product_attributes(osv.osv):
             
         if isinstance(ids, (int, long)):
             ids = [ids]
+            
+        location_obj = self.pool.get('stock.location')
+        po_line_obj = self.pool.get('purchase.order.line')
+        tender_line_obj = self.pool.get('tender.line')
+        fo_line_obj = self.pool.get('sale.order.line')
+        error_obj = self.pool.get('product.deactivation.error')
+        error_line_obj = self.pool.get('product.deactivation.error.line')
         
-        internal_loc = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+        internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
         
         c = context.copy()
         c.update({'location_id': internal_loc})
@@ -317,31 +324,74 @@ class product_attributes(osv.osv):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
             
             # Check if the product is in some purchase order lines or request for quotation lines
-            has_po_line = self.pool.get('purchase.order.line').search(cr, uid, [('product_id', '=', product.id),
-                                                                                ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+            has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             if has_po_line:
                 opened_object = True
                 
             # Check if the product is in some tender lines
-            has_tender_line = self.pool.get('tender.line').search(cr, uid, [('product_id', '=', product.id),
-                                                                            ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                               ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             if has_tender_line:
                 opened_object = True
                 
             # Check if the product is in field order lines or in internal request lines
-            has_fo_line = self.pool.get('sale.order.line').search(cr, uid, [('product_id', '=', product.id),
-                                                                            ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             if has_fo_line:
                 opened_object = True
+                
+            # Check if the product is in an internal moves
+            #has_int_line = self.pool.get('stock.move').search(cr, uid, [('product_id', '=', product.id),
+            #                                                            ('picking_id.type', '=', 'internal'),
+            #                                                            ('picking.state', 'not in', ['draft', 'done', 'cancel'])])
+            #if has_int_line:
+            #    opened_object = True
             
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
             
             if has_stock or opened_object:
                 # Create the error wizard
-                wizard_id = self.pool.get('product.deactivation.error').create(cr, uid, {'product_id': product.id,
-                                                                                         'stock_exist': has_stock and True or False,
-                                                                                         'opened_object': opened_object}, context=context)
+                wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
+                                                       'stock_exist': has_stock and True or False,
+                                                       'opened_object': opened_object}, context=context)
+                
+                # Create lines for error in PO/RfQ
+                po_ids = []
+                for po_line in po_line_obj.browse(cr, uid, has_po_line, context=context):
+                    if po_line.order_id.id not in po_ids:
+                        po_ids.append(po_line.order_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': po_line.order_id.rfq_ok and 'Request for Quotation' or 'Purchase order',
+                                                        'internal_type': 'purchase.order',
+                                                        'doc_ref': po_line.order_id.name,
+                                                        'doc_id': po_line.order_id.id}, context=context)
+                        
+                # Create lines for error in Tender
+                tender_ids = []
+                for tender_line in tender_line_obj.browse(cr, uid, has_tender_line, context=context):
+                    if tender_line.tender_id.id not in tender_ids:
+                        tender_ids.append(tender_line.tender_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Tender',
+                                                        'internal_type': 'tender',
+                                                        'doc_ref': tender_line.tender_id.name,
+                                                        'doc_id': tender_line.tender_id.id}, context=context)
+                        
+                # Create lines for error in FO/IR
+                fo_ids = []
+                for fo_line in fo_line_obj.browse(cr, uid, has_fo_line, context=context):
+                    if fo_line.order_id.id not in fo_ids:
+                        fo_ids.append(fo_line.order_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': fo_line.order_id.procurement_request and 'Internal request' or 'Field order',
+                                                        'internal_type': 'sale.order',
+                                                        'doc_ref': fo_line.order_id.name,
+                                                        'doc_id': fo_line.order_id.id}, context=context)
+                        
+                    
+                
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
                         'view_type': 'form',
@@ -404,6 +454,7 @@ class product_deactivation_error(osv.osv_memory):
         'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True),
         'stock_exist': fields.boolean(string='Stocks exist (internal locations)', readonly=True),
         'opened_object': fields.boolean(string='Product is contains in opened documents', readonly=True),
+        'error_lines': fields.one2many('product.deactivation.error.line', 'error_id', string='Error lines'),
     }
     
     _defaults = {
@@ -412,5 +463,18 @@ class product_deactivation_error(osv.osv_memory):
     }
     
 product_deactivation_error()
+
+class product_deactivation_error_line(osv.osv_memory):
+    _name = 'product.deactivation.error'
+    
+    _columns = {
+        'error_id': fields.many2one('product.deactivation.error', string='Error', readonly=True),
+        'type': fields.char(size=64, string='Documents type'),
+        'internal_type': fields.char(size=64, string='Internal document type'),
+        'doc_ref': fields.char(size=64, string='Reference'),
+        'doc_id': fields.integer(string='Internal Reference'),
+    }
+
+product_deactivation_error_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
