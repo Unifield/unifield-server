@@ -147,6 +147,36 @@ class hq_entries_import_wizard(osv.osv_memory):
         # Fetch 3rd party
         if third_party:
             vals.update({'partner_txt': third_party})
+        # Search if 3RD party exists as employee
+        emp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', third_party)])
+        # If yes, get its analytic distribution
+        if len(emp_ids) and len(emp_ids) == 1:
+            employee = self.pool.get('hr.employee').browse(cr, uid, emp_ids)[0]
+            if employee.destination_id and employee.destination_id.id in [x and x.id for x in account.destination_ids]:
+                vals.update({
+                    'destination_id_first_value': employee.destination_id.id,
+                    'destination_id': employee.destination_id.id
+                })
+            if employee.cost_center_id:
+                vals.update({
+                    'cost_center_id_first_value': employee.cost_center_id.id,
+                    'cost_center_id': employee.cost_center_id.id,
+                })
+            if employee.funding_pool_id:
+                fp = self.pool.get('account.analytic.account').browse(cr, uid, employee.funding_pool_id.id)
+                if vals.get('cost_center_id') in [x and x.id for x in fp.cost_center_ids]:
+                    vals.update({
+                        'analytic_id_first_value': employee.funding_pool_id.id,
+                        'analytic_id': employee.funding_pool_id.id,
+                    })
+            if employee.free1_id:
+                vals.update({
+                    'free1_id': employee.free1_id.id,
+                })
+            if employee.free2_id:
+                vals.update({
+                    'free2_id': employee.free2_id.id,
+                })
         # Fetch currency
         if booking_currency:
             currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
