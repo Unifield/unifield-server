@@ -75,7 +75,7 @@ class wizard_import_po(osv.osv_memory):
         return res
 
     _columns = {
-        'file': fields.binary(string='File to import', required=True),
+        'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
         'po_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
         'data': fields.binary('Lines with errors'),
@@ -119,7 +119,6 @@ The columns should be in this values:
             po_id = context.get('active_id')
             res = super(wizard_import_po, self).default_get(cr, uid, fields, context=context)
             res['po_id'] = po_id
-        #columns_header = [(column, type(column)) for column in columns_for_po_integration]
         columns_header = PO_COLUMNS_HEADER_FOR_INTEGRATION
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
@@ -155,10 +154,7 @@ The columns should be in this values:
     def get_po_row_values(self, cr, uid, ids, row, po_browse, header_index, context=None):
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-        obj_data = self.pool.get('ir.model.data')
-        currency_obj = self.pool.get('res.currency')
         purchase_obj = self.pool.get('purchase.order')
-        purchase_line_obj = self.pool.get('purchase.order.line')
         to_write = {
             'error_list': [],
             'warning_list': [],
@@ -187,13 +183,11 @@ The columns should be in this values:
         to_write.update({'line_number': line_number})
 
         # Quantity
-        qty_value = {}
         cell_nb = header_index['Quantity*']
         product_qty = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
         to_write.update({'product_qty': product_qty})
     
         # Product Code
-        p_value = {}
         cell_nb = header_index['Product Code*']
         product_code = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
@@ -205,7 +199,6 @@ The columns should be in this values:
             to_write.update({'product_id': default_code})
 
         # UOM
-        uom_value = {}
         cell_nb = header_index['UoM*']
         cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)])
@@ -216,7 +209,6 @@ The columns should be in this values:
             to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Price
-        price_value = {}
         cell_nb = header_index['Price*']
         price_unit = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
         to_write.update({'price_unit': price_unit})
@@ -262,35 +254,24 @@ The columns should be in this values:
         
         if context is None:
             context = {}
-        purchase_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
-        product_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
-        field_obj = self.pool.get('ir.model.fields')
         import_obj = self.pool.get('purchase.import.xml.line')
         context.update({'import_in_progress': True})
         start_time = time.time()
-        line_with_error = []
-        
         wiz_browse = self.browse(cr, uid, ids, context)[0]
         po_browse = wiz_browse.po_id
         po_id = po_browse.id
-        po_line_browse = po_browse.order_line
-        
+        header_index = context['header_index']
+
         ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
-        nm_lines = {} # Dict containing data of lines not matching with po lines
-        matching_po_lines = [] # List of po lines matching with file lines
-        line_ignored_num = []
-        error_list = []
-        notif_list = []
-        error_log = ''
-        notif_log = ''
+        line_with_error, error_list, notif_list = [], [], []
+        error_log, notif_log = '', ''
         
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
-        header_index = context['header_index']
-        
         rows = fileobj.getRows()
+        # take all the lines of the file in a list of dict
         file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list=[], line_num=False, context=context)
+        
         rows = fileobj.getRows()
         rows.next()
         file_line_number = 0
@@ -310,11 +291,13 @@ The columns should be in this values:
                     line_number = to_write['line_number']
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
                     if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
+                        import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'wizard_id': False, 'product_id': False})
                         error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n' % (file_line_number, line_number, po_browse.name)
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                         ignore_lines += 1
-                    to_write.update({'wizard_id': wiz_browse.id, 'file_line_number': file_line_number})
-                    import_obj.create(cr, uid, to_write)
+                    else:
+                        to_write.update({'wizard_id': wiz_browse.id, 'file_line_number': file_line_number})
+                        import_obj.create(cr, uid, to_write)
             except osv.except_osv as osv_error:
                 import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'wizard_id': False, 'product_id': False})
                 osv_value = osv_error.value
@@ -338,13 +321,16 @@ The columns should be in this values:
                 same_pol_line_nb = pol_obj.search(cr, uid, [('line_number', '=', line_number), ('order_id', '=', po_id)])
                 count_same_file_line_nb = len(same_file_line_nb)
                 count_same_pol_line_nb = len(same_pol_line_nb)
+                # we deal with 3 cases
                 if same_file_line_nb:
+                    # 1st CASE
                     if count_same_file_line_nb == count_same_pol_line_nb:
                         # 'We update all the lines.'
                         for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
                             vals = file_line
                             pol_obj.write(cr, uid, pol_line.id, vals)
                             complete_lines += 1
+                    # 2nd CASE
                     elif count_same_file_line_nb < count_same_pol_line_nb:
                         # if the product is the same: we update the corresponding line
                         file_line_proceed = []
@@ -367,6 +353,7 @@ The columns should be in this values:
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
+                    # 3rd CASE
                     elif count_same_file_line_nb > count_same_pol_line_nb:
                         if count_same_pol_line_nb == 1:
                             #"We split the only line with this line number"
@@ -401,11 +388,24 @@ The columns should be in this values:
                             lines = ','.join(lines)
                             error_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
                         else:
-                            print "We ignore the file lines with this line number because we can't know which lines to update or not."
+                            # if the product is the same: we update the corresponding line
+                            file_line_proceed = []
+                            for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
+                                # is a product similar between the file line and obj line?
+                                overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)])
+                                if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
+                                    import_values = import_obj.read(cr, uid, overlapping_lines)[0]
+                                    file_line_number = import_values['file_line_number']
+                                    pol_obj.write(cr, uid, pol_line.id, import_values)
+                                    notif_list.append("Line %s of the Excel file updated the line %s with the product %s in common."
+                                                      % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
+                                    file_line_proceed.append(overlapping_lines[0])
+                                    complete_lines += 1
+                            # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
                             for line in import_obj.read(cr, uid, same_file_line_nb):
-                                if not line['line_ignored_ok']:
+                                if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
                                     # the file_line_number is equal to the index of the line in file_values
-                                    error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (file_line)
+                                    error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (import_values['file_line_number'])
                                     data = file_values[line['file_line_number']].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
@@ -433,8 +433,6 @@ The columns should be in this values:
             error_exception = ('%s' % e)
             self.write(cr, uid, ids, {'message': error_exception, 'state': 'draft'}, context=context)
         finally:
-            # we reactivate the PO whatever happens!!!
-#            purchase_obj.write(cr, uid, po_id, {'active': True}, context)
             cr.commit()
             cr.close()
 
@@ -442,7 +440,6 @@ The columns should be in this values:
         """
         Launch a thread for importing lines.
         """
-        purchase_obj = self.pool.get('purchase.order')
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
             po_id = wiz_read['po_id']
             if not wiz_read['file']:
@@ -464,18 +461,26 @@ The columns should be in this values:
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
-#            # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
-#            purchase_obj.write(cr, uid, po_id, {'active': False}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
-        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""")
+        msg_to_return = _("""
+Important, please do not update the Purchase Order %s
+Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+Otherwise, you can continue to use Unifield.""" % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name'])
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
         """
         This button is only for updating the view.
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        purchase_obj = self.pool.get('purchase.order')
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
+            po_id = wiz_read['po_id']
+            po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
+            if wiz_read['state'] != 'done':
+                self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
         return False
 
     def cancel(self, cr, uid, ids, context=None):
