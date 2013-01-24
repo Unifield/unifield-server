@@ -22331,18 +22331,6 @@ msgstr "Pas de Partenaire Défini !"
 msgid "Update Instance"
 msgstr "Mise à jour Instance"
 
-#. module: kit
-#: code:addons/kit/wizard/substitute.py:205
-#, python-format
-msgid "Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))\n"
-"            # we search for existing internal lot, if does not exist, we create a new one\n"
-"            prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.exp_substitute_item),\n"
-"                                                   ('type', '=', 'internal"
-msgstr "Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))\n"
-"            # we search for existing internal lot, if does not exist, we create a new one\n"
-"            prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.exp_substitute_item),\n"
-"                                                   ('type', '=', 'internal"
-
 #. module: stock_schedule
 #: model:ir.actions.act_window,name:stock_schedule.action_stock_frequence_new
 msgid "Stock Frequence"
@@ -48783,26 +48771,6 @@ msgstr "Impossible de créer une séquence automatique pour cette pièce !\n"
 "\n"
 "Indiquez une séquence dans la définition du journal pour la numérotation automatique ou créez manuellement une séquence pour cette pièce."
 
-#. module: res_currency_tables
-#: code:addons/res_currency_tables/wizard/import_currencies.py:74
-#, python-format
-msgid "The currency %s is not defined!' % line[0]))\n"
-"                        break\n"
-"                    else:\n"
-"                        # check for date. 2 checks done:\n"
-"                        # - if the rate date is the 1st of the month, no check.\n"
-"                        # - all other dates: check if the 1st day of the month has a rate;\n"
-"                        #   otherwise, raise a warning\n"
-"                        rate_datetime = datetime.datetime.strptime(wizard.rate_date, '%Y-%m-%d"
-msgstr "The currency %s is not defined!' % line[0]))\n"
-"                        break\n"
-"                    else:\n"
-"                        # check for date. 2 checks done:\n"
-"                        # - if the rate date is the 1st of the month, no check.\n"
-"                        # - all other dates: check if the 1st day of the month has a rate;\n"
-"                        #   otherwise, raise a warning\n"
-"                        rate_datetime = datetime.datetime.strptime(wizard.rate_date, '%Y-%m-%d"
-
 #. module: specific_rules
 #: view:report.stock.inventory:0
 msgid "Expiry Month"
@@ -53008,34 +52976,6 @@ msgstr "Fractionner Facture"
 msgid "were scrapped"
 msgstr "ont été mis au rebut"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:41
-#, python-format
-msgid "The line '%s' is already posted!\" % accrual_line.description))\n"
-"                elif not accrual_line.period_id:\n"
-"                    raise osv.except_osv(_('Warning !'), _(\"The line '%s' has no period set!\" % accrual_line.description))\n"
-"                elif not accrual_line.analytic_distribution_id:\n"
-"                    raise osv.except_osv(_('Warning !'), _(\"The line '%s' has no analytic distribution!\" % accrual_line.description))\n"
-"                else:\n"
-"                    move_date = accrual_line.period_id.date_stop\n"
-"                    reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')\n"
-"                    # check if periods are open\n"
-"                    reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)\n"
-"                    if len(reversal_period_ids) == 0:\n"
-"                        raise osv.except_osv(_('Warning !'), _(\"No period (M+1) was found in the system!"
-msgstr "The line '%s' is already posted!\" % accrual_line.description))\n"
-"                elif not accrual_line.period_id:\n"
-"                    raise osv.except_osv(_('Warning !'), _(\"The line '%s' has no period set!\" % accrual_line.description))\n"
-"                elif not accrual_line.analytic_distribution_id:\n"
-"                    raise osv.except_osv(_('Warning !'), _(\"The line '%s' has no analytic distribution!\" % accrual_line.description))\n"
-"                else:\n"
-"                    move_date = accrual_line.period_id.date_stop\n"
-"                    reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')\n"
-"                    # check if periods are open\n"
-"                    reversal_period_ids = period_obj.find(cr, uid, reversal_move_date, context=context)\n"
-"                    if len(reversal_period_ids) == 0:\n"
-"                        raise osv.except_osv(_('Warning !'), _(\"No period (M+1) was found in the system!"
-
 #. module: register_accounting
 #: report:cash.inventory:0
 msgid "Unrecorded expenses:"
@@ -54293,38 +54233,6 @@ msgstr "Choisir un catalogue"
 #: view:audittrail.rule:0
 msgid "UnSubscribe"
 msgstr "Désinscrire"
-
-#. module: specific_rules
-#: code:addons/specific_rules/stock.py:443
-#, python-format
-msgid "You cannot have two lines with the same product. (Product : [%s] %s)' % (line.product_id.default_code, line.product_id.name)))\n"
-"        \n"
-"        return self.write(cr, uid, ids, {'state': 'confirm'}, context=context)\n"
-"        \n"
-"    def action_done(self, cr, uid, ids, context=None):\n"
-"        '\n"
-"        Change the price of the products in the lines\n"
-"        '\n"
-"        if isinstance(ids, (int, long)):\n"
-"            ids = [ids]\n"
-"        \n"
-"        for obj in self.browse(cr, uid, ids, context=context):\n"
-"            for line in obj.reevaluation_line_ids:\n"
-"                self.pool.get('product.product"
-msgstr "You cannot have two lines with the same product. (Product : [%s] %s)' % (line.product_id.default_code, line.product_id.name)))\n"
-"        \n"
-"        return self.write(cr, uid, ids, {'state': 'confirm'}, context=context)\n"
-"        \n"
-"    def action_done(self, cr, uid, ids, context=None):\n"
-"        '\n"
-"        Change the price of the products in the lines\n"
-"        '\n"
-"        if isinstance(ids, (int, long)):\n"
-"            ids = [ids]\n"
-"        \n"
-"        for obj in self.browse(cr, uid, ids, context=context):\n"
-"            for line in obj.reevaluation_line_ids:\n"
-"                self.pool.get('product.product"
 
 #. modules: analytic, msf_audittrail, analytic_distribution
 #: constraint:account.analytic.account:0
