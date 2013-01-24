@@ -473,17 +473,17 @@ class product_attributes(osv.osv):
         cycle_ids = cycle_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
         for cycle in cycle_line_obj.browse(cr, uid, cycle_ids, context=context):
             if len(cycle.order_cycle_id.product_line_ids) == 1:
-                auto_supply_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
+                cycle_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
             else:
-                auto_supply_line_obj.unlink(cr, uid, [cycle.id], context=context)
+                cycle_line_obj.unlink(cr, uid, [cycle.id], context=context)
                 
         # Threshold value
         threshold_ids = threshold_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
         for threshold in threshold_line_obj.browse(cr, uid, threshold_ids, context=context):
             if len(threshold.threshold_value_id.line_ids) == 1:
-                auto_supply_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
+                threshold_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
             else:
-                auto_supply_line_obj.unlink(cr, uid, [threshold.id], context=context)
+                threshold_line_obj.unlink(cr, uid, [threshold.id], context=context)
                 
         # Minimum stock rules
         orderpoint_ids = orderpoint_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
