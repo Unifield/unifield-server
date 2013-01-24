@@ -4160,12 +4160,6 @@ msgstr "Analyseur Python personnalisé"
 msgid "Confirmation date"
 msgstr "Date de Confirmation"
 
-#. module: purchase_override
-#: code:addons/purchase_override/purchase.py:1323
-#, python-format
-msgid "The state of the following invoices cannot be updated automatically. Please cancel them manually or discuss with the accounting team to solve the problem.' #                                'Invoices references : %s"
-msgstr "The state of the following invoices cannot be updated automatically. Please cancel them manually or discuss with the accounting team to solve the problem.' #                                'Invoices references : %s"
-
 #. module: kit
 #: view:composition.item:0
 msgid "Search Theoretical Kit Composition Item"
@@ -4780,12 +4774,6 @@ msgstr "Veuillez spécifier une nouvelle date."
 msgid "Currency for average price"
 msgstr "Devise pour prix moyen"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:158
-#, python-format
-msgid "No HR journal found!"
-msgstr "        ; verbose = True ; Turn on the verbose messages of webdav"
-
 #. module: account
 #: selection:account.tax.template,applicable_type:0
 msgid "True"
@@ -4845,148 +4833,6 @@ msgstr "Employé(e) - Importation réussie"
 #: model:res.country,name:sd.base_cf
 msgid "Central African Republic"
 msgstr "République Centre-Africaine"
-
-#. module: msf_audittrail
-#: code:addons/msf_audittrail/audittrail.py:616
-#, python-format
-msgid "'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators\" %(d[1]))\n"
-"            \n"
-"        if len(d[0].split('.')) == 2 and model:\n"
-"            p_rel, p_field = d[0].split('.')\n"
-"            parent_field_id = pool.get('ir.model.fields').search(cr, uid, [('model', '=', model.model), ('name', '=', p_rel)])\n"
-"            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)\n"
-"            if not vals.get(p_rel) and res_id:\n"
-"                vals[d[0]] = self.pool.get(model.model).read(cr, uid, res_id, [p_rel])[p_rel]\n"
-"            if parent_field and parent_field[0].relation and vals.get(p_rel):\n"
-"                if isinstance(vals[p_rel], (int, long)):\n"
-"                    p_rel_id = vals[p_rel]\n"
-"                else:\n"
-"                    p_rel_id = vals[p_rel][0] \n"
-"                value = pool.get(parent_field[0].relation).read(cr, uid, p_rel_id, [p_field])\n"
-"                if value:\n"
-"                    d = (p_field, d[1], d[2])\n"
-"                    vals[p_field] = value[p_field]\n"
-"        \n"
-"        if d[0] not in vals and model and res_id:\n"
-"            obj = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])\n"
-"            vals[d[0]] = obj[d[0]]\n"
-"        \n"
-"        if d[1] == '=' and vals[d[0]] != d[2]:\n"
-"            res = False\n"
-"        elif d[1] == '!=' and vals[d[0]] == d[2]:\n"
-"            res = False\n"
-"        elif d[1] == 'in' and vals[d[0]] not in d[2]:\n"
-"            res = False\n"
-"        elif d[1] == 'not in' and vals[d[0]] in d[2]:\n"
-"            res = False\n"
-"            \n"
-"    return res\n"
-"\n"
-"def get_field_description(model):\n"
-"    \"\n"
-"    Redefine the field_description for sale order and sale order line\n"
-"    \"\n"
-"    if model.model == 'sale.order':\n"
-"        field_description = 'Field Order'\n"
-"    elif model.model == 'sale.order.line':\n"
-"        field_description = 'Field Order Line'\n"
-"    elif model.model== 'stock.picking':\n"
-"        field_description = 'Incoming Shipment'\n"
-"    else:\n"
-"        field_description = model.name\n"
-"    return field_description\n"
-"\n"
-"def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):\n"
-"    \"\n"
-"    Logging function: This function is performs logging operations according to method\n"
-"    @param cr: the current database\n"
-"    @param uid: the current user’s ID for security checks,\n"
-"    @param model: Object who's values are being changed\n"
-"    @param method: method to log: create, read, write, unlink\n"
-"    @param fct_src: execute method of Object proxy\n"
-"\n"
-"    @return: Returns result as per method of Object proxy\n"
-"    \"\n"
-"    if not fields_to_trace:\n"
-"        fields_to_trace = []\n"
-"    uid_orig = uid\n"
-"    uid = 1\n"
-"    pool = pooler.get_pool(cr.dbname)\n"
-"    resource_pool = pool.get(model)\n"
-"    model_pool = pool.get('ir.model')\n"
-"\n"
-"    model_ids = model_pool.search(cr, uid, [('model', '=', model)])\n"
-"    model_id = model_ids and model_ids[0] or False\n"
-"    assert model_id, _(\"'%s' Model does not exist..."
-msgstr "'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators\" %(d[1]))\n"
-"            \n"
-"        if len(d[0].split('.')) == 2 and model:\n"
-"            p_rel, p_field = d[0].split('.')\n"
-"            parent_field_id = pool.get('ir.model.fields').search(cr, uid, [('model', '=', model.model), ('name', '=', p_rel)])\n"
-"            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)\n"
-"            if not vals.get(p_rel) and res_id:\n"
-"                vals[d[0]] = self.pool.get(model.model).read(cr, uid, res_id, [p_rel])[p_rel]\n"
-"            if parent_field and parent_field[0].relation and vals.get(p_rel):\n"
-"                if isinstance(vals[p_rel], (int, long)):\n"
-"                    p_rel_id = vals[p_rel]\n"
-"                else:\n"
-"                    p_rel_id = vals[p_rel][0] \n"
-"                value = pool.get(parent_field[0].relation).read(cr, uid, p_rel_id, [p_field])\n"
-"                if value:\n"
-"                    d = (p_field, d[1], d[2])\n"
-"                    vals[p_field] = value[p_field]\n"
-"        \n"
-"        if d[0] not in vals and model and res_id:\n"
-"            obj = self.pool.get(model.model).read(cr, uid, res_id, [d[0]])\n"
-"            vals[d[0]] = obj[d[0]]\n"
-"        \n"
-"        if d[1] == '=' and vals[d[0]] != d[2]:\n"
-"            res = False\n"
-"        elif d[1] == '!=' and vals[d[0]] == d[2]:\n"
-"            res = False\n"
-"        elif d[1] == 'in' and vals[d[0]] not in d[2]:\n"
-"            res = False\n"
-"        elif d[1] == 'not in' and vals[d[0]] in d[2]:\n"
-"            res = False\n"
-"            \n"
-"    return res\n"
-"\n"
-"def get_field_description(model):\n"
-"    \"\n"
-"    Redefine the field_description for sale order and sale order line\n"
-"    \"\n"
-"    if model.model == 'sale.order':\n"
-"        field_description = 'Field Order'\n"
-"    elif model.model == 'sale.order.line':\n"
-"        field_description = 'Field Order Line'\n"
-"    elif model.model== 'stock.picking':\n"
-"        field_description = 'Incoming Shipment'\n"
-"    else:\n"
-"        field_description = model.name\n"
-"    return field_description\n"
-"\n"
-"def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id=False, parent_field_id=False, name_get_field='name', domain='[]', *args, **kwargs):\n"
-"    \"\n"
-"    Logging function: This function is performs logging operations according to method\n"
-"    @param cr: the current database\n"
-"    @param uid: the current user’s ID for security checks,\n"
-"    @param model: Object who's values are being changed\n"
-"    @param method: method to log: create, read, write, unlink\n"
-"    @param fct_src: execute method of Object proxy\n"
-"\n"
-"    @return: Returns result as per method of Object proxy\n"
-"    \"\n"
-"    if not fields_to_trace:\n"
-"        fields_to_trace = []\n"
-"    uid_orig = uid\n"
-"    uid = 1\n"
-"    pool = pooler.get_pool(cr.dbname)\n"
-"    resource_pool = pool.get(model)\n"
-"    model_pool = pool.get('ir.model')\n"
-"\n"
-"    model_ids = model_pool.search(cr, uid, [('model', '=', model)])\n"
-"    model_id = model_ids and model_ids[0] or False\n"
-"    assert model_id, _(\"'%s' Model does not exist..."
 
 #. module: product
 #: help:product.template,procure_method:0
@@ -5079,22 +4925,6 @@ msgstr "For an Internal Request with a procurement method 'On Order' and without
 #: selection:shipment,state:0
 msgid "Packed"
 msgstr "Emballé"
-
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/product.py:531
-#, python-format
-msgid "You cannot uncheck the Section checkbox because this currency is used on these 'Inter-section' partners :                                       %s' % partner_list))\n"
-"\n"
-"        # Check if ESC partners used one of these currencies\n"
-"        if 'is_esc_currency' in values and not values['is_esc_currency']:\n"
-"            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)\n"
-"            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc"
-msgstr "You cannot uncheck the Section checkbox because this currency is used on these 'Inter-section' partners :                                       %s' % partner_list))\n"
-"\n"
-"        # Check if ESC partners used one of these currencies\n"
-"        if 'is_esc_currency' in values and not values['is_esc_currency']:\n"
-"            pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids)], context=context)\n"
-"            partner_ids = partner_obj.search(cr, uid, [('partner_type', '=', 'esc"
 
 #. module: account
 #: code:addons/account/wizard/account_move_journal.py:104
@@ -16584,26 +16414,6 @@ msgstr "Îles Cook"
 msgid "This account will be used for invoices to value expenses for the current product category"
 msgstr "Ce compte sera utilisé pour les factures lors de la valorisation des dépenses de la catégorie du produit actuel"
 
-#. module: kit
-#: code:addons/kit/kit.py:671
-#, python-format
-msgid "Expiry Date of Batch Number %s for product %s has been updated to %s.'%(lot_name,prod_name,exp_obj.strftime(date_format))))\n"
-"            else:\n"
-"                # not lot because the product is not batch managment, we have a reference instead, we write in composition_ref_exp\n"
-"                self.write(cr, uid, ids, {'composition_ref_exp': value}, context=context)\n"
-"        return True\n"
-"\n"
-"    _columns = {'composition_type': fields.selection(KIT_COMPOSITION_TYPE, string='Composition Type', readonly=True, required=True),\n"
-"                'composition_description': fields.text(string='Composition Description"
-msgstr "Expiry Date of Batch Number %s for product %s has been updated to %s.'%(lot_name,prod_name,exp_obj.strftime(date_format))))\n"
-"            else:\n"
-"                # not lot because the product is not batch managment, we have a reference instead, we write in composition_ref_exp\n"
-"                self.write(cr, uid, ids, {'composition_ref_exp': value}, context=context)\n"
-"        return True\n"
-"\n"
-"    _columns = {'composition_type': fields.selection(KIT_COMPOSITION_TYPE, string='Composition Type', readonly=True, required=True),\n"
-"                'composition_description': fields.text(string='Composition Description"
-
 #. module: account
 #: view:account.subscription:0
 msgid "Recurring"
@@ -19835,20 +19645,6 @@ msgstr "Generate By system"
 #: constraint:stock.production.lot:0
 msgid "You can't create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory."
 msgstr "Vous ne pouvez pas créer un numéro de lot standard pour un produit dont le lot n'est pas obligatoire. Si le produit est périssable, le système créera automatiquement un numéro de lot interne à la réception / inventaire."
-
-#. module: kit
-#: code:addons/kit/wizard/substitute.py:201
-#, python-format
-msgid "Batch Number %s for %s with Expiry Date %s has been created.'%(lot_name,item.product_id_substitute_item.name,exp_item.strftime(date_format))))\n"
-"        elif item.product_id_substitute_item.perishable:\n"
-"            # expiry date must have been filled in\n"
-"            if not item.exp_substitute_item:\n"
-"                raise osv.except_osv(_('Warning !"
-msgstr "Batch Number %s for %s with Expiry Date %s has been created.'%(lot_name,item.product_id_substitute_item.name,exp_item.strftime(date_format))))\n"
-"        elif item.product_id_substitute_item.perishable:\n"
-"            # expiry date must have been filled in\n"
-"            if not item.exp_substitute_item:\n"
-"                raise osv.except_osv(_('Warning !"
 
 #. modules: msf_order_date, sale_override, sourcing, sale
 #: selection:sale.order.line,so_state_stored:0
@@ -23307,12 +23103,6 @@ msgstr "Web"
 msgid "Menu for Marketing"
 msgstr "Menu pour Marketing"
 
-#. module: documents_done
-#: code:addons/documents_done/documents_done.py:534
-#, python-format
-msgid "You cannot set the SO to 'Closed' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/"
-msgstr "You cannot set the SO to 'Closed' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/"
-
 #. module: object_query
 #: field:ir.model.fields,is_function:0
 msgid "Is function ?"
@@ -24836,32 +24626,6 @@ msgstr "Appliquer les Mises à Jour/Améliorations Programmées"
 msgid "  valuation: balance"
 msgstr "  valorisation : solde"
 
-#. module: msf_outgoing
-#: code:addons/msf_outgoing/msf_outgoing.py:952
-#, python-format
-msgid "No %s journal found!' % (journal_type,)))\n"
-"            invoice_vals['journal_id'] = journal_ids[0]\n"
-"                \n"
-"            invoice_id = invoice_obj.create(cr, uid, invoice_vals,\n"
-"                        context=context)\n"
-"            \n"
-"            # Change currency for the intermission invoice\n"
-"            if shipment.partner_id2.partner_type == 'intermission':\n"
-"                company_currency = company.currency_id and company.currency_id.id or False\n"
-"                if not company_currency:\n"
-"                    raise osv.except_osv(_('Warning"
-msgstr "No %s journal found!' % (journal_type,)))\n"
-"            invoice_vals['journal_id'] = journal_ids[0]\n"
-"                \n"
-"            invoice_id = invoice_obj.create(cr, uid, invoice_vals,\n"
-"                        context=context)\n"
-"            \n"
-"            # Change currency for the intermission invoice\n"
-"            if shipment.partner_id2.partner_type == 'intermission':\n"
-"                company_currency = company.currency_id and company.currency_id.id or False\n"
-"                if not company_currency:\n"
-"                    raise osv.except_osv(_('Warning"
-
 #. modules: msf_processes, account, sd
 #: model:process.transition,note:account.process_transition_suppliercustomerinvoice0
 #: model:process.transition,note:msf_processes.process_transition_suppliercustomerinvoice0
@@ -25138,40 +24902,6 @@ msgstr "Le Début de période doit être antérieur à la Fin de période."
 #: model:ir.actions.act_window,help:base.action_country_state
 msgid "If you are working on the American market, you can manage the different federal states you are working on from here. Each state is attached to one country."
 msgstr "Si vous travaillez sur le marché américain, vous pouvez gérer les différents états fédéraux avec lesquels vous travaillez à partir d'ici. Chaque état est lié à un pays."
-
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:105
-#, python-format
-msgid "The 'To' date of this catalogue is older than the 'From' date of another catalogue - Please change the 'To' date of this catalogue or the 'From' date of the following catalogue : %s ('From' : %s - 'To' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))\n"
-"        \n"
-"        # Search all catalogues with the same partner/currency which are done\n"
-"        # after the beginning of the new catalogue\n"
-"        from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),\n"
-"                                                                                              ('partner_id', '=', partner_id),\n"
-"                                                                                              ('period_from', '<=', period_from),\n"
-"                                                                                              '|', \n"
-"                                                                                              ('period_to', '>=', period_from), \n"
-"                                                                                              ('period_to', '=', False),], context=context)\n"
-"        \n"
-"        # Update these catalogues with an end date which is the start date - 1 day of\n"
-"        # the new catalogue\n"
-"        if isinstance(period_from, date):\n"
-"            period_from = period_from.strftime('%Y-%m-%d"
-msgstr "The 'To' date of this catalogue is older than the 'From' date of another catalogue - Please change the 'To' date of this catalogue or the 'From' date of the following catalogue : %s ('From' : %s - 'To' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))\n"
-"        \n"
-"        # Search all catalogues with the same partner/currency which are done\n"
-"        # after the beginning of the new catalogue\n"
-"        from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),\n"
-"                                                                                              ('partner_id', '=', partner_id),\n"
-"                                                                                              ('period_from', '<=', period_from),\n"
-"                                                                                              '|', \n"
-"                                                                                              ('period_to', '>=', period_from), \n"
-"                                                                                              ('period_to', '=', False),], context=context)\n"
-"        \n"
-"        # Update these catalogues with an end date which is the start date - 1 day of\n"
-"        # the new catalogue\n"
-"        if isinstance(period_from, date):\n"
-"            period_from = period_from.strftime('%Y-%m-%d"
 
 #. module: base
 #: view:workflow.workitem:0
@@ -27149,12 +26879,6 @@ msgstr "Localisation Source"
 msgid "purchase_double_validation"
 msgstr "purchase_double_validation"
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:409
-#, python-format
-msgid "Please, format the line number ' + str(line_num) + ', column \"Unit Price\""
-msgstr "Please, format the line number ' + str(line_num) + ', column \"Unit Price\""
-
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "To parcel"
@@ -28567,11 +28291,6 @@ msgstr "Ouvrir Modules"
 #: view:stock.picking:0
 msgid "Confirm"
 msgstr "Confirmer"
-
-#. module: product
-#: view:product.pricelist.item:0
-msgid "* ( 1 + "
-msgstr "* ( 1 + "
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:630
@@ -31829,7 +31548,6 @@ msgstr "Transporteur :"
 msgid "Compared products"
 msgstr "Produits Comparés"
 
-#. modules: account, product_asset
 #: report:account.tax.code.entries:0
 #: report:product.asset:0
 msgid "("
@@ -37683,12 +37401,6 @@ msgstr "Exclure la sélection Libérer2"
 msgid "Delivery & Invoicing"
 msgstr "Livraison & Facturation"
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:427
-#, python-format
-msgid "Please, format the line number ' + str(line_num) + ', column \"Min Order Qty\""
-msgstr "Please, format the line number ' + str(line_num) + ', column \"Min Order Qty\""
-
 #. module: account
 #: view:account.installer:0
 msgid "The default Chart of Accounts is matching your country selection. If no certified Chart of Accounts exists for your specified country, a generic one can be installed and will be selected by default."
@@ -40795,12 +40507,6 @@ msgstr "Par mois"
 msgid "WebKit Header"
 msgstr "WebKit - En-tête "
 
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:418
-#, python-format
-msgid "Please, format the line number ' + str(line_num) + ', column \"Rounding\""
-msgstr "Please, format the line number ' + str(line_num) + ', column \"Rounding\""
-
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:104
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:172
@@ -42797,12 +42503,6 @@ msgstr "Sélectionnez ici le type d'évaluation associé à cette ligne de condi
 #, python-format
 msgid "You must define an analytic journal of type '%s' !"
 msgstr "Vous devez définir un journal analytique de type '%s' !"
-
-#. module: sale_override
-#: code:addons/sale_override/sale.py:782
-#, python-format
-msgid "The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.'             #                'Invoices references : %s"
-msgstr "The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.'             #                'Invoices references : %s"
 
 #. module: sale
 #: model:ir.model,name:sale.model_sale_open_invoice
@@ -46681,24 +46381,6 @@ msgstr "Importation d'un Demande Interne"
 #: selection:stock.picking,flow_type:0
 msgid "Quick"
 msgstr "Rapide"
-
-#. module: kit
-#: code:addons/kit/wizard/substitute.py:184
-#, python-format
-msgid "Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item_text)))\n"
-"                # select production lot\n"
-"                prodlot_id = prodlot_ids[0]\n"
-"            else:\n"
-"                # lot number must have been filled in\n"
-"                if not item.exp_substitute_item:\n"
-"                    raise osv.except_osv(_('Warning !"
-msgstr "Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item_text)))\n"
-"                # select production lot\n"
-"                prodlot_id = prodlot_ids[0]\n"
-"            else:\n"
-"                # lot number must have been filled in\n"
-"                if not item.exp_substitute_item:\n"
-"                    raise osv.except_osv(_('Warning !"
 
 #. module: kit
 #: constraint:composition.item:0
@@ -52661,18 +52343,6 @@ msgstr "Une ID est manquante!"
 msgid "Real consumption reports"
 msgstr "Rapports des Consommations Réelles"
 
-#. module: kit
-#: code:addons/kit/wizard/substitute.py:163
-#, python-format
-msgid "Batch Number is missing for %s.'%item.product_id_substitute_item.name))\n"
-"            # we search for existing standard lot, if does not exist, we create a new one\n"
-"            prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),\n"
-"                                                   ('type', '=', 'standard"
-msgstr "Batch Number is missing for %s.'%item.product_id_substitute_item.name))\n"
-"            # we search for existing standard lot, if does not exist, we create a new one\n"
-"            prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),\n"
-"                                                   ('type', '=', 'standard"
-
 #. module: sale
 #: model:ir.model,name:sale.model_sale_advance_payment_inv
 msgid "Sales Advance Payment Invoice"
@@ -57905,12 +57575,6 @@ msgstr "Commandes de Projet - Propriétés"
 #: selection:stock.picking,invoice_state:0
 msgid "Invoiced"
 msgstr "Facturé"
-
-#. module: supplier_catalogue
-#: code:addons/supplier_catalogue/supplier_catalogue.py:398
-#, python-format
-msgid "Please, format the line number ' + str(line_num) + ', column \"Min Qty\""
-msgstr "Please, format the line number ' + str(line_num) + ', column \"Min Qty\""
 
 #. module: base
 #: code:addons/orm.py:3392
@@ -63573,16 +63237,6 @@ msgstr "Date d'exécution"
 msgid "Batch likely to expire"
 msgstr "Lot atteignant probablement expiration"
 
-#. module: kit
-#: code:addons/kit/wizard/substitute.py:190
-#, python-format
-msgid "Expiry Date is missing for %s.'%item.product_id_substitute_item.name))\n"
-"                # the batch does not exist, we create a new one\n"
-"                lot_name = item.lot_mirror# or self.pool.get('ir.sequence"
-msgstr "Expiry Date is missing for %s.'%item.product_id_substitute_item.name))\n"
-"                # the batch does not exist, we create a new one\n"
-"                lot_name = item.lot_mirror# or self.pool.get('ir.sequence"
-
 #. module: base
 #: selection:res.request,state:0
 msgid "waiting"
@@ -67748,4 +67402,278 @@ msgstr "Créer et gérer les comptes dont vous avez besoin pour enregistrer des 
 #: help:account.move.line,amount_residual_currency:0
 msgid "The residual amount on a receivable or payable of a journal entry expressed in its currency (maybe different of the company currency)."
 msgstr "Le montant restant sur une écriture comptable de charge ou de dépense est exprimée dans la devise du journal (peut être différente de la devise de la société)"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/report_local_expenses_xls.mako:113
+msgid "Account code"
+msgstr "Code du compte  "
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Out. Amount"
+msgstr "Montant Out. "
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:55
+msgid "Destination"
+msgstr "Description"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:56
+msgid "Cost Center"
+msgstr "Centre de Coût"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:57
+msgid "Funding Pool"
+msgstr "Funding Pool"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:61
+msgid "Initial Average Cost"
+msgstr "Coût moyen initial"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "State"
+msgstr "Statut"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Entry Sequence"
+msgstr "Séquence d'éntrée"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Document Date"
+msgstr "Date du Document"
+
+#. module: base
+#: help:ir.actions.report.xml,report_type:0
+msgid "Report Type, e.g. pdf, html, raw, sxw, odt, html2html, mako2html, ..."
+msgstr "Type de Rapport, ex: PDF, html, raw, sxw, odt, html2html, mako2html, ..."
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+msgid "Func. Amount"
+msgstr "Mont.Fonctl."
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+msgid "Book. Amount"
+msgstr "Montant Enregist."
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Book. Debit"
+msgstr "Débit Enregist."
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:64
+msgid "Expiry Date"
+msgstr "Date d'expiration"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Description"
+msgstr "Description"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/product_list_xls.mako:51
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:59
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:71
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:70
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:71
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:70
+#: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:51
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:60
+msgid "Product Description"
+msgstr "Description produit"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:74
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:73
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:74
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:73
+msgid "Price"
+msgstr "Prix"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:52
+msgid "Product Cost"
+msgstr "Coût du produit"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+msgid "Func. Currency"
+msgstr "Devise Fonctl."
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/product_list_xls.mako:50
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:58
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:70
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:69
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:70
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:69
+#: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:50
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:59
+msgid "Product Code"
+msgstr "Code du produit"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Book. Credit"
+msgstr "Crédit Enregist."
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/report_local_expenses_xls.mako:114
+msgid "Account name"
+msgstr "Nom du compte"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Ref."
+msgstr "Ref"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:8
+msgid "Journal Items"
+msgstr "Écriture comptable"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Posting Date"
+msgstr "Date de comptn. "
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/product_list_xls.mako:52
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:63
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:77
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:76
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:77
+msgid "Comment"
+msgstr "Commentaire"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Account"
+msgstr "compte"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:74
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:75
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
+msgid "Delivery requested date"
+msgstr "Date de livraison demandée"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+msgid "Reversal Origin"
+msgstr "Origine Contrepass."
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:63
+msgid "Batch"
+msgstr "Lot"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:54
+msgid "Ana. Account"
+msgstr "Compte.Ana"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Proprietary Instance"
+msgstr "Instance propriétaire"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:8
+msgid "Analytic Journal Items"
+msgstr "Journal Ana - Ecritures"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:60
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:72
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:71
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:72
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:71
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:65
+msgid "Quantity"
+msgstr "Quantité"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Journal Code"
+msgstr "Code du Journal"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Book. Currency"
+msgstr "Devise Enregist."
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+msgid "G/L Account"
+msgstr "Compte Grand Livre"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Reconcile"
+msgstr "Lettrer"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Period"
+msgstr "Période"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:62
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:76
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:75
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:76
+msgid "Currency"
+msgstr "Devise"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Third Party"
+msgstr "Tiers"
+
+#. module: account_mcdb
+#: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
+#: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+msgid "Out. Currency"
+msgstr "Devise Out"
+
+#. module: msf_budget
+#: report:addons/msf_budget/report/report_local_expenses_xls.mako:118
+msgid "Total"
+msgstr "Total"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:61
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:73
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:72
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:73
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:72
+msgid "UoM"
+msgstr "UdM"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:62
+msgid "Location"
+msgstr "Zone"
 
