@@ -171,10 +171,10 @@ The columns should be in this values:
         order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
         if not order_ids:
             to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.' % order_name))
-            to_write.update({'error_list': to_write['error_list']})
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
         elif order_ids[0] != po_browse.id:
             to_write['error_list'].append(_('The Purchase Order %s does not correspond to the current one (%s).' % (order_name, po_browse.name)))
-            to_write.update({'error_list': to_write['error_list']})
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
         elif order_ids[0] == po_browse.id:
             to_write.update({'order_id': order_ids[0]})
         
@@ -196,7 +196,7 @@ The columns should be in this values:
         p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
         if not p_ids:
             to_write['error_list'].append("The Product\'s Code %s is not found in the database."% (product_code))
-            to_write.update({'error_list': to_write['error_list']})
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
         else:
             default_code = p_ids[0]
             to_write.update({'product_id': default_code})
@@ -210,7 +210,7 @@ The columns should be in this values:
             to_write.update({'product_uom': product_uom[0]})
         else:
             to_write['error_list'].append(_('The UOM %s was not found in the DataBase.' % cell_data))
-            to_write.update({'error_list': to_write['error_list']})
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Price
         price_value = {}
@@ -231,15 +231,8 @@ The columns should be in this values:
         c_value = check_line.comment_value(row=row, cell_nb=cell_nb, to_write=to_write, context=context)
         to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
         to_write.update({
-            'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
-            'show_msg_ok': [True for x in to_write['warning_list']],  # the lines with show_msg_ok=True won't change color, it is just info
-            'order_id': po_browse.id,
             'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
         })
-        # we check consistency on the model of on_change functions to call for updating values
-        context.update({'po_integration': True})
-        check = purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
-
         return to_write
 
     def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
@@ -314,6 +307,9 @@ The columns should be in this values:
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                     ignore_lines += 1
                 else:
+                    # we check consistency on the model of on_change functions to call for updating values
+                    context.update({'po_integration': True})
+                    pol_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
                     line_number = to_write['line_number']
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
                     if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
@@ -346,47 +342,39 @@ The columns should be in this values:
         list_line_number = cr.fetchall()
         for line_number in list_line_number:
             line_number = line_number[0]
-            same_file_line_nb = import_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_id', '=', wiz_browse.id)])
+            same_file_line_nb = import_obj.search(cr, uid, [('line_number', '=', line_number), ('wizard_id', '=', wiz_browse.id), ('order_id', '=', po_id)])
             same_pol_line_nb = pol_obj.search(cr, uid, [('line_number', '=', line_number), ('order_id', '=', po_id)])
             count_same_file_line_nb = len(same_file_line_nb)
             count_same_pol_line_nb = len(same_pol_line_nb)
             if same_file_line_nb:
                 if count_same_file_line_nb == count_same_pol_line_nb:
-                    for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
-                        
-                        print 'We update all the lines.'
+                    print 'We update all the lines.'
+                    for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
+                        vals = file_line
+                        pol_obj.write(cr, uid, pol_line.id, vals)
+                        complete_lines += 1
                 elif count_same_file_line_nb < count_same_pol_line_nb:
+                    print """if the product is the same:
+                               we update the corresponding line"""
+                    file_line_proceed = []
                     for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
                         # is a product similar between the file line and obj line?
-                        overlapping_lines = import_obj.search(cr, uid, [('product_id', '=', pol_line.product_id.id), ('line_number', '=', pol_line.line_number), ('wizard_id', '=', wiz_browse.id)])
-                        print """
-                            if the product is the same:
-                               we update the corresponding line
-                               """
-                        if overlapping_lines:
+                        overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)])
+                        if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                             import_values = import_obj.read(cr, uid, overlapping_lines)[0]
                             file_line_number = import_values['file_line_number']
-                            if len(overlapping_lines) == 1:
-                                del import_values['file_line_number']
-                                del import_values['wizard_id']
-                                del import_values['line_number']
-                                pol_obj.write(cr, uid, pol_line.id, import_values)
-                                notif_list.append("Line %s of the Excel file updated the line %s because the product %s was in common."
-                                                  % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
-                            else:
-                                print"""
-                                    we ignore the file lines with this line number because we can't know which lines to update or not.
-                                    """
-                                for line in same_file_line_nb:
-                                    # the file_line_number is equal to the index of the line in file_values
-                                    error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (import_values['file_line_number'])
-                                    data = file_values[line].items()
-                                    line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
-                                    ignore_lines += 1
-                        elif not overlapping_lines:
-                            for line in [x for x in same_file_line_nb if x not in overlapping_lines]:
+                            pol_obj.write(cr, uid, pol_line.id, import_values)
+                            notif_list.append("Line %s of the Excel file updated the line %s with the product %s in common."
+                                              % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
+                            file_line_proceed.append(overlapping_lines[0])
+                            complete_lines += 1
+                        else:
+                            print"""
+                                we ignore the file lines with this line number because we can't know which lines to update or not.
+                                """
+                            for line in [x for x in same_file_line_nb if x not in file_line_proceed]:
                                 # the file_line_number is equal to the index of the line in file_values
-                                error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (line)
+                                error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (import_values['file_line_number'])
                                 data = file_values[line].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
