@@ -32,12 +32,43 @@ class product_section_code(osv.osv):
     }
 product_section_code()
 
+
+class product_status(osv.osv):
+    _name = "product.status"
+    _columns = {
+        'name': fields.char('Name', size=256),
+    }
+product_status()
+
+
+class product_international_status(osv.osv):
+    _name = "product.international.status"
+    _columns = {
+        'name': fields.char('Name', size=256),
+    }
+product_international_status()
+
+class product_heat_sensitive(osv.osv):
+    _name = "product.heat_sensitive"
+    _columns = {
+        'name': fields.char('Name', size=256),
+    }
+product_heat_sensitive()
+
+class product_cold_chain(osv.osv):
+    _name = "product.cold_chain"
+    _columns = {
+        'name': fields.char('Name', size=256),
+    }
+product_cold_chain()
+
 class product_supply_source(osv.osv):
     _name = "product.supply.source"
     _columns = {
         'source': fields.char('Supply source', size=32),
     }
 product_supply_source()
+
 
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
@@ -148,15 +179,12 @@ class product_attributes(osv.osv):
         'description2': fields.text('Description 2'),
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
-        'international_status': fields.selection([('itc','ITC'),('esc', 'ESC'),('hq', 'HQ'),('local','Local'),('temp','Temporary')], 
-                                                 string='Product Creator', required=True),
-        'state': fields.selection([('',''),
-            ('draft','Introduction'),
-            ('sellable','Normal'),
-            ('transfer','Transfer'),
-            ('end_alternative','End of Life (alternative available)'),
-            ('end','End of Life (not supplied anymore)'),
-            ('obsolete','Warning list')], 'Status', help="Tells the user if he can use the product or not."),
+
+
+        'international_status': fields.many2one('product.international.status', 'Product Creator', required=True),
+        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
+
+
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
@@ -180,30 +208,19 @@ class product_attributes(osv.osv):
             ('l2','L2'),
             ('l3','L3'),
             ('l4','L4')], 'Library'),
+
+
         'supply_source_ids': fields.many2many('product.supply.source','product_supply_source_rel','product_id','supply_source_id','Supply Source'),
+
+
         'sublist' : fields.char('Sublist', size=64),
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
-        'heat_sensitive_item': fields.selection([('',''),
-            ('KR','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
-            ('*','Keep Cool'),
-            ('**','Keep Cool, airfreight'),
-            ('***','Cold chain, 0° to 8°C strict')], string='Temperature sensitive item'),
-        'cold_chain': fields.selection([('',''),
-            ('3*','3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)'),
-            ('6*0','6*0 Cold Chain *0 - Problem if any window blue'),
-            ('7*0F','7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM'),
-            ('8*A','8*A Cold Chain *A - Problem if B, C and/or D totally blue'),
-            ('9*AF','9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM'),
-            ('10*B','10*B Cold Chain *B - Problem if C and/or D totally blue'),
-            ('11*BF','11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM'),
-            ('12*C','12*C Cold Chain *C - Problem if D totally blue'),
-            ('13*CF','13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM'),
-            ('14*D','14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)'),
-            ('15*F','15*F Cold Chain *F - Cannot be frozen: check Freeze-tag '),
-            ('16*25','16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)'),
-            ('17*25F','17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag '),
-            ], 'Cold Chain'),
+
+        'heat_sensitive_item': fields.many2one('product.heat_sensitive', 'Temperature sensitive item',),
+        'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
+        'show_cold_chain': fields.boolean('Show cold chain'),
+
         'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
         'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
@@ -234,7 +251,7 @@ class product_attributes(osv.osv):
     }
     
     _defaults = {
-        'international_status': 'itc',
+        'international_status': False,
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
@@ -246,7 +263,13 @@ class product_attributes(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
-    
+
+    def onchange_heat(self, cr, uid, ids, heat, context=None):
+        heat_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
+        if not heat or heat == heat_id:
+            return {'value': {'show_cold_chain':False}}
+        return {'value': {'show_cold_chain':True}}
+
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
