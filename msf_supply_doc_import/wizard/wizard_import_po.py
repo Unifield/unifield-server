@@ -31,13 +31,18 @@ from msf_supply_doc_import import check_line
 from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION
 
 
-class purchase_import_xml_line(osv.osv_memory):
-    _name = 'purchase.import.xml.line'
+class purchase_line_import_xml_line(osv.osv_memory):
+    """
+    This class is usefull only for the import:
+    - it helps using search function to find matching lines (between PO lines and file lines)
+    - it helps updating or spliting the lines because we can directly use the fields in vals
+    with a read.
+    """
+    _name = 'purchase.line.import.xml.line'
     
     
     _columns = {
         'line_ignored_ok': fields.boolean('Ignored?'),
-        'wizard_id': fields.many2one('wizard.import.po', string='Wizard', required=True),
         'file_line_number': fields.integer(string='File line numbers'),
         'line_number': fields.integer(string='Line number'),
         'product_id': fields.many2one('product.product', string='Product'),
@@ -57,10 +62,13 @@ class purchase_import_xml_line(osv.osv_memory):
         'line_ignored_ok': False,
         }
     
-purchase_import_xml_line()
+purchase_line_import_xml_line()
 
 
 class wizard_import_po(osv.osv_memory):
+    """
+    This class helps importing the PO for the vertical integration.
+    """
     _name = 'wizard.import.po'
     _description = 'Import PO from Excel sheet'
 
@@ -234,10 +242,6 @@ The columns should be in this values:
         """
         Catch the file values on the form [{values of the 1st line}, {values of the 2nd line}...]
         """
-#        data = header_index.items()
-#        columns_header = []
-#        for k,v in sorted(data, key=lambda tup: tup[1]):
-#            columns_header.append(k)
         file_values = []
         for row in rows:
             line_values = {}
@@ -255,7 +259,7 @@ The columns should be in this values:
         if context is None:
             context = {}
         pol_obj = self.pool.get('purchase.order.line')
-        import_obj = self.pool.get('purchase.import.xml.line')
+        import_obj = self.pool.get('purchase.line.import.xml.line')
         context.update({'import_in_progress': True})
         start_time = time.time()
         wiz_browse = self.browse(cr, uid, ids, context)[0]
@@ -275,12 +279,13 @@ The columns should be in this values:
         rows = fileobj.getRows()
         rows.next()
         file_line_number = 0
+        total_line_num = len([row for row in file_obj.getRows()])
         for row in rows:
             file_line_number += 1
             try:
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
                 if to_write['error_list']:
-                    import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'wizard_id': False, 'product_id': False})
+                    import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
                     error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write['error_list']))
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                     ignore_lines += 1
@@ -291,15 +296,15 @@ The columns should be in this values:
                     line_number = to_write['line_number']
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
                     if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
-                        import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'wizard_id': False, 'product_id': False})
+                        import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
                         error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n' % (file_line_number, line_number, po_browse.name)
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                         ignore_lines += 1
                     else:
-                        to_write.update({'wizard_id': wiz_browse.id, 'file_line_number': file_line_number})
+                        to_write.update({'file_line_number': file_line_number})
                         import_obj.create(cr, uid, to_write)
             except osv.except_osv as osv_error:
-                import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'wizard_id': False, 'product_id': False})
+                import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_number, osv_name, osv_value)
@@ -317,7 +322,7 @@ The columns should be in this values:
             list_line_number = cr.fetchall()
             for line_number in list_line_number:
                 line_number = line_number[0]
-                same_file_line_nb = import_obj.search(cr, uid, [('line_ignored_ok', '=', False), ('line_number', '=', line_number), ('wizard_id', '=', wiz_browse.id), ('order_id', '=', po_id)])
+                same_file_line_nb = import_obj.search(cr, uid, [('line_ignored_ok', '=', False), ('line_number', '=', line_number), ('order_id', '=', po_id)])
                 same_pol_line_nb = pol_obj.search(cr, uid, [('line_number', '=', line_number), ('order_id', '=', po_id)])
                 count_same_file_line_nb = len(same_file_line_nb)
                 count_same_pol_line_nb = len(same_pol_line_nb)
@@ -328,7 +333,10 @@ The columns should be in this values:
                         # 'We update all the lines.'
                         for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
                             vals = file_line
+                            file_line_number = vals['file_line_number']
                             pol_obj.write(cr, uid, pol_line.id, vals)
+                            notif_list.append("Line %s of the Excel file updated the PO line %s."
+                                              % (file_line_number, pol_line.line_number))
                             complete_lines += 1
                     # 2nd CASE
                     elif count_same_file_line_nb < count_same_pol_line_nb:
@@ -363,9 +371,6 @@ The columns should be in this values:
                                 product_qty += file_line['product_qty']
                             import_values = file_line_read[0]
                             lines = [str(import_values['file_line_number'])]
-                            del import_values['file_line_number']
-                            del import_values['wizard_id']
-                            del import_values['line_number']
                             import_values.update({'product_qty': product_qty})
                             pol_obj.write(cr, uid, same_pol_line_nb, import_values)
                             complete_lines += 1
@@ -412,9 +417,9 @@ The columns should be in this values:
             error_log += '\n'.join(error_list)
             notif_log += '\n'.join(notif_list)
             if error_log:
-                error_log = "Reported errors for ignored lines : \n" + error_log
+                error_log = " ---------------------------------\n Reported errors for ignored lines : \n" + error_log
             if notif_log:
-                notif_log = "The following lines were modified: \n" + notif_log
+                notif_log = "--------------------------------- \n The following lines were modified: \n" + notif_log
             end_time = time.time()
             total_time = str(round(end_time-start_time)) + ' second(s)'
             message = ''' Importation completed in %s!
