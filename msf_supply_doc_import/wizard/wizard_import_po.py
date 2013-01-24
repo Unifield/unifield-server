@@ -40,9 +40,20 @@ class purchase_import_xml_line(osv.osv_memory):
         'file_line_number': fields.integer(string='File line numbers'),
         'line_number': fields.integer(string='Line number'),
         'product_id': fields.many2one('product.product', string='Product'),
+        'default_code': fields.many2one('product.product', string='Product'),
         'product_uom': fields.many2one('product.uom', string='UoM'),
         'product_qty': fields.float(digits=(16,2), string='Quantity'),
+        'price_unit':fields.float(digits=(16,2), string='Price'),
         'confirmed_delivery_date': fields.date('Confirmed Delivery Date'),
+        'order_id': fields.many2one('purchase.order', string='Purchase Order'),
+        'to_correct_ok': fields.boolean('To correct?'),
+        'warning_list': fields.text('Warning'),
+        'error_list': fields.text('Error'),
+        'text_error': fields.text('Text Error'),
+        'show_msg_ok': fields.boolean('To show?'),
+        'comment': fields.text('Comment'),
+        'date_planned': fields.date('Delivery Requested Date'),
+        'functional_currency_id': fields.many2one('res.currency', string='Functional Currency'),
     }
     
     
@@ -158,14 +169,23 @@ The columns should be in this values:
             'functional_currency_id': po_browse.pricelist_id.currency_id.id,
             'price_unit': 1,  # as the price unit cannot be null, it will be computed in the method "compute_price_unit" after.
             'product_qty': 1,
-            'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
-            'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
-            'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
-            'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
-            'proc_type': 'make_to_order',
             'default_code': False,
             'confirmed_delivery_date': False,
         }
+        
+        # Order Reference*
+        cell_nb = header_index['Order Reference*']
+        order_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
+        if not order_ids:
+            to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.' % order_name))
+            to_write.update({'error_list': to_write['error_list']})
+        elif order_ids[0] != po_browse.id:
+            to_write['error_list'].append(_('The Purchase Order %s does not correspond to the current one (%s).' % (order_name, po_browse.name)))
+            to_write.update({'error_list': to_write['error_list']})
+        elif order_ids[0] == po_browse.id:
+            to_write.update({'order_id': order_ids[0]})
+        
         # Line
         cell_nb = header_index['Line*']
         line_number = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
@@ -181,9 +201,14 @@ The columns should be in this values:
         # Product Code
         p_value = {}
         cell_nb = header_index['Product Code*']
-        p_value = check_line.product_value(cr, uid, cell_nb=cell_nb, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-        to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
-                         'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+        product_code = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+        if not p_ids:
+            to_write['error_list'].append("The Product\'s Code %s is not found in the database."% (product_code))
+            to_write.update({'error_list': to_write['error_list']})
+        else:
+            default_code = p_ids[0]
+            to_write.update({'product_id': default_code})
 
         # UOM
         uom_value = {}
@@ -193,7 +218,8 @@ The columns should be in this values:
         if product_uom:
             to_write.update({'product_uom': product_uom[0]})
         else:
-            to_write.update({'error_list': to_write['error_list'].append('The UOM %s was not found in the DataBase.' % cell_data)})
+            to_write['error_list'].append(_('The UOM %s was not found in the DataBase.' % cell_data))
+            to_write.update({'error_list': to_write['error_list']})
 
         # Price
         price_value = {}
@@ -287,34 +313,24 @@ The columns should be in this values:
         file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list=[], line_num=False, context=context)
         rows = fileobj.getRows()
         rows.next()
-        file_line_num = 0
+        file_line_number = 0
         for row in rows:
-            file_line_num += 1
+            file_line_number += 1
             try:
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
                 if to_write['error_list']:
-                    error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s' % (file_line_num, ' '.join(to_write['error_list']))
+                    error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write['error_list']))
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                     ignore_lines += 1
                 else:
                     line_number = to_write['line_number']
-                    product_id = to_write['product_id']
-                    product_uom = to_write['product_uom']
-                    price_unit = to_write['price_unit']
-                    product_qty = to_write['product_qty']
-                    confirmed_delivery_date = to_write['confirmed_delivery_date']
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
                     if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
-                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number does not exist for %s' % (file_line_num, po_browse.name)
+                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number does not exist for %s \n' % (file_line_number, po_browse.name)
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                         ignore_lines += 1
-                    import_obj.create(cr, uid, {'wizard_id': wiz_browse.id,
-                                                'file_line_number': file_line_num,
-                                                'line_number': line_number,
-                                                'product_id': product_id,
-                                                'product_uom': product_uom,
-                                                'product_qty': product_qty,
-                                                'confirmed_delivery_date': confirmed_delivery_date,})
+                    to_write.update({'wizard_id': wiz_browse.id, 'file_line_number': file_line_number})
+                    import_obj.create(cr, uid, to_write)
             except IndexError, e:
                 if line_num not in line_ignored_num:
                     error_log += "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s \n" % (line_num, len(header_index.items()), e)
@@ -325,8 +341,8 @@ The columns should be in this values:
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
-                error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_num, osv_name, osv_value)
-                line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_num, context=context))
+                error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_number, osv_name, osv_value)
+                line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_number, context=context))
                 ignore_lines += 1
                 continue
         # start importing lines
@@ -369,14 +385,14 @@ The columns should be in this values:
                                     we ignore the file lines with this line number because we can't know which lines to update or not.
                                     """
                                 for line in same_file_line_nb:
-                                    # the file_line_num is equal to the index of the line in file_values
+                                    # the file_line_number is equal to the index of the line in file_values
                                     error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (import_values['file_line_number'])
                                     data = file_values[line].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
                         elif not overlapping_lines:
                             for line in [x for x in same_file_line_nb if x not in overlapping_lines]:
-                                # the file_line_num is equal to the index of the line in file_values
+                                # the file_line_number is equal to the index of the line in file_values
                                 error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (line)
                                 data = file_values[line].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
@@ -415,7 +431,7 @@ The columns should be in this values:
                     else:
                         print "We ignore the file lines with this line number because we can't know which lines to update or not."
                         for file_line in same_file_line_nb:
-                            # the file_line_num is equal to the index of the line in file_values
+                            # the file_line_number is equal to the index of the line in file_values
                             error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (file_line)
                             data = file_values[file_line].items()
                             line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
@@ -492,13 +508,13 @@ The columns should be in this values:
 #            
 #            rows = fileobj.getRows()
 #            rows.next()
-#            file_line_num = 0
+#            file_line_number = 0
 #            for row in rows:
-#                file_line_num += 1
+#                file_line_number += 1
 #                try:
 #                    to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
 #                    if to_write['error_list']:
-#                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s' % (file_line_num, ' '.join(to_write['error_list']))
+#                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s' % (file_line_number, ' '.join(to_write['error_list']))
 #                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
 #                        ignore_lines += 1
 #                        continue
@@ -512,7 +528,7 @@ The columns should be in this values:
 #                        line_found = False
 #                        # We ignore the lines with a line number that does not correspond to any line number of the PO line
 #                        if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
-#                            error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number does not exist for %s' % (file_line_num, po_browse.name)
+#                            error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number does not exist for %s' % (file_line_number, po_browse.name)
 #                            line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
 #                            ignore_lines += 1
 #                            continue
@@ -540,7 +556,7 @@ The columns should be in this values:
 #                                
 #                            # If the file line does not match with a wizard line
 #                            # add it to a list of lines to process after (sort in dict with the line_number)
-#                            nm_lines[line_number].append({'file_line_num': file_line_num,
+#                            nm_lines[line_number].append({'file_line_number': file_line_number,
 #                                                          'product_uom': product_uom,
 #                                                          'product_id': product_id,
 #                                                          'price_unit': price_unit,
@@ -558,7 +574,7 @@ The columns should be in this values:
 #                                for field_changed in ['product_uom', 'product_id', 'price_unit', 'product_qty', 'confirmed_delivery_date']:
 #                                    domain = [('id', 'not in', matching_po_lines), ('order_id', '=', po_id),('line_number', '=', ln)]
 #                                    list_tuple = nml.items()
-#                                    domain.extend([(x, '=', y) for (x,y) in list_tuple if x != field_changed and x != 'file_line_num'])
+#                                    domain.extend([(x, '=', y) for (x,y) in list_tuple if x != field_changed and x != 'file_line_number'])
 #                                    change_ids = pol_obj.search(cr, uid, domain)
 #                                    if change_ids:
 #                                        # The field has changed
@@ -578,7 +594,7 @@ The columns should be in this values:
 #                                            former_value = pol_obj.read(cr, uid, line_id, [str(field_changed)])[str(field_changed)]
 #                                            new_value = nml.get(field_changed)
 #                                        notif_list.append("Line %s of the Excel file: The %s did not match with the existing one of the line %s so the field changed from %s to %s."
-#                                                          % (nml.get('file_line_num'), field_description, ln, former_value, new_value))
+#                                                          % (nml.get('file_line_number'), field_description, ln, former_value, new_value))
 #                                        pol_obj.write(cr, uid, [line_id], {str(field_changed): nml.get(field_changed)})
 #                                        matching_po_lines.append(line_id)
 #                                        complete_lines += 1
@@ -605,8 +621,8 @@ The columns should be in this values:
 #                except osv.except_osv as osv_error:
 #                    osv_value = osv_error.value
 #                    osv_name = osv_error.name
-#                    error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_num, osv_name, osv_value)
-#                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_num, context=context))
+#                    error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_number, osv_name, osv_value)
+#                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_number, context=context))
 #                    ignore_lines = 1
 #                    continue
 #
