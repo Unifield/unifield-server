@@ -40,7 +40,6 @@ class purchase_import_xml_line(osv.osv_memory):
         'file_line_number': fields.integer(string='File line numbers'),
         'line_number': fields.integer(string='Line number'),
         'product_id': fields.many2one('product.product', string='Product'),
-        'default_code': fields.many2one('product.product', string='Product'),
         'product_uom': fields.many2one('product.uom', string='UoM'),
         'product_qty': fields.float(digits=(16,2), string='Quantity'),
         'price_unit':fields.float(digits=(16,2), string='Price'),
@@ -52,8 +51,6 @@ class purchase_import_xml_line(osv.osv_memory):
         'text_error': fields.text('Text Error'),
         'show_msg_ok': fields.boolean('To show?'),
         'comment': fields.text('Comment'),
-        'date_planned': fields.date('Delivery Requested Date'),
-        'functional_currency_id': fields.many2one('res.currency', string='Functional Currency'),
     }
     
     
@@ -165,11 +162,6 @@ The columns should be in this values:
             'to_correct_ok': False,
             'show_msg_ok': False,
             'comment': '',
-            'date_planned': po_browse.delivery_requested_date,
-            'functional_currency_id': po_browse.pricelist_id.currency_id.id,
-            'price_unit': 1,  # as the price unit cannot be null, it will be computed in the method "compute_price_unit" after.
-            'product_qty': 1,
-            'default_code': False,
             'confirmed_delivery_date': False,
         }
         
@@ -194,9 +186,8 @@ The columns should be in this values:
         # Quantity
         qty_value = {}
         cell_nb = header_index['Quantity*']
-        qty_value = check_line.quantity_value(product_obj=product_obj, cell_nb=cell_nb, row=row, to_write=to_write, context=context)
-        to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'],
-                         'warning_list': qty_value['warning_list']})
+        product_qty = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
+        to_write.update({'product_qty': product_qty})
     
         # Product Code
         p_value = {}
@@ -361,7 +352,9 @@ The columns should be in this values:
             count_same_pol_line_nb = len(same_pol_line_nb)
             if same_file_line_nb:
                 if count_same_file_line_nb == count_same_pol_line_nb:
-                    print 'We update all the lines.'
+                    for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
+                        
+                        print 'We update all the lines.'
                 elif count_same_file_line_nb < count_same_pol_line_nb:
                     for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
                         # is a product similar between the file line and obj line?
@@ -411,6 +404,7 @@ The columns should be in this values:
                         del import_values['line_number']
                         import_values.update({'product_qty': product_qty})
                         pol_obj.write(cr, uid, same_pol_line_nb, import_values)
+                        complete_lines += 1
                         for file_line in import_obj.browse(cr, uid, same_file_line_nb[1:len(same_file_line_nb)]):
                             wizard_values = pol_obj.open_split_wizard(cr, uid, same_pol_line_nb, context)
                             wiz_context = wizard_values.get('context')
@@ -426,6 +420,7 @@ The columns should be in this values:
                                                                     'product_uom': file_line.product_uom.id,
                                                                     'product_id': file_line.product_id.id,
                                                                     'confirmed_delivery_date': file_line.confirmed_delivery_date})
+                            complete_lines += 1
                         lines = ','.join(lines)
                         error_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
                     else:
