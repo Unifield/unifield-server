@@ -152,7 +152,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # If yes, get its analytic distribution
         if len(emp_ids) and len(emp_ids) == 1:
             employee = self.pool.get('hr.employee').browse(cr, uid, emp_ids)[0]
-            if employee.destination_id and employee.destination_id.id in [x and x.id for x in account.destination_ids]:
+            if employee.destination_id and employee.destination_id.id:
                 vals.update({
                     'destination_id_first_value': employee.destination_id.id,
                     'destination_id': employee.destination_id.id
@@ -164,11 +164,6 @@ class hq_entries_import_wizard(osv.osv_memory):
                 })
             if employee.funding_pool_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, employee.funding_pool_id.id)
-                if vals.get('cost_center_id') in [x and x.id for x in fp.cost_center_ids]:
-                    vals.update({
-                        'analytic_id_first_value': employee.funding_pool_id.id,
-                        'analytic_id': employee.funding_pool_id.id,
-                    })
             if employee.free1_id:
                 vals.update({
                     'free1_id': employee.free1_id.id,

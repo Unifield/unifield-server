@@ -1025,7 +1025,7 @@ class account_bank_statement_line(osv.osv):
             employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
             if is_expense and employee.cost_center_id:
                 # Create a distribution
-                destination_id = account.default_destination_id and account.default_destination_id.id or False
+                destination_id = (employee.destination_id and employee.destination_id.id) or (account.default_destination_id and account.default_destination_id.id) or False
                 cc_id = employee.cost_center_id and employee.cost_center_id.id or False
                 fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
                 f1_id = employee.free1_id and employee.free1_id.id or False
