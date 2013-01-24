@@ -309,6 +309,15 @@ class product_attributes(osv.osv):
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
         fo_line_obj = self.pool.get('sale.order.line')
+        move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.item')
+        auto_supply_obj = self.pool.get('stock.warehouse.automatic.supply')
+        auto_supply_line_obj = self.pool.get('stock.warehouse.automatic.supply.line')
+        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
+        cycle_line_obj = self.pool.get('stock.warehouse.order.cycle.line')
+        threshold_obj = self.pool.get('threshold.value')
+        threshold_line_obj = self.pool.get('threshold.value.line')
+        orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
         error_obj = self.pool.get('product.deactivation.error')
         error_line_obj = self.pool.get('product.deactivation.error.line')
         
@@ -341,12 +350,18 @@ class product_attributes(osv.osv):
             if has_fo_line:
                 opened_object = True
                 
-            # Check if the product is in an internal moves
-            #has_int_line = self.pool.get('stock.move').search(cr, uid, [('product_id', '=', product.id),
-            #                                                            ('picking_id.type', '=', 'internal'),
-            #                                                            ('picking.state', 'not in', ['draft', 'done', 'cancel'])])
-            #if has_int_line:
-            #    opened_object = True
+            # Check if the product is in stock picking
+            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                      ('picking_id', '!=', False),
+                                                      #('picking_id.shipment_id', '=', False),
+                                                      ('picking_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            if has_move_line:
+                opened_object = True
+                
+            # Check if the product is in a kit composition
+            has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id)], context=context)
+            if has_kit:
+                opened_object = True
             
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
@@ -390,6 +405,51 @@ class product_attributes(osv.osv):
                                                         'doc_ref': fo_line.order_id.name,
                                                         'doc_id': fo_line.order_id.id}, context=context)
                         
+                # Create lines for error in picking
+                pick_ids = []
+                ship_ids = []
+                pick_type = {'in': 'Incoming shipment',
+                             'internal': 'Internal move',
+                             'out': 'Delivery Order'}
+                pick_subtype = {'standard': 'Delivery Order', 
+                                'picking': 'Picking Ticket', 
+                                'ppl': 'PPL', 
+                                'packing': 'Packing'}
+                for move in move_obj.browse(cr, uid, has_move_line, context=context):
+                    # Get the name of the stock.picking object
+                    picking_id = move.picking_id.id
+                    picking_name = move.picking_id.name
+                    picking_type = pick_type.get(move.picking_id.type)
+                    if move.picking_id.type == 'out':
+                        picking_type = pick_subtype.get(move.picking_id.subtype)
+                    
+                    # If the error picking is in a shipment, display the shipment instead of the picking
+                    if move.picking_id.shipment_id and move.picking_id.id not in ship_ids:
+                        ship_ids.append(move.picking_id.shipment_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Shipment',
+                                                        'internal_type': 'shipment',
+                                                        'doc_ref': move.picking_id.shipment_id.name,
+                                                        'doc_id': move.picking_id.shipment_id.id}, context=context)
+                        
+                    elif not move.picking_id.shipment_id and move.picking_id.id not in pick_ids:
+                        pick_ids.append(move.picking_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': picking_type,
+                                                        'internal_type': 'stock.picking',
+                                                        'doc_ref': move.picking_id.name,
+                                                        'doc_id': move.picking_id.id}, context=context)
+                        
+                # Create lines for error in kit composition
+                kit_ids = []
+                for kit in kit_obj.browse(cr, uid, has_kit, context=context):
+                    if kit.id not in kit_ids:
+                        kit_ids.append(kit.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Kit Composition',
+                                                        'internal_type': 'composition.kit',
+                                                        'doc_ref': kit.item_kit_id.name,
+                                                        'doc_id': kit.item_kit_id.id}, context=context)
                     
                 
                 return {'type': 'ir.actions.act_window',
@@ -399,7 +459,36 @@ class product_attributes(osv.osv):
                         'res_id': wizard_id,
                         'target': 'new',
                         'context': context}
+        
+        # Remove the replenishment rules associated to this product
+        # Automatic supply
+        auto_line_ids = auto_supply_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        for auto in auto_supply_line_obj.browse(cr, uid, auto_line_ids, context=context):
+            if len(auto.supply_id.line_ids) == 1:
+                auto_supply_obj.unlink(cr, uid, [auto.supply_id.id], context=context)
+            else:
+                auto_supply_line_obj.unlink(cr, uid, [auto.id], context=context)
                 
+        # Order cycle
+        cycle_ids = cycle_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        for cycle in cycle_line_obj.browse(cr, uid, cycle_ids, context=context):
+            if len(cycle.order_cycle_id.product_line_ids) == 1:
+                auto_supply_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
+            else:
+                auto_supply_line_obj.unlink(cr, uid, [cycle.id], context=context)
+                
+        # Threshold value
+        threshold_ids = threshold_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        for threshold in threshold_line_obj.browse(cr, uid, threshold_ids, context=context):
+            if len(threshold.threshold_value_id.line_ids) == 1:
+                auto_supply_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
+            else:
+                auto_supply_line_obj.unlink(cr, uid, [threshold.id], context=context)
+                
+        # Minimum stock rules
+        orderpoint_ids = orderpoint_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        orderpoint_obj.unlink(cr, uid, orderpoint_ids, context=context)
+        
         self.write(cr, uid, ids, {'active': False}, context=context)
         
         return True
@@ -440,7 +529,7 @@ class product_attributes(osv.osv):
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
     
-    _constraints = [
+    _constraints = [ 
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
 

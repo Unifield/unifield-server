@@ -189,10 +189,18 @@ class purchase_order(osv.osv):
                                                                                ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
         
         if inactive_lines:
-            line = self.pool.get('purchase.order.line').browse(cr, uid, inactive_lines[0])
-            obj = line.rfq_ok and _('Request for quotation') or _('Purchase order')
-            raise osv.except_osv(_('Error'), _('You cannot validate the %s %s because it contains a line with the inactive product [%s] %s')  
-                                 % (object, line.order_id.name, line.product_id.default_code, line.product_id.name))
+            error_products = ""
+            order_name = ''
+            product_ids = []
+            for line in self.pool.get('purchase.order.line').browse(cr, uid, inactive_lines):
+                order_name = line.order_id.name
+                if line.product_id.id not in product_ids:
+                    product_ids.append(line.product_id.id)
+                    error_products = "%s \n * [%s] %s" % (error_products, line.product_id.default_code, line.product_id.name)
+            obj = line.rfq_ok and _('Request for quotation') or _('Purchase order')          
+            raise osv.except_osv(_('Error'), _('''You cannot validate the %s %s because it contains some inactivated products. 
+\n
+If you want to validate this document you have to remove the lines containing those inactive products : %s''') % (obj, order_name, error_products))
         
         return True
     
