@@ -487,11 +487,12 @@ class product_deactivation_error_line(osv.osv_memory):
         
         for line in self.browse(cr, uid, ids, context=context):
             return {'type': 'ir.actions.act_window',
-                    'res_model': line.internal_tye,
+                    'res_model': line.internal_type,
                     'res_id': line.doc_id,
                     'view_mode': 'form,tree',
                     'view_type': 'form',
                     'target': 'current',
+                    'nodestroy': True,
                     'context': context}
 
 product_deactivation_error_line()
