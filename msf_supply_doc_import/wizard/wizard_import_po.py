@@ -27,7 +27,6 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
-from msf_supply_doc_import import check_line
 from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION
 from msf_order_date import TRANSPORT_TYPE
 
@@ -56,7 +55,6 @@ class purchase_line_import_xml_line(osv.osv_memory):
         'notes': fields.text('Notes'),
         'comment': fields.text('Comment'),
         'to_correct_ok': fields.boolean('To correct?'),
-        'warning_list': fields.text('Warning'),
         'error_list': fields.text('Error'),
         'text_error': fields.text('Text Error'),
         'show_msg_ok': fields.boolean('To show?'),
@@ -305,7 +303,6 @@ The columns should be in this values:
         purchase_obj = self.pool.get('purchase.order')
         to_write = {
             'error_list': [],
-            'warning_list': [],
             'to_correct_ok': False,
             'show_msg_ok': False,
             'comment': '',
@@ -400,13 +397,9 @@ The columns should be in this values:
             to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
 
         #  Comment
-        c_value = {}
         cell_nb = header_index['Comment']
-        c_value = check_line.comment_value(row=row, cell_nb=cell_nb, to_write=to_write, context=context)
-        to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
-        to_write.update({
-            'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
-        })
+        notes = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        to_write.update({'comment': notes})
         return to_write
 
     def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
