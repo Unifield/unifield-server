@@ -125,7 +125,7 @@ class stock_partial_picking(osv.osv_memory):
                             _('Can not process empty lines !'))
 
                 if partial_datas.has_key('move%s'%(move.move_id.id)) and move.quantity > 0:
-                    new_move_id = self.pool.get('stock.move').copy(cr, uid, move.move_id.id,{'product_qty': calc_qty, 'state':'assigned' })
+                    new_move_id = self.pool.get('stock.move').copy(cr, uid, move.move_id.id,{'product_qty': calc_qty, 'state':'assigned', 'line_number':move.line_number  })
                     old_move_id = self.pool.get('stock.move').browse(cr, uid, move.move_id.id )
                     self.pool.get('stock.move').write(cr, uid, [move.move_id.id], {'product_qty':old_move_id.product_qty - calc_qty })
                     new_move = self.pool.get('stock.move').browse(cr, uid, new_move_id)
