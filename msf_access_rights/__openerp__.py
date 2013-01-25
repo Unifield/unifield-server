@@ -36,7 +36,7 @@
         'menu/menu.xml',
         'data/groups.xml',
         'data/users.xml',
-        'security/ir.model.access.csv'
+        'security/ir.model.access.csv',
     ],
     "test": [
         'tests/rules.yml'

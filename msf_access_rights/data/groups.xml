@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
 	<data>
-		<record model="res.groups" id="msf_access_rights_field_access_rules_group">
+		<record model="res.groups" id="field_access_rule_group">
 			<field name="name">Field Access Rules Admin</field>
 		</record>
 	</data>
