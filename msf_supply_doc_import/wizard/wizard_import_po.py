@@ -317,8 +317,12 @@ The columns should be in this values:
         
         # Line
         cell_nb = header_index['Line*']
-        line_number = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-        to_write.update({'line_number': line_number})
+        try:
+            line_number = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
+            to_write.update({'line_number': line_number})
+        except ValueError, e:
+            to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.' % (product_qty, e)))
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Origin
         cell_nb = header_index['Origin']
@@ -332,8 +336,12 @@ The columns should be in this values:
 
         # Quantity
         cell_nb = header_index['Quantity*']
-        product_qty = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-        to_write.update({'product_qty': product_qty})
+        try:
+            product_qty = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
+            to_write.update({'product_qty': product_qty})
+        except ValueError, e:
+            to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.' % (product_qty, e)))
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
     
         # Product Code
         cell_nb = header_index['Product Code*']
@@ -358,8 +366,12 @@ The columns should be in this values:
 
         # Price
         cell_nb = header_index['Price*']
-        price_unit = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-        to_write.update({'price_unit': price_unit})
+        try:
+            price_unit = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
+            to_write.update({'price_unit': price_unit})
+        except ValueError, e:
+            to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.' % (price_unit, e)))
+            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Delivery Confirmed Date
         cell_nb = header_index['Delivery Confirmed Date*']
