@@ -948,7 +948,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
 
 _old_create = orm.orm.create
 _old_write = orm.orm.write
-_old_unlink = osv.osv.unlink
+_old_unlink = orm.orm.unlink
 
 def _audittrail_osv_method(self, old_method, method_name, cr, *args, **kwargs):
     """ General wrapper for osv methods """
@@ -1006,6 +1006,6 @@ def _audittrail_unlink(self, *args, **kwargs):
 
 orm.orm.create = _audittrail_create
 orm.orm.write = _audittrail_write
-osv.osv.unlink = _audittrail_unlink
+orm.orm.unlink = _audittrail_unlink
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
