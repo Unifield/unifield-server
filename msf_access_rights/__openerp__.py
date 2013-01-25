@@ -29,9 +29,6 @@
     synchronization propagation settings concerning the MSF synchronization 
     server hierarchy for models and specific fields of models.
     """,
-    "init": [
-        'security/ir.model.access.csv'
-    ],
     "update_xml": [
         'views/field_access_rule_view.xml',
         'views/field_access_rule_line_view.xml',
@@ -39,6 +36,7 @@
         'menu/menu.xml',
         'data/groups.xml',
         'data/users.xml',
+        'security/ir.model.access.csv'
     ],
     "test": [
         'tests/rules.yml'
