@@ -157,24 +157,21 @@ class ir_ui_view(osv.osv):
     
     def parse_view(self, view_xml_text, model_id=None, view_id=None, inherit_id=None):
         """
-        Pass viewxml to extract button objects for each button in the view
+        Pass view_xml_text to extract button objects for each button in the view (Ignore special and position buttons). Return _button_dict pseudo object
         """
         button_object_list = []
         view_xml = etree.fromstring(view_xml_text)
-        buttons = view_xml.xpath("//button")
+        buttons = view_xml.xpath("//button[ @type != 'special' and not (@position) ]")
         
         for button in buttons:
             
-            # ignore buttons with the position attribute
-            if button.attrib.get('position', False):
-                continue
-            
             name = button.attrib.get('name', '')
             label = button.attrib.get('string', '')
-            type = button.attrib.get('type', '')
             groups = button.attrib.get('groups','')
+            type = button.attrib.get('type', '').lower()
             
-            button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id, inherit_id))
+            if name:
+                button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id, inherit_id))
             
         return button_object_list
             
