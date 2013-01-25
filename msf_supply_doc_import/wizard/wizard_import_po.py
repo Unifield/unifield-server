@@ -29,6 +29,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
 from msf_supply_doc_import import check_line
 from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION
+from msf_order_date import TRANSPORT_TYPE
 
 
 class purchase_line_import_xml_line(osv.osv_memory):
@@ -42,6 +43,7 @@ class purchase_line_import_xml_line(osv.osv_memory):
     
     
     _columns = {
+        'order_id': fields.many2one('purchase.order', string='Purchase Order'),
         'line_ignored_ok': fields.boolean('Ignored?'),
         'file_line_number': fields.integer(string='File line numbers'),
         'line_number': fields.integer(string='Line number'),
@@ -50,19 +52,53 @@ class purchase_line_import_xml_line(osv.osv_memory):
         'product_qty': fields.float(digits=(16,2), string='Quantity'),
         'price_unit':fields.float(digits=(16,2), string='Price'),
         'confirmed_delivery_date': fields.date('Confirmed Delivery Date'),
-        'order_id': fields.many2one('purchase.order', string='Purchase Order'),
+        'origin': fields.char(size=64, string='Origin'),
+        'notes': fields.text('Notes'),
+        'comment': fields.text('Comment'),
         'to_correct_ok': fields.boolean('To correct?'),
         'warning_list': fields.text('Warning'),
         'error_list': fields.text('Error'),
         'text_error': fields.text('Text Error'),
         'show_msg_ok': fields.boolean('To show?'),
-        'comment': fields.text('Comment'),
     }
     _defaults = {
         'line_ignored_ok': False,
         }
     
 purchase_line_import_xml_line()
+
+
+class purchase_import_xml_line(osv.osv_memory):
+    """
+    This class is usefull only for the import:
+    - it helps using search function to find matching lines (between PO lines and file lines)
+    - it helps updating or spliting the lines because we can directly use the fields in vals
+    with a read.
+    """
+    _name = 'purchase.import.xml.line'
+    
+    
+    _columns = {
+        'file_line_number': fields.integer(string='File line numbers'),
+        'error_list': fields.text('Error'),
+        'line_ignored_ok': fields.boolean('Ignored?'),
+        'delivery_confirmed_date': fields.date('Confirmed Delivery Date'),
+        'partner_ref': fields.char('Supplier Reference', size=64),
+        'est_transport_lead_time': fields.float(digits=(16,2), string='Est. Transport Lead Time'),
+        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode'),
+        'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
+        'dest_address_id':fields.many2one('res.partner.address', 'Destination Address'),
+        'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address'),
+        'arrival_date': fields.date(string='Arrival date in the country'),
+        'incoterm_id': fields.many2one('stock.incoterms', string='Incoterm'),
+        'notes': fields.text('Notes'),
+        'to_correct_ok': fields.boolean('To correct?'),
+    }
+    _defaults = {
+        'line_ignored_ok': False,
+        }
+    
+purchase_import_xml_line()
 
 
 class wizard_import_po(osv.osv_memory):
@@ -97,8 +133,10 @@ class wizard_import_po(osv.osv_memory):
     
     _defaults = {
         'message': lambda *a : """
-        IMPORTANT : The first line will be ignored by the system.
+        IMPORTANT : The first line will be ignored by the system because it only contains the header values.
         The file should be in XML 2003 format.
+
+The Purchase Order will be updated with the first data line only (the one after the header values).
 
 The columns should be in this values:
 %s
@@ -159,7 +197,99 @@ The columns should be in this values:
                 return self.write(cr, uid, ids, vals, context), False
         return True, True
 
+    def get_po_header_row_values(self, cr, uid, ids, row, po_browse, header_index, context=None):
+        """
+        Get the PO values for the first line
+        """
+        partner_obj = self.pool.get('res.partner')
+        partner_address_obj = self.pool.get('res.partner.address')
+        incoterm_obj = self.pool.get('stock.incoterms')
+        to_write_po = {'error_list': [],}
+        # Delivery Confirmed Date (PO)*
+        cell_nb = header_index['Delivery Confirmed Date (PO)*']
+        delivery_confirmed_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if delivery_confirmed_date:
+            delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
+        to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
+        
+        # Supplier Reference
+        cell_nb = header_index['Supplier Reference']
+        partner_ref = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        to_write_po.update({'partner_ref': partner_ref})
+        
+        # Est. Transport Lead Time
+        cell_nb = header_index['Est. Transport Lead Time']
+        est_transport_lead_time = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
+        to_write_po.update({'est_transport_lead_time': est_transport_lead_time})
+        
+        # Transport Mode
+        cell_nb = header_index['Transport Mode']
+        transport_type = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        transport_type_value = [y for (x,y) in TRANSPORT_TYPE]
+        transport_type_key = [x for (x,y) in TRANSPORT_TYPE]
+        transport_type_reverse = [(y, x) for (x,y) in TRANSPORT_TYPE]
+        transport_type_dict_val = dict(transport_type_reverse)
+        if transport_type in transport_type_value:
+            to_write_po.update({'transport_type': transport_type_dict_val[transport_type]})
+        if transport_type in transport_type_key:
+            to_write_po.update({'transport_type': transport_type})
+        else:
+            # we set all the error in to_write
+            to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.' % transport_type_value))
+            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        
+        # Destination Partner and Destination Address go together
+        cell_nb = header_index['Destination Partner']
+        dest_partner_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        dest_partner_ids = partner_obj.search(cr, uid, [('name', '=', dest_partner_name)])
+        if dest_partner_ids:
+            dest_partner_id = dest_partner_ids[0]
+            dest_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
+            to_write_po.update({'dest_partner_id': dest_partner_id, 'dest_address_id': dest_address_id})
+        else:
+            to_write_po['error_list'].append(_('The %s does not exist in the Database.' % dest_partner_name))
+            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        
+        # Invoicing Address
+        cell_nb = header_index['Invoicing Address']
+        invoice_address_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        invoice_address_ids = partner_address_obj.search(cr, uid, [('name', '=', invoice_address_name)])
+        if invoice_address_ids:
+            invoice_address_id = invoice_address_ids[0]
+            to_write_po.update({'invoice_address_id': invoice_address_id})
+        else:
+            to_write_po['error_list'].append(_('The %s does not exist in the Database.' % invoice_address_name))
+            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        
+        # Arrival Date in the country
+        cell_nb = header_index['Arrival Date in the country']
+        arrival_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if arrival_date:
+            arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
+        to_write_po.update({'arrival_date': arrival_date})
+        
+        # Incoterm
+        cell_nb = header_index['Incoterm']
+        incoterm_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        incoterm_ids = incoterm_obj.search(cr, uid, [('name', '=', incoterm_name)])
+        if incoterm_ids:
+            incoterm_id = incoterm_ids[0]
+            to_write_po.update({'incoterm_id': incoterm_id})
+        else:
+            to_write_po['error_list'].append(_('The %s does not exist in the Database.' % incoterm_name))
+            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+
+        # Notes (PO)
+        cell_nb = header_index['Notes (PO)']
+        notes_po = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        to_write_po.update({'notes': notes_po})
+        
+        return to_write_po
+
     def get_po_row_values(self, cr, uid, ids, row, po_browse, header_index, context=None):
+        """
+        Get PO lines values
+        """
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         purchase_obj = self.pool.get('purchase.order')
@@ -171,7 +301,7 @@ The columns should be in this values:
             'comment': '',
             'confirmed_delivery_date': False,
         }
-        
+
         # Order Reference*
         cell_nb = header_index['Order Reference*']
         order_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -189,6 +319,16 @@ The columns should be in this values:
         cell_nb = header_index['Line*']
         line_number = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
         to_write.update({'line_number': line_number})
+
+        # Origin
+        cell_nb = header_index['Origin']
+        origin = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        to_write.update({'origin': origin})
+
+        # Notes
+        cell_nb = header_index['Notes']
+        notes = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        to_write.update({'origin': notes})
 
         # Quantity
         cell_nb = header_index['Quantity*']
@@ -258,7 +398,9 @@ The columns should be in this values:
         
         if context is None:
             context = {}
+        po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
+        import_po_obj = self.pool.get('purchase.import.xml.line')
         import_obj = self.pool.get('purchase.line.import.xml.line')
         context.update({'import_in_progress': True})
         start_time = time.time()
@@ -279,10 +421,33 @@ The columns should be in this values:
         rows = fileobj.getRows()
         rows.next()
         file_line_number = 0
-        total_line_num = len([row for row in file_obj.getRows()])
+        total_line_num = len([row for row in fileobj.getRows()])
+        first_row = True
         for row in rows:
             file_line_number += 1
             try:
+                # take values of po (first line only)
+                if first_row:
+                    to_write_po = self.get_po_header_row_values(cr, uid, ids, row, po_browse, header_index, context)
+                    if to_write_po['error_list']:
+                        import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
+                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write_po['error_list']))
+                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po['error_list'], line_num=False, context=context))
+                        ignore_lines += 1
+                    else:
+                        to_write_po.update({'file_line_number': file_line_number})
+                        po_import_id = import_po_obj.create(cr, uid, to_write_po)
+                        vals_po = import_po_obj.read(cr, uid, po_import_id)
+                        # We take only the not Null Value
+                        filtered_vals = {}
+                        for k, v in vals_po.iteritems():
+                            if v:
+                                filtered_vals.update({k: v})
+                        po_obj.write(cr, uid, po_id, filtered_vals, context)
+                        notif_list.append("Line %s of the Excel file updated the PO %s."
+                                          % (file_line_number, po_browse.name))
+                    first_row = False
+                # take values of po line
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
                 if to_write['error_list']:
                     import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
@@ -334,7 +499,12 @@ The columns should be in this values:
                         for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
                             vals = file_line
                             file_line_number = vals['file_line_number']
-                            pol_obj.write(cr, uid, pol_line.id, vals)
+                            # We take only the not Null Value
+                            filtered_vals = {}
+                            for k, v in vals.iteritems():
+                                if v:
+                                    filtered_vals.update({k: v})
+                            pol_obj.write(cr, uid, pol_line.id, filtered_vals)
                             notif_list.append("Line %s of the Excel file updated the PO line %s."
                                               % (file_line_number, pol_line.line_number))
                             complete_lines += 1
@@ -348,7 +518,12 @@ The columns should be in this values:
                             if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                                 import_values = import_obj.read(cr, uid, overlapping_lines)[0]
                                 file_line_number = import_values['file_line_number']
-                                pol_obj.write(cr, uid, pol_line.id, import_values)
+                                # We take only the not Null Value
+                                filtered_vals = {}
+                                for k, v in import_values.iteritems():
+                                    if v:
+                                        filtered_vals.update({k: v})
+                                pol_obj.write(cr, uid, pol_line.id, filtered_vals)
                                 notif_list.append("Line %s of the Excel file updated the line %s with the product %s in common."
                                                   % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                                 file_line_proceed.append(overlapping_lines[0])
@@ -356,8 +531,10 @@ The columns should be in this values:
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
                         for line in import_obj.read(cr, uid, same_file_line_nb):
                             if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
-                                # the file_line_number is equal to the index of the line in file_values
-                                error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (import_values['file_line_number'])
+                                import_values = import_obj.read(cr, uid, line['id'], ['file_line_number', 'product_id'])
+                                error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (import_values['file_line_number'],
+                                                                                        count_same_pol_line_nb, line_number,
+                                                                                        file_values[import_values['file_line_number']][header_index['Product Code*']])
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
@@ -372,7 +549,12 @@ The columns should be in this values:
                             import_values = file_line_read[0]
                             lines = [str(import_values['file_line_number'])]
                             import_values.update({'product_qty': product_qty})
-                            pol_obj.write(cr, uid, same_pol_line_nb, import_values)
+                            # We take only the not Null Value
+                            filtered_vals = {}
+                            for k, v in import_values.iteritems():
+                                if v:
+                                    filtered_vals.update({k: v})
+                            pol_obj.write(cr, uid, same_pol_line_nb, filtered_vals)
                             complete_lines += 1
                             for file_line in import_obj.browse(cr, uid, same_file_line_nb[1:len(same_file_line_nb)]):
                                 wizard_values = pol_obj.open_split_wizard(cr, uid, same_pol_line_nb, context)
@@ -401,7 +583,12 @@ The columns should be in this values:
                                 if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                                     import_values = import_obj.read(cr, uid, overlapping_lines)[0]
                                     file_line_number = import_values['file_line_number']
-                                    pol_obj.write(cr, uid, pol_line.id, import_values)
+                                    # We take only the not Null Value
+                                    filtered_vals = {}
+                                    for k, v in import_values.iteritems():
+                                        if v:
+                                            filtered_vals.update({k: v})
+                                    pol_obj.write(cr, uid, pol_line.id, filtered_vals)
                                     notif_list.append("Line %s of the Excel file updated the line %s with the product %s in common."
                                                       % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                                     file_line_proceed.append(overlapping_lines[0])
@@ -409,8 +596,11 @@ The columns should be in this values:
                             # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
                             for line in import_obj.read(cr, uid, same_file_line_nb):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
-                                    # the file_line_number is equal to the index of the line in file_values
-                                    error_log += "Line %s in the Excel file was added to the file of the lines with errors\n" % (import_values['file_line_number'])
+                                    import_values = import_obj.read(cr, uid, line['id'], ['file_line_number', 'product_id'])
+                                    error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (
+                                                                                        import_values['file_line_number'],
+                                                                                        count_same_pol_line_nb, line_number,
+                                                                                        file_values[import_values['file_line_number']][header_index['Product Code*']])
                                     data = file_values[line['file_line_number']].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
@@ -435,8 +625,8 @@ The columns should be in this values:
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
         except Exception, e:
-            error_exception = ('%s' % e)
-            self.write(cr, uid, ids, {'message': error_exception, 'state': 'draft'}, context=context)
+            error_exception = ('There is an error in the code, please notify the technical team: %s' % e)
+            self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
         finally:
             cr.commit()
             cr.close()

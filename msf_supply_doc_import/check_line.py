@@ -258,7 +258,7 @@ def compute_currency_value(cr, uid, **kwargs):
     browse_sale = kwargs.get('browse_sale', False)
     browse_purchase = kwargs.get('browse_purchase', False)
     # the cell number change between Internal Request and Sale Order
-    cell_nb = kwargs['cell_nb']
+    cell_nb = kwargs.get('cell_nb', 5)
     fc_id = False
     msg = ''
     try:
@@ -304,7 +304,7 @@ def comment_value(**kwargs):
     comment = kwargs['to_write']['comment']
     warning_list = kwargs['to_write']['warning_list']
     # the cell number change between Internal Request and Sale Order
-    cell_nb = kwargs['cell_nb']
+    cell_nb = kwargs.get('cell_nb', 7)
     try:
         if not row.cells[cell_nb]:
             warning_list.append("No comment was defined")

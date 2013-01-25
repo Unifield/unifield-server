@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-# if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, you also need to modify the method export_po_integration and get_po_row_values.
+# if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
 PO_COLUMNS_HEADER_FOR_INTEGRATION=[
 ('Line*', 'number'), ('Product Code*', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), 
 ('Delivery Confirmed Date*', 'string'), ('Order Reference*', 'string'), ('Delivery Confirmed Date (PO)*', 'string'),
