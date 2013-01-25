@@ -132,7 +132,7 @@ class wizard_import_po(osv.osv_memory):
     }
     
     _defaults = {
-        'message': lambda *a : """
+        'message': lambda *a : _("""
         IMPORTANT : The first line will be ignored by the system because it only contains the header values.
         The file should be in XML 2003 format.
 
@@ -140,7 +140,7 @@ The Purchase Order will be updated with the first data line only (the one after 
 
 The columns should be in this values:
 %s
-""" % (', \n'.join(columns_for_po_integration), ),
+""") % (', \n'.join(columns_for_po_integration), ),
         'state': lambda *a: 'draft',
     }
 
@@ -192,7 +192,7 @@ The columns should be in this values:
         """
         for k,v in header_index.items():
             if k not in columns_for_po_integration:
-                vals = {'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s' 
+                vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s') 
                                                    % (k, ', \n'.join(columns_for_po_integration))}
                 return self.write(cr, uid, ids, vals, context), False
         return True, True
@@ -225,7 +225,7 @@ The columns should be in this values:
                 est_transport_lead_time = float(cell_data)
                 to_write_po.update({'est_transport_lead_time': est_transport_lead_time})
             except ValueError, e:
-                to_write['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.' % (cell_data, e)))
+                to_write['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
         
         # Transport Mode
@@ -242,7 +242,7 @@ The columns should be in this values:
                 to_write_po.update({'transport_type': transport_type})
             elif transport_type not in transport_type_value and transport_type not in transport_type_key:
                 # we set all the error in to_write
-                to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.' % transport_type_value))
+                to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.') % transport_type_value)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Destination Partner and Destination Address go together
@@ -255,7 +255,7 @@ The columns should be in this values:
                 dest_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
                 to_write_po.update({'dest_partner_id': dest_partner_id, 'dest_address_id': dest_address_id})
             else:
-                to_write_po['error_list'].append(_('The Destination Partner %s does not exist in the Database.' % dest_partner_name))
+                to_write_po['error_list'].append(_('The Destination Partner %s does not exist in the Database.') % dest_partner_name)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Invoicing Address
@@ -267,7 +267,7 @@ The columns should be in this values:
                 invoice_address_id = invoice_address_ids[0]
                 to_write_po.update({'invoice_address_id': invoice_address_id})
             else:
-                to_write_po['error_list'].append(_('The Invoicing Address %s does not exist in the Database.' % invoice_address_name))
+                to_write_po['error_list'].append(_('The Invoicing Address %s does not exist in the Database.') % invoice_address_name)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Arrival Date in the country
@@ -286,7 +286,7 @@ The columns should be in this values:
                 incoterm_id = incoterm_ids[0]
                 to_write_po.update({'incoterm_id': incoterm_id})
             else:
-                to_write_po['error_list'].append(_('The Incoterm %s does not exist in the Database.' % incoterm_name))
+                to_write_po['error_list'].append(_('The Incoterm %s does not exist in the Database.') % incoterm_name)
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
 
         # Notes (PO)
@@ -318,10 +318,10 @@ The columns should be in this values:
         if order_name:
             order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
             if not order_ids:
-                to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.' % order_name))
+                to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.') % order_name)
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             elif order_ids[0] != po_browse.id:
-                to_write['error_list'].append(_('The Purchase Order %s does not correspond to the current one (%s).' % (order_name, po_browse.name)))
+                to_write['error_list'].append(_('The Purchase Order %s does not correspond to the current one (%s).') % (order_name, po_browse.name))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             elif order_ids[0] == po_browse.id:
                 to_write.update({'order_id': order_ids[0]})
@@ -334,7 +334,7 @@ The columns should be in this values:
                 line_number = int(cell_data)
                 to_write.update({'line_number': line_number})
             except ValueError, e:
-                to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.' % (cell_data, e)))
+                to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Origin
@@ -355,7 +355,7 @@ The columns should be in this values:
                 product_qty = float(cell_data)
                 to_write.update({'product_qty': product_qty})
             except ValueError, e:
-                to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.' % (cell_data, e)))
+                to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
     
         # Product Code
@@ -364,7 +364,7 @@ The columns should be in this values:
         if product_code:
             p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
             if not p_ids:
-                to_write['error_list'].append("The Product\'s Code %s is not found in the database."% (product_code))
+                to_write['error_list'].append(_("The Product\'s Code %s is not found in the database.") % product_code)
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             else:
                 default_code = p_ids[0]
@@ -378,7 +378,7 @@ The columns should be in this values:
             if product_uom:
                 to_write.update({'product_uom': product_uom[0]})
             else:
-                to_write['error_list'].append(_('The UOM %s was not found in the DataBase.' % cell_data))
+                to_write['error_list'].append(_('The UOM %s was not found in the DataBase.') % cell_data)
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Price
@@ -389,7 +389,7 @@ The columns should be in this values:
                 price_unit = float(cell_data)
                 to_write.update({'price_unit': price_unit})
             except ValueError, e:
-                to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.' % (cell_data, e)))
+                to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Delivery Confirmed Date
@@ -463,7 +463,7 @@ The columns should be in this values:
                     to_write_po = self.get_po_header_row_values(cr, uid, ids, row, po_browse, header_index, context)
                     if to_write_po['error_list']:
                         import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
-                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write_po['error_list']))
+                        error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number, ' '.join(to_write_po['error_list']))
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po['error_list'], line_num=False, context=context))
                     else:
                         to_write_po.update({'file_line_number': file_line_number})
@@ -475,14 +475,13 @@ The columns should be in this values:
                             if v:
                                 filtered_vals.update({k: v})
                         po_obj.write(cr, uid, po_id, filtered_vals, context)
-                        notif_list.append("Line %s of the Excel file updated the PO %s."
-                                          % (file_line_number, po_browse.name))
+                        notif_list.append(_("Line %s of the Excel file updated the PO %s." % (file_line_number, po_browse.name)))
                     first_row = False
                 # take values of po line
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
                 if to_write['error_list']:
                     import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
-                    error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write['error_list']))
+                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number, ' '.join(to_write['error_list']))
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                     ignore_lines += 1
                     processed_lines += 1
@@ -495,7 +494,7 @@ The columns should be in this values:
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
                     if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
                         import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
-                        error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n' % (file_line_number, line_number, po_browse.name)
+                        error_log += _('Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n') % (file_line_number, line_number, po_browse.name)
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                         ignore_lines += 1
                         processed_lines += 1
@@ -507,7 +506,7 @@ The columns should be in this values:
                 import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
                 osv_value = osv_error.value
                 osv_name = osv_error.name
-                error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_number, osv_name, osv_value)
+                error_log += _("Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n") % (file_line_number, osv_name, osv_value)
                 line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_number, context=context))
                 ignore_lines += 1
                 processed_lines += 1
@@ -543,7 +542,7 @@ The columns should be in this values:
                                 if v:
                                     filtered_vals.update({k: v})
                             pol_obj.write(cr, uid, pol_line.id, filtered_vals)
-                            notif_list.append("Line %s of the Excel file updated the PO line %s with the product %s."
+                            notif_list.append(_("Line %s of the Excel file updated the PO line %s with the product %s.")
                                               % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                             complete_lines += 1
                             processed_lines += 1
@@ -565,7 +564,7 @@ The columns should be in this values:
                                     if v:
                                         filtered_vals.update({k: v})
                                 pol_obj.write(cr, uid, pol_line.id, filtered_vals)
-                                notif_list.append("Line %s of the Excel file updated the line %s with the product %s in common."
+                                notif_list.append(_("Line %s of the Excel file updated the line %s with the product %s in common.")
                                                   % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                                 file_line_proceed.append(overlapping_lines[0])
                                 complete_lines += 1
@@ -575,7 +574,7 @@ The columns should be in this values:
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
                         for line in import_obj.read(cr, uid, same_file_line_nb):
                             if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
-                                error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (
+                                error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number'],
                                                                                         count_same_pol_line_nb, line_number,
                                                                                         file_values[line['file_line_number']][header_index['Product Code*']])
@@ -642,7 +641,7 @@ The columns should be in this values:
                                         if v:
                                             filtered_vals.update({k: v})
                                     pol_obj.write(cr, uid, pol_line.id, filtered_vals)
-                                    notif_list.append("Line %s of the Excel file updated the line %s with the product %s in common."
+                                    notif_list.append(_("Line %s of the Excel file updated the line %s with the product %s in common.")
                                                       % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                                     file_line_proceed.append(overlapping_lines[0])
                                     complete_lines += 1
@@ -652,7 +651,7 @@ The columns should be in this values:
                             # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
                             for line in import_obj.read(cr, uid, same_file_line_nb):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
-                                    error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (
+                                    error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number'],
                                                                                         count_same_pol_line_nb, line_number,
                                                                                         file_values[line['file_line_number']][header_index['Product Code*']])
@@ -665,9 +664,9 @@ The columns should be in this values:
             error_log += '\n'.join(error_list)
             notif_log += '\n'.join(notif_list)
             if error_log:
-                error_log = " ---------------------------------\n Errors report : \n" + error_log
+                error_log = _(" ---------------------------------\n Errors report : \n") + error_log
             if notif_log:
-                notif_log = "--------------------------------- \n Modifications report: \n" + notif_log
+                notif_log = _("--------------------------------- \n Modifications report: \n") + notif_log
             end_time = time.time()
             total_time = str(round(end_time-start_time)) + ' second(s)'
             message = ''' Importation completed in %s!
@@ -704,7 +703,7 @@ The columns should be in this values:
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
             po_id = wiz_read['po_id']
             if not wiz_read['file']:
-                return self.write(cr, uid, ids, {'message': "Nothing to import"})
+                return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
                 # iterator on rows
@@ -729,7 +728,7 @@ The columns should be in this values:
         msg_to_return = _("""
 Important, please do not update the Purchase Order %s
 Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-Otherwise, you can continue to use Unifield.""" % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name'])
+Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order').read(cr, uid, po_id, ['name'])['name']
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
 
     def dummy(self, cr, uid, ids, context=None):
@@ -743,7 +742,7 @@ Otherwise, you can continue to use Unifield.""" % self.pool.get('purchase.order'
             po_id = wiz_read['po_id']
             po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
+                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % po_name})
         return False
 
     def cancel(self, cr, uid, ids, context=None):
