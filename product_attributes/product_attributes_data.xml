@@ -20,10 +20,9 @@
 			<field name="name">Warning list</field>
 		</record>
 
-
-		<record model="product.international.status" id="int_1">
-			<field name="name">ITC</field>
-		</record>
+	<record model="product.international.status" id="int_1">
+		<field name="name">ITC</field>
+	</record>
 		<record model="product.international.status" id="int_2">
 			<field name="name">ESC</field>
 		</record>

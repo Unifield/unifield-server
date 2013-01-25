@@ -22,6 +22,10 @@
 from osv import fields, osv
 import re
 from tools.translate import _
+import logging
+import re
+import tools
+from os import path
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -117,6 +121,14 @@ product_country_restriction()
 
 class product_attributes(osv.osv):
     _inherit = "product.product"
+
+    def init(self, cr):
+        if hasattr(super(product_attributes, self), 'init'):
+            super(product_attributes, self).init(cr)
+        logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
+        pathname = path.join('product_attributes', 'product_attributes_data.xml')
+        file = tools.file_open(pathname)
+        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode='init', noupdate=False)
     
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -180,10 +192,8 @@ class product_attributes(osv.osv):
         'old_code' : fields.char('Old code', size=64),
         'new_code' : fields.char('New code', size=64),
 
-
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=True),
         'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
-
 
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
@@ -209,9 +219,7 @@ class product_attributes(osv.osv):
             ('l3','L3'),
             ('l4','L4')], 'Library'),
 
-
         'supply_source_ids': fields.many2many('product.supply.source','product_supply_source_rel','product_id','supply_source_id','Supply Source'),
-
 
         'sublist' : fields.char('Sublist', size=64),
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
@@ -250,8 +258,14 @@ class product_attributes(osv.osv):
         'controlled_substance': fields.boolean(string='Controlled substance'),
     }
     
+
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+        id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 0
+        res.update({'international_status': id })
+        return res
+
     _defaults = {
-        'international_status': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or False,
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
