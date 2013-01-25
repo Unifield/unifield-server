@@ -180,24 +180,6 @@ class purchase_order(osv.osv):
         'name': lambda *a: False,
     }
     
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the Purchase order contains a line with an inactive products
-        '''
-        inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                               ('order_id', 'in', ids),
-                                                                               ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
-        
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('products have') or _('product has')          
-            raise osv.except_osv(_('Error'), _('Some %s been incativated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red lines of the document)') % plural)
-            return False
-        return True
-    
-    _constraints = [
-        (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
-    ]
-    
     def _check_service(self, cr, uid, ids, vals, context=None):
         '''
         Avoid the saving of a PO with non service products on Service PO

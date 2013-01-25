@@ -38,6 +38,25 @@ class tender(osv.osv):
                                                 else you have to split the lines in several files and import each one by one.
                                                 """ % MAX_LINES_NB),
     }
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the tender contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
+                                                                       ('tender_id', 'in', ids),
+                                                                       ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            line = self.pool.get('tender.line').browse(cr, uid, inactive_lines[0])
+            raise osv.except_osv(_('Error'), _('You cannot generate RfQs from the tender %s because it contains a line with the inactive product [%s] %s')  
+                                 % (line.tender_id.name, line.product_id.default_code, line.product_id.name))
+        
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
+    ]
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
@@ -160,10 +179,42 @@ class tender_line(osv.osv):
     '''
     _inherit = 'tender.line'
     _description = 'Tender Line'
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.tender_id and line.tender_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': 'The product in line is inactive !'}
+                
+        return res    
+    
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'text_error': fields.text('Errors'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
+    
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
+    
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Raise error message
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.inactive_product and line.product_id:
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before generate RfQs.') % (line.product_id.default_code, line.product_id.name))
+            
+        return True
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']

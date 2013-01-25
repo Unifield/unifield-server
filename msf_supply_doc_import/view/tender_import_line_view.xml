@@ -12,6 +12,9 @@
                 <data>
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree/field[@name='state']" position="after" >
                     <field name="to_correct_ok" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
+                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
+                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                     <field name="text_error" attrs="{'invisible':[('to_correct_ok', '=', False)]}" readonly="1" />
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
@@ -23,7 +26,7 @@
                 </xpath>
                  -->
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
