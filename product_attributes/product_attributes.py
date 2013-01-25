@@ -311,6 +311,8 @@ class product_attributes(osv.osv):
         fo_line_obj = self.pool.get('sale.order.line')
         move_obj = self.pool.get('stock.move')
         kit_obj = self.pool.get('composition.item')
+        inv_obj = self.pool.get('stock.inventory.line')
+        in_inv_obj = self.pool.get('initial.stock.inventory.line')
         auto_supply_obj = self.pool.get('stock.warehouse.automatic.supply')
         auto_supply_line_obj = self.pool.get('stock.warehouse.automatic.supply.line')
         cycle_obj = self.pool.get('stock.warehouse.order.cycle')
@@ -327,7 +329,6 @@ class product_attributes(osv.osv):
         c.update({'location_id': internal_loc})
         
         for product in self.browse(cr, uid, ids, context=context):
-            opened_object = False
             # Raise an error if the product is already inactive
             if not product.active:
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
@@ -335,38 +336,39 @@ class product_attributes(osv.osv):
             # Check if the product is in some purchase order lines or request for quotation lines
             has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
-            if has_po_line:
-                opened_object = True
                 
             # Check if the product is in some tender lines
             has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
                                                                ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
-            if has_tender_line:
-                opened_object = True
                 
             # Check if the product is in field order lines or in internal request lines
             context.update({'procurement_request': True})
             has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
-            if has_fo_line:
-                opened_object = True
-                
+            
             # Check if the product is in stock picking
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
                                                       #('picking_id.shipment_id', '=', False),
                                                       ('picking_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
-            if has_move_line:
-                opened_object = True
+                
+            # Check if the product is in a stock inventory
+            has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                          ('inventory_id', '!=', False),
+                                                          ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            
+            # Check if the product is in an initial stock inventory
+            has_initial_inv_line = in_inv_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                          ('inventory_id', '!=', False),
+                                                          ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
                 
             # Check if the product is in a kit composition
             has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id)], context=context)
-            if has_kit:
-                opened_object = True
             
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
             
+            opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line
             if has_stock or opened_object:
                 # Create the error wizard
                 wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
@@ -449,6 +451,28 @@ class product_attributes(osv.osv):
                                                         'internal_type': 'composition.kit',
                                                         'doc_ref': kit.item_kit_id.name,
                                                         'doc_id': kit.item_kit_id.id}, context=context)
+                        
+                # Create lines for error in inventory
+                inv_ids = []
+                for inv in inv_obj.browse(cr, uid, has_inventory_line, context=context):
+                    if inv.inventory_id.id not in inv_ids:
+                        inv_ids.append(inv.inventory_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Physical Inventory',
+                                                        'internal_type': 'stock.inventory',
+                                                        'doc_ref': inv.inventory_id.name,
+                                                        'doc_id': inv.inventory_id.id}, context=context)
+                        
+                # Create lines for error in inventory
+                inv_ids = []
+                for inv in inv_obj.browse(cr, uid, has_inventory_line, context=context):
+                    if inv.inventory_id.id not in inv_ids:
+                        inv_ids.append(inv.inventory_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Initial stock inventory',
+                                                        'internal_type': 'initial.stock.inventory',
+                                                        'doc_ref': inv.inventory_id.name,
+                                                        'doc_id': inv.inventory_id.id}, context=context)
                 
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
