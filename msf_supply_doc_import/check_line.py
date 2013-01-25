@@ -131,7 +131,7 @@ def quantity_value(**kwargs):
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     try:
-        if not row.cells[2]:
+        if not row.cells[2] or str(row.cells[2]) == str(None):
             warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
         else:
             try:
