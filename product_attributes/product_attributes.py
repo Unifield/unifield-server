@@ -251,7 +251,7 @@ class product_attributes(osv.osv):
     }
     
     _defaults = {
-        'international_status': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_supply_doc_import', 'int_1') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_supply_doc_import', 'int_1')[1] or False,
+        'international_status': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or False,
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
