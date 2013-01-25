@@ -985,8 +985,8 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                or v[2]['name'] == 'Request for Quotation' \
-                or v[2]['name'] == 'Request For Quotation Excel Export' :
+                or v[1] == 'Request for Quotation' \
+                or v[1] == 'Request For Quotation Excel Export' :
                     new_values.append(v)
  
         return new_values
