@@ -240,7 +240,7 @@ The columns should be in this values:
                 to_write_po.update({'transport_type': transport_type_dict_val[transport_type]})
             if transport_type in transport_type_key:
                 to_write_po.update({'transport_type': transport_type})
-            else:
+            elif transport_type not in transport_type_value and transport_type not in transport_type_key:
                 # we set all the error in to_write
                 to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.' % transport_type_value))
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
