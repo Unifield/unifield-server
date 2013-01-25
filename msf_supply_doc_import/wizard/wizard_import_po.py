@@ -628,6 +628,8 @@ The columns should be in this values:
             error_exception = ('There is an error in the code, please notify the technical team: %s' % e)
             self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
         finally:
+            # we reset the PO to its original state ('confirmed')
+            po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
             cr.commit()
             cr.close()
 
@@ -635,6 +637,7 @@ The columns should be in this values:
         """
         Launch a thread for importing lines.
         """
+        po_obj = self.pool.get('purchase.order')
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
             po_id = wiz_read['po_id']
             if not wiz_read['file']:
@@ -656,6 +659,8 @@ The columns should be in this values:
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
+            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
+            po_obj.write(cr, uid, po_id, {'state': 'done'}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""
