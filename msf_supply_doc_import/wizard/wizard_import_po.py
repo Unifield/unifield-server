@@ -210,7 +210,7 @@ The columns should be in this values:
         delivery_confirmed_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
             delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
-        to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
+            to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
         
         # Supplier Reference
         cell_nb = header_index['Supplier Reference']
@@ -219,65 +219,75 @@ The columns should be in this values:
         
         # Est. Transport Lead Time
         cell_nb = header_index['Est. Transport Lead Time']
-        est_transport_lead_time = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-        to_write_po.update({'est_transport_lead_time': est_transport_lead_time})
+        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if cell_data:
+            try:
+                est_transport_lead_time = float(cell_data)
+                to_write_po.update({'est_transport_lead_time': est_transport_lead_time})
+            except ValueError, e:
+                to_write['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.' % (cell_data, e)))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
         
         # Transport Mode
         cell_nb = header_index['Transport Mode']
         transport_type = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        transport_type_value = [y for (x,y) in TRANSPORT_TYPE]
-        transport_type_key = [x for (x,y) in TRANSPORT_TYPE]
-        transport_type_reverse = [(y, x) for (x,y) in TRANSPORT_TYPE]
-        transport_type_dict_val = dict(transport_type_reverse)
-        if transport_type in transport_type_value:
-            to_write_po.update({'transport_type': transport_type_dict_val[transport_type]})
-        if transport_type in transport_type_key:
-            to_write_po.update({'transport_type': transport_type})
-        else:
-            # we set all the error in to_write
-            to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.' % transport_type_value))
-            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        if transport_type:
+            transport_type_value = [y for (x,y) in TRANSPORT_TYPE]
+            transport_type_key = [x for (x,y) in TRANSPORT_TYPE]
+            transport_type_reverse = [(y, x) for (x,y) in TRANSPORT_TYPE]
+            transport_type_dict_val = dict(transport_type_reverse)
+            if transport_type in transport_type_value:
+                to_write_po.update({'transport_type': transport_type_dict_val[transport_type]})
+            if transport_type in transport_type_key:
+                to_write_po.update({'transport_type': transport_type})
+            else:
+                # we set all the error in to_write
+                to_write_po['error_list'].append(_('The Transport Mode Value should be in %s.' % transport_type_value))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Destination Partner and Destination Address go together
         cell_nb = header_index['Destination Partner']
         dest_partner_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        dest_partner_ids = partner_obj.search(cr, uid, [('name', '=', dest_partner_name)])
-        if dest_partner_ids:
-            dest_partner_id = dest_partner_ids[0]
-            dest_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
-            to_write_po.update({'dest_partner_id': dest_partner_id, 'dest_address_id': dest_address_id})
-        else:
-            to_write_po['error_list'].append(_('The %s does not exist in the Database.' % dest_partner_name))
-            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        if dest_partner_name:
+            dest_partner_ids = partner_obj.search(cr, uid, [('name', '=', dest_partner_name)])
+            if dest_partner_ids:
+                dest_partner_id = dest_partner_ids[0]
+                dest_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
+                to_write_po.update({'dest_partner_id': dest_partner_id, 'dest_address_id': dest_address_id})
+            else:
+                to_write_po['error_list'].append(_('The Destination Partner %s does not exist in the Database.' % dest_partner_name))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Invoicing Address
         cell_nb = header_index['Invoicing Address']
         invoice_address_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        invoice_address_ids = partner_address_obj.search(cr, uid, [('name', '=', invoice_address_name)])
-        if invoice_address_ids:
-            invoice_address_id = invoice_address_ids[0]
-            to_write_po.update({'invoice_address_id': invoice_address_id})
-        else:
-            to_write_po['error_list'].append(_('The %s does not exist in the Database.' % invoice_address_name))
-            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        if invoice_address_name:
+            invoice_address_ids = partner_address_obj.search(cr, uid, [('name', '=', invoice_address_name)])
+            if invoice_address_ids:
+                invoice_address_id = invoice_address_ids[0]
+                to_write_po.update({'invoice_address_id': invoice_address_id})
+            else:
+                to_write_po['error_list'].append(_('The Invoicing Address %s does not exist in the Database.' % invoice_address_name))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Arrival Date in the country
         cell_nb = header_index['Arrival Date in the country']
         arrival_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
             arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
-        to_write_po.update({'arrival_date': arrival_date})
+            to_write_po.update({'arrival_date': arrival_date})
         
         # Incoterm
         cell_nb = header_index['Incoterm']
         incoterm_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        incoterm_ids = incoterm_obj.search(cr, uid, [('name', '=', incoterm_name)])
-        if incoterm_ids:
-            incoterm_id = incoterm_ids[0]
-            to_write_po.update({'incoterm_id': incoterm_id})
-        else:
-            to_write_po['error_list'].append(_('The %s does not exist in the Database.' % incoterm_name))
-            to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+        if incoterm_name:
+            incoterm_ids = incoterm_obj.search(cr, uid, [('name', '=', incoterm_name)])
+            if incoterm_ids:
+                incoterm_id = incoterm_ids[0]
+                to_write_po.update({'incoterm_id': incoterm_id})
+            else:
+                to_write_po['error_list'].append(_('The Incoterm %s does not exist in the Database.' % incoterm_name))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
 
         # Notes (PO)
         cell_nb = header_index['Notes (PO)']
@@ -305,24 +315,27 @@ The columns should be in this values:
         # Order Reference*
         cell_nb = header_index['Order Reference*']
         order_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
-        if not order_ids:
-            to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.' % order_name))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
-        elif order_ids[0] != po_browse.id:
-            to_write['error_list'].append(_('The Purchase Order %s does not correspond to the current one (%s).' % (order_name, po_browse.name)))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
-        elif order_ids[0] == po_browse.id:
-            to_write.update({'order_id': order_ids[0]})
+        if order_name:
+            order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
+            if not order_ids:
+                to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.' % order_name))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+            elif order_ids[0] != po_browse.id:
+                to_write['error_list'].append(_('The Purchase Order %s does not correspond to the current one (%s).' % (order_name, po_browse.name)))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+            elif order_ids[0] == po_browse.id:
+                to_write.update({'order_id': order_ids[0]})
         
         # Line
         cell_nb = header_index['Line*']
-        try:
-            line_number = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-            to_write.update({'line_number': line_number})
-        except ValueError, e:
-            to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.' % (product_qty, e)))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if cell_data:
+            try:
+                line_number = int(cell_data)
+                to_write.update({'line_number': line_number})
+            except ValueError, e:
+                to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.' % (cell_data, e)))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Origin
         cell_nb = header_index['Origin']
@@ -336,49 +349,55 @@ The columns should be in this values:
 
         # Quantity
         cell_nb = header_index['Quantity*']
-        try:
-            product_qty = float(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-            to_write.update({'product_qty': product_qty})
-        except ValueError, e:
-            to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.' % (product_qty, e)))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+        cell_data=row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if cell_data:
+            try:
+                product_qty = float(cell_data)
+                to_write.update({'product_qty': product_qty})
+            except ValueError, e:
+                to_write['error_list'].append(_('The Quantity %s has a wrong format. Details: %s.' % (cell_data, e)))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
     
         # Product Code
         cell_nb = header_index['Product Code*']
         product_code = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
-        if not p_ids:
-            to_write['error_list'].append("The Product\'s Code %s is not found in the database."% (product_code))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
-        else:
-            default_code = p_ids[0]
-            to_write.update({'product_id': default_code})
+        if product_code:
+            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+            if not p_ids:
+                to_write['error_list'].append("The Product\'s Code %s is not found in the database."% (product_code))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+            else:
+                default_code = p_ids[0]
+                to_write.update({'product_id': default_code})
 
         # UOM
         cell_nb = header_index['UoM*']
         cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)])
-        if product_uom:
-            to_write.update({'product_uom': product_uom[0]})
-        else:
-            to_write['error_list'].append(_('The UOM %s was not found in the DataBase.' % cell_data))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+        if cell_data:
+            product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)])
+            if product_uom:
+                to_write.update({'product_uom': product_uom[0]})
+            else:
+                to_write['error_list'].append(_('The UOM %s was not found in the DataBase.' % cell_data))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Price
         cell_nb = header_index['Price*']
-        try:
-            price_unit = int(row.cells and row.cells[cell_nb] and row.cells[cell_nb].data)
-            to_write.update({'price_unit': price_unit})
-        except ValueError, e:
-            to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.' % (price_unit, e)))
-            to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if cell_data:
+            try:
+                price_unit = float(cell_data)
+                to_write.update({'price_unit': price_unit})
+            except ValueError, e:
+                to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.' % (cell_data, e)))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Delivery Confirmed Date
         cell_nb = header_index['Delivery Confirmed Date*']
         confirmed_delivery_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
             confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
-        to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
+            to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
 
         #  Comment
         c_value = {}
