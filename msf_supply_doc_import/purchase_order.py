@@ -261,11 +261,40 @@ class purchase_order_line(osv.osv):
     '''
     _inherit = 'purchase.order.line'
     _description = 'Purchase Order Line'
+    
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': 'The product in line is inactive !'}
+                
+        return res
+    
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'show_msg_ok': fields.boolean('Info on importation of lines'),
         'text_error': fields.text('Errors when trying to import file'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
+    
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Raise error message
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.inactive_product and line.product_id:
+                obj_name = line.order_id.rfq_ok and _('Request for Quotation') or _('Purchase Order')
+                raise osv.except_osv(_('Errro'), _('The product [%s] %s is inactive. You must change it by an active product before validate the %s.') % (line.product_id.default_code, line.product_id.name, obj_name))
+            
+        return True
 
     def check_line_consistency(self, cr, uid, ids, *args, **kwargs):
         """
