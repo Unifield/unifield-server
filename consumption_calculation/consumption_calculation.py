@@ -48,13 +48,14 @@ class real_average_consumption(osv.osv):
             
         return res
 
-
     def unlink(self, cr, uid, ids, context=None):
         '''
         Display a message to the user if the report has been confirmed
         and stock moves has been generated
         '''
         for report in self.browse(cr, uid, ids, context=context):
+            if report.state == 'done':
+                raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
                     raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
@@ -112,13 +113,15 @@ class real_average_consumption(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
+        'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),], string="State", readonly=True),
     }
-    
+
     _defaults = {
         'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'state': 'draft',
     }
 
     _sql_constraints = [
@@ -197,7 +200,7 @@ class real_average_consumption(osv.osv):
                                                                          'date': date,
                                                                          'reason_type_id': reason_type_id}, context=context)
             
-            self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
+            self.write(cr, uid, [rac.id], {'created_ok': True, }, context=context)
             for line in rac.line_ids:
                 if line.consumed_qty != 0.00:
                     move_id = move_obj.create(cr, uid, {'name': '%s/%s' % (rac.name, line.product_id.name),
@@ -212,11 +215,11 @@ class real_average_consumption(osv.osv):
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
-                                                       'reason_type_id': reason_type_id})
+                                                        'reason_type_id': reason_type_id})
                     move_ids.append(move_id)
                     line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
-            self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
+            self.write(cr, uid, [rac.id], {'picking_id': picking_id, 'state': 'done'}, context=context)
 
             # Confirm the picking
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)

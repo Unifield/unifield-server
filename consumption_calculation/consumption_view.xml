@@ -77,7 +77,10 @@
                     <field name="created_ok" invisible="1" />
                     <group colspan="4" col="6">
                         <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('created_ok', '=', True)]}" />
-                        <button name="save_and_process" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <button name="process_moves" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    </group>
+                    <group colspan="4" >
+		 	<field name="state" />
                     </group>
                 </form>
             </field>
@@ -109,6 +112,7 @@
                     <field name="period_to" />
                     <field name="nb_lines" />
                     <field name="created_ok" />
+		 	<field name="state" />
                     <field name="sublist_id" invisible="1" />
                     <field name="nomen_manda_0" invisible="1" />
                     <field name="nomen_manda_1" invisible="1" />
