@@ -434,9 +434,6 @@ The columns should be in this values:
                         import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
                         error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write_po['error_list']))
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po['error_list'], line_num=False, context=context))
-                        ignore_lines += 1
-                        processed_lines += 1
-                        percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     else:
                         to_write_po.update({'file_line_number': file_line_number})
                         po_import_id = import_po_obj.create(cr, uid, to_write_po)
@@ -482,7 +479,8 @@ The columns should be in this values:
                 error_log += "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n" % (file_line_number, osv_name, osv_value)
                 line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_number, context=context))
                 ignore_lines += 1
-                continue
+                processed_lines += 1
+                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
             finally:
                 self.write(cr, uid, ids, {'percent_completed':percent_completed})
         try:
@@ -546,10 +544,10 @@ The columns should be in this values:
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
                         for line in import_obj.read(cr, uid, same_file_line_nb):
                             if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
-                                import_values = import_obj.read(cr, uid, line['id'], ['file_line_number', 'product_id'])
-                                error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (import_values['file_line_number'],
+                                error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (
+                                                                                        line['file_line_number'],
                                                                                         count_same_pol_line_nb, line_number,
-                                                                                        file_values[import_values['file_line_number']][header_index['Product Code*']])
+                                                                                        file_values[line['file_line_number']][header_index['Product Code*']])
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
@@ -623,11 +621,10 @@ The columns should be in this values:
                             # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
                             for line in import_obj.read(cr, uid, same_file_line_nb):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
-                                    import_values = import_obj.read(cr, uid, line['id'], ['file_line_number', 'product_id'])
                                     error_log += """Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""" % (
-                                                                                        import_values['file_line_number'],
+                                                                                        line['file_line_number'],
                                                                                         count_same_pol_line_nb, line_number,
-                                                                                        file_values[import_values['file_line_number']][header_index['Product Code*']])
+                                                                                        file_values[line['file_line_number']][header_index['Product Code*']])
                                     data = file_values[line['file_line_number']].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
@@ -654,9 +651,9 @@ The columns should be in this values:
                 file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
-        except Exception, e:
-            error_exception = ('There is an error in the code, please notify the technical team: %s' % e)
-            self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
+#        except Exception, e:
+#            error_exception = ('There is an error in the code, please notify the technical team: %s' % e)
+#            self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
         finally:
             # we reset the PO to its original state ('confirmed')
             po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
