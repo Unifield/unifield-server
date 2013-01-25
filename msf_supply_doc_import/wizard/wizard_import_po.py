@@ -342,7 +342,7 @@ The columns should be in this values:
         # Notes
         cell_nb = header_index['Notes']
         notes = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        to_write.update({'origin': notes})
+        to_write.update({'notes': notes})
 
         # Quantity
         cell_nb = header_index['Quantity*']
@@ -398,8 +398,8 @@ The columns should be in this values:
 
         #  Comment
         cell_nb = header_index['Comment']
-        notes = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        to_write.update({'comment': notes})
+        comment = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        to_write.update({'comment': comment})
         return to_write
 
     def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
