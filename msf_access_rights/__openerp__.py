@@ -38,6 +38,7 @@
         'menu/menu.xml',
         'menu/view_config.xml',
         'data/users.xml',
+        'data/groups.xml',
         'security/ir.model.access.csv',
         'wizards/wizards.xml',
     ],
