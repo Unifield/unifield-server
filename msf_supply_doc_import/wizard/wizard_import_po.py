@@ -409,7 +409,7 @@ The columns should be in this values:
         po_id = po_browse.id
         header_index = context['header_index']
 
-        ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
+        processed_lines, ignore_lines, complete_lines, lines_to_correct = 0, 0, 0, 0
         line_with_error, error_list, notif_list = [], [], []
         error_log, notif_log = '', ''
         
@@ -423,6 +423,7 @@ The columns should be in this values:
         file_line_number = 0
         total_line_num = len([row for row in fileobj.getRows()])
         first_row = True
+        percent_completed = 0
         for row in rows:
             file_line_number += 1
             try:
@@ -434,6 +435,8 @@ The columns should be in this values:
                         error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write_po['error_list']))
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po['error_list'], line_num=False, context=context))
                         ignore_lines += 1
+                        processed_lines += 1
+                        percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     else:
                         to_write_po.update({'file_line_number': file_line_number})
                         po_import_id = import_po_obj.create(cr, uid, to_write_po)
@@ -454,6 +457,8 @@ The columns should be in this values:
                     error_log += 'Line %s in the Excel file was added to the file of the lines with errors: %s \n' % (file_line_number, ' '.join(to_write['error_list']))
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                     ignore_lines += 1
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                 else:
                     # we check consistency on the model of on_change functions to call for updating values
                     context.update({'po_integration': True})
@@ -465,6 +470,8 @@ The columns should be in this values:
                         error_log += 'Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n' % (file_line_number, line_number, po_browse.name)
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                         ignore_lines += 1
+                        processed_lines += 1
+                        percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     else:
                         to_write.update({'file_line_number': file_line_number})
                         import_obj.create(cr, uid, to_write)
@@ -476,6 +483,8 @@ The columns should be in this values:
                 line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=file_line_number, context=context))
                 ignore_lines += 1
                 continue
+            finally:
+                self.write(cr, uid, ids, {'percent_completed':percent_completed})
         try:
             # start importing lines
             sql_line_number = """
@@ -508,6 +517,9 @@ The columns should be in this values:
                             notif_list.append("Line %s of the Excel file updated the PO line %s."
                                               % (file_line_number, pol_line.line_number))
                             complete_lines += 1
+                            processed_lines += 1
+                            percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                            self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     # 2nd CASE
                     elif count_same_file_line_nb < count_same_pol_line_nb:
                         # if the product is the same: we update the corresponding line
@@ -528,6 +540,9 @@ The columns should be in this values:
                                                   % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                                 file_line_proceed.append(overlapping_lines[0])
                                 complete_lines += 1
+                                processed_lines += 1
+                                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
                         for line in import_obj.read(cr, uid, same_file_line_nb):
                             if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
@@ -538,6 +553,9 @@ The columns should be in this values:
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
+                                processed_lines += 1
+                                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     # 3rd CASE
                     elif count_same_file_line_nb > count_same_pol_line_nb:
                         if count_same_pol_line_nb == 1:
@@ -556,6 +574,9 @@ The columns should be in this values:
                                     filtered_vals.update({k: v})
                             pol_obj.write(cr, uid, same_pol_line_nb, filtered_vals)
                             complete_lines += 1
+                            processed_lines += 1
+                            percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                            self.write(cr, uid, ids, {'percent_completed':percent_completed})
                             for file_line in import_obj.browse(cr, uid, same_file_line_nb[1:len(same_file_line_nb)]):
                                 wizard_values = pol_obj.open_split_wizard(cr, uid, same_pol_line_nb, context)
                                 wiz_context = wizard_values.get('context')
@@ -572,6 +593,9 @@ The columns should be in this values:
                                                                         'product_id': file_line.product_id.id,
                                                                         'confirmed_delivery_date': file_line.confirmed_delivery_date})
                                 complete_lines += 1
+                                processed_lines += 1
+                                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
                             lines = ','.join(lines)
                             error_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
                         else:
@@ -593,6 +617,9 @@ The columns should be in this values:
                                                       % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                                     file_line_proceed.append(overlapping_lines[0])
                                     complete_lines += 1
+                                    processed_lines += 1
+                                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                             # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
                             for line in import_obj.read(cr, uid, same_file_line_nb):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
@@ -604,12 +631,15 @@ The columns should be in this values:
                                     data = file_values[line['file_line_number']].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
+                                    processed_lines += 1
+                                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
             error_log += '\n'.join(error_list)
             notif_log += '\n'.join(notif_list)
             if error_log:
-                error_log = " ---------------------------------\n Reported errors for ignored lines : \n" + error_log
+                error_log = " ---------------------------------\n Errors report : \n" + error_log
             if notif_log:
-                notif_log = "--------------------------------- \n The following lines were modified: \n" + notif_log
+                notif_log = "--------------------------------- \n Modifications report: \n" + notif_log
             end_time = time.time()
             total_time = str(round(end_time-start_time)) + ' second(s)'
             message = ''' Importation completed in %s!
