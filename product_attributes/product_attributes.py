@@ -345,6 +345,7 @@ class product_attributes(osv.osv):
                 opened_object = True
                 
             # Check if the product is in field order lines or in internal request lines
+            context.update({'procurement_request': True})
             has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             if has_fo_line:
@@ -417,8 +418,6 @@ class product_attributes(osv.osv):
                                 'packing': 'Packing'}
                 for move in move_obj.browse(cr, uid, has_move_line, context=context):
                     # Get the name of the stock.picking object
-                    picking_id = move.picking_id.id
-                    picking_name = move.picking_id.name
                     picking_type = pick_type.get(move.picking_id.type)
                     if move.picking_id.type == 'out':
                         picking_type = pick_subtype.get(move.picking_id.subtype)
@@ -446,11 +445,10 @@ class product_attributes(osv.osv):
                     if kit.id not in kit_ids:
                         kit_ids.append(kit.id)
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
-                                                        'type': 'Kit Composition',
+                                                        'type': kit.item_kit_id.composition_type == 'real' and 'Kit Composition' or 'Theorical Kit Composition',
                                                         'internal_type': 'composition.kit',
                                                         'doc_ref': kit.item_kit_id.name,
                                                         'doc_id': kit.item_kit_id.id}, context=context)
-                    
                 
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
@@ -562,6 +560,7 @@ class product_deactivation_error_line(osv.osv_memory):
         'internal_type': fields.char(size=64, string='Internal document type'),
         'doc_ref': fields.char(size=64, string='Reference'),
         'doc_id': fields.integer(string='Internal Reference'),
+        'view_id': fields.integer(string='Reference of the view to open'),
     }
     
     def open_doc(self, cr, uid, ids, context=None):
@@ -575,14 +574,40 @@ class product_deactivation_error_line(osv.osv_memory):
             ids = [ids]
         
         for line in self.browse(cr, uid, ids, context=context):
+            view_id, context = self._get_view(cr, uid, line, context=context)
             return {'type': 'ir.actions.act_window',
+                    'name': line.type,
                     'res_model': line.internal_type,
                     'res_id': line.doc_id,
                     'view_mode': 'form,tree',
                     'view_type': 'form',
                     'target': 'current',
+                    'view_id': view_id,
                     'nodestroy': True,
                     'context': context}
+
+    def _get_view(self, cr, uid, line, context=None):
+        '''
+        Return the good view according to the type of the object
+        '''
+        if not context:
+            context = {}
+            
+        view_id = False
+        obj = self.pool.get(line.internal_type).browse(cr, uid, line.doc_id)
+        
+        if line.internal_type == 'composition.kit':
+            context.update({'composition_type': 'theoretical'})
+            if obj.composition_type == 'real':
+                context.update({'composition_type': 'real'})
+        elif line.internal_type == 'stock.picking':
+            view_id = [self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, [line.doc_id], context=context, pick=obj)[1]]
+        elif line.internal_type == 'sale.order':
+            context.update({'procurement_request': obj.procurement_request})
+        elif line.internal_type == 'purchase.order':
+            context.update({'rfq_ok': obj.rfq_ok})
+                
+        return view_id, context
 
 product_deactivation_error_line()
 
