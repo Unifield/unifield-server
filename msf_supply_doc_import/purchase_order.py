@@ -354,7 +354,7 @@ class purchase_order_line(osv.osv):
         obj_data = self.pool.get('ir.model.data')
         to_write = kwargs['to_write']
         order_id = to_write['order_id']
-        text_error = to_write['text_error']
+        text_error = to_write.get('text_error', '')
         price_unit_defined = to_write.get('price_unit_defined', False)
         po_obj = self.pool.get('purchase.order')
         po = po_obj.browse(cr, uid, order_id, context=context)
