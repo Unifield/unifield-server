@@ -512,8 +512,8 @@ The columns should be in this values:
                                 if v:
                                     filtered_vals.update({k: v})
                             pol_obj.write(cr, uid, pol_line.id, filtered_vals)
-                            notif_list.append("Line %s of the Excel file updated the PO line %s."
-                                              % (file_line_number, pol_line.line_number))
+                            notif_list.append("Line %s of the Excel file updated the PO line %s with the product %s."
+                                              % (file_line_number, pol_line.line_number, pol_line.product_id.default_code))
                             complete_lines += 1
                             processed_lines += 1
                             percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
@@ -596,7 +596,7 @@ The columns should be in this values:
                                 self.write(cr, uid, ids, {'percent_completed':percent_completed})
                             lines = ','.join(lines)
                             error_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
-                        else:
+                        elif count_same_pol_line_nb > 1:
                             # if the product is the same: we update the corresponding line
                             file_line_proceed = []
                             for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
@@ -655,6 +655,11 @@ The columns should be in this values:
 #            error_exception = ('There is an error in the code, please notify the technical team: %s' % e)
 #            self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
         finally:
+            #we delete all the lines of the temporary obj
+            import_obj_ids = import_obj.search(cr, uid, [])
+            import_obj.unlink(cr, uid, import_obj_ids)
+            import_po_obj_ids = import_po_obj.search(cr, uid, [])
+            import_po_obj.unlink(cr, uid, import_po_obj_ids)
             # we reset the PO to its original state ('confirmed')
             po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
             cr.commit()
