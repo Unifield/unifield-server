@@ -12,9 +12,12 @@
                 <data>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree[@string='Sales Order Lines']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
+                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
+                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">

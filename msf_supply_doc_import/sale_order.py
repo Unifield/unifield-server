@@ -60,6 +60,26 @@ class sale_order(osv.osv):
                                                 else you have to split the lines in several files and import each one by one.
                                                 """ % MAX_LINES_NB),
     }
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the Purchase order contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('sale.order.line').search(cr, uid, [('product_id.active', '=', False),
+                                                                               ('order_id', 'in', ids),
+                                                                               ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            line = self.pool.get('sale.order.line').browse(cr, uid, inactive_lines[0])
+            obj = line.procurement_request and _('Internal Request') or _('Field order')
+            raise osv.except_osv(_('Error'), _('You cannot validate the %s %s because it contains a line with the inactive product [%s] %s')  
+                                 % (object, line.order_id.name, line.product_id.default_code, line.product_id.name))
+        
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
+    ]
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
@@ -355,11 +375,44 @@ class sale_order_line(osv.osv):
     '''
     _inherit = 'sale.order.line'
     _description = 'Sale Order Line'
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.order_id and line.order_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': 'The product in line is inactive !'}
+                
+        return res
+    
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'show_msg_ok': fields.boolean('Info on importation of lines'),
         'text_error': fields.text('Errors when trying to import file'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
+    
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
+    
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Raise error message
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.inactive_product and line.product_id:
+                obj_name = line.order_id.procurement_request and _('Internal request') or _('Field Order')
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before validate the %s.') % (line.product_id.default_code, line.product_id.name, obj_name))
+            
+        return True
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         """
