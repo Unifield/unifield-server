@@ -75,7 +75,7 @@
         <field name="uom_po_id" ref="product.product_uom_unit"/>
         <field name="categ_id" ref="product.cat0"/>
         <field name="active" eval="False" />
-        <field name="international_status" ref="int_1"/>
+        <field name="international_status" ref="msf_supply_doc_import.int_1"/>
     </record>
     
     <!-- Partner to be defined -->
