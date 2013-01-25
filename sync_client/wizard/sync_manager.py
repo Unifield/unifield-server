@@ -99,4 +99,24 @@ class sync_manager(osv.osv_memory):
             raise osv.except_osv(_('Error !'), 'You cannot perform this action now.')
         return {'type': 'ir.actions.act_window_close'}
 
+    def recover_data_and_messages(self, cr, uid, ids, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        try:
+            data = self.pull_all_data(cr, uid, ids, context=context)
+        except osv.except_osv:
+            raise osv.except_osv(_('Error !'), 'You cannot Recover Data right now.')
+        if not data:
+            raise osv.except_osv(_('Error !'), 'You cannot Recover Data right now.')
+
+        try:            
+            msgs = self.recover_message(cr, uid, ids, context=context)
+        except osv.except_osv:
+            raise osv.except_osv(_('Error !'), 'You cannot Recover Messages right now.')
+        if not msgs:
+            raise osv.except_osv(_('Error !'), 'You cannot Recover Messages right now.')
+        
+        return {'type': 'ir.actions.act_window_close'}
+
 sync_manager()
