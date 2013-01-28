@@ -469,7 +469,7 @@ class procurement_request_line(osv.osv):
         '''
         if context is None:
             context = {}
-        value = {}
+        value = {'comment': comment}
         domain = {}
         obj_data = self.pool.get('ir.model.data')
         tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]

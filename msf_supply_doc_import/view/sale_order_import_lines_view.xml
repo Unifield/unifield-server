@@ -12,9 +12,6 @@
                 <data>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree[@string='Sales Order Lines']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
-                    <field name="inactive_product" invisible="1" />
-                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
-                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree" position="attributes" >
                     <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
@@ -43,6 +40,21 @@
                     <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
                 </xpath>
                 </data>
+            </field>
+        </record>
+        
+        <record id="view_order_form_error" model="ir.ui.view">
+            <field name="name">sale.order.form.view.error</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="order_nomenclature.view_order_form" />
+            <field name="arch" type="xml">
+        		<xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree[@string='Sales Order Lines']//field[@name='comment']" position="replace"> 
+                	<field name="inactive_product" invisible="1" />
+                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
+                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                </xpath>
             </field>
         </record>
         

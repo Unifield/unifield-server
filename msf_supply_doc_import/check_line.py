@@ -232,7 +232,7 @@ def compute_date_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     try:
         if row.cells[5] and row.cells[5].type == 'datetime':
-            date_planned = row.cells[5].data
+            date_planned = str(row.cells[5].data).replace(',', '.')
         else:
             warning_list.append('The date format was not correct. The date from the header has been taken.')
     # if nothing is found at the line index (empty cell)

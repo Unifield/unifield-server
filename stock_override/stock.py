@@ -163,6 +163,17 @@ class stock_picking(osv.osv):
                 result[obj.id].update({'partner_type_stock_picking': obj.partner_id2.partner_type})
             
         return result
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = False
+            for line in pick.move_lines:
+                if line.inactive_product:
+                    res[pick.id] = True
+                    break
+        
+        return res
 
     _columns = {
         'state': fields.selection([
@@ -187,6 +198,7 @@ class stock_picking(osv.osv):
         'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
                                                       store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
                                                               'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -702,6 +714,20 @@ class stock_move(osv.osv):
                 return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
     
         return False
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': 'The product in line is inactive !'}
+                
+        return res  
 
     _columns = {
         'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
@@ -716,12 +742,26 @@ class stock_move(osv.osv):
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
     
     _defaults = {
         'location_dest_id': _default_location_destination,
         'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
     }
+    
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Raise error message
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.inactive_product and line.product_id:
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before confirm the move.') % (line.product_id.default_code, line.product_id.name))
+            
+        return True
     
     def create(self, cr, uid, vals, context=None):
         '''

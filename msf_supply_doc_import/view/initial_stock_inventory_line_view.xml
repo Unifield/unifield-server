@@ -15,7 +15,7 @@
                     <field name="comment" attrs="{'invisible': [('to_correct_ok', '=', True)]'}" />
                     <field name="inactive_product" invisible="1" />
                     <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
-                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                    <!-- <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" /> -->
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >
                     <attribute name="colors">red:to_correct_ok == True or err_msg!='' or inactive_product == True</attribute>
