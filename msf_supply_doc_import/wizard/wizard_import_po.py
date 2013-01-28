@@ -207,8 +207,12 @@ The columns should be in this values:
         cell_nb = header_index['Delivery Confirmed Date (PO)*']
         delivery_confirmed_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
-            delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
-            to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
+            try:
+                delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
+                to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
+            except ValueError, e:
+                to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)*" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Supplier Reference
         cell_nb = header_index['Supplier Reference']
@@ -272,8 +276,12 @@ The columns should be in this values:
         cell_nb = header_index['Arrival Date in the country']
         arrival_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
-            arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
-            to_write_po.update({'arrival_date': arrival_date})
+            try:
+                arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
+                to_write_po.update({'arrival_date': arrival_date})
+            except ValueError, e:
+                to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Details: %s.') % (arrival_date, e))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Incoterm
         cell_nb = header_index['Incoterm']
@@ -393,8 +401,12 @@ The columns should be in this values:
         cell_nb = header_index['Delivery Confirmed Date*']
         confirmed_delivery_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
-            confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
-            to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
+            try:
+                confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
+                to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
+            except ValueError, e:
+                to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
+                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         #  Comment
         cell_nb = header_index['Comment']
@@ -426,7 +438,7 @@ The columns should be in this values:
         pol_obj = self.pool.get('purchase.order.line')
         import_po_obj = self.pool.get('purchase.import.xml.line')
         import_obj = self.pool.get('purchase.line.import.xml.line')
-        context.update({'import_in_progress': True})
+        context.update({'import_in_progress': True, 'po_integration': True})
         start_time = time.time()
         wiz_browse = self.browse(cr, uid, ids, context)[0]
         po_browse = wiz_browse.po_id
@@ -472,25 +484,16 @@ The columns should be in this values:
                     first_row = False
                 # take values of po line
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
-                if to_write['error_list']:
+                # we check consistency on the model of on_change functions to call for updating values
+                to_write_check = pol_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
+                if to_write['error_list'] or to_write_check['text_error'].strip():
                     import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
-                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write['error_list']))
+                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write['error_list']) or to_write_check['text_error'])
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
                     ignore_lines += 1
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                 else:
-                    # we check consistency on the model of on_change functions to call for updating values
-                    context.update({'po_integration': True})
-                    to_write_check = pol_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
-                    if to_write_check['text_error']:
-                        import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
-                        error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, to_write['text_error'])
-                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
-                        ignore_lines += 1
-                        processed_lines += 1
-                        percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                        continue
                     line_number = to_write['line_number']
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
                     if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
