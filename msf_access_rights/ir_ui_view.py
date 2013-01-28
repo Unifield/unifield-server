@@ -186,6 +186,10 @@ class ir_ui_view(osv.osv):
     def _write_button_objects(self, cr, uid, buttons):
         rules_pool = self.pool.get('msf_access_rights.button_access_rule')
         for button in buttons:
-            rules_pool.create(cr, uid, button)
+            existing_rule_search = rules_pool.search(cr, uid, [('name','=',button['name']), ('view_id','=',button['view_id'])])
+            if not existing_rule_search:
+                rules_pool.create(cr, uid, button)
+            else:
+                logging.getLogger(self._name).warn('Existing Button Access Rule found for name %s and view %s' % (button['name'], button['view_id']))    
     
 ir_ui_view()
