@@ -83,7 +83,7 @@
     <Cell ss:StyleID="s62"><Data ss:Type="String">Quantity</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">UoM</Data></Cell>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Price</Data></Cell>
-    <Cell ss:StyleID="s62"><Data ss:Type="String">Delivery requested date</Data></Cell>
+    <Cell ss:StyleID="s62"><Data ss:Type="String">Delivery Requested Date</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s63"><Data ss:Type="String">ADAPPRINSB2</Data></Cell>

@@ -319,6 +319,7 @@ Importation completed in %s!
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
                         line_num-=1
+                        total_line_num -= 1
                         continue
     
                     # Cell 0: Product Code
@@ -447,13 +448,15 @@ Importation completed in %s!
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'fo_id': fo_id, 'header_index': header_index, 'object': sale_obj})
                 if wiz_browse.fo_id.procurement_request:
-                    if wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_ir_line_import):
-                        return False
+                    res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_ir_line_import)
+                    if not res:
+                        self.write(cr, uid, ids, res1, context)
                     thread = threading.Thread(target=self.import_internal_req, args=(cr.dbname, uid, ids, context))
                     thread.start()
                 else:
-                    if wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_fo_line_import):
-                        return False
+                    res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_fo_line_import)
+                    if not res:
+                        self.write(cr, uid, ids, res1, context)
                     thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
                     thread.start()
                 # we close the FO only during the import process so that the user can't update the FO in the same time (all fields are readonly)

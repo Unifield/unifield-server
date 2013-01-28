@@ -75,8 +75,8 @@ class wiz_common_import(osv.osv_memory):
             if k not in real_columns:
                 vals = {'state': 'draft',
                         'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' % (k, ','.join(real_columns))}
-                context.get('object').write(cr, uid, ids, vals, context)
-                return True
+                return False, vals
+        return True, True
 
     def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
         """

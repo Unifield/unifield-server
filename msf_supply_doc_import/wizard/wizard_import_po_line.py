@@ -28,7 +28,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 # For the the time logger function------
 import time
 from msf_supply_doc_import import check_line
-from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import, PO_COLUMNS_HEADER_FOR_IMPORT
 
 class wizard_import_po_line(osv.osv_memory):
     _name = 'wizard.import.po.line'
@@ -84,68 +84,6 @@ The columns should be in this values:
         res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
         return res
 
-    def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
-        lines_not_imported = kwargs.get('line_with_error') # list of list
-        header_index = kwargs.get('header_index')
-        data = header_index.items()
-        columns_header = []
-        for k,v in sorted(data, key=lambda tup: tup[1]):
-            columns_header.append((k, type(k)))
-        files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
-        return vals
-
-    def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        list_of_values = []
-        for cell_nb in range(len(row)):
-            cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context)
-            list_of_values.append(cell_data)
-        return list_of_values
-
-    def get_cell_data(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        cell_data = False
-        try:
-            line_content = row.cells
-        except ValueError:
-            line_content = row.cells
-        if line_content and row.cells[cell_nb] and row.cells[cell_nb].data:
-            cell_data = row.cells[cell_nb].data
-        return cell_data
-
-    def get_header_index(self, cr, uid, ids, row, error_list, line_num, context):
-        """
-        Return dict with {'header_name0': header_index0, 'header_name1': header_index1...}
-        """
-        header_dict = {}
-        for cell_nb in range(len(row.cells)):
-            header_dict.update({self.get_cell_data(cr, uid, ids, row, cell_nb, error_list, line_num, context): cell_nb})
-        return header_dict
-
-    def check_header_values(self, cr, uid, ids, context, header_index):
-        """
-        Check that the columns in the header will be taken into account.
-        """
-        for k,v in header_index.items():
-            if k not in columns_for_po_line_import:
-                vals = {'state': 'draft',
-                        'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' % (k, ','.join(columns_for_po_line_import))}
-                self.write(cr, uid, ids, vals, context)
-                return True
-#                raise osv.except_osv(_('Error'), _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
-#                                                   % (k, ', \n'.join(columns_for_po_line_import))))
-
-    def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
-        """
-        Catch the file values on the form [{values of the 1st line}, {values of the 2nd line}...]
-        """
-        file_values = []
-        for row in rows:
-            line_values = {}
-            for cell in enumerate(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context)):
-                line_values.update({cell[0]: cell[1]})
-            file_values.append(line_values)
-        return file_values
-
     def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
@@ -156,6 +94,7 @@ The columns should be in this values:
             context = {}
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
+        wiz_common_import = self.pool.get('wiz.common.import')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
@@ -170,11 +109,8 @@ The columns should be in this values:
             po_id = po_browse.id
             
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
-            line_ignored_num = []
-            error_list = []
-            error_log = ''
-            message = ''
-            line_num = 0
+            line_ignored_num, error_list = [], []
+            error_log, message = '', ''
             header_index = context['header_index']
             
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
@@ -212,13 +148,17 @@ The columns should be in this values:
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
                     message += """Line %s: You should have exactly %s columns in this order: %s \n""" % (line_num, template_col_count,','.join(columns_for_po_line_import))
-                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 try:
                     if not check_line.check_empty_line(row=row, col_count=col_count):
+                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                        self.write(cr, uid, ids, {'percent_completed': percent_completed})
+                        line_num-=1
+                        total_line_num -= 1
                         continue
     
                     # Cell 0: Product Code
@@ -278,7 +218,7 @@ The columns should be in this values:
 
                 except IndexError, e:
                     error_log += _("The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
-                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     continue
@@ -287,11 +227,11 @@ The columns should be in this values:
                     osv_name = osv_error.name
                     message += _("Line %s in your Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                     ignore_lines += 1
-                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 except Exception, e:
                     message += _("""Line %s: Uncaught error: %s""") % (line_num, e)
-                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 finally:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
@@ -313,7 +253,7 @@ Importation completed in %s!
 #        try:
         wizard_vals = {'message': final_message, 'state': 'done'}
         if line_with_error:
-            file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
+            file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)
@@ -326,6 +266,7 @@ Importation completed in %s!
         """
         Launch a thread for importing lines.
         """
+        wiz_common_import = self.pool.get('wiz.common.import')
         purchase_obj = self.pool.get('purchase.order')
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
             po_id = wiz_read['po_id']
@@ -338,10 +279,11 @@ Importation completed in %s!
                 reader_iterator = iter(reader)
                 # get first line
                 first_row = next(reader_iterator)
-                header_index = self.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
+                header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
-                if self.check_header_values(cr, uid, ids, context, header_index):
-                    return False
+                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_po_line_import)
+                if not res:
+                    return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
@@ -369,6 +311,24 @@ Otherwise, you can continue to use Unifield.""")
             if wiz_read['state'] != 'done':
                 self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
         return False
+
+    def cancel(self, cr, uid, ids, context=None):
+        '''
+        Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
+        I come back on the home page. Here, I come back on the object on which I opened the wizard.
+        '''
+        if isinstance(ids, (int, long)):
+            ids=[ids]
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form, tree',
+                'target': 'crush',
+                'res_id': po_id,
+                'context': context,
+                }
 
     def close_import(self, cr, uid, ids, context=None):
         '''

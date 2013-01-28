@@ -33,6 +33,12 @@ IR_COLUMNS_HEADER_FOR_IMPORT=[
 ('Currency', 'string'), ('Comment', 'string')]
 IR_COLUMNS_FOR_IMPORT = [x for (x, y) in IR_COLUMNS_HEADER_FOR_IMPORT]
 
+TENDER_COLUMNS_HEADER_FOR_IMPORT=[
+('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), 
+('Price', 'number'), ('Delivery Requested Date', 'DateTime')]
+TENDER_COLUMNS_FOR_IMPORT = [x for (x, y) in TENDER_COLUMNS_HEADER_FOR_IMPORT]
+
 import wizard_import_po_line
 import wizard_import_fo_line
 import wiz_common_import
+import wizard_import_tender_line

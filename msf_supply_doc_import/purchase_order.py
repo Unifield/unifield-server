@@ -73,7 +73,8 @@ class purchase_order(osv.osv):
 #                        res[var.id] = True
 #        return res
 
-    _columns = {
+# The field below were replaced by the wizard_import_fo_line (utp-113)
+#    _columns = {
 #        'file_to_import': fields.binary(string='File to import', filters='*.xml',
 #                                        help="""* You can use the template of the export for the format that you need to use.
 #                                                * The file should be in XML Spreadsheet 2003 format.
@@ -81,7 +82,7 @@ class purchase_order(osv.osv):
 #                                                else you have to split the lines in several files and import each one by one.
 #                                                """ % MAX_LINES_NB),
 #        'import_error_ok': fields.function(_get_import_error, method=True, type="boolean", string="Error in Import", store=True),
-    }
+#    }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
