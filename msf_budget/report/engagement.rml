@@ -1,10 +1,26 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(595.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
-    <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="42.0" width="539" height="756"/>
+
+    <template pageSize="(595.0,842.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
+
+        <pageGraphics>
+            <fill color="blue"/>
+            <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+            <image x="35" y="790.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="275" y="10.0">Page <pageNumber /></drawString>
+            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
+            <!--            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+        </pageGraphics>
+
     </pageTemplate>
-  </template>
+    </template>
+
+
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
@@ -96,7 +112,7 @@
     <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P8" fontName="Helvetica" fontSize="8.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="8.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="12.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="8.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P11" fontName="Helvetica" fontSize="8.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="8.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -153,11 +169,14 @@
   <story>
     <para style="P5">[[repeatIn(objects,'o')]]</para>
     <para style="P26">Order impact vs. budget</para>
-    <para style="P27">Report date: [[ time.strftime('%d/%m/%Y') ]]</para>
+    <para style="P27">        
+		<font color="white"> </font>
+	</para>
     <para style="P10">Delivery requested date: [[ (str(o.delivery_requested_date) and str(o.delivery_requested_date)) or '' ]]</para>
     <para style="P10">Delivery confirmed date: [[ (str(o.delivery_confirmed_date) and str(o.delivery_confirmed_date)) or '' ]]</para>
     <para style="P10">PO reference: [[ (o.name and o.name) or '' ]]</para>
     <para style="P10">Fiscal year: [[ (get_fiscal_year(o) and get_fiscal_year(o)) or ' ' ]]</para>
+    <para style="P10">Report date: [[ time.strftime('%d/%m/%Y') ]]</para>
     <para style="P5">
       <font color="white"> </font>
     </para>
@@ -167,9 +186,12 @@
     <para style="P5">
       <font color="white"> </font>
     </para>
-    <blockTable style="Table9">
-      <tr>
-        <td>
+
+
+
+
+
+
           <blockTable colWidths="115.0,115.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
               <tr>
                 <td>
@@ -195,9 +217,11 @@
                 </td>
               </tr>
           </blockTable>
+
+
           <blockTable colWidths="115.0,115.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
-            <tr>
               <para style="P20">[[ repeatIn(get_report_lines(o),'line', 'blockTable') ]]</para>
+            <tr>
               <td>
                 <para style="P3">[[ line[0] ]]</para>
               </td>
@@ -221,9 +245,9 @@
               </td>
             </tr>
           </blockTable>
-        </td>
-      </tr>
-    </blockTable>
+
+
+
     <para style="P5">
       <font color="white"> </font>
     </para>

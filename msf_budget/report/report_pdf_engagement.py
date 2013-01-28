@@ -24,6 +24,7 @@ import pooler
 import datetime
 from tools.translate import _
 from osv import osv
+import time
 
 class report_pdf_engagement(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -32,6 +33,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
             'get_fiscal_year': self.get_fiscal_year,
             'check_distribution': self.check_distribution,
             'get_report_lines': self.get_report_lines,
+            'time': time,
+            'locale': locale,
         })
         return
     
@@ -216,11 +219,12 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         formatted_line += [values[0]]
                     formatted_line += [locale.format("%d", value, grouping=True) for value in values[1:]]
                     res.append(formatted_line)
+
                 # empty line between cost centers
                 res.append([''] * 7)
             # append formatted total
             res.append(['TOTALS', ''] + [locale.format("%d", value, grouping=True) for value in total_values])
-                    
+   
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)
