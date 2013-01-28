@@ -40,7 +40,6 @@
         'data/users.xml',
         'data/groups.xml',
         'security/ir.model.access.csv',
-        'wizards/wizards.xml',
     ],
     "test": [
         'tests/rules.yml'

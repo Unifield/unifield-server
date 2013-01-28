@@ -26,6 +26,7 @@ from osv import fields
 from osv import orm
 import psycopg2
 from lxml import etree
+import logging
 
 class ir_ui_view(osv.osv):
     """
@@ -54,9 +55,13 @@ class ir_ui_view(osv.osv):
         Generate the button access rules for this view
         """
         view_id = super(ir_ui_view, self).create(cr, uid, vals, context=context)
-        model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',vals['model'])])[0]
-        buttons = self.parse_view(vals['arch'], model_id, view_id, vals.get('inherit_id', None))
-        self._write_button_objects(cr, 1, buttons)
+        view = self.browse(cr, 1, view_id)
+        model_id = self.pool.get('ir.model').search(cr, 1, [('model','=',view.model)])
+        if not model_id:
+            logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view_id))
+        else:
+            buttons = self.parse_view(vals['arch'], model_id[0], view_id, vals.get('inherit_id', None))
+            self._write_button_objects(cr, 1, buttons)
         return view_id
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -82,7 +87,7 @@ class ir_ui_view(osv.osv):
             try:
                 buttons = self.parse_view(xml)
             except ValueError as e:
-                print '================= Error when parsing view %s' % i
+                logging.getLogger(self._name).warn('Error when parsing view %s' % i)
                 print e
                 buttons = False
                 
@@ -131,6 +136,9 @@ class ir_ui_view(osv.osv):
                         if rules_search.count(id):
                             rules_search.remove(id)
                     rules_pool.write(cr, 1, rules_search, {'active':0})
+                else:
+                    logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view.id))
+        
         
         # perform the final writes to the views    
         super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
