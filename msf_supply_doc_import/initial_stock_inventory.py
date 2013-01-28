@@ -30,6 +30,71 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
+
+class stock_inventory(osv.osv):
+    _inherit = 'stock.inventory'
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the initial stock inventory contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('%s.line' % self._name).search(cr, uid, [('product_id.active', '=', False),
+                                                                                ('inventory_id', 'in', ids),
+                                                                                ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')       
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
+    ]
+    
+stock_inventory()
+
+
+class stock_inventory_line(osv.osv):
+    _inherit = 'stock.inventory.line'
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.inventory_id and line.inventory_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': 'The product in line is inactive !'}
+                
+        return res
+    
+    _columns = {
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
+    }
+    
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
+    
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Raise error message
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.inactive_product and line.product_id:
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before confirm the stock inventory.') % (line.product_id.default_code, line.product_id.name))
+            
+        return True
+    
+stock_inventory_line()
+
 class initial_stock_inventory(osv.osv):
     _inherit = 'initial.stock.inventory'
 
@@ -329,10 +394,42 @@ class initial_stock_inventory_line(osv.osv):
     override of initial_stock_inventory_line class
     '''
     _inherit = 'initial.stock.inventory.line'
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.inventory_id and line.inventory_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': 'The product in line is inactive !'}
+                
+        return res
+    
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'comment': fields.text('Comment', readonly=True),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
+    
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
+    
+    def get_error(self, cr, uid, ids, context=None):
+        '''
+        Raise error message
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.inactive_product and line.product_id:
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before confirm the stock inventory.') % (line.product_id.default_code, line.product_id.name))
+            
+        return True
 
     def create(self, cr, uid, vals, context=None):
         comment = ''

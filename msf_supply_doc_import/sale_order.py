@@ -66,19 +66,18 @@ class sale_order(osv.osv):
         Check if the Purchase order contains a line with an inactive products
         '''
         inactive_lines = self.pool.get('sale.order.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                               ('order_id', 'in', ids),
-                                                                               ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+                                                                           ('order_id', 'in', ids),
+                                                                           ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
         
         if inactive_lines:
-            line = self.pool.get('sale.order.line').browse(cr, uid, inactive_lines[0])
-            obj = line.procurement_request and _('Internal Request') or _('Field order')
-            raise osv.except_osv(_('Error'), _('You cannot validate the %s %s because it contains a line with the inactive product [%s] %s')  
-                                 % (object, line.order_id.name, line.product_id.default_code, line.product_id.name))
-        
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+            return False
         return True
     
     _constraints = [
-        (_check_active_product, "You cannot validate this purchase order because it contains a line with an inactive product", ['order_line', 'state'])
+        (_check_active_product, "You cannot validate this sale order because it contains a line with an inactive product", ['order_line', 'state'])
     ]
 
     def button_remove_lines(self, cr, uid, ids, context=None):

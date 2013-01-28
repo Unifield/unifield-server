@@ -465,7 +465,7 @@ class product_attributes(osv.osv):
                         
                 # Create lines for error in inventory
                 inv_ids = []
-                for inv in inv_obj.browse(cr, uid, has_inventory_line, context=context):
+                for inv in in_inv_obj.browse(cr, uid, has_initial_inv_line, context=context):
                     if inv.inventory_id.id not in inv_ids:
                         inv_ids.append(inv.inventory_id.id)
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,

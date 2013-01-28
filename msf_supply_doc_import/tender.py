@@ -48,10 +48,10 @@ class tender(osv.osv):
                                                                        ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
         
         if inactive_lines:
-            line = self.pool.get('tender.line').browse(cr, uid, inactive_lines[0])
-            raise osv.except_osv(_('Error'), _('You cannot generate RfQs from the tender %s because it contains a line with the inactive product [%s] %s')  
-                                 % (line.tender_id.name, line.product_id.default_code, line.product_id.name))
-        
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+            return False
         return True
     
     _constraints = [
