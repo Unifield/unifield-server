@@ -38,6 +38,7 @@
         'wizard/wizard_import_po_line_view.xml',
         'wizard/wizard_import_fo_line.xml',
         'wizard/wizard_import_tender_line.xml',
+        'wizard/wizard_imprort_ir_line.xml',
         'data/msf_supply_doc_import_data.xml',
         'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',

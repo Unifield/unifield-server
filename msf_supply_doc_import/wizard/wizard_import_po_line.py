@@ -25,7 +25,6 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-# For the the time logger function------
 import time
 from msf_supply_doc_import import check_line
 from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import, PO_COLUMNS_HEADER_FOR_IMPORT
@@ -56,7 +55,7 @@ class wizard_import_po_line(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
-    
+
     _defaults = {
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.

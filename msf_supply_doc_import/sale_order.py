@@ -322,6 +322,26 @@ class sale_order(osv.osv):
 #            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
 #        return True
 
+    def wizard_import_ir_line(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        if context is None:
+            context = {}
+        context.update({'active_id': ids[0]})
+        columns_header = columns_header_for_fo_line_import
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml()),
+                                                                            'filename_template': 'template.xls'}, context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.ir.line',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
+
     def wizard_import_fo_line(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file

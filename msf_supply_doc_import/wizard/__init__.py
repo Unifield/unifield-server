@@ -40,5 +40,6 @@ TENDER_COLUMNS_FOR_IMPORT = [x for (x, y) in TENDER_COLUMNS_HEADER_FOR_IMPORT]
 
 import wizard_import_po_line
 import wizard_import_fo_line
+import wizard_import_ir_line
 import wiz_common_import
 import wizard_import_tender_line
