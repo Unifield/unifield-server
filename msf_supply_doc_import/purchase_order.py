@@ -381,9 +381,10 @@ class purchase_order_line(osv.osv):
                 text_error += '\n %s' % warning_msg
                 text_error += 'We use the price mechanism to compute the Price Unit.'
             except osv.except_osv as osv_error:
-                osv_value = osv_error.value
-                osv_name = osv_error.name
-                text_error += '%s. %s\n' % (osv_value, osv_name)
+                if not context.get('po_integration'):
+                    osv_value = osv_error.value
+                    osv_name = osv_error.name
+                    text_error += '%s. %s\n' % (osv_value, osv_name)
             to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
         if uom:
             self.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
@@ -391,6 +392,7 @@ class purchase_order_line(osv.osv):
             uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
             text_error += '\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.'
             to_write.update({'product_uom': uom, 'text_error': text_error})
+        return to_write
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
@@ -412,7 +414,7 @@ class purchase_order_line(osv.osv):
             if product.uom_id.category_id.id != uom.category_id.id:
                 # this is inspired by onchange_uom in specific_rules>specific_rules.py
                 text_error += """\n You have to select a product UOM in the same category than the UOM of the product.
-                The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
+The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
                 """ % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
