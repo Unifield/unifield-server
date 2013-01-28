@@ -148,7 +148,7 @@ The columns should be in this values:
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_po_line_import))
+                    message += _("""Line %s: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_ir_line_import))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -284,7 +284,6 @@ Otherwise, you can continue to use Unifield.""")
             ids = [ids]
         sale_obj = self.pool.get('sale.order')
         for wiz_read in self.read(cr, uid, ids, ['fo_id', 'state', 'file']):
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
             fo_id = wiz_read['fo_id']
             fo_name = sale_obj.read(cr, uid, fo_id, ['name'])['name']
             if wiz_read['state'] != 'done':

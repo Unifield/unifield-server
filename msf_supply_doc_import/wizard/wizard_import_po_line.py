@@ -304,7 +304,6 @@ Otherwise, you can continue to use Unifield.""")
             ids = [ids]
         purchase_obj = self.pool.get('purchase.order')
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
-            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
             po_id = wiz_read['po_id']
             po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
             if wiz_read['state'] != 'done':

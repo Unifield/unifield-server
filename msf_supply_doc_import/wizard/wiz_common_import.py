@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import base64
 

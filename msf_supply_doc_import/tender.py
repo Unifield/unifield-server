@@ -152,6 +152,8 @@ class tender(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'active_id': ids[0]})
         columns_header = columns_header_for_tender_line_import
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
