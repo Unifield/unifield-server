@@ -117,6 +117,7 @@
         "purchase_double_validation_workflow.xml",
         "usability.xml",
         "user_access_configurator_view.xml",
+        "msf_profile_wizard.xml",
     ],
     "demo_xml": [
     ],
