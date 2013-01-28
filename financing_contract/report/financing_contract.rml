@@ -1,10 +1,27 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(595.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
-    <pageTemplate id="first">
-      <frame id="first" x1="15.0" y1="42.0" width="539" height="758"/>
+
+
+    <template pageSize="(595.0,842.0)" title="test" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
+
+        <pageGraphics>
+            <fill color="blue"/>
+            <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+            <image x="35" y="790.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
+            <!--            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+        </pageGraphics>
+
     </pageTemplate>
-  </template>
+    </template>
+
+
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
@@ -250,6 +267,10 @@
       </blockTable>
     </section>
     <pageBreak/>
+
+    <para style="P27">        
+		<font color="white"> </font>
+	</para>
     <para style="P7">Reporting lines:</para>
     <blockTable colWidths="80.0,90.0,90.0,80.0,142.0" repeatRows="1" style="Table4">
       <tr>
