@@ -293,7 +293,7 @@ The columns should be in this values:
                     osv_value = osv_error.value
                     osv_name = osv_error.name
                     message += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
-                    ignore_lines = '1'
+                    ignore_lines += 1
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 except Exception, e:
@@ -323,8 +323,8 @@ Importation completed in %s!
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
-        # we reactivate the PO
-        purchase_obj.write(cr, uid, po_id, {'active': True}, context)
+        # we reset the state of the PO to draft (initial state)
+        purchase_obj.write(cr, uid, po_id, {'state': 'draft'}, context)
         cr.commit()
         cr.close()
 
@@ -354,8 +354,8 @@ Importation completed in %s!
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
-            # we inactive the PO when it is in import_in_progress because we don't want the user to edit it in the same time
-            purchase_obj.write(cr, uid, po_id, {'active': False}, context)
+            # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
+            purchase_obj.write(cr, uid, po_id, {'state': 'done'}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
