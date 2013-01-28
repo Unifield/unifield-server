@@ -18,7 +18,21 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+PO_COLUMNS_HEADER_FOR_IMPORT=[
+('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), 
+('Delivery requested date', 'string'), ('Currency', 'string'), ('Comment', 'string')]
+PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
-PO_LINE_COLUMNS_FOR_IMPORT=['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment']
+FO_COLUMNS_HEADER_FOR_IMPORT=[
+('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), 
+('Delivery requested date', 'string'), ('Currency', 'string'), ('Comment', 'string')]
+FO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in FO_COLUMNS_HEADER_FOR_IMPORT]
+
+IR_COLUMNS_HEADER_FOR_IMPORT=[
+('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), 
+('Currency', 'string'), ('Comment', 'string')]
+IR_COLUMNS_FOR_IMPORT = [x for (x, y) in IR_COLUMNS_HEADER_FOR_IMPORT]
 
 import wizard_import_po_line
+import wizard_import_fo_line
+import wiz_common_import

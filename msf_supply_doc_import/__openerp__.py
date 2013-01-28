@@ -36,6 +36,7 @@
         'view/stock_cost_reevaluation_view.xml',
         'view/product_list_view.xml',
         'wizard/wizard_import_po_line_view.xml',
+        'wizard/wizard_import_fo_line.xml',
         'data/msf_supply_doc_import_data.xml',
         'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',

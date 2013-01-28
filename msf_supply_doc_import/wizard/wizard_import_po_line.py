@@ -70,7 +70,8 @@ The columns should be in this values:
 
     def default_get(self, cr, uid, fields, context=None):
         '''
-        Set po_id with the active_id value in context
+        Set po_id with the active_id value in context.
+        Set the template of import.
         '''
         if not context or not context.get('active_id'):
             raise osv.except_osv(_('Error !'), _('No Purchase Order found !'))
@@ -78,6 +79,9 @@ The columns should be in this values:
             po_id = context.get('active_id')
             res = super(wizard_import_po_line, self).default_get(cr, uid, fields, context=context)
             res['po_id'] = po_id
+        columns_header = PO_COLUMNS_HEADER_FOR_IMPORT
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
         return res
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
@@ -85,15 +89,9 @@ The columns should be in this values:
         header_index = kwargs.get('header_index')
         data = header_index.items()
         columns_header = []
-        start = time.time()
         for k,v in sorted(data, key=lambda tup: tup[1]):
             columns_header.append((k, type(k)))
-        end = time.time()
-        print "Get header columns = %s" % str(round(end-start))
-        start_class = time.time()
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        end_class = time.time()
-        print "Get class = %s" % str(round(end_class-start_class))
         vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
         return vals
 
@@ -132,7 +130,6 @@ The columns should be in this values:
                 vals = {'state': 'draft',
                         'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' % (k, ','.join(columns_for_po_line_import))}
                 self.write(cr, uid, ids, vals, context)
-                self.pool.get('purchase.order').write(cr, uid, context['po_id'], {'active': True}, context)
                 return True
 #                raise osv.except_osv(_('Error'), _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' 
 #                                                   % (k, ', \n'.join(columns_for_po_line_import))))
@@ -141,15 +138,11 @@ The columns should be in this values:
         """
         Catch the file values on the form [{values of the 1st line}, {values of the 2nd line}...]
         """
-        data = header_index.items()
-        columns_header = []
-        for k,v in sorted(data, key=lambda tup: tup[1]):
-            columns_header.append(k)
         file_values = []
         for row in rows:
             line_values = {}
             for cell in enumerate(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context)):
-                line_values.update({columns_header[cell[0]]: cell[1]})
+                line_values.update({cell[0]: cell[1]})
             file_values.append(line_values)
         return file_values
 
@@ -284,7 +277,7 @@ The columns should be in this values:
                         complete_lines += 1
 
                 except IndexError, e:
-                    error_log += "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined 8 columns. Details: %s" % (line_num, e)
+                    error_log += _("The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -292,12 +285,12 @@ The columns should be in this values:
                 except osv.except_osv as osv_error:
                     osv_value = osv_error.value
                     osv_name = osv_error.name
-                    message += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+                    message += _("Line %s in your Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                     ignore_lines += 1
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 except Exception, e:
-                    message += """Line %s: Uncaught error: %s""" % (line_num, e)
+                    message += _("""Line %s: Uncaught error: %s""") % (line_num, e)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 finally:
@@ -305,10 +298,10 @@ The columns should be in this values:
         
         error_log += '\n'.join(error_list)
         if error_log:
-            error_log = "Reported errors for ignored lines : \n" + error_log
+            error_log = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()
-        total_time = str(round(end_time-start_time)) + ' second(s)'
-        final_message = ''' 
+        total_time = str(round(end_time-start_time)) + _(' second(s)')
+        final_message = _(''' 
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
@@ -316,7 +309,7 @@ Importation completed in %s!
 %s
 
 %s
-''' % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
 #        try:
         wizard_vals = {'message': final_message, 'state': 'done'}
         if line_with_error:
