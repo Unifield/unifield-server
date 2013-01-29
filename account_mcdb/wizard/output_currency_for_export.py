@@ -89,6 +89,8 @@ class output_currency_for_export(osv.osv_memory):
         report_name = 'account.move.line'
         if model == 'account.analytic.line':
             report_name = 'account.analytic.line'
+        elif model == 'account.bank.statement.line':
+            report_name = 'account.bank.statement.line'
 
         if choice == 'csv':
             report_name += '_csv'

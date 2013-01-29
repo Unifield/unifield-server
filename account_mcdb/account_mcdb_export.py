@@ -223,6 +223,84 @@ class account_line_csv_export(osv.osv_memory):
             writer.writerow(csv_line)
         return True
 
+    def _account_bank_statement_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):
+        """
+        Take account_bank_statement_line and return a csv string
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not writer:
+            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+        # Prepare some value
+        currency_name = ""
+        if currency_id:
+            currency_obj = self.pool.get('res.currency')
+            currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
+        # Prepare csv head
+        head = ['Document Date', 'Posting Date', 'Entry Sequence', 'Description', 'Reference', 'Account Code', 'Account Description', 'Third party', 
+            'Amount In', 'Amount Out', 'Currency']
+        if not currency_id:
+            head += ['Func. In', 'Func. Out', 'Func. Currency']
+        else:
+            head += ['Output In', 'Output Out', 'Output Currency']
+        head += ['State', 'Statement']
+        writer.writerow(head)
+        # Sort items
+        ids.sort()
+        # Then write lines
+        for absl in self.pool.get('account.bank.statement.line').browse(cr, uid, ids, context=context):
+            csv_line = []
+            #document_date
+            csv_line.append(absl.document_date or '')
+            #date
+            csv_line.append(absl.date or '')
+            #sequence_for_reference (Entry Sequence)
+            csv_line.append(absl.sequence_for_reference and absl.sequence_for_reference.encode('utf-8') or '')
+            #name
+            csv_line.append(absl.name and absl.name.encode('utf-8') or '')
+            #ref
+            csv_line.append(absl.ref and absl.ref.encode('utf-8') or '')
+            #account_id code
+            csv_line.append(absl.account_id and absl.account_id.code and absl.account_id.code.encode('utf-8') or '')
+            #account_id name
+            csv_line.append(absl.account_id and absl.account_id.name and absl.account_id.name.encode('utf-8') or '')
+            #partner_txt
+            csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.name and absl.transfer_journal_id.name.encode('utf-8') or '')
+            #debit_currency
+            csv_line.append(absl.amount_in or 0.0)
+            #credit_currency
+            csv_line.append(absl.amount_out or 0.0)
+            #currency_id
+            csv_line.append(absl.currency_id and absl.currency_id.name and absl.currency_id.name.encode('utf-8') or '')
+            if not currency_id:
+                #debit
+                csv_line.append(absl.functional_in or 0.0)
+                #credit
+                csv_line.append(absl.functional_out or 0.0)
+                #functional_currency_id
+                csv_line.append(absl.functional_currency_id and absl.functional_currency_id.name and absl.functional_currency_id.name.encode('utf-8') or '')
+            else:
+                #output amount (debit/credit) regarding booking currency
+                amount = currency_obj.compute(cr, uid, absl.currency_id.id, currency_id, absl.amount, round=True, context=context)
+                if amount < 0.0:
+                    csv_line.append(0.0)
+                    csv_line.append(abs(amount) or 0.0)
+                else:
+                    csv_line.append(abs(amount) or 0.0)
+                    csv_line.append(0.0)
+                #output currency
+                csv_line.append(currency_name.encode('utf-8') or '')
+            #state
+            csv_line.append(absl.state.encode('utf-8') or '')
+            #statement
+            csv_line.append(absl.statement_id and absl.statement_id.name and absl.statement_id.name.encode('utf-8') or '')
+            # Write line
+            writer.writerow(csv_line)
+        return True
+
     def export_to_csv(self, cr, uid, ids, currency_id, model, context=None):
         """
         Return a CSV file containing all given line
