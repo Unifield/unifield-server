@@ -175,6 +175,8 @@ The columns should be in this values:
                     tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
                     vals['tender_line_ids'].append((0, 0, to_write))
                     tender_line_obj.create(cr, uid, to_write, context)
+                    if to_write['error_list']:
+                        lines_to_correct += 1
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     complete_lines += 1
                         
