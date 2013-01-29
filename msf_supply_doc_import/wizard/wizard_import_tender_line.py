@@ -24,11 +24,10 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 # For the the time logger function------
 import time
 from msf_supply_doc_import import check_line
-from msf_supply_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import, TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
+from msf_supply_doc_import.wizard import TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
 
 class wizard_import_tender_line(osv.osv_memory):
     _name = 'wizard.import.tender.line'
@@ -79,9 +78,6 @@ The columns should be in this values:
             tender_id = context.get('active_id')
             res = super(wizard_import_tender_line, self).default_get(cr, uid, fields, context=context)
             res['tender_id'] = tender_id
-        columns_header = columns_header_for_tender_line_import
-        default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
         return res
 
     def _import(self, dbname, uid, ids, context=None):
@@ -98,7 +94,6 @@ The columns should be in this values:
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-        currency_obj = self.pool.get('res.currency')
         tender_obj = self.pool.get('tender')
         tender_line_obj = self.pool.get('tender.line')
         line_with_error = []
