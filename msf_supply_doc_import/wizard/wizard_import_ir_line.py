@@ -24,10 +24,9 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
 from msf_supply_doc_import import check_line
-from msf_supply_doc_import.wizard import IR_COLUMNS_HEADER_FOR_IMPORT, IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
+from msf_supply_doc_import.wizard import IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
 
 class wizard_import_ir_line(osv.osv_memory):
     _name = 'wizard.import.ir.line'
@@ -77,10 +76,6 @@ The columns should be in this values:
             fo_id = context.get('active_id')
             res = super(wizard_import_ir_line, self).default_get(cr, uid, fields, context=context)
             res['fo_id'] = fo_id
-            if self.pool.get('sale.order').read(cr, uid, fo_id, ['procurement_request'])['procurement_request']:
-                columns_header = IR_COLUMNS_HEADER_FOR_IMPORT
-        default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
         return res
 
     def _import_internal_req(self, dbname, uid, ids, context=None):
