@@ -902,14 +902,18 @@ class orm_template(object):
                         warning += [_("Key/value '%s' not found in selection field '%s'") % (line[i], field[len(prefix)])]
                 elif fields_def[field[len(prefix)]]['type'] == 'reference':
                     # support importing of reference fields
-                    (module, model, ref_xml_id) = eval(line[i])
-                    ir_model_data_obj = self.pool.get('ir.model.data')
-                    try:
-                         ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
-                         ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
-                    except:
-                        ref_db_id = None
-                    res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
+                    field_value = eval(line[i])
+                    if isinstance(field_value, tuple):
+                        (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
+                        ir_model_data_obj = self.pool.get('ir.model.data')
+                        try:
+                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
+                            ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
+                        except:
+                            ref_db_id = None
+                        res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
+                    else:
+                        res = 0
                 else:
                     res = line[i]
 
