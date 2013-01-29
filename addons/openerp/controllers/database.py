@@ -303,7 +303,7 @@ class Database(BaseController):
             rpc.session.execute_db('change_admin_password', old_password, new_password)
             self.msg = {'message': _('The super admin password has been '
                                      'successfully changed. As a consequence, '
-                                     'you must back up the configuration files.'
+                                     'you must back up the configuration files.\\n'
                                      'Please refer to the documentation on how to do it.'),
                         'title': _('Information'),
                         'redirect_to': '/openerp/login'}
