@@ -30,6 +30,19 @@ class procurement_request(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
     
+    def _ir_amount_all(self, cr, uid, ids, field_name, arg, context=None):
+        cur_obj = self.pool.get('res.currency')
+        res = {}
+        for ir in self.browse(cr, uid, ids, context=context):
+            res[ir.id] = 0.0,
+            val = 0.0
+            if ir.procurement_request:
+                curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
+                for line in ir.order_line:
+                    val += line.price_subtotal
+                res[ir.id] = cur_obj.round(cr, uid, curr_browse, val)
+        return res
+    
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Override the method to return 0.0 if the sale.order is a prcourement request
@@ -84,7 +97,7 @@ class procurement_request(osv.osv):
         'notes': fields.text(string='Notes'),
         'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),
-        
+        'ir_total_amount': fields.function(_ir_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Indicative Total Value'),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
@@ -341,9 +354,12 @@ class procurement_request_line(osv.osv):
         '''
         res = {}
         new_ids= []
+        cur_obj = self.pool.get('res.currency')
+        curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
         for line in self.browse(cr, uid, ids):
             if line.order_id.procurement_request:
-                res[line.id] = 0.0
+                subtotal = line.cost_price * line.product_uom_qty
+                res[line.id] = cur_obj.round(cr, uid, curr_browse, subtotal)
             else:
                 new_ids.append(line.id)
                 
@@ -430,12 +446,12 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False}
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
-                     'type': product.procure_method, 'comment_ok': True}
+                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])

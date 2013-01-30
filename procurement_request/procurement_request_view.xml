@@ -80,6 +80,8 @@
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1" />
+                                    <field name="price_subtotal" sum="Total"/>
+                                    <field name="currency_id" />
                                     <button name="open_split_wizard"
                                         type="object"
                                         string="Split Line"
@@ -134,6 +136,8 @@
                     <field name="delivery_requested_date" />
                     <field name="origin" />
                     <field name="requestor" />
+                    <field name="ir_total_amount" string="Indicative Total Value"/>
+                    <field name="functional_currency_id" />
                     <field name="state" />
                     <field name="warehouse_id" invisible="1" />
                 </tree>
