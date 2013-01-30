@@ -54,7 +54,7 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="57.0,51.0,101.0,225.0,82.0,174.0,111.0,68.0,57.0,47.0,44.0,45.0,39.0,61.0" style="Tableau3">
+    <blockTable style="Tableau3">
       <tr>
         <td>
           <para style="P3">Document Date</para>
@@ -129,17 +129,13 @@
           <para style="P3">[[ o.amount_out or 0.0 ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.currency_id and or.currency_id.name or '' ]]</para>
+          <para style="P3">[[ o.statement_id and o.statement_id.currency and o.statement_id.currency.name or '' ]]</para>
         </td>
         <td>
-          <para style="P4">
-            <font color="white"> </font>
-          </para>
+          <para style="P4">[[ o.output_amount or 0.0 ]]</para>
         </td>
         <td>
-          <para style="P3">
-            <font color="white"> </font>
-          </para>
+          <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[o.state or '']]</para>
