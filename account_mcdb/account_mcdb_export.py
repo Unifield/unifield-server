@@ -327,6 +327,8 @@ class account_line_csv_export(osv.osv_memory):
             self._account_move_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
         elif model == 'account.analytic.line':
             self._account_analytic_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
+        elif model == 'account.bank.statement.line':
+            self._account_bank_statement_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
         
         outfile.seek(0)
         file = encodestring(outfile.read())
