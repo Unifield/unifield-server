@@ -75,6 +75,8 @@ class account_move_line_report_csv(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
         return create_csv(self, cr, uid, ids, data, context)
 
 account_move_line_report_csv('report.account.move.line_csv','account.move.line','addons/account_mcdb/report/report_account_move_line.rml')
@@ -111,6 +113,8 @@ class account_analytic_line_report_csv(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
         return create_csv(self, cr, uid, ids, data, context)
 
 account_analytic_line_report_csv('report.account.analytic.line_csv','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line.rml')
@@ -147,6 +151,8 @@ class account_bank_statement_line_report_csv(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
         return create_csv(self, cr, uid, ids, data, context)
 
 account_bank_statement_line_report_csv('report.account.bank.statement.line_csv','account.bank.statement.line','addons/account_mcdb/report/report_account_bank_statement_line.rml')
