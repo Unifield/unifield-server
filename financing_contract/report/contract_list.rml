@@ -1,10 +1,29 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(842.0,595.0)" title="Test" author="Martin Simon" allowSplitting="20">
-    <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="42.0" width="758" height="539"/>
-    </pageTemplate>
-  </template>
+
+
+    <template pageSize="(842.0,595.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+
+        <pageGraphics>
+            <drawString x="35" y="540.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+            <image x="15" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="410" y="10">Page : <pageNumber /></drawString>
+            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
+            <!--            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+        </pageGraphics>
+
+    	</pageTemplate>
+    </template>
+
+
+
+
+
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
@@ -55,6 +74,9 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
     </blockTableStyle>
+
+
+
     <blockTableStyle id="Table6">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -144,52 +166,60 @@
     <images/>
   </stylesheet>
   <story>
-    <blockTable colWidths="50.0,62.0,50.0,50.0,100.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0" style="Table10">
+
+
+
+   <blockTable style="Table10">
       <tr>
         <td>
-          <para style="P2">Financing contract code</para>
-        </td>
-        <td>
-          <para style="P2">Financing contract name</para>
-        </td>
-        <td>
-          <para style="P2">Donor grant reference</para>
-        </td>
-        <td>
-          <para style="P2">HQ grant reference</para>
-        </td>
-        <td>
-          <para style="P2">Cost centers associated</para>
-        </td>
-        <td>
-          <para style="P2">Start eligibility date</para>
-        </td>
-        <td>
-          <para style="P2">End eligibility date</para>
-        </td>
-        <td>
-          <para style="P2">Grant amount</para>
-        </td>
-        <td>
-          <para style="P2">Reporting currency</para>
-        </td>
-        <td>
-          <para style="P2">Reporting type</para>
-        </td>
-        <td>
-          <para style="P2">List of Funding pools associated for earmarked costs</para>
-        </td>
-        <td>
-          <para style="P2">List of Funding pools associated for total project costs</para>
-        </td>
-      </tr>
-    </blockTable>
-    <blockTable>
-      <tr>
-        <td>
-          <para style="P20">[[ repeatIn(get_contract_list(),'line') ]]</para>
-          <blockTable colWidths="50.0,62.0,50.0,50.0,100.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0" style="Table10">
+
+
+          <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10" repeatRows="1" >
+	      <tr>
+		<td>
+		  <para style="P2">Financing contract code</para>
+		</td>
+		<td>
+		  <para style="P2">Financing contract name</para>
+		</td>
+		<td>
+		  <para style="P2">Donor grant reference</para>
+		</td>
+		<td>
+		  <para style="P2">HQ grant reference</para>
+		</td>
+		<td>
+		  <para style="P2">Start eligibility date</para>
+		</td>
+		<td>
+		  <para style="P2">End eligibility date</para>
+		</td>
+		<td>
+		  <para style="P2">Grant amount</para>
+		</td>
+		<td>
+		  <para style="P2">Reporting currency</para>
+		</td>
+		<td>
+		  <para style="P2">Reporting type</para>
+		</td>
+		<td>
+		  <para style="P2">Cost centers associated</para>
+		</td>
+		<td>
+		  <para style="P2">List of Funding pools associated for earmarked costs</para>
+		</td>
+		<td>
+		  <para style="P2">List of Funding pools associated for total project costs</para>
+		</td>
+	      </tr>
+	    </blockTable>
+
+    	<section>
+              <para style="P20">[[ repeatIn(get_contract_list(), 'line') ]]</para>
+          <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10">
             <tr>
+
               <td>
                 <parawrap style="P3">[[ line['code'] ]]</parawrap>
               </td>
@@ -201,9 +231,6 @@
               </td>
               <td>
                 <parawrap style="P3">[[ line['hq_grant_reference'] ]]</parawrap>
-              </td>
-              <td>
-                <para style="P3">[[ line['cost_centers'] ]]</para>
               </td>
               <td>
                 <para style="P3">[[ formatLang(line['eligibility_from_date'],date=True) ]]</para>
@@ -221,6 +248,9 @@
                 <para style="P3">[[ line['reporting_type'] ]]</para>
               </td>
               <td>
+                <para style="P3">[[ line['cost_centers'] ]]</para>
+              </td>
+              <td>
                 <para style="P3">[[ line['earmarked_funding_pools'] ]]</para>
               </td>
               <td>
@@ -228,8 +258,13 @@
               </td>
             </tr>
           </blockTable>
+    	</section>
+
+
         </td>
       </tr>
     </blockTable>
+
+
   </story>
 </document>
