@@ -101,7 +101,7 @@ class hr_employee(osv.osv):
             return True
         if vals.get('identification_id', False):
             e_ids = self.search(cr, uid, [('identification_id', '=', vals.get('identification_id'))])
-            if e_ids:
+            if e_ids and context.get('from', False) != 'import':
                 msg = ','.join([x and x.get('name', '') for x in self.read(cr, uid, e_ids, ['name'])])
                 raise osv.except_osv(_('Error'), _('Employee code already used by: %s') % (msg or '',))
         return True
