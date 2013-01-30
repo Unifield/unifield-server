@@ -667,7 +667,9 @@
                             </group>
                         </page>
                         <page string="Additional Info">
-                            <field name="type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                            <!-- [UF-1689] We set the field type readonly, because we don't an incoming shipment to become an internal move -->
+                        <!--<field name="type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>-->
+                            <field name="type" readonly="1" />
                             <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                             <field name="company_id" widget="selection" invisible="1"/>
                         </page>
