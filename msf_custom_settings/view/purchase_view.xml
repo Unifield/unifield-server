@@ -38,7 +38,7 @@
                             <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                             <field name="internal_type" string="Zone"  />
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
-                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                         </group>
                     </xpath>
                     <xpath expr="/form/notebook" position="after">
