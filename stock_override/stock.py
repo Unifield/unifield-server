@@ -523,6 +523,14 @@ class stock_picking(osv.osv):
             else:
                 inv_type = 'out_invoice'
         return inv_type
+    
+    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
+        move_obj = self.pool.get('stock.move')
+        pick = kwargs['pick']
+        move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), 
+                                             ('state', 'in', ('waiting', 'confirmed'))], order='product_qty desc')
+        
+        return move_ids
 
     def is_invoice_needed(self, cr, uid, sp=None):
         """
@@ -869,7 +877,7 @@ class stock_move(osv.osv):
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
             r = res.pop(0)
-            move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
+            move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
             if r[2]:
                 done.append(move_id)
             else:
@@ -1272,8 +1280,8 @@ class ir_values(osv.osv):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        trans_obj = self.pool.get('ir.translation')
         new_values = values
-        
         move_accepted_values = {'client_action_multi': [],
                                     'client_print_multi': [],
                                     'client_action_relate': ['act_relate_picking'],
@@ -1306,10 +1314,11 @@ class ir_values(osv.osv):
         
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
+            Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
             for v in values:
                 if key == 'action' and v[1] in move_accepted_values[key2]:
-                    new_values.append(v)          
-                elif context.get('_terp_view_name', False) == 'Destruction Report':
+                    new_values.append(v)
+                elif context.get('_terp_view_name', False) == Destruction_Report:
                     new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []
