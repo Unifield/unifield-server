@@ -27,7 +27,6 @@ import csv
 from tempfile import TemporaryFile
 from report_webkit.webkit_report import WebKitParser
 
-
 def getIds(self, cr, uid, ids, context):
     if not context:
         context = {}
@@ -51,6 +50,8 @@ def create_csv(self, cr, uid, ids, data, context=None):
 
     if self.table == 'account.analytic.line':
         obj._account_analytic_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
+    elif self.table == 'account.bank.statement.line':
+        obj._account_bank_statement_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
     else:
         obj._account_move_line_to_csv(cr, uid, ids, writer, context.get('output_currency_id'), context)
 
@@ -74,6 +75,8 @@ class account_move_line_report_csv(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
         return create_csv(self, cr, uid, ids, data, context)
 
 account_move_line_report_csv('report.account.move.line_csv','account.move.line','addons/account_mcdb/report/report_account_move_line.rml')
@@ -110,6 +113,8 @@ class account_analytic_line_report_csv(report_sxw.report_sxw):
         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
         return create_csv(self, cr, uid, ids, data, context)
 
 account_analytic_line_report_csv('report.account.analytic.line_csv','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line.rml')
@@ -131,5 +136,43 @@ class account_analytic_line_report_xls(WebKitParser):
         return (a[0], 'xls')
 
 account_analytic_line_report_xls('report.account.analytic.line_xls','account.analytic.line','addons/account_mcdb/report/report_account_analytic_line_xls.mako')
+
+class account_bank_statement_line_report(report_sxw.report_sxw):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+    def getObjects(self, cr, uid, ids, context):
+        return getObjects(self, cr, uid, ids, context)
+
+account_bank_statement_line_report('report.account.bank.statement.line','account.bank.statement.line','addons/account_mcdb/report/report_account_bank_statement_line.rml')
+
+
+class account_bank_statement_line_report_csv(report_sxw.report_sxw):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
+        return create_csv(self, cr, uid, ids, data, context)
+
+account_bank_statement_line_report_csv('report.account.bank.statement.line_csv','account.bank.statement.line','addons/account_mcdb/report/report_account_bank_statement_line.rml')
+
+
+class account_bank_statement_line_report_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header= " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(account_bank_statement_line_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(account_bank_statement_line_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+account_bank_statement_line_report_xls('report.account.bank.statement.line_xls','account.bank.statement.line','addons/account_mcdb/report/report_account_bank_statement_line_xls.mako')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
