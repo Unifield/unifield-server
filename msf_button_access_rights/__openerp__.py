@@ -25,27 +25,17 @@
     "developer": "Max Mumford",
     "category" : "Generic Modules/Others",
     "depends" : [],
-    "description": """Provides functionality to define access rights and 
-    synchronization propagation settings concerning the MSF synchronization 
-    server hierarchy for models and specific fields of models.
+    "description": """Provides functionality to define access rights  
+    for buttons in views based and the actions and workflows they trigger
     """,
     "update_xml": [
         'views/view_config_view.xml',
-        'views/field_access_rule_view.xml',
-        'views/field_access_rule_line_view.xml',
         'views/button_access_rule_view.xml',
         'views/ir_ui_view_view.xml',
         'menu/menu.xml',
         'menu/view_config.xml',
-        'data/users.xml',
         'data/groups.xml',
         'security/ir.model.access.csv',
-    ],
-    "test": [
-        'tests/rules.yml'
-    ],
-    "depends": [
-        'msf_instance',
     ],
     'installable': True,
     'active': True,

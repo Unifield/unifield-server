@@ -25,7 +25,7 @@ from osv import osv
 from osv import fields
 
 class view_config_install(osv.osv_memory):
-    _name = 'msf_access_rights.view_config_wizard_install'
+    _name = 'msf_button_access_rights.view_config_wizard_install'
     _inherit = 'res.config' 
 
     def execute(self, cr, uid, ids, context=None):

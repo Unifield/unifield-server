@@ -40,14 +40,14 @@ class ir_ui_view(osv.osv):
     def _get_button_access_rules(self, cr, uid, ids, field_name, arg, context):
         res = dict.fromkeys(ids)
         records = self.browse(cr, 1, ids)
-        pool = self.pool.get('msf_access_rights.button_access_rule')
+        pool = self.pool.get('msf_button_access_rights.button_access_rule')
         for record in records:
             search = pool.search(cr, 1, [('view_id','=',record.id)])
             res[record.id] = search
         return res
 
     _columns = {
-        'button_access_rules_ref': fields.function(_get_button_access_rules, type='one2many', obj='msf_access_rights.button_access_rule', method=True, string='Button Access Rules'),
+        'button_access_rules_ref': fields.function(_get_button_access_rules, type='one2many', obj='msf_button_access_rights.button_access_rule', method=True, string='Button Access Rules'),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -71,7 +71,7 @@ class ir_ui_view(osv.osv):
         if not isinstance(ids, list):
             ids = [ids]
         
-        rules_pool = self.pool.get('msf_access_rights.button_access_rule')
+        rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
         model_pool = self.pool.get('ir.model')
         
         arch = vals.get('arch', False)
@@ -81,7 +81,8 @@ class ir_ui_view(osv.osv):
             view = self.browse(cr, 1, i)
             xml = arch or view.arch
             if isinstance(xml, unicode):
-                xml = str(xml)
+                xml = unicode(s.strip(codecs.BOM_UTF8), 'utf-8')
+                xml = xml.encode('ascii', 'ignore')
                 
             # parse the old xml into a list of button dictionaries
             try:
@@ -145,7 +146,7 @@ class ir_ui_view(osv.osv):
     
     def unlink(self, cr, uid, ids, context=None):
         # delete button access rules
-        pool = self.pool.get('msf_access_rights.button_access_rule')
+        pool = self.pool.get('msf_button_access_rights.button_access_rule')
         for i in ids:
             search = pool.search(cr, uid, [('view_id','=',i)])
             pool.unlink(cr, uid, search)
@@ -184,7 +185,7 @@ class ir_ui_view(osv.osv):
         return button_object_list
             
     def _write_button_objects(self, cr, uid, buttons):
-        rules_pool = self.pool.get('msf_access_rights.button_access_rule')
+        rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
         for button in buttons:
             existing_rule_search = rules_pool.search(cr, uid, [('name','=',button['name']), ('view_id','=',button['view_id'])])
             if not existing_rule_search:
