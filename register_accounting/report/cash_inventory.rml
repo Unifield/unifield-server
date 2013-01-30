@@ -63,12 +63,13 @@
 
     <blockTableStyle id="Table200">
       <blockAlignment value="LEFT"/>
-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,1" stop="1,1" />
-      <lineStyle kind="LINEAFTER" colorName="#000000" start="1,1" stop="1,1"/>
-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,3" stop="1,3" />
-      <lineStyle kind="LINEAFTER" colorName="#000000" start="1,3" stop="1,3"/>
-      <lineStyle kind="LINEABOVE" colorName="#000000" start="1,1" stop="1,-1" />
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,1" stop="1,-1" />
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,1" stop="2,1" />
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="2,1" stop="2,1"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,3" stop="2,3" />
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="2,3" stop="2,3"/>
+
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="2,1" stop="2,-1" />
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,1" stop="2,-1" />
     </blockTableStyle>
 
     <blockTableStyle id="Table8">
@@ -109,20 +110,17 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
+
     <blockTableStyle id="Table42">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
-      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,0" stop="1,-1"/>
-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,0" stop="2,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="0,-1" stop="2,-1"/>
       <lineStyle kind="LINEBEFORE" colorName="#000000" start="3,0" stop="3,-1"/>
       <lineStyle kind="LINEAFTER" colorName="#000000" start="3,0" stop="3,-1"/>
-      <lineStyle kind="LINEABOVE" colorName="#000000" start="1,-2" stop="1,-2"/>
       <lineStyle kind="LINEABOVE" colorName="#000000" start="3,-2" stop="3,-2"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
     </blockTableStyle>
+
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
@@ -228,7 +226,6 @@
         </td>
       </tr>
     </blockTable>
-
 
 
 
@@ -413,9 +410,6 @@
           <para style="P11">[[ format(o.notes or '') ]]</para>
         </td>
       </tr>
-
-
-
 		<tr><td><para style="P6"></para></td></tr>
 		<tr><td><para style="P6"></para></td></tr>
 		<tr><td><para style="P6"></para></td></tr>
@@ -424,16 +418,12 @@
 		<tr><td><para style="P6"></para></td></tr>
     </blockTable>
 
-
-
     <para style="P26">
       <font color="white"> </font>
     </para>
     <para style="P26">
       <font color="white"> </font>
     </para>
-
-
 
     <para style="P7">State: [[ get_selection(o.state) ]]</para>
     <para style="P7">Report date: [[ time.strftime('%d/%m/%Y %H:%M') ]]</para>
@@ -444,10 +434,7 @@
       <font color="white"> </font>
     </para>
 
-
-
-
-    <blockTable style="Table200">
+    <blockTable style="Table42">
       <tr>
         <td>
           <para style="P26">blank text</para>
@@ -462,7 +449,6 @@
           <para style="P26">blank text</para>
         </td>
       </tr>
-
       <tr>
         <td>
           <para style="P6">(Name, Function)</para>
@@ -471,45 +457,48 @@
           <para style="P26">blank text</para>
         </td>
         <td>
-        </td>
-        <td>
-        </td>
-      </tr>
-
-      <tr>
-        <td>
-          <para style="P26">blank text</para>
-        </td>
-        <td>
-          <para style="P26">blank text</para>
-        </td>
-        <td>
-          <para style="P26">blank text</para>
+          <para style="P6"></para>
         </td>
         <td>
           <para style="P26">blank text</para>
         </td>
       </tr>
-
-      <tr>
-        <td>
-          <para style="P6">(Name, Function)</para>
-        </td>
-        <td>
-          <para style="P26">blank text</para>
-        </td>
-        <td>
-        </td>
-        <td>
-        </td>
-      </tr>
-
-
-
     </blockTable>
 
+    <para style="P6">
+      <font color="white"> </font>
+    </para>
 
-
+    <blockTable style="Table42">
+      <tr>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P6">(Name, Function)</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P6"></para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+      </tr>
+    </blockTable>
 
   </story>
 </document>
