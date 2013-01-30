@@ -18,32 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name": "Fx Tables Management",
-    "version": "1.0",
-    "depends": ["res_currency_functional", "base"],
-    "category": "General/Standard",
-    "description": """
-    This module aims to have other subsets of currencies, and have them available
-    for financing contracts and budgets.
-    
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'security/ir.model.access.csv',
-        'res_currency_view.xml',
-        'res_currency_table_workflow.xml',
-        'res_currency_table_report.xml',
-        'wizard/wizard_report_rates_table_view.xml',
-        'wizard/wizard_report_currency_table_view.xml',
-    ],
-    'test': [
-        'test/currency_pricelist.yml',
-    ],
-    'demo_xml': [],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
+
+import report_rates_table
+import report_currency_table
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
