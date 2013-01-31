@@ -1,17 +1,15 @@
 <?xml version="1.0"?>
-<document filename="test.pdf">
+<document filename="financing_contract.pdf">
 
-
-    <template pageSize="(842.0,595.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(842.0,595.0)" title="financing_contract" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
-
         <pageGraphics>
             <drawString x="35" y="540.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
             <image x="15" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="410" y="10">Page : <pageNumber /></drawString>
+            <drawString x="410" y="10">Page <pageNumber /></drawString>
             <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
             <!--            <drawString x="765" y="520.0">/</drawString>
             <drawString x="770" y="520.0"><pageCount /> </drawString>-->
@@ -19,10 +17,6 @@
 
     	</pageTemplate>
     </template>
-
-
-
-
 
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
@@ -74,8 +68,6 @@
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
     </blockTableStyle>
-
-
 
     <blockTableStyle id="Table6">
       <blockAlignment value="LEFT"/>
@@ -167,12 +159,9 @@
   </stylesheet>
   <story>
 
-
-
-   <blockTable style="Table10">
+   <blockTable style="Table9">
       <tr>
         <td>
-
 
           <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10" repeatRows="1" >
 	      <tr>
@@ -215,11 +204,9 @@
 	      </tr>
 	    </blockTable>
 
-    	<section>
-              <para style="P20">[[ repeatIn(get_contract_list(), 'line') ]]</para>
           <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10">
             <tr>
-
+              <para style="P20">[[ repeatIn(get_contract_list(), 'line', 'blockTable') ]]</para>
               <td>
                 <parawrap style="P3">[[ line['code'] ]]</parawrap>
               </td>
@@ -258,13 +245,10 @@
               </td>
             </tr>
           </blockTable>
-    	</section>
-
 
         </td>
       </tr>
     </blockTable>
-
 
   </story>
 </document>
