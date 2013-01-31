@@ -559,14 +559,19 @@ class stock_move(osv.osv):
         picking_todo = []
         if todo:
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
+            
+            # we cancel availability
+            self.cancel_assign(cr, uid, todo, context=context)
+            # we rechech availability
+            self.action_assign(cr, uid, todo)
 
             # below we cancel availability to recheck it
-            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-            picking_todo.append(stock_picking_id)
-            # we cancel availability
-            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
-            # we recheck availability
-            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
+#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
+#            picking_todo.append(stock_picking_id)
+#            # we cancel availability
+#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
+#            # we recheck availability
+#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
 #        if picking_todo:
 #            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return ret
@@ -603,13 +608,17 @@ class stock_move(osv.osv):
                 todo.append(move.id)
 
         if todo:
-            # below we cancel availability to recheck it
-            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
-            picking_todo.append(stock_picking_id)
             # we cancel availability
-            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
+            self.cancel_assign(cr, uid, todo, context=context)
+            # we rechech availability
+            self.action_assign(cr, uid, todo)
+            # below we cancel availability to recheck it
+#            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
+#            picking_todo.append(stock_picking_id)
+            # we cancel availability
+#            self.pool.get('stock.picking').cancel_assign(cr, uid, [stock_picking_id])
             # we recheck availability
-            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
+#            self.pool.get('stock.picking').action_assign(cr, uid, [stock_picking_id])
 #        if picking_todo:
 #            self.pool.get('stock.picking').check_all_move_cross_docking(cr, uid, picking_todo, context=context)
         return True
