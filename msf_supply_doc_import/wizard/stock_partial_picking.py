@@ -242,7 +242,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 
             if line_number not in line_numbers:
                 line_numbers.append(line_number)
-                
+            
+            # Create an osv.memory object for each file lines
             import_obj.create(cr, uid, {'wizard_id': obj.id,
                                         'file_line_number': file_line_num,
                                         'line_number': line_number,
@@ -299,7 +300,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                                           ('id', 'not in', already_treated),
                                                           ('product_id', '=', l.product_id.id),
                                                           ('product_uom', '=', l.uom_id.id)], context=context)
-                    # Treat after if no move match with the line
+                    
+                    # Treat after if no move matches with the line values
                     if not match_ids:
                         remaining_lines.append(l.id)
                         continue
@@ -307,6 +309,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    # We search the best move to fill
                     diff_qty = False
                     best_move = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
@@ -330,6 +333,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     ok = False
                     for m in move_obj.browse(cr, uid, move_ids, context=context):
+                        # Pass to the next move if UoMs are not compatible
                         if m.id in already_treated or m.product_uom.category_id.id != l.uom_id.category_id.id:
                             continue
                         else:
@@ -386,6 +390,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    
+                    # Search the best move to fill
                     diff_qty = False
                     best_move = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
@@ -406,12 +412,15 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    
+                    # If the moves have more than one product and the line has another product, return an error
                     if len(multi_product) > 1 and l.product_id.id not in multi_product:
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : The system cannot found a line matching with the line numbert %s, the product [%s] %s and the UoM %s.") % (l.file_line_number, l.line_number, l.product_id.default_code, l.product_id.name, l.uom_id.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
                         continue
                         
+                    # Search moves which can be split
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
                                                           ('quantity_ordered', '>=', l.quantity),], order='quantity_ordered desc', context=context)
                     
@@ -420,6 +429,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     
                     ok = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
+                        # Split the move only if UoMs are compatible and if the quantity ordered is bigger than the line quantity
+                        # or a quantity is already filled on this move
                         if (m.quantity_ordered > l.quantity or m.quantity > 0) and m.product_uom.category_id.id == l.uom_id.category_id.id:
                             ok = True
                             # Split the line
@@ -453,6 +464,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 
                             complete_lines += 1
                             break
+                        # Don't split the move if the quantity ordered is equal to the quantity of the line and the move quantity is not filled
                         elif m.quantity_ordered == l.quantity and m.quantity == 0.00 and m.product_uom.category_id.id == l.uom_id.category_id.id:
                             ok = True
                             move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
@@ -501,13 +513,16 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     last_move = False
+                    # Fill moves while there is quantity to fill
                     while remaining_qty:
+                        # In case where is no move available, add the remaining qty to the last move filled
                         if not match_ids:
                             move_obj.write(cr, uid, [last_move.id], {'quantity': best_move.quantity_ordered + remaining_qty,
                                                                      'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                                      'expiry_date': l.expiry_date}, context=context)
                             break
                         
+                        # Search the best move
                         diff_qty = False
                         best_move = False
                         for m in move_obj.browse(cr, uid, match_ids, context=context):
