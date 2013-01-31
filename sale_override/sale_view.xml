@@ -151,6 +151,9 @@
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                         <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
                     </xpath>
+                    <xpath expr="/search//filter[@string='Sales']" position="replace">
+                        <filter icon="terp-check" string="Confirmed" domain="[('state','in',('manual','progress'))]"/>
+                    </xpath>
 
                     <xpath expr="/search//filter[@string='To Invoice']" position="after">
                         <separator orientation="vertical" />
