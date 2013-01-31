@@ -52,6 +52,7 @@
     <blockTableStyle id="Table10">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="13,0"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="13,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table8">
@@ -159,96 +160,85 @@
   </stylesheet>
   <story>
 
-   <blockTable style="Table9">
+    <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10" repeatRows="1" >
       <tr>
         <td>
-
-          <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10" repeatRows="1" >
-	      <tr>
-		<td>
-		  <para style="P2">Financing contract code</para>
-		</td>
-		<td>
-		  <para style="P2">Financing contract name</para>
-		</td>
-		<td>
-		  <para style="P2">Donor grant reference</para>
-		</td>
-		<td>
-		  <para style="P2">HQ grant reference</para>
-		</td>
-		<td>
-		  <para style="P2">Start eligibility date</para>
-		</td>
-		<td>
-		  <para style="P2">End eligibility date</para>
-		</td>
-		<td>
-		  <para style="P2">Grant amount</para>
-		</td>
-		<td>
-		  <para style="P2">Reporting currency</para>
-		</td>
-		<td>
-		  <para style="P2">Reporting type</para>
-		</td>
-		<td>
-		  <para style="P2">Cost centers associated</para>
-		</td>
-		<td>
-		  <para style="P2">List of Funding pools associated for earmarked costs</para>
-		</td>
-		<td>
-		  <para style="P2">List of Funding pools associated for total project costs</para>
-		</td>
-	      </tr>
-	    </blockTable>
-
-          <blockTable colWidths="50.0,62.0,50.0,50.0,75.0,75.0,50.0,50.0,50.0,100.0,100.0,100.0" style="Table10">
-            <tr>
-              <para style="P20">[[ repeatIn(get_contract_list(), 'line', 'blockTable') ]]</para>
-              <td>
-                <parawrap style="P3">[[ line['code'] ]]</parawrap>
-              </td>
-              <td>
-                <parawrap style="P3">[[ line['name'] ]]</parawrap>
-              </td>
-              <td>
-                <parawrap style="P3">[[ line['donor_grant_reference'] ]]</parawrap>
-              </td>
-              <td>
-                <parawrap style="P3">[[ line['hq_grant_reference'] ]]</parawrap>
-              </td>
-              <td>
-                <para style="P3">[[ formatLang(line['eligibility_from_date'],date=True) ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ formatLang(line['eligibility_to_date'],date=True) ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ locale.format('%.0f', line['grant_amount'], True) ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line['reporting_currency'] ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line['reporting_type'] ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line['cost_centers'] ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line['earmarked_funding_pools'] ]]</para>
-              </td>
-              <td>
-                <para style="P3">[[ line['total_project_funding_pools'] ]]</para>
-              </td>
-            </tr>
-          </blockTable>
-
+          <para style="P2">Financing contract code</para>
+        </td>
+        <td>
+          <para style="P2">Financing contract name</para>
+        </td>
+        <td>
+          <para style="P2">Donor grant reference</para>
+        </td>
+        <td>
+          <para style="P2">HQ grant reference</para>
+        </td>
+        <td>
+          <para style="P2">Start eligibility date</para>
+        </td>
+        <td>
+          <para style="P2">End eligibility date</para>
+        </td>
+        <td>
+          <para style="P2">Grant amount</para>
+        </td>
+        <td>
+          <para style="P2">Reporting currency</para>
+        </td>
+        <td>
+          <para style="P2">Reporting type</para>
+        </td>
+        <td>
+          <para style="P2">Cost centers associated</para>
+        </td>
+        <td>
+          <para style="P2">List of Funding pools associated for earmarked costs</para>
+        </td>
+        <td>
+          <para style="P2">List of Funding pools associated for total project costs</para>
         </td>
       </tr>
-    </blockTable>
+      <tr>
+          <para style="P20">[[ repeatIn(get_contract_list(), 'line', 'tr') ]]</para>
+          <td>
+            <parawrap style="P3">[[ line['code'] ]]</parawrap>
+          </td>
+          <td>
+            <parawrap style="P3">[[ line['name'] ]]</parawrap>
+          </td>
+          <td>
+            <parawrap style="P3">[[ line['donor_grant_reference'] ]]</parawrap>
+          </td>
+          <td>
+            <parawrap style="P3">[[ line['hq_grant_reference'] ]]</parawrap>
+          </td>
+          <td>
+            <para style="P3">[[ formatLang(line['eligibility_from_date'],date=True) ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ formatLang(line['eligibility_to_date'],date=True) ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ formatLang(line['grant_amount'], digits=0, grouping=True) ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ line['reporting_currency'] ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ line['reporting_type'] ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ line['cost_centers'] ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ line['earmarked_funding_pools'] ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ line['total_project_funding_pools'] ]]</para>
+          </td>
+      </tr>
+   </blockTable>
 
   </story>
 </document>
