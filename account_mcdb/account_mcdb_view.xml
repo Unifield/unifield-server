@@ -43,8 +43,6 @@
                         <field name="period_ids" colspan="2" nolabel="1">
                             <tree string="Periods" editable="top" noteditable="1">
                                 <field name="name" string="Name"/>
-                                <field name="date_start" string="Start"/>
-                                <field name="date_stop" string="Stop"/>
                                 <field name="state"/>
                             </tree>
                         </field>
