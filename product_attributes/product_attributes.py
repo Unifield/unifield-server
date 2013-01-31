@@ -258,10 +258,9 @@ class product_attributes(osv.osv):
         'controlled_substance': fields.boolean(string='Controlled substance'),
     }
     
-
     def default_get(self, cr, uid, fields, context=None):
         res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
-        id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 0
+        id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1') and self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')[1] or 1
         res.update({'international_status': id })
         return res
 
