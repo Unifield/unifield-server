@@ -1900,6 +1900,11 @@ class purchase_order_line(osv.osv):
         all_qty = qty
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
+
+        # If the user modify a line, remove the old quantity for the total quantity
+        if ids:
+            for line_id in self.browse(cr, uid, ids, context=context):
+                all_qty -= line_id.product_qty
         
         if product and not uom:
             uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
@@ -1960,6 +1965,12 @@ class purchase_order_line(osv.osv):
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
+                if info_price.rounding and all_qty%info_price.rounding != 0:
+                    message = _('A rounding value of %s UoM has been set for ' \
+                            'this product, you should than modify ' \
+                            'the quantity ordered to match the supplier criteria.') % info_price.rounding
+                    message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
+                    res['warning'].update({'message': message})
             else:
                 old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res['value']['price_unit'], round=False, context=context)
                 res['value'].update({'old_price_unit': old_price})
