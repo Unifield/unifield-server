@@ -423,14 +423,14 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory:
+            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00 and not context.get('noraise'):
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
                 expiry_date = obj.expiry_date
                 if not prod_ids:
                     raise osv.except_osv(_('Error'), 
-                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
+                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or 'No expiry date set'))
                 prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
@@ -631,6 +631,9 @@ class real_average_consumption_line(osv.osv):
             default = {}
 
         default.update({'prodlot_id': False, 'expiry_date': False})
+
+        if 'consumed_qty' in default and default['consumed_qty'] < 0.00:
+            default['consumed_qty'] = 0.00
 
         return super(real_average_consumption_line, self).copy(cr, uid, line_id[0], default=default, context={'noraise': True})
 
