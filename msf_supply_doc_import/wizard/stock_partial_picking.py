@@ -78,6 +78,7 @@ class stock_partial_picking(osv.osv_memory):
         'import_error_ok': fields.boolean(string='error', readonly=True),
         'message': fields.text('Report of lines\' import', readonly=True),
         'percent_completed': fields.integer('% completed', readonly=True),
+        'import_in_progress': fields.boolean(string*'import in progress', readonly=True),
     }
     
     _defaults = {
@@ -215,7 +216,7 @@ class stock_partial_picking(osv.osv_memory):
         file_line_num = 1
         
         line_numbers = []
-        
+
         for row in rows:
             # default values
             line_data = {}
@@ -624,6 +625,8 @@ Reported errors :
             raise osv.except_osv(_('Error'), _('No line to process.'))
         
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
+
+        self.write(cr, uid, ids, {'import_in_progress': True})
         
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, fileobj, context))
         thread.start()
@@ -662,6 +665,7 @@ Reported errors :
             if picking_type == 'incoming_shipment':
                 new_field_txt = """
                 <newline/>
+                <field name="import_in_progress" invisible="1" />
                 <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
                 <field name="file_to_import" colspan="2"/>
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
@@ -670,7 +674,7 @@ Reported errors :
                 <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
                 <newline />
-                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('percent_completed', '=', 0.00)]}" />
+                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('import_in_progress', '=', False)]}" />
                 </group>
                 <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
                 """
