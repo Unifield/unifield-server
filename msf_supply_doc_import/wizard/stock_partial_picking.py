@@ -663,14 +663,14 @@ Reported errors :
                 new_field_txt = """
                 <newline/>
                 <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
-                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('percent_completed', '=', 0.00)]}" />
-                <newline />
                 <field name="file_to_import" colspan="2"/>
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                 <field name="import_error_ok" invisible="1"/>
                 <field name="filename" invisible="1"  />
                 <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
+                <newline />
+                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('percent_completed', '=', 0.00)]}" />
                 </group>
                 <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
                 """
