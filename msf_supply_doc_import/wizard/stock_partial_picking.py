@@ -78,7 +78,7 @@ class stock_partial_picking(osv.osv_memory):
         'import_error_ok': fields.boolean(string='error', readonly=True),
         'message': fields.text('Report of lines\' import', readonly=True),
         'percent_completed': fields.integer('% completed', readonly=True),
-        'import_in_progress': fields.boolean(string*'import in progress', readonly=True),
+        'import_in_progress': fields.boolean(string='import in progress', readonly=True),
     }
     
     _defaults = {
