@@ -3,7 +3,7 @@
 	<data>
 	
 		<!-- view_config wizard install act_window and menu -->
-		<record id="msf_button_access_rights.view_config_wizard_act_window" model="ir.actions.act_window">
+		<record id="msf_button_access_rights_view_config_wizard_act_window" model="ir.actions.act_window">
 		    <field name="name">Generate Button Access Rules</field>
 		    <field name="type">ir.actions.act_window</field>
 		    <field name="res_model">msf_button_access_rights.view_config_wizard_install</field>
@@ -14,10 +14,10 @@
 		</record>
 		
 		<record id="msf_button_access_rights.view_config_wizard_todo" model="ir.actions.todo">
-		    <field name="action_id" ref="msf_button_access_rights.view_config_wizard_act_window"/>
+		    <field name="action_id" ref="msf_button_access_rights_view_config_wizard_act_window"/>
 		</record>
 		
-		<menuitem name="Generate Button Access Rules" action="msf_button_access_rights.view_config_wizard_act_window" id="button_access_rule_generate_rules_menu" parent="msf_sync_access_rights" sequence="20" />
+		<menuitem name="Generate Button Access Rules" action="msf_button_access_rights_view_config_wizard_act_window" id="button_access_rule_generate_rules_menu" parent="msf_sync_access_rights" sequence="20" />
 
 	</data>
 </openerp>
