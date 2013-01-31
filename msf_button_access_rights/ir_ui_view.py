@@ -27,6 +27,7 @@ from osv import orm
 import psycopg2
 from lxml import etree
 import logging
+import unicodedata
 
 class ir_ui_view(osv.osv):
     """
@@ -60,7 +61,13 @@ class ir_ui_view(osv.osv):
         if not model_id:
             logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view_id))
         else:
-            buttons = self.parse_view(vals['arch'], model_id[0], view_id, vals.get('inherit_id', None))
+            try:
+                buttons = self.parse_view(vals['arch'], model_id[0], view_id, vals.get('inherit_id', None))
+            except (ValueError, etree.XMLSyntaxError) as e:
+                logging.getLogger(self._name).warn('Error when parsing view %s' % i)
+                print e
+                buttons = False
+                
             self._write_button_objects(cr, 1, buttons)
         return view_id
     
@@ -80,14 +87,11 @@ class ir_ui_view(osv.osv):
             # get old view xml
             view = self.browse(cr, 1, i)
             xml = arch or view.arch
-            if isinstance(xml, unicode):
-                xml = unicode(s.strip(codecs.BOM_UTF8), 'utf-8')
-                xml = xml.encode('ascii', 'ignore')
-                
+            
             # parse the old xml into a list of button dictionaries
             try:
                 buttons = self.parse_view(xml)
-            except ValueError as e:
+            except (ValueError, etree.XMLSyntaxError) as e:
                 logging.getLogger(self._name).warn('Error when parsing view %s' % i)
                 print e
                 buttons = False
@@ -167,7 +171,12 @@ class ir_ui_view(osv.osv):
     def parse_view(self, view_xml_text, model_id=None, view_id=None, inherit_id=None):
         """
         Pass view_xml_text to extract button objects for each button in the view (Ignore special and position buttons). Return _button_dict pseudo object
+        @raise XMLSyntaxError: thrown by lxml when there is an error while parsing the xml
         """
+        
+        # encode xml
+        view_xml_text = view_xml_text.decode('utf-8')
+        
         button_object_list = []
         view_xml = etree.fromstring(view_xml_text)
         buttons = view_xml.xpath("//button[ @type != 'special' and not (@position) ]")
