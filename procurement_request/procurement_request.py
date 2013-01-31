@@ -403,7 +403,7 @@ class procurement_request_line(osv.osv):
         return res
     
     _columns = {
-        'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
+        'cost_price': fields.float(string='Cost price'),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
@@ -432,6 +432,7 @@ class procurement_request_line(osv.osv):
         'comment_ok': False,
     }
     
+
     def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
         '''
         Fills automatically the product_uom_id field and the name on the line when the 

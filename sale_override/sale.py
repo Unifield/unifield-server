@@ -1226,12 +1226,17 @@ class sale_order_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Override create method so that the procurement method is on order if no product is selected
+        If it is a procurement request, we update the cost price.
         """
         if context is None:
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
-            
+        # Internal request
+        order_id = vals.get('order_id', False)
+        if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
+            vals.update({'cost_price': vals.get('cost_price', False)})
+
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
@@ -1246,12 +1251,17 @@ class sale_order_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        Override write method so that the procurement method is on order if no product is selected
+        Override write method so that the procurement method is on order if no product is selected.
+        If it is a procurement request, we update the cost price.
         """
         if context is None:
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
+        # Internal request
+        order_id = vals.get('order_id', False)
+        if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
+            vals.update({'cost_price': vals.get('cost_price', False)})
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()
