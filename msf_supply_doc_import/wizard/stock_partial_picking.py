@@ -75,8 +75,9 @@ class stock_partial_picking(osv.osv_memory):
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         #'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
-        'import_error_ok': fields.boolean(string='error'),
+        'import_error_ok': fields.boolean(string='error', readonly=True),
         'message': fields.text('Report of lines\' import', readonly=True),
+        'percent_completed': fields.integer('% completed', readonly=True),
     }
     
     _defaults = {
@@ -154,7 +155,7 @@ class stock_partial_picking(osv.osv_memory):
         return True, prodlot_id
 
         
-    def _import(self, dbname, uid, ids, context=None):
+    def _import(self, dbname, uid, ids, fileobj=None, context=None):
         """
         Read the file line of the xls file and update the values of the wizard.
         Create an other xls file if lines are ignored.
@@ -183,7 +184,8 @@ class stock_partial_picking(osv.osv_memory):
         ignore_lines, complete_lines = 0, 0
         line_with_error = []
         
-        
+        percent_completed = 0
+        processed_lines = 0
 
         context.update({'import_in_progress': True})
         
@@ -199,10 +201,12 @@ class stock_partial_picking(osv.osv_memory):
 
         # Error if no line in wizard
         if not wizard_lines:
-            raise osv.except_osv(_('Error'), _('No file to process.'))
+            raise osv.except_osv(_('Error'), _('No line to process.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
+        if not fileobj:
+            fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
 
+        total_line_num = len([row for row in fileobj.getRows()])
         # iteration on rows
         rows = fileobj.getRows()
         # ignore the first row
@@ -211,7 +215,6 @@ class stock_partial_picking(osv.osv_memory):
         file_line_num = 1
         
         line_numbers = []
-        matching_wiz_lines = [] # List of wizard lines matching with file lines
         
         for row in rows:
             # default values
@@ -276,6 +279,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 All lines raise an error because no move found
                 '''
                 for l in import_obj.browse(cr, uid, line_ids, context=context):
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : No matching line found with in the Incoming shipment for the line number %s.") % (l.file_line_number, l.line_number))
                     line_with_error.append(list(l.line_values))
                     ignore_lines += 1
@@ -298,6 +304,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         remaining_lines.append(l.id)
                         continue
                     
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     diff_qty = False
                     best_move = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
@@ -316,6 +325,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     
                 # Treat the remaining lines
                 for l in import_obj.browse(cr, uid, remaining_lines, context=context):
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     ok = False
                     for m in move_obj.browse(cr, uid, move_ids, context=context):
                         if m.id in already_treated or m.product_uom.category_id.id != l.uom_id.category_id.id:
@@ -371,6 +383,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         remaining_lines.append(l.id)
                         continue
                     
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     diff_qty = False
                     best_move = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
@@ -388,6 +403,9 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     already_treated.append(best_move)
                     
                 for l in import_obj.browse(cr, uid, remaining_lines, context=context):
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     if len(multi_product) > 1 and l.product_id.id not in multi_product:
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : The system cannot found a line matching with the line numbert %s, the product [%s] %s and the UoM %s.") % (l.file_line_number, l.line_number, l.product_id.default_code, l.product_id.name, l.uom_id.name))
                         line_with_error.append(list(l.line_values))
@@ -395,32 +413,52 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         continue
                         
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
-                                                          ('quantity_ordered', '>', l.quantity),
-                                                          ('product_id', '=', l.product_id.id),], order='quantity_ordered desc', context=context)
+                                                          ('quantity_ordered', '>=', l.quantity),], order='quantity_ordered desc', context=context)
                     
                     if not match_ids:
                         match_ids = move_obj.search(cr, uid, [('id', 'in', already_treated)], order='quantity_ordered desc', context=context)
                     
                     ok = False
                     for m in move_obj.browse(cr, uid, match_ids, context=context):
-                        if m.quantity_ordered > l.quantity and m.product_uom.category_id.id != l.uom_id.category_id.id:
+                        if (m.quantity_ordered > l.quantity or m.quantity > 0) and m.product_uom.category_id.id == l.uom_id.category_id.id:
                             ok = True
                             # Split the line
                             wizard_values = move_obj.split(cr, uid, m.id, context)
                             wiz_context = wizard_values.get('context')
+                            qty_to_split = m.quantity_ordered - l.quantity < 1 and 1 or l.quantity
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
-                                                                            {'quantity': l.quantity}, context=wiz_context)
+                                                                            {'quantity': qty_to_split}, context=wiz_context)
                             self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
                             info_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
                             new_move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
-                                                                    ('id', 'not in', matching_wiz_lines),
+                                                                    ('id', 'not in', already_treated),
                                                                     ('id', 'not in', move_ids),
-                                                                    ('line_number', '=', ln)])
+                                                                    ('line_number', '=', ln)], order='id desc')
                             new_move_id = new_move_ids[0]
+                            move_ids.append(new_move_id)
                             move_obj.write(cr, uid, [new_move_id], {'product_uom': l.uom_id.id,
                                                                     'quantity': l.quantity,
                                                                     'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
                                                                     'expiry_date': l.expiry_date}, context=context)
+                            if m.product_id.id != l.product_id.id:
+                                # Call the change product wizard
+                                wizard_values = move_obj.change_product(cr, uid, new_move_id, context)
+                                wiz_context = wizard_values.get('context')
+                                self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
+                                self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                                info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the from [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
+                                
+                            if m.product_uom.id != l.uom_id.id:
+                                info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
+                                
+                            complete_lines += 1
+                            break
+                        elif m.quantity_ordered == l.quantity and m.quantity == 0.00 and m.product_uom.category_id.id == l.uom_id.category_id.id:
+                            ok = True
+                            move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
+                                                             'quantity': l.quantity,
+                                                             'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
+                                                             'expiry_date': l.expiry_date}, context=context)
                             if m.product_id.id != l.product_id.id:
                                 # Call the change product wizard
                                 wizard_values = move_obj.change_product(cr, uid, m.id, context)
@@ -449,6 +487,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 remaining_lines = []
                 already_treated = []
                 for l in import_obj.browse(cr, uid, line_ids, context=context):
+                    remaining_qty = l.quantity
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
                                                           ('id', 'not in', already_treated),
                                                           ('product_id', '=', l.product_id.id),
@@ -458,23 +497,41 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         remaining_lines.append(l.id)
                         continue
                     
-                    diff_qty = False
-                    best_move = False
-                    for m in move_obj.browse(cr, uid, match_ids, context=context):
-                        if not best_move:
-                            best_move = m.id
-                            diff_qty = abs(m.quantity_ordered - l.quantity)
-                        if abs(m.quantity_ordered - l.quantity) < diff_qty:
-                            best_move = m.id
-                            diff_qty = abs(m.quantity_ordered - l.quantity)
-                            
-                    move_obj.write(cr, uid, [best_move], {'quantity': l.quantity,
-                                                          'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
-                                                          'expiry_date': l.expiry_date}, context=context)
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    last_move = False
+                    while remaining_qty:
+                        if not match_ids:
+                            move_obj.write(cr, uid, [last_move.id], {'quantity': best_move.quantity_ordered + remaining_qty,
+                                                                     'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
+                                                                     'expiry_date': l.expiry_date}, context=context)
+                            break
+                        
+                        diff_qty = False
+                        best_move = False
+                        for m in move_obj.browse(cr, uid, match_ids, context=context):
+                            if not best_move:
+                                best_move = m
+                                diff_qty = abs(m.quantity_ordered - l.quantity)
+                            if abs(m.quantity_ordered - l.quantity) < diff_qty:
+                                best_move = m
+                                diff_qty = abs(m.quantity_ordered - l.quantity)
+                                
+                        move_obj.write(cr, uid, [best_move.id], {'quantity': min(best_move.quantity_ordered, remaining_qty),
+                                                                 'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
+                                                                 'expiry_date': l.expiry_date}, context=context)
+                        remaining_qty -= min(best_move.quantity_ordered, remaining_qty)
+                        last_move = best_move
+                        match_ids.remove(best_move.id)
+                        
                     complete_lines += 1
                     already_treated.append(best_move)
                     
                 for l in import_obj.browse(cr, uid, remaining_lines, context=context):
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     ok = False
                     for m in move_obj.browse(cr, uid, move_ids, context=context):
                         if m.id in already_treated or m.product_uom.category_id.id != l.uom_id.category_id.id:
@@ -518,7 +575,7 @@ Reported errors :
 %s
 %s
                 '''  % (complete_lines, ignore_lines, error or 'No error !', info and 'Reported information :' or '', info or '')
-        vals = {'message': message}
+        vals = {'message': message, 'percent_completed': percent_completed}
         if line_with_error:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
             vals.update(file_to_export)
@@ -539,7 +596,21 @@ Reported errors :
         """
         Launch a thread for importing lines.
         """
-        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        wizard_lines = False
+        file_to_import = False
+        for obj in self.browse(cr, uid, ids, context):
+            file_to_import = obj.file_to_import
+            wizard_lines = obj.product_moves_in
+        # Error if no file to import
+        if not file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        # Error if no line in wizard
+        if not wizard_lines:
+            raise osv.except_osv(_('Error'), _('No line to process.'))
+        
+        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
+        
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, fileobj, context))
         thread.start()
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
         Otherwise, you can continue to use Unifield.""")
@@ -577,6 +648,8 @@ Reported errors :
                 new_field_txt = """
                 <newline/>
                 <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
+                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('percent_completed', '=', 0.00)]}" />
+                <newline />
                 <field name="file_to_import" colspan="2"/>
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                 <field name="import_error_ok" invisible="1"/>
