@@ -209,18 +209,18 @@
     <blockTable style="Table100">
       <tr>
         <td>
-          <para style="P13">Starting Balance: [[ o.balance_start and o.balance_start or '0.0' ]]</para>
+          <para style="P13">Starting Balance: [[ o.balance_start and formatLang(o.balance_start, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P13">Bank statement balance: [[ o.balance_end_real and o.balance_end_real or '0.0' ]]</para>
+          <para style="P13">Bank statement balance: [[ o.balance_end_real and formatLang(o.balance_end_real, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
       </tr>
       <tr>
         <td>
-          <para style="P13">Calculated Balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
+          <para style="P13">Calculated Balance: [[ o.balance_end and formatLang(o.balance_end, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P13">Gap: [[ o.balance_gap and o.balance_gap or '0.0' ]]</para>
+          <para style="P13">Gap: [[ o.balance_gap and formatLang(o.balance_gap, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
       </tr>
     </blockTable>
