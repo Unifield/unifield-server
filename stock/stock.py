@@ -2057,10 +2057,20 @@ class stock_move(osv.osv):
         self.write(cr, uid, ids, {'state': 'assigned'})
         return True
 
+    def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the cancel_assign method from stock>stock.py>stock_move class
+        
+        -  it erases the batch number associated if any and reset the source location to the original one.
+        '''
+        return True
+
     def cancel_assign(self, cr, uid, ids, context=None):
         """ Changes the state to confirmed.
         @return: True
         """
+        self._hook_cancel_assign_batch(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
         return True
     
