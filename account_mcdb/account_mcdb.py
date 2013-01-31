@@ -38,7 +38,7 @@ class account_mcdb(osv.osv_memory):
         'posting_date_to': fields.date('Ending posting date'),
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
-        'document_code': fields.char(string='Document Code', size='255'),
+        'document_code': fields.char(string='Sequence number', size='255'),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Document Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
