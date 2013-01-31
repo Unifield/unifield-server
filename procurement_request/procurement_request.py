@@ -34,7 +34,7 @@ class procurement_request(osv.osv):
         cur_obj = self.pool.get('res.currency')
         res = {}
         for ir in self.browse(cr, uid, ids, context=context):
-            res[ir.id] = 0.0,
+            res[ir.id] = 0.0
             val = 0.0
             if ir.procurement_request:
                 curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
