@@ -230,6 +230,10 @@
       <font color="white"> </font>
     </para>
     <para style="P7">Cashbox:</para>
+
+
+
+
     <blockTable style="Table10">
       <tr>
         <td>
@@ -271,6 +275,10 @@
           </blockTable>
         </td>
       </tr>
+	</blockTable>
+
+
+    <blockTable style="Table10">
       <tr>
         <td>
           <section>
@@ -310,6 +318,10 @@
         </td>
       </tr>
     </blockTable>
+
+
+
+
     <para style="P6">
       <font color="white"> </font>
     </para>
@@ -332,6 +344,7 @@
       </tr>
       <tr>
         <td>
+
           <para style="P3a">Theoretical balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
         </td>
         <td>
@@ -343,6 +356,7 @@
       </tr>
       <tr>
         <td>
+
           <para style="P3a">CashBox Balance: [[ o.balance_end_cash and o.balance_end_cash or '0.0' ]]</para>
         </td>
         <td>
@@ -354,6 +368,7 @@
       </tr>
       <tr>
         <td>
+
           <para style="P3a">Gap: [[ o.closing_gap and o.closing_gap or '0.0' ]]</para>
         </td>
         <td>
