@@ -44,6 +44,7 @@
     'test': [
         'test/analytic_account_activable.yml',
         'test/analytic_data.yml',
+        'test/bug_1681.yml',
     ],
     'demo_xml': [
     ],
