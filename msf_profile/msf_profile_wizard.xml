@@ -11,12 +11,6 @@
                     <group colspan="3">
                         <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
                         <newline/>
-                        <label colspan="4" width="220" string="OpenERP translations (core, modules, clients) are managed through Launchpad.net, our open source project management facility. We use their online interface to synchronize all translations efforts."/>
-                        <label colspan="4" width="220" string="To improve or expand the official translations, you should use directly Lauchpad's web interface (Rosetta). If you need to perform mass translation, Launchpad also allows uploading full .po files at once"/>
-                        <label colspan="4" width="220"/>
-                        <label colspan="4" width="220" string="To browse official translations, you can start with these links:"/>
-                        <label colspan="4" width="220" string="https://help.launchpad.net/Translations"/>
-                        <label colspan="4" width="220" string="https://translations.launchpad.net/openobject"/>
                     </group>
                     <separator orientation="vertical" rowspan="15"/>
                     <group colspan="4">
@@ -34,13 +28,13 @@
     </record>
 
     <record id="export_lang_background_result" model="ir.ui.view">
-        <field name="name">Export Lang Background</field>
+        <field name="name">Export Lang step 2</field>
         <field name="model">base.language.export</field>
         <field name="priority" eval="200" />
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Export Translation">
-                <separator string="The file will be attached to a new request, please check the menu Administration > Customization > Low Level Objects > Requests > Requests" colspan="4"/>
+                <separator string="The export process could take quite a long time. The file will be attached to a new request, please check the menu Administration > Customization > Low Level Objects > Requests > Requests" colspan="4"/>
                 <group colspan="2">
                     <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
                 </group>
@@ -48,48 +42,51 @@
         </field>
     </record>
 
-    <record id="import_lang_background" model="ir.ui.view">
-        <field name="name">Import Lang Background</field>
+    <record id="base.view_base_import_language" model="ir.ui.view">
+        <field name="name">Import Lang</field>
         <field name="model">base.language.import</field>
         <field name="priority" eval="200" />
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Import Translation">
-                <field name="name" required="1"/>
-                <field name="code" />
-                <field name="data" />
-                <group colspan="2">
-                    <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
-                    <button icon="gtk-ok" name="import_lang_background" string="_Import" type="object"/>
+                <group col="8">
+                    <group colspan="3">
+                        <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                        <newline/>
+                        <label colspan="4" string="Supported file formats: *.csv (Comma-separated values), *.po (GetText Portable Objects) or *.xml (XML SpreadSheet 2003" />
+                        <label colspan="4" string="When using CSV format or PO format, please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it." />
+                        <label colspan="4" string="When using CSV format or XML SpreadSheet 2003 format, please check that the first line of your file is one of the following:"/>
+                        <label colspan="4" string="- type,name,res_id,src,value"/>
+                        <label colspan="4" string="- module,type,name,res_id,src,value"/>
+                    </group>
+                    <separator orientation="vertical" rowspan="15"/>
+                    <group colspan="4">
+                        <field name="name" required="1"/>
+                        <field name="code" />
+                        <field name="data" />
+                        <group colspan="4">
+                            <button icon="gtk-cancel" name="act_cancel" special="cancel" string="_Close" type="object"/>
+                            <button icon="gtk-ok" name="import_lang_background" string="_Import" type="object"/>
+                        </group>
+                    </group>
                 </group>
             </form>
         </field>
     </record>
 
     <record id="import_lang_background_result" model="ir.ui.view">
-        <field name="name">Import Lang Background</field>
+        <field name="name">Import Lang step 2</field>
         <field name="model">base.language.import</field>
         <field name="priority" eval="200" />
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Import Translation">
-                <separator string="The file will be attached to a new request, please check the menu Administration > Customization > Low Level Objects > Requests > Requests" colspan="4"/>
+                <separator string="The import process could take quite a long time, when finished a new request will be created, please check the menu Administration > Customization > Low Level Objects > Requests > Requests" colspan="4"/>
                 <group colspan="2">
                     <button icon="gtk-ok" name="open_requests"  string="OK" type="object"/>
                 </group>
             </form>
         </field>
     </record>
-
-    <record id="action_wizard_lang_import_background" model="ir.actions.act_window">
-        <field name="name">Import Translation in Background</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">base.language.import</field>
-        <field name="view_type">form</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="view_id" ref="import_lang_background" />
-    </record>
-    <menuitem action="action_wizard_lang_import_background" id="menu_wizard_lang_import_background" parent="base.menu_translation_export"/>
 </data>
 </openerp>
