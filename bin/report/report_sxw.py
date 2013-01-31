@@ -311,7 +311,7 @@ class rml_parse(object):
                 formatLang(value, dp='Account') -> digits=3
                 formatLang(value, digits=5, dp='Account') -> digits=5
         """
-        digits = 2
+        #digits = 2
         computation = False
         # could be a clue for proper use of digit and computation directly from field object - I leave this code as a start for further dev later on
         if hasattr(value,'_field'):
