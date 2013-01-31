@@ -141,27 +141,26 @@ class account_journal(osv.osv):
 
 account_journal()
 
-class account_analytic_line(osv.osv):
-    _name = 'account.analytic.line'
-    _inherit = 'account.analytic.line'
-    
-    _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
-    }
-    
-    def create(self, cr, uid, vals, context=None):
-        if 'journal_id' in vals:
-            journal = self.pool.get('account.analytic.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals['instance_id'] = journal.instance_id.id
-        return super(account_analytic_line, self).create(cr, uid, vals, context=context)
-    
-    def write(self, cr, uid, ids, vals, context=None):
-        if 'journal_id' in vals:
-            journal = self.pool.get('account.analytic.journal').browse(cr, uid, vals['journal_id'], context=context)
-            vals['instance_id'] = journal.instance_id.id
-        return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+class account_analytic_journal_fake(osv.osv):
+    """ Workaround class used in account.analytic.line search view, because context is lost in m2o search view """
+    _inherit = 'account.analytic.journal'
+    _name = 'account.analytic.journal.fake'
+    _table = 'account_analytic_journal'
 
-account_analytic_line()
+    def name_get(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
+
+        ret = []
+        for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+            ret.append((journal['id'], '%s / %s'%(journal['instance_id'] and journal['instance_id'][1] or '', journal['code'])))
+
+        return ret
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        return self.pool.get('account.analytic.journal').fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+account_analytic_journal_fake()
 
 class account_journal_fake(osv.osv):
     """ Workaround class used in account.move search view, because context is lost in m2o search view """
@@ -202,6 +201,38 @@ def _search_journal_id_fake(self, cr, uid, obj, name, args, context=None):
             res.append(arg)
     return res
 
+class account_analytic_line(osv.osv):
+    _name = 'account.analytic.line'
+    _inherit = 'account.analytic.line'
+    
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'journal_id_fake': fields.function(_get_journal_id_fake, method=True, string='Journal', type='many2one', relation='account.analytic.journal.fake', fnct_search=_search_journal_id_fake)
+    }
+
+    def onchange_filter_journal(self, cr, uid, ids, instance_id, journal_id, context=None):
+        value = {}
+        dom = []
+        if instance_id:
+            dom = [('instance_id', '=', instance_id)]
+            if journal_id and not self.pool.get('account.analytic.journal').search(cr, uid, [('id', '=', journal_id), ('instance_id', '=', instance_id)]):
+                    value['journal_id_fake'] = False
+
+        return {'domain': {'journal_id_fake': dom}, 'value': value}
+
+    def create(self, cr, uid, vals, context=None):
+        if 'journal_id' in vals:
+            journal = self.pool.get('account.analytic.journal').browse(cr, uid, vals['journal_id'], context=context)
+            vals['instance_id'] = journal.instance_id.id
+        return super(account_analytic_line, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'journal_id' in vals:
+            journal = self.pool.get('account.analytic.journal').browse(cr, uid, vals['journal_id'], context=context)
+            vals['instance_id'] = journal.instance_id.id
+        return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
+
+account_analytic_line()
 
 class account_move(osv.osv):
     _name = 'account.move'
