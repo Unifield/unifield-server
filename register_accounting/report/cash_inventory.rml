@@ -4,7 +4,6 @@
     <template pageSize="(595.0,842.0)" title="test" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
-
         <pageGraphics>
             <fill color="blue"/>
             <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
@@ -16,7 +15,6 @@
             <!--            <drawString x="765" y="520.0">/</drawString>
             <drawString x="770" y="520.0"><pageCount /> </drawString>-->
         </pageGraphics>
-
     </pageTemplate>
     </template>
 
@@ -127,10 +125,8 @@
     <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER"/>
-
     <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P3a" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
-
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -226,8 +222,6 @@
         </td>
       </tr>
     </blockTable>
-
-
 
     <para style="P6">
       <font color="white"> </font>
@@ -338,7 +332,6 @@
       </tr>
       <tr>
         <td>
-
           <para style="P3a">Theoretical balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
         </td>
         <td>
@@ -350,7 +343,6 @@
       </tr>
       <tr>
         <td>
-
           <para style="P3a">CashBox Balance: [[ o.balance_end_cash and o.balance_end_cash or '0.0' ]]</para>
         </td>
         <td>
@@ -362,7 +354,6 @@
       </tr>
       <tr>
         <td>
-
           <para style="P3a">Gap: [[ o.closing_gap and o.closing_gap or '0.0' ]]</para>
         </td>
         <td>
@@ -389,8 +380,6 @@
         </td>
       </tr>
     </blockTable>
-
-
 
     <para style="P6">
       <font color="white"> </font>
