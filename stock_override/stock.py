@@ -926,6 +926,20 @@ class stock_move(osv.osv):
         move = kwargs['move']
         return move.location_id.usage == 'supplier'
 
+    def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the cancel_assign method from stock>stock.py>stock_move class
+        
+        -  it erases the batch number associated if any and reset the source location to the original one.
+        '''
+        for line in self.browse(cr, uid, ids, context):
+            if line.prodlot_id:
+                self.write(cr, uid, ids, {'prodlot_id': False})
+            if line.location_id.location_id and line.location_id.location_id.usage != 'view':
+                self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
+        return True
+
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
             r = res.pop(0)
