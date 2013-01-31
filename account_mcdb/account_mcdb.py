@@ -87,6 +87,8 @@ class account_mcdb(osv.osv_memory):
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Destination"),
+        'display_journal': fields.boolean('Display Journals?'),
+        'display_period': fields.boolean('Display Periods?'),
     }
 
     _defaults = {
@@ -94,6 +96,8 @@ class account_mcdb(osv.osv_memory):
         'functional_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
         'currency_choice': lambda *a: 'booking',
         'analytic_axis': lambda *a: 'fp',
+        'display_journal': lambda *a: False,
+        'display_period': lambda *a: False,
     }
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):

@@ -18,7 +18,8 @@
             <field name="arch" type="xml">
                 <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     &general;
-                    <group col="2" colspan="2">
+                    <field name="display_journal" colspan="2"/><field name="display_period" colspan="2"/>
+                    <group col="2" colspan="2" attrs="{'invisible': [('display_journal', '=', False)]}">
                         <group col="2" colspan="2">
                             <button name="button_journal_clear" type="object" string="Remove all Journals" icon="gtk-clear" colspan="1"/>
                             <button name="button_journal_add" type="object" string="Add all Journals" icon="gtk-add" colspan="1"/>
@@ -32,7 +33,7 @@
                             </tree>
                         </field>
                     </group>
-                    <group col="2" colspan="2">
+                    <group col="2" colspan="2" attrs="{'invisible': [('display_period', '=', False)]}">
                         <group col="2" colspan="2">
                             <button name="button_period_clear" type="object" string="Remove all Periods" icon="gtk-clear" colspan="1"/>
                             <button name="button_period_add" type="object" string="Add all Periods" icon="gtk-add" colspan="1"/>
