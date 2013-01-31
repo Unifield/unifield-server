@@ -137,35 +137,39 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
         pool = pooler.get_pool(cr.dbname) 
         object_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
-        rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
-        
-        # do we have rules?
-        if rules_search:
-            rule = rules_pool.browse(cr, 1, rules_search[0])
+        if rules_pool:
+            rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
             
-            # does user have access? 
-            access = False
-            if rule.group_ids:
-                user = pool.get('res.users').read(cr, 1, uid)
-                if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
+            # do we have rules?
+            if rules_search:
+                rule = rules_pool.browse(cr, 1, rules_search[0])
+                
+                # does user have access? 
+                access = False
+                if rule.group_ids:
+                    user = pool.get('res.users').read(cr, 1, uid)
+                    if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
+                        access = True
+                else:
                     access = True
-            else:
-                access = True
-            
-            if access:
-                # if method type = action, continue as normal, otherwise
-                if rule.type == 'action':
-                    return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
-            
-                # continue action as admin user
-                if rule.type != 'action':
-                    return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
+                
+                if access:
+                    # if method type = action, continue as normal, otherwise
+                    if rule.type == 'action':
+                        return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
+                
+                    # continue action as admin user
+                    if rule.type != 'action':
+                        return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
+                    
+                else:
+                    # throw access denied
+                    raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
                 
             else:
-                # throw access denied
-                raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
-            
+                return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
         else:
+            logging.getLogger(self._name).warn('Could not get model pool for button_access_rule')
             return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
 
 osv.object_proxy.execute_cr = execute_cr
@@ -190,28 +194,32 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
         pool = pooler.get_pool(cr.dbname) 
         object_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
-        rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
-        
-        # do we have rules?
-        if rules_search:
-            rule = rules_pool.browse(cr, 1, rules_search[0])
+        if rules_pool:
+            rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
             
-            # does user have access? 
-            access = False
-            if rule.group_ids:
-                user = pool.get('res.users').read(cr, 1, uid)
-                if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
+            # do we have rules?
+            if rules_search:
+                rule = rules_pool.browse(cr, 1, rules_search[0])
+                
+                # does user have access? 
+                access = False
+                if rule.group_ids:
+                    user = pool.get('res.users').read(cr, 1, uid)
+                    if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
+                        access = True
+                else:
                     access = True
+                
+                if access:
+                    # execute workflow as admin
+                    return super_execute_workflow_cr(self, cr, 1, obj, method, *args)
+                else:
+                    # throw access denied
+                    raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
             else:
-                access = True
-            
-            if access:
-                # execute workflow as admin
-                return super_execute_workflow_cr(self, cr, 1, obj, method, *args)
-            else:
-                # throw access denied
-                raise osv.except_osv('Access Denied', 'You do not have permission to use this button')
+                return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
         else:
+            logging.getLogger(self._name).warn('Could not get model pool for button_access_rule')
             return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
     
 osv.object_proxy.exec_workflow_cr = exec_workflow_cr
