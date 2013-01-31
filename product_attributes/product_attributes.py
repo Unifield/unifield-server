@@ -302,6 +302,7 @@ class product_attributes(osv.osv):
                        default_code="XXX",
                        # we set international_status to "temp" so that it won't be synchronized with this status
                        international_status='temp',
+                       asset_ids=False,
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
