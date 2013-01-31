@@ -61,6 +61,7 @@
                                 <field name="amount_untaxed" sum="Untaxed amount"/>
                                 <field name="amount_tax"/>
                                 <field name="amount_total" sum="Total amount"/>
+                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                                 <newline/>
                                 <field name="functional_currency_id" readonly="1"/>
                                 <field name="functional_amount_untaxed"/>
@@ -70,8 +71,6 @@
                                 <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                                 <newline/>
                                 <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
-                        <newline />
-                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                         </group>
                         <newline/>
 
