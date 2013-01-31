@@ -17,7 +17,7 @@
 		    <field name="action_id" ref="msf_button_access_rights.view_config_wizard_act_window"/>
 		</record>
 		
-		<menuitem name="Generate Button Access Rules" action="msf_button_access_rights.view_config_wizard_act_window" id="button_access_rule_generate_rules_menu" parent="msf_sync_access_rights" sequence="4" />
+		<menuitem name="Generate Button Access Rules" action="msf_button_access_rights.view_config_wizard_act_window" id="button_access_rule_generate_rules_menu" parent="msf_sync_access_rights" sequence="20" />
 
 	</data>
 </openerp>

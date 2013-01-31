@@ -32,7 +32,7 @@
         'views/view_config_view.xml',
         'views/button_access_rule_view.xml',
         'views/ir_ui_view_view.xml',
-        'menu/menu.xml',
+        'menu/button_access_rules.xml',
         'menu/view_config.xml',
         'data/groups.xml',
         'security/ir.model.access.csv',
