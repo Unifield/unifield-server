@@ -18,7 +18,7 @@ def open_requests(self, cr, uid, ids, filter=False, context=None):
     view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'res_request_trans-act')
     result = self.pool.get(view[0]).read(cr, uid, view[1], ['view_id', 'view_mode', 'view_type', 'res_model', 'type', 'search_view_id', 'domain'])
     result['target'] = 'crunch'
-    result['context'] = {'search_default_import': filter=='import' , 'search_default_export': filter=='export', 'search_default_act_to': uid}
+    #result['context'] = {'search_default_import': filter=='import' , 'search_default_export': filter=='export', 'search_default_act_to': uid}
     return result
 
 class base_language_export(osv.osv_memory):
