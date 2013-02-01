@@ -42,6 +42,6 @@
     from osv import osv
     try:
       self.rfq_sent(cr, uid, [ref('rfq3')])
-      raise False, "Error not raised"
+      assert False, "Error not raised"
     except osv.except_osv, e:
       pass
