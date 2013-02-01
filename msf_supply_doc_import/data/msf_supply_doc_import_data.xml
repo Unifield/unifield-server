@@ -58,6 +58,8 @@
         <field name="active" eval="False" />
     </record>
 
+
+
     <!-- Product to be defined -->
     <record id="product_tbd" model="product.product">
         <field name="default_code" >TBD</field>
