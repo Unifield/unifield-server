@@ -197,6 +197,9 @@ class base_language_import(osv.osv_memory):
                 'import_trans': True,
                 'body': _('Your translation file has been successfully imported.')
             })
+            if req_id:
+                self.pool.get('res.request').request_send(cr, uid, [req_id])
+
             self.write(cr, uid, [ids[0]], {'data': ''})
             cr.commit()
             cr.close()
