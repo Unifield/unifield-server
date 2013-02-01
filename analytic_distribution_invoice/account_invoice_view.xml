@@ -18,6 +18,7 @@
                         <group colspan="3"/>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']/field[@name='account_analytic_id']" position="replace">
+                        <field name="inactive_product" invisible="1" />
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
                         <field name="analytic_distribution_state_recap"/>
                         <field name="have_analytic_distribution_from_header" invisible="1"/>
@@ -25,7 +26,7 @@
                         <field name="is_allocatable" invisible="1"/>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']" position="attributes">
-                        <attribute name="colors">blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')</attribute>
+                        <attribute name="colors">red:analytic_distribution_state in ('invalid') or inactive_product == True;blue:analytic_distribution_state in ('valid');black:analytic_distribution_state in ('none')</attribute>
                     </xpath>
                 </data>
             </field>
@@ -57,8 +58,9 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
-                        <tree string="Invoice Line" colors="blue:analytic_distribution_state in ('valid');red:analytic_distribution_state in ('invalid');black:analytic_distribution_state in ('none')">
+                        <tree string="Invoice Line" colors="red:analytic_distribution_state in ('invalid') or inactive_product == True;blue:analytic_distribution_state in ('valid');black:analytic_distribution_state in ('none')">
                             <field name="name"/>
+                            <field name="inactive_product" invisible="1" />
                             <field name="account_id" />
                             <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
                             <field name="analytic_distribution_state_recap"/>
