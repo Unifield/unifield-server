@@ -320,6 +320,8 @@ class product_attributes(osv.osv):
         threshold_obj = self.pool.get('threshold.value')
         threshold_line_obj = self.pool.get('threshold.value.line')
         orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
+        invoice_obj = self.pool.get('account.invoice.line')
+
         error_obj = self.pool.get('product.deactivation.error')
         error_line_obj = self.pool.get('product.deactivation.error.line')
         
@@ -364,11 +366,16 @@ class product_attributes(osv.osv):
                 
             # Check if the product is in a kit composition
             has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id)], context=context)
+
+            # Check if the product is in an invoice
+            has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                            ('invoice_id', '!=', False),
+                                                            ('invoice_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             
             # Check if the product has stock in internal locations
             has_stock = product.qty_available
             
-            opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line
+            opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line
             if has_stock or opened_object:
                 # Create the error wizard
                 wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
@@ -473,6 +480,17 @@ class product_attributes(osv.osv):
                                                         'internal_type': 'initial.stock.inventory',
                                                         'doc_ref': inv.inventory_id.name,
                                                         'doc_id': inv.inventory_id.id}, context=context)
+
+                # Create lines for error in invoices
+                invoice_ids = []
+                for invoice in invoice_obj.browse(cr, uid, has_invoice_line, context=context):
+                    if invoice.invoice_id.id not in invoice_ids:
+                        invoice_ids.append(invoice.invoice_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Invoice',
+                                                        'internal_type': 'account.invoice',
+                                                        'doc_ref': invoice.invoice_id.number,
+                                                        'doc_id': invoice.invoice_id.id}, context=context)
                 
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
