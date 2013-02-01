@@ -244,6 +244,7 @@
       for mem in obj.product_moves_picking:
         mem.write({'quantity': 0}, context=c)
     # validate the creation
+    c.update({'yml_test': True})
     self.do_create_picking(cr, uid, ids, context=c)
     # empty picking
     for obj in self.browse(cr, uid, ids, context=c):

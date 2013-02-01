@@ -566,7 +566,7 @@ class create_picking(osv.osv_memory):
                                                                                    })
                     # override : add hook call
                     partial_datas = self.do_create_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
-            if not total_qty:
+            if not total_qty and not context.get('yml_test'):
                 raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
