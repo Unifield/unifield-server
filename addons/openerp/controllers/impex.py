@@ -33,7 +33,7 @@ import simplejson
 import time
 from openobject.i18n import format
 
-
+product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
 def datas_read(ids, model, flds, context=None):
     ctx = dict((context or {}), **rpc.session.context)
     return rpc.RPCProxy(model).export_data(ids, flds, ctx)
@@ -149,6 +149,9 @@ class ImpEx(SecuredController):
                 if import_compat=='1' and '/' in kw.get('fields')[i] and kw.get('fields')[i].split('/')[-1] not in ('id', '.id'):
                     continue
                 default.append([kw['fields'][i], params.fields2[i]])
+
+        if params.model == 'product.product':
+            default = [x for x in default if x[0] not in product_remove_fields]
         default = simplejson.dumps(default)
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
@@ -388,24 +391,19 @@ class ImpEx(SecuredController):
             fields = fields.replace('/.id','.id')
             flds = [fields]
 
-        # UF-1257 Only use Code, Description and UoM for export due to timeout error from products with some fields:
-        # - qty_available
-        # - virtual_available
-        # - product_amc
-        # - reviewed_consumption
-        # - monthly_consumption
         if params.model == 'product.product':
             tmp_flds = flds
             flds = []
-            flds_to_remove = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
-            fields_to_remove = ['Real Stock', 'Virtual Stock', 'Real Consumption', 'Monthly consumption', 'Forecasted Monthly Consumption']
+            fields_header = []
             for f in tmp_flds:
-                if f not in flds_to_remove:
+                header = ""
+                if params.fields2 and len(params.fields2):
+                    header = params.fields2.pop(0)
+                if f not in product_remove_fields:
                     flds.append(f)
+                    fields_header.append(header)
 
-            for f_r in fields_to_remove:
-                if f_r in params.fields2:
-                    params.fields2.remove(f_r)
+            params.fields2 = fields_header
 
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
