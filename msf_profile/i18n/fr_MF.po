@@ -59860,7 +59860,7 @@ msgstr "Valide à partir de (date)"
 #. module: base
 #: selection:base.language.export,format:0
 msgid "PO File"
-msgstr "Fichier Bon de Commande"
+msgstr "Fichier PO"
 
 #. modules: purchase, sd
 #: model:process.node,name:purchase.process_node_rfq_draft
