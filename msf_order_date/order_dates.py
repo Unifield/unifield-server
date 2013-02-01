@@ -1485,7 +1485,7 @@ class stock_picking(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
         return res
 
 stock_picking()
@@ -1525,7 +1525,7 @@ class stock_move(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
         return res
     
 stock_move()
