@@ -407,7 +407,8 @@ class shipment_wizard(osv.osv_memory):
         packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas_shipment, model_name='stock.move.memory.shipment.create', context=context)
         if not packs_check:
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+            self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+            raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
     
