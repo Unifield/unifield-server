@@ -205,6 +205,26 @@ class stock_picking(osv.osv):
                  'from_wkf': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
                  }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the stock picking contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
+                                                                      ('picking_id', 'in', ids),
+                                                                      ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+            (_check_active_product, "You cannot validate this document because it contains a line with an inactive product", ['order_line', 'state'])
+    ]
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -752,7 +772,21 @@ class stock_move(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the stock picking contains a line with an inactive products
+        '''
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.state not in ('draft', 'done', 'cancel') and not move.product_id.active:
+                raise osv.except_osv(_('Error'), _('[%s] %s been inactivated. If you want to validate this document you have to remove/replace this product') % (move.product_id.default_code, move.product_id.name))
+            return False
+        return True
     
+    _constraints = [
+            (_check_active_product, "You cannot validate this document because it contains an inactive product", ['state', 'product_id'])
+    ]
+
     def get_error(self, cr, uid, ids, context=None):
         '''
         Raise error message
