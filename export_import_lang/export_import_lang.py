@@ -191,10 +191,12 @@ class base_language_import(osv.osv_memory):
                 'import_trans': True,
                 'body': _('Your translation file has been successfully imported.')
             })
+            self.unlink(cr, uid, ids)
             cr.commit()
             cr.close()
         except Exception, e:
             cr.rollback()
+            self.unlink(cr, uid, ids)
             req_id = self.pool.get('res.request').create(cr, uid, {
                 'name': _('Import translation failed'),
                 'act_from': uid,
