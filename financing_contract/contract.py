@@ -55,7 +55,57 @@ class financing_contract_contract(osv.osv):
         })
         return True
 
+    def search_draft_or_temp_posted_register_lines(self, cr, uid, ids, context=None):
+        """
+        Search all draft/temp posted register lines that have an analytic distribution in which funding pool lines have an analytic account set to those given in contract.
+        """
+        res = []
+        for c in self.browse(cr, uid, ids):
+            # Create domain to find analytic lines
+            domain = []
+            for actual in c.actual_line_ids:
+                domain += self.pool.get('financing.contract.format.line')._get_analytic_domain(cr, uid, actual, 'allocated_real')
+            # Find analytic lines
+            al_ids = self.pool.get('account.analytic.line').search(cr, uid, domain)
+            move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] and x.get('move_id')[0] for x in self.pool.get('account.analytic.line').read(cr, uid, al_ids, ['move_id'])]
+            # Search statement lines that are draft/temp and which have a move id compatible
+            absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', '=', 'temp'), ('move_ids', 'in', move_ids)])
+            if absl_ids:
+                res = absl_ids
+            # Search draft posted statement lines
+            fp_ids = [x and x.funding_pool_id and x.funding_pool_id.id for x in c.funding_pool_ids]
+            sql = """SELECT absl.id
+            FROM account_bank_statement_line AS absl, funding_pool_distribution_line AS fp
+            WHERE distribution_id = analytic_distribution_id
+            AND fp.analytic_id in %s
+            AND absl.id in (
+                SELECT st.id
+                FROM account_bank_statement_line st
+                    LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+                    LEFT JOIN account_move am ON am.id = rel.statement_id
+                WHERE (rel.statement_id is null OR am.state != 'posted')
+                ORDER BY st.id
+            ) ORDER BY absl.id"""
+            cr.execute(sql, (tuple(fp_ids),))
+            sql_res = cr.fetchall()
+            if sql_res:
+                res += [x and x[0] for x in sql_res]
+        return res
+
     def contract_soft_closed(self, cr, uid, ids, *args):
+        """
+        If some draft/temp posted register lines that have an analytic distribution in which funding pool lines have an analytic account set to those given in contract, then raise an error.
+        Otherwise set contract as soft closed.
+        """
+        # Search draft/temp posted register lines
+        reg_lines = self.search_draft_or_temp_posted_register_lines(cr, uid, ids)
+        if reg_lines:
+            msg= ''
+            for i, st in enumerate(self.pool.get('account.bank.statement.line').browse(cr, uid, reg_lines)):
+                if i > 0:
+                    msg += ' - '
+                msg += (st.name or '') + (st.statement_id and st.statement_id.name and (' in (' + st.statement_id.name + ')') or '')
+            raise osv.except_osv(_('Error'), _("Some register lines linked to contract's funding pools are not hard posted: %s") % (msg,))
         self.write(cr, uid, ids, {
             'state': 'soft_closed',
             'soft_closed_date': datetime.date.today().strftime('%Y-%m-%d')

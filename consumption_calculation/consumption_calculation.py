@@ -421,7 +421,7 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory:
+            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
@@ -1367,7 +1367,7 @@ class product_product(osv.osv):
         'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
                                         help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),
         'monthly_consumption': fields.function(compute_mac, method=True, type='float', string='Real Consumption', readonly=True),
-        'product_amc': fields.function(_compute_product_amc, method=True, type='float', string='Monthly consupmiton', readonly=True),
+        'product_amc': fields.function(_compute_product_amc, method=True, type='float', string='Monthly consumption', readonly=True),
         'reviewed_consumption': fields.function(_compute_fmc, method=True, type='float', string='Forecasted Monthly Consumption', readonly=True),
     }
     
