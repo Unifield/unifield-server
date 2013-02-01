@@ -32,7 +32,7 @@ class field_access_rule(osv.osv):
     This class defines which model, instance level and groups to target
     """
 
-    _name = "msf_access_rights.field_access_rule"
+    _name = "msf_field_access_rights.field_access_rule"
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
@@ -42,7 +42,7 @@ class field_access_rule(osv.osv):
         'domain_id': fields.many2one('ir.filters', 'Filter', domain='[("model_id","=",model_name)]', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule. Note: Due to a technical constraint, all "like" or "ilike" operators will be automatically replaced with "=".'),
         'domain_text': fields.text('Advanced Filter', help='The Filter that chooses which records this rule applies to'),
         'group_ids': fields.many2many('res.groups', 'field_access_rule_groups_rel', 'field_access_rule_id', 'group_id', 'Groups', help='A list of groups that should be affected by this rule. If you leave this empty, this rule will apply to all groups.'),
-        'field_access_rule_line_ids': fields.one2many('msf_access_rights.field_access_rule_line', 'field_access_rule', 'Field Access Rule Lines', help='A list of fields and their specific access and synchronization propagation rules that will be implemented by this rule. If you have left out any fields, users will have full write access, and all values will be synchronized when the record is created or editted.', required=True),
+        'field_access_rule_line_ids': fields.one2many('msf_field_access_rights.field_access_rule_line', 'field_access_rule', 'Field Access Rule Lines', help='A list of fields and their specific access and synchronization propagation rules that will be implemented by this rule. If you have left out any fields, users will have full write access, and all values will be synchronized when the record is created or editted.', required=True),
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
         'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
@@ -169,7 +169,7 @@ class field_access_rule(osv.osv):
         assert len(ids) <= 1, "Cannot work on list of ids != 1"
 
         this = self.browse(cr, uid, ids, context=context)[0]
-        x, view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_access_rights', 'field_access_rule_full_tree_view')
+        x, view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_field_access_rights', 'field_access_rule_full_tree_view')
 
         return {
             'type': 'ir.actions.act_window',
@@ -178,7 +178,7 @@ class field_access_rule(osv.osv):
 			'view_mode':'tree,form',
 			'view_id': [view_id],
             'target': 'new',
-            'res_model': 'msf_access_rights.field_access_rule_line',
+            'res_model': 'msf_field_access_rights.field_access_rule_line',
             'context': {
             	'search_default_field_access_rule': ids[0],
             },

@@ -137,7 +137,7 @@ def create(self, cr, uid, vals, context=None):
                 user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
                 groups = [x.id for x in user.groups_id]
 
-                rules_pool = self.pool.get('msf_access_rights.field_access_rule')
+                rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
                 
                 defaults = self.pool.get(model_name)._defaults
@@ -224,7 +224,7 @@ def write(self, cr, uid, ids, vals, context=None):
     user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
     groups = [x.id for x in user.groups_id]
 
-    rules_pool = self.pool.get('msf_access_rights.field_access_rule')
+    rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
     rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
     wprint('=== INSTANCE_LEVEL: ' + instance_level)
@@ -264,7 +264,7 @@ def write(self, cr, uid, ids, vals, context=None):
                                             raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
-        if context.get('sync_data') or user.login == 'msf_access_rights_benchmarker':
+        if context.get('sync_data') or user.login == 'msf_field_access_rights_benchmarker':
 
             wprint('====== SYNCING')
 
@@ -334,7 +334,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
         groups = [x.id for x in user.groups_id]
 
-        rules_pool = self.pool.get('msf_access_rights.field_access_rule')
+        rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
         rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
         fprint('=== INSTANCE_LEVEL: ' + instance_level)

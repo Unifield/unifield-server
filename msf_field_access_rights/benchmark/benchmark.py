@@ -40,10 +40,10 @@ parser.add_option('-n', '-i', '--number-of-iterations',  default=30, type='int',
 parser.add_option('-r', '--number-of-rules', default=10, type='int', dest='rules', help='The number of field access rules to create')
 parser.add_option('-a', '--hostaddress', dest='host', default="localhost", help='The address of the host')
 parser.add_option('-d', '--database', default="access_right", help='The name of the database')
-parser.add_option('-u', '--admin-username', dest='username', default="msf_access_rights_benchmarker", help='The username for the account to use to login to OpenERP')
+parser.add_option('-u', '--admin-username', dest='username', default="msf_field_access_rights_benchmarker", help='The username for the account to use to login to OpenERP')
 parser.add_option('-p', '--admin-password', dest='password', default="benchmark_it", help='The password for the account to use to login to OpenERP')
-parser.add_option('-s', '--save-graphs', action='store_true', dest='save', help='Save graphs to physical files (In msf_access_rights/benchmark/graphs directory)')
-parser.add_option('-o', '--file-prefix', dest='prefix', help='A prefix for the filenames when they are saved (In msf_access_rights/benchmark/graphs directory)')
+parser.add_option('-s', '--save-graphs', action='store_true', dest='save', help='Save graphs to physical files (In msf_field_access_rights/benchmark/graphs directory)')
+parser.add_option('-o', '--file-prefix', dest='prefix', help='A prefix for the filenames when they are saved (In msf_field_access_rights/benchmark/graphs directory)')
 
 options, args = parser.parse_args()
 
@@ -55,8 +55,8 @@ options.prefix = options.prefix or ''
 # init connection and pools 
 connection = openerplib.get_connection(hostname=options.host, database=options.database, login=options.username, password=options.password)
 
-field_access_rule_pool = connection.get_model('msf_access_rights.field_access_rule')
-field_access_rule_line_pool = connection.get_model('msf_access_rights.field_access_rule_line')
+field_access_rule_pool = connection.get_model('msf_field_access_rights.field_access_rule')
+field_access_rule_line_pool = connection.get_model('msf_field_access_rights.field_access_rule_line')
 
 user_pool = connection.get_model("res.users")
 
@@ -145,8 +145,8 @@ def create():
     # loop create
     for i in range(0, options.iterations):
         user_values = {
-            'name':'msf_access_rights_benchmark_create_' + str(i),
-            'login':'msf_access_rights_benchmark_create_' + str(i),
+            'name':'msf_field_access_rights_benchmark_create_' + str(i),
+            'login':'msf_field_access_rights_benchmark_create_' + str(i),
             'user_email':'benchmark%s@test.com' % str(i),
         }
         created_user_ids.append(user_pool.create(user_values))
@@ -167,13 +167,13 @@ def create():
 def write():
         
     # create the user to write on (unless already exists)
-    user_id = user_pool.search([('name','=','msf_access_rights_benchmark')])
+    user_id = user_pool.search([('name','=','msf_field_access_rights_benchmark')])
     
     if not user_id:
         
         user_values = {
-            'name':'msf_access_rights_benchmark',
-            'login':'msf_access_rights_benchmark',
+            'name':'msf_field_access_rights_benchmark',
+            'login':'msf_field_access_rights_benchmark',
             'user_email':'benchmark@test.com',
         }
         

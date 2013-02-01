@@ -5,7 +5,7 @@
         <!-- Field Access Rule Tree View -->
         <record id="field_access_rule_list_view" model="ir.ui.view">
             <field name='name'>Field Access Rule List</field>
-            <field name='model'>msf_access_rights.field_access_rule</field>
+            <field name='model'>msf_field_access_rights.field_access_rule</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <form string="Field Access Rule">
@@ -22,7 +22,7 @@
         <!-- Field Access Rule Search View -->
         <record id="field_access_rule_search" model="ir.ui.view">
             <field name='name'>Field Access Rule Search</field>
-            <field name='model'>msf_access_rights.field_access_rule</field>
+            <field name='model'>msf_field_access_rights.field_access_rule</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Field Access Rules">
@@ -42,7 +42,7 @@
         <!-- Field Access Rule Form View -->
         <record id="field_access_rule_form_view" model="ir.ui.view">
             <field name='name'>Field Access Rule Form</field>
-            <field name='model'>msf_access_rights.field_access_rule</field>
+            <field name='model'>msf_field_access_rights.field_access_rule</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
