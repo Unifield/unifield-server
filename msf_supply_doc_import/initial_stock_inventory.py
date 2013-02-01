@@ -38,14 +38,15 @@ class stock_inventory(osv.osv):
         '''
         Check if the initial stock inventory contains a line with an inactive products
         '''
-        inactive_lines = self.pool.get('%s.line' % self._name).search(cr, uid, [('product_id.active', '=', False),
+        inactive_lines = self.pool.get('stock.inventory.line').search(cr, uid, [('product_id.active', '=', False),
                                                                                 ('inventory_id', 'in', ids),
                                                                                 ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
         
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')       
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
             return False
         return True
     
@@ -116,6 +117,26 @@ class initial_stock_inventory(osv.osv):
         'file_to_import': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Initial Average Cost, Location*, Batch, Expiry Date, Quantity'),
         'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=True),
     }
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the initial stock inventory contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('initial.stock.inventory.line').search(cr, uid, [('product_id.active', '=', False),
+                                                                                        ('inventory_id', 'in', ids),
+                                                                                        ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot confirm this stock inventory because it contains a line with an inactive product", ['order_line', 'state'])
+    ]
 
     #def button_remove_lines(self, cr, uid, ids, context=None):
     #    '''

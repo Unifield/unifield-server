@@ -773,20 +773,6 @@ class stock_move(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-    def _check_active_product(self, cr, uid, ids, context=None):
-        '''
-        Check if the stock picking contains a line with an inactive products
-        '''
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state not in ('draft', 'done', 'cancel') and not move.product_id.active:
-                raise osv.except_osv(_('Error'), _('[%s] %s been inactivated. If you want to validate this document you have to remove/replace this product') % (move.product_id.default_code, move.product_id.name))
-            return False
-        return True
-    
-    _constraints = [
-            (_check_active_product, "You cannot validate this document because it contains an inactive product", ['state', 'product_id'])
-    ]
-
     def get_error(self, cr, uid, ids, context=None):
         '''
         Raise error message
