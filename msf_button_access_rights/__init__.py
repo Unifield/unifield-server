@@ -19,6 +19,6 @@
 #
 ##############################################################################
 import wizards
-import button_osv_override
+import osv_override
 import ir_ui_view
 import button_access_rule
