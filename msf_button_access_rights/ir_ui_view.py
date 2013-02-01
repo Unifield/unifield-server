@@ -92,8 +92,7 @@ class ir_ui_view(osv.osv):
             try:
                 buttons = self.parse_view(xml)
             except (ValueError, etree.XMLSyntaxError) as e:
-                logging.getLogger(self._name).warn('Error when parsing view %s' % i)
-                print e
+                logging.getLogger(self._name).warn('Error when parsing view %s: %s' % (i, e))
                 buttons = False
                 
             # if we have some buttons we need to create/update Button Access Rule's from them
@@ -106,7 +105,7 @@ class ir_ui_view(osv.osv):
                     
                     # for each button in the old view, update it with the new view_id and model_id
                     for button in buttons:
-                        button.update({'view_id': i, 'model_id': model_id, 'inherit_id': vals.get('inherit_id', None)})
+                        button.update({'view_id': i, 'model_id': model_id, 'inherit_id': vals.get('inherit_id', '')})
                         
                         # look for existing BAR's with the same name and view_id
                         existing_button_search = rules_pool.search(cr, 1, [('view_id', '=', i),('name','=',button['name']),'|',('active','=',True),('active','=',False)])
@@ -174,11 +173,8 @@ class ir_ui_view(osv.osv):
         @raise XMLSyntaxError: thrown by lxml when there is an error while parsing the xml
         """
         
-        # encode xml
-        view_xml_text = view_xml_text.decode('utf-8')
-        
         button_object_list = []
-        view_xml = etree.fromstring(view_xml_text)
+        view_xml = etree.fromstring(view_xml_text.encode('utf8'))
         buttons = view_xml.xpath("//button[ @type != 'special' and not (@position) ]")
         
         for button in buttons:
