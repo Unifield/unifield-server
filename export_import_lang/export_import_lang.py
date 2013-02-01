@@ -176,13 +176,19 @@ class base_language_import(osv.osv_memory):
             try:
                 s_xml = SpreadsheetXML(xmlstring=filedata)
             except osv.except_osv:
-                self.import_lang(cr, uid, ids, context)
+                fileobj = TemporaryFile('w+b')
+                fileobj.write(filedata)
+                fileobj.seek(0)
+                first_line = fileobj.readline().strip().replace('"', '').replace(' ', '')
+                fileformat = first_line.endswith("type,name,res_id,src,value") and 'csv' or 'po'
             else:
                 fileobj = TemporaryFile('w+')
                 s_xml.to_csv(to_file=fileobj)
                 fileobj.seek(0)
-                tools.trans_load_data(cr, fileobj, 'csv', import_data.code, lang_name=import_data.name, context={'overwrite': 1})
-                tools.trans_update_res_ids(cr)
+                fileformat = 'csv'
+            tools.trans_load_data(cr, fileobj, fileformat, import_data.code, lang_name=import_data.name, context={'overwrite': 1})
+            tools.trans_update_res_ids(cr)
+            fileobj.close()
 
             req_id = self.pool.get('res.request').create(cr, uid, {
                 'name': _('Translation file imported'),
@@ -191,12 +197,12 @@ class base_language_import(osv.osv_memory):
                 'import_trans': True,
                 'body': _('Your translation file has been successfully imported.')
             })
-            self.write(cr, uid, ids[0], {'data': ''})
+            self.write(cr, uid, [ids[0]], {'data': ''})
             cr.commit()
             cr.close()
         except Exception, e:
             cr.rollback()
-            self.write(cr, uid, ids[0], {'data': ''})
+            self.write(cr, uid, [ids[0]], {'data': ''})
             req_id = self.pool.get('res.request').create(cr, uid, {
                 'name': _('Import translation failed'),
                 'act_from': uid,
