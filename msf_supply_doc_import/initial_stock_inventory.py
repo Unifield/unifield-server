@@ -68,6 +68,8 @@ class stock_inventory_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
+            if line.comment:
+                res[line.id].update({'inactive_error': line.comment})
             if line.inventory_id and line.inventory_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': 'The product in line is inactive !'}
@@ -76,23 +78,13 @@ class stock_inventory_line(osv.osv):
     
     _columns = {
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
     
     _defaults = {
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
-    
-    def get_error(self, cr, uid, ids, context=None):
-        '''
-        Raise error message
-        '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.inactive_product and line.product_id:
-                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before confirm the stock inventory.') % (line.product_id.default_code, line.product_id.name))
-            
-        return True
     
 stock_inventory_line()
 
@@ -424,6 +416,8 @@ class initial_stock_inventory_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
+            if line.comment:
+                res[line.id].update({'inactive_error': line.comment})
             if line.inventory_id and line.inventory_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': 'The product in line is inactive !'}
@@ -434,7 +428,7 @@ class initial_stock_inventory_line(osv.osv):
         'to_correct_ok': fields.boolean('To correct'),
         'comment': fields.text('Comment', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
     
     _defaults = {
@@ -442,16 +436,6 @@ class initial_stock_inventory_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
     
-    def get_error(self, cr, uid, ids, context=None):
-        '''
-        Raise error message
-        '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.inactive_product and line.product_id:
-                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before confirm the stock inventory.') % (line.product_id.default_code, line.product_id.name))
-            
-        return True
-
     def create(self, cr, uid, vals, context=None):
         comment = ''
         hidden_batch_management_mandatory = False

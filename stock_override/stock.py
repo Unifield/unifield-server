@@ -773,16 +773,6 @@ class stock_move(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
-    def get_error(self, cr, uid, ids, context=None):
-        '''
-        Raise error message
-        '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.inactive_product and line.product_id:
-                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before confirm the move.') % (line.product_id.default_code, line.product_id.name))
-            
-        return True
-    
     def create(self, cr, uid, vals, context=None):
         '''
         Update the partner or the address according to the other

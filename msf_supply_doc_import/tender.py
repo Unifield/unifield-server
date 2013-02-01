@@ -208,16 +208,6 @@ class tender_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
     
-    def get_error(self, cr, uid, ids, context=None):
-        '''
-        Raise error message
-        '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.inactive_product and line.product_id:
-                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before generate RfQs.') % (line.product_id.default_code, line.product_id.name))
-            
-        return True
-
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
         if context is None:

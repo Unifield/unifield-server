@@ -15,7 +15,6 @@
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree//field[@name='default_name']" position="after">
                 	<field name="inactive_product" invisible="1" />
-                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     <!-- <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" /> -->
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >

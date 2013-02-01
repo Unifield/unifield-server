@@ -248,7 +248,6 @@
 									<field name="dg_check" />
 									<field name="np_check" />
 									<field name="inactive_product" invisible="1" />
-                                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
 								</tree>
 								<form string="Stock Moves">
@@ -619,7 +618,6 @@
 									<field name="dg_check" />
 									<field name="np_check" />
 									<field name="inactive_product" invisible="1" />
-                                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
 								</tree>
 								<form string="Stock Moves">
@@ -831,7 +829,6 @@
 									<field name="dg_check" />
 									<field name="np_check" />
 									<field name="inactive_product" invisible="1" />
-                                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
 								</tree>
 							</field>
@@ -999,7 +996,6 @@
 									<field name="dg_check" />
 									<field name="np_check" />
 									<field name="inactive_product" invisible="1" />
-                                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
 								</tree>
 								<form string="Stock Moves">
@@ -1245,7 +1241,6 @@
 											<field name="location_dest_id" />
 											<field name="state" />
 											<field name="inactive_product" invisible="1" />
-		                                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     						<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
 										</tree>
 									</field>

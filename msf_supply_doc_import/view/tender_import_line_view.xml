@@ -13,7 +13,6 @@
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree/field[@name='state']" position="after" >
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="inactive_product" invisible="1" />
-                    <button icon="gtk-dialog-warning" attrs="{'invisible': [('inactive_product', '=', False)]}" name="get_error" string="Error in line" type="object" />
                     <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" readonly="1" />
                     <!-- <field name="text_error" attrs="{'invisible':[('to_correct_ok', '=', False)]}" readonly="1" /> -->
                 </xpath>

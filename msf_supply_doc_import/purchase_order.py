@@ -311,17 +311,6 @@ class purchase_order_line(osv.osv):
         'inactive_error': lambda *a: '',
     }
     
-    def get_error(self, cr, uid, ids, context=None):
-        '''
-        Raise error message
-        '''
-        for line in self.browse(cr, uid, ids, context=context):
-            if line.inactive_product and line.product_id:
-                obj_name = line.order_id.rfq_ok and _('Request for Quotation') or _('Purchase Order')
-                raise osv.except_osv(_('Error'), _('The product [%s] %s is inactive. You must change it by an active product before validate the %s.') % (line.product_id.default_code, line.product_id.name, obj_name))
-            
-        return True
-
     def check_line_consistency(self, cr, uid, ids, *args, **kwargs):
         """
         After having taken the value in the to_write variable we are going to check them.
