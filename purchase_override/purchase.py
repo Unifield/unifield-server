@@ -803,6 +803,13 @@ stock moves which are already processed : '''
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
         # set the state of purchase order to confirmed_wait
         self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
+        # corresponding sale order
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        # from so, list corresponding po
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+        list_po_name = ', '.join([linked_po.name for linked_po in self.browse(cr, uid, all_po_ids, context) if linked_po.id != ids[0]])
+        self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
+                                 ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
         # sale order lines with modified state
         sol_ids = self.get_sol_ids_from_po_ids(cr, uid, ids, context=context)
         if sol_ids:
