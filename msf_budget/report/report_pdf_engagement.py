@@ -35,9 +35,15 @@ class report_pdf_engagement(report_sxw.rml_parse):
             'get_report_lines': self.get_report_lines,
             'time': time,
             'locale': locale,
+            'isPos': self.isPos,
         })
         return
     
+    def isPos(self, nb):
+        if nb < 0: 
+            return False
+        return True
+
     def get_fiscal_year(self, purchase_order):
         pool = pooler.get_pool(self.cr.dbname)
         po_date = str(purchase_order.delivery_confirmed_date) or str(purchase_order.delivery_requested_date)
@@ -47,11 +53,12 @@ class report_pdf_engagement(report_sxw.rml_parse):
             return fiscalyear.name
         return False
     
-    def _add_purchase_order_amount(self, cr, uid, browse_po_line, browse_analytic_distribution, functional_currency_id, expense_account_id, value_list):
+    def _add_purchase_order_amount(self, cr, uid, browse_po_line, browse_analytic_distribution, functional_currency_id, expense_account_id, value_list, value_list2):
         pool = pooler.get_pool(self.cr.dbname)
         for cc_line in browse_analytic_distribution.cost_center_lines:
             if cc_line.analytic_id and cc_line.analytic_id.id not in value_list:
                 value_list[cc_line.analytic_id.id] = {}
+                value_list2[cc_line.analytic_id.id] = {}
             # convert amount to today's rate
             date_context = {'date': datetime.datetime.today()}
             functional_amount = int(round(pool.get('res.currency').compute(self.cr,
@@ -66,6 +73,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 value_list[cc_line.analytic_id.id][expense_account_id] = expense_line
             else:
                 value_list[cc_line.analytic_id.id][expense_account_id] = [sum(pair) for pair in zip(value_list[cc_line.analytic_id.id][expense_account_id], expense_line)]
+            value_list2[cc_line.analytic_id.id][expense_account_id] = cc_line.destination_id.name
         return
     
     def check_distribution(self, purchase_order):
@@ -96,7 +104,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
         # Output: a formatted list of list
         res = []
         temp_data = {}
-        
+        temp_data2 = {}
         pool = pooler.get_pool(self.cr.dbname)
         cr = self.cr
         uid = self.uid
@@ -107,7 +115,6 @@ class report_pdf_engagement(report_sxw.rml_parse):
         if purchase_order:
             for po_line in purchase_order.order_line:
                 expense_account_id = False
-                
                 if po_line.product_id and \
                    po_line.product_id.property_account_expense:
                     expense_account_id = po_line.product_id.property_account_expense.id
@@ -126,7 +133,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                     po_line.analytic_distribution_id,
                                                     functional_currency_id,
                                                     expense_account_id,
-                                                    temp_data)
+                                                    temp_data,temp_data2)
                 elif purchase_order.analytic_distribution_id:
                     # a line does not have a distribution, but there is a header one
                     self._add_purchase_order_amount(cr,
@@ -135,7 +142,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                                                     purchase_order.analytic_distribution_id,
                                                     functional_currency_id,
                                                     expense_account_id,
-                                                    temp_data)
+                                                    temp_data,temp_data2)
                 
             # PO data is filled, now to the temp_data
             # Get the corresponding fiscal year (delivery confirmed date or delivery requested date)
@@ -171,7 +178,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
                             # create the line to add
                             actual_line = [0, total_actual, -total_actual, 0, -total_actual]
                             temp_data[cost_center_id][account_id] = [sum(pair) for pair in zip(temp_data[cost_center_id][account_id], actual_line)]
-                    
+
+                            temp_data2[destination_id][account_id] = [sum(pair) for pair in zip(temp_data[destination_id][account_id], actual_line)]
                     # get budget values                for cost_center_id in cost_center_list:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                             AND cost_center_id = %s \
@@ -198,7 +206,6 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         for account_id in temp_data[cost_center_id].keys():
                             temp_data[cost_center_id][account_id][0] = str('Budget missing')
                             
-                            
             # Now we format the data to form the result
             total_values = [0, 0, 0, 0, 0]
             cost_center_ids = sorted(temp_data.keys())
@@ -210,21 +217,20 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     cost_center = pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
                     expense_account = pool.get('account.account').browse(cr, uid, expense_account_id, context=context)
                     formatted_line = [cost_center.name]
-                    formatted_line += [expense_account.code + " " + expense_account.name]
+                    formatted_line += [expense_account.code + " " + expense_account.name + "\n" + temp_data2[cost_center_id][expense_account_id]]
                     if values[0] != 'Budget missing':
                         total_values = [sum(pair) for pair in zip(values, total_values)]
-                        formatted_line += [locale.format("%d", values[0], grouping=True)]
+                        formatted_line += [values[0]]
                     else:
                         total_values = [sum(pair) for pair in zip([0] + values[1:], total_values)]
                         formatted_line += [values[0]]
-                    formatted_line += [locale.format("%d", value, grouping=True) for value in values[1:]]
+                    formatted_line += values[1:]
                     res.append(formatted_line)
 
                 # empty line between cost centers
                 res.append([''] * 7)
             # append formatted total
-            res.append(['TOTALS', ''] + [locale.format("%d", value, grouping=True) for value in total_values])
-   
+            res.append(['TOTALS', ''] + total_values)
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)

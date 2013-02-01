@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
 
-    <template pageSize="(595.0,842.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
+    <template pageSize="(595.0,842.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
             <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
 
@@ -11,7 +11,7 @@
             <image x="35" y="790.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+            <drawString x="275" y="10.0">Page <pageNumber /></drawString>
             <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
             <!--            <drawString x="765" y="520.0">/</drawString>
             <drawString x="770" y="520.0"><pageCount /> </drawString>-->
@@ -19,7 +19,6 @@
 
     </pageTemplate>
     </template>
-
 
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
@@ -187,11 +186,9 @@
       <font color="white"> </font>
     </para>
 
-
-
-
-
-
+    <blockTable style="Table9">
+      <tr>
+        <td>
           <blockTable colWidths="115.0,115.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
               <tr>
                 <td>
@@ -217,11 +214,9 @@
                 </td>
               </tr>
           </blockTable>
-
-
           <blockTable colWidths="115.0,115.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
-              <para style="P20">[[ repeatIn(get_report_lines(o),'line', 'blockTable') ]]</para>
             <tr>
+              <para style="P20">[[ repeatIn(get_report_lines(o),'line', 'blockTable') ]]</para>
               <td>
                 <para style="P3">[[ line[0] ]]</para>
               </td>
@@ -229,24 +224,25 @@
                 <para style="P3">[[ line[1] ]]</para>
               </td>
               <td>
-                <para style="P3"><font color="red">[[ (line[2] == 'Budget missing' and line[2]) or '' ]]</font>[[ (line[2] != 'Budget missing' and line[2]) or '' ]]</para>
+                <para style="P3"><font color="red">[[ (line[2] == 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</font>[[ (line[2] != 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[3] ]]</para>
+                <para style="P3">[[ formatLang(line[3], digits=0, grouping=True ) or '' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[4] ]]</para>
+                <para style="P3">[[ formatLang(line[4], digits=0, grouping=True ) or '' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[5] ]]</para>
+                <para style="P3">[[ formatLang(line[5], digits=0, grouping=True ) or '' ]]</para>
               </td>
               <td>
-                <para style="P3"><font color="red">[[ (line[6].startswith('-') and line[6]) or '' ]]</font>[[ (not line[6].startswith('-') and line[6]) or '' ]]</para>
+                <para style="P3"><font color="red">[[ not isPos(line[6]) and formatLang(line[6], digits=0, grouping=True ) or '' ]]</font>[[ isPos(line[6]) and formatLang(line[6], digits=0, grouping=True) or '' ]]</para>
               </td>
             </tr>
           </blockTable>
-
-
+        </td>
+      </tr>
+    </blockTable>
 
     <para style="P5">
       <font color="white"> </font>
