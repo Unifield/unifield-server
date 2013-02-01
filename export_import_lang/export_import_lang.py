@@ -12,17 +12,14 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import logging
 from tempfile import TemporaryFile
+import zipfile
 
-def open_requests(self, cr, uid, ids, context=None):
-    return {
-        'view_id': False,
-        'view_mode': 'tree,form',
-        'view_type': 'form',
-        'res_model': 'res.request',
-        'type': 'ir.actions.act_window',
-        'target': 'crunch',
-        'context': {},
-    }
+def open_requests(self, cr, uid, ids, filter=False, context=None):
+    view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'res_request_trans-act')
+    result = self.pool.get(view[0]).read(cr, uid, view[1], ['view_id', 'view_mode', 'view_type', 'res_model', 'type', 'search_view_id', 'domain'])
+    result['target'] = 'crunch'
+    result['context'] = {'search_default_import': filter=='import' , 'search_default_export': filter=='export', 'search_default_act_to': uid}
+    return result
 
 class base_language_export(osv.osv_memory):
     _inherit = "base.language.export"
@@ -30,7 +27,8 @@ class base_language_export(osv.osv_memory):
 
 
     _columns = {
-        'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML')], 'File Format', required=True)
+        'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML')], 'File Format', required=True),
+        'advanced': fields.boolean('Show advanced options'),
     }
 
     _defaults = {
@@ -40,7 +38,7 @@ class base_language_export(osv.osv_memory):
     def act_getfile_background(self, cr, uid, ids, context=None):
         thread = threading.Thread(target=self._export, args=(cr.dbname, uid, ids, context))
         thread.start()
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'export_lang_background_result')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'export_lang_background_result')[1]
 
         return {
             'view_mode': 'form',
@@ -54,7 +52,7 @@ class base_language_export(osv.osv_memory):
         }
 
     def open_requests(self, cr, uid, ids, context=None):
-        return open_requests(self, cr, uid, ids, context)
+        return open_requests(self, cr, uid, ids, 'export', context)
 
     def _export(self, dbname, uid, ids, context=None):
         #modules = ['account_mcdb']
@@ -63,6 +61,10 @@ class base_language_export(osv.osv_memory):
             cr = pooler.get_db(dbname).cursor()
 
             this = self.browse(cr, uid, ids)[0]
+            if this.modules:
+                modules = map(lambda m: m.name, this.modules)
+                modules.sort()
+
             if this.lang:
                 filename = get_iso_codes(this.lang)
             this.name = "%s.%s" % (filename, this.format)
@@ -90,6 +92,7 @@ class base_language_export(osv.osv_memory):
                 'name': subject,
                 'act_from': uid,
                 'act_to': uid,
+                'export_trans': True,
                 'body': summary,
             })
 
@@ -113,6 +116,7 @@ class base_language_export(osv.osv_memory):
                 'name': _('Export translation failed'),
                 'act_from': uid,
                 'act_to': uid,
+                'export_trans': True,
                 'body': _('''The process to export the translations failed !
                 %s
                 ''')% (e,),
@@ -129,10 +133,13 @@ class base_language_import(osv.osv_memory):
     _name = "base.language.import"
     _inherit = "base.language.import"
 
+    def act_cancel(self, cr, uid, ids, context=None):
+        return {'type':'ir.actions.act_window_close' }
+
     def import_lang_background(self, cr, uid, ids, context):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'import_lang_background_result')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'import_lang_background_result')[1]
 
         return {
             'view_mode': 'form',
@@ -146,13 +153,26 @@ class base_language_import(osv.osv_memory):
         }
 
     def open_requests(self, cr, uid, ids, context=None):
-        return open_requests(self, cr, uid, ids, context)
+        return open_requests(self, cr, uid, ids, 'import', context)
 
     def _import(self, dbname, uid, ids, context=None):
         try:
             cr = pooler.get_db(dbname).cursor()
             import_data = self.browse(cr, uid, ids)[0]
             filedata = base64.decodestring(import_data.data)
+
+            buf = cStringIO.StringIO(filedata)
+            try:
+                zipf = zipfile.ZipFile(buf, 'r')
+                file_name = zipf.namelist()
+                if not file_name or len(file_name) > 1:
+                    raise osv.except_osv(_('Error'), _('The Zip file should contain only one file'))
+                filedata = zipf.read(file_name[0])
+                zipf.close()
+            except zipfile.BadZipfile:
+                pass
+            buf.close()
+
             try:
                 s_xml = SpreadsheetXML(xmlstring=filedata)
             except osv.except_osv:
@@ -168,6 +188,7 @@ class base_language_import(osv.osv_memory):
                 'name': _('Translation file imported'),
                 'act_from': uid,
                 'act_to': uid,
+                'import_trans': True,
                 'body': _('Your translation file has been successfully imported.')
             })
             cr.commit()
@@ -178,6 +199,7 @@ class base_language_import(osv.osv_memory):
                 'name': _('Import translation failed'),
                 'act_from': uid,
                 'act_to': uid,
+                'import_trans': True,
                 'body': _('''The process to import the translation file failed !
                 %s
                 ''')% (e,),
@@ -188,3 +210,18 @@ class base_language_import(osv.osv_memory):
         logging.getLogger('export').info('Import translation ended')
 
 base_language_import()
+
+class res_request(osv.osv):
+    _name = 'res.request'
+    _inherit = 'res.request'
+
+    _columns = {
+        'import_trans': fields.boolean('Import Translations request'),
+        'export_trans': fields.boolean('Export Translations request'),
+    }
+
+    _defaults = {
+        'import_trans': lambda *a: False,
+        'import_trans': lambda *a: False,
+    }
+res_request()

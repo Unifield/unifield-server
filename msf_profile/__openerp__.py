@@ -111,13 +111,13 @@
         "msf_supply_doc_import",
         "mission_stock_cron",
         "report_webkit_override",
+        "export_import_lang",
     ],
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
         "usability.xml",
         "user_access_configurator_view.xml",
-        "msf_profile_wizard.xml",
     ],
     "demo_xml": [
     ],
