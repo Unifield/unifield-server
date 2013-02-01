@@ -32,7 +32,7 @@
 -
   !python {model: product.product}: |
     res = self.deactivate_product(cr, uid, ref('product16'))
-    assert res == True, "Error occured when the de-activation of the product"
+    assert res == True, "Error occured during the de-activation of the product"
 -
   Validate the IR
 -
@@ -42,6 +42,6 @@
     wf_service = netsvc.LocalService("workflow")
     try:
       wf_service.trg_validate(uid, 'sale.order', ref("ir3"), 'procurement_validate', cr)
-      raise False, "Error not raised"
+      assert False, "Error not raised"
     except osv.except_osv, e:
       pass

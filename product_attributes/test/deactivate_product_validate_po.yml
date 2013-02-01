@@ -43,6 +43,6 @@
     wf_service = netsvc.LocalService("workflow")
     try:
       wf_service.trg_validate(uid, 'purchase.order', ref("po3"), 'purchase_confirm', cr)
-      raise False, "Error not raised"
+      assert False, "Error not raised"
     except osv.except_osv, e:
       pass

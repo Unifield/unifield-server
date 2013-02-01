@@ -34,7 +34,7 @@
     try:
       wf_service.trg_validate(uid, 'tender', ref("tender2"), 'button_generate', cr)
     except osv.except_osv, e:
-      raise False, "Error raised"
+      assert False, "Error raised"
 -
   Then, we try to de-activate this product
 -

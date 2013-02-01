@@ -18,6 +18,7 @@
     creation_date: !eval time.strftime('%Y-%m-%d')
     requested_date: !eval time.strftime('%Y-%m-%d')
     location_id: stock.stock_location_stock
+    name: Tender1
     tender_line_ids:
       - product_id: product9
         qty: 1.0
@@ -39,6 +40,6 @@
     wf_service = netsvc.LocalService("workflow")
     try:
       wf_service.trg_validate(uid, 'tender', ref("tender1"), 'button_generate', cr)
-      raise False, "Error not raised"
+      assert False, "Error not raised"
     except osv.except_osv, e:
       pass
