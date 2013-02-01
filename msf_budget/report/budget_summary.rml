@@ -194,16 +194,16 @@
                 <para style="P3">[[ line[0] ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[1] ]]</para>
+                <para style="P3">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[2] ]]</para>
+                <para style="P3">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[3] ]]</para>
+                <para style="P3">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[4] and line[4] or '0.0' ]] %</para>
+                <para style="P3">[[ line[4] and formatLang(line[4], digits=1, grouping=True ) or '0.0' ]] %</para>
               </td>
       </tr>
     </blockTable>

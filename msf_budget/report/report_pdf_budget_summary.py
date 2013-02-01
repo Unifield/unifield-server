@@ -50,11 +50,7 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         
         # regroup both dicts in a list
         for line_id in sorted_line_names:
-            result_line = [line_names[line_id],
-                           locale.format("%d", total_amounts[line_id]['budget_amount'], grouping=True),
-                           locale.format("%d", total_amounts[line_id]['actual_amount'], grouping=True),
-                           locale.format("%d", total_amounts[line_id]['balance'], grouping=True),
-                           str(total_amounts[line_id]['percentage'])]
+            result_line = [line_names[line_id],total_amounts[line_id]['budget_amount'],total_amounts[line_id]['actual_amount'], total_amounts[line_id]['balance'], float(total_amounts[line_id]['percentage'])]
             result.append(result_line)
         return result
 
