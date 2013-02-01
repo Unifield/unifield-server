@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+import time
+
 
 class currency_setup(osv.osv_memory):
     _name = 'currency.setup'
@@ -103,6 +105,8 @@ class currency_setup(osv.osv_memory):
         self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
                                                                   'property_product_pricelist_purchase': purchase_price_id[0]})
 
+        print 'property in product'
+        print time.strftime('%H:%M:%S')
         # Change the default value of the ir.property pricelist fields
         sale_price_property_ids = self.pool.get('ir.property').search(cr, uid, [('res_id', '=', False), ('name', '=', 'property_product_pricelist')])
         self.pool.get('ir.property').write(cr, uid, sale_price_property_ids, {'value': sale_price_id[0]})
@@ -122,10 +126,11 @@ class currency_setup(osv.osv_memory):
             self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id})
 
         # product.product
-        product_ids = self.pool.get('product.product').search(cr, uid, [('currency_id', '=', 1)])
-        product2_ids = self.pool.get('product.product').search(cr, uid, [('field_currency_id', '=', 1)])
-        self.pool.get('product.product').write(cr, uid, product_ids, {'currency_id': cur_id})
-        self.pool.get('product.product').write(cr, uid, product2_ids, {'field_currency_id': cur_id})
+        cr.execute('UPDATE product_product SET currency_id = %s AND field_currency_id = %s' % (cur_id, cur_id))
+#        product_ids = self.pool.get('product.product').search(cr, uid, [('currency_id', '=', 1)])
+#        product2_ids = self.pool.get('product.product').search(cr, uid, [('field_currency_id', '=', 1)])
+#        self.pool.get('product.product').write(cr, uid, product_ids, {'currency_id': cur_id})
+#        self.pool.get('product.product').write(cr, uid, product2_ids, {'field_currency_id': cur_id})
 
         # account.model
         model_ids = self.pool.get('account.model').search(cr, uid, [('currency_id', '=', 1)])
