@@ -254,7 +254,7 @@ class Database(BaseController):
             return self.backup()
         raise redirect('/openerp/login')
 
-    @expose(template="/openerp/controllers/templates/database_restore.mako")
+    @expose(template="/openerp/controllers/templates/database.mako")
     def restore(self, tg_errors=None, **kw):
         form = _FORMS['restore']
         error = self.msg

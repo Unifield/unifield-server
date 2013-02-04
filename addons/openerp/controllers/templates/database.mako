@@ -64,6 +64,22 @@
         </div>
         <hr style="margin: 0 0 !important; background-color: #5A5858;">
         <div>${form.display()}</div>
+
+	%if form.name == 'restore':
+        <script type="text/javascript">
+            jQuery('#filename').change(function() {
+                var choosen_filename = jQuery(this).val();
+                var matches = /^(.*)-[0-9]{8}-[0-9]{6}.dump$/.exec(choosen_filename);
+                if (!matches) {
+                    // show jquery alert
+                    alert('${_('The choosen file in not a valid database file')}');
+                } else {
+                    jQuery('#dbname').val(matches[1]);
+                }
+            });
+        </script>
+	%endif
+
     </div>
 <%include file="footer.mako"/>    
 </%def>
