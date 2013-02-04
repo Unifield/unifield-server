@@ -67,7 +67,7 @@ class FormCreate(DBForm):
     submit_text = _('Create')
     strip_name = True
     form_attrs = {'onsubmit': 'return on_create()'}
-    fields = [openobject.widgets.PasswordField(name='password', label=_('Super admin password:'), validator=formencode.validators.NotEmpty(), help=_("This is the password of the user that have the rights to administer databases. This is not a OpenERP user, just a super administrator. If you did not changed it, the password is 'admin' after installation.")),
+    fields = [openobject.widgets.PasswordField(name='password', label=_('Super admin password:'), validator=formencode.validators.NotEmpty(), help=_("This is the password of the user that have the rights to administer databases. This is not a OpenERP user, just a super administrator.")),
               openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), help=_("Choose the name of the database that will be created. The name must not contain any special character. Exemple: 'terp'.")),
 #              openobject.widgets.CheckBox(name='demo_data', label=_('Load Demonstration data:'), default=False, validator=validators.Bool(if_empty=False), help=_("Check this box if you want demonstration data to be installed on your new database. These data will help you to understand OpenERP, with predefined products, partners, etc.")),
               openobject.widgets.SelectField(name='language', options=get_lang_list, validator=validators.String(), label=_('Default Language:'), help=_("Choose the default language that will be installed for this database. You will be able to install new languages after installation through the administration menu.")),
