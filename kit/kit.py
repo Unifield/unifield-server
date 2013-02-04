@@ -826,6 +826,7 @@ class composition_kit(osv.osv):
         '''
         inactive_lines = self.pool.get('composition.item').search(cr, uid, [('item_product_id.active', '=', False),
                                                                             ('item_kit_id', 'in', ids),
+                                                                            ('item_kit_id.composition_type', '=', 'real'),
                                                                             ('item_kit_id.state', '=', 'completed')], context=context)
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
