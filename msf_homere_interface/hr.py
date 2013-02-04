@@ -99,7 +99,7 @@ class hr_employee(osv.osv):
         """
         if not vals:
             return True
-        if vals.get('identification_id', False):
+        if context.get('from', False) != 'import' and vals.get('identification_id', False):
             e_ids = self.search(cr, uid, [('identification_id', '=', vals.get('identification_id'))])
             if e_ids:
                 msg = ','.join([x and x.get('name', '') for x in self.read(cr, uid, e_ids, ['name'])])
