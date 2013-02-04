@@ -90,5 +90,22 @@ def start():
 
     configure_babel()
 
+    if sys.platform == 'win32':
+        from cherrypy.process.win32 import ConsoleCtrlHandler
+        class ConsoleCtrlHandlerWeb(ConsoleCtrlHandler):
+            def handle(self, event):
+                """Handle console control events (like Ctrl-C)."""
+                # 'First to return True stops the calls'
+                return 1
+        cherrypy.engine.console_control_handler = ConsoleCtrlHandlerWeb(cherrypy.engine)
+
+    if hasattr(cherrypy.engine, "signal_handler"):
+        cherrypy.engine.signal_handler.subscribe()
+    if hasattr(cherrypy.engine, "console_control_handler"):
+        cherrypy.engine.console_control_handler.subscribe()
+
     cherrypy.engine.start()
     cherrypy.engine.block()
+
+def stop():
+    cherrypy.engine.exit()

@@ -12,6 +12,16 @@ if 'bdist_rpm' in sys.argv:
 try:
     import py2exe
     from py2exe_utils import opts
+    opts['options'].setdefault('py2exe',{})
+    opts['options']['py2exe'].setdefault('includes',[])
+    opts['options']['py2exe']['includes'].extend([
+        'win32api',
+        'win32con',
+        'win32event',
+        'win32service',
+        'win32serviceutil',
+    ])
+
     version_dash_incompatible = True
 except ImportError:
     opts = {}
