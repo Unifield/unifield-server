@@ -1692,7 +1692,7 @@ class account_bank_statement_line(osv.osv):
             if inv.journal_id and inv.journal_id.type not in journal_type:
                 journal_type.append(inv.journal_id.type)
         return {
-            'name': "Invoice Lines",
+            'name': "Supplier Invoices",
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',
