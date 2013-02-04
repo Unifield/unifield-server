@@ -31,8 +31,8 @@ class account_mcdb(osv.osv_memory):
 
     _columns = {
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
-        'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic Journal Code"),
-        'abs_id': fields.many2one('account.bank.statement', string="Register Code"), # Change into many2many ?
+        'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic journal code"),
+        'abs_id': fields.many2one('account.bank.statement', string="Register name"), # Change into many2many ?
         'instance_id': fields.many2one('msf.instance', string="Proprietary instance"),
         'posting_date_from': fields.date('First posting date'),
         'posting_date_to': fields.date('Ending posting date'),
