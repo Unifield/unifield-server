@@ -193,8 +193,6 @@ class product_attributes(osv.osv):
         'new_code' : fields.char('New code', size=64),
 
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=True),
-        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
-
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
@@ -359,5 +357,14 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
+
+class product_template(osv.osv):
+    _inherit = 'product.template'
+
+    _columns = {
+        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
+    }
+
+product_template()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
