@@ -1358,6 +1358,26 @@ class stock_picking(osv.osv):
         
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
+        pick_obj = self.pool.get('stock.picking')
+        pick = kwargs['pick']
+        message = kwargs['message']
+        if pick.type == 'out' and pick.subtype == 'picking':
+            domain = [('type','=','out'), ('subtype', '=', 'picking')]
+            return self.pool.get('res.log').create(cr, uid,
+                                                   {'name': message,
+                                                    'res_model': pick_obj._name,
+                                                    'secondary': False,
+                                                    'res_id': pick.id,
+                                                    'domain': domain,
+                                                    }, context=context)
+        return True
+
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook from stock>stock.py>stock_picking>log_picking
@@ -1366,6 +1386,8 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
+            return False
+        elif pick.type == 'out' and pick.subtype == 'picking':
             return False
 
         return result
