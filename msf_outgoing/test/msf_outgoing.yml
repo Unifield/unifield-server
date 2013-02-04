@@ -1007,6 +1007,7 @@
       for mem in obj.product_moves_shipment_create:
         mem.write({'selected_number': -10}, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # negative value rule
     for obj in self.browse(cr, uid, ids, context=c):
@@ -1027,6 +1028,7 @@
     # reset the qty
     self.deselect_all(cr, uid, ids, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # empty rule
     for obj in self.browse(cr, uid, ids, context=c):
@@ -1050,6 +1052,7 @@
       for mem in obj.product_moves_shipment_create:
         mem.write({'selected_number': 9999}, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # too much rule
     for obj in self.browse(cr, uid, ids, context=c):
@@ -1079,6 +1082,7 @@
         if mem.sale_order_id.id == context['so']['b']:
           mem.write({'selected_number': 1}, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # assert a shipment has been created
     shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
@@ -1108,6 +1112,7 @@
     # select all
     self.select_all(cr, uid, ids, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # assert a shipment has been created
     shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
@@ -1557,6 +1562,7 @@
     # select all
     self.select_all(cr, uid, ids, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # assert a shipment has been created
     shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
@@ -1714,6 +1720,7 @@
     # select all
     self.select_all(cr, uid, ids, context=c)
     # create shipment
+    c.update({'yml_test': True})
     self.do_create_shipment(cr, uid, ids, context=c)
     # assert a shipment has been created
     shipment_ids = self.pool.get('shipment').search(cr, uid, [('parent_id', 'in', context['draft_shipment'])], context=context)
