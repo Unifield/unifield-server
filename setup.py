@@ -4,6 +4,7 @@ import sys
 import glob
 
 from setuptools import setup
+from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
 
 execfile(os.path.join("openobject", "release.py"))
 
@@ -22,6 +23,16 @@ try:
         'win32service',
         'win32serviceutil',
     ])
+    opts['options']['py2exe'].update(
+            skip_archive=1,
+            compressed=0,
+            bundle_files=3,
+            optimize=0,
+            collected_libs_dir='libs',
+            collected_libs_data_relocate='babel,pytz',
+    )
+    opts.setdefault('data_files', []).extend(fixup_data_pytz_zoneinfo())
+    opts.update(cmdclass={'py2exe': custom_py2exe},)
 
     version_dash_incompatible = True
 except ImportError:
