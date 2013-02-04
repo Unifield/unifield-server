@@ -32,20 +32,6 @@ def get_config_file():
             configfile = os.path.join(setupdir, DISTRIBUTION_CONFIG)
     return configfile
 
-def configure_babel():
-    """ If we are in a py2exe bundle, rather than babel being installed in
-    a site-packages directory in an unzipped form with all its meta- and
-    package- data it is split between the code files within py2exe's archive
-    file and the metadata being stored at the toplevel of the py2exe
-    distribution.
-    """
-    if not hasattr(sys, 'frozen'): return
-
-    # the locale-specific data files are in babel/localedata/*.dat, babel
-    # finds these data files via the babel.localedata._dirname filesystem
-    # path.
-    babel.localedata._dirname = openobject.paths.root('babel', 'localedata')
-
 def start():
 
     parser = OptionParser(version="%s" % (openobject.release.version))
@@ -87,8 +73,6 @@ def start():
             pass
     if options.openerp_protocol in ['http', 'https', 'socket']:
         cherrypy.config['openerp.server.protocol'] = options.openerp_protocol
-
-    configure_babel()
 
     if sys.platform == 'win32':
         from cherrypy.process.win32 import ConsoleCtrlHandler
