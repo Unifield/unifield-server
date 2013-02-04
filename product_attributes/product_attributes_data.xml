@@ -2,41 +2,50 @@
 	<data >
 
 		<record model="product.status" id="status_1">
+			<field name="code">draft</field>
 			<field name="name">Introduction</field>
 		</record>
 		<record model="product.status" id="status_2">
+			<field name="code">sellable</field>
 			<field name="name">Normal</field>
 		</record>
 		<record model="product.status" id="status_3">
+			<field name="code">transfer</field>
 			<field name="name">Transfer</field>
 		</record>
 		<record model="product.status" id="status_4">
+			<field name="code">end_alternative</field>
 			<field name="name">End of Life (alternative available)</field>
 		</record>
 		<record model="product.status" id="status_5">
+			<field name="code">end</field>
 			<field name="name">End of Life (not supplied anymore)</field>
 		</record>
 		<record model="product.status" id="status_6">
+			<field name="code">obsolete</field>
 			<field name="name">Warning list</field>
 		</record>
 
-
 		<record model="product.international.status" id="int_1">
+			<field name="code">itc</field>
 			<field name="name">ITC</field>
 		</record>
 		<record model="product.international.status" id="int_2">
+			<field name="code">esc</field>
 			<field name="name">ESC</field>
 		</record>
 		<record model="product.international.status" id="int_3">
+			<field name="code">hq</field>
 			<field name="name">HQ</field>
 		</record>
 		<record model="product.international.status" id="int_4">
+			<field name="code">local</field>
 			<field name="name">Local</field>
 		</record>
 		<record model="product.international.status" id="int_5">
+			<field name="code">temp</field>
 			<field name="name">Temporary</field>
 		</record>
-
 
 		<record model="product.heat_sensitive" id="heat_1">
 			<field name="code">KR</field>
@@ -54,7 +63,6 @@
 			<field name="code">***</field>
 			<field name="name">Cold chain, 0° to 8°C strict</field>
 		</record>
-
 
 		<record model="product.cold_chain" id="cold_1">
 			<field name="code">3*</field>
