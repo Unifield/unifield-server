@@ -87,9 +87,12 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         if not self.stopping:
             sys.exit("OpenERP Server check: server not running, check the logfile for more info")
 
-
+def ctrlHandler(ctrlType):
+    return True
 
 if __name__=='__main__':
+    # handle console control (used to survive to logout)
+    win32api.SetConsoleCtrlHandler(ctrlHandler, True)
     # Do with the service whatever option is passed in the command line
     win32serviceutil.HandleCommandLine(OpenERPServerService)
 

@@ -250,6 +250,20 @@ def quit(restart=False):
     else:
 	os.execv(sys.executable, [sys.executable] + sys.argv)
 
+#----------------------------------------------------------
+# manage some platform specific behaviour
+#----------------------------------------------------------
+
+if sys.platform == 'win32':
+    import win32api
+    def mainthread_sleep():
+        # use SleepEx so the process can recieve console control event
+        # (required to Windows service survive if the user logout)
+        win32api.SleepEx(60000)
+else:
+    def mainthread_sleep():
+        time.sleep(60)
+
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')
     pidtext = "%d" % (os.getpid())

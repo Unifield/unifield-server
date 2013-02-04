@@ -53,12 +53,12 @@ if os.name == 'nt':
             "dist_dir": 'dist',
             "packages": [
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
-                "lxml.objectify", "decimal", "xml", "xml", "xml.dom", "xml.xpath",
+                "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
                 "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
                 "pydot", "asyncore","asynchat", "reportlab", "vobject",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
-                "uuid", "commands",
+                "uuid", "commands", "mx.DateTime",
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
@@ -144,6 +144,8 @@ def data_files():
         #for root, _, names in os.walk('pixmaps'):
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'),]))
+        files.append(("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')))
+        files.append((join('service','Microsoft.VC90.CRT'), glob.glob('C:\Microsoft.VC90.CRT\*.*')))
     else:
         man_directory = join('share', 'man')
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))

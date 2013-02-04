@@ -959,11 +959,30 @@ def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
         pickle.dump(data, file(config.get('import_partial'),'wb'))
         cr.commit()
 
+# Custom etree.Resolver to handler external entity on win32
+class ModuleEntityResolver(etree.Resolver):
+    def __init__(self, addons_path, module):
+        self.addons_path = addons_path
+        self.module = module
+
+    def resolve(self, url, id, context):
+        for addon_path in self.addons_path:
+            module_path = os.path.join(addon_path, self.module)
+            for dir in [ addon_path, module_path ]:
+                try:
+                    filepath = os.path.join(dir, url)
+                    if os.path.exists(filepath):
+                        fp = open(filepath, 'rb')
+                        return self.resolve_file(fp, context)
+                except IOError, e:
+                    pass
 #
 # xml import/export
 #
 def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=False, report=None):
-    doc = etree.parse(xmlfile)
+    parser = etree.XMLParser()
+    parser.resolvers.add(ModuleEntityResolver([config['addons_path']], module))
+    doc = etree.parse(xmlfile, parser)
     relaxng = etree.RelaxNG(
         etree.parse(os.path.join(config['root_path'],'import_xml.rng' )))
     try:
