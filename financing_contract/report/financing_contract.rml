@@ -219,7 +219,7 @@
         </td>
       </tr>
         <tr>
-      	<para style="P20">[[repeatIn(o.funding_pool_ids*10,'line')]]</para>
+      	<para style="P20">[[repeatIn(o.funding_pool_ids,'line')]]</para>
           <td>
             <para style="P3" alignment="LEFT">[[ line.funding_pool_id.name ]]</para>
           </td>
@@ -251,7 +251,7 @@
       </tr>
 
         <tr>
-      <para style="P20">[[repeatIn(o.cost_center_ids*50,'line')]]</para>
+      <para style="P20">[[repeatIn(o.cost_center_ids,'line')]]</para>
           <td>
             <para style="P3" alignment="LEFT">[[ line.name ]]</para>
           </td>
