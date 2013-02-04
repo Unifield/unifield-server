@@ -372,8 +372,11 @@ class product_attributes(osv.osv):
                                                           ('inventory_id', '!=', False),
                                                           ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
                 
-            # Check if the product is in a kit composition
-            has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id)], context=context)
+            # Check if the product is in a real kit composition
+            has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id),
+                                               ('item_kit_id.composition_type', '=', 'real'),
+                                               ('item_kit_id.state', '=', 'completed'),
+                                              ], context=context)
 
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
@@ -464,7 +467,7 @@ class product_attributes(osv.osv):
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
                                                         'type': kit.item_kit_id.composition_type == 'real' and 'Kit Composition' or 'Theorical Kit Composition',
                                                         'internal_type': 'composition.kit',
-                                                        'doc_ref': kit.item_kit_id.name,
+                                                        'doc_ref': kit.item_kit_id.composition_type == 'real' and kit.item_kit_id.composition_reference or kit.item_kit_id.name,
                                                         'doc_id': kit.item_kit_id.id}, context=context)
                         
                 # Create lines for error in inventory
