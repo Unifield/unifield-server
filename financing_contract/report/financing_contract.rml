@@ -67,8 +67,8 @@
     <blockTableStyle id="Table11">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="0,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,0" stop="1,0"/>
     </blockTableStyle>
     <blockTableStyle id="Table6">
       <blockAlignment value="LEFT"/>
@@ -209,7 +209,7 @@
     </para>
     
     <para style="P7">Funding pools:</para>
-    <blockTable colWidths="281.0,258.0" style="Table10">
+    <blockTable colWidths="281.0,258.0" style="Table11" repeatRows="1" >
       <tr>
         <td>
           <para style="P2" alignment="LEFT">Funding pool name</para>
@@ -218,11 +218,8 @@
         <para style="P2" alignment="LEFT">Funding pool code</para>
         </td>
       </tr>
-    </blockTable>
-    <section>
-      <para style="P20">[[repeatIn(o.funding_pool_ids,'line')]]</para>
-      <blockTable colWidths="281.0,258.0" style="Table12">
         <tr>
+      	<para style="P20">[[repeatIn(o.funding_pool_ids*10,'line')]]</para>
           <td>
             <para style="P3" alignment="LEFT">[[ line.funding_pool_id.name ]]</para>
           </td>
@@ -231,7 +228,9 @@
           </td>
         </tr>
       </blockTable>
-    </section>
+
+
+
     <para style="P4">
       <font color="white"> </font>
     </para>
@@ -239,7 +238,9 @@
       <font color="white"> </font>
     </para>
     <para style="P7">Cost centers:</para>
-    <blockTable colWidths="281.0,258.0" style="Table11">
+
+
+    <blockTable colWidths="281.0,258.0" style="Table11" repeatRows="1">
       <tr>
         <td>
           <para style="P2" alignment="LEFT">Cost center name</para>
@@ -248,11 +249,9 @@
           <para style="P2" alignment="LEFT">Cost center code</para>
         </td>
       </tr>
-    </blockTable>
-    <section>
-      <para style="P20">[[repeatIn(o.cost_center_ids,'line')]]</para>
-      <blockTable colWidths="278.0,255.0" style="Table9">
+
         <tr>
+      <para style="P20">[[repeatIn(o.cost_center_ids*50,'line')]]</para>
           <td>
             <para style="P3" alignment="LEFT">[[ line.name ]]</para>
           </td>
@@ -261,7 +260,7 @@
           </td>
         </tr>
       </blockTable>
-    </section>
+
     <pageBreak/>
 
     <para style="P15">        
