@@ -349,10 +349,18 @@ class product_attributes(osv.osv):
                                                        ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
             
             # Check if the product is in stock picking
+            # All stock moves in a stock.picking not draft/cancel/done or all stock moves in a shipment not delivered/done/cancel
             has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
                                                       ('picking_id', '!=', False),
-                                                      #('picking_id.shipment_id', '=', False),
-                                                      ('picking_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+                                                      '&', ('picking_id.shipment_id', '!=', False),
+                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
+                                                      ], context=context)
+#            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
+#                                                      ('picking_id', '!=', False),
+#                                                      '|', '&', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+#                                                      ('picking_id.shipment_id', '!=', False),
+#                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel'])], context=context)
                 
             # Check if the product is in a stock inventory
             has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
@@ -582,7 +590,7 @@ class product_deactivation_error(osv.osv_memory):
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True),
         'stock_exist': fields.boolean(string='Stocks exist (internal locations)', readonly=True),
-        'opened_object': fields.boolean(string='Product is contains in opened documents', readonly=True),
+        'opened_object': fields.boolean(string='Product is contain in opened documents', readonly=True),
         'error_lines': fields.one2many('product.deactivation.error.line', 'error_id', string='Error lines'),
     }
     
