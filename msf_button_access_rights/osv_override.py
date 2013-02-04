@@ -61,7 +61,7 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
                 if not button_name: 
                     continue
                 
-                # if user already has access to the button, skip the rule checks
+                # if button already hidden, skip rule checks
                 if button.attrib.get('invisible', '') == '1':
                     continue
                 
@@ -135,10 +135,10 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
     else:
         # load button access rights for this method
         pool = pooler.get_pool(cr.dbname) 
-        object_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
+        model_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
         if rules_pool:
-            rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',object_id)])
+            rules_search = rules_pool.search(cr, 1, [('name','=',method),'|',('model_id','=',model_id),('inherit_id','=',model_id)])
             
             # do we have rules?
             if rules_search:

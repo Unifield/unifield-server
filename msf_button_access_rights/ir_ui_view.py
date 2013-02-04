@@ -105,7 +105,7 @@ class ir_ui_view(osv.osv):
                     
                     # for each button in the old view, update it with the new view_id and model_id
                     for button in buttons:
-                        button.update({'view_id': i, 'model_id': model_id, 'inherit_id': vals.get('inherit_id', '')})
+                        button.update({'view_id': i, 'model_id': model_id, 'inherit_id': vals.get('inherit_id', '') or view.inherit_id and view.inherit_id.id})
                         
                         # look for existing BAR's with the same name and view_id
                         existing_button_search = rules_pool.search(cr, 1, [('view_id', '=', i),('name','=',button['name']),'|',('active','=',True),('active','=',False)])
@@ -145,7 +145,7 @@ class ir_ui_view(osv.osv):
         
         
         # perform the final writes to the views    
-        super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
+        return super(ir_ui_view, self).write(cr, uid, ids, vals, context=context) 
     
     def unlink(self, cr, uid, ids, context=None):
         # delete button access rules
@@ -174,19 +174,21 @@ class ir_ui_view(osv.osv):
         """
         
         button_object_list = []
-        view_xml = etree.fromstring(view_xml_text.encode('utf8'))
-        buttons = view_xml.xpath("//button[ @type != 'special' and not (@position) ]")
         
-        for button in buttons:
+        if view_xml_text:
+            view_xml = etree.fromstring(view_xml_text.encode('utf8'))
+            buttons = view_xml.xpath("//button[ @type != 'special' and not (@position) ]")
             
-            name = button.attrib.get('name', '')
-            label = button.attrib.get('string', '')
-            groups = button.attrib.get('groups','')
-            type = button.attrib.get('type', '').lower()
-            
-            if name:
-                button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id, inherit_id))
-            
+            for button in buttons:
+                
+                name = button.attrib.get('name', '')
+                label = button.attrib.get('string', '')
+                groups = button.attrib.get('groups','')
+                type = button.attrib.get('type', '').lower()
+                
+                if name:
+                    button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id, inherit_id))
+                
         return button_object_list
             
     def _write_button_objects(self, cr, uid, buttons):
