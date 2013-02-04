@@ -256,7 +256,7 @@ class account_mcdb(osv.osv_memory):
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('instance_id', 'instance_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
-                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
+                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
@@ -285,6 +285,10 @@ class account_mcdb(osv.osv_memory):
                     domain.append(('reconcile_id', '!=', False))
                 elif wiz.reconciled == 'unreconciled':
                     domain.append(('reconcile_id', '=', False))
+            if wiz.reconcile_id:
+                domain.append('|')
+                domain.append(('reconcile_id', '=', wiz.reconcile_id.id))
+                domain.append(('reconcile_partial_id', '=', wiz.reconcile_id.id))
             # REALLOCATION field
             if wiz.reallocated:
                 if wiz.reallocated == 'reallocated':
