@@ -50,7 +50,6 @@ class button_access_rule(osv.osv):
         'type': fields.selection((('workflow','Workflow'), ('object','Object'), ('action', 'Action')), 'Button Type'),
         'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True, ondelete='cascade'),
         'view_id': fields.many2one('ir.ui.view', 'View', help='The view to which this rule applies', required=True, ondelete='cascade'),
-        'inherit_id': fields.many2one('ir.ui.view', 'Parent View', help='The ID of the parent view if the view is an inherited view', ondelete='cascade'),
         'group_ids': fields.many2many('res.groups', 'button_access_rule_groups_rel', 'button_access_rule_id', 'group_id', 'Groups', help='A list of groups who have access to this button. If you leave this empty, everybody will have access.'),
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'group_names': fields.function(_get_group_names, type='char', method=True, string='Group Names', help='A list of all group names given button access by this rule'),
@@ -64,5 +63,19 @@ class button_access_rule(osv.osv):
     _sql_constraints = [
         ('name_view_unique', 'unique (name, view_id)', "The combination of Button Name and View ID must be unique - i.e. you cannot have two rules for the same button in the same view"),
     ]
+    
+    def _get_family_ids(self, cr, view_id):
+        """
+        Return a list of ids for all the children of view_id + view_id 
+        """
+        family_ids = [view_id]
+        last_ids = [view_id]
+        view_pool = self.pool.get('ir.ui.view')
+        
+        while(last_ids):
+            last_ids = view_pool.search(cr, 1, [('inherit_id','in',last_ids)])
+            family_ids = family_ids + last_ids
+            
+        return family_ids
                
 button_access_rule()

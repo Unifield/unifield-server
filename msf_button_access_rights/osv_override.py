@@ -39,9 +39,15 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
     view_id = view_id or fields_view.get('view_id', False)
     
     if uid != 1:
-
+        
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
-        rules_search = rules_pool.search(cr, 1, ['|',('view_id', '=', view_id),('inherit_id', '=', view_id)]) # TODO: extend to get all inherited views too
+        
+        if view_id:
+            search_ids = rules_pool._get_family_ids(cr, view_id)
+        else:
+            search_ids = [view_id]
+        
+        rules_search = rules_pool.search(cr, 1, [('view_id', 'in', search_ids)])
 
         # if have rules
         if rules_search:
@@ -99,7 +105,6 @@ orm.orm.fields_view_get = button_fields_view_get
 module_whitelist = [
     'ir.module.module',
     'res.log',
-    'res.users',
     'ir.ui.menu',
     'ir.actions.act_window',
     'ir.ui.view_sc',
@@ -138,7 +143,7 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
         model_id = pool.get('ir.model').search(cr, 1, [('model','=',obj)])
         rules_pool = pool.get('msf_button_access_rights.button_access_rule')
         if rules_pool:
-            rules_search = rules_pool.search(cr, 1, [('name','=',method),'|',('model_id','=',model_id),('inherit_id','=',model_id)])
+            rules_search = rules_pool.search(cr, 1, [('name','=',method),('model_id','=',model_id)])
             
             # do we have rules?
             if rules_search:

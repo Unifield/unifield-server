@@ -62,7 +62,7 @@ class ir_ui_view(osv.osv):
             logging.getLogger(self._name).warn('No model found for model name %s, so cannot generate button access rules for view_id %s' % (view.model, view_id))
         else:
             try:
-                buttons = self.parse_view(vals['arch'], model_id[0], view_id, vals.get('inherit_id', None))
+                buttons = self.parse_view(vals['arch'], model_id[0], view_id)
             except (ValueError, etree.XMLSyntaxError) as e:
                 logging.getLogger(self._name).warn('Error when parsing view %s' % i)
                 print e
@@ -105,13 +105,13 @@ class ir_ui_view(osv.osv):
                     
                     # for each button in the old view, update it with the new view_id and model_id
                     for button in buttons:
-                        button.update({'view_id': i, 'model_id': model_id, 'inherit_id': vals.get('inherit_id', '') or view.inherit_id and view.inherit_id.id})
+                        button.update({'view_id': i, 'model_id': model_id})
                         
                         # look for existing BAR's with the same name and view_id
                         existing_button_search = rules_pool.search(cr, 1, [('view_id', '=', i),('name','=',button['name']),'|',('active','=',True),('active','=',False)])
                         if existing_button_search:
                             # a BAR exists so update it with the new view information and append the id to the list of existing BAR's
-                            rules_pool.write(cr, 1, existing_button_search[0], {'label':button['label'], 'type':button['type'], 'model_id': model_id, 'inherit_id': button['inherit_id'], 'active':True})
+                            rules_pool.write(cr, 1, existing_button_search[0], {'label':button['label'], 'type':button['type'], 'model_id': model_id, 'active':True})
                             rule_id_list.append(existing_button_search[0])
                         else:
                             # does not exist so create it (First convert group xml ids to db ids)
@@ -156,7 +156,7 @@ class ir_ui_view(osv.osv):
             
         return super(ir_ui_view, self).unlink(cr, uid, ids, context=context)
     
-    def _button_dict(self, name, label, type, groups=None, model_id=None, view_id=None, inherit_id=None):
+    def _button_dict(self, name, label, type, groups=None, model_id=None, view_id=None):
         return {
             'name': name,
             'label': label,
@@ -164,10 +164,9 @@ class ir_ui_view(osv.osv):
             'groups': groups,
             'model_id': model_id,
             'view_id': view_id,
-            'inherit_id': inherit_id,
         }
     
-    def parse_view(self, view_xml_text, model_id=None, view_id=None, inherit_id=None):
+    def parse_view(self, view_xml_text, model_id=None, view_id=None):
         """
         Pass view_xml_text to extract button objects for each button in the view (Ignore special and position buttons). Return _button_dict pseudo object
         @raise XMLSyntaxError: thrown by lxml when there is an error while parsing the xml
@@ -187,7 +186,7 @@ class ir_ui_view(osv.osv):
                 type = button.attrib.get('type', '').lower()
                 
                 if name:
-                    button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id, inherit_id))
+                    button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id))
                 
         return button_object_list
             
