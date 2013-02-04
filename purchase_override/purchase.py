@@ -798,6 +798,7 @@ stock moves which are already processed : '''
         
         # objects
         sol_obj = self.pool.get('sale.order.line')
+        so_obj =  self.pool.get('sale.order')
         
         # code from wkf_approve_order
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
