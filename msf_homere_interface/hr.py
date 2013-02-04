@@ -93,18 +93,24 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
     }
 
-    def check_identification_id(self, cr, uid, ids, vals, context=None):
+    def _check_unicity(self, cr, uid, ids, context=None):
         """
-        Check that no employee have the same identification number.
+        Check that identification_id is not used yet.
         """
-        if not vals:
-            return True
-        if context.get('from', False) != 'import' and vals.get('identification_id', False):
-            e_ids = self.search(cr, uid, [('identification_id', '=', vals.get('identification_id'))])
-            if e_ids:
-                msg = ','.join([x and x.get('name', '') for x in self.read(cr, uid, e_ids, ['name'])])
-                raise osv.except_osv(_('Error'), _('Employee code already used by: %s') % (msg or '',))
+        # Some verifications
+        if not context:
+            context = {}
+        # Search if no one use this identification_id
+        for e in self.browse(cr, uid, ids):
+            if e.identification_id:
+                same = self.search(cr, uid, [('identification_id', '=', e.identification_id)])
+                if same and len(same) > 1:
+                    return False
         return True
+
+    _constraints = [
+        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+    ]
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -126,7 +132,6 @@ class hr_employee(osv.osv):
 #            # Raise an error if no cost_center
 #            if not vals.get('cost_center_id', False):
 #                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
-            self.check_identification_id(cr, uid, [], vals, context)
             # Add Nat. staff by default if not in vals
             if not vals.get('destination_id', False):
                 try:
@@ -175,9 +180,6 @@ class hr_employee(osv.osv):
                 for el in vals:
                     if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
                         new_vals.update({el: vals[el]})
-            # Check identification number
-            if local:
-                self.check_identification_id(cr, uid, [emp.id], vals, context)
             # Write changes
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
