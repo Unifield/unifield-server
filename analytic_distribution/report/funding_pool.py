@@ -19,15 +19,37 @@
 #
 ##############################################################################
 
-import time
-
 from report import report_sxw
+import locale
+import pooler
+import datetime
+from tools.translate import _
+from osv import osv
+import time
 
 class funding(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(funding, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'locale': locale,
+            'getBoolDest': self.getBoolDest,
+        })
+        return
+
+    def getBoolDest(self, line, o):
+        pool = pooler.get_pool(self.cr.dbname)
+        obj = pool.get('account.destination.summary')
+        ids_sum = pool.get('account.destination.summary').search(self.cr, self.uid, [('account_id','=',line.account_id.id)] )
+        if not ids_sum:
+            return ''
+        fields = []
+        for field in pool.get('account.destination.summary').fields_get(self.cr, self.uid, ['account_id']):
+            fields.append(field)
+        r = pool.get('account.destination.summary').read(self.cr, self.uid, ids_sum[0], fields)
+        if r[o]:
+            return 'x'
+        return ''
 
 report_sxw.report_sxw('report.funding.pool', 'account.analytic.account', 'addons/analytic_distribution/report/funding_pool.rml', parser=funding)
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
