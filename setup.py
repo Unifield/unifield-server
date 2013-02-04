@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import glob
 
 from setuptools import setup
 
@@ -43,6 +44,13 @@ def find_data_files(source, patterns=FILE_PATTERNS):
                 (base, cur_files))
 
     return out
+
+if os.name == 'nt':
+    sys.path.append("C:\Microsoft.VC90.CRT")
+    opts.setdefault('data_files',[]).extend([
+        ("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')),
+        (os.path.join('service', "Microsoft.VC90.CRT"), glob.glob('C:\Microsoft.VC90.CRT\*.*')),
+    ])
 
 setup(
     name=name,
