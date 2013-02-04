@@ -18,9 +18,12 @@ class ConfigurationError(Exception):
     pass
 
 DISTRIBUTION_CONFIG = os.path.join('doc', 'openerp-web.cfg')
+FROZEN_DISTRIBUTION_CONFIG = os.path.join('conf', 'openerp-web.cfg')
 def get_config_file():
     if hasattr(sys, 'frozen'):
-        configfile = os.path.join(openobject.paths.root(), DISTRIBUTION_CONFIG)
+        configfile = os.path.join(openobject.paths.root(), FROZEN_DISTRIBUTION_CONFIG)
+        if not os.path.exists(configfile):
+            configfile = os.path.join(openobject.paths.root(), DISTRIBUTION_CONFIG)
     else:
         setupdir = os.path.dirname(os.path.dirname(__file__))
         isdevdir = os.path.isfile(os.path.join(setupdir, 'setup.py'))
