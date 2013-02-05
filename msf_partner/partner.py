@@ -244,9 +244,9 @@ class res_partner(osv.osv):
             if purchase_ids or sale_ids or invoice_ids:
                 raise osv.except_osv(_('Warning'),
                                      _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
-                                       ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '\n'+
-                                            ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '\n'+
-                                            ', '.join([inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])))
+                                       ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)].extend(
+                                                               [so['name'] for so in sale_obj.read(cr, uid, sale_ids)])).extend(
+                                                               [inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])))
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -299,9 +299,9 @@ class res_partner(osv.osv):
                 return {'value': {'active': True}, 
                         'warning': {'title': _('Error'), 
                                     'message': _("Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
-                                                ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '\n'+
-                                                     ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '\n'+
-                                                     ', '.join([inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])),}}
+                                                ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)].extend(
+                                                               [so['name'] for so in sale_obj.read(cr, uid, sale_ids)])).extend(
+                                                               [inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])),}}
         return {}
 
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
