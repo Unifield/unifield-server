@@ -303,12 +303,13 @@
             <para style="P15" alignment="LEFT">[[ (line['line_type'] == 'View' and line['line_type']) or removeParentNode('para') ]]</para>
           </td>
           <td>
-          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and locale.format('%.0f', line['allocated_budget'], True)) or removeParentNode('para') ]]</para>
-            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and locale.format('%.0f', line['allocated_budget'], True)) or removeParentNode('para') ]]</para>
+          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and formatLang(line['allocated_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
+
           </td>
           <td>
-          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and locale.format('%.0f', line['project_budget'], True)) or removeParentNode('para') ]]</para>
-            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and locale.format('%.0f', line['project_budget'], True)) or removeParentNode('para') ]]</para>
+          	<para style="P12" alignment="RIGHT">[[ (line['line_type'] != 'View' and formatLang(line['project_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
+            <para style="P15" alignment="RIGHT">[[ (line['line_type'] == 'View' and formatLang(line['project_budget'], digits=0, grouping=True)) or removeParentNode('para') ]]</para>
             
           </td>
         </tr>
@@ -337,10 +338,13 @@
              
           </td>
 	      <td>
-	        <para style="P15" alignment="RIGHT">[[ locale.format('%.0f', get_totals(o.actual_line_ids)[0], True) ]] </para>
+	        <para style="P15" alignment="RIGHT">[[ formatLang( get_totals(o.actual_line_ids)[0], digits=0, grouping=True) ]] </para>
 	      </td>
 	      <td>
-	        <para style="P15" alignment="RIGHT">[[ locale.format('%.0f', get_totals(o.actual_line_ids)[1], True) ]]</para>
+	        <para style="P15" alignment="RIGHT">[[ formatLang( get_totals(o.actual_line_ids)[1], digits=0, grouping=True) ]]</para>
+
+
+
 	      </td>
 	    </tr>
 	  </blockTable>
