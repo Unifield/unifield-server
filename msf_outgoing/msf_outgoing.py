@@ -1376,7 +1376,7 @@ class stock_picking(osv.osv):
                                                     'res_id': pick.id,
                                                     'domain': domain,
                                                     }, context=context)
-        return True
+        return result
 
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
