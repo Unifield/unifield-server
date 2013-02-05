@@ -176,7 +176,7 @@ class ir_ui_view(osv.osv):
         
         if view_xml_text:
             view_xml = etree.fromstring(view_xml_text.encode('utf8'))
-            buttons = view_xml.xpath("//button[ @type != 'special' and not (@position) ]")
+            buttons = view_xml.xpath("//button[ @name and @type != 'special' and not (@position) ]")
             
             for button in buttons:
                 

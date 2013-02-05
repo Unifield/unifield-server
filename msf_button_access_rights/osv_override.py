@@ -53,23 +53,11 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
         if rules_search:
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
             
-            # parse view and get all buttons
+            # parse view and get all buttons with a name, a type that is not 'special', no position attribute, and may or may not have an invisible attribute (But not set to '1')
             view_xml = etree.fromstring(fields_view['arch'])
-            buttons = view_xml.xpath("//button")
+            buttons = view_xml.xpath("//button[ @name and @type != 'special' and not (@position) and @invisible != '1' or not (@invisible) ]")
             
             for button in buttons:
-                
-                # ignore buttons with the position attribute
-                if button.attrib.get('position', False):
-                    continue
-                
-                button_name = button.attrib.get('name', '')
-                if not button_name: 
-                    continue
-                
-                # if button already hidden, skip rule checks
-                if button.attrib.get('invisible', '') == '1':
-                    continue
                 
                 # check if rule gives user access to button
                 rule_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
