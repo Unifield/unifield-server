@@ -224,7 +224,7 @@
                 <para style="P3">[[ line[1] ]]</para>
               </td>
               <td>
-                <para style="P3"><font color="red">[[ (line[2] == 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</font>[[ (line[2] != 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</para>
+		<para style="P3"><font color="red">[[ (line[2] == 'Budget missing' and line[2]) or '' ]]</font>[[ (line[2] != 'Budget missing' and formatLang(line[2], digits=0, grouping=True )) or '' ]]</para>
               </td>
               <td>
                 <para style="P3">[[ formatLang(line[3], digits=0, grouping=True ) or '' ]]</para>
