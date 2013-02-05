@@ -238,8 +238,8 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
-            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
-            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
+            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
+            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
             invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '=', 'open')])
             if purchase_ids or sale_ids or invoice_ids:
                 raise osv.except_osv(_('Warning'),
@@ -292,8 +292,8 @@ class res_partner(osv.osv):
             purchase_obj = self.pool.get('purchase.order')
             sale_obj = self.pool.get('sale.order')
             account_invoice_obj = self.pool.get('account.invoice')
-            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
-            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
+            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
+            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
             invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '=', 'open')])
             if purchase_ids or sale_ids or invoice_ids:
                 return {'value': {'active': True}, 
@@ -302,7 +302,7 @@ class res_partner(osv.osv):
                                                 ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '\n'+
                                                      ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '\n'+
                                                      ', '.join([inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])),}}
-        return
+        return {}
 
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
         '''
