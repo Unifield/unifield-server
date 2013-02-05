@@ -59,6 +59,8 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
             
             for button in buttons:
                 
+                button_name = button.attrib.get('name', '')
+                
                 # check if rule gives user access to button
                 rule_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
                 if rule_for_button:
