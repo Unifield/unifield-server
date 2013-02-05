@@ -7818,7 +7818,7 @@ msgstr "Le budget n'a pas de moment de décision!"
 #: field:stock.production.lot,np_check:0
 #: report:destruction.location:0
 msgid "NP"
-msgstr "Stupéfiants/Psychotropes"
+msgstr "SP"
 
 #. module: kit
 #: field:assign.to.kit.line,required_qty_assign_to_kit_line:0
@@ -7835,9 +7835,13 @@ msgstr "Zones  Liées"
 #: field:real.average.consumption.line,expiry_date:0
 #: report:order.type.donation.certificate:0
 #: report:order.type.gift.certificate:0
-#: report:msf.report_reception_in:0
 msgid "Expiry date"
 msgstr "Date d'expiration"
+
+#. module: sale
+#: report:msf.report_reception_in:0
+msgid "Expiry date"
+msgstr "Date d' expiration"
 
 #. module: base
 #: view:res.config:0
@@ -38392,7 +38396,7 @@ msgstr "Vous ne pouvez pas créer des écritures reflétant une seule transactio
 #: field:stock.production.lot,dg_check:0
 #: report:destruction.location:0
 msgid "DG"
-msgstr "Matière Dangereuse (MD)"
+msgstr "MD"
 
 #. module: account_msf
 #: view:account.invoice:0
@@ -59544,7 +59548,7 @@ msgstr "Importation de la liste du personnel effectuée avec succès"
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Qty backorder"
-msgstr "Qté - Livraison en attente"
+msgstr "Qté en attente"
 
 #. module: account
 #: code:addons/account/account.py:1431
@@ -60261,7 +60265,7 @@ msgstr "Nom du Département"
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Item"
-msgstr "Article"
+msgstr "N°"
 
 #. module: account
 #: view:account.tax.template:0
@@ -63358,7 +63362,7 @@ msgstr "Allocation analytique"
 #: field:stock.move.memory.out,kc_check:0
 #: field:stock.production.lot,kc_check:0
 msgid "KC"
-msgstr "Garder Frais"
+msgstr "GF"
 
 #. module: base
 #: report:ir.module.reference:0
