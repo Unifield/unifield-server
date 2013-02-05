@@ -327,7 +327,7 @@ msgstr "Vous ne pouvez pas avoir deux fois le même produit sur la même règle 
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "To Parcel"
-msgstr "Au Parcelle"
+msgstr "À Parcelle"
 
 #. module: base
 #: code:addons/fields.py:551
@@ -13165,7 +13165,7 @@ msgstr "Journal des Achats - Avoir"
 #: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "To p:"
-msgstr "Au P."
+msgstr "À p:"
 
 #. module: msf_outgoing
 #: field:pack.family.memory,to_pack:0
@@ -13176,7 +13176,7 @@ msgstr "Au P."
 #: field:stock.move.memory.shipment.returnpacks,to_pack:0
 #: field:stock.move.memory.shipment.returnpacksfromshipment,to_pack:0
 msgid "To p."
-msgstr "Au P."
+msgstr "À P."
 
 #. module: base
 #: code:addons/fields.py:113
@@ -42031,7 +42031,7 @@ msgstr "Fct Nouvelle Valeur"
 #: field:stock.move.memory.shipment.returnpacks,sale_order_id:0
 #: field:stock.move.memory.shipment.returnpacksfromshipment,sale_order_id:0
 msgid "Sale Order Ref"
-msgstr "Commande de Terrain – Réf"
+msgstr "Réf Commande de Terrain"
 
 #. module: sale
 #: field:sale.installer,sale_margin:0
@@ -51967,7 +51967,7 @@ msgstr "Simple OUT (sortie)"
 #: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "From p:"
-msgstr "De P."
+msgstr "De p.:"
 
 #. modules: tender_flow, analytic_distribution_supply
 #: field:account.invoice.line,sale_order_lines:0
