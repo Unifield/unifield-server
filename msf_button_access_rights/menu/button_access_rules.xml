@@ -2,9 +2,6 @@
 <openerp>
 	<data>
 	
-		<!-- Parent menu item -->
-		<menuitem name="Sync and Access Rules" id="msf_sync_access_rights" parent="base.menu_security" />
-
 		<!-- Button Access Rule List -->
 		<record id="button_access_rule_list" model="ir.actions.act_window">
 	        <field name="name">Button Access Rules</field>
@@ -12,8 +9,8 @@
 	        <field name="view_mode">tree,form</field>
 	        <field name="view_id" ref="button_access_rule_list_view"/>
     	</record>
-
-		<menuitem name="Button Access Rules" action="button_access_rule_list" id="button_access_rule_list_menu" parent="msf_sync_access_rights" sequence="16" />
+    	
+    	<menuitem name="Button Access Rules" id="msf_button_access_rules" parent="base.menu_security" action="button_access_rule_list" />
 
 	</data>
 </openerp>

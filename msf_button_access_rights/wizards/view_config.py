@@ -55,7 +55,7 @@ class view_config_install(osv.osv_memory):
            'errors': str(len(errors)) + ' Button Access Rule(s) had errors\n\n' + _join_dictionary(errors, 'View ID: ', ', Error: ', '\n')
         }
         
-        results_id = results_pool.create(cr, 1, results, context=context)
+        results_id = self.pool.get('msf_button_access_rights.view_config_wizard_install_results').create(cr, 1, results, context=context)
         return {
             'name': 'Generation Results',
             'view_type': 'form',
