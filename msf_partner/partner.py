@@ -244,8 +244,8 @@ class res_partner(osv.osv):
             if purchase_ids or sale_ids or invoice_ids:
                 raise osv.except_osv(_('Warning'),
                                      _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
-                                       ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ ', '+
-                                            ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ ', '+
+                                       ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '_'
+                                            ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '_'
                                             ', '.join([inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])))
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
@@ -299,8 +299,8 @@ class res_partner(osv.osv):
                 return {'value': {'active': True}, 
                         'warning': {'title': _('Error'), 
                                     'message': _("Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
-                                                ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ ', '+
-                                                     ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ ', '+
+                                                ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '_'+
+                                                     ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '_'+
                                                      ', '.join([inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])),}}
         return {}
 
