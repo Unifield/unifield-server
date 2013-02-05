@@ -69,12 +69,13 @@
                     </xpath>
 
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
-                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="details" />
+                        <newline />
+                        <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                     </xpath>
                     <xpath expr="/form/notebook/page//field[@name='invoice_method']" position="replace">
                         <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}" />
@@ -124,6 +125,7 @@
                       <field name="priority" />
                       <field name="categ" />
                       <field name="date_order" />
+                      <field name="partner_ref" />
                       <field name="partner_id" string="Supplier" />
                       <field name="delivery_requested_date" />
                       <field name="origin" />
@@ -266,7 +268,8 @@
                     <xpath expr="/form//field[@name='product_id']" position="replace">
                         <field name="product_id" colspan="4" 
                             context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id" 
-                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"/>
+                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"
+                            domain="[('purchase_type', '=', parent.categ)]" />
                     </xpath>
 
                     <xpath expr="/form//field[@name='price_unit']" position="replace">
@@ -332,31 +335,8 @@
         <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
 
         <!-- Invoice control -->
-        <delete id="purchase.menu_procurement_management_invoice" model="ir.ui.menu" />
-        <delete id="purchase.menu_procurement_management_pending_invoice" model="ir.ui.menu" />
-        <delete id="purchase.menu_purchase_line_order_draft" model="ir.ui.menu" />
-
-        <!-- Products -->
-        <delete id="purchase.menu_procurement_partner_contact_form" model="ir.ui.menu" />
-        <delete id="purchase.menu_product_by_category_purchase_form" model="ir.ui.menu" />
-        <delete id="purchase.menu_procurement_management_product" model="ir.ui.menu" />
-
-        <!-- Picking on Purchase menu -->
-        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree4" />
-        <delete model="ir.ui.menu" id="purchase.menu_action_picking_tree_in_move" />
-<!--        <delete model="ir.ui.menu" id="purchase.menu_procurement_management_inventory" /> -->
-
-        <!-- Purchase configuration menu -->
-<!--
-        <delete model="ir.ui.menu" id="base.menu_procurement_management_supplier" />
--->
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_categ_form_action" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_uom_form_action" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_unit_measure_purchase" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action_purhase" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_pricelist_action2_purchase" />
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_product_pricelist_type" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_category_config_purchase" />
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
+        
 <!--
         <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
         <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />

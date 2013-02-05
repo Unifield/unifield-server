@@ -207,10 +207,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                       or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
                       or (context.get('from_move', False) and isinstance(context.get('from_move'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
                         # Add account_id constraints for invoice lines
-                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
+                        field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', '&', ('cost_center_ids', '=', cost_center_id), ('tuple_destination', '=', (parent.account_id, destination_id)), ('id', '=', %s)]" % fp_id)
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -303,6 +303,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [vals.get('wizard_id')], context=context)
             if wiz and wiz[0] and wiz[0].total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].total_amount) * 100.0)})
+        if vals.get('percentage', False) == 0.0:
+            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
@@ -326,6 +328,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.browse(cr, uid, ids, context=context)
             if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0)})
+        if vals.get('percentage', False) == 0.0:
+            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)
@@ -958,6 +962,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.move_line_id:
                 move_id = wiz.move_line_id.move_id.id
             self.pool.get('account.move').validate(cr, uid, [move_id])
+        # Validate account_move if we come from a temp posted register line
+        if wiz and (wiz.register_line_id and wiz.register_line_id.state == 'temp'):
+            # write analytic distribution on move line and validate move
+            distribution_id = wiz.distribution_id and wiz.distribution_id.id or False
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('account_id', '=', wiz.register_line_id.account_id.id), ('id', 'not in', [wiz.register_line_id.first_move_line_id.id])])
+            # write changes
+            self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, distribution_id)}, check=False, update_check=False)
+            self.pool.get('account.move').validate(cr, uid, [x.id for x in wiz.register_line_id.move_ids])
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         

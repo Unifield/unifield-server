@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 import time
 
 class account_invoice_refund(osv.osv_memory):
@@ -82,6 +83,17 @@ class account_invoice_refund(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
             data.update({'document_date': form['document_date']})
         return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
+
+    def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
+        """
+        Get period regarding given date
+        """
+        res = super(account_invoice_refund, self)._hook_get_period_from_date(cr, uid, invoice_id, date, period)
+        if date:
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, date)
+            if period_ids and isinstance(period_ids, list):
+                res = period_ids[0]
+        return res
 
 account_invoice_refund()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

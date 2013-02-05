@@ -11,6 +11,9 @@
             <field name="priority" eval="20"/>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                    </xpath>
                     <xpath expr="/form/group[1]/field[@name='date']" position="after">
                         <field name="reversal_origin"/>
                     </xpath>

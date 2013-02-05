@@ -56,5 +56,16 @@ class account_analytic_journal(osv.osv):
 (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
     }
 
+    def name_get(self, cr, user, ids, context=None):
+        """
+        Get code for Journals
+        """
+        result = self.read(cr, user, ids, ['code'])
+        res = []
+        for rs in result:
+            txt = rs.get('code', '')
+            res += [(rs.get('id'), txt)]
+        return res
+
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

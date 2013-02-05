@@ -26,7 +26,8 @@ from osv import osv
 
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
-    Get period in which this date could go into, otherwise return last open period
+    Get period in which this date could go into, otherwise return last open period.
+    Do not select special periods (Period 13, 14 and 15).
     """
     # Some verifications
     if not context:
@@ -34,11 +35,11 @@ def get_period_from_date(self, cr, uid, date=False, context=None):
     if not date:
         return False
     # Search period in which this date come from
-    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], limit=1, 
+    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('special', '=', False)], limit=1, 
         order='date_start asc, name asc', context=context) or []
     # Get last period if no period found
     if not period_ids:
-        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open')], limit=1, 
+        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('special', '=', False)], limit=1, 
             order='date_stop desc, name desc', context=context) or []
     if isinstance(period_ids, (int, long)):
         period_ids = [period_ids]

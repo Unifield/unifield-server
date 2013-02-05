@@ -183,6 +183,7 @@ That means Not price, Neither Delivery requested date. """))
         # write order line on SO
         context['import_in_progress'] = True
         self.write(cr, uid, ids, vals, context=context)
+        self._check_service(cr, uid, ids, vals, context=context)
         msg_to_return = get_log_message(to_write=to_write, obj=obj)
         if msg_to_return:
             self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
@@ -197,7 +198,7 @@ That means Not price, Neither Delivery requested date. """))
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if context.get('_terp_view_name', False) == 'Internal Requests':
+        if context.get('_terp_view_name', False) == self.pool.get('ir.translation').tr_view(cr, 'Internal Requests', context):
             return self.import_internal_req(cr, uid, ids, context=context)
 
         product_obj = self.pool.get('product.product')

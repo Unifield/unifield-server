@@ -30,6 +30,8 @@ from tools.translate import _
 import logging
 from workflow.wkf_expr import _eval_expr
 
+import decimal_precision as dp
+
 from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
@@ -174,19 +176,20 @@ class sale_order(osv.osv):
             # better: if order.order_line: res[order.id] = False
                 
         return res
-    
+
     _columns = {
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('customer','=',True), ('id', '!=', company_id2)]"),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'details': fields.char(size=30, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        # we increase the size of the 'details' field from 30 to 86
+        'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
             fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
@@ -243,6 +246,52 @@ class sale_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
+
+    def onchange_categ(self, cr, uid, ids, categ, context=None):
+        '''
+        Check if the list of products is valid for this new category
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        message = {}
+        if ids and categ in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service FO
+            category = categ=='service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+                          FROM sale_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN sale_order fo ON l.order_id = fo.id
+                          WHERE (t.type != 'service_recep' %s) AND fo.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+            res = cr.fetchall()
+            if res:
+                cat_name = categ=='service' and 'Service' or 'Transport'
+                message.update({'title': _('Warning'),
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can sale only \'%s\' products on a \'%s\' field order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+
+        return {'warning': message}
+
+    def _check_service(self, cr, uid, ids, vals, context=None):
+        '''
+        Avoid the saving of a FO with a non service products on Service FO
+        '''
+        categ = {'transport': _('Transport'),
+                 'service': _('Service')}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Transport\' product. You can sale only \'Transport\' products on a \'Transport\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can sale only \'Service\' products on a \'Service\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    return False
+
+        return True
     
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -252,11 +301,13 @@ class sale_order(osv.osv):
             logging.getLogger('init').info('SO: set from yml test to True')
             vals['from_yml_test'] = True
 
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
 
-        return super(sale_order, self).create(cr, uid, vals, context)
+        res = super(sale_order, self).create(cr, uid, vals, context)
+        self._check_service(cr, uid, [res], vals, context=context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -266,11 +317,13 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        # Don't allow the possibility to make a SO to my owm company
+        # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request'):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        self._check_service(cr, uid, ids, vals, context=context)
 
         return super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
@@ -389,7 +442,8 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type]}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
+                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -986,7 +1040,8 @@ class sale_order_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    _columns = {'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
+    _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
+                'parent_line_id': fields.many2one('sale.order.line', string='Parent line'),
                 'partner_id': fields.related('order_id', 'partner_id', relation="res.partner", readonly=True, type="many2one", string="Customer"),
                 # this field is used when the po is modified during on order process, and the so must be modified accordingly
                 # the resulting new purchase order line will be merged in specified po_id 
@@ -1001,6 +1056,7 @@ class sale_order_line(osv.osv):
                 
                 # This field is used to identify the FO PO line between 2 instances of the sync
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+                'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 }
 
     _sql_constraints = [
@@ -1123,9 +1179,30 @@ class sale_order_line(osv.osv):
         """
         Default procurement method is 'on order' if no product selected
         """
-        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
-        if context is None:
+        if not context:
             context = {}
+
+        if context.get('sale_id'):
+            # Check validity of the field order. We write the order to avoid
+            # the creation of a new line if one line of the order is not valid
+            # according to the order category
+            # Example : 
+            #    1/ Create a new FO with 'Other' as Order Category
+            #    2/ Add a new line with a Stockable product
+            #    3/ Change the Order Category of the FO to 'Service' -> A warning message is displayed
+            #    4/ Try to create a new line -> The system displays a message to avoid you to create a new line
+            #       while the not valid line is not modified/deleted
+            #
+            #   Without the write of the order, the message displayed by the system at 4/ is displayed at the saving
+            #   of the new line that is not very understandable for the user
+            data = {}
+            if context.get('partner_id'):
+                data.update({'partner_id': context.get('partner_id')})
+            if context.get('categ'):
+                data.update({'categ': context.get('categ')})
+            self.pool.get('sale.order').write(cr, uid, [context.get('sale_id')], data, context=context)
+
+        default_data = super(sale_order_line, self).default_get(cr, uid, fields, context=context)
         sale_id = context.get('sale_id', [])
         if not sale_id:
             return default_data

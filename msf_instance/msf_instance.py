@@ -124,7 +124,22 @@ class msf_instance(osv.osv):
             txt = rs.code
             res += [(rs.id, txt)]
         return res
-    
+
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        """
+        Search Instance regarding their code and their name
+        """
+        if not args:
+            args = []
+        if context is None:
+            context = {}
+        ids = []
+        if name:
+            ids = self.search(cr, uid, [('code', 'ilike', name)]+ args, limit=limit, context=context)
+        if not ids:
+            ids = self.search(cr, uid, [('name', 'ilike', name)]+ args, limit=limit, context=context)
+        return self.name_get(cr, uid, ids, context=context)
+
     def button_deactivate(self, cr, uid, ids, context=None):
         """
         Deactivate instance

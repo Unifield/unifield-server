@@ -103,9 +103,9 @@ class tender(osv.osv):
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product')
                 }
     
-    _defaults = {'state': 'draft',
+    _defaults = {'categ': 'other',
+                 'state': 'draft',
                  'internal_state': 'draft',
-                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'tender'),
                  'company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
                  'creator': lambda obj, cr, uid, context: uid,
                  'creation_date': lambda *a: time.strftime('%Y-%m-%d'),
@@ -115,6 +115,14 @@ class tender(osv.osv):
                  }
     
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the reference of the tender at this time
+        '''
+        if not vals.get('name', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
+        return super(tender, self).create(cr, uid, vals, context=context)
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
@@ -153,8 +161,7 @@ class tender(osv.osv):
                 if not address_id:
                     raise osv.except_osv(_('Warning !'), _('The supplier "%s" has no address defined!')%(supplier.name,))
                 pricelist_id = supplier.property_product_pricelist_purchase.id
-                values = {'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq'),
-                          'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
+                values = {'origin': tender.sale_order_id and tender.sale_order_id.name + ';' + tender.name or tender.name,
                           'rfq_ok': True,
                           'partner_id': supplier.id,
                           'partner_address_id': address_id,
@@ -170,7 +177,7 @@ class tender(osv.osv):
                           'delivery_requested_date': tender.requested_date,
                           }
                 # create the rfq - dic is udpated for default partner_address_id at purchase.order level
-                po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id))
+                po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
                 
                 for line in tender.tender_line_ids:
                     if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_supply_doc_import', 'product_tbd')[1]:
@@ -541,10 +548,10 @@ class tender_line(osv.osv):
                 'date_planned': fields.related('tender_id', 'requested_date', type='date', string='Requested Date', store=False,),
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
-                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", readonly=True),
-                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", multi='total'),
+                'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True), # same precision as related field!
+                'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
                 'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
-                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", multi='total'),
+                'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
                 'func_currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Func. Cur.', multi='total'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
@@ -637,7 +644,7 @@ class procurement_order(osv.osv):
                                            ('waiting','Waiting'),], 'State', required=True,
                                           help='When a procurement is created the state is set to \'Draft\'.\n If the procurement is confirmed, the state is set to \'Confirmed\'.\
                                                 \nAfter confirming the state is set to \'Running\'.\n If any exception arises in the order then the state is set to \'Exception\'.\n Once the exception is removed the state becomes \'Ready\'.\n It is in \'Waiting\'. state when the procurement is waiting for another one to finish.'),
-                'price_unit': fields.float('Unit Price from Tender', digits_compute= dp.get_precision('Purchase Price')),
+                'price_unit': fields.float('Unit Price from Tender', digits_compute=dp.get_precision('Purchase Price Computation')),
         }
     _defaults = {'is_tender_done': False,}
     
@@ -759,13 +766,23 @@ class purchase_order(osv.osv):
 
     _defaults = {
                 'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
-                'name': lambda obj, cr, uid, c: obj.pool.get('ir.sequence').get(cr, uid, c.get('rfq_ok', False) and 'rfq' or 'purchase.order'),
                  }
     
     _constraints = [
         (_check_valid_till,
             'You must specify a Valid Till date.',
             ['valid_till']),]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Set the reference at this step
+        '''
+        if context.get('rfq_ok', False) and not vals.get('name', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
+        elif not vals.get('name', False):
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')})
+
+        return super(purchase_order, self).create(cr, uid, vals, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -792,10 +809,21 @@ class purchase_order(osv.osv):
         HOOK from purchase>purchase.py for COPY function. Modification of default copy values
         define which name value will be used
         '''
+        # default values from copy function
+        default = kwargs.get('default', False)
+        # flag defining if the new object will be a rfq
+        is_rfq = False
+        # calling super function
         result = super(purchase_order, self)._hook_copy_name(cr, uid, ids, context=context, *args, **kwargs)
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.rfq_ok:
-                result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
+        if default.get('rfq_ok', False):
+            is_rfq = True
+        elif 'rfq_ok' not in default:
+            for obj in self.browse(cr, uid, ids, context=context):
+                # if rfq_ok is specified as default value for new object, we base our decision on this value
+                if obj.rfq_ok:
+                    is_rfq = True
+        if is_rfq:
+            result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
@@ -916,7 +944,8 @@ class pricelist_partnerinfo(osv.osv):
         return res
     
     _inherit = 'pricelist.partnerinfo'
-    _columns = {'currency_id': fields.many2one('res.currency', string='Currency', required=True, domain="[('partner_currency', '=', partner_id)]"),
+    _columns = {'price': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation'), help="This price will be considered as a price for the supplier UoM if any or the default Unit of Measure of the product otherwise"),
+                'currency_id': fields.many2one('res.currency', string='Currency', required=True, domain="[('partner_currency', '=', partner_id)]"),
                 'valid_till': fields.date(string="Valid Till",),
                 'comment': fields.char(size=128, string='Comment'),
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
@@ -957,18 +986,18 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in po_accepted_values[key2] \
-                or v[2]['name'] == 'Purchase Order Excel Export' \
-                or v[2]['name'] == 'Purchase Order' \
-                or v[2]['name'] == 'Purchase Order (Merged)' \
-                or v[2]['name'] == 'Allocation report' \
-                or v[2]['name'] == 'Order impact vs. Budget' :
+                or v[1] == 'Purchase Order Excel Export' \
+                or v[1] == 'Purchase Order' \
+                or v[1] == 'Purchase Order (Merged)' \
+                or v[1] == 'Allocation report' \
+                or v[1] == 'Order impact vs. Budget' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                or v[2]['name'] == 'Request for Quotation' \
-                or v[2]['name'] == 'Request For Quotation Excel Export' :
+                or v[1] == 'Request for Quotation' \
+                or v[1] == 'Request For Quotation Excel Export' :
                     new_values.append(v)
  
         return new_values

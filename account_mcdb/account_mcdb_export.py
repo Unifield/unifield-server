@@ -90,7 +90,7 @@ class account_line_csv_export(osv.osv_memory):
             #account_id name
             csv_line.append(ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or '')
             #partner_txt
-            csv_line.append(ml.partner_txt.encode('utf-8') or '')
+            csv_line.append(ml.partner_txt and ml.partner_txt.encode('utf-8') or '')
             #debit_currency
             csv_line.append(ml.debit_currency or 0.0)
             #credit_currency

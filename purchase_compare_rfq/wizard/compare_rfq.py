@@ -24,6 +24,8 @@ from osv import fields
 
 import netsvc
 
+import decimal_precision as dp
+
 from tools.translate import _
 
 class wizard_compare_rfq(osv.osv_memory):
@@ -339,11 +341,11 @@ class wizard_choose_supplier_line(osv.osv_memory):
         'compare_line_id': fields.many2one('wizard.compare.rfq.line', string='Compare Line'),
         'po_line_id': fields.many2one('purchase.order.line', string='PO Line'),
         'supplier_id': fields.many2one('res.partner', string='Supplier'),
-        'price_unit': fields.float(digits=(16,2), string='Unit Price'),
+        'price_unit': fields.float(string='Unit Price', digits_compute=dp.get_precision('Purchase Price Computation')),
         'qty': fields.float(digits=(16,2), string='Qty'),
-        'price_total': fields.float(digits=(16,2), string='Total Price'),
+        'price_total': fields.float(string='Total Price', digits_compute=dp.get_precision('Purchase Price')),
         'currency_id': fields.many2one('res.currency', string='Currency'),
-        'func_price_total': fields.function(_get_func_total, method=True, string='Func. Total Price', type='float'),
+        'func_price_total': fields.function(_get_func_total, method=True, string='Func. Total Price', type='float', digits_compute=dp.get_precision('Purchase Price')),
         'func_currency_id': fields.function(_get_func_total, method=True, string='Func. Currency', type='many2one', relation='res.currency'),
         'notes': fields.text(string='Notes'),
     }

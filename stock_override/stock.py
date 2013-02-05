@@ -32,6 +32,7 @@ import decimal_precision as dp
 import logging
 from os import path
 
+from msf_partner import PARTNER_TYPE
 
 #----------------------------------------------------------
 # Procurement Order
@@ -124,6 +125,44 @@ class stock_picking(osv.osv):
         state_list['done'] = _('is closed.')
         
         return state_list
+    
+    def _get_stock_picking_from_partner_ids(self, cr, uid, ids, context=None):
+        '''
+        ids represents the ids of res.partner objects for which values have changed
+        
+        return the list of ids of stock.picking objects which need to get their fields updated
+        
+        self is res.partner object
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        pick_obj = self.pool.get('stock.picking')
+        result = pick_obj.search(cr, uid, [('partner_id2', 'in', ids)], context=context)
+        return result
+    
+    def _vals_get_stock_ov(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        multi fields function method
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f:False})
+            if obj.partner_id2:
+                result[obj.id].update({'partner_type_stock_picking': obj.partner_id2.partner_type})
+            
+        return result
 
     _columns = {
         'state': fields.selection([
@@ -144,10 +183,15 @@ class stock_picking(osv.osv):
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'from_wkf': fields.boolean('From wkf'),
+        'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
+        'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
+                                                      store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
+                                                              'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
-                'from_wkf': lambda *a: False,
+                 'from_wkf': lambda *a: False,
+                 'update_version_from_in_stock_picking': 0,
                  }
     
     def create(self, cr, uid, vals, context=None):
@@ -159,6 +203,9 @@ class stock_picking(osv.osv):
 
         if not context.get('active_id',False):
             vals['from_wkf'] = True
+        # in case me make a copy of a stock.picking coming from a workflow
+        if context.get('not_workflow', False):
+            vals['from_wkf'] = False
     
         if context.get('update_mode') in ['init', 'update'] and 'from_yml_test' not in vals:
             logging.getLogger('init').info('PICKING: set from yml test to True')
@@ -174,6 +221,7 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
+                 
         return super(stock_picking, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -342,7 +390,7 @@ class stock_picking(osv.osv):
 
                     if qty > 0:
                         new_price = currency_obj.compute(cr, uid, product_currency,
-                                move_currency_id, product_price)
+                                move_currency_id, product_price, round=False, context=context)
                         new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                                 product.uom_id.id)
                         if product.qty_available <= 0:
@@ -386,6 +434,7 @@ class stock_picking(osv.osv):
                             'state': 'assigned',
                             'move_dest_id': False,
                             'price_unit': move.price_unit,
+                            'processed_stock_move': True,
                     }
                     prodlot_id = prodlot_ids[move.id]
                     if prodlot_id:
@@ -398,6 +447,7 @@ class stock_picking(osv.osv):
                         {
                             'product_qty' : move.product_qty - product_qty,
                             'product_uos_qty':move.product_qty - product_qty, #TODO: put correct uos_qty
+                            'processed_stock_move': True,
                         })
 
             if new_picking:
@@ -473,20 +523,65 @@ class stock_picking(osv.osv):
             else:
                 inv_type = 'out_invoice'
         return inv_type
+    
+    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
+        move_obj = self.pool.get('stock.move')
+        pick = kwargs['pick']
+        move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), 
+                                             ('state', 'in', ('waiting', 'confirmed'))], order='product_qty desc')
+        
+        return move_ids
+
+    def is_invoice_needed(self, cr, uid, sp=None):
+        """
+        Check if invoice is needed. Cases where we do not need invoice:
+        - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
+        - OUT from FO AND stock picking type in internal, external or esc
+        So all OUT that have internel, external or esc should return FALSE from this method.
+        This means to only accept intermission and intersection invoicing on OUT with reason type "Deliver partner".
+        """
+        res = True
+        if not sp:
+            return res
+        # Fetch some values
+        try:
+            rt_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_deliver_partner')[1]
+        except ValueError:
+            rt_id = False
+        # type out and partner_type in internal, external or esc
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and sp.partner_id.partner_type in ['external', 'internal', 'esc']:
+            res = False
+        if sp.type == 'out' and not sp.purchase_id and not sp.sale_id and rt_id and sp.partner_id.partner_type in ['intermission', 'section']:
+            # Search all stock moves attached to this one. If one of them is deliver partner, then is_invoice_needed is ok
+            res = False
+            sm_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', sp.id)])
+            if sm_ids:
+                for sm in self.pool.get('stock.move').browse(cr, uid, sm_ids):
+                    if sm.reason_type_id.id == rt_id:
+                        res = True
+        # partner is itself (those that own the company)
+        company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
+        if sp.partner_id.id == company_partner_id.id:
+            res = False
+        return res
 
     def action_done(self, cr, uid, ids, context=None):
         """
-        Create automatically invoice
+        Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
         if res:
             if isinstance(ids, (int, long)):
                 ids = [ids]
             for sp in self.browse(cr, uid, ids):
+                sp_type = False
+                inv_type = self._get_invoice_type(sp)
+                # Check if no invoice needed
+                is_invoice_needed = self.is_invoice_needed(cr, uid, sp)
+                if not is_invoice_needed:
+                    continue
                 # we do not create invoice for procurement_request (Internal Request)
                 if not sp.sale_id.procurement_request and sp.subtype == 'standard':
-                    sp_type = False
-                    inv_type = self._get_invoice_type(sp)
                     if sp.type == 'in' or sp.type == 'internal':
                         if inv_type == 'out_refund':
                             sp_type = 'sale_refund'
@@ -617,6 +712,7 @@ class stock_move(osv.osv):
         return False
 
     _columns = {
+        'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True,
               help='When the stock move is created it is in the \'Draft\' state.\n After that, it is set to \'Not Available\' state if the scheduler did not find the products.\n When products are reserved it is set to \'Available\'.\n When the picking is done the state is \'Closed\'.\
               \nThe state is \'Waiting\' if the move is waiting for another one.'),
@@ -627,10 +723,12 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
+        'processed_stock_move': fields.boolean(string='Processed Stock Move'),
     }
     
     _defaults = {
         'location_dest_id': _default_location_destination,
+        'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
     }
     
     def create(self, cr, uid, vals, context=None):
@@ -649,6 +747,16 @@ class stock_move(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
+
+        type = vals.get('type')
+        if not type and vals.get('picking_id'):
+            type = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'), context=context).type
+            
+        if type == 'in' and not vals.get('date_expected'):
+            vals['date_expected'] = time.strftime('%Y-%m-%d %H:%M:%S')
+
+        if vals.get('date_expected'):
+            vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).create(cr, uid, vals, context=context)
     
@@ -670,6 +778,11 @@ class stock_move(osv.osv):
                 if move.address_id.id != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+
+        if vals.get('date_expected'):
+            for move in self.browse(cr, uid, ids, context=context):
+                if vals.get('state', move.state) not in ('done', 'cancel'):
+                    vals['date'] = vals.get('date_expected')
         
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
     
@@ -764,7 +877,7 @@ class stock_move(osv.osv):
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
             r = res.pop(0)
-            move_id = self.copy(cr, uid, move.id, {'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
+            move_id = self.copy(cr, uid, move.id, {'line_number': move.line_number, 'product_qty': r[0],'product_uos_qty': r[0] * move.product_id.uos_coeff,'location_id': r[1]})
             if r[2]:
                 done.append(move_id)
             else:
@@ -830,7 +943,7 @@ class stock_move(osv.osv):
                 qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product.uom_id.id)
                 if qty > 0:
                     new_price = currency_obj.compute(cr, uid, product_currency,
-                            move_currency_id, product_price)
+                            move_currency_id, product_price, round=False, context=context)
                     new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                             product.uom_id.id)
                     if product.qty_available <= 0:
@@ -1167,8 +1280,8 @@ class ir_values(osv.osv):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        trans_obj = self.pool.get('ir.translation')
         new_values = values
-        
         move_accepted_values = {'client_action_multi': [],
                                     'client_print_multi': [],
                                     'client_action_relate': ['act_relate_picking'],
@@ -1201,9 +1314,12 @@ class ir_values(osv.osv):
         
         if 'stock.move' in [x[0] for x in models]:
             new_values = []
+            Destruction_Report = trans_obj.tr_view(cr, 'Destruction Report', context)
             for v in values:
                 if key == 'action' and v[1] in move_accepted_values[key2]:
-                    new_values.append(v)          
+                    new_values.append(v)
+                elif context.get('_terp_view_name', False) == Destruction_Report:
+                    new_values.append(v)
         elif context.get('picking_type', False) == 'incoming_shipment' and 'stock.picking' in [x[0] for x in models]:
             new_values = []
             for v in values:

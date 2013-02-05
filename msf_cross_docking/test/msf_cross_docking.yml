@@ -1,4 +1,12 @@
 -
+  I create a service stock location
+-
+  !record {model: stock.location, id: service_loc}:
+    name: service
+    service_location: True
+    location_category: other
+    usage: inventory
+-
   Create a Sale Order
 -
   !record {model: sale.order, id: so_A}:
@@ -67,8 +75,9 @@
     # check the option cross docking
     c_d_option = po_obj.browse(cr, uid, [po_id])[0].cross_docking_ok
     warehouse_id = po_obj.browse(cr, uid, [po_id])[0].warehouse_id
+    categ = po_obj.browse(cr, uid, [po_id])[0].categ
     assert c_d_option == True, 'If a purchase order is created from Field Order "On Order", the option cross docking should be checked and it is not here.'
-    assert po_obj.browse(cr, uid, [po_id])[0].location_id.id == self.onchange_cross_docking_ok(cr, uid, [po_id], c_d_option, warehouse_id, context=context)['value']['location_id'], 'If the option cross docking is checked, the location should be cross docking'
+    assert po_obj.browse(cr, uid, [po_id])[0].location_id.id == self.onchange_cross_docking_ok(cr, uid, [po_id], c_d_option, warehouse_id, categ, context=context)['value']['location_id'], 'If the option cross docking is checked, the location should be cross docking'
     # change Invoicing control to From Picking
     self.write(cr, uid, [po_id], {'invoice_method':'picking'}, context=context)
     import netsvc
@@ -94,7 +103,6 @@
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
     move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_ids[0])], context=context)
-    print move_ids
     dic = self.action_process(cr, uid, in_ids, context=context)
     wiz_obj = self.pool.get(dic['res_model'])
     data_wiz = wiz_obj.read(cr, uid, [dic['res_id']], ['dest_type'], context=dic['context'])[0]

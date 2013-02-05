@@ -23,6 +23,8 @@
 from osv import osv
 from osv import fields
 
+import decimal_precision as dp
+
 
 class product_supplierinfo(osv.osv):
     _name = 'product.supplierinfo'
@@ -63,7 +65,7 @@ class product_supplierinfo(osv.osv):
         'company_id': fields.many2one('res.company','Company',select=1),
         'sequence_bis': fields.function(_get_order_id, method=True, type="integer", help="Assigns the priority to the list of product supplier.", string="Ranking"),
         'check_manufacturer': fields.function(_get_manu_price_dates, method=True, type="boolean", string="Manufacturer", multi="compt_f"),
-        'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", multi="compt_f"),
+        'get_first_price': fields.function(_get_manu_price_dates, method=True, type="float", string="Indicative Price", digits_compute=dp.get_precision('Purchase Price Computation'), multi="compt_f"),
         'get_first_currency': fields.function(_get_manu_price_dates, method=True, type="many2one", relation="res.currency", string="Currency", multi="compt_f"),
         'get_till_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid till date", multi="compt_f"),
         'get_from_date': fields.function(_get_manu_price_dates, method=True, type="date", string="Valid form date", multi="compt_f"),

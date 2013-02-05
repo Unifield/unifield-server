@@ -1031,6 +1031,19 @@ class stock_production_lot(osv.osv):
                 return False
 
         return True
+
+    def _get_delete_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns if the batch is deletable
+        '''
+        res = {}
+        for batch_id in ids:
+            res[batch_id] = True
+            move_ids = self.pool.get('stock.move').search(cr, uid, [('prodlot_id', '=', batch_id)], context=context)
+            if move_ids:
+                res[batch_id] = False
+
+        return res
     
     _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
                 # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
@@ -1052,6 +1065,7 @@ class stock_production_lot(osv.osv):
                 'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
                 'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
                 'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
+                'delete_ok': fields.function(_get_delete_ok, method=True, string='Possible deletion ?', type='boolean', readonly=True),
                 }
     
     _defaults = {'type': 'standard',
@@ -1102,7 +1116,18 @@ class stock_production_lot(osv.osv):
                 name = record['name']
             res.append((record['id'], name))
         return res
-    
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Remove the batch
+        '''
+        for batch in self.browse(cr, uid, ids, context=context):
+            if not batch.delete_ok:
+                raise osv.except_osv(_('Error'), _('You cannot remove a batch number which has stock !'))
+
+        return super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
+
+
 stock_production_lot()
 
 
@@ -1254,7 +1279,8 @@ class stock_inventory(osv.osv):
                     
             for product in product_obj.browse(cr, uid, product_ids, context=context):
                 # Check if the product is not already in the list
-                if not line_obj.search(cr, uid, [('inventory_id', '=', inv.id), 
+                if product.type not in ('consu', 'service', 'service_recep') and\
+                   not line_obj.search(cr, uid, [('inventory_id', '=', inv.id), 
                                                  ('product_id', '=', product.id),
                                                  ('product_uom', '=', product.uom_id.id)], context=context):
                     line_obj.create(cr, uid, {'inventory_id': inv.id,
@@ -1664,6 +1690,16 @@ CREATE OR REPLACE view report_stock_inventory AS (
             fields = []
         context['with_expiry'] = 1
         return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
+    
+    def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
+        '''
+        UF-1546: This method is to remove the lines that have quantity = 0 from the list view
+        '''
+        res = super(report_stock_inventory, self).read_group(cr, uid, domain, fields, groupby, offset, limit, context, orderby)
+        if self._name == 'report.stock.inventory' and res:
+             return [data for data in res if data.get('product_qty', 10) != 0.0]
+        return res
+    
 report_stock_inventory()
 
 class product_product(osv.osv):

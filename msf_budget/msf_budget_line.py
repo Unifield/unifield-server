@@ -80,7 +80,7 @@ class msf_budget_line(osv.osv):
             # if commitments are set to False in context, the engagement analytic journals are removed
             # from the domain
             if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', 'in', engagement_journal_ids))
+                actual_domain.append(('journal_id', 'not in', engagement_journal_ids))
             
             # Call budget_tools method
             res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)
@@ -179,8 +179,12 @@ class msf_budget_line(osv.osv):
             budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
             line_amounts = self._compute_total_amounts(cr,
                                                        uid,
-                                                       budget_amounts[budget_line.account_id.id, budget_line_destination_id],
-                                                       actual_amounts[budget_line.account_id.id, budget_line_destination_id],
+                                                       (budget_line.account_id.id, budget_line_destination_id) in budget_amounts \
+                                                       and budget_amounts[budget_line.account_id.id, budget_line_destination_id] \
+                                                       or [0] * 12,
+                                                       (budget_line.account_id.id, budget_line_destination_id) in actual_amounts \
+                                                       and actual_amounts[budget_line.account_id.id, budget_line_destination_id] \
+                                                       or [0] * 12,
                                                        context=context)
             actual_amount = line_amounts['actual_amount']
             budget_amount = line_amounts['budget_amount']
@@ -218,8 +222,12 @@ class msf_budget_line(osv.osv):
             if budget_line.line_type == 'view' \
                 or ('granularity' in context and context['granularity'] == 'all') \
                 or ('granularity' in context and context['granularity'] == 'expense' and budget_line.line_type != 'destination'):
-                line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
-                line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
+                line_actual_amounts = [0] * 12
+                line_budget_amounts = [0] * 12
+                if (budget_line.account_id.id, budget_line_destination_id) in actual_amounts:
+                    line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
+                if (budget_line.account_id.id, budget_line_destination_id) in budget_amounts:
+                    line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
                 
                 line_name = budget_line.account_id.code
                 if budget_line.destination_id:

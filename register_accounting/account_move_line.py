@@ -155,9 +155,9 @@ class account_move_line(osv.osv):
         return r_move.keys()
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register"),
-        'transfer_journal_id': fields.many2one('account.journal', 'Journal'),
-        'employee_id': fields.many2one("hr.employee", "Employee"),
+        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
+        'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
+        'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
             string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
             multi="third_parties_key"),
@@ -187,12 +187,14 @@ class account_move_line(osv.osv):
         'down_payment_amount': fields.float(string='Down Payment used amount', readonly=True),
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
+        'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
     }
 
     _defaults = {
         'partner_txt': lambda *a: '',
         'down_payment_amount': lambda *a: 0.0,
         'is_transfer_with_change': lambda *a: False,
+        'cheque_number': lambda *a: '',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

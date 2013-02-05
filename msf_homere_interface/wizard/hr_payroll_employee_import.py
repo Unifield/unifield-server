@@ -94,6 +94,14 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         """
         if not context:
             return {'type': 'ir.actions.act_window_close'}
+        # Clean up error table
+        if context.get('employee_import_wizard_ids', False):
+            wiz_ids = context.get('employee_import_wizard_ids')
+            if isinstance(wiz_ids, (int, long)):
+                wiz_ids = [wiz_ids]
+            line_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [('wizard_id', 'in', wiz_ids)])
+            if line_ids:
+                self.pool.get('hr.payroll.employee.import.errors').unlink(cr, uid, line_ids)
         if context.get('from', False):
             result = False
             domain = False
@@ -110,6 +118,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'expat_employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_expatriate': 1})
+            if context.get('from') == 'nat_staff_import':
+                result = ('inherit_view_employee_tree', 'hr.employee')
+                context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:
@@ -216,15 +227,19 @@ class hr_payroll_employee_import(osv.osv_memory):
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
-        if codeterrain and codeterrain[0] and id_staff and id_staff[0] and id_unique and id_unique[0] and code_staff and code_staff[0]:
+        # Due to UF-1742, if no id_unique, we fill it with "empty"
+        uniq_id = id_unique and id_unique[0] or False
+        if not id_unique or not id_unique[0]:
+            uniq_id = 'empty'
+        if codeterrain and codeterrain[0] and id_staff and id_staff[0] and code_staff and code_staff[0]:
             # Employee name
             employee_name = (nom and prenom and nom[0] and prenom[0] and ustr(nom[0]) + ', ' + ustr(prenom[0])) or (nom and ustr(nom[0])) or (prenom and ustr(prenom[0])) or False
             # Do some check
-            employee_check = self.update_employee_check(cr, uid, ustr(code_staff[0]), ustr(codeterrain[0]), id_staff[0], ustr(id_unique[0]), wizard_id, employee_name)
+            employee_check = self.update_employee_check(cr, uid, ustr(code_staff[0]), ustr(codeterrain[0]), id_staff[0], ustr(uniq_id), wizard_id, employee_name)
             if not employee_check:
                 return False, created, updated
             # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0]), ('homere_id_unique', '=', id_unique[0])])
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0]), ('homere_id_unique', '=', uniq_id)])
             # Prepare vals
             res = False
             name = (nom and prenom and nom[0] and prenom[0] and ustr(nom[0]) + ', ' + ustr(prenom[0])) or (nom and ustr(nom[0])) or (prenom and ustr(prenom[0])) or False
@@ -233,7 +248,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'employee_type': 'local',
                 'homere_codeterrain': codeterrain[0],
                 'homere_id_staff': id_staff[0],
-                'homere_id_unique': id_unique[0],
+                'homere_id_unique': uniq_id,
                 'photo': False,
                 'identification_id': code_staff and code_staff[0] or False,
                 'notes': commentaire and ustr(commentaire[0]) or '',
@@ -334,7 +349,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             vals = {
                 'homere_codeterrain': line.get('codeterrain') or False,
                 'homere_id_staff': line.get('id_staff') or False,
-                'homere_id_unique': line.get('id_unique') or False,
+                'homere_id_unique': line.get('id_unique') or 'empty',
                 'current': False,
             }
             # Update values for current field

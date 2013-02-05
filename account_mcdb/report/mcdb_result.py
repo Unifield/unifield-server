@@ -22,8 +22,6 @@
 ##############################################################################
 
 from report import report_sxw
-from osv import osv
-import time
 import pooler
 import csv
 from tempfile import TemporaryFile
@@ -64,7 +62,7 @@ def create_csv(self, cr, uid, ids, data, context=None):
 
 class account_move_line_report(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
     def getObjects(self, cr, uid, ids, context):
         return getObjects(self, cr, uid, ids, context)
 
@@ -73,7 +71,7 @@ account_move_line_report('report.account.move.line','account.move.line','addons/
 
 class account_move_line_report_csv(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
         return create_csv(self, cr, uid, ids, data, context)
@@ -100,7 +98,7 @@ account_move_line_report_xls('report.account.move.line_xls','account.move.line',
 
 class account_analytic_line_report(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
     def getObjects(self, cr, uid, ids, context):
         return getObjects(self, cr, uid, ids, context)
 
@@ -109,7 +107,7 @@ account_analytic_line_report('report.account.analytic.line','account.analytic.li
 
 class account_analytic_line_report_csv(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-         report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
         return create_csv(self, cr, uid, ids, data, context)

@@ -306,7 +306,7 @@ class wizard_cash_return(osv.osv_memory):
 
         # Prepare some values
         date = move_line.date
-        document_date = move_line.date
+        document_date = move_line.document_date
         name = move_line.name
         amount = (move_line.credit - move_line.debit) or 0.0
         account_id = move_line.account_id.id
@@ -499,21 +499,24 @@ class wizard_cash_return(osv.osv_memory):
             register = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         journal = register.journal_id
         period_id = register.period_id.id
-        move_name = "Advance return" + "/" + wizard.advance_st_line_id.statement_id.journal_id.code
+        # move name have been deleted by UTP-330 to be consistent with other register lines ' sequence
+        #move_name = "Advance return" + "/" + wizard.advance_st_line_id.statement_id.journal_id.code
         # prepare a move
         move_vals = {
             'journal_id': journal.id,
             'period_id': period_id,
             'date': wizard.date,
-            'name': move_name,
+            # name have been deleted by UTP-330
+            #'name': move_name,
         }
         # create the move
         move_id = move_obj.create(cr, uid, move_vals, context=context)
+        # Prepare the closing advance name
+        adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
         # create a cash return move line ONLY IF this return is superior to 0
         if wizard.returned_amount > 0:
-            return_name = "Cash return"
             return_acc_id = register.journal_id.default_credit_account_id.id
-            return_id = self.create_move_line(cr, uid, ids, wizard.date, return_name, journal, register, False, False, return_acc_id, \
+            return_id = self.create_move_line(cr, uid, ids, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
                 wizard.returned_amount, 0.0, move_id, False, context=context)
         if wizard.display_invoice:
             # make treatment for invoice lines
@@ -557,7 +560,6 @@ class wizard_cash_return(osv.osv_memory):
                 adv_move_line_ids.append(adv_id)
                 
         # create the advance closing line
-        adv_closing_name = "closing" + "-" + wizard.advance_st_line_id.name
         adv_closing_acc_id = wizard.advance_st_line_id.account_id.id
         adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
@@ -609,11 +611,14 @@ class wizard_cash_return(osv.osv_memory):
                     # create the move with 2 move lines for the supplier
                     if total > 0:
                         # prepare the move
-                        supp_move_name = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description'], context=context).get('description', "/")
+                        supp_move_info = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description', 'date'], context=context)
+                        supp_move_name = supp_move_info.get('description', "/")
+                        supp_move_date = supp_move_info.get('date', curr_date)
                         supp_move_vals = {
                             'journal_id': journal.id,
                             'period_id': period_id,
-                            'date': curr_date,
+                            'date': supp_move_date,
+                            'document_date': supp_move_date,
                             'name': supp_move_name,
                             'partner_id': supplier_id,
                         }
@@ -627,9 +632,9 @@ class wizard_cash_return(osv.osv_memory):
                         # Create the move
                         supp_move_id = move_obj.create(cr, uid, supp_move_vals, context=context)
                         # Create move_lines
-                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, curr_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, total, 0.0, supp_move_id, False, context=context)
-                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, curr_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, 0.0, total, supp_move_id, False, context=context)
                         # We hard post the move
                         supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)

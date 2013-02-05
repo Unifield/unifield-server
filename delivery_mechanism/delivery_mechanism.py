@@ -39,7 +39,7 @@ class stock_move(osv.osv):
                 'change_reason': fields.char(string='Change Reason', size=1024, readonly=True),
                 }
     _defaults = {'line_number': 0,}
-    _order = 'line_number'
+    _order = 'line_number, date_expected desc, id'
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -129,7 +129,21 @@ class stock_move(osv.osv):
         # set the line number from original stock move
         move_data.update({'line_number': move.line_number})
         return move_data
-    
+
+    def _get_location_for_internal_request(self, cr, uid, context=None, **kwargs):
+        '''
+        Get the requestor_location_id in case of IR to update the location_dest_id of each move
+        '''
+        location_dest_id = False
+        sol_obj = self.pool.get('sale.order.line')
+        so_obj = self.pool.get('sale.order')
+        move = kwargs['move']
+        if move.purchase_line_id:
+            proc = move.purchase_line_id.procurement_id
+            if proc and proc.sale_order_line_ids and proc.sale_order_line_ids[0].order_id and proc.sale_order_line_ids[0].order_id.procurement_request:
+                location_dest_id = proc.sale_order_line_ids[0].order_id.location_requestor_id.id
+        return location_dest_id
+
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
         '''
         hook to update defaults data
@@ -173,7 +187,7 @@ class stock_move(osv.osv):
             
         res = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = False
+            res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
                 if obj.purchase_line_id:
@@ -194,10 +208,19 @@ class stock_move(osv.osv):
                             for move in self.browse(cr, uid, move_ids, context=context):
                                 # move from draft picking or standard picking
                                 if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
-                                    integrity_check.append(move.id)
+                                    integrity_check.append(move)
                             # return the first one matching
                             if integrity_check:
-                                res[obj.id] = integrity_check[0]
+                                if all([not move.processed_stock_move for move in integrity_check]):
+                                    # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
+                                    res[obj.id]['move_id'] = integrity_check[0].id
+                                    res[obj.id]['picking_id'] = integrity_check[0].picking_id.id
+                                    res[obj.id]['picking_version'] = integrity_check[0].picking_id.update_version_from_in_stock_picking
+                                    res[obj.id]['quantity'] = integrity_check[0].product_qty
+                                else:
+                                    # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
+                                    self.log(cr, uid, integrity_check[0].id, _('The Stock Move %s from %s has already been processed and is therefore not updated.')%(integrity_check[0].name, integrity_check[0].picking_id.name))
+                                    
             else:
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'
@@ -317,7 +340,7 @@ class stock_picking(osv.osv):
         product_obj = self.pool.get('product.product')
         # first look for a move - we search even if we get out_move because out_move
         # may not be valid anymore (product changed) - get_mirror_move will validate it or return nothing
-        out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]
+        out_move_id = move_obj.get_mirror_move(cr, uid, [data_back['id']], data_back, context=context)[data_back['id']]['move_id']
         if not out_move_id and out_move:
             # copy existing out_move with move properties: - update the name of the stock move
             # the state is confirmed, we dont know if available yet - should be in input location before stock
@@ -327,6 +350,8 @@ class stock_picking(osv.osv):
                       'product_uos_qty': 0,
                       'product_uom': data_back['product_uom'],
                       'state': 'confirmed',
+                      'prodlot_id': False, # reset batch number
+                      'asset_id': False, # reset asset
                       }
             out_move_id = move_obj.copy(cr, uid, out_move, values, context=context)
         # update quantity
@@ -338,8 +363,17 @@ class stock_picking(osv.osv):
             uom_name = data['product_uom'][1]
             present_qty = data['product_qty']
             new_qty = max(present_qty + diff_qty, 0)
-            move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
-                                                    'product_uos_qty': new_qty,}, context=context)
+            if new_qty > 0.00 and present_qty != 0.00:
+                new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                                                                   'product_uos_qty': diff_qty,}, context=context)
+                move_obj.action_confirm(cr, uid, [new_move_id], context=context)
+#                if present_qty == 0.00:
+#                    move_obj.write(cr, uid, [out_move_id], {'state': 'draft'})
+#                    move_obj.unlink(cr, uid, out_move_id, context=context)
+            else:
+                move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                                                        'product_uos_qty': new_qty,}, context=context)
+    
             # log the modification
             # log creation message
             move_obj.log(cr, uid, out_move_id, _('The Stock Move %s from %s has been updated to %s %s.')%(stock_move_name, picking_out_name, new_qty, uom_name))
@@ -391,8 +425,13 @@ class stock_picking(osv.osv):
             all_move_ids = [move.id for move in pick.move_lines]
             # related moves - swap if a backorder is created - openERP logic
             done_moves = []
+            # OUT moves to assign
+            to_assign_moves = []
+            second_assign_moves = []
             # average price computation
             product_avail = {}
+            # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
+            update_pick_version = False
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 # keep data for back order creation
                 data_back = self.create_data_back(cr, uid, move, context=context)
@@ -405,7 +444,8 @@ class stock_picking(osv.osv):
                 # initial qty
                 initial_qty = move.product_qty
                 # corresponding out move
-                out_move_id = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
+                out_move_id = mirror_data['move_id']
                 # update out flag
                 update_out = (len(partial_datas[pick.id][move.id]) > 1)
                 # average price computation, new values - should be the same for every partial
@@ -426,7 +466,7 @@ class stock_picking(osv.osv):
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
-
+                    values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
                         val_loc = self.pool.get('stock.location').browse(cr, uid, values.get('location_dest_id'), context=context)
@@ -452,7 +492,7 @@ class stock_picking(osv.osv):
     
                         if qty > 0:
                             new_price = currency_obj.compute(cr, uid, product_currency,
-                                    move_currency_id, product_price)
+                                    move_currency_id, product_price, round=False, context=context)
                             new_price = uom_obj._compute_price(cr, uid, product_uom, new_price,
                                     product.uom_id.id)
                             if product.qty_available <= 0:
@@ -484,8 +524,13 @@ class stock_picking(osv.osv):
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
+                            second_assign_moves.append(out_move_id)
                             if update_out:
-                                move_obj.write(cr, uid, [out_move_id], values, context=context)
+                                # UF-1690 : Remove the location_dest_id from values
+                                out_values = values.copy()
+                                if out_values.get('location_dest_id', False):
+                                    out_values.pop('location_dest_id')
+                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                             elif move.product_id.id != partial['product_id']:
                                 # no split but product changed, we have to update the corresponding out move
                                 move_obj.write(cr, uid, [out_move_id], values, context=context)
@@ -493,7 +538,8 @@ class stock_picking(osv.osv):
                                 update_out = True
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
                         values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
-                        move_obj.write(cr, uid, [move.id], values, context=context)
+                        # mark the done IN stock as processed
+                        move_obj.write(cr, uid, [move.id], dict(values, processed_stock_move=True), context=context)
                         done_moves.append(move.id)
 
                     else:
@@ -503,10 +549,18 @@ class stock_picking(osv.osv):
                         values.update({'state': 'assigned'})
                         # average computation - empty if not average
                         values.update(average_values)
-                        new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
+                        # mark the done IN stock as processed
+                        new_move = move_obj.copy(cr, uid, move.id, dict(values, processed_stock_move=True), context=dict(context, keepLineNumber=True))
                         done_moves.append(new_move)
                         if out_move_id:
-                            new_out_move = move_obj.copy(cr, uid, out_move_id, values, context=dict(context, keepLineNumber=True))
+                            # UF-1690 : Remove the location_dest_id from values
+                            out_values = values.copy()
+                            out_values.update({'state': 'confirmed'})
+                            if out_values.get('location_dest_id', False):
+                                out_values.pop('location_dest_id')
+                            new_out_move = move_obj.copy(cr, uid, out_move_id, out_values, context=dict(context, keepLineNumber=True))
+                            to_assign_moves.append(new_out_move)
+                            
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity
@@ -534,21 +588,36 @@ class stock_picking(osv.osv):
                                 'move_dest_id': False,
                                 'price_unit': move.price_unit,
                                 'change_reason': False,
+                                'processed_stock_move': (move.processed_stock_move or count != 0) and True or False, # count == 0 means not processed. will not be updated by the synchro anymore if already completely or partially processed
                                 }
                     # average computation - empty if not average
                     defaults.update(average_values)
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
                     # if split happened
                     if update_out:
+                        if out_move_id in to_assign_moves:
+                            to_assign_moves.remove(out_move_id)
+                            second_assign_moves.append(out_move_id)
                         # update out move - quantity is increased, to match the original qty
-                        self._update_mirror_move(cr, uid, ids, data_back, diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
+                        # diff_qty = quantity originally in OUT move - count
+                        out_diff_qty = mirror_data['quantity'] - count
+                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
                     # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
                     if not update_out:
+                        if out_move_id in to_assign_moves:
+                            to_assign_moves.remove(out_move_id)
+                            second_assign_moves.append(out_move_id)
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
+                        # no split nor product change but out is updated (qty increased), force update out for update out picking
+                        update_out = True
+                
+                # we got an update_out, we set the flag
+                update_pick_version = update_pick_version or (update_out and mirror_data['picking_id'])
+                
             # clean the picking object - removing lines with 0 qty - force unlink
             # this should not be a problem as IN moves are not referenced by other objects, only OUT moves are referenced
             # no need of skipResequencing as the picking cannot be draft
@@ -569,6 +638,22 @@ class stock_picking(osv.osv):
             else:
                 self.action_move(cr, uid, [pick.id])
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+            
+            # update the out version
+            if update_pick_version:
+                self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
+
+            # Assign all updated out moves
+            for move in move_obj.browse(cr, uid, to_assign_moves):
+                if not move.product_qty and move.state not in ('done', 'cancel'):
+                    to_assign_moves.remove(move.id)
+                    move.unlink(context=dict(context, call_unlink=True))
+            for move in move_obj.browse(cr, uid, second_assign_moves):
+                if not move.product_qty and move.state not in ('done', 'cancel'):
+                    second_assign_moves.remove(move.id)
+                    move.unlink(context=dict(context, call_unlink=True))
+            move_obj.action_assign(cr, uid, second_assign_moves)
+            move_obj.action_assign(cr, uid, to_assign_moves)
 
         return {'type': 'ir.actions.act_window_close'}
     

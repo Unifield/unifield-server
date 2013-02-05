@@ -91,9 +91,16 @@ class stock_partial_picking(osv.osv_memory):
         }
 
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0.00
       
             picking_type = self.get_picking_type(cr, uid, pick, context=context)
             moves_list = picking_type == 'in' and partial.product_moves_in or partial.product_moves_out
+            
+            # integrity constraint
+            integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, None, context=context)
+            if not integrity_check:
+                # the windows must be updated to trigger tree colors
+                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
 
             if not moves_list:
                     raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.')) 
@@ -114,11 +121,14 @@ class stock_partial_picking(osv.osv_memory):
                     %(move.quantity, move.product_uom.name, move.product_id.name,\
                       move.move_id.product_qty, move.move_id.product_uom.name))
 
+                total_qty += calc_qty
+
                 #Adding a check whether any move line contains qty less than zero
                 if calc_qty <= 0:
+                    # if no quantity, don't process the move
+                    continue
                     raise osv.except_osv(_('Processing Error'), \
-                            _('Can not process quantity %d for Product %s !') \
-                            %(move.quantity, move.product_id.name))
+                            _('Can not process empty lines !'))
 
                 partial_datas['move%s' % (move.move_id.id)] = {
                     'product_id': move.product_id.id, 
@@ -135,6 +145,9 @@ class stock_partial_picking(osv.osv_memory):
                     
                 # override : add hook call
                 partial_datas = self.do_partial_hook(cr, uid, context=context, move=move, partial_datas=partial_datas, pick=pick, partial=partial)
+
+            if not total_qty:
+                raise osv.except_osv(_('Processing Error'), _('No quantity to process, please fill quantity to process before processing the moves'))
 
         res = pick_obj.do_partial(cr, uid, picking_ids, partial_datas, context=context)
         return self.return_hook_do_partial(cr, uid, context=context, partial_datas=partial_datas, res=res)
