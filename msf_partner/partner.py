@@ -222,6 +222,10 @@ class res_partner(osv.osv):
             ids = [ids]
         if not context:
             context = {}
+        #objects
+        purchase_obj = self.pool.get('purchase.order')
+        sale_obj = self.pool.get('sale.order')
+        account_invoice_obj = self.pool.get('account.invoice')
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
         bro = bro_uid.company_id
@@ -232,7 +236,17 @@ class res_partner(osv.osv):
             for field in ['name', 'partner_type', 'customer', 'supplier']:
                 if field in vals:
                     del vals[field]
-
+        # [utp-315] avoid deactivating partner that have still open document linked to them
+        if 'active' in vals and vals.get('active') == False:
+            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
+            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
+            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '=', 'open')])
+            if purchase_ids or sale_ids or invoice_ids:
+                raise osv.except_osv(_('Warning'),
+                                     _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
+                                       ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '\n'+
+                                            ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '\n'+
+                                            ', '.join([inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])))
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -265,7 +279,31 @@ class res_partner(osv.osv):
             if ftd in res:
                 del(res[ftd])
         return res
-    
+
+    def on_change_active(self, cr, uid, ids, active, context=None):
+        """
+        [utp-315] avoid deactivating partner that have still open document linked to them.
+        """
+        if not active:
+            # some verifications
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            #objects
+            purchase_obj = self.pool.get('purchase.order')
+            sale_obj = self.pool.get('sale.order')
+            account_invoice_obj = self.pool.get('account.invoice')
+            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
+            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['done', 'cancel'])])
+            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '=', 'open')])
+            if purchase_ids or sale_ids or invoice_ids:
+                return {'value': {'active': True}, 
+                        'warning': {'title': _('Error'), 
+                                    'message': _("Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
+                                                ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)])+ '\n'+
+                                                     ', '.join([so['name'] for so in sale_obj.read(cr, uid, sale_ids)])+ '\n'+
+                                                     ', '.join([inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)])),}}
+        return
+
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
         '''
         Change the procurement method according to the partner type
