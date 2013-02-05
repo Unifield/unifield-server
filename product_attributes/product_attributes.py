@@ -36,18 +36,18 @@ class product_section_code(osv.osv):
     }
 product_section_code()
 
-
 class product_status(osv.osv):
     _name = "product.status"
     _columns = {
+        'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256),
     }
 product_status()
 
-
 class product_international_status(osv.osv):
     _name = "product.international.status"
     _columns = {
+        'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256),
     }
 product_international_status()
@@ -55,6 +55,7 @@ product_international_status()
 class product_heat_sensitive(osv.osv):
     _name = "product.heat_sensitive"
     _columns = {
+        'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256),
     }
 product_heat_sensitive()
@@ -62,6 +63,7 @@ product_heat_sensitive()
 class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
+        'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256),
     }
 product_cold_chain()
@@ -72,7 +74,6 @@ class product_supply_source(osv.osv):
         'source': fields.char('Supply source', size=32),
     }
 product_supply_source()
-
 
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
