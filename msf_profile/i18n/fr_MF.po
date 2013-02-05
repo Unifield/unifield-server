@@ -24880,7 +24880,7 @@ msgstr "Nombre"
 #: report:invoice:0
 #: report:packing.list:0
 msgid "SO ref:"
-msgstr "Commande de Terrain – Réf:"
+msgstr "Réf CdT:"
 
 #. module: msf_outgoing
 #: report:pre.packing.list:0
@@ -62709,12 +62709,15 @@ msgstr "Sahara Occidental"
 
 #. module: msf_outgoing
 #: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 #: report:packing.list:0
 #: report:pro.forma.invoice:0
-msgid "High level description of goods:"
 msgstr "Niveau supérieur de description des marchandises:"
+
+#. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "High level description of goods:"
+msgstr "Description des marchandises:"
 
 #. modules: base, sd
 #: model:res.country,name:base.id
