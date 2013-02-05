@@ -119,11 +119,31 @@ class real_average_consumption(osv.osv):
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
+        'nb_lines': lambda *a: 0,
     }
 
     _sql_constraints = [
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
     ]
+
+    def line_change(self, cr, uid, ids, *args, **kwargs):
+        '''
+        Update the nb lines field
+        '''
+        nb_lines = self.pool.get('real.average.consumption.line').search(cr, uid, [('rac_id', 'in', ids)], count=1)
+        return {'value': {'nb_lines': nb_lines}}
+
+    def change_cons_location_id(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to change the location
+        '''
+        wiz_id = self.pool.get('real.consumption.change.location').create(cr, uid, {'report_id': ids[0]}, context=context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.consumption.change.location',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': wiz_id,
+                'target': 'new'}
 
     def button_update_stock(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
@@ -606,6 +626,35 @@ class real_average_consumption_line(osv.osv):
     
 real_average_consumption_line()
 
+
+class real_consumption_change_location(osv.osv_memory):
+    _name = 'real.consumption.change.location'
+
+    _columns = {
+        'report_id': fields.many2one('real.average.consumption', string='Report'),
+        'location_id': fields.many2one('stock.location', string='Consumer location', required=True),
+    }
+
+    def change_location(self, cr, uid, ids, context=None):
+        '''
+        Change location of the report and reload the report
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz = self.browse(cr, uid, ids[0], context=context)
+
+        self.pool.get('real.average.consumption').write(cr, uid, [wiz.report_id.id], {'cons_location_id': wiz.location_id.id}, context=context)
+        self.pool.get('real.average.consumption').button_update_stock(cr, uid, [wiz.report_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'res_id': wiz.report_id.id,
+                'target': 'dummy'}
+
+real_consumption_change_location()
 
 class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'
