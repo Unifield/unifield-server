@@ -179,7 +179,6 @@ class report_pdf_engagement(report_sxw.rml_parse):
                             actual_line = [0, total_actual, -total_actual, 0, -total_actual]
                             temp_data[cost_center_id][account_id] = [sum(pair) for pair in zip(temp_data[cost_center_id][account_id], actual_line)]
 
-                            #temp_data2[destination_id][account_id] = [sum(pair) for pair in zip(temp_data[destination_id][account_id], actual_line)]
                     # get budget values                for cost_center_id in cost_center_list:
                     cr.execute("SELECT id FROM msf_budget WHERE fiscalyear_id = %s \
                                                             AND cost_center_id = %s \
