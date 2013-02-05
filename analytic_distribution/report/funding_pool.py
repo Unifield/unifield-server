@@ -32,9 +32,13 @@ class funding(report_sxw.rml_parse):
         super(funding, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'locale': locale,
-            'getBoolDest': self.getBoolDest,
+            'getBoolDest': self.today,
+            'today': self.today,
         })
         return
+
+    def today(self):
+        return time.strftime('%Y/%m/%d',time.localtime())  
 
     def getBoolDest(self, line, o):
         pool = pooler.get_pool(self.cr.dbname)
