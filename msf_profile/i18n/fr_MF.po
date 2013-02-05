@@ -65863,12 +65863,12 @@ msgstr "Note de débit annulée"
 #. module: account
 #: report:account.invoice2:0
 msgid "Stock Transfer Voucher"
-msgstr "Stock Transfer Voucher"
+msgstr "Bon Client"
 
 #. module: account
 #: report:account.invoice2:0
 msgid "Cancelled Stock Transfer Voucher"
-msgstr "Cancelled Stock Transfer Voucher"
+msgstr "Bon Client annulé"
 
 #. module: account
 #: report:account.invoice2:0
@@ -65878,7 +65878,7 @@ msgstr "Note de débit en brouillon"
 #. module: account
 #: report:account.invoice2:0
 msgid "Draft Stock Transfer Voucher"
-msgstr "Draft Stock Transfer Voucher"
+msgstr "Bon Client en brouillon"
 
 #. module: account
 #: report:account.invoice2:0
