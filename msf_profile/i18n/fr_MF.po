@@ -8814,8 +8814,9 @@ msgstr "17*25F Cold Chain *25F - Doit être maintenu sous 25°C et ne peut être
 msgid "Customer Refund"
 msgstr "Avoir Client"
 
-#. module: account_msf
+#. modules: account_msf, account
 #: view:account.invoice:0
+#: report:account.invoice2:0
 msgid "In-kind Donation"
 msgstr "Donation en nature"
 
@@ -19549,6 +19550,7 @@ msgstr "Code de travailleur déjà utilisé par : %s %s"
 #: field:wizard.invoice.line,invoice_id:0
 #: model:process.transition,name:sd.purchase_process_transition_invoicefrompackinglist0
 #: model:res.request.link,name:sd.account_req_link_invoice
+#: report:account.invoice2:0
 msgid "Invoice"
 msgstr "Facture"
 
@@ -22288,9 +22290,10 @@ msgstr "msf_chart_of_account.installer"
 msgid "Albania"
 msgstr "Albanie"
 
-#. module: account_msf
+#. module: account_msf, account
 #: model:ir.actions.act_window,name:account_msf.action_intermission_in
 #: model:ir.ui.menu,name:account_msf.menu_action_intermission_in
+#: report:account.invoice2:0
 msgid "Intermission Voucher IN"
 msgstr "Bons Intermission IN"
 
@@ -32123,6 +32126,7 @@ msgstr "Rapport des Commandes de terrain par Compte"
 #: selection:wizard.account.invoice,type:0
 #: model:process.process,name:sd.account_process_process_supplierinvoiceprocess0
 #: model:process.process,name:sd.msf_processes_process_process_supplierinvoiceprocess0
+#: report:account.invoice2:0
 msgid "Supplier Invoice"
 msgstr "Facture Fournisseur"
 
@@ -33510,6 +33514,7 @@ msgstr "Liste Ecritures HQ"
 #: model:process.node,name:purchase.process_node_invoicecontrol0
 #: model:process.node,name:sd.account_process_node_draftinvoices0
 #: model:process.node,name:sd.purchase_process_node_invoicecontrol0
+#: report:account.invoice2:0
 msgid "Draft Invoice"
 msgstr "Brouillon de Facture"
 
@@ -54618,12 +54623,13 @@ msgstr "Stock Sécurité (en mois)"
 msgid "On delete property for many2one fields"
 msgstr "On delete property for many2one fields"
 
-#. module: account_msf
+#. module: account_msf, account
 #: view:account.invoice:0
 #: model:ir.actions.act_window,name:account_msf.action_debit_note
 #: model:ir.ui.menu,name:account_msf.menu_action_debit_note
+#: report:account.invoice2:0
 msgid "Debit Note"
-msgstr "Note de  débit"
+msgstr "Note de débit"
 
 #. module: purchase
 #: view:purchase.installer:0
@@ -65497,9 +65503,10 @@ msgstr "account.installer.modules"
 msgid "Open Invoices"
 msgstr "Factures Ouvertes"
 
-#. module: account_msf
+#. module: account_msf, account
 #: model:ir.actions.act_window,name:account_msf.action_intermission_out
 #: model:ir.ui.menu,name:account_msf.menu_action_intermission_out
+#: report:account.invoice2:0
 msgid "Intermission Voucher OUT"
 msgstr "Bons Intermission OUT"
 
@@ -65843,3 +65850,37 @@ msgstr "Créer et gérer les comptes dont vous avez besoin pour enregistrer des 
 msgid "The residual amount on a receivable or payable of a journal entry expressed in its currency (maybe different of the company currency)."
 msgstr "Le montant restant sur une écriture comptable de charge ou de dépense est exprimée dans la devise du journal (peut être différente de la devise de la société)"
 
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled Invoice"
+msgstr "Facture annulée"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled Debit Note"
+msgstr "Note de débit annulée"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Stock Transfer Voucher"
+msgstr "Stock Transfer Voucher"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Cancelled Stock Transfer Voucher"
+msgstr "Cancelled Stock Transfer Voucher"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Draft Debit Note"
+msgstr "Note de débit en brouillon"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Draft Stock Transfer Voucher"
+msgstr "Draft Stock Transfer Voucher"
+
+#. module: account
+#: report:account.invoice2:0
+msgid "Draft Intermission Voucher OUT"
+msgstr "Bon Intermission OUT en brouillon"
