@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-        <!-- ir.mode.fields view inherit add readonly field -->
+        <!-- ir.model.fields view inherit add readonly field -->
         <record id="base.view_model_fields_tree_msf" model="ir.ui.view">
             <field name='name'>view.model.fields.tree.msf.inherit</field>
             <field name='model'>ir.model.fields</field>
