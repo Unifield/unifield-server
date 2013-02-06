@@ -61,6 +61,8 @@ class BackgroundSynchronisation(Thread):
         finally:
             cr.close()
 
+already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
+
 class entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
@@ -160,7 +162,7 @@ class entity(osv.osv):
         self.sync_lock = RLock()
         super(entity, self).__init__(*args, **kwargs)
 
-    def sync_process(step='status', is_step=None):
+    def sync_process(step='status'):
         is_step = not (step == 'status')
 
         def decorator(fn):
@@ -170,7 +172,7 @@ class entity(osv.osv):
 
                 # First, check if we can acquire the lock or return False
                 if not self.sync_lock.acquire(blocking=False):
-                    raise osv.except_osv('Already Syncing...', 'OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.')
+                    raise already_syncing_error
 
                 # Lock is acquired, so don't put any code outside the try...catch!!
                 try:
@@ -541,6 +543,8 @@ class entity(osv.osv):
     def sync_threaded(self, cr, uid, context=None):
         # Check if connection is up
         self.pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
+        # Check if we are not already syncing
+        self.is_syncing(raise_on_syncing=True)
         # Check for update (if connection is up)
         if hasattr(self, 'upgrade'):
             up_to_date = self.upgrade(cr, uid, context=context)
@@ -552,7 +556,7 @@ class entity(osv.osv):
         t.start()
         return True
 
-    @sync_process(is_step=True)
+    @sync_process()
     def sync(self, cr, uid, context=None):
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
@@ -564,9 +568,11 @@ class entity(osv.osv):
         return ""
 
     # Check if lock can be acquired or not
-    def is_syncing(self):
+    def is_syncing(self, raise_on_syncing=False):
         acquired = self.sync_lock.acquire(blocking=False)
         if not acquired:
+            if raise_on_syncing:
+                raise already_syncing_error
             return True
         self.sync_lock.release()
         return False
