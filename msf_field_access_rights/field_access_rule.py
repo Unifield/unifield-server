@@ -33,6 +33,7 @@ class field_access_rule(osv.osv):
     """
 
     _name = "msf_field_access_rights.field_access_rule"
+    _description = 'Field Access Rule'
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
