@@ -83,6 +83,10 @@ def create(self, cr, uid, vals, context=None):
                 groups = [x.id for x in user.groups_id]
 
                 rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+                if not rules_pool:
+                    logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
+                    return create_result
+                    
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
                 
                 defaults = self.pool.get(model_name)._defaults
@@ -146,6 +150,10 @@ def write(self, cr, uid, ids, vals, context=None):
     groups = [x.id for x in user.groups_id]
 
     rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+    if not rules_pool:
+        logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
+        return super_write(self, cr, uid, ids, vals, context=context)
+    
     rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
     # if have rules
@@ -231,6 +239,10 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         groups = [x.id for x in user.groups_id]
 
         rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+        if not rules_pool:
+            logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
+            return fields_view
+    
         rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
         # if have rules
