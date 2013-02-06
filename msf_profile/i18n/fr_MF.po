@@ -854,7 +854,7 @@ msgstr "Date de Réception Réelle"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Qty per Parcel"
-msgstr "Qty par Parcelle"
+msgstr "Qté par Parcelle"
 
 #. module: msf_cross_docking
 #: code:addons/msf_cross_docking/cross_docking.py:379
@@ -13403,7 +13403,7 @@ msgstr "Ce module complète les applications d'Entrepôt en ajoutant un support 
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "From Parcel"
-msgstr "De la Parcelle"
+msgstr "De Parcelle"
 
 #. module: import_data
 #: view:import_product:0
@@ -23802,7 +23802,7 @@ msgstr "Sélectionner les Plans de Taxes"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "SO Qty:"
-msgstr "Commande de Terrain – Qté:"
+msgstr "Qté CdT:"
 
 #. modules: account, account_period_closing_level
 #: model:ir.actions.act_window,help:account.action_account_period_tree
@@ -26373,7 +26373,7 @@ msgstr "purchase_double_validation"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "To parcel"
-msgstr "Vers parcelle"
+msgstr "À Parcelle"
 
 #. module: account
 #: help:account.tax,include_base_amount:0
@@ -32138,7 +32138,7 @@ msgstr "Adresse Professionnelle"
 #. module: msf_outgoing
 #: report:picking.ticket:0
 msgid "Free on Stock"
-msgstr "Libre en Stock"
+msgstr "Disponible en Stock"
 
 #. module: useability_dashboard_and_menu
 #: view:board.board:0
@@ -62712,9 +62712,6 @@ msgstr "Sahara Occidental"
 #: report:invoice:0
 #: report:packing.list:0
 #: report:pro.forma.invoice:0
-msgstr "Niveau supérieur de description des marchandises:"
-
-#. module: msf_outgoing
 #: report:certificate.free.gift:0
 msgid "High level description of goods:"
 msgstr "Description des marchandises:"
