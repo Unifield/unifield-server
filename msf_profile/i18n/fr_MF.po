@@ -22634,6 +22634,8 @@ msgstr "Certificat de Don Gratuit n'est disponible que pour les Objets d'Expédi
 
 #. module: msf_outgoing
 #: model:ir.model,name:msf_outgoing.model_create_picking
+#: code:addons/msf_outgoing/wizard/create_picking.py:233
+#, python-format
 msgid "Create Picking"
 msgstr "Créer un Piquage"
 
@@ -27950,6 +27952,18 @@ msgstr "IN Correspondant du mouvement de stock"
 #, python-format
 msgid "Process Document"
 msgstr "Traiter document"
+
+#. module: stock
+#: code:addons/stock/wizard/stock_partial_picking.py:111
+#, python-format
+msgid "_Validate"
+msgstr "Valider"
+
+#. module: stock
+#: code:addons/stock/wizard/stock_partial_picking.py:111
+#, python-format
+msgid "_Cancel"
+msgstr "Annuler"
 
 #. modules: procurement, tender_flow, sd, purchase
 #: model:process.node,note:procurement.process_node_procure_in
@@ -41336,6 +41350,7 @@ msgstr "MSF Partnaires"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:293
+#: code:addons/msf_outgoing/wizard/shipment.py:223
 #, python-format
 msgid "Create Shipment"
 msgstr "Créer une Expédition"
@@ -42457,6 +42472,7 @@ msgstr "2-Spécifique"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:383
+#: code:addons/msf_outgoing/wizard/shipment.py:226
 #, python-format
 msgid "Return Packs"
 msgstr "Renvoyer colis"
@@ -47097,8 +47113,10 @@ msgstr "Utilisation de l'action"
 msgid "Product"
 msgstr "Produit"
 
-#. module: return_claim
+#. modules: return_claim, msf_outgoing
 #: selection:claim.event,type_claim_event:0
+#: code:addons/msf_outgoing/wizard/create_picking.py:243
+#, python-format
 msgid "Return"
 msgstr "Retour"
 
@@ -62598,7 +62616,7 @@ msgstr "Sorte de Node"
 #: view:stock.split.into:0
 #: view:stock.analyze.view:0
 msgid "_Cancel"
-msgstr "_Cancel"
+msgstr "Annuler"
 
 #. module: sync_client
 #: field:sync.monitor,data_push:0
@@ -62645,11 +62663,13 @@ msgstr "Approvisionnement- Commandes à Traiter"
 msgid "Structured"
 msgstr "Structuré"
 
-#. modules: sync_client, base, sd
+#. modules: sync_client, base, sd, msf_outgoing
 #: view:res.config:0
 #: wizard_button:server.action.create,init,step_1:0
 #: view:sync.client.register_entity:0
 #: view:sync.client.register_entity:0
+#: code:addons/msf_outgoing/wizard/create_picking.py:239
+#, python-format
 msgid "Next"
 msgstr "Suivant"
 
@@ -65627,6 +65647,8 @@ msgstr "Lancer la recherche"
 
 #. module: msf_outgoing
 #: view:shipment:0
+#: code:addons/msf_outgoing/wizard/shipment.py:229
+#, python-format
 msgid "Return Packs from Shipment..."
 msgstr "Retour de Colis de l´Expédition…"
 
@@ -65947,4 +65969,66 @@ msgstr " Numéro de la Parcelle:"
 msgid "DG / "
 msgstr "MD (DG) / "
 
+#. modules: msf_outgoing, specific_rules
+#: code:addons/msf_outgoing/wizard/create_picking.py:213
+#: code:addons/msf_outgoing/wizard/shipment.py:213
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:42
+#, python-format
+msgid "Copy all"
+msgstr "Copier tout"
 
+#. modules: msf_outgoing, specific_rules
+#: code:addons/msf_outgoing/wizard/create_picking.py:213
+#: code:addons/msf_outgoing/wizard/shipment.py:213
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:43
+#, python-format
+msgid "Clear all"
+msgstr "Effacer tout"
+
+#. module: specific_rules
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:63
+#, python-format
+msgid "heat sensitive"
+msgstr "produits sensibles à la chaleur"
+
+#. module: specific_rules
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:61
+#, python-format
+msgid "heat sensitive and dangerous goods"
+msgstr "produits sensibles à la chaleur et des marchandises dangereuses"
+
+#. module: specific_rules
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:65
+#, python-format
+msgid "dangerous goods"
+msgstr "marchandises dangereuses"
+
+#. module: specific_rules
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:40
+#, python-format
+msgid "You receive %s products, please refer to the appropriate procedure."
+msgstr "Vous recevez des %s, merci de vous référer à la procédure appropriée."
+
+#. module: specific_rules
+#: code:addons/specific_rules/wizard/stock_partial_picking.py:41
+#, python-format
+msgid "You ship %s products, please refer to the appropriate procedure and ensure that the mean of transport is appropriate."
+msgstr "Vous envoyez des %s, merci de vous référer à la procédure appropriée."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/create_picking.py:235
+#, python-format
+msgid "Validate Picking"
+msgstr "Valider Piquage"
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/create_picking.py:241
+#, python-format
+msgid "Validate PPL"
+msgstr "Validater Liste de Pré-Colisage"
+
+#. modules: msf_outgoing, specific_rules
+#: view:shipment:0
+#: view:stock.cost.reevaluation:0
+msgid "Validate"
+msgstr "Valider"

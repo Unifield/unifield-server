@@ -207,10 +207,10 @@ class create_picking(osv.osv_memory):
 
         if step in ['create', 'validate', 'returnproducts']:
             _moves_arch_lst += """
-                <button name="select_all" string="Copy all"
+                <button name="select_all" string="Ms"
                     colspan="1" type="object"  icon="gtk-jump-to" />
-                <button name="deselect_all" string="Clear all"
-                    colspan="1" type="object" icon="gtk-undo" />"""
+                <button name="deselect_all" string="%s"
+                    colspan="1" type="object" icon="gtk-undo" />""" % (_('Copy all'), _('Clear all'))
 
         _moves_arch_lst += """
                 <field name="date" invisible="1"/>
@@ -230,17 +230,17 @@ class create_picking(osv.osv_memory):
         # refactoring is needed here !
         if picking_subtype == 'picking':
             if step == 'create':
-                button = ('do_create_picking', 'Create Picking')
+                button = ('do_create_picking', _('Create Picking'))
             elif step == 'validate':
-                button = ('do_validate_picking', 'Validate Picking')
+                button = ('do_validate_picking', _('Validate Picking'))
         # ppl, two wizard steps
         elif picking_subtype == 'ppl':
             if step == 'ppl1':
-                button = ('do_ppl1', 'Next')
+                button = ('do_ppl1', _('Next'))
             if step == 'ppl2':
-                button = ('do_ppl2', 'Validate PPL')
+                button = ('do_ppl2', _('Validate PPL'))
             if step == 'returnproducts':
-                button = ('do_return_products', 'Return')
+                button = ('do_return_products', _('Return'))
                     
         else:
             button = ('undefined', 'Undefined')
