@@ -258,11 +258,11 @@ class account_analytic_line(osv.osv):
             cost_center_id = vals['cost_center_id']
             xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, [res_id], context=context)
             if xml_ids[0]:
-                for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
-                    xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-                    cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
-                    destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
-                    self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', destination_name, xml_id, instance_name)
+                xml_id_record = self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)[0]
+                xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
+                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
+                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
+                self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', destination_name, xml_id, instance_name)
 
         return res_id
 
