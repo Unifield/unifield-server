@@ -70,6 +70,9 @@ class field_access_rule(osv.osv):
 
     def write(self, cr, uid, ids, values, context=None):
 
+        if not isinstance(ids, (list, tuple)):
+            ids = [ids]
+
         # if domain_text has changed, change status to not_validated
         if values.get('domain_text'):
             if len(ids) == 1:
