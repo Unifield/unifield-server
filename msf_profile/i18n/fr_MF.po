@@ -65896,3 +65896,55 @@ msgstr "Bon Client en brouillon"
 #: report:account.invoice2:0
 msgid "Draft Intermission Voucher OUT"
 msgstr "Bon Intermission OUT en brouillon"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Project Destination Address:"
+msgstr "Adresse Destinataire du Projet:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Your Order:"
+msgstr "Votre commande:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Specific Information:"
+msgstr "Information Spécifique:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Project Destination:"
+msgstr "Projet Destinataire:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Our Pre Packing List Reference:"
+msgstr "Notre Référence Liste de Pré-Colisage:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Weight:"
+msgstr "Poids:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "KC / "
+msgstr "GF (KC) / "
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "N"
+msgstr "S (N)"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "Parcel No:"
+msgstr " Numéro de la Parcelle:"
+
+#. module: msf_outgoing
+#: report:labels:0
+msgid "DG / "
+msgstr "MD (DG) / "
+
+
