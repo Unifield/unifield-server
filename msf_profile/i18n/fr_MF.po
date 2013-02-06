@@ -7809,7 +7809,6 @@ msgstr "Le budget n'a pas de moment de décision!"
 #: field:stock.move.memory.ppl,np_check:0
 #: field:stock.move.memory.returnproducts,np_check:0
 #: report:msf.freight_manifest:0
-#: report:msf.report_reception_in:0
 #: field:initial.stock.inventory.line,np_check:0
 #: field:stock.inventory.line,np_check:0
 #: field:stock.move,np_check:0
@@ -7817,6 +7816,11 @@ msgstr "Le budget n'a pas de moment de décision!"
 #: field:stock.move.memory.out,np_check:0
 #: field:stock.production.lot,np_check:0
 #: report:destruction.location:0
+msgid "NP"
+msgstr "SP (NP)"
+
+#. module: sale
+#: report:msf.report_reception_in:0
 msgid "NP"
 msgstr "SP"
 
@@ -24880,7 +24884,7 @@ msgstr "Nombre"
 #: report:invoice:0
 #: report:packing.list:0
 msgid "SO ref:"
-msgstr "Réf CdT:"
+msgstr "CdT Réf:"
 
 #. module: msf_outgoing
 #: report:pre.packing.list:0
@@ -38392,7 +38396,6 @@ msgstr "Vous ne pouvez pas créer des écritures reflétant une seule transactio
 #: field:stock.move.memory.ppl,dg_check:0
 #: field:stock.move.memory.returnproducts,dg_check:0
 #: report:msf.freight_manifest:0
-#: report:msf.report_reception_in:0
 #: field:initial.stock.inventory.line,dg_check:0
 #: field:stock.inventory.line,dg_check:0
 #: field:stock.move,dg_check:0
@@ -38401,7 +38404,12 @@ msgstr "Vous ne pouvez pas créer des écritures reflétant une seule transactio
 #: field:stock.production.lot,dg_check:0
 #: report:destruction.location:0
 msgid "DG"
-msgstr "PD"
+msgstr "MD (DG)"
+
+#. module: sale
+#: report:msf.report_reception_in:0
+msgid "DG"
+msgstr "MD"
 
 #. module: account_msf
 #: view:account.invoice:0
@@ -60271,7 +60279,7 @@ msgstr "Nom du Département"
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Item"
-msgstr "Article"
+msgstr "Art."
 
 #. module: account
 #: view:account.tax.template:0
@@ -63360,13 +63368,17 @@ msgstr "Allocation analytique"
 #: field:stock.move.memory.ppl,kc_check:0
 #: field:stock.move.memory.returnproducts,kc_check:0
 #: report:msf.freight_manifest:0
-#: report:msf.report_reception_in:0
 #: field:initial.stock.inventory.line,kc_check:0
 #: field:stock.inventory.line,kc_check:0
 #: field:stock.move,kc_check:0
 #: field:stock.move.memory.in,kc_check:0
 #: field:stock.move.memory.out,kc_check:0
 #: field:stock.production.lot,kc_check:0
+msgid "KC"
+msgstr "GF (KC)"
+
+#. module: sale
+#: report:msf.report_reception_in:0
 msgid "KC"
 msgstr "GF"
 
