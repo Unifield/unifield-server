@@ -19,7 +19,7 @@
 #
 ##############################################################################
 {
-    "name" : "Field Access Rights for MSF",
+    "name" : "Button Access Rights for MSF",
     "version": "1.0",
     "author" : "OpenERP",
     "developer": "Max Mumford",

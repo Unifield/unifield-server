@@ -49,10 +49,13 @@ class view_config_install(osv.osv_memory):
                 view_pool.write(cr, uid, id, {})
             except Exception as e:
                 errors[id] = e
+                
+        all = self.pool.get('msf_button_access_rights.button_access_rule').search(cr, 1, [])
         
         results = {
-           'successes': str(len(view_ids) - len(errors)) + ' Button Access Rules created successfully',
-           'errors': str(len(errors)) + ' Button Access Rule(s) had errors\n\n' + _join_dictionary(errors, 'View ID: ', ', Error: ', '\n')
+           'successes': str(len(view_ids) - len(errors)) + ' Views were processed successfully',
+           'total': 'You now have ' + str(len(all)) + ' Button Access Rules in total',
+           'errors': str(len(errors)) + ' error(s) occurred while processing the Views\n\n' + _join_dictionary(errors, 'View ID: ', ', Error: ', '\n')
         }
         
         results_id = self.pool.get('msf_button_access_rights.view_config_wizard_install_results').create(cr, 1, results, context=context)
@@ -73,6 +76,7 @@ class view_config_install_results(osv.osv_memory):
     _name = 'msf_button_access_rights.view_config_wizard_install_results'
     _columns = {
         'successes': fields.text('Successes', readonly=True),
+        'total': fields.text('Total', readonly=True),
         'errors': fields.text('Errors', readonly=True),
     }
         
