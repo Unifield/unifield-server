@@ -126,13 +126,6 @@ class real_average_consumption(osv.osv):
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
     ]
 
-    def line_change(self, cr, uid, ids, *args, **kwargs):
-        '''
-        Update the nb lines field
-        '''
-        nb_lines = self.pool.get('real.average.consumption.line').search(cr, uid, [('rac_id', 'in', ids)], count=1)
-        return {'value': {'nb_lines': nb_lines}}
-
     def change_cons_location_id(self, cr, uid, ids, context=None):
         '''
         Open the wizard to change the location
