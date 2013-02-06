@@ -402,18 +402,6 @@
             </field>
         </record>
 
-        <record id="product_justification_code_tree_view" model="ir.ui.view">
-            <field name="name">product.justification.code.tree</field>
-            <field name="model">product.justification.code</field>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree string="Justification Code">
-                    <field name="code"/>
-                    <field name="description"/>
-                </tree>
-            </field>
-        </record>
-
         <record id="product.product_search_form_view" model="ir.ui.view">
             <field name="name">product.search.form</field>
             <field name="model">product.product</field>
@@ -708,6 +696,42 @@
         </record>
 	<menuitem id="menu_cold_chain_product"
                   action="product_cold_chain_action"
+                  parent="purchase.menu_product_in_config_purchase" />
+
+        <record id="product_justification_code_tree_view" model="ir.ui.view">
+            <field name="name">product.justification.code.tree</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Justification Code" editable="top">
+                    <field name="code"/>
+                    <field name="description"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="product_justification_code_search_view" model="ir.ui.view">
+            <field name="name">product.justification.code.search.view</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Justification Codes">
+                    <field name="code" />
+                    <field name="description" />
+                </search>
+            </field>
+        </record>
+
+        <record id="product_justification_code_action" model="ir.actions.act_window">
+            <field name="name">Justification codes</field>
+            <field name="res_model">product.justification.code</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="product_justification_code_search_view" />
+        </record>
+
+        <menuitem id="menu_justification_code_product"
+                  action="product_justification_code_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
     </data>
