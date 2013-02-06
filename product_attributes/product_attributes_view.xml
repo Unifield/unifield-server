@@ -617,7 +617,7 @@
 	    <field name="model">product.international.status</field>
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
-	        <search string="International status">
+	        <search string="Product Creators">
 	            <field name="name" />
 	        </search>
 	    </field>
@@ -627,13 +627,13 @@
 	    <field name="model">product.international.status</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="International status" editable="top" >
+                <tree string="Product Creators" editable="top" >
 	            <field name="name" />
                 </tree>
             </field>
         </record>
 	<record id="product_international_status_action" model="ir.actions.act_window">
-            <field name="name">International status</field>
+            <field name="name">Product creators</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">product.international.status</field>
             <field name="view_type">form</field>
