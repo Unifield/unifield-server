@@ -38401,7 +38401,7 @@ msgstr "Vous ne pouvez pas créer des écritures reflétant une seule transactio
 #: field:stock.production.lot,dg_check:0
 #: report:destruction.location:0
 msgid "DG"
-msgstr "MD"
+msgstr "PD"
 
 #. module: account_msf
 #: view:account.invoice:0
@@ -60271,7 +60271,7 @@ msgstr "Nom du Département"
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Item"
-msgstr "N°"
+msgstr "Article"
 
 #. module: account
 #: view:account.tax.template:0
