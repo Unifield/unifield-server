@@ -36,7 +36,7 @@ class field_access_rule(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
-        'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True),
+        'model_id': fields.many2one('ir.model', 'Model', help='The type of data to which this rule applies', required=True, ondelete='cascade'),
         'model_name': fields.char('Model Name', size=256, help='The technical name for the model. This is used to make searching for Field Access Rules easier.'),
         'instance_level': fields.selection((('hq', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')), 'Instance Level', help='The Instance Level that this rule applies to'),
         'domain_id': fields.many2one('ir.filters', 'Filter', domain='[("model_id","=",model_name)]', help='Choose a pre-defined Filter to filter which records this rule applies to. Click the Create New Filter button, define some seach criteria, save your custom filter, then return to this form and type your new filters name here to use it for this rule. Note: Due to a technical constraint, all "like" or "ilike" operators will be automatically replaced with "=".'),
