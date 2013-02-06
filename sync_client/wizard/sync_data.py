@@ -36,6 +36,8 @@ from sync_common.common import sync_log
 
 from tools.safe_eval import safe_eval as eval
 
+MAX_IMPORT = 500
+
 def eval_poc_domain(obj, cr, uid, domain, context=None):
     if not context:
         context = {}
@@ -301,22 +303,20 @@ class update_received(osv.osv):
 
         def secure_import_data(obj, fields, values):
             try:
-                cr.rollback_org, cr.rollback = cr.rollback, lambda:None
-                cr.commit_org, cr.commit = cr.commit, lambda:None
-                cr.execute("SAVEPOINT import_data")
-                res = obj.import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
+                cr.rollback_orig, cr.rollback = cr.rollback, lambda:None
+                cr.commit_orig, cr.commit = cr.commit, lambda:None
+                res = obj.import_data(cr, uid, fields, values, mode='update',
+                                      current_module='sd', noupdate=True, context=context)
             except BaseException, e:
-                cr.execute("ROLLBACK TO SAVEPOINT import_data")
+                cr.rollback_orig()
                 self._logger.exception("import failure")
                 raise Exception(tools.ustr(e))
             else:
-                if res[0] == len(values):
-                    cr.execute("RELEASE SAVEPOINT import_data")
-                else:
-                    cr.execute("ROLLBACK TO SAVEPOINT import_data")
+                if not res[0] == len(values):
+                    cr.rollback_orig()
             finally:
-                cr.rollback = cr.rollback_org
-                cr.commit = cr.commit_org
+                cr.rollback = cr.rollback_orig
+                cr.commit = cr.commit_orig
             return res
 
         def group_update_execution(updates):
@@ -338,6 +338,7 @@ class update_received(osv.osv):
                     self.write(cr, uid, [update_id], {
                         'log' : log,
                     }, context=context)
+                logs.clear()
                 for xml_id, version in versions.items():
                     self.pool.get('ir.model.data').sync(cr, uid, xml_id, version=version, context=context)
 
@@ -432,11 +433,23 @@ class update_received(osv.osv):
 
             return message
 
+        # Commit any changes made til now coz we gonna make a lot of commits
+        cr.commit()
+        imported = []
+
         error_message = ""
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
-            error_message += group_update_execution(updates)
+            while updates:
+                imported, updates = updates[:MAX_IMPORT], updates[MAX_IMPORT:]
+                error_message += group_update_execution(imported)
+                if len(imported) >= MAX_IMPORT:
+                    cr.commit()
+                    imported[:] = []
         
+        # Make sure the transaction is clean 
+        if imported:
+            cr.commit()
         return error_message
 
     def _check_fields(self, cr, uid, model, fields, context=None):
