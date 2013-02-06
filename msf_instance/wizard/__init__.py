@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
+#    Copyright (C) 2012 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -18,29 +18,5 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-{
-    "name" : "MSF Proprietary Instance",
-    "version": "1.1",
-    "author" : "MSF, TeMPO Consulting",
-    "developer": "Matthieu Dietrich",
-    "category" : "Generic Modules/Projects & Services",
-    "depends" : ["account_msf", "res_currency_functional", "account_mcdb"],
-    "description": """Module for defining proprietary instances, their informations
-    """,
-    "init_xml" : [],
-    "update_xml": [
-        'msf_instance_installer_view.xml',
-        'security/ir.model.access.csv',
-        'msf_instance_view.xml',
-        'wizard/wizard_add_cost_centers_view.xml',
-    ],
-    "additional_xml": [
-        'data/instance_data.xml',
-    ],
-    'demo_xml': [
-    ],
-    'installable': True,
-    'active': False,
-#    'certificate': 'certificate',
-}
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+
+import wizard_add_cost_centers

@@ -33,9 +33,11 @@ class msf_instance(osv.osv):
         'instance': fields.char('Instance', size=64),
         #'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project'), ('state', '=', 'active')]),
         'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project') ]),
+        'child_ids': fields.one2many('msf.instance', 'parent_id', 'Children'),
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
+        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')]),
+        'target_cost_center_ids': fields.one2many('account.target.costcenter', 'instance_id', 'Target Cost Centers'),
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
                                    ('inactive', 'Inactive')], 'State', required=True),
@@ -46,6 +48,26 @@ class msf_instance(osv.osv):
     _defaults = {
         'state': 'draft',
     }
+
+    def button_cost_center_wizard(self, cr, uid, ids, context=None):
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        return {
+            'name': "Add Cost Centers",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.add.cost.centers',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'context': context,
+        }
 
     def create(self, cr, uid, vals, context=None):
         return osv.osv.create(self, cr, uid, vals, context=context)
@@ -111,7 +133,6 @@ class msf_instance(osv.osv):
 
     _constraints = [
          (_check_name_code_unicity, 'You cannot have the same code or name than an active instance!', ['code', 'name']),
-         (_check_cost_center_unicity, 'You cannot have the same cost_center than an active instance!', ['cost_center_id']),
          (_check_database_unicity, 'You cannot have the same database than an active instance!', ['instance']),
          (_check_move_prefix_unicity, 'You cannot have the same move prefix than an active instance!', ['move_prefix']),
          (_check_reconcile_prefix_unicity, 'You cannot have the same reconciliation prefix than an active instance!', ['reconcile_prefix']),

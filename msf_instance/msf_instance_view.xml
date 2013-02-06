@@ -10,22 +10,29 @@
                 <form string="Proprietary Instance" hide_duplicate_button="1" hide_delete_button="1">
                     <field name="code"/>
                     <field name="name"/>
-                       <newline/>
                     <field name="level"/>
-                    <newline />
+                    <newline/>
                     <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
                     <field name="instance" readonly="1"/>
-                    <newline/>
                     <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
                     <field name="note"/>
-                    <newline/>
-                    <field name="cost_center_id"/>
-                    <field name="state" readonly="1"/>
-                    <newline/>
                     <field name="move_prefix"/>
                     <field name="reconcile_prefix"/>
+                    <field name="state" readonly="1"/>
+                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list">
+                        <tree editable="top" string="Cost Centers">
+                            <field name="cost_center_id" attrs="{'readonly': [('parent.level', '!=', 'coordo')]}"/>
+                            <field name="target"/>
+                        </tree>
+                        <form string="Cost Centers">
+                            <field name="cost_center_id" attrs="{'readonly': [('parent.level', '!=', 'coordo')]}"/>
+                            <field name="target"/>
+                        </form>
+                    </field>
+                    <newline/>
                     <button name="button_deactivate" string="Deactivate" type="object"
                             attrs="{'invisible': [('state', '!=', 'active')]}" icon="terp-check"/>
+                    <button name="button_cost_center_wizard" string="Add Cost Centers" type="object" icon="terp-document-new"/>
                 </form>
             </field>
         </record>
@@ -42,7 +49,6 @@
                     <field name="mission"/>
                     <field name="instance"/>
                     <field name="parent_id"/>
-                    <field name="cost_center_id"/>
                     <field name="state"/>
                 </tree>
             </field>
