@@ -1398,8 +1398,7 @@ stock moves which are already processed : '''
 #
 #            if invoice_error_ids:
 #                invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
-#                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or discuss with the accounting team to solve the problem.' \
-#                                'Invoices references : %s') % invoices_ref)
+#                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or discuss with the accounting team to solve the problem. Invoices references : %s') % invoices_ref)
 
         # Done stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)

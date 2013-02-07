@@ -440,7 +440,7 @@ class stock_cost_reevaluation(osv.osv):
                 if line.product_id.id not in products:
                     products.append(line.product_id.id)
                 else:
-                    raise osv.except_osv(_('Error'), _('You cannot have two lines with the same product. (Product : [%s] %s)' % (line.product_id.default_code, line.product_id.name)))
+                    raise osv.except_osv(_('Error'), _('You cannot have two lines with the same product. (Product : [%s] %s)') % (line.product_id.default_code, line.product_id.name))
         
         return self.write(cr, uid, ids, {'state': 'confirm'}, context=context)
         
