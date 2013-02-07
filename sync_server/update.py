@@ -63,8 +63,42 @@ class SavePullerCache(object):
                 except KeyError:
                     todo[update_id] = set([entity_id])
         for id, entity_ids in todo.items():
-            puller_ids = [(4, x) for x in entity_ids]
+            puller_ids = [(0, 0, {'entity_id':x}) for x in entity_ids]
             self.__model__.write(cr, uid, [id], {'puller_ids': puller_ids}, context)
+
+class puller_ids_rel(osv.osv):
+    _name = "sync.server.puller_logs"
+    _table = 'sync_server_entity_rel'
+
+    _columns = {
+        'update_id' : fields.many2one('sync.server.update',
+            required=True, string="Update"),
+        'entity_id' : fields.many2one('sync.server.entity',
+            required=True, string="Instance"),
+        'create_date' : fields.datetime('Pull Date'),
+    }
+
+    def init(self, cr):
+        cr.execute("""\
+SELECT column_name 
+  FROM information_schema.columns 
+  WHERE table_name='sync_server_entity_rel' AND column_name='id';""")
+        if not cr.fetchone():
+            cr.execute("""\
+ALTER TABLE sync_server_entity_rel RENAME COLUMN "update_id" TO "real_entity_id";
+ALTER TABLE sync_server_entity_rel RENAME COLUMN "entity_id" TO "update_id";
+ALTER TABLE sync_server_entity_rel RENAME COLUMN "real_entity_id" TO "entity_id";
+ALTER TABLE "public"."%(table)s" ADD COLUMN "id" INTEGER;
+CREATE SEQUENCE "public"."%(table)s_id_seq";
+UPDATE %(table)s SET id = nextval('"public"."%(table)s_id_seq"');
+ALTER TABLE "public"."%(table)s"
+  ALTER COLUMN "id" SET DEFAULT nextval('"public"."%(table)s_id_seq"');
+ALTER TABLE "public"."%(table)s"
+  ALTER COLUMN "id" SET NOT NULL;
+ALTER TABLE "public"."%(table)s" ADD UNIQUE ("id");
+ALTER TABLE "public"."%(table)s" DROP CONSTRAINT "%(table)s_id_key" RESTRICT;
+ALTER TABLE "public"."%(table)s" ADD PRIMARY KEY ("id");""" % {'table':self._table})
+
 
 class update(osv.osv):
     """
@@ -88,7 +122,7 @@ class update(osv.osv):
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
-        'puller_ids': fields.many2many('sync.server.entity', 'sync_server_entity_rel', 'entity_id', 'update_id', string="Pulled by")
+        'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
     }
 
     _order = 'sequence, create_date desc'
@@ -345,6 +379,7 @@ class update(osv.osv):
     _order = 'sequence asc, id asc'
     
 update()
+puller_ids_rel()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
