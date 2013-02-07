@@ -13938,12 +13938,14 @@ msgstr "Indique d'une facture a été générée"
 msgid "Rules Test Match"
 msgstr "Test d’Application de la Règle"
 
-#. modules: account, msf_instance
+#. modules: account, msf_instance, register_accounting
 #: field:account.analytic.journal,name:0
 #: field:account.bank.statement,journal_id:0
 #: report:account.general.journal:0
 #: field:account.journal,name:0
 #: field:account.journal.fake,name:0
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
 msgid "Journal Name"
 msgstr "Nom du Journal"
 
@@ -14216,7 +14218,7 @@ msgstr "Générer les Ecritures avant :"
 msgid "Synchronize"
 msgstr "Synchroniser"
 
-#. modules: account_corrections, account, account_mcdb
+#. modules: account_corrections, account, account_mcdb, register_accounting
 #: field:account.analytic.journal,code:0
 #: field:account.analytic.line,journal_id:0
 #: field:account.move.line,journal_id:0
@@ -14228,6 +14230,8 @@ msgstr "Synchroniser"
 #: report:account.move.line_csv:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:48
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
 msgid "Journal Code"
 msgstr "Code Journal"
 
@@ -61134,13 +61138,15 @@ msgstr "Quantités"
 msgid "New location creation"
 msgstr "Création Nouvelle Zone"
 
-#. modules: res_currency_functional, msf_accrual
+#. modules: res_currency_functional, msf_accrual, register_accounting
 #: field:msf.accrual.line,functional_currency_id:0
 #: field:account.move,functional_currency_id:0
 #: field:purchase.order,functional_currency_id:0
 #: field:purchase.order.line,functional_currency_id:0
 #: field:sale.order,functional_currency_id:0
 #: field:sale.order.line,functional_currency_id:0
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
 msgid "Functional Currency"
 msgstr "Devise fonctionnelle"
 
@@ -66032,3 +66038,33 @@ msgstr "Validater Liste de Pré-Colisage"
 #: view:stock.cost.reevaluation:0
 msgid "Validate"
 msgstr "Valider"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
+msgid "Register Balance in register currency"
+msgstr "Solde du registre en devise du registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
+msgid "Calculated Balance in functional currency"
+msgstr "Solde calculé en devise fonctionnelle"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
+msgid "Register Currency"
+msgstr "Devise du registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
+msgid "Calculated Balance in register currency"
+msgstr "Solde calculé dans la devise du registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_liquidity_position.py:39
+#, python-format
+msgid "Register Balance in functional currency"
+msgstr "Solde du registre en devise fonctionnelle"
