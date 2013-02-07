@@ -25,6 +25,7 @@ from osv import fields
 from msf_partner import PARTNER_TYPE
 import time
 from tools.translate import _
+from lxml import etree
 
 
 class res_partner(osv.osv):
@@ -340,6 +341,28 @@ class res_partner(osv.osv):
             new_res.extend(tmp_res)
             
             return new_res
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Show the button "Show inactive" in the partner search view only when we have in the context {'show_button_show_inactive':1}.
+        """
+        if not context:
+            context = {}
+        view = super(res_partner, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type == 'search':
+            if context and context.get('show_button_show_inactive', False):
+                tree = etree.fromstring(view['arch'])
+                fields = tree.xpath('//filter[@name="inactive"]')
+                for field in fields:
+                    field.set('invisible', "0")
+                view['arch'] = etree.tostring(tree)
+            else:
+                tree = etree.fromstring(view['arch'])
+                fields = tree.xpath('//filter[@name="inactive"]')
+                for field in fields:
+                    field.set('invisible', "1")
+                view['arch'] = etree.tostring(tree)
+        return view
 
 res_partner()
 
