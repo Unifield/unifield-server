@@ -39,33 +39,76 @@ product_section_code()
 class product_status(osv.osv):
     _name = "product.status"
     _columns = {
-        'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256),
+        'code': fields.char('Code', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True),
     }
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('state','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this status because it used at least in one product'))
+        return super(product_status, self).unlink(cr, uid, ids, context=context)
+
 product_status()
 
 class product_international_status(osv.osv):
     _name = "product.international.status"
     _columns = {
-        'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256),
+        'code': fields.char('Code', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True),
     }
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('international_status','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it used at least in one product'))
+        return super(product_international_status, self).unlink(cr, uid, ids, context=context)
+
+
 product_international_status()
 
 class product_heat_sensitive(osv.osv):
     _name = "product.heat_sensitive"
     _columns = {
-        'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256),
+        'code': fields.char('Code', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True),
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('heat_sensitive_item','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it used at least in one product'))
+        return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
+
 product_heat_sensitive()
 
 class product_cold_chain(osv.osv):
     _name = "product.cold_chain"
     _columns = {
-        'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256),
+        'code': fields.char('Code', size=256, required=True),
+        'name': fields.char('Name', size=256, required=True),
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ids_p = self.pool.get('product.product').search(cr, uid, [('cold_chain','in',ids)])
+        if ids_p:
+            raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it used at least in one product'))
+        return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
+
 product_cold_chain()
 
 class product_supply_source(osv.osv):
@@ -78,8 +121,8 @@ product_supply_source()
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
     _columns = {
-        'code': fields.char('Justification Code', size=32),
-        'description': fields.char('Justification Description', size=256),
+        'code': fields.char('Justification Code', size=32, required=True),
+        'description': fields.char('Justification Description', size=256, required=True),
     }
     
     def name_get(self, cr, user, ids, context=None):
