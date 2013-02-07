@@ -424,13 +424,13 @@ def trans_export(lang, modules, buffer, format, cr):
             # we now group the translations by source. That means one translation per source.
             grouped_rows = {}
             for module, type, name, res_id, src, trad in rows:
-                row = grouped_rows.setdefault(src, {})
+                row = grouped_rows.setdefault((src, trad), {})
                 row.setdefault('modules', set()).add(module)
                 if ('translation' not in row) or (not row['translation']):
                     row['translation'] = trad
                 row.setdefault('tnrs', []).append((type, name, res_id))
 
-            for src, row in grouped_rows.items():
+            for (src, trad), row in grouped_rows.items():
                 writer.write(row['modules'], row['tnrs'], src, row['translation'])
 
         elif format == 'tgz':
