@@ -107,7 +107,7 @@
     </Row>
 	<Row ss:Index="3">
 		<Cell ss:StyleID="title" ><Data ss:Type="String">Instance:</Data></Cell>
-		<Cell ss:StyleID="title" ><Data ss:Type="String">${(company.name or 'aaa')|x}</Data></Cell>
+		<Cell ss:StyleID="title" ><Data ss:Type="String">${(o.instance_id.code or 'aaa')|x}</Data></Cell>
 	</Row>
 	<Row>
 		<Cell ss:StyleID="title" ><Data ss:Type="String">Report Date:</Data></Cell>
@@ -134,13 +134,13 @@
     % for line in o.line_ids:
         % if line.state == 'hard' and line.account_id.type_for_register == 'advance' and not line.reconciled and not line.amount > 0.0 and not line.date > time.strftime('%Y-%m-%d') :
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.journal_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id.journal_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.sequence_for_reference and line.sequence_for_reference or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.instance_id.code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id.instance_id.code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.period_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.account_id.code and line.account_id.name and line.account_id.code + ' ' + line.account_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.partner_txt or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
