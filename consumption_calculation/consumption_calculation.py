@@ -113,7 +113,7 @@ class real_average_consumption(osv.osv):
         'nomen_manda_1': fields.many2one('product.nomenclature', 'Group'),
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
-        'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),], string="State", readonly=True),
+        'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
     }
 
     _defaults = {
@@ -156,6 +156,41 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
+    def draft_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        for rac in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [rac.id], {'state':'draft'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+    def cancel_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        for rac in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [rac.id], {'state':'cancel'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+
     def process_moves(self, cr, uid, ids, context=None):
         '''
         Creates all stock moves according to the report lines
