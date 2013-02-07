@@ -185,7 +185,7 @@ class hr_payroll(osv.osv):
             # Change OC field
             fields = form.xpath('//field[@name="cost_center_id"]')
             for field in fields:
-                field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
+                field.set('domain', "[('category', '=', 'OC'), ('type', '!=', 'view'), ('state', '=', 'open'), ('id', 'child_of', [%s])]" % oc_id)
             # Change FP field
             try:
                 fp_id = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
