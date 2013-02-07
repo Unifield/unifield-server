@@ -225,16 +225,13 @@
     <para style="P6">Accounts:</para>
 
 
-    <blockTable colWidths="40.0,180.0,80.0,55.0,55.0,55.0,55.0" repeatRows="1" style="Table4">
+    <blockTable colWidths="40.0,260.0,55.0,55.0,55.0,55.0" repeatRows="1" style="Table4">
       <tr>
         <td>
           <para style="P14" alignment="LEFT">Code</para>
         </td>
         <td>
           <para style="P15" alignment="LEFT">Name</para>
-        </td>
-        <td>
-          <para style="P15" alignment="LEFT">Dest. code</para>
         </td>
         <td>
           <para style="P25" alignment="CENTER">EXP</para>
@@ -251,15 +248,12 @@
       </tr>
 
         <tr>
-      	[[repeatIn(o.tuple_destination_account_ids,'line')]]
+      	[[repeatIn(o.tuple_destination_summary,'line')]]
           <td>
             <para style="P16" alignment="LEFT">[[ line.account_id and line.account_id.code ]]</para>
           </td>
           <td>
             <para style="P11" alignment="LEFT">[[ line.account_id and line.account_id.name ]]</para>
-          </td>
-          <td>
-            <para style="P11" alignment="LEFT">[[ line.destination_id and line.destination_id.code ]] </para>
           </td>
           <td>
             <para style="P29" alignment="CENTER">[[ getBoolDest(line,'dest_11') ]]</para>
