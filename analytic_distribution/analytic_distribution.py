@@ -119,6 +119,19 @@ class distribution_line(osv.osv):
         'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
 
+    def _check_percentage(self, cr, uid, ids, context=None):
+        """
+        Do not allow 0.0 percentage value
+        """
+        for l in self.browse(cr, uid, ids):
+            if l.percentage == 0.0:
+                return False
+        return True
+
+    _constraints = [
+        (_check_percentage, '0 is not allowed as percentage value!', ['percentage']),
+    ]
+
     def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
         '''
         Creates an analytic lines from a distribution line and an account.move.line

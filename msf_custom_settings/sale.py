@@ -23,6 +23,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class sale_order(osv.osv):
     _name = 'sale.order'
@@ -34,14 +35,44 @@ class sale_order(osv.osv):
         res = {}
         if not order_type:
             return res
-        domain = [('customer','=',True)]
+        msg = _('Partner type is not compatible with given Order Type!')
         if order_type in ['regular', 'donation_st', 'loan']:
-            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section', 'external'])] + domain}
+            # Check that partner correspond
+            if partner_id:
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+                if partner and partner.partner_type not in ['internal', 'intermission', 'section', 'external']:
+                    return {'warning': {'title': _('Error'), 'message': msg}}
         elif order_type in ['donation_exp']:
-            res['domain'] = {'partner_id': [('partner_type', 'in', ['internal', 'intermission', 'section'])] + domain}
+            # Check that partner correspond
+            if partner_id:
+                partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+                if partner and partner.partner_type not in ['internal', 'intermission', 'section']:
+                    return {'warning': {'title': _('Error'), 'message': msg}}
         else:
             pass
         return res
+
+    def _check_order_type_and_partner(self, cr, uid, ids, context=None):
+        """
+        Check that partner and order type are compatibles
+        """
+        compats = {
+            'regular':      ['internal', 'intermission', 'section', 'external'],
+            'donation_st':  ['internal', 'intermission', 'section', 'external'],
+            'loan':         ['internal', 'intermission', 'section', 'external'],
+            'donation_exp': ['internal', 'intermission', 'section'],
+            'in_kind':      ['internal', 'intermission', 'section', 'external', 'esc'],
+            'direct':       ['internal', 'intermission', 'section', 'external', 'esc'],
+        }
+        # Browse SO
+        for so in self.browse(cr, uid, ids):
+            if so.order_type not in compats or so.partner_id.partner_type not in compats[so.order_type]:
+                return False
+        return True
+
+    _constraints = [
+       (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+    ]
 
 sale_order()
 

@@ -11,19 +11,19 @@
             <field name="arch" type="xml">
                 <data>
                 
-                	<field name="partner_id" position="replace" >
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" />
-                		<field name="partner_type" />
-                	</field>
-                	
-                	<field name="pricelist_id" position="attributes">
-                		<attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
-                	</field>
+                    <field name="partner_id" position="replace" >
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" />
+                        <field name="partner_type" />
+                    </field>
+                    
+                    <field name="pricelist_id" position="attributes">
+                        <attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
+                    </field>
 
-                	
-                	<field name="date_order" position="replace">
-                		<field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
-                	</field>
+                    
+                    <field name="date_order" position="replace">
+                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
+                    </field>
                 	
                     <!--  Add dates on header -->
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
@@ -99,10 +99,10 @@
             <field name="arch" type="xml">
                 <data>
                 
-                	<field name="partner_id" position="replace" >
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" />
-                		<field name="partner_type" />
-                	</field>
+                    <field name="partner_id" position="replace" >
+                      <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}"  domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]" />
+                      <field name="partner_type" />
+                    </field>
                     
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <field name="internal_type" invisible="True" />
