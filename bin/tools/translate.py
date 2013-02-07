@@ -482,8 +482,11 @@ def trans_parse_xsl(de):
         res.extend(trans_parse_xsl(n))
     return res
 
-def trans_parse_rml(de):
+def trans_parse_rml(de, withtranslate=True):
     res = []
+    trans_re = re.compile(r'[^a-zA-Z0-9_]translate\([\s]*("|\')(.+?)\1[\s]*?\)', re.DOTALL)
+    join_dquotes = re.compile(r'([^\\])"[\s\\]*"', re.DOTALL)
+    join_quotes = re.compile(r'([^\\])\'[\s\\]*\'', re.DOTALL)
     for n in de:
         for m in n:
             if isinstance(m, SKIPPED_ELEMENT_TYPES) or not m.text:
@@ -492,7 +495,17 @@ def trans_parse_rml(de):
             for s in string_list:
                 if s:
                     res.append(s.encode("utf8"))
-        res.extend(trans_parse_rml(n))
+            if withtranslate:
+                ite = trans_re.finditer(m.text)
+                for i in ite:
+                    if i.group(1) == "'":
+                        s = join_quotes.sub(r'\1', i.group(2))
+                    elif i.group(1) == '"':
+                        s = join_dquotes.sub(r'\1', i.group(2))
+                    if s:
+                        s = s.decode('string_escape')
+                        res.append(s.encode("utf8"))
+        res.extend(trans_parse_rml(n, False))
     return res
 
 def trans_parse_view(de):
@@ -779,6 +792,8 @@ def trans_generate(lang, modules, cr):
                 src_file.close()
             if module in installed_modules:
                 frelativepath = str("addons" + frelativepath)
+            if os.path.sep != '/':
+                frelativepath = '/'.join(frelativepath.split(os.path.sep))
             ite = re_dquotes.finditer(code_string)
             code_offset = 0
             code_line = 1
