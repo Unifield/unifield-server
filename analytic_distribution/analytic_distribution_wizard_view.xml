@@ -134,7 +134,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
+                  <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/><label string="" colspan="2"/>
+                    <newline/>
+                    <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
                     <field name="display_fp" invisible="1"/>
                     <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
@@ -162,6 +164,8 @@
                     </group>
                     <field name="display_fp" invisible="1"/>
                     <field name="account_id" colspan="2"/>
+                    <newline/>
+                    <field name="date"/>
                     <newline/>
                     <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />
