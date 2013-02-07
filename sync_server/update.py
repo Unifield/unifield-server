@@ -70,6 +70,8 @@ class puller_ids_rel(osv.osv):
     _name = "sync.server.puller_logs"
     _table = 'sync_server_entity_rel'
 
+    _logger = logging.getLogger('sync.server')
+
     _columns = {
         'update_id' : fields.many2one('sync.server.update',
             required=True, string="Update"),
@@ -78,12 +80,20 @@ class puller_ids_rel(osv.osv):
         'create_date' : fields.datetime('Pull Date'),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        try:
+            del vals['create_date']
+        except KeyError:
+            pass
+        super(puller_ids_rel, self).create(cr, uid, vals, context=context)
+
     def init(self, cr):
         cr.execute("""\
 SELECT column_name 
   FROM information_schema.columns 
-  WHERE table_name='sync_server_entity_rel' AND column_name='id';""")
+  WHERE table_name=%s AND column_name='id';""", [self._table])
         if not cr.fetchone():
+            self._logger.info("Migrate old relational table sync_server_entity_rel to OpenERP model")
             cr.execute("""\
 ALTER TABLE sync_server_entity_rel RENAME COLUMN "update_id" TO "real_entity_id";
 ALTER TABLE sync_server_entity_rel RENAME COLUMN "entity_id" TO "update_id";
