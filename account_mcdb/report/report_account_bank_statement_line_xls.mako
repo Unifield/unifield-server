@@ -108,7 +108,7 @@ x:FullRows="1">
 </Row>
 % endfor
 </Table>
-<AutoFilter x:Range="R1C1:R1C16" xmlns="urn:schemas-microsoft-com:office:excel">
+<AutoFilter x:Range="R1C1:R1C14" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
 </Workbook>
