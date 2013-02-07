@@ -1535,3 +1535,19 @@ msgstr ""
 msgid "Delete record(s)."
 msgstr ""
 
+#: controllers/templates/tree.mako:47
+msgid "Expand all"
+msgstr ""
+
+#: controllers/templates/tree.mako:47
+msgid "Expand all tree elements."
+msgstr ""
+
+#: widgets/templates/listgrid/listgroup.mako:25
+msgid "Expand all."
+msgstr ""
+
+#: widgets/templates/listgrid/listgroup.mako:25
+msgid "Expand All"
+msgstr ""
+

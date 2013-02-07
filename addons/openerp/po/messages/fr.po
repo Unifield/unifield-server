@@ -1612,6 +1612,22 @@ msgstr "Ajouter des enregistrements..."
 msgid "Delete record(s)."
 msgstr "Supprimer l'(es) enregistrement(s)."
 
+#: controllers/templates/tree.mako:47
+msgid "Expand all"
+msgstr "Vue étendue"
+
+#: controllers/templates/tree.mako:47
+msgid "Expand all tree elements."
+msgstr "Étendre tous les éléments de la vue"
+
+#: widgets/templates/listgrid/listgroup.mako:25
+msgid "Expand all."
+msgstr "Vue étendue"
+
+#: widgets/templates/listgrid/listgroup.mako:25
+msgid "Expand All"
+msgstr "Vue Étendue"
+
 #~ msgid "Add Resource:"
 #~ msgstr "Ajouter une ressource :"
 
@@ -1698,3 +1714,4 @@ msgstr "Supprimer l'(es) enregistrement(s)."
 
 #~ msgid "Click here to add new image."
 #~ msgstr "Cliquez ici pour ajouter une nouvelle image"
+
