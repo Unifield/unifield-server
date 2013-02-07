@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution    
+#    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,16 +19,13 @@
 #
 ##############################################################################
 
-import wizard
-import partner
-import account_move_line
-import account_bank_statement
-import account_cash_statement
-import account
-import account_cheque_register
-import invoice
-import purchase
-import report
-import register_accounting_report
+# !!! each time you create a new report the "name" in the xml file should be on the form "report.sale.order_xls" but WITHOUT "report" at the beginning)
+# so in that case, only name="sale.order_xls" in the xml
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from osv import osv
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
+
+
+SpreadsheetReport('report.open.advances.2','account.bank.statement','addons/register_accounting/report/open_advances_xls.mako')
+
