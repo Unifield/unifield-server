@@ -201,6 +201,7 @@ class base_language_import(osv.osv_memory):
                 self.pool.get('res.request').request_send(cr, uid, [req_id])
 
             self.write(cr, uid, [ids[0]], {'data': ''})
+            tools.cache.clean_caches_for_db(cr.dbname)
             cr.commit()
             cr.close()
         except Exception, e:
