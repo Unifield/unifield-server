@@ -67,14 +67,14 @@
 
 ## we loop over the sale_order_line
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Price</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Delivery requested date</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Currency</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
