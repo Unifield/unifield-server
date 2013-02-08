@@ -93,11 +93,15 @@ SELECT column_name
   FROM information_schema.columns 
   WHERE table_name=%s AND column_name='id';""", [self._table])
         if not cr.fetchone():
-            self._logger.info("Migrate old relational table sync_server_entity_rel to OpenERP model")
+            self._logger.info("Migrate old relational table %s to OpenERP model" % self._table)
             cr.execute("""\
-ALTER TABLE sync_server_entity_rel RENAME COLUMN "update_id" TO "real_entity_id";
-ALTER TABLE sync_server_entity_rel RENAME COLUMN "entity_id" TO "update_id";
-ALTER TABLE sync_server_entity_rel RENAME COLUMN "real_entity_id" TO "entity_id";
+-- Fix bad column name of old table
+ALTER TABLE %(table)s RENAME COLUMN "update_id" TO "real_entity_id";
+ALTER TABLE %(table)s RENAME COLUMN "entity_id" TO "update_id";
+ALTER TABLE %(table)s RENAME COLUMN "real_entity_id" TO "entity_id";
+-- Drop constraint to permit storing multiple pull for a same update
+ALTER TABLE %(table)s DROP CONSTRAINT %(table)s_entity_id_key;
+-- Create column id
 ALTER TABLE "public"."%(table)s" ADD COLUMN "id" INTEGER;
 CREATE SEQUENCE "public"."%(table)s_id_seq";
 UPDATE %(table)s SET id = nextval('"public"."%(table)s_id_seq"');
