@@ -37,8 +37,8 @@ class field_access_rule_line(osv.osv):
 		'field': fields.many2one('ir.model.fields', 'Field', help='The field of the model for which this rule applies', required=True),
 		'field_name': fields.char('Field Name', size=256, help='The technical name for the field. This is used to make searching for Field Access Rule Lines easier.'),
 		'write_access': fields.boolean('Write Access', help='If checked, the user has access to write on this field.'),
-		'value_not_synchronized_on_create': fields.boolean('Value NOT Synchronized on Create', help='If checked, the value for this field given by a synchronization or import is ignored when this record is created.'),
-		'value_not_synchronized_on_write': fields.boolean('Value NOT Synchronized on Write', help='If checked, the value for this field given by a synchronization or import is ignored when this record is editted.'),
+		'value_not_synchronized_on_create': fields.boolean('Value NOT Synchronised on Create', help='If checked, the value for this field given by a synchronisation or import is ignored when this record is created.'),
+		'value_not_synchronized_on_write': fields.boolean('Value NOT Synchronised on Write', help='If checked, the value for this field given by a synchronisation or import is ignored when this record is editted.'),
 
 		'field_access_rule': fields.many2one('msf_field_access_rights.field_access_rule', 'Field Access Rule', ondelete='cascade', required=True),
 		'field_access_rule_model_id': fields.related('field_access_rule', 'model_id', type="integer", string='Field Model')

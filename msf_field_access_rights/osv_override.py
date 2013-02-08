@@ -27,15 +27,20 @@ import logging
 import copy
 
 def _get_instance_level(self, cr, uid):
-    instance = self.pool.get('res.users').browse(cr, 1, uid).company_id.instance_id
-    instance_level = getattr(instance, 'level', False)
+    user = self.pool.get('res.users').browse(cr, 1, uid)
+    if hasattr(user.company_id, 'instance_id'):
+        instance_level = user.company_id.instance_id.level
     
-    if instance_level:
-        if instance_level.lower() == 'section':
-            instance_level = 'hq'
-
-        return instance_level.lower()
-    return False
+        if instance_level:
+            if instance_level.lower() == 'section':
+                instance_level = 'hq'
+            return instance_level.lower()
+        else:
+            logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
+            return False
+    else:
+        logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
+        return False
 
 def _record_matches_domain(self, cr, record_id, domain):
     """
@@ -116,7 +121,6 @@ def create(self, cr, uid, vals, context=None):
 
                 return create_result
             else:
-                logging.getLogger(self._name).warn("No instance name for current user's company. Function: create, Model: %s" % self._name)
                 return create_result
         else:
             return False
@@ -141,7 +145,6 @@ def write(self, cr, uid, ids, vals, context=None):
     # get instance level. if not set, log warning, then return normal write
     instance_level = _get_instance_level(self, cr, uid)
     if not instance_level:
-        logging.getLogger(self._name).warn("No instance name for current user's company. Function: write, Model: %s" % self._name)
         return super_write(self, cr, uid, ids, vals, context=context)
 
     # get rules for this model
@@ -230,7 +233,6 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         # get instance level. if not set, log warning, then return normal fields_view
         instance_level = _get_instance_level(self, cr, 1)
         if not instance_level:
-            logging.getLogger(self._name).warn("No instance name for current user's company. Function: field_view_get, Model: %s" % self._name)
             return fields_view
 
         # get rules for this model
