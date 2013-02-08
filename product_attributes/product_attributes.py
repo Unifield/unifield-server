@@ -49,7 +49,7 @@ class product_status(osv.osv):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid, [('state','in',ids)])
         if ids_p:
-            raise osv.except_osv(_('Error'), _('You cannot delete this status because it used at least in one product'))
+            raise osv.except_osv(_('Error'), _('You cannot delete this status because it\'s used at least in one product'))
         return super(product_status, self).unlink(cr, uid, ids, context=context)
 
 product_status()
@@ -67,7 +67,7 @@ class product_international_status(osv.osv):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid, [('international_status','in',ids)])
         if ids_p:
-            raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it used at least in one product'))
+            raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it\'s used at least in one product'))
         return super(product_international_status, self).unlink(cr, uid, ids, context=context)
 
 
@@ -87,7 +87,7 @@ class product_heat_sensitive(osv.osv):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid, [('heat_sensitive_item','in',ids)])
         if ids_p:
-            raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it used at least in one product'))
+            raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it\'s used at least in one product'))
         return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
 
 product_heat_sensitive()
@@ -106,7 +106,7 @@ class product_cold_chain(osv.osv):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid, [('cold_chain','in',ids)])
         if ids_p:
-            raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it used at least in one product'))
+            raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
         return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
 
 product_cold_chain()
