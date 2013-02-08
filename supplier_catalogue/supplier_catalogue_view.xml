@@ -42,11 +42,12 @@
 					    <field name="file_to_import" />
 					    <button name="catalogue_import_lines" type="object" string="Import the file" icon="gtk-execute" colspan="1" />
                         <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" />
+                        <field name="hide_column_error_ok" invisible="1" colspan="1" />
                     </group>
     
 					<notebook colspan="4">
 						<page string="Products">
-							<field name="line_ids" mode="tree" colspan="4" nolabel="1" />
+							<field name="line_ids" mode="tree" colspan="4" nolabel="1" context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}"/>
 						</page>
 						<page string="Comment">
 							<field name="comment" colspan="4" nolabel="1" />
@@ -171,6 +172,7 @@
 					<field name="min_order_qty" />
 					<field name="comment" />
 					<field name="to_correct_ok" invisible="1"/>
+					<field name="error_txt" invisible="context.get('hide_column_error_ok', False) != True" readonly="0"/>
 				</tree>
 			</field>
 		</record>

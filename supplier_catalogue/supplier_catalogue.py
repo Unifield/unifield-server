@@ -238,7 +238,17 @@ class supplier_catalogue(osv.osv):
                 return [('id', 'in', ids)]
         
         return ids
-    
+
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.line_ids  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
@@ -256,6 +266,7 @@ class supplier_catalogue(osv.osv):
         'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
         'file_to_import': fields.binary(string='File to import', filters='*.xml', help="The file should be in XML Spreadsheet 2003 format. The columns should be in this order : Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."),
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
     
     _defaults = {
@@ -327,6 +338,7 @@ class supplier_catalogue(osv.osv):
         vals = {}
         vals['line_ids'] = []
         msg_to_return = _("All lines successfully imported")
+        error_txt = ''
 
         sup_cat = self.pool.get('supplier.catalogue')
         product_obj = self.pool.get('product.product')
@@ -350,7 +362,10 @@ class supplier_catalogue(osv.osv):
                 comment = []
                 p_comment = False
                 #Product code
-                product_code = row.cells[0].data
+                try:
+                    product_code = row.cells[0].data
+                except TypeError:
+                    product_code = row.cells[0].data
                 if not product_code :
                     default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
                     to_correct_ok = True
@@ -387,6 +402,14 @@ class supplier_catalogue(osv.osv):
                     except Exception:
                          uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                          to_correct_ok = True
+                if default_code != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]:
+                    browse_uom = uom_obj.browse(cr, uid, uom_id, context)
+                    browse_product = product_obj.browse(cr, uid, default_code, context)
+                    if browse_uom.category_id.id != browse_product.uom_id.category_id.id:
+                        uom_id = browse_product.uom_id.id
+                        to_correct_ok = True
+                        error_txt = _("""Line %s of the file: the UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
+                                      ) % (line_num, browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code)
 
                 #Product Min Qty
                 if not row.cells[3].data :
@@ -418,7 +441,7 @@ class supplier_catalogue(osv.osv):
                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Rounding"') % (line_num,) )
 
                 #Product Min Order Qty
-                if not row.cells[6].data:
+                if not len(row.cells)>7 or row.cells[6].data:
                     p_min_order_qty = 0
                 else:
                     if row.cells[6].type in ['int', 'float']:
@@ -427,7 +450,7 @@ class supplier_catalogue(osv.osv):
                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Min Order Qty"') % (line_num,) )
 
                 #Product Comment
-                if row.cells[7].data:
+                if len(row.cells)>8 and row.cells[7].data:
                     comment.append(str(row.cells[7].data))
                 if comment:
                     p_comment = ', '.join(comment)
@@ -443,6 +466,7 @@ class supplier_catalogue(osv.osv):
                     'rounding': p_rounding,
                     'min_order_qty': p_min_order_qty,
                     'comment': p_comment,
+                    'error_txt': error_txt,
                 }
 
                 vals['line_ids'].append((0, 0, to_write))
@@ -563,6 +587,7 @@ class supplier_catalogue_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):    
             if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  
                 vals['to_correct_ok'] = False
+                vals['error_txt'] = False
             # If product is changed
             if 'product_id' in vals and vals['product_id'] != line.product_id.id:
                 c = context.copy()
@@ -648,6 +673,7 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
         'to_correct_ok': fields.boolean('To correct'),
+        'error_txt': fields.text('Error'),
     }
     
     _constraints = [
