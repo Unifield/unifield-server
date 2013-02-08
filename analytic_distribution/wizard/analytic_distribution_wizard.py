@@ -747,19 +747,19 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Process funding pool lines to retrieve cost centers and their total percentage
         cc_data = {}
         for line in wizard.fp_line_ids:
-            if not cc_data.get(line.cost_center_id.id, False):
-                cc_data[line.cost_center_id.id] = 0.0
-            cc_data[line.cost_center_id.id] += line.percentage
+            if not cc_data.get((line.cost_center_id.id, line.destination_id.id), False):
+                cc_data[(line.cost_center_id.id, line.destination_id.id)] = 0.0
+            cc_data[(line.cost_center_id.id, line.destination_id.id)] += line.percentage
         # Do update of cost center lines
         update_lines = [] # lines that have been updated
         cc_obj = self.pool.get('analytic.distribution.wizard.lines')
         for el in cc_data:
             res = False
-            search_ids = cc_obj.search(cr, uid, [('analytic_id', '=', el), ('wizard_id', '=', wizard.id)], context=context)
+            search_ids = cc_obj.search(cr, uid, [('analytic_id', '=', el[0]), ('wizard_id', '=', wizard.id), ('destination_id', '=', el[1])], context=context)
             # Create a new entry if no one for this cost center
             if not search_ids:
                 res = cc_obj.create(cr, uid, {'wizard_id': wizard.id, 'percentage': cc_data[el], 'type': 'cost.center',
-                    'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el,}, context=context)
+                    'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
             # else change current cost center
             else:
                 res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el]}, context=context)
@@ -894,8 +894,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Then update cost center lines
-            #if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-            #    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+            if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+                raise osv.except_osv(_('Error'), _('Cost center update failure.'))
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
