@@ -345,25 +345,9 @@ class product_uom(osv.osv):
                 
         return dom
 
-    def _get_uom_by_parent(self, cr, uid, ids, field_name, arg, context=None):
-        return False
-
-    def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
-        dom = []
-        for arg in args:
-            if arg[0] == 'uom_by_parent' and arg[1] != '=':
-                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
-            elif arg[0] == 'uom_by_parent':
-                parent_uom_id = arg[2]['uom_id']
-                parent_uom = self.browse(cr, uid, parent_uom_id, context)
-                dom.append(('category_id', '=', parent_uom.category_id.id))
-        return dom
-
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
                                           help='Field used to filter the UoM for a specific product'),
-        'uom_by_parent': fields.function(_get_uom_by_parent, type="boolean", fnct_search=_search_uom_by_parent, string="Domain for the tree view", store=False, method = True,
-                                         help="Filter UoM according to a parent object."),
     }
     
 product_uom()
