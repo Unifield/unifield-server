@@ -96,9 +96,12 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
                 break  # normal exit
             sys.exit(exit_status)
 
-
+def ctrlHandler(ctrlType):
+    return True
 
 if __name__=='__main__':
+    # handle console control (used to survive to logout)
+    win32api.SetConsoleCtrlHandler(ctrlHandler, True)
     # Do with the service whatever option is passed in the command line
     win32serviceutil.HandleCommandLine(OpenERPServerService)
 

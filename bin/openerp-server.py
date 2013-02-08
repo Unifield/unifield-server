@@ -241,6 +241,8 @@ def quit(restart=False):
                 # and would present the forced shutdown
                 thread.join(0.05)
                 time.sleep(0.05)
+                # TODO -- Check if the following step is still needed
+                #         because SleepEx may have solved the problem
                 time.sleep(1)
                 if os.name == 'nt':
                     try:
@@ -255,6 +257,20 @@ def quit(restart=False):
     else:
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
+#----------------------------------------------------------
+# manage some platform specific behaviour
+#----------------------------------------------------------
+
+if sys.platform == 'win32':
+    import win32api
+    def mainthread_sleep():
+        # use SleepEx so the process can recieve console control event
+        # (required to Windows service survive if the user logout)
+        win32api.SleepEx(5000)
+else:
+    def mainthread_sleep():
+        time.sleep(5)
+
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')
     pidtext = "%d" % (os.getpid())
@@ -266,7 +282,7 @@ netsvc.Server.startAll()
 logger.info('OpenERP server is running, waiting for connections...')
 
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
-    time.sleep(5)
+    mainthread_sleep()
 
 quit(restart=updater.restart_required)
 
