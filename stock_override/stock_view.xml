@@ -69,6 +69,7 @@
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
+                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='location_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
