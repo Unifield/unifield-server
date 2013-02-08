@@ -52,9 +52,29 @@ class res_currency(osv.osv):
     _name = 'res.currency'
     _inherit = 'res.currency'
 
-    def _check_unicity(self, cr, uid, ids, context=None):
+    def _check_unicity_currency_name(self, cr, uid, ids, context=None):
         """
-        Check that no currency have the same code, the same name and the same currency_table_id.
+        Check that no currency have the same name and the same currency_table_id.
+        Check is non case-sensitive.
+        """
+        if not context:
+            context = {}
+        for c in self.browse(cr, uid, ids):
+            sql = """SELECT id, name
+            FROM res_currency
+            WHERE (currency_name ilike %s)
+            AND (active in ('t', 'f'))"""
+            if c.currency_table_id:
+                sql += """\nAND currency_table_id = %s""" % c.currency_table_id.id
+            cr.execute(sql, (ustr(c.currency_name),))
+            bad_ids = cr.fetchall()
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    def _check_unicity_name(self, cr, uid, ids, context=None):
+        """
+        Check that no currency is the same and have the same currency_table_id.
         Check is non case-sensitive.
         """
         if not context:
@@ -63,18 +83,18 @@ class res_currency(osv.osv):
             sql = """SELECT id, name
             FROM res_currency
             WHERE (name ilike %s)
-            AND (currency_name ilike %s)
             AND (active in ('t', 'f'))"""
             if c.currency_table_id:
                 sql += """\nAND currency_table_id = %s""" % c.currency_table_id.id
-            cr.execute(sql, (('%' + ustr(c.name) + '%'), ('%' + ustr(c.currency_name) + '%')))
+            cr.execute(sql, (ustr(c.name),))
             bad_ids = cr.fetchall()
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
 
     _constraints = [
-        (_check_unicity, "Another currency have the same code and name.", ['currency_name', 'name']),
+        (_check_unicity_currency_name, "Another currency have the same name.", ['currency_name']),
+        (_check_unicity_name, "Same currency exists", ['name']),
     ]
 
 res_currency()
