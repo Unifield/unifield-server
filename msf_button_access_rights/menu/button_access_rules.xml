@@ -10,7 +10,7 @@
 	        <field name="view_id" ref="button_access_rule_list_view"/>
     	</record>
     	
-    	<menuitem name="Button Access Rules" id="msf_button_access_rules" parent="base.menu_security" action="button_access_rule_list" />
+    	<menuitem name="Button Access Rules" id="msf_button_access_rules" parent="base.menu_security" action="button_access_rule_list" sequence="25" />
 
 	</data>
 </openerp>
