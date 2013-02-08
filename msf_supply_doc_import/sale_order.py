@@ -404,19 +404,19 @@ class sale_order_line(osv.osv):
         Check if the UoM is convertible to product standard UoM
         '''
         res = {}
-        if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        if product_id:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+            domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
+            res['domain'] = domain
+            if uom_id:
+                uom = uom_obj.browse(cr, uid, uom_id, context=context)
+                if product.uom_id.category_id.id != uom.category_id.id:
+                    warning = {'title': 'Wrong Product UOM !',
+                               'message': "You have to select a product UOM in the same category than the purchase UOM of the product", }
+                    res.update({'warning': warning})
 
-            if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': 'Wrong Product UOM !',
-                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product", }
-                res.update({'warning': warning})
-                domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
-                res['domain'] = domain
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
