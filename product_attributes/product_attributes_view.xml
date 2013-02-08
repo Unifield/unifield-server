@@ -192,7 +192,7 @@
                                     <field colspan="4" name="pricelist_ids" nolabel="1" widget="one2many_list" context="{'partner_id': name}">
                                         <tree editable="top" string="Pricelist">
                                             <field name="min_quantity" />
-                                            <field name="uom_id" />
+                                            <field name="uom_id" domain="[('uom_by_parent', '=', {'uom_id': parent.product_uom})]"/>
                                             <field name="price" />
                                             <field name="rounding" />
                                             <field name="currency_id" domain="[('partner_currency', '=', parent.name)]" />
