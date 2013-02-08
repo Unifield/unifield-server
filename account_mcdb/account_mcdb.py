@@ -29,7 +29,20 @@ from tools import flatten
 class account_mcdb(osv.osv_memory):
     _name = 'account.mcdb'
 
+    def _check_mcdb_name(self, cr, uid, ids, context=None):
+        """
+        Check that selector_name and description are filled in.
+        """
+        if not context:
+            context = {}
+        for m in self.browse(cr, uid, ids):
+            if not m.selector_name:
+                return False
+        return True
+
     _columns = {
+        'selector_name': fields.char("Name", size="254", required=False, readonly=False),
+        'description': fields.text("Description", required=False, readonly=False),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
         'instance_ids': fields.many2many('msf.instance', 'instance_mcdb', 'mcdb_id', 'instance_id', string="Proprietary instance"),
         'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic journal code"),
@@ -89,6 +102,7 @@ class account_mcdb(osv.osv_memory):
             string="Destination"),
         'display_journal': fields.boolean('Display Journals?'),
         'display_period': fields.boolean('Display Periods?'),
+        'user': fields.many2one('res.users', "User"),
     }
 
     _defaults = {
@@ -98,7 +112,12 @@ class account_mcdb(osv.osv_memory):
         'analytic_axis': lambda *a: 'fp',
         'display_journal': lambda *a: False,
         'display_period': lambda *a: False,
+        'user': lambda self, cr, uid, c: uid or False,
     }
+
+    _constraints = [
+        (_check_mcdb_name, "Name is missing", ['selector_name']),
+    ]
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """
@@ -260,13 +279,8 @@ class account_mcdb(osv.osv_memory):
                             continue
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
-<<<<<<< TREE
             for m2o in [('abs_id', 'statement_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
                 ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
-=======
-            for m2o in [('abs_id', 'statement_id'), ('instance_id', 'instance_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'), 
-                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
->>>>>>> MERGE-SOURCE
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields

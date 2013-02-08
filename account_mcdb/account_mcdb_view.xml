@@ -183,20 +183,49 @@
             </field>
         </record>
 
+    <!-- Tree view -->
+        <record id="account_mcdb_tree" model="ir.ui.view">
+            <field name="name">account.mcdb.tree</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Selector G/L list">
+                    <field name="selector_name"/>
+                    <field name="description"/>
+                    <field name="user"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_mcdb_search" model="ir.ui.view">
+            <field name="name">account.mcdb.search</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Selector G/L">
+                    <field name="selector_name" select="1"/>
+                    <field name="description" select="1"/>
+                    <field name="user" select="1"/>
+                </search>
+            </field>
+        </record>
+
+
     <!-- Actions -->
         <record id="action_account_mcdb_form" model="ir.actions.act_window">
             <field name="name">Selector - G/L</field>
             <field name="res_model">account.mcdb</field>
             <field name="view_type">form</field>
-            <field name="view_mode">form</field>
+            <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_form"/>
+            <field name="search_view_id" ref="account_mcdb_search"/>
         </record>
 
         <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
             <field name="name">Selector - Analytic</field>
             <field name="res_model">account.mcdb</field>
             <field name="view_type">form</field>
-            <field name="view_mode">form</field>
+            <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_analytic_form"/>
             <field name="context">{'from': 'account.analytic.line'}</field>
         </record>
