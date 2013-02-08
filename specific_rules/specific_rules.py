@@ -338,10 +338,11 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_product':
                 product_id = arg[2]
-                if isinstance(product_id, (int, long)):
-                    product_id = [product_id]
-                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
-                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                if product_id:
+                    if isinstance(product_id, (int, long)):
+                        product_id = [product_id]
+                    product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                    dom.append(('category_id', '=', product.uom_id.category_id.id))
                 
         return dom
 
@@ -1362,14 +1363,19 @@ class stock_inventory_line(osv.osv):
         if not product:
             return result
         product_obj = self.pool.get('product.product').browse(cr, uid, product)
-        uom = uom or product_obj.uom_id.id
-        stock_context = {'uom': uom, 'to_date': to_date,
+        product_uom = product_obj.uom_id.id
+        if uom:
+            uom_obj = self.pool.get('product.uom').browse(cr, uid, uom)
+            if uom_obj.category_id.id == product_obj.uom_id.category_id.id:
+                product_uom = uom
+        #uom = uom or product_obj.uom_id.id
+        stock_context = {'uom': product_uom, 'to_date': to_date,
                          'prodlot_id':prod_lot_id,}
         if location_id:
             # if a location is specified, we do not list the children locations, otherwise yes
             stock_context.update({'compute_child': False,})
         amount = self.pool.get('stock.location')._product_get(cr, uid, location_id, [product], stock_context)[product]
-        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': uom})
+        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': product_uom})
         return result
     
     def change_lot(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
