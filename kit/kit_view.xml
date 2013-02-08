@@ -44,7 +44,7 @@
 				           						<field name="item_module" />
 				           						<field name="item_product_id" />
 						                        <field name="item_qty" />
-						                        <field name="item_uom_id" />
+						                        <field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
 					                        </page>
 					                        <page string="Notes">
 					                        	<field name="item_description" nolabel="True" />
