@@ -230,6 +230,7 @@ The columns should be in this values:
                     continue
                 finally:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    cr.commit()
         
         error_log += '\n'.join(error_list)
         if error_log:

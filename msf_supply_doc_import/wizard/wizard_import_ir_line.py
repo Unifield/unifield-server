@@ -201,7 +201,6 @@ The columns should be in this values:
                         if to_write['error_list']:
                             lines_to_correct += 1
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                        self.write(cr, uid, ids, {'percent_completed': percent_completed})
                         complete_lines += 1
                 except IndexError, e:
                     error_log += _("The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
@@ -209,8 +208,10 @@ The columns should be in this values:
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                    self.write(cr, uid, ids, {'percent_completed': percent_completed})
                     continue
+                finally:
+                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    cr.commit()
             sale_obj._check_service(cr, uid, ids, vals, context=context)
             error_log += '\n'.join(error_list)
             if error_log:
