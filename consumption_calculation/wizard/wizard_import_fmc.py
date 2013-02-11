@@ -22,10 +22,9 @@
 from osv import osv, fields
 from tools.translate import _
 
-from tempfile import TemporaryFile
-
 import base64
-import csv
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from msf_supply_doc_import import check_line
 import time
 
 class wizard_import_fmc(osv.osv_memory):
@@ -42,7 +41,7 @@ class wizard_import_fmc(osv.osv_memory):
         'message': lambda *a : """
         IMPORTANT : The first line will be ignored by the system.
         
-        The file should be in CSV format (with ',' character as delimiter).
+        The file should be in Excel xml 2003 format.
         The columns should be in this order :
           * Product Code
           * Product Description
@@ -66,74 +65,109 @@ class wizard_import_fmc(osv.osv_memory):
     
     def import_file(self, cr, uid, ids, context=None):
         '''
-        Import file
+        Import lines form file
         '''
-        if context is None:
+        if not context:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        import_mrc = self.browse(cr, uid, ids[0], context)
+        mrc_id = import_mrc.rmc_id.id
+
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('monthly.review.consumption.line')
-           
-        import_fmc = self.browse(cr, uid, ids[0], context)
-        rmc_id = import_fmc.rmc_id.id
+        obj_data = self.pool.get('ir.model.data')
+
+        ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
+
+        obj = self.browse(cr, uid, ids, context=context)[0]
+        if not obj.file:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file))
+
+        # iterator on rows
+        rows = fileobj.getRows()
         
-        complete_lines = 0
-        ignore_lines = 0
-
-        fileobj = TemporaryFile('w+')
-        fileobj.write(base64.decodestring(import_fmc.file))
-
-        # now we determine the file format
-        fileobj.seek(0)
-
-        reader = csv.reader(fileobj, quotechar='"', delimiter=',')
-
-        error = ''
-
-        line_num = 0
-        
-        reader.next()
-
-        for line in reader:
+        # ignore the first row
+        rows.next()
+        line_num = 1
+        to_write = {}
+        for row in rows:
+            # default values
+            to_write = {
+                'error_list': [],
+                'warning_list': [],
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+            }
+            error = ''
+            fmc = 0
+            valid_until = False
             line_num += 1
-            if len(line) < 3:
-                error += 'Line %s is not valid !' % (line_num)
-                error += '\n'
-                continue
-            
-            # Get the product
-            product_ids = product_obj.search(cr, uid, [('default_code', '=', line[0])], context=context)
-            if not product_ids:
-                product_ids = product_obj.search(cr, uid, [('name', '=', line[1])], context=context)
-            
-            if not product_ids:
-                error += 'Product [%s] %s not found !' % (line[0], line[1])
-                error += '\n'
-                continue
+            # Check length of the row
+            if len(row) != 5:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
+Product Code*, Product Description*, AMC, FMC, Valid Until"""))
 
-            product_id = product_ids[0]
-            
+            # Cell 0: Product Code
+            p_value = {}
+            p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+            if p_value['default_code']:
+                product_id = p_value['default_code']
+            else:
+                product_id = False
+                error += 'Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n' % (line_num, row[0], p_value['error_list'])
+
+            # Cell 3: Quantity (FMC)
+            if row.cells[3] and row.cells[3].data:
+                if row.cells[3].type in ('int', 'float'):
+                    fmc = row.cells[3].data
+                elif isinstance(row.cells[3].data, (int, long, float)):
+                    fmc = row.cells[3].data
+                else:
+                    error += "Line %s in your Excel file ignored: FMC should be a number and not %s \n" % (line_num, row.cells[3].data)
+
+            # Cell 4: Date (Valid Until)
+            if row[4] and row[4].data:
+                if row[4].type in ('datetime', 'date'):
+                    valid_until = row[4].data
+                else:
+                    try:
+                        valid_until = time.strftime('%Y-%m-%d', time.strptime(str(row[4]), '%d/%m/%Y'))
+                    except ValueError:
+                        try:
+                            valid_until = time.strftime('%Y-%b-%d', time.strptime(str(row[4]), '%d/%b/%Y'))
+                        except ValueError as e:
+                            error += "Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n" % (line_num, row[4], e)
+
+            error += '\n'.join(to_write['error_list'])
+            if error:
+                lines_to_correct += 1
             line_data = {'name': product_id,
-                         'fmc': line[2].replace(',', '.'),
-                         'mrc_id': rmc_id,}
-            
-            if len(line) == 4:
-                #TODO : Fix the locale problem (use the locale of the server) 
-                pass
-                #line_data.update({'valid_until': time.strftime('%Y-%m-%d', time.strptime(line[3], '%d-%b-%Y'))})
-            
-            try:    
-                line_obj.create(cr, uid, line_data, context=context)
-                complete_lines += 1
-            except:
+                         'fmc': fmc,
+                         'mrc_id': mrc_id,
+                         'valid_until': valid_until,
+                         'text_error': error,}
+
+            context['import_in_progress'] = True
+            try:
+                line_obj.create(cr, uid, line_data)
+            except osv.except_osv as osv_error:
+                osv_value = osv_error.value
+                osv_name = osv_error.name
+                error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
                 ignore_lines += 1
+            complete_lines += 1
                 
         self.write(cr, uid, ids, {'message': '''Importation completed !
                                                 # of imported lines : %s
+                                                # of lines to correct: %s
                                                 # of ignored lines : %s
                                                 
                                                 Reported errors :
                                                 %s
-                                             ''' % (complete_lines, ignore_lines, error or 'No error !')}, context=context)
+                                             ''' % (complete_lines, lines_to_correct, ignore_lines, error or 'No error !')}, context=context)
         
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_fmc_end')[1],
         
@@ -150,14 +184,7 @@ class wizard_import_fmc(osv.osv_memory):
         '''
         Return to the initial view
         '''
-        res_id = self.browse(cr, uid, ids[0], context=context).rmc_id.id
-        
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'monthly.review.consumption',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': res_id}    
+        return {'type': 'ir.actions.act_window_close'}
     
 wizard_import_fmc()
 

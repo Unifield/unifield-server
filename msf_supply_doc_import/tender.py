@@ -25,7 +25,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from check_line import *
+import check_line
 from msf_supply_doc_import import MAX_LINES_NB
 from msf_supply_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
 
@@ -33,15 +33,26 @@ from msf_supply_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as col
 class tender(osv.osv):
     _inherit = 'tender'
 
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.tender_line_ids  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
+    _columns = {
 # The field below were replaced by the wizard_import_fo_line (utp-113)
-#    _columns = {
 #        'file_to_import': fields.binary(string='File to import',
 #                                        help="""* You can use the template of the export for the format that you need to use.
 #                                                * The file should be in XML Spreadsheet 2003 format.
 #                                                * You can import up to %s lines each time,
 #                                                else you have to split the lines in several files and import each one by one.
 #                                                """ % MAX_LINES_NB),
-#    }
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
+    }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''

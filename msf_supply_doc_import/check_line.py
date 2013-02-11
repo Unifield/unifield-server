@@ -58,7 +58,6 @@ def get_log_message(**kwargs):
     """
     Define log message
     """
-    obj = kwargs.get('obj', False)
     to_write = kwargs['to_write']
     # nb_lines_error and tender are just for tender
     nb_lines_error = kwargs.get('nb_lines_error', False)
@@ -95,7 +94,9 @@ def product_value(cr, uid, **kwargs):
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
-    cell_nb = kwargs.get('cell_nb', 0)
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 0
     try:
         if row.cells[cell_nb] and row.cells[cell_nb].data:
             product_code = row.cells[cell_nb].data
@@ -104,7 +105,7 @@ def product_value(cr, uid, **kwargs):
                 p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                 if not p_ids:
                     comment += ' Code: %s' % (product_code)
-                    msg = 'The Product\'s Code is not found in the database.'
+                    msg = 'Product code doesn\'t exist in the DB.'
                 else:
                     default_code = p_ids[0]
                     proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
@@ -126,11 +127,18 @@ def quantity_value(**kwargs):
     Compute qty value of the cell.
     """
     row = kwargs['row']
-    product_qty = kwargs['to_write']['product_qty']
+    if kwargs.get('real_consumption', False):
+        product_qty = kwargs['to_write']['consumed_qty']
+    elif kwargs.get('monthly_consumption', False):
+        product_qty = kwargs['to_write']['fmc']
+    else:
+        product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
-    cell_nb = kwargs.get('cell_nb', 2)
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 2
     try:
         if not row.cells[cell_nb]:
             warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
@@ -157,6 +165,10 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
+    # some object have not there uom at the 3rd column, so we pass them the relevant cell number (i.e. 2 for real consumption report)
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 3
     msg = ''
     cell_nb = kwargs.get('cell_nb', 3)
     try:
