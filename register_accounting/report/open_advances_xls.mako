@@ -88,12 +88,10 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 
-
-
 	<Style ss:ID="s25">
-		<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+		<Interior ss:Pattern="Solid" ss:Bold="1"/>
+		<Font ss:Bold="1"/>
 	</Style>
-
 
 </Styles>
 % for o in objects:
@@ -107,7 +105,7 @@
     </Row>
 	<Row ss:Index="3">
 		<Cell ss:StyleID="title" ><Data ss:Type="String">Instance:</Data></Cell>
-		<Cell ss:StyleID="title" ><Data ss:Type="String">${(o.instance_id.code or 'aaa')|x}</Data></Cell>
+		<Cell ss:StyleID="title" ><Data ss:Type="String">${(o.instance_id.code or '')|x}</Data></Cell>
 	</Row>
 	<Row>
 		<Cell ss:StyleID="title" ><Data ss:Type="String">Report Date:</Data></Cell>
@@ -132,24 +130,24 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
     </Row>
     % for line in o.line_ids:
-        % if line.state == 'hard' and line.account_id.type_for_register == 'advance' and not line.reconciled and not line.amount > 0.0 and not line.date > time.strftime('%Y-%m-%d') :
+        % if line.first_move_line_id.state == 'valid' and line.account_id.type_for_register == 'advance' and not line.first_move_line_id.reconcile_id and not line.date > time.strftime('%Y-%m-%d'):
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id.journal_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.journal_id and line.statement_id.journal_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.sequence_for_reference and line.sequence_for_reference or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id.instance_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.ref or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.instance_id and line.statement_id.instance_id.code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id and line.first_move_line_id.ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id.period_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.account_id.code and line.account_id.name and line.account_id.code + ' ' + line.account_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id.partner_txt or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id and line.first_move_line_id.partner_txt or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id.credit_currency or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id.debit_currency or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id.credit or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id.debit or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id.currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.credit_currency or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit_currency or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id and line.currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.credit or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
     </Row>
 
         % endif
