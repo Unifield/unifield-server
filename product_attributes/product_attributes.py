@@ -497,8 +497,32 @@ class product_attributes(osv.osv):
                 for invoice in invoice_obj.browse(cr, uid, has_invoice_line, context=context):
                     if invoice.invoice_id.id not in invoice_ids:
                         invoice_ids.append(invoice.invoice_id.id)
+                        obj = invoice.invoice_id
+                        type_name = 'Invoice'
+                        # Debit Note
+                        if obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_kind_donation:
+                            type_name = 'Debit Note'
+                        # Donation (in-kind donation)
+                        elif obj.type == 'in_invoice' and not obj.is_debit_not and obj.is_kind_donation:
+                            type_name = 'In-kind Donation'
+                        # Intermission voucher out
+                        elif obj.type == 'out_invoice' and not obj.is_debit_not and not obj.is_kind_donation and obj.is_intermission:
+                            type_name = 'Intermission Voucher Out'
+                        # Intermission voucher in
+                        elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                            type_name = 'Intermission Voucher In'
+                        # Customer Invoice
+                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_kind_donation:
+                            type_name = 'Customer Invoice'
+                        # Supplier Invoice
+                        elif obj.type == 'in_invoice' not register_line_ids and not obj.is_debit_note and not obj.is_kind_donation:
+                            type_name = 'Supplier Invoice'
+                        # Supplier Direct Invoice
+                        elif obj.type == 'in_invoice' and obj.register_line_ids:
+                            type_name = 'Supplier Direct Invoice'
+
                         error_line_obj.create(cr, uid, {'error_id': wizard_id,
-                                                        'type': 'Invoice',
+                                                        'type': type_name,
                                                         'internal_type': 'account.invoice',
                                                         'doc_ref': invoice.invoice_id.number,
                                                         'doc_id': invoice.invoice_id.id}, context=context)
@@ -659,6 +683,29 @@ class product_deactivation_error_line(osv.osv_memory):
             context.update({'procurement_request': obj.procurement_request})
         elif line.internal_type == 'purchase.order':
             context.update({'rfq_ok': obj.rfq_ok})
+        elif line.internal_type == 'account.invoice':
+            # Debit Note
+            if obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_kind_donation:
+                context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
+            # Donation (in-kind donation)
+            elif obj.type == 'in_invoice' and not obj.is_debit_not and obj.is_kind_donation:
+                context.update({'type':'in_invoice', 'journal_type': 'inkind'})
+            # Intermission voucher out
+            elif obj.type == 'out_invoice' and not obj.is_debit_not and not obj.is_kind_donation and obj.is_intermission:
+                context.update({'type':'out_invoice', 'journal_type': 'intermission'})
+            # Intermission voucher in
+            elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                context.update({{'type':'in_invoice', 'journal_type': 'intermission'}})
+            # Customer Invoice
+            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_kind_donation:
+                context.update({'type':'out_invoice', 'journal_type': 'sale'})
+            # Supplier Invoice
+            elif obj.type == 'in_invoice' not register_line_ids and not obj.is_debit_note and not obj.is_kind_donation:
+                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
+            # Supplier Direct Invoice
+            elif obj.type == 'in_invoice' and obj.register_line_ids:
+                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
+
                 
         return view_id, context
 
