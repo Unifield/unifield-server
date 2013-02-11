@@ -39,24 +39,43 @@ class purchase_order_line(osv.osv):
         '''
         update the name attribute if a product is selected
         '''
+        if not context:
+            context = {}
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
         elif vals.get('comment'):
             vals.update(name=vals.get('comment'),)
-            
+        if not context.get('import_in_progress', False):
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+            product_id = vals.get('product_id', False)
+            product_uom = vals.get('product_uom', False)
+            if product_id and product_uom:
+                if product_obj.browse(cr, uid, product_id, context).uom_id.category_id.id != uom_obj.browse(cr, uid, product_uom, context).category_id.id:
+                    raise osv.except_osv(_('Error'),
+                                         _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
         update the name attribute if a product is selected
         '''
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
         elif vals.get('comment'):
             vals.update(name=vals.get('comment'),)
-            
+        if not context.get('import_in_progress', False):
+            for pol in self.browse(cr, uid, ids, context=context):
+                if pol.product_id.uom_id.category_id.id != pol.product_uom.category_id.id:
+                    raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
     
     def _get_manufacturers(self, cr, uid, ids, field_name, arg, context=None):
