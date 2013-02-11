@@ -1506,6 +1506,23 @@ class purchase_order_line(osv.osv):
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
                 }
     
+    def _check_product_uom(self, cr, uid, ids, context=None):
+        '''
+        Check if the UoM has the same category as the product standard UoM
+        '''
+        if not context:
+            context = {}
+            
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.product_id.uom_id.category_id.id != pol.product_uom.category_id.id:
+                return False
+            
+        return True
+    
+    _constraints = [
+        (_check_product_uom, 'You have to select a product UOM in the same category than the purchase UOM of the product', ['product_id', 'product_uom']),
+    ]
+    
 purchase_order_line()
 
 
