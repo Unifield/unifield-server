@@ -443,8 +443,9 @@ class update_received(osv.osv):
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
             while updates:
-                imported, updates = updates[:MAX_IMPORT], updates[MAX_IMPORT:]
-                error_message += group_update_execution(imported)
+                to_import, updates = updates[:MAX_IMPORT], updates[MAX_IMPORT:]
+                error_message += group_update_execution(to_import)
+                imported += to_import
                 if len(imported) >= MAX_IMPORT:
                     cr.commit()
                     imported[:] = []
