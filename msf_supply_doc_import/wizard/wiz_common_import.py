@@ -38,7 +38,7 @@ class wiz_common_import(osv.osv_memory):
         for k,v in sorted(data, key=lambda tup: tup[1]):
             columns_header.append((k, type(k)))
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
         return vals
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):

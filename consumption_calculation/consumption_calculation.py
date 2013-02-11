@@ -277,7 +277,7 @@ class real_average_consumption(osv.osv):
             list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.prodlot_id and line.prodlot_id.name, 
                                   line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.consumed_qty, line.remark or ''])
         instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
-        file = base64.encodestring(instanciate_class.get_xml())
+        file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
         
         export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 
                                                                         'file': file, 
