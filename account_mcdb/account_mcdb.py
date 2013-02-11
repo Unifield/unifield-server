@@ -26,22 +26,10 @@ from osv import fields
 from tools.translate import _
 from tools import flatten
 
-class account_mcdb(osv.osv_memory):
+class account_mcdb(osv.osv):
     _name = 'account.mcdb'
 
-    def _check_mcdb_name(self, cr, uid, ids, context=None):
-        """
-        Check that selector_name and description are filled in.
-        """
-        if not context:
-            context = {}
-        for m in self.browse(cr, uid, ids):
-            if not m.selector_name:
-                return False
-        return True
-
     _columns = {
-        'selector_name': fields.char("Name", size="254", required=False, readonly=False),
         'description': fields.text("Description", required=False, readonly=False),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code"),
         'instance_ids': fields.many2many('msf.instance', 'instance_mcdb', 'mcdb_id', 'instance_id', string="Proprietary instance"),
@@ -51,7 +39,7 @@ class account_mcdb(osv.osv_memory):
         'posting_date_to': fields.date('Ending posting date'),
         'document_date_from': fields.date('First document date'),
         'document_date_to': fields.date('Ending document date'),
-        'document_code': fields.char(string='Sequence number', size='255'),
+        'document_code': fields.char(string='Sequence number', size=255),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Document Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
@@ -114,10 +102,6 @@ class account_mcdb(osv.osv_memory):
         'display_period': lambda *a: False,
         'user': lambda self, cr, uid, c: uid or False,
     }
-
-    _constraints = [
-        (_check_mcdb_name, "Name is missing", ['selector_name']),
-    ]
 
     def onchange_currency_choice(self, cr, uid, ids, choice, func_curr=False, mnt_from=0.0, mnt_to=0.0, context=None):
         """

@@ -189,8 +189,7 @@
             <field name="model">account.mcdb</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Selector G/L list">
-                    <field name="selector_name"/>
+                <tree string="Selector list">
                     <field name="description"/>
                     <field name="user"/>
                 </tree>
@@ -202,14 +201,24 @@
             <field name="model">account.mcdb</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Selector G/L">
-                    <field name="selector_name" select="1"/>
+                <search string="Selector - G/L">
                     <field name="description" select="1"/>
                     <field name="user" select="1"/>
                 </search>
             </field>
         </record>
 
+        <record id="account_mcdb_analytic_search" model="ir.ui.view">
+            <field name="name">account.mcdb.analytic.search</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Selector - Analytic">
+                    <field name="description" select="1"/>
+                    <field name="user" select="1"/>
+                </search>
+            </field>
+        </record>
 
     <!-- Actions -->
         <record id="action_account_mcdb_form" model="ir.actions.act_window">
@@ -219,6 +228,8 @@
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_form"/>
             <field name="search_view_id" ref="account_mcdb_search"/>
+            <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
+            <field name="context">{'search_default_user': uid}</field>
         </record>
 
         <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
@@ -227,13 +238,42 @@
             <field name="view_type">form</field>
             <field name="view_mode">form,tree</field>
             <field name="view_id" ref="account_mcdb_analytic_form"/>
+            <field name="search_view_id" ref="account_mcdb_analytic_search"/>
             <field name="context">{'from': 'account.analytic.line'}</field>
+            <field name="domain">[('description', '!=', False), ('model', '=', 'account.analytic.line')]</field>
         </record>
 
     <!-- Menu -->
         <menuitem id="menu_finance_mcdb" name="Selector" parent="account.menu_finance" sequence="9"/>
         <menuitem string="Selector - G/L" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
         <menuitem string="Selector - Analytic" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="2"/>
+
+    <!-- Redefine MCDB to add instance -->
+        <record id="account_mcdb_form_instance_inherit" model="ir.ui.view">
+            <field name="name">account.mcdb.form.instance.inherit</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="priority" eval="18"/>
+            <field name='inherit_id' ref='account_mcdb.account_mcdb_form' />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='journal_ids']/tree/field[@name='code']" position="before">
+                    <field name="instance_id"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="account_mcdb_analytic_form_instance_inherit" model="ir.ui.view">
+            <field name="name">account.mcdb.analytic.form.instance.inherit</field>
+            <field name="model">account.mcdb</field>
+            <field name="type">form</field>
+            <field name="priority" eval="18"/>
+            <field name='inherit_id' ref='account_mcdb.account_mcdb_analytic_form' />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='analytic_journal_ids']/tree/field[@name='code']" position="before">
+                    <field name="instance_id"/>
+                </xpath>
+            </field>
+        </record>
 
     </data>
 </openerp>
