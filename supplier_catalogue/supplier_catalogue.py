@@ -402,6 +402,7 @@ class supplier_catalogue(osv.osv):
                     except Exception:
                          uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                          to_correct_ok = True
+                #[utp-129]: check consistency of uom
                 if default_code != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]:
                     browse_uom = uom_obj.browse(cr, uid, uom_id, context)
                     browse_product = product_obj.browse(cr, uid, default_code, context)
@@ -441,7 +442,7 @@ class supplier_catalogue(osv.osv):
                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Rounding"') % (line_num,) )
 
                 #Product Min Order Qty
-                if not len(row.cells)>7 or row.cells[6].data:
+                if not len(row.cells)>=7 or not row.cells[6].data:
                     p_min_order_qty = 0
                 else:
                     if row.cells[6].type in ['int', 'float']:
@@ -450,7 +451,7 @@ class supplier_catalogue(osv.osv):
                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Min Order Qty"') % (line_num,) )
 
                 #Product Comment
-                if len(row.cells)>8 and row.cells[7].data:
+                if len(row.cells)>=8 and row.cells[7].data:
                     comment.append(str(row.cells[7].data))
                 if comment:
                     p_comment = ', '.join(comment)
