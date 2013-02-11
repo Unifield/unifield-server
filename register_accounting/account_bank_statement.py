@@ -1924,7 +1924,6 @@ class ir_values(osv.osv):
                 or v[1] == 'Cash Inventory' and context['journal_type'] == 'cash' \
                 or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
                 or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
-                or v[1] == 'Cheque Inventory 2' and context['journal_type'] == 'cheque' \
                 or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque':
                     new_act.append(v)
             values = new_act
