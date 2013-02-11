@@ -303,20 +303,22 @@ class update_received(osv.osv):
 
         def secure_import_data(obj, fields, values):
             try:
-                cr.rollback_orig, cr.rollback = cr.rollback, lambda:None
-                cr.commit_orig, cr.commit = cr.commit, lambda:None
-                res = obj.import_data(cr, uid, fields, values, mode='update',
-                                      current_module='sd', noupdate=True, context=context)
+                cr.rollback_org, cr.rollback = cr.rollback, lambda:None
+                cr.commit_org, cr.commit = cr.commit, lambda:None
+                cr.execute("SAVEPOINT import_data")
+                res = obj.import_data(cr, uid, fields, values, mode='update', current_module='sd', noupdate=True, context=context)
             except BaseException, e:
-                cr.rollback_orig()
+                cr.execute("ROLLBACK TO SAVEPOINT import_data")
                 self._logger.exception("import failure")
                 raise Exception(tools.ustr(e))
             else:
-                if not res[0] == len(values):
-                    cr.rollback_orig()
+                if res[0] == len(values):
+                    cr.execute("RELEASE SAVEPOINT import_data")
+                else:
+                    cr.execute("ROLLBACK TO SAVEPOINT import_data")
             finally:
-                cr.rollback = cr.rollback_orig
-                cr.commit = cr.commit_orig
+                cr.rollback = cr.rollback_org
+                cr.commit = cr.commit_org
             return res
 
         def group_update_execution(updates):
