@@ -27,8 +27,10 @@ from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from check_line import *
 from msf_supply_doc_import import MAX_LINES_NB
+from msf_supply_doc_import.wizard import FO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_fo_line_import, IR_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_ir_line_import
 
 
 class sale_order(osv.osv):
@@ -52,14 +54,15 @@ class sale_order(osv.osv):
         # mode to force noupdate=True when reloading this module
         tools.convert_xml_import(cr, 'msf_supply_doc_import', file, {}, mode=mode, noupdate=True)
 
-    _columns = {
-        'file_to_import': fields.binary(string='File to import',
-                                        help="""* You can use the template of the export for the format that you need to use.
-                                                * The file should be in XML Spreadsheet 2003 format.
-                                                * You can import up to %s lines each time,
-                                                else you have to split the lines in several files and import each one by one.
-                                                """ % MAX_LINES_NB),
-    }
+# The field below were replaced by the wizard_import_fo_line (utp-113)
+#    _columns = {
+#        'file_to_import': fields.binary(string='File to import',
+#                                        help="""* You can use the template of the export for the format that you need to use.
+#                                                * The file should be in XML Spreadsheet 2003 format.
+#                                                * You can import up to %s lines each time,
+#                                                else you have to split the lines in several files and import each one by one.
+#                                                """ % MAX_LINES_NB),
+#    }
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
@@ -78,244 +81,286 @@ class sale_order(osv.osv):
             self.write(cr, uid, ids, vals, context=context)
         return True
 
-    def import_internal_req(self, cr, uid, ids, context=None):
+# This method was replaced by the one of the wizard wizard_import_fo_line (utp-113)
+#    def import_internal_req(self, cr, uid, ids, context=None):
+#        '''
+#        Import lines from Excel file (in xml) for internal request
+#        '''
+#        if not context:
+#            context = {}
+#
+#        product_obj = self.pool.get('product.product')
+#        uom_obj = self.pool.get('product.uom')
+#        obj_data = self.pool.get('ir.model.data')
+#        currency_obj = self.pool.get('res.currency')
+#        sale_obj = self.pool.get('sale.order')
+#        sale_line_obj = self.pool.get('sale.order.line')
+#        view_id = obj_data.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
+#
+#        vals = {}
+#        vals['order_line'] = []
+#
+#        obj = self.browse(cr, uid, ids, context=context)[0]
+#        if not obj.file_to_import:
+#            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+#
+#        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+#        # check that the max number of lines is not excedeed
+#        if check_nb_of_lines(fileobj=fileobj):
+#            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
+#        # iterator on rows
+#        rows = fileobj.getRows()
+#        # ignore the first row
+#        rows.next()
+#        line_num = 0
+#        to_write = {}
+#        for row in rows:
+#            # default values
+#            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+#            to_write = {
+#                'error_list': [],
+#                'warning_list': [],
+#                'to_correct_ok': False,
+#                'show_msg_ok': False,
+#                'comment': '',
+#                'date_planned': obj.delivery_requested_date,
+#                'functional_currency_id': browse_sale.pricelist_id.currency_id.id,
+#                'price_unit': 1,  # in case that the product is not found and we do not have price
+#                'product_qty': 1,
+#                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
+#                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
+#                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
+#                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
+#                'proc_type': 'make_to_order',
+#                'default_code': False,
+#                'confirmed_delivery_date': False,
+#            }
+#
+#            line_num += 1
+#            col_count = len(row)
+#            if col_count != 6:
+#                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order:
+#Product Code, Product Description, Quantity, UoM, Currency, Comment.
+#That means Not price, Neither Delivery requested date. """))
+#            try:
+#                if not check_empty_line(row=row, col_count=col_count):
+#                    continue
+#                # for each cell we check the value
+#                # Cell 0: Product Code
+#                p_value = {}
+#                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
+#                                 'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+#
+#                # Cell 2: Quantity
+#                qty_value = {}
+#                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+#
+#                # Cell 3: UoM
+#                uom_value = {}
+#                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+#
+#                # Cell 4: Currency
+#                curr_value = {}
+#                curr_value = compute_currency_value(cr, uid, cell=4, browse_sale=browse_sale,
+#                                                    currency_obj=currency_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
+#
+#                # Cell 5: Comment
+#                c_value = {}
+#                c_value = comment_value(row=row, cell=5, to_write=to_write, context=context)
+#                to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
+#                to_write.update({
+#                    'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+#                    'show_msg_ok': [True for x in to_write['warning_list']],  # the lines with show_msg_ok=True won't change color, it is just info
+#                    'order_id': obj.id,
+#                    'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
+#                })
+#                # we check consistency on the model of on_change functions to call for updating values
+#                sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+#                vals['order_line'].append((0, 0, to_write))
+#            except IndexError:
+#                print "The line num %s in the Excel file got element outside the defined 6 columns" % line_num
+#
+#        # write order line on SO
+#        context['import_in_progress'] = True
+#        self.write(cr, uid, ids, vals, context=context)
+#        self._check_service(cr, uid, ids, vals, context=context)
+#        msg_to_return = get_log_message(to_write=to_write, obj=obj)
+#        if msg_to_return:
+#            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
+#        return True
+
+# This method was replaced by the one of the wizard wizard_import_fo_line (utp-113)
+#    def import_file(self, cr, uid, ids, context=None):
+#        '''
+#        Import lines from Excel file (in xml)
+#        '''
+#        if not context:
+#            context = {}
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#
+#        if context.get('_terp_view_name', False) == self.pool.get('ir.translation').tr_view(cr, 'Internal Requests', context):
+#            return self.import_internal_req(cr, uid, ids, context=context)
+#
+#        product_obj = self.pool.get('product.product')
+#        uom_obj = self.pool.get('product.uom')
+#        obj_data = self.pool.get('ir.model.data')
+#        currency_obj = self.pool.get('res.currency')
+#        sale_obj = self.pool.get('sale.order')
+#        sale_line_obj = self.pool.get('sale.order.line')
+#        view_id = obj_data.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
+#
+#        vals = {}
+#        vals['order_line'] = []
+#
+#        obj = self.browse(cr, uid, ids, context=context)[0]
+#        if not obj.file_to_import:
+#            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+#
+#        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+#        # check that the max number of lines is not excedeed
+#        if check_nb_of_lines(fileobj=fileobj):
+#            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
+#        # iterator on rows
+#        rows = fileobj.getRows()
+#        # ignore the first row
+#        rows.next()
+#        line_num = 0
+#        to_write = {}
+#        for row in rows:
+#            # default values
+#            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
+#            to_write = {
+#                'error_list': [],
+#                'warning_list': [],
+#                'to_correct_ok': False,
+#                'show_msg_ok': False,
+#                'comment': '',
+#                'date_planned': obj.delivery_requested_date,
+#                'functional_currency_id': browse_sale.pricelist_id.currency_id.id,
+#                'price_unit': 1,  # in case that the product is not found and we do not have price
+#                'product_qty': 1,
+#                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
+#                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
+#                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
+#                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
+#                'proc_type': 'make_to_order',
+#                'default_code': False,
+#                'confirmed_delivery_date': False,
+#            }
+#
+#            line_num += 1
+#            col_count = len(row)
+#            if col_count != 8:
+#                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
+#Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
+#            try:
+#                if not check_empty_line(row=row, col_count=col_count):
+#                    continue
+#
+#                # Cell 0: Product Code
+#                p_value = {}
+#                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
+#                                 'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+#
+#                # Cell 2: Quantity
+#                qty_value = {}
+#                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+#
+#                # Cell 3: UOM
+#                uom_value = {}
+#                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+#
+#                # Cell 4: Price
+#                price_value = {}
+#                price_value = compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
+#                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
+#                                 'warning_list': price_value['warning_list']})
+#
+#                # Cell 5: Date
+#                date_value = {}
+#                date_value = compute_date_value(row=row, to_write=to_write, context=context)
+#                to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list'],
+#                                 'warning_list': date_value['warning_list']})
+#
+#                # Cell 6: Currency
+#                curr_value = {}
+#                curr_value = compute_currency_value(cr, uid, cell=6, browse_sale=browse_sale,
+#                                                    currency_obj=currency_obj, row=row, to_write=to_write, context=context)
+#                to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
+#
+#                # Cell 7: Comment
+#                c_value = {}
+#                c_value = comment_value(row=row, cell=7, to_write=to_write, context=context)
+#                to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
+#                to_write.update({
+#                    'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+#                    'show_msg_ok': [True for x in to_write['warning_list']],  # the lines with show_msg_ok=True won't change color, it is just info
+#                    'order_id': obj.id,
+#                    'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
+#                })
+#                # we check consistency on the model of on_change functions to call for updating values
+#                sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+#
+#                vals['order_line'].append((0, 0, to_write))
+#
+#            except IndexError:
+#                print "The line num %s in the Excel file got element outside the defined 8 columns" % line_num
+#
+#        # write order line on PO
+#        context['import_in_progress'] = True
+#        self.write(cr, uid, ids, vals, context=context)
+#        msg_to_return = get_log_message(to_write=to_write, obj=obj)
+#        if msg_to_return:
+#            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
+#        return True
+
+    def wizard_import_ir_line(self, cr, uid, ids, context=None):
         '''
-        Import lines from Excel file (in xml) for internal request
+        Launches the wizard to import lines from a file
         '''
-        if not context:
+        if context is None:
             context = {}
+        context.update({'active_id': ids[0]})
+        columns_header = columns_header_for_ir_line_import
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml()),
+                                                                            'filename_template': 'template.xls'}, context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.ir.line',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
 
-        product_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
-        obj_data = self.pool.get('ir.model.data')
-        currency_obj = self.pool.get('res.currency')
-        sale_obj = self.pool.get('sale.order')
-        sale_line_obj = self.pool.get('sale.order.line')
-        view_id = obj_data.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
-
-        vals = {}
-        vals['order_line'] = []
-
-        obj = self.browse(cr, uid, ids, context=context)[0]
-        if not obj.file_to_import:
-            raise osv.except_osv(_('Error'), _('Nothing to import.'))
-
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-        # check that the max number of lines is not excedeed
-        if check_nb_of_lines(fileobj=fileobj):
-            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
-        # iterator on rows
-        rows = fileobj.getRows()
-        # ignore the first row
-        rows.next()
-        line_num = 0
-        to_write = {}
-        for row in rows:
-            # default values
-            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
-            to_write = {
-                'error_list': [],
-                'warning_list': [],
-                'to_correct_ok': False,
-                'show_msg_ok': False,
-                'comment': '',
-                'date_planned': obj.delivery_requested_date,
-                'functional_currency_id': browse_sale.pricelist_id.currency_id.id,
-                'price_unit': 1,  # in case that the product is not found and we do not have price
-                'product_qty': 1,
-                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
-                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
-                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
-                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
-                'proc_type': 'make_to_order',
-                'default_code': False,
-                'confirmed_delivery_date': False,
-            }
-
-            line_num += 1
-            col_count = len(row)
-            if col_count != 6:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order:
-Product Code, Product Description, Quantity, UoM, Currency, Comment.
-That means Not price, Neither Delivery requested date. """))
-            try:
-                if not check_empty_line(row=row, col_count=col_count):
-                    continue
-                # for each cell we check the value
-                # Cell 0: Product Code
-                p_value = {}
-                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
-                                 'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
-
-                # Cell 2: Quantity
-                qty_value = {}
-                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
-
-                # Cell 3: UoM
-                uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
-
-                # Cell 4: Currency
-                curr_value = {}
-                curr_value = compute_currency_value(cr, uid, cell=4, browse_sale=browse_sale,
-                                                    currency_obj=currency_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
-
-                # Cell 5: Comment
-                c_value = {}
-                c_value = comment_value(row=row, cell=5, to_write=to_write, context=context)
-                to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
-                to_write.update({
-                    'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
-                    'show_msg_ok': [True for x in to_write['warning_list']],  # the lines with show_msg_ok=True won't change color, it is just info
-                    'order_id': obj.id,
-                    'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
-                })
-                # we check consistency on the model of on_change functions to call for updating values
-                sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-                vals['order_line'].append((0, 0, to_write))
-            except IndexError:
-                print "The line num %s in the Excel file got element outside the defined 6 columns" % line_num
-
-        # write order line on SO
-        context['import_in_progress'] = True
-        self.write(cr, uid, ids, vals, context=context)
-        self._check_service(cr, uid, ids, vals, context=context)
-        msg_to_return = get_log_message(to_write=to_write, obj=obj)
-        if msg_to_return:
-            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
-        return True
-
-    def import_file(self, cr, uid, ids, context=None):
+    def wizard_import_fo_line(self, cr, uid, ids, context=None):
         '''
-        Import lines from Excel file (in xml)
+        Launches the wizard to import lines from a file
         '''
-        if not context:
+        if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if context.get('_terp_view_name', False) == self.pool.get('ir.translation').tr_view(cr, 'Internal Requests', context):
-            return self.import_internal_req(cr, uid, ids, context=context)
-
-        product_obj = self.pool.get('product.product')
-        uom_obj = self.pool.get('product.uom')
-        obj_data = self.pool.get('ir.model.data')
-        currency_obj = self.pool.get('res.currency')
-        sale_obj = self.pool.get('sale.order')
-        sale_line_obj = self.pool.get('sale.order.line')
-        view_id = obj_data.get_object_reference(cr, uid, 'sale', 'view_order_form')[1]
-
-        vals = {}
-        vals['order_line'] = []
-
-        obj = self.browse(cr, uid, ids, context=context)[0]
-        if not obj.file_to_import:
-            raise osv.except_osv(_('Error'), _('Nothing to import.'))
-
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-        # check that the max number of lines is not excedeed
-        if check_nb_of_lines(fileobj=fileobj):
-            raise osv.except_osv(_('Warning !'), _("""You can\'t have more than %s lines in your file.""") % MAX_LINES_NB)
-        # iterator on rows
-        rows = fileobj.getRows()
-        # ignore the first row
-        rows.next()
-        line_num = 0
-        to_write = {}
-        for row in rows:
-            # default values
-            browse_sale = sale_obj.browse(cr, uid, ids, context=context)[0]
-            to_write = {
-                'error_list': [],
-                'warning_list': [],
-                'to_correct_ok': False,
-                'show_msg_ok': False,
-                'comment': '',
-                'date_planned': obj.delivery_requested_date,
-                'functional_currency_id': browse_sale.pricelist_id.currency_id.id,
-                'price_unit': 1,  # in case that the product is not found and we do not have price
-                'product_qty': 1,
-                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
-                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
-                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
-                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
-                'proc_type': 'make_to_order',
-                'default_code': False,
-                'confirmed_delivery_date': False,
-            }
-
-            line_num += 1
-            col_count = len(row)
-            if col_count != 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
-Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. """))
-            try:
-                if not check_empty_line(row=row, col_count=col_count):
-                    continue
-
-                # Cell 0: Product Code
-                p_value = {}
-                p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
-                                 'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
-
-                # Cell 2: Quantity
-                qty_value = {}
-                qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
-
-                # Cell 3: UOM
-                uom_value = {}
-                uom_value = compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
-
-                # Cell 4: Price
-                price_value = {}
-                price_value = compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
-                to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
-                                 'warning_list': price_value['warning_list']})
-
-                # Cell 5: Date
-                date_value = {}
-                date_value = compute_date_value(row=row, to_write=to_write, context=context)
-                to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list'],
-                                 'warning_list': date_value['warning_list']})
-
-                # Cell 6: Currency
-                curr_value = {}
-                curr_value = compute_currency_value(cr, uid, cell=6, browse_sale=browse_sale,
-                                                    currency_obj=currency_obj, row=row, to_write=to_write, context=context)
-                to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
-
-                # Cell 7: Comment
-                c_value = {}
-                c_value = comment_value(row=row, cell=7, to_write=to_write, context=context)
-                to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
-                to_write.update({
-                    'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
-                    'show_msg_ok': [True for x in to_write['warning_list']],  # the lines with show_msg_ok=True won't change color, it is just info
-                    'order_id': obj.id,
-                    'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
-                })
-                # we check consistency on the model of on_change functions to call for updating values
-                sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-
-                vals['order_line'].append((0, 0, to_write))
-
-            except IndexError:
-                print "The line num %s in the Excel file got element outside the defined 8 columns" % line_num
-
-        # write order line on PO
-        context['import_in_progress'] = True
-        self.write(cr, uid, ids, vals, context=context)
-        msg_to_return = get_log_message(to_write=to_write, obj=obj)
-        if msg_to_return:
-            self.log(cr, uid, obj.id, _(msg_to_return), context={'view_id': view_id, })
-        return True
+        context.update({'active_id': ids[0]})
+        columns_header = columns_header_for_fo_line_import
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        export_id = self.pool.get('wizard.import.fo.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml()),
+                                                                            'filename_template': 'template.xls'}, context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.fo.line',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
