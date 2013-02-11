@@ -11,7 +11,7 @@ currency_rate,TRUE,TRUE,Down,"[('rate' , '!=' , ''),('currency_id', '!=', '')]",
 currency_activator,TRUE,TRUE,Down,"[('active', '!=', ''),('currency_table_id', '!=', '')]",['active'],OC,res.currency,,Currency activator,Valid,,24
 currency_table_header_state,TRUE,TRUE,Down,"[('state','=','valid')]",['state'],OC,res.currency.table,,Currency Table Header State,Valid,,25
 gl_account_type,TRUE,TRUE,Down,[],"['close_method', 'code', 'name', 'note', 'report_type']",OC,account.account.type,,GL Account Type,Valid,,30
-gl_accounts,TRUE,TRUE,Down,[],"['code', 'default_destination_id/id', 'name', 'note', 'reconcile', 'type', 'type_for_register', 'user_type/id']",OC,account.account,,GL Accounts,Valid,,31
+gl_accounts,TRUE,TRUE,Down,[],"['code', 'default_destination_id/id', 'is_not_hq_correctible', 'name', 'note', 'reconcile', 'type', 'type_for_register', 'user_type/id']",OC,account.account,,GL Accounts,Valid,,31
 gl_accounts_tree,TRUE,TRUE,Down,"[('parent_id', '!=', '')]",['parent_id/id'],OC,account.account,,GL Accounts Tree,Valid,,32
 analytical_journal_hq,TRUE,TRUE,Down,"[('instance_id.level', '=', 'section')]","['active', 'code', 'name', 'type','instance_id/id']",OC,account.analytic.journal,,Analytical Journal (HQ),Valid,,38
 analytical_journal_coordo,TRUE,TRUE,Down,"[('instance_id.level', '=', 'coordo')]","['active', 'code', 'name', 'type','instance_id/id']",MISSION,account.analytic.journal,,Analytical Journal (Coordo),Valid,,39
