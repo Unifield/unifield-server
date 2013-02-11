@@ -23,6 +23,7 @@
 
 from osv import osv
 from tools.translate import _
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
     """
@@ -310,4 +311,7 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
             if balance:
                 st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)
     return True
+
+SpreadsheetReport('report.cheque.inventory.2','account.bank.statement','addons/register_accounting/report/cheque_inventory_xls.mako')
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

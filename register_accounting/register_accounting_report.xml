@@ -27,6 +27,18 @@
         report_type="txt"
         auto="True"
         menu="True"/>
+
+        <report
+       	id="cheque_inventory_2"
+        string="Cheque Inventory 2"
+        model="account.bank.statement"
+        name="cheque.inventory.2"
+        file="register_accounting/report/cheque_inventory_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"
+         />
         
         <report id="open_advances"
         string="Open Advances"
