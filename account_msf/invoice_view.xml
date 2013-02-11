@@ -60,13 +60,15 @@
                             <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" />
                             <field name="name"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1">
+                                <tree editable="top" string="Invoice Line" noteditable="1" hide_new_button="1" colors="red: inactive_product == True">
                                     <field name="name"/>
                                     <field name="account_id" />
                                     <field name="quantity"/>
                                     <field name="uos_id" string="UoM"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
+                                    <field name="inactive_product" invisible="1" />
+                                    <field name="inactive_error" />
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
@@ -181,7 +183,7 @@
                             <label string="" colspan="2"/>
                             <field name="check_total" required="2"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Donation Lines" noteditable="1" hide_new_button="1">
+                                <tree editable="top" string="Donation Lines" noteditable="1" hide_new_button="1" colors="red: inactive_product == True">
                                     <field name="line_number"/>
                                     <field name="product_id"/>
                                     <field name="account_id" />
@@ -195,6 +197,8 @@
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
+                                    <field name="inactive_product" invisible="1" />
+                                    <field name="inactive_error" />
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
@@ -277,7 +281,7 @@
                             <field name="name" string="Reference"/>
                             <newline/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Intermission Voucher Lines" hide_new_button="1">
+                                <tree editable="top" string="Intermission Voucher Lines" hide_new_button="1" colors="red: inactive_product == True">
                                     <field name="name"/>
                                     <field name="account_id" />
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
@@ -290,6 +294,8 @@
                                     <field name="uos_id" string="UOM"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
+                                    <field name="inactive_product" invisible="1" />
+                                    <field name="inactive_error" />
                                 </tree>
                             </field>
                             <group col="8" colspan="4">

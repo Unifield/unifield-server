@@ -26,7 +26,7 @@
                         <field name="is_allocatable" invisible="1"/>
                     </xpath>
                     <xpath expr="//tree[@string='Invoice lines']" position="attributes">
-                        <attribute name="colors">red:analytic_distribution_state in ('invalid') or inactive_product == True;blue:analytic_distribution_state in ('valid');black:analytic_distribution_state in ('none')</attribute>
+                        <attribute name="colors">red:analytic_distribution_state in ('invalid') or inactive_product == True;blue:analytic_distribution_state in ('valid') and inactive_product == False;black:analytic_distribution_state in ('none') and inactive_product = False</attribute>
                     </xpath>
                 </data>
             </field>
@@ -58,7 +58,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
-                        <tree string="Invoice Line" colors="red:analytic_distribution_state in ('invalid') or inactive_product == True;blue:analytic_distribution_state in ('valid');black:analytic_distribution_state in ('none')">
+                        <tree string="Invoice Line" colors="red:inactive_product == True or analytic_distribution_state in ('invalid');blue:inactive_product == False and analytic_distribution_state in ('valid');black:inactive_product == False and analytic_distribution_state in ('none')">
                             <field name="name"/>
                             <field name="inactive_product" invisible="1" />
                             <field name="account_id" />
@@ -71,6 +71,7 @@
                             <field name="uos_id" string="UoM"/>
                             <field name="price_unit"/>
                             <field name="price_subtotal"/>
+                            <!-- <field name="inactive_error" /> -->
                         </tree>
                     </xpath>
                 </data>
