@@ -704,6 +704,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Justification Code" editable="top">
+                    <field name="code" />
                     <field name="description"/>
                 </tree>
             </field>
