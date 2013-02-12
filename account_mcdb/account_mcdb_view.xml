@@ -59,6 +59,11 @@
                             </group>
                         </group>
                     </group>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
+                    </group>
                     &account;
                     <separator string="Reconciliation" colspan="4"/>
                     <field name="reconciled"/>
@@ -83,34 +88,47 @@
             <field name="arch" type="xml">
                 <form string="Selector - Analytic" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     &general;
-                    <field name="display_account" colspan="2"/><field name="display_analytic_journal" colspan="2"/>
-                    <group colspan="2" col="2" attrs="{'invisible': [('display_account', '=', False)]}">
-                        <group colspan="2" col="2">
-                            <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="1"/>
-                            <button name="button_account_add" type="object" string="Add all Accounts" icon="gtk-add" colspan="1"/>
-                        </group>
-                        <field name="rev_account_ids"/>
-                        <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
-                            <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
-                                <field name="code"/>
-                                <field name="name"/>
-                                <field name="type" string="Type"/>
-                            </tree>
-                        </field>
-                    </group>
-                    <group colspan="2" col="2" attrs="{'invisible': [('display_analytic_journal', '=', False)]}">
+                    <group col="4" colspan="4">
                         <group col="2" colspan="2">
-                            <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="1"/>
-                            <button name="button_analytic_journal_add" type="object" string="Add all Analytic Journals" icon="gtk-add" colspan="1"/>
+                            <group col="4" colspan="2">
+                                <separator string="Accounts" colspan="3"/>
+                                <field name="display_account" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_account', '=', False)]}">
+                                <group colspan="2" col="2">
+                                    <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_account_add" type="object" string="Add all Accounts" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_account_ids"/>
+                                <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
+                                    <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="type" string="Type"/>
+                                    </tree>
+                                </field>
+                            </group>
                         </group>
-                        <field name="rev_analytic_journal_ids" colspan="2"/>
-                        <field name="analytic_journal_ids" colspan="2" nolabel="1">
-                            <tree string="Analytic Journals" editable="top" noteditable="1">
-                                <field name="code"/>
-                                <field name="name" string="Name"/>
-                                <field name="type"/>
-                            </tree>
-                        </field>
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Analytic journals" colspan="3"/>
+                                <field name="display_analytic_journal" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_analytic_journal', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_analytic_journal_clear" type="object" string="Remove all Analytic Journals" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_analytic_journal_add" type="object" string="Add all Analytic Journals" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_analytic_journal_ids" colspan="2"/>
+                                <field name="analytic_journal_ids" colspan="2" nolabel="1">
+                                    <tree string="Analytic Journals" editable="top" noteditable="1">
+                                        <field name="code"/>
+                                        <field name="name" string="Name"/>
+                                        <field name="type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
                     </group>
                     <group colspan="2" col="2">
                         <html>

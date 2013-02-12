@@ -9,6 +9,11 @@
                             <field name="name"/>
                         </tree>
                     </field>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
+                    </group>
                     <separator string="" colspan="4"/>
                     <group colspan="2" col="2">
                         <field name="document_date_from" string="Document date"/>
