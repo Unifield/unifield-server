@@ -100,9 +100,14 @@ class stock_partial_picking(osv.osv_memory):
         Export lines with errors in a file.
         Warning: len(columns_header) == len(lines_not_imported)
         """
-        lines_not_imported = kwargs.get('line_with_error') # list of list
         columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Description', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
+        lines_not_imported = [] # list of list
+        for line in kwargs.get('line_with_error'):
+            if len(line) < len(columns_header):
+                lines_not_imported.append(line + ['' for x in range(len(columns_header)-len(line))])
+            else:
+                lines_not_imported.append(line)
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
                 'filename': 'Lines_Not_Imported.xls',
@@ -234,7 +239,7 @@ class stock_partial_picking(osv.osv_memory):
             if len(row) < 7:
                 error_list.append(_("""Line %s of the Excel file was added to the file of the lines with errors. You should have exactly 7 columns in this order:
 Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch, Expiry Date.""") % (file_line_num, ))
-                line_with_error.append(list(list(line_values) + ['' for x in range(7-len(row))]))
+                line_with_error.append(list(line_values))
                 ignore_lines += 1
                 continue
             line_number = cell_data.get_move_line_number(cr, uid, ids, row, line_cell, error_list, file_line_num, context)
