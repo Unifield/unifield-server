@@ -65,11 +65,23 @@ class product_international_status(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # Raise an error if the status is used in a product
         ids_p = self.pool.get('product.product').search(cr, uid, [('international_status','in',ids)])
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it\'s used at least in one product'))
-        return super(product_international_status, self).unlink(cr, uid, ids, context=context)
 
+        # Raise an error if the status is ITC or Temporary because there are used in some product.product methods
+        tmp_int_1 = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_1')
+        int_1 = tmp_int_1[1] or False
+        tmp_int_5 = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_5')
+        int_5 = tmp_int_5[1] or False
+
+        if int_1 and int_1 in ids:
+            raise osv.except_osv(_('Error'), _('You cannot remove the \'ITC\' international status because it\'s a system value'))
+        if int_5 and int_5 in ids:
+            raise osv.except_osv(_('Error'), _('You cannot remove the \'Temporary\' international status because it\'s a system value'))
+
+        return super(product_international_status, self).unlink(cr, uid, ids, context=context)
 
 product_international_status()
 
@@ -367,7 +379,7 @@ class product_attributes(osv.osv):
         if batch_management:
             return {'value': {'perishable': True}}
         return {}
-    
+
     def copy(self, cr, uid, id, default=None, context=None):
         product_xxx = self.search(cr, uid, [('default_code', '=', 'XXX')])
         if product_xxx:
@@ -375,11 +387,13 @@ class product_attributes(osv.osv):
         product2copy = self.read(cr, uid, [id], ['default_code', 'name'])[0]
         if default is None:
             default = {}
+        temp_status = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
+        
         copy_pattern = _("%s (copy)")
         copydef = dict(name=(copy_pattern % product2copy['name']),
                        default_code="XXX",
                        # we set international_status to "temp" so that it won't be synchronized with this status
-                       international_status='temp',
+                       international_status=temp_status,
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
