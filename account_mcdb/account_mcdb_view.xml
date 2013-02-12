@@ -135,81 +135,84 @@
                             <br />
                         </html>
                     </group>
-                    <separator string="Analytic Accounts" colspan="4"/>
-                    <field name="display_cost_center" colspan="2"/>
-                    <field name="display_destination" colspan="2"/>
-                    <field name="display_funding_pool" colspan="2"/>
-                    <label string="" colspan="2"/>
-                    <group colspan="2" col="2" attrs="{'invisible': [('display_cost_center', '=', False)]}">
+                    <group col="4" colspan="4">
                         <group col="2" colspan="2">
-                            <button name="button_cost_center_clear" type="object" string="Remove all Cost Centers" icon="gtk-clear" colspan="1"/>
-                            <button name="button_cost_center_add" type="object" string="Add all Cost Centers" icon="gtk-add" colspan="1"/>
+                            <group col="4" colspan="2">
+                                <separator string="Cost Centers" colspan="3"/>
+                                <field name="display_cost_center" colspan="1" nolabel="1"/>
+                            </group>
+                            <label string="" colspan="2"/>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_cost_center', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_cost_center_clear" type="object" string="Remove all Cost Centers" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_cost_center_add" type="object" string="Add all Cost Centers" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_analytic_account_cc_ids"/>
+                                <field name="analytic_account_cc_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
+                                    <tree string="Cost Center" editable="top" noteditable="1">
+                                        <field name="code" string="Ana. Code"/>
+                                        <field name="name" string="Ana. Name"/>
+                                        <field name="type" string="Ana. Type"/>
+                                    </tree>
+                                </field>
+                            </group>
                         </group>
-                        <field name="rev_analytic_account_cc_ids"/>
-                        <field name="analytic_account_cc_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'OC')]">
-                            <tree string="Cost Center" editable="top" noteditable="1">
-                                <field name="code" string="Ana. Code"/>
-                                <field name="name" string="Ana. Name"/>
-                                <field name="type" string="Ana. Type"/>
-                            </tree>
-                        </field>
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Destinations" colspan="3"/>
+                                <field name="display_destination" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_destination', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_destination_clear" type="object" string="Remove all Destinations" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_destination_add" type="object" string="Add all Destinations" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_analytic_account_dest_ids"/>
+                                <field name="analytic_account_dest_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
+                                    <tree string="Destination" editable="top" noteditable="1">
+                                        <field name="code" string="Ana. Code"/>
+                                        <field name="name" string="Ana. Name"/>
+                                        <field name="type" string="Ana. Type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
                     </group>
-                    <group colspan="2" col="2" attrs="{'invisible': [('display_destination', '=', False)]}">
-                        <group col="2" colspan="2">
-                            <button name="button_destination_clear" type="object" string="Remove all Destinations" icon="gtk-clear" colspan="1"/>
-                            <button name="button_destination_add" type="object" string="Add all Destinations" icon="gtk-add" colspan="1"/>
-                        </group>
-                        <field name="rev_analytic_account_dest_ids"/>
-                        <field name="analytic_account_dest_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
-                            <tree string="Destination" editable="top" noteditable="1">
-                                <field name="code" string="Ana. Code"/>
-                                <field name="name" string="Ana. Name"/>
-                                <field name="type" string="Ana. Type"/>
-                            </tree>
-                        </field>
+                    <group col="2" colspan="2">
+                        <html>
+                            <br />
+                        </html>
                     </group>
-                    <group colspan="2" col="2" attrs="{'invisible': [('display_funding_pool', '=', False)]}">
+                    <group col="4" colspan="4">
                         <group col="2" colspan="2">
-                            <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pools" icon="gtk-clear" colspan="1"/>
-                            <button name="button_funding_pool_add" type="object" string="Add all Funding Pools" icon="gtk-add" colspan="1"/>
+                            <group col="4" colspan="2">
+                                <separator string="Funding pools" colspan="3"/>
+                                <field name="display_funding_pool" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_funding_pool', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_funding_pool_clear" type="object" string="Remove all Funding Pools" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_funding_pool_add" type="object" string="Add all Funding Pools" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_analytic_account_fp_ids"/>
+                                <field name="analytic_account_fp_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
+                                    <tree string="Funding Pool" editable="top" noteditable="1">
+                                        <field name="code" string="Ana. Code"/>
+                                        <field name="name" string="Ana. Name"/>
+                                        <field name="type" string="Ana. Type"/>
+                                    </tree>
+                                </field>
+                            </group>
                         </group>
-                        <field name="rev_analytic_account_fp_ids"/>
-                        <field name="analytic_account_fp_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]">
-                            <tree string="Funding Pool" editable="top" noteditable="1">
-                                <field name="code" string="Ana. Code"/>
-                                <field name="name" string="Ana. Name"/>
-                                <field name="type" string="Ana. Type"/>
-                            </tree>
-                        </field>
+                        <group col="2" colspan="2">
+                            <label string="" colspan="2"/>
+                        </group>
                     </group>
-                    <!--group colspan="2" col="2">
-                        <group col="2" colspan="2">
-                            <button name="button_free_1_clear" type="object" string="Remove all Free 1" icon="gtk-clear" colspan="1"/>
-                            <button name="button_free_1_add" type="object" string="Add all Free 1" icon="gtk-add" colspan="1"/>
-                        </group>
-                        <field name="rev_analytic_account_f1_ids"/>
-                        <field name="analytic_account_f1_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1')]">
-                            <tree string="Free 1" editable="top" noteditable="1">
-                                <field name="code" string="Ana. Code"/>
-                                <field name="name" string="Ana. Name"/>
-                                <field name="type" string="Ana. Type"/>
-                            </tree>
-                        </field>
+                    <group col="2" colspan="2">
+                        <html>
+                            <br />
+                        </html>
                     </group>
-                    <group colspan="2" col="2">
-                        <group col="2" colspan="2">
-                            <button name="button_free_2_clear" type="object" string="Remove all Free 2" icon="gtk-clear" colspan="1"/>
-                            <button name="button_free_2_add" type="object" string="Add all Free 2" icon="gtk-add" colspan="1"/>
-                        </group>
-                        <field name="rev_analytic_account_f2_ids"/>
-                        <field name="analytic_account_f2_ids" colspan="2" nolabel="1" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2')]">
-                            <tree string="Free 2" editable="top" noteditable="1">
-                                <field name="code" string="Ana. Code"/>
-                                <field name="name" string="Ana. Name"/>
-                                <field name="type" string="Ana. Type"/>
-                            </tree>
-                        </field>
-                    </group-->
                     <separator string="Reallocation" colspan="4"/>
                     <field name="reallocated" colspan="2"/>
                     <field name="reversed" colspan="2"/>
