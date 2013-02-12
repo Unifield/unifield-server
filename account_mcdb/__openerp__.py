@@ -35,6 +35,7 @@
         'account_view.xml',
         'account_mcdb_export_view.xml',
         'account_mcdb_report.xml',
+        'account_mcdb_data.xml',
     ],
     "demo_xml" : [],
     "test": [],

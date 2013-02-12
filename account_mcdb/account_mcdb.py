@@ -821,5 +821,15 @@ class account_mcdb(osv.osv):
         field = 'instance_ids'
         return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
+    def clean_up_search(self, cr, uid, ids, context=None):
+        """
+        Clean up objects that have no description.
+        """
+        if not context:
+            context = {}
+        to_clean = self.search(cr, uid, [('description', '=', False)])
+        self.unlink(cr, uid, to_clean)
+        return True
+
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
