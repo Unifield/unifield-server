@@ -63,6 +63,7 @@ def get_log_message(**kwargs):
     nb_lines_error = kwargs.get('nb_lines_error', False)
     tender = kwargs.get('tender', False)
     # not for tender
+    obj = kwargs.get('obj', False)
     msg_to_return = False
     # nb_lines_error => is just for tender
     if tender and nb_lines_error:
