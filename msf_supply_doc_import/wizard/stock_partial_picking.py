@@ -92,7 +92,7 @@ class stock_partial_picking(osv.osv_memory):
         columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        values.update({'file_to_import': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
+        values.update({'file_to_import': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])), 'filename': 'template.xls'})
         return values
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
@@ -100,7 +100,7 @@ class stock_partial_picking(osv.osv_memory):
         columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
         return vals
         
 

@@ -150,7 +150,7 @@ The columns should be in this values:
         for k,v in sorted(data, key=lambda tup: tup[1]):
             columns_header.append((k, type(k)))
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml()), 'filename': 'Lines_Not_Imported.xls'}
+        vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
         return vals
 
     def default_get(self, cr, uid, fields, context=None):
@@ -165,7 +165,7 @@ The columns should be in this values:
             res['po_id'] = po_id
         columns_header = PO_COLUMNS_HEADER_FOR_INTEGRATION
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        res.update({'file': base64.encodestring(default_template.get_xml()), 'filename': 'template.xls'})
+        res.update({'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])), 'filename': 'template.xls'})
         return res
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
