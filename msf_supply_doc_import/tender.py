@@ -170,7 +170,9 @@ class tender(osv.osv):
         columns_header = columns_header_for_tender_line_import
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-                                                                            'filename_template': 'template.xls'}, context)
+                                                                            'filename_template': 'template.xls',
+                                                                            'filename': 'Lines_Not_Imported.xls',
+                                                                            'tender_id': ids[0]}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.tender.line',
                 'res_id': export_id,

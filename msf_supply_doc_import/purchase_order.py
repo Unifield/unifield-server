@@ -108,7 +108,9 @@ class purchase_order(osv.osv):
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.po.line').create(cr, uid, {'file': file,
-                                                                            'filename_template': 'template.xls'}, context)
+                                                                            'filename_template': 'template.xls',
+                                                                            'filename': 'Lines_Not_Imported.xls',
+                                                                            'po_id': ids[0]}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.line',
                 'res_id': export_id,

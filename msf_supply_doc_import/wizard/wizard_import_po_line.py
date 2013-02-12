@@ -66,19 +66,6 @@ The columns should be in this values:
         'state': lambda *a: 'draft',
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        '''
-        Set po_id with the active_id value in context.
-        Set the template of import.
-        '''
-        if not context or not context.get('active_id'):
-            raise osv.except_osv(_('Error !'), _('No Purchase Order found !'))
-        else:
-            po_id = context.get('active_id')
-            res = super(wizard_import_po_line, self).default_get(cr, uid, fields, context=context)
-            res['po_id'] = po_id
-        return res
-
     def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
