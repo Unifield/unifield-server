@@ -10,6 +10,16 @@
         auto="True"
         menu="True"/>
 
+        <report id="open_invoices_2"
+        string="Open Invoices 2"
+        model="account.invoice"
+        name="open.invoices.2"
+        file="account_override/report/open_invoices_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
+
     </data>
 </openerp>
 
