@@ -84,6 +84,7 @@ class account_mcdb(osv.osv):
         'rev_period_ids': fields.boolean('Exclude period selection'),
         'rev_account_type_ids': fields.boolean('Exclude account type selection'),
         'rev_analytic_journal_ids': fields.boolean('Exclude analytic journal selection'),
+        'rev_instance_ids': fields.boolean('Exclude instance selection'),
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
@@ -260,6 +261,9 @@ class account_mcdb(osv.osv):
                         operator = 'not in'
                     # analytic_journal_ids with reversal
                     if m2m[0] == 'analytic_journal_ids' and wiz.rev_analytic_journal_ids:
+                        operator = 'not in'
+                    # instance_ids with reversal
+                    if m2m[0] == 'instance_ids' and wiz.rev_instance_ids:
                         operator = 'not in'
                     # Search if a view account is given
                     if m2m[0] in ['account_ids', 'analytic_account_fp_ids', 'analytic_account_cc_ids', 'analytic_account_f1_ids', 'analytic_account_f2_ids']:
@@ -788,6 +792,33 @@ class account_mcdb(osv.osv):
         obj = 'account.analytic.account'
         args = [('type', '!=', 'view'), ('category', '=', 'DEST')]
         field = 'analytic_account_dest_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
+
+    def button_instance_clear(self, cr, uid, ids, context=None):
+        """
+        Delete instance_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Return default behaviour with 'period_ids' field
+        return self.button_clear(cr, uid, ids, field='instance_ids', context=context)
+
+    def button_instance_add(self, cr, uid, ids, context=None):
+        """
+        Add all instances in instance_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'msf.instance'
+        args = []
+        field = 'instance_ids'
         return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
 account_mcdb()
