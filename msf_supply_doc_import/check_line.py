@@ -50,6 +50,9 @@ def check_empty_line(**kwargs):
         try:
             if row.cells[cell].data:
                 return True
+        except ValueError:
+            if row.cells[cell].data:
+                return True
         except TypeError:
             pass
 
@@ -78,6 +81,33 @@ def get_log_message(**kwargs):
     return msg_to_return
 
 
+def compute_asset_value(cr, uid, **kwargs):
+    """
+    Retrieves asset_id from Excel file
+    """
+    row = kwargs['row']
+    asset_obj = kwargs['asset_obj']
+    error_list = kwargs['to_write']['error_list']
+    product_id = kwargs['to_write'].get('product_id', False)
+    cell_nb = kwargs['cell_nb']
+    asset_id = None
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            asset_name = row.cells[cell_nb].data.strip()
+            if asset_name and product_id:
+                asset_ids = asset_obj.search(cr, uid, [('name', '=', asset_name), ('product_id', '=', product_id)])
+                if asset_ids:
+                    asset_id = asset_ids[0]
+                else:
+                    error_list.append('The Asset "%s" does not exist for this product.' % asset_name)
+        else:
+            msg = 'The Asset Name has to be a string.'
+        if not asset_id:
+            error_list.append(msg or 'The Asset was not valid.')
+    return {'asset_id': asset_id, 'error_list': error_list}
+
+
 def product_value(cr, uid, **kwargs):
     """
     Compute product value according to cell content.
@@ -96,10 +126,11 @@ def product_value(cr, uid, **kwargs):
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
+    cell_nb = kwargs.get('cell_nb', 0)
     try:
-        if row.cells[0] and row.cells[0].data:
-            product_code = row.cells[0].data
-            if product_code and row.cells[0].type == 'str':
+        if row.cells[cell_nb] and row.cells[cell_nb].data:
+            product_code = row.cells[cell_nb].data
+            if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
                 p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                 if not p_ids:
@@ -128,14 +159,15 @@ def quantity_value(**kwargs):
     row = kwargs['row']
     product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
+    cell_nb = kwargs.get('cell_nb', 2)
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     try:
-        if not row.cells[2]:
+        if not row.cells[cell_nb]:
             warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
         else:
-            if row.cells[2].type in ['int', 'float']:
-                product_qty = row.cells[2].data
+            if row.cells[cell_nb].type in ['int', 'float']:
+                product_qty = row.cells[cell_nb].data
             else:
                 error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
     # if the cell is empty
@@ -156,12 +188,13 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
+    cell_nb = kwargs.get('cell_nb', 3)
     msg = ''
     try:
         # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
-        if row.cells[3] and str(row.cells[3]) != str(None):
-            if row.cells[3].type == 'str':
-                uom_name = row.cells[3].data.strip()
+        if row.cells[cell_nb] and str(row.cells[3]) != str(None):
+            if row.cells[cell_nb].type == 'str':
+                uom_name = row.cells[cell_nb].data.strip()
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
                 if uom_ids:
                     uom_id = uom_ids[0]
@@ -239,6 +272,24 @@ def compute_date_value(**kwargs):
     except IndexError:
         warning_list.append('The date format was not correct. The date from the header has been taken.')
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
+
+
+def compute_expiry_date_value(**kwargs):
+    """
+    Retrieves Date from Excel file or take the one from the parent
+    """
+    row = kwargs['row']
+    cell_nb = kwargs['cell_nb']
+    error_list = kwargs['to_write']['error_list']
+    expiry_date = None
+    try:
+        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime' and row.cells[cell_nb].data:
+            expiry_date = row.cells[cell_nb].data
+        else:
+            error_list.append('The date format was not correct.')
+    except IndexError:
+        pass
+    return {'expiry_date': expiry_date, 'error_list': error_list}
 
 
 def compute_currency_value(cr, uid, **kwargs):
