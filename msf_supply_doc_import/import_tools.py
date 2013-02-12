@@ -82,7 +82,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_product_uom_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data:
+        if cell_data and isinstance(cell_data, (str,)):
             product_uom_name = cell_data.strip()
             product_uom_ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', product_uom_name)])
             if product_uom_ids:

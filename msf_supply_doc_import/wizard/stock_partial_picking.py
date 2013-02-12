@@ -89,18 +89,24 @@ class stock_partial_picking(osv.osv_memory):
         if not context:
             context = {}
         values = super(stock_partial_picking, self).default_get(cr, uid, fields, context=context)
-        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
+        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Description', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         values.update({'file_to_import': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])), 'filename': 'template.xls'})
         return values
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
+        """
+        Export lines with errors in a file.
+        Warning: len(columns_header) == len(lines_not_imported)
+        """
         lines_not_imported = kwargs.get('line_with_error') # list of list
-        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Descrpition', 'string'), ('Quantity To Process', 'string'),
+        columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Description', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
-        vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
+        vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
+                'filename': 'Lines_Not_Imported.xls',
+                'import_error_ok': True,}
         return vals
         
 
@@ -221,13 +227,16 @@ class stock_partial_picking(osv.osv_memory):
             # default values
             line_data = {}
             file_line_num += 1
-            # Check length of the row
-            if len(row) < 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly the 8 first following columns in this order for all lines:
-Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch, Expiry Date, Asset"""))
 
             # get values from row
             line_values = cell_data.get_line_values(cr, uid, ids, row)
+            # Check length of the row
+            if len(row) < 7:
+                error_list.append(_("""Line %s of the Excel file was added to the file of the lines with errors. You should have exactly 7 columns in this order:
+Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch, Expiry Date.""") % (file_line_num, ))
+                line_with_error.append(list(list(line_values) + ['' for x in range(7-len(row))]))
+                ignore_lines += 1
+                continue
             line_number = cell_data.get_move_line_number(cr, uid, ids, row, line_cell, error_list, file_line_num, context)
             product_id = cell_data.get_product_id(cr, uid, ids, row, product_cell, error_list, file_line_num, context)
             uom_id = cell_data.get_product_uom_id(cr, uid, ids, row, uom_cell, error_list, file_line_num, context)
@@ -671,10 +680,10 @@ Reported errors :
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                 <field name="import_error_ok" invisible="1"/>
                 <field name="filename" invisible="1"  />
-                <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
                 <newline />
                 <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('import_in_progress', '=', False)]}" />
+                <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 </group>
                 <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
                 """
