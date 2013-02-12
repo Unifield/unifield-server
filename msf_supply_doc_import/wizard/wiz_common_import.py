@@ -31,12 +31,17 @@ class wiz_common_import(osv.osv_memory):
     _name = 'wiz.common.import'
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
-        lines_not_imported = kwargs.get('line_with_error') # list of list
+        lines_not_imported = []
         header_index = kwargs.get('header_index')
         data = header_index.items()
         columns_header = []
         for k,v in sorted(data, key=lambda tup: tup[1]):
             columns_header.append((k, type(k)))
+        for line in kwargs.get('line_with_error'):
+            if len(line) < len(columns_header):
+                lines_not_imported.append(line + ['' for x in range(len(columns_header)-len(line))])
+            else:
+                lines_not_imported.append(line)
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
         return vals
