@@ -33,6 +33,7 @@ import time
 
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 class supplier_catalogue(osv.osv):
     _name = 'supplier.catalogue'
@@ -265,8 +266,15 @@ class supplier_catalogue(osv.osv):
         'active': fields.boolean(string='Active'),
         'current': fields.function(_get_active, fnct_search=_search_active, method=True, string='Active', type='boolean', store=False, 
                                    readonly=True, help='Indicate if the catalogue is currently active.'),
-        'file_to_import': fields.binary(string='File to import', filters='*.xml', help="The file should be in XML Spreadsheet 2003 format. The columns should be in this order : Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."),
+        'file_to_import': fields.binary(string='File to import', filters='*.xml',
+                                        help="""The file should be in XML Spreadsheet 2003 format. The columns should be in this order :
+                                        Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
+        'data': fields.binary(string='File with errors',),
+        'filename': fields.char(string='Lines not imported', size=256),
+        'filename_template': fields.char(string='Template', size=256),
+        'import_error_ok': fields.boolean('Display file with error'), 
+        'text_error': fields.text('Text Error', readonly=True),
     }
     
     _defaults = {
@@ -275,8 +283,9 @@ class supplier_catalogue(osv.osv):
         'partner_id': lambda obj, cr, uid, ctx: ctx.get('partner_id', False),
         'period_from': lambda *a: time.strftime('%Y-%m-%d'),
         'active': lambda *a: True,
+        'filename_template': 'template.xls'
     }
-    
+
     def _check_period(self, cr, uid, ids):
         '''
         Check if the To date is older than the From date
@@ -328,17 +337,57 @@ class supplier_catalogue(osv.osv):
                 'view_mode': 'form',
                 'res_id': ids[0],
                 'context': context}
-        
+
+    def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
+        """
+        Export lines with errors in a file.
+        Warning: len(columns_header) == len(lines_not_imported)
+        """
+        columns_header = [('Product code*', 'string'), ('Product description', 'string'), ('Product UoM*', 'string'),
+                          ('Min Quantity*', 'number'), ('Unit Price*', 'number'), ('Rounding', 'number'), ('Min Order Qty', 'number'),
+                          ('Comment', 'string')]
+        lines_not_imported = [] # list of list
+        for line in kwargs.get('line_with_error'):
+            if len(line) < len(columns_header):
+                lines_not_imported.append(line + ['' for x in range(len(columns_header)-len(line))])
+            else:
+                lines_not_imported.append(line)
+        files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
+        vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
+                'filename': 'Lines_Not_Imported.xls',
+                'import_error_ok': True,}
+        return vals
+
+    def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, context=None):
+        list_of_values = []
+        for cell_nb in range(len(row)):
+            cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+            list_of_values.append(cell_data)
+        return list_of_values
+
+    def get_file_values(self, cr, uid, ids, rows, error_list, context=None):
+        """
+        Catch the file values on the form [{values of the 1st line}, {values of the 2nd line}...]
+        """
+        file_values = []
+        for row in rows:
+            line_values = {}
+            for cell in enumerate(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, context=context)):
+                line_values.update({cell[0]: cell[1]})
+            file_values.append(line_values)
+        return file_values
+
     def catalogue_import_lines(self, cr, uid, ids, context=None):
         '''
-        Open the wizard to import lines
+        Import the catalogue lines
         '''
         if not context:
             context = {}
         vals = {}
-        vals['line_ids'] = []
+        vals['line_ids'], error_list, line_with_error = [], [], []
         msg_to_return = _("All lines successfully imported")
         error_txt = ''
+        ignore_lines = 0
 
         sup_cat = self.pool.get('supplier.catalogue')
         product_obj = self.pool.get('product.product')
@@ -350,7 +399,9 @@ class supplier_catalogue(osv.osv):
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
             fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
-            reader = fileobj.getRows()
+            rows,reader = fileobj.getRows(), fileobj.getRows() # because we got 2 iterations
+            # take all the lines of the file in a list of dict
+            file_values = self.get_file_values(cr, uid, ids, rows, error_list, context=context)
 
             reader.next()
             line_num = 1
@@ -409,8 +460,12 @@ class supplier_catalogue(osv.osv):
                     if browse_uom.category_id.id != browse_product.uom_id.category_id.id:
                         uom_id = browse_product.uom_id.id
                         to_correct_ok = True
-                        error_txt = _("""Line %s of the file: the UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
-                                      ) % (line_num, browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code)
+                        error_list.append(_("""Line %s of the file: the UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
+                                            ) % (line_num, browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
+                        data = file_values[line_num].items()
+                        line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
+                        ignore_lines += 1
+                        continue
 
                 #Product Min Qty
                 if not row.cells[3].data :
@@ -471,6 +526,11 @@ class supplier_catalogue(osv.osv):
                 }
 
                 vals['line_ids'].append((0, 0, to_write))
+            # in case of lines ignored, we notify the user and create a file with he lines ignored
+            vals.update({'text_error': '\n'.join(error_list) + '\n Lines ignored: %s' % ignore_lines})
+            if line_with_error:
+                file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
+                vals.update(file_to_export)
 
             self.write(cr, uid, ids, vals, context=context)
 
@@ -480,7 +540,7 @@ class supplier_catalogue(osv.osv):
             #res_id = self.pool.get('catalogue.import.lines').create(cr, uid, {'catalogue_id': ids[0]}, context=context)
 
             for line in obj.line_ids:
-                if line.to_correct_ok:
+                if line.to_correct_ok or line_with_error:
                     msg_to_return = _("The import of lines had errors, please correct the red lines below")
             
         return self.log(cr, uid, obj.id, msg_to_return,)
