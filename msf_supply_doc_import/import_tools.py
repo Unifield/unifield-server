@@ -39,7 +39,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_purchase_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data:
+        if cell_data and isinstance(cell_data, (str,)):
             purchase_name = cell_data.strip()
             purchase_ids = self.pool.get('purchase.order').search(cr, uid, [('name', '=', purchase_name)])
             if purchase_ids:
@@ -49,7 +49,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_picking_id(self, cr, uid, ids, row, cell_nb, line_num, error_list, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data:
+        if cell_data and isinstance(cell_data, (str,)):
             incoming_shipment_name = cell_data.strip()
             picking_ids = self.pool.get('stock.picking').search(cr, uid, [('name', '=', incoming_shipment_name)])
             if picking_ids:
@@ -66,7 +66,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_product_id(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data:
+        if cell_data and isinstance(cell_data, (str,)):
             default_code = cell_data.strip()
             product_ids = self.pool.get('product.product').search(cr, uid, [('default_code', '=', default_code)])
             if product_ids:
@@ -91,7 +91,7 @@ class import_cell_data(osv.osv_memory):
 
     def get_prodlot_name(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data:
+        if cell_data and isinstance(cell_data, (str,)):
             return cell_data.strip()
         return False
 
