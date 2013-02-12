@@ -365,34 +365,35 @@ class purchase_order_line(osv.osv):
             date_order = po.date_order or False
             fiscal_position = po.fiscal_position or False
             state = po.state or False
-            product = to_write['product_id']
-            qty = to_write['product_qty']
-            price_unit = to_write['price_unit']
-            uom = to_write['product_uom']
-            if product and qty and not price_unit_defined:
-                try:
-                    res = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-                                                    partner_id, date_order, fiscal_position, date_planned=False,
-                                                    name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
-                                                    nomen_manda_0=False, comment=False, context=context)
-                    if not context.get('po_integration'):
-                        price_unit = res.get('value', {}).get('price_unit', False)
-                        text_error += 'We use the price mechanism to compute the Price Unit.'
-                    uom = res.get('value', {}).get('product_uom', False)
-                    warning_msg = res.get('warning', {}).get('message', '')
-                    text_error += '\n %s' % warning_msg
-                except osv.except_osv as osv_error:
-                    if not context.get('po_integration'):
-                        osv_value = osv_error.value
-                        osv_name = osv_error.name
-                        text_error += '%s. %s\n' % (osv_value, osv_name)
-                to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
-            if uom:
-                self.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-            else:
-                uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-                text_error += '\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.'
-                to_write.update({'product_uom': uom, 'text_error': text_error})
+            product = to_write.get('product_id', False)
+            if product:
+                qty = to_write['product_qty']
+                price_unit = to_write['price_unit']
+                uom = to_write['product_uom']
+                if product and qty and not price_unit_defined:
+                    try:
+                        res = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
+                                                        partner_id, date_order, fiscal_position, date_planned=False,
+                                                        name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
+                                                        nomen_manda_0=False, comment=False, context=context)
+                        if not context.get('po_integration'):
+                            price_unit = res.get('value', {}).get('price_unit', False)
+                            text_error += 'We use the price mechanism to compute the Price Unit.'
+                        uom = res.get('value', {}).get('product_uom', False)
+                        warning_msg = res.get('warning', {}).get('message', '')
+                        text_error += '\n %s' % warning_msg
+                    except osv.except_osv as osv_error:
+                        if not context.get('po_integration'):
+                            osv_value = osv_error.value
+                            osv_name = osv_error.name
+                            text_error += '%s. %s\n' % (osv_value, osv_name)
+                    to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
+                if uom:
+                    self.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                else:
+                    uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+                    text_error += '\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.'
+                    to_write.update({'product_uom': uom, 'text_error': text_error})
         return to_write
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
