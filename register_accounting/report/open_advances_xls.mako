@@ -105,7 +105,7 @@
     </Row>
 	<Row ss:Index="3">
 		<Cell ss:StyleID="title" ><Data ss:Type="String">Instance:</Data></Cell>
-		<Cell ss:StyleID="title" ><Data ss:Type="String">${(o.instance_id.code or '')|x}</Data></Cell>
+		<Cell ss:StyleID="title" ><Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
 	</Row>
 	<Row>
 		<Cell ss:StyleID="title" ><Data ss:Type="String">Report Date:</Data></Cell>
