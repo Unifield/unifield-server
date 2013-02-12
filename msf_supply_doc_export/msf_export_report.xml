@@ -13,7 +13,7 @@
             auto="False"
             menu="True"
          />
-         
+
         <report
             id="report_request_for_quotation_xls"
             string="Request For Quotation Excel Export"
