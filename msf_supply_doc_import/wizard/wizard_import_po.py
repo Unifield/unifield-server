@@ -159,21 +159,6 @@ The columns should be in this values:
         vals = {'data': base64.encodestring(files_with_error.get_xml(default_filters=['decode.utf8'])), 'filename': 'Lines_Not_Imported.xls'}
         return vals
 
-    def default_get(self, cr, uid, fields, context=None):
-        '''
-        Set po_id with the active_id value in context
-        '''
-        if not context or not context.get('active_id'):
-            raise osv.except_osv(_('Error !'), _('No Purchase Order found !'))
-        else:
-            po_id = context.get('active_id')
-            res = super(wizard_import_po, self).default_get(cr, uid, fields, context=context)
-            res['po_id'] = po_id
-        columns_header = PO_COLUMNS_HEADER_FOR_INTEGRATION
-        default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        res.update({'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])), 'filename': 'template.xls'})
-        return res
-
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         list_of_values = []
         for cell_nb in range(len(row)):
