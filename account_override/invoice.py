@@ -85,6 +85,21 @@ class account_invoice(osv.osv):
         'date_invoice': lambda *a: strftime('%Y-%m-%d'),
     }
 
+    def _check_inactive_suppliers(self, cr, uid, ids, context=None):
+        """
+        Check that partner_id is not inactive
+        """
+        if not context:
+            context = {}
+        for i in self.browse(cr, uid, ids):
+            if i.partner_id and i.partner_id.active == False:
+                return False
+        return True
+
+    _constraints = [
+        (_check_inactive_suppliers, "Partner is inactive!", ['partner_id']),
+    ]
+
     def create_sequence(self, cr, uid, vals, context=None):
         """
         Create new entry sequence for every new invoice
