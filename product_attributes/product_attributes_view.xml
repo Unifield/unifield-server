@@ -573,7 +573,6 @@
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
 	        <search string="Status">
-	            <field name="code" />
 	            <field name="name" />
 	        </search>
 	    </field>
@@ -584,7 +583,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Status" editable="top" >
-	            <field name="code" />
 	            <field name="name" />
                 </tree>
             </field>
@@ -608,7 +606,6 @@
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
 	        <search string="Product Creators">
-	            <field name="code" />
 	            <field name="name" />
 	        </search>
 	    </field>
@@ -619,7 +616,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Product Creators" editable="top" >
-	            <field name="code" />
 	            <field name="name" />
                 </tree>
             </field>
@@ -643,7 +639,6 @@
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
 	        <search string="Heat sensitive">
-	            <field name="code" />
 	            <field name="name" />
 	        </search>
 	    </field>
@@ -654,7 +649,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Heat sensitive" editable="top" >
-	            <field name="code" />
 	            <field name="name" />
                 </tree>
             </field>
@@ -678,7 +672,6 @@
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
 	        <search string="Cold chain">
-	            <field name="code" />
 	            <field name="name" />
 	        </search>
 	    </field>
@@ -689,7 +682,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Cold chain" editable="top" >
-	            <field name="code" />
 	            <field name="name" />
                 </tree>
             </field>
@@ -712,7 +704,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Justification Code" editable="top">
-                    <field name="code"/>
                     <field name="description"/>
                 </tree>
             </field>
@@ -724,7 +715,6 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Justification Codes">
-                    <field name="code" />
                     <field name="description" />
                 </search>
             </field>
