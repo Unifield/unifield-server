@@ -521,7 +521,7 @@ class product_attributes(osv.osv):
                         elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
                             type_name = 'Stock Transfer Voucher'
                         # Supplier Invoice
-                        elif obj.type == 'in_invoice' and not register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
+                        elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
                             type_name = 'Supplier Invoice'
                         # Supplier Direct Invoice
                         elif obj.type == 'in_invoice' and obj.register_line_ids:
@@ -712,7 +712,7 @@ class product_deactivation_error_line(osv.osv_memory):
             elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
                 context.update({'type':'out_invoice', 'journal_type': 'sale'})
             # Supplier Invoice
-            elif obj.type == 'in_invoice' and not register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
+            elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
                 context.update({'type':'in_invoice', 'journal_type': 'purchase'})
             # Supplier Direct Invoice
             elif obj.type == 'in_invoice' and obj.register_line_ids:
