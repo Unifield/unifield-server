@@ -73,6 +73,7 @@ class stock_partial_picking(osv.osv_memory):
                                         help="""* You can use the template of the export for the format that you need to use.
                                                 * The file should be in XML Spreadsheet 2003 format."""),
         'data': fields.binary('Lines with errors'),
+        'filename_template': fields.char('Template', size=256),
         'filename': fields.char('Lines with errors', size=256),
         #'import_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Error at import", store=False),
         'import_error_ok': fields.boolean(string='error', readonly=True),
@@ -92,7 +93,7 @@ class stock_partial_picking(osv.osv_memory):
         columns_header = [('Line Number', 'string'), ('Product Code','string'), ('Product Description', 'string'), ('Quantity To Process', 'string'),
                           ('Product UOM', 'string'), ('Batch', 'string'), ('Expiry Date', 'string')]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        values.update({'file_to_import': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])), 'filename': 'template.xls'})
+        values.update({'file_to_import': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])), 'filename_template': 'template.xls'})
         return values
 
     def export_file_with_error(self, cr, uid, ids, *args, **kwargs):
@@ -681,14 +682,14 @@ Reported errors :
                 <newline/>
                 <field name="import_in_progress" invisible="1" />
                 <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
-                <field name="file_to_import" colspan="2"/>
+                <field name="file_to_import" filename="filename_template" colspan="2"/>
                 <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
                 <field name="import_error_ok" invisible="1"/>
                 <field name="filename" invisible="1"  />
                 <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
                 <newline />
                 <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('import_in_progress', '=', False)]}" />
-                <field name="data" filename="filename" readonly="2" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
+                <field name="data" filename="filename" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 </group>
                 <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
                 """

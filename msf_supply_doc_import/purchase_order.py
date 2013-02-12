@@ -111,7 +111,9 @@ class purchase_order(osv.osv):
         columns_header = [(column, type(column)) for column in columns_for_po_integration]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-                                                                            'filename_template': 'template.xls'}, context)
+                                                                        'filename_template': 'template.xls',
+                                                                        'filename': 'Lines_Not_Imported.xls',
+                                                                        'po_id': ids[0]}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po',
                 'res_id': export_id,
