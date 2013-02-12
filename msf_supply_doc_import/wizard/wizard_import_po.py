@@ -49,7 +49,8 @@ class purchase_line_import_xml_line(osv.osv_memory):
         'product_id': fields.many2one('product.product', string='Product'),
         'product_uom': fields.many2one('product.uom', string='UoM'),
         'product_qty': fields.float(digits=(16,2), string='Quantity'),
-        'price_unit':fields.float(digits=(16,2), string='Price'),
+        'price_unit': fields.float(digits=(16,2), string='Price'),
+        'price_unit_defined': fields.boolean('Price Unit Defined?'),
         'confirmed_delivery_date': fields.date('Confirmed Delivery Date'),
         'origin': fields.char(size=64, string='Origin'),
         'notes': fields.text('Notes'),
@@ -315,6 +316,7 @@ The columns should be in this values:
             'show_msg_ok': False,
             'comment': '',
             'confirmed_delivery_date': False,
+            'text_error': '',
         }
 
         # Order Reference*
@@ -392,7 +394,7 @@ The columns should be in this values:
         if cell_data:
             try:
                 price_unit = float(cell_data)
-                to_write.update({'price_unit': price_unit})
+                to_write.update({'price_unit': price_unit, 'price_unit_defined': True})
             except ValueError, e:
                 to_write['error_list'].append(_('The Price %s has a wrong format. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
