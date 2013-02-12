@@ -110,7 +110,7 @@ class purchase_order(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = [(column, type(column)) for column in columns_for_po_integration]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml()),
+        export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
                                                                             'filename_template': 'template.xls'}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po',
@@ -157,7 +157,7 @@ class purchase_order(osv.osv):
             new_list.insert(header_index['Notes (PO)'], po.notes)
             list_of_lines.append(new_list)
         instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
-        file = base64.encodestring(instanciate_class.get_xml())
+        file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
         
         export_id = self.pool.get('wizard.export.po').create(cr, uid, {'po_id': ids[0], 
                                                                         'file': file, 
