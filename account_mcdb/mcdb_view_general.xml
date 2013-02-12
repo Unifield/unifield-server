@@ -1,7 +1,7 @@
                     <separator string="General" colspan="4"/>
                     <field name="description" colspan="4"/>
-                    <separator string="Instance" colspan="4"/>
-                    <field name="display_instance" colspan="2"/>
+                    <separator string="Instance" colspan="3"/>
+                    <field name="display_instance" colspan="1" nolabel="1"/>
                     <label string="" colspan="2"/>
                     <field name="instance_ids" colspan="4" nolabel="1" attrs="{'invisible': [('display_instance', '=', False)]}">
                         <tree string="Proprietary Instances">
@@ -21,4 +21,3 @@
                         <field name="posting_date_to" string="to"/>
                         <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                     </group>
-                    <separator string="Accounting" colspan="4"/>
