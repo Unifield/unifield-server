@@ -246,7 +246,7 @@ class account_line_csv_export(osv.osv_memory):
             head += ['Func. In', 'Func. Out', 'Func. Currency']
         else:
             head += ['Output In', 'Output Out', 'Output Currency']
-        head += ['State', 'Statement']
+        head += ['State', 'Register Name']
         writer.writerow(head)
         # Sort items
         ids.sort()
