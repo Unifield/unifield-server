@@ -145,10 +145,15 @@ class stock_partial_picking(osv.osv_memory):
         if product.perishable:
             # Error if no expiry date
             if not expired_date:
-                error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found" % (file_line_num))
-                line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                return True, prodlot_id
-
+                if not prodlot_name:
+                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found or it has a wrong format ('DD-MM-YYYY')" % (file_line_num))
+                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                    return True, prodlot_id
+                else:
+                    prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id)])
+                    if prodlot_ids:
+                        prodlot_id = prodlot_ids[0]
+                    return True, prodlot_id
             # Search or create a batch number
             prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])
             if prodlot_ids:
@@ -455,18 +460,27 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             qty_to_split = m.quantity_ordered - l.quantity < 1 and 1 or l.quantity
                             self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
                                                                             {'quantity': qty_to_split}, context=wiz_context)
-                            self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                            info_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
-                            new_move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
-                                                                    ('id', 'not in', already_treated),
-                                                                    ('id', 'not in', move_ids),
-                                                                    ('line_number', '=', ln)], order='id desc')
-                            new_move_id = new_move_ids[0]
-                            move_ids.append(new_move_id)
-                            move_obj.write(cr, uid, [new_move_id], {'product_uom': l.uom_id.id,
-                                                                    'quantity': l.quantity,
-                                                                    'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
-                                                                    'expiry_date': l.expiry_date}, context=context)
+                            try:
+                                self.pool.get(wizard_values['res_model']).split(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                                info_list.append(_("Line %s of the Excel file produced a split for the line %s.") % (l.file_line_number, ln))
+                                new_move_ids = move_obj.search(cr, uid, [('wizard_pick_id', '=', obj.id),
+                                                                        ('id', 'not in', already_treated),
+                                                                        ('id', 'not in', move_ids),
+                                                                        ('line_number', '=', ln)], order='id desc')
+                                new_move_id = new_move_ids[0]
+                                move_ids.append(new_move_id)
+                                move_obj.write(cr, uid, [new_move_id], {'product_uom': l.uom_id.id,
+                                                                        'quantity': l.quantity,
+                                                                        'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
+                                                                        'expiry_date': l.expiry_date}, context=context)
+                            except osv.except_osv as osv_error:
+                                error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : %s") % (l.file_line_number, osv_error.value))
+                                line_with_error.append(list(l.line_values))
+                                ignore_lines += 1
+                                processed_lines -= 1
+                                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                                break
                             if m.product_id.id != l.product_id.id:
                                 # Call the change product wizard
                                 wizard_values = move_obj.change_product(cr, uid, new_move_id, context)
@@ -640,14 +654,14 @@ Reported errors :
             raise osv.except_osv(_('Error'), _('No line to process.'))
         
         fileobj = SpreadsheetXML(xmlstring=base64.decodestring(file_to_import))
-
-        self.write(cr, uid, ids, {'import_in_progress': True})
+        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
+        Otherwise, you can continue to use Unifield.""")
+        self.write(cr, uid, ids, {'import_in_progress': True, 'message': msg_to_return})
         
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, fileobj, context))
         thread.start()
-        msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
-        Otherwise, you can continue to use Unifield.""")
-        return self.log(cr, uid, ids[0], msg_to_return)
+        # the windows must be updated to display the message
+        return self.pool.get('wizard').open_wizard(cr, uid, ids, type='update', context=context)
 
     def dummy(self, cr, uid, ids, context=None):
         """
