@@ -198,13 +198,16 @@ The columns should be in this values:
         cell_nb = header_index['Delivery Confirmed Date (PO)*']
         delivery_confirmed_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
-            try:
-                delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
-                to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
-            except ValueError, e:
-                to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)*" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
-                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-        
+            if row.cells[cell_nb].type == 'datetime':
+                to_write_po.update({'delivery_confirmed_date':  delivery_confirmed_date.strftime('%d-%m-%Y')})
+            else:
+                try:
+                    delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
+                    to_write_po.update({'delivery_confirmed_date': str(delivery_confirmed_date)})
+                except ValueError, e:
+                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)*" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
+                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+            
         # Supplier Reference
         cell_nb = header_index['Supplier Reference']
         partner_ref = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -267,13 +270,16 @@ The columns should be in this values:
         cell_nb = header_index['Arrival Date in the country']
         arrival_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
-            try:
-                arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
-                to_write_po.update({'arrival_date': arrival_date})
-            except ValueError, e:
-                to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Details: %s.') % (arrival_date, e))
-                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-        
+            if row.cells[cell_nb].type == 'datetime':
+                to_write_po.update({'arrival_date':  arrival_date.strftime('%d-%m-%Y')})
+            else:
+                try:
+                    arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
+                    to_write_po.update({'arrival_date': str(arrival_date)})
+                except ValueError, e:
+                    to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Details: %s.') % (arrival_date, e))
+                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
+            
         # Incoterm
         cell_nb = header_index['Incoterm']
         incoterm_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -393,12 +399,15 @@ The columns should be in this values:
         cell_nb = header_index['Delivery Confirmed Date*']
         confirmed_delivery_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
-            try:
-                confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
-                to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
-            except ValueError, e:
-                to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
-                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+            if row.cells[cell_nb].type == 'datetime':
+                to_write.update({'confirmed_delivery_date': confirmed_delivery_date.strftime('%d-%m-%Y')})
+            else:
+                try:
+                    confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
+                    to_write.update({'confirmed_delivery_date': str(confirmed_delivery_date)})
+                except ValueError, e:
+                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
+                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         #  Comment
         cell_nb = header_index['Comment']
