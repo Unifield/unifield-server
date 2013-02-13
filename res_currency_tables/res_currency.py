@@ -214,6 +214,14 @@ class res_currency(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
+        # Search for move lines with this currency. If those exists,
+        # exception.
+        move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('|'),
+                                                                            ('currency_id','in',ids),
+                                                                            ('functional_currency_id', 'in', ids)], context=context)
+        if len(move_line_ids) > 0:
+            raise osv.except_osv(_('Currency currently used !'), _('The currency cannot be deleted as one or more journal items are currently using it!'))
+            
         pricelist_obj = self.pool.get('product.pricelist')
             
         # If no error, unlink pricelists

@@ -48,6 +48,9 @@ class wizard_import_cheque_lines(osv.osv_memory):
         'line_id': fields.many2one('account.move.line', string="Invoice", required=True),
         'wizard_id': fields.many2one('wizard.import.cheque', string='wizard'),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
+        'partner_txt': fields.char('Third Party', size=255, readonly=True),
+        'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True),
+        'transfer_journal_id': fields.many2one('account.journal', string="Transfer Journal", readonly=True),
     }
 
 wizard_import_cheque_lines()
@@ -109,6 +112,9 @@ class wizard_import_cheque(osv.osv_memory):
                     'currency_id': line.currency_id.id or None,
                     'wizard_id': wizard.id or None,
                     'document_date': document_date or None,
+                    'partner_txt': line.partner_txt or None,
+                    'employee_id': line.employee_id and line.employee_id.id or None,
+                    'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 }
                 new_lines.append((0, 0, vals))
         
@@ -154,6 +160,8 @@ class wizard_import_cheque(osv.osv_memory):
                 'statement_id': wizard.statement_id.id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
+                'employee_id': line.employee_id and line.employee_id.id or None,
+                'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 #'partner_type_mandatory': True, # if we come from another register, Third Parties is mandatory !
                 'amount': total,
                 'from_import_cheque_id': line.id,

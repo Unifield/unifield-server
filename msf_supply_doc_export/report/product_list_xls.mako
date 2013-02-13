@@ -47,9 +47,9 @@
 <Table >
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>
     ## we loop over the product_list_line
     % for line in o.product_ids:

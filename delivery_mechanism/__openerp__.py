@@ -63,6 +63,7 @@
              'test/delivery_mechanism-process-change-product-same-qty-delete-one-line.yml', #I
              'test/delivery_mechanism-cancel-update-out.yml', #J
              'test/internal_request.yml',
+             'test/duplicate-out.yml',
              ],
     'installable': True,
     'active': False,

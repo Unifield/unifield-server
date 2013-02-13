@@ -176,12 +176,12 @@ class sale_order(osv.osv):
             # better: if order.order_line: res[order.id] = False
                 
         return res
-    
+
     _columns = {
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True, domain="[('customer','=',True), ('id', '!=', company_id2)]"),
+        'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
                                         string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
@@ -779,8 +779,7 @@ class sale_order(osv.osv):
 
             #if invoice_error_ids:
             #    invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
-            #    raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
-            #                'Invoices references : %s') % invoices_ref)            
+            #    raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem. Invoices references : %s') % invoices_ref)
 
         # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)

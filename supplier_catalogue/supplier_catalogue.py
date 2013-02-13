@@ -104,7 +104,7 @@ class supplier_catalogue(osv.osv):
             over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
             raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
                                                'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
-                                               'catalogue : %s (\'From\' : %s - \'To\' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))
+                                               'catalogue : %s (\'From\' : %s - \'To\' : %s)') % (over_cat.name, over_cat_from, over_cat_to))
         
         # Search all catalogues with the same partner/currency which are done
         # after the beginning of the new catalogue
@@ -395,7 +395,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[3].type in ['int', 'float']:
                         p_min_qty = row.cells[3].data
                     else:
-                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Qty"') )
+                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Min Qty"') % (line_num,))
 
                 #Product Unit Price
                 if not row.cells[4].data :
@@ -406,7 +406,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[4].type in ['int', 'float']:
                         p_unit_price = row.cells[4].data
                     else:
-                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Unit Price"') )
+                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Unit Price"') % (line_num,) )
 
                 #Product Rounding
                 if not row.cells[5].data:
@@ -415,7 +415,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[5] and row.cells[5].type in ['int', 'float']:
                         p_rounding = row.cells[5].data
                     else:
-                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Rounding"') )
+                       raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Rounding"') % (line_num,) )
 
                 #Product Min Order Qty
                 if not row.cells[6].data:
@@ -424,7 +424,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[6].type in ['int', 'float']:
                         p_min_order_qty = row.cells[6].data
                     else:
-                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Order Qty"') )
+                       raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Min Order Qty"') % (line_num,) )
 
                 #Product Comment
                 if row.cells[7].data:

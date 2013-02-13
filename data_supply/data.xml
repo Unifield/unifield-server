@@ -321,8 +321,7 @@
 
         <!--model: stock.production.lot, id: 1-->
         <record model="stock.production.lot" id="stock_production_lot_lot0001_1">
-            <field name="life_date">2012-04-01</field>
-            <field name="date">2012-01-10 12:19:48</field>
+            <field name="life_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-7*86400))" />
             <field name="type">standard</field>
             <field name="name">LOT0001</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
@@ -330,8 +329,7 @@
 
         <!--model: stock.production.lot, id: 2-->
         <record model="stock.production.lot" id="stock_production_lot_lot0002_2">
-            <field name="life_date">2012-08-20</field>
-            <field name="date">2012-01-10 12:19:48</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=1)).strftime('%Y-%m-%d')" />
             <field name="type">standard</field>
             <field name="name">LOT0002</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
@@ -339,8 +337,7 @@
 
         <!--model: stock.production.lot, id: 3-->
         <record model="stock.production.lot" id="stock_production_lot_lot0003_3">
-            <field name="life_date">2012-06-15</field>
-            <field name="date">2012-01-10 12:19:48</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=2)).strftime('%Y-%m-%d')" />
             <field name="type">standard</field>
             <field name="name">LOT0003</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
@@ -348,8 +345,7 @@
 
         <!--model: stock.production.lot, id: 4-->
         <record model="stock.production.lot" id="stock_production_lot_lot0004_4">
-            <field name="life_date">2012-03-05</field>
-            <field name="date">2012-01-10 12:19:48</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=3)).strftime('%Y-%m-%d')" />
             <field name="type">standard</field>
             <field name="name">LOT0004</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
@@ -357,8 +353,7 @@
 
         <!--model: stock.production.lot, id: 5-->
         <record model="stock.production.lot" id="stock_production_lot_lot0005_5">
-            <field name="life_date">2012-05-05</field>
-            <field name="date">2012-01-10 12:19:48</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=4)).strftime('%Y-%m-%d')" />
             <field name="type">standard</field>
             <field name="name">LOT0005</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJCHLO1V-'), ('name', '=', 'CHLORAMPHENICOL, 1 g powder, vial')]"/>
@@ -366,8 +361,7 @@
 
         <!--model: stock.production.lot, id: 6-->
         <record model="stock.production.lot" id="stock_production_lot_msfbn_000001_6">
-            <field name="life_date">2012-12-21</field>
-            <field name="date">2012-01-10 12:26:20</field>
+            <field name="life_date" eval="(DateTime.now()-relativedelta.relativedelta(days=7)).strftime('%Y-%m-%d')" />
             <field name="type">internal</field>
             <field name="name">MSFBN/000001</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
@@ -375,8 +369,7 @@
 
         <!--model: stock.production.lot, id: 7-->
         <record model="stock.production.lot" id="stock_production_lot_msfbn_000002_7">
-            <field name="life_date">2012-07-07</field>
-            <field name="date">2012-01-10 12:29:54</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=1)).strftime('%Y-%m-%d')" />
             <field name="type">internal</field>
             <field name="name">MSFBN/000002</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
@@ -384,8 +377,7 @@
 
         <!--model: stock.production.lot, id: 8-->
         <record model="stock.production.lot" id="stock_production_lot_msfbn_000003_8">
-            <field name="life_date">2012-01-30</field>
-            <field name="date">2012-01-10 12:29:54</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=2)).strftime('%Y-%m-%d')" />
             <field name="type">internal</field>
             <field name="name">MSFBN/000003</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
@@ -393,8 +385,7 @@
 
         <!--model: stock.production.lot, id: 9-->
         <record model="stock.production.lot" id="stock_production_lot_msfbn_000004_9">
-            <field name="life_date">2012-06-04</field>
-            <field name="date">2012-01-10 12:29:54</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=3)).strftime('%Y-%m-%d')" />
             <field name="type">internal</field>
             <field name="name">MSFBN/000004</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
@@ -402,8 +393,7 @@
 
         <!--model: stock.production.lot, id: 10-->
         <record model="stock.production.lot" id="stock_production_lot_msfbn_000005_10">
-            <field name="life_date">2012-08-03</field>
-            <field name="date">2012-01-10 12:29:54</field>
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=4)).strftime('%Y-%m-%d')" />
             <field name="type">internal</field>
             <field name="name">MSFBN/000005</field>
             <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAASPB1TC'), ('name', '=', 'ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y coblister')]"/>

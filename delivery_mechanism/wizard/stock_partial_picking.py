@@ -88,6 +88,7 @@ class stock_partial_picking(osv.osv_memory):
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0.00
             # for each picking
             partial_datas[pick.id] = {}
             # picking type openERP bug passion logic
@@ -96,6 +97,10 @@ class stock_partial_picking(osv.osv_memory):
             memory_moves_list = getattr(partial, 'product_moves_%s'%picking_type)
             # organize data according to move id
             for move in memory_moves_list:
+                total_qty += move.quantity
+                # if no quantity, don't process the move
+                if not move.quantity:
+                    continue
                 # by default prodlot_id comes from the wizard
                 prodlot_id = move.prodlot_id.id
                 # treat internal batch to be created# if only expiry date mandatory, and not batch management
@@ -139,6 +144,9 @@ class stock_partial_picking(osv.osv_memory):
                                    'product_currency': move.currency.id,
                                    })
                 partial_datas[pick.id].setdefault(move.move_id.id, []).append(values)
+
+            if not total_qty:
+                raise osv.except_osv(_('Processing Error'), _('No quantity to process, please fill quantity to process before processing the moves'))
             # treated moves
             move_ids = partial_datas[pick.id].keys()
             # all moves

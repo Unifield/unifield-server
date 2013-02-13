@@ -45,6 +45,7 @@
         'test/10_analytic_account_activable.yml',
         'test/20_analytic_data.yml',
         'test/30_check_dates.yml'
+        'test/bug_1681.yml',
     ],
     'demo_xml': [
     ],

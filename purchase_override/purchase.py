@@ -55,6 +55,79 @@ purchase_order_confirm_wizard()
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
+    
+    def update_supplier_info(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        update the supplier info of corresponding products
+        '''
+        info_obj = self.pool.get('product.supplierinfo')
+        pricelist_info_obj = self.pool.get('pricelist.partnerinfo')
+        for rfq in self.browse(cr, uid, ids, context=context):
+            for line in rfq.order_line:
+                # if the price is updated and a product selected
+                if line.price_unit and line.product_id:
+                    # get the product
+                    product = line.product_id
+                    # find the corresponding suppinfo with sequence -99
+                    info_99_list = info_obj.search(cr, uid, [('product_id', '=', product.product_tmpl_id.id),
+                                                             ('sequence', '=', -99),], context=context)
+                    
+                    if info_99_list:
+                        # we drop it
+                        info_obj.unlink(cr, uid, info_99_list, context=context)
+                    
+                    # create the new one
+                    values = {'name': rfq.partner_id.id,
+                              'product_name': False,
+                              'product_code': False,
+                              'sequence' : -99,
+                              #'product_uom': line.product_uom.id,
+                              #'min_qty': 0.0,
+                              #'qty': function
+                              'product_id' : product.product_tmpl_id.id,
+                              'delay' : int(rfq.partner_id.default_delay),
+                              #'pricelist_ids': created just after
+                              #'company_id': default value
+                              }
+                    
+                    new_info_id = info_obj.create(cr, uid, values, context=context)
+                    # price lists creation - 'pricelist.partnerinfo
+                    values = {'suppinfo_id': new_info_id,
+                              'min_quantity': 1.00,
+                              'price': line.price_unit,
+                              'uom_id': line.product_uom.id,
+                              'currency_id': line.currency_id.id,
+                              'valid_till': rfq.valid_till,
+                              'purchase_order_line_id': line.id,
+                              'comment': 'RfQ original quantity for price : %s' % line.product_qty,
+                              }
+                    new_pricelist_id = pricelist_info_obj.create(cr, uid, values, context=context)
+                    
+        return True
+    
+    def generate_po_from_rfq(self, cr, uid, ids, context=None):
+        '''
+        generate a po from the selected request for quotation
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # update price lists
+        self.update_supplier_info(cr, uid, ids, context=context)
+        # copy the po with rfq_ok set to False
+        data = self.read(cr, uid, ids[0], ['name'], context=context)
+        new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        data = self.read(cr, uid, new_po_id, ['name'], context=context)
+        # log message describing the previous action
+        self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
+        # close the current po
+        wf_service = netsvc.LocalService("workflow")
+        wf_service.trg_validate(uid, 'purchase.order', ids[0], 'rfq_done', cr)
+        
+        return True
 
     def copy(self, cr, uid, id, default=None, context=None):
         '''
@@ -62,8 +135,13 @@ class purchase_order(osv.osv):
         '''
         if not default:
             default = {}
+        if context is None:
+            context = {}
             
-        default.update({'loan_id': False, 'merged_line_ids': False, 'origin': False, 'partner_ref': False, })
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, })
+        if not context.get('keepOrigin', False):
+            default.update({'origin': False})
+            
         return super(purchase_order, self).copy(cr, uid, id, default, context=context)
     
     # @@@purchase.purchase_order._invoiced
@@ -1320,8 +1398,7 @@ stock moves which are already processed : '''
 #
 #            if invoice_error_ids:
 #                invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
-#                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or discuss with the accounting team to solve the problem.' \
-#                                'Invoices references : %s') % invoices_ref)
+#                raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or discuss with the accounting team to solve the problem. Invoices references : %s') % invoices_ref)
 
         # Done stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
@@ -1900,6 +1977,11 @@ class purchase_order_line(osv.osv):
         all_qty = qty
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
+
+        # If the user modify a line, remove the old quantity for the total quantity
+        if ids:
+            for line_id in self.browse(cr, uid, ids, context=context):
+                all_qty -= line_id.product_qty
         
         if product and not uom:
             uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
@@ -1960,6 +2042,12 @@ class purchase_order_line(osv.osv):
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
                                                                                 'for a minimal quantity of %s (the min quantity of the price list), '\
                                                                                 'it might change at the supplier confirmation.') % info_price.min_quantity}})
+                if info_price.rounding and all_qty%info_price.rounding != 0:
+                    message = _('A rounding value of %s UoM has been set for ' \
+                            'this product, you should than modify ' \
+                            'the quantity ordered to match the supplier criteria.') % info_price.rounding
+                    message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
+                    res['warning'].update({'message': message})
             else:
                 old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res['value']['price_unit'], round=False, context=context)
                 res['value'].update({'old_price_unit': old_price})
