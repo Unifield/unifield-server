@@ -29,9 +29,9 @@ import string
 
 super_fields_view_get = orm.orm.fields_view_get
 
-def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
     """
-    Dynamically change button groups based on button access rules
+    Dynamically change button groups_with_duplicates based on button access rules
     """
 
     context = context or {}
@@ -64,10 +64,19 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
                 # check if rule gives user access to button
                 rule_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
                 if rule_for_button:
-                    rule = rule_for_button[0]
+                    
+                    # might have multiple rules (from inherited views), so concatenate groups lists
+                    groups_with_duplicates = [r.group_ids for r in rule_for_button]
+                    groups = []
+                    for group in groups_with_duplicates:
+                        if isinstance(group, (list, tuple)):
+                            for g in group:
+                                if g not in groups:
+                                    groups.append(g)
+                    
                     access = False
                     
-                    if rule.group_ids:
+                    if groups:
                         user = self.pool.get('res.users').read(cr, 1, uid)
                         if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
                             access = True
@@ -90,7 +99,7 @@ def button_fields_view_get(self, cr, uid, view_id=None, view_type='form', contex
     else:
         return fields_view
 
-orm.orm.fields_view_get = button_fields_view_get
+orm.orm.fields_view_get = fields_view_get
 
 module_whitelist = [
     'ir.module.module',
