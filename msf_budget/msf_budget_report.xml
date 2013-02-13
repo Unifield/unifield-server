@@ -16,6 +16,16 @@
         report_type="txt"
         auto="False"
         menu="True"/>
+
+        <report id="xls_budget_monthly"
+        string="Monthly Budget (XLS)"
+        model="msf.budget"
+        name="xls.budget.monthly"
+        file="msf_budget/report/budget_monthly_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
         
         <report id="pdf_budget_monthly"
         string="Monthly Budget (PDF)"
