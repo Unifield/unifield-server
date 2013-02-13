@@ -355,7 +355,7 @@ class supplier_catalogue(osv.osv):
         files_with_error = SpreadsheetCreator('Lines with errors', columns_header, lines_not_imported)
         vals = {'data': base64.encodestring(files_with_error.get_xml(['decode.utf8'])),
                 'filename': 'Lines_Not_Imported.xls',
-                'import_error_ok': True,}
+                'import_error_ok': True}
         return vals
 
     def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, context=None):
@@ -389,7 +389,6 @@ class supplier_catalogue(osv.osv):
         error_txt = ''
         ignore_lines = 0
 
-        sup_cat = self.pool.get('supplier.catalogue')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
@@ -409,7 +408,7 @@ class supplier_catalogue(osv.osv):
                 to_correct_ok = False
                 row_len = len(row)
                 if row_len != 8:
-                    raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
+                    raise osv.except_osv(_('Error'), _("""Line %s: You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment.""" % line_num))
                 comment = []
                 p_comment = False
                 #Product code
@@ -460,7 +459,7 @@ class supplier_catalogue(osv.osv):
                     if browse_uom.category_id.id != browse_product.uom_id.category_id.id:
                         uom_id = browse_product.uom_id.id
                         to_correct_ok = True
-                        error_list.append(_("""Line %s of the file: the UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
+                        error_list.append(_("""Line %s of the file was exported in the file of the lines not imported: the UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
                                             ) % (line_num, browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
                         data = file_values[line_num].items()
                         line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
@@ -511,7 +510,7 @@ class supplier_catalogue(osv.osv):
                 if comment:
                     p_comment = ', '.join(comment)
                 line_num += 1
-
+                
                 to_write = {
                     'to_correct_ok': to_correct_ok, 
                     'product_id': default_code,
@@ -526,8 +525,9 @@ class supplier_catalogue(osv.osv):
                 }
 
                 vals['line_ids'].append((0, 0, to_write))
-            # in case of lines ignored, we notify the user and create a file with he lines ignored
-            vals.update({'text_error': '\n'.join(error_list) + '\n Lines ignored: %s' % ignore_lines})
+            # in case of lines ignored, we notify the user and create a file with the lines ignored
+            vals.update({'text_error': 'Lines ignored: %s \n ----------------------\n' % (ignore_lines,) +
+                         '\n'.join(error_list), 'data': False, 'import_error_ok': False})
             if line_with_error:
                 file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
                 vals.update(file_to_export)
@@ -538,10 +538,8 @@ class supplier_catalogue(osv.osv):
 
             
             #res_id = self.pool.get('catalogue.import.lines').create(cr, uid, {'catalogue_id': ids[0]}, context=context)
-
-            for line in obj.line_ids:
-                if line.to_correct_ok or line_with_error:
-                    msg_to_return = _("The import of lines had errors, please correct the red lines below")
+            if any([line for line in obj.line_ids if line.to_correct_ok]) or line_with_error:
+                msg_to_return = _("The import of lines had errors, please correct the red lines below")
             
         return self.log(cr, uid, obj.id, msg_to_return,)
 
