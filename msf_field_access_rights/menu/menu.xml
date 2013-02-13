@@ -9,7 +9,7 @@
 	        <field name="view_mode">tree,form</field>
     	</record>
 
-		<menuitem name="Field Access Rules" id="msf_field_access_rules" action="field_access_rules_list" parent="base.menu_security" />
+		<menuitem name="Field Access Rules" id="msf_field_access_rules" action="field_access_rules_list" parent="base.menu_security" sequence="20" />
 
 		<!-- Field Access Rule Line List -->
 		<record id="field_access_rule_line_list" model="ir.actions.act_window">
