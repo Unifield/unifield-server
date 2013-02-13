@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from mx import DateTime
 
 class import_cell_data(osv.osv_memory):
     '''
@@ -97,8 +98,15 @@ class import_cell_data(osv.osv_memory):
 
     def get_expired_date(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
-        if cell_data and row.cells[cell_nb].type == 'datetime':
-                return cell_data.strftime('%Y-%m-%d')
+        if cell_data:
+            if row.cells[cell_nb].type == 'datetime':
+                return cell_data.strftime('%d-%m-%Y')
+            else:
+                try:
+                    expired_date = DateTime.strptime(cell_data,'%d-%m-%Y')
+                    return str(expired_date)
+                except ValueError, e:
+                    return False
         return False
 
     def get_line_values(self, cr, uid, ids, row):
