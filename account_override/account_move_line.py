@@ -160,6 +160,21 @@ class account_move_line(osv.osv):
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
     }
 
+    def _check_inactive_suppliers(self, cr, uid, ids, context=None):
+        """
+        Check that partner_id is not inactive
+        """
+        if not context:
+            context = {}
+        for aml in self.browse(cr, uid, ids):
+            if aml.partner_id and aml.partner_id.active == False:
+                return False
+        return True
+
+    _constraints = [
+        (_check_inactive_suppliers, "Partner is inactive!", ['partner_id']),
+    ]
+
     _order = 'move_id DESC'
 
     def _accounting_balance(self, cr, uid, ids, context=None):
