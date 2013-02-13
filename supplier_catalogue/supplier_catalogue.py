@@ -405,9 +405,10 @@ class supplier_catalogue(osv.osv):
                     product_code = row.cells[0].data
                 except TypeError:
                     product_code = row.cells[0].data
-                if not product_code :
+                if not product_code or row.cells[0].type != 'str':
                     default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
                     to_correct_ok = True
+                    error_list_line.append(_("""The product was not defined properly."""))
                 else:
                     try:
                         product_code = product_code.strip()
@@ -415,17 +416,16 @@ class supplier_catalogue(osv.osv):
                         if not code_ids:
                             default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
                             to_correct_ok = True
+                            error_list_line.append(_("""The product was not found."""))
                         else:
                             default_code = code_ids[0]
                     except Exception:
                          default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
                          to_correct_ok = True
-
-                #Product Description
-                p_descr = row.cells[1].data
+                         error_list_line.append(_("""The product was not found."""))
 
                 #Product UoM
-                p_uom = row.cells[2].data
+                p_uom = len(row.cells)>=3 and row.cells[2].data
                 if not p_uom:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
                     to_correct_ok = True
@@ -453,7 +453,7 @@ class supplier_catalogue(osv.osv):
                                             ) % (browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
 
                 #Product Min Qty
-                if not row.cells[3].data :
+                if not len(row.cells)>=4 or not row.cells[3].data :
                     p_min_qty = 1.0
                 else:
                     if row.cells[3].type in ['int', 'float']:
@@ -462,7 +462,7 @@ class supplier_catalogue(osv.osv):
                         error_list_line.append(_("""Please, format the line number %s, column "Min Qty".""") % (line_num,))
 
                 #Product Unit Price
-                if not row.cells[4].data :
+                if not len(row.cells)>=5 or not row.cells[4].data :
                     p_unit_price = 1.0
                     to_correct_ok = True
                     comment.append('Unit Price defined automatically as 1.00')
@@ -473,7 +473,7 @@ class supplier_catalogue(osv.osv):
                         error_list_line.append(_("""Please, format the line number %s, column "Unit Price".""") % (line_num,))
 
                 #Product Rounding
-                if not row.cells[5].data:
+                if not len(row.cells)>=6 or not row.cells[5].data:
                     p_rounding = False
                 else:
                     if row.cells[5] and row.cells[5].type in ['int', 'float']:
@@ -509,7 +509,6 @@ class supplier_catalogue(osv.osv):
                 to_write = {
                     'to_correct_ok': to_correct_ok, 
                     'product_id': default_code,
-                    'product_description': p_descr,
                     'min_qty': p_min_qty,
                     'line_uom_id': uom_id,
                     'unit_price': p_unit_price,
