@@ -705,7 +705,7 @@ Reported errors :
                 <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('import_in_progress', '=', False)]}" />
                 <field name="data" filename="filename" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
                 </group>
-                <field name="message" attrs="{'invisible':[('import_error_ok', '=', False)]}" colspan="4" nolabel="1"/>
+                <field name="message" attrs="{'invisible':[('import_in_progress', '=', False)]}" colspan="4" nolabel="1"/>
                 """
                 # add field in arch
                 arch = result['arch']
