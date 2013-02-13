@@ -78,6 +78,21 @@ class account_commitment(osv.osv):
                                                                                                     ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
 
+    def _check_inactive_suppliers(self, cr, uid, ids, context=None):
+        """
+        Check that partner_id is not inactive
+        """
+        if not context:
+            context = {}
+        for cv in self.browse(cr, uid, ids):
+            if cv.partner_id and cv.partner_id.active == False:
+                return False
+        return True
+
+    _constraints = [
+        (_check_inactive_suppliers, "Partner is inactive!", ['partner_id']),
+    ]
+
     def create(self, cr, uid, vals, context=None):
         """
         Update period_id regarding date.
