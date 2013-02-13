@@ -183,7 +183,9 @@
                                     <field name="sequence"/>
                                     <field name="product_code" />
                                     <field name="product_name" />
-                                    <field name="product_uom"/>
+                                    <!-- utp-129: we filter the product_uom according to the uom_id of the product because of the constraint
+                                    _check_uom in unifield-addons/product/product.py -->
+                                    <field name="product_uom" domain="[('uom_by_parent', '=', parent.uom_id)]"/>
                                     <field name="manufacturer_id"/>
                                     <field name="catalogue_id"/>
                                     <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
