@@ -88,7 +88,12 @@
                     </group>
                     <group colspan="2" col="1">
                         <separator string="Pulled by"/>
-                        <field name="puller_ids" nolabel="1"/>
+                        <field name="puller_ids" nolabel="1">
+                            <tree>
+                                <field name="entity_id"/>
+                                <field name="create_date"/>
+                            </tree>
+                        </field>
                     </group>
                     <group colspan="2" col="1">
                         <separator string="Fields"/>
