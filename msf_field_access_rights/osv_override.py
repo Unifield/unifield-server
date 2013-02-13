@@ -46,18 +46,20 @@ def _record_matches_domain(self, cr, record_id, domain):
     """
     Make a search with domain + id = id. If we get the ID in the result, the domain matches the record
     """
+    # convert domain from string to list
     if isinstance(domain, (str, unicode)):
-        if len(domain) == 0:
-            domain = False
-        else:
-            domain = eval(domain)
-            domain.append(('id', '=', record_id))
-            domain.append('&')
-            domain.reverse()
-    if isinstance(domain, bool):
+        domain = eval(domain)
+        
+    # if domain is True or False or empty list, no domain specified, therefore record matches all domains
+    if isinstance(domain, bool) or not domain:
         return True
+    
+    # add id = record_id to domain 
+    domain.insert(0, ('id', '=', record_id))
+    domain.insert(0, '&')
 
-    return bool(self.search(cr, 1, domain))
+    # perform search and return bool based on whether or not the record_id was in the 
+    return record_id in self.search(cr, 1, domain)
 
 class _SetToDefaultFlag:
     pass
@@ -257,7 +259,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                 for line in rule.field_access_rule_line_ids:
                     if not line.write_access:
                         if domains.get(line.field.name, False) != True:
-                            if rule.domain_text:
+                            if rule.domain_text and rule.domain_text != '[]':
                                 domains[line.field.name] = domains.get(line.field.name, []) + (eval(rule.domain_text))
                             else:
                                 domains[line.field.name] = True
@@ -269,24 +271,21 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                 view_xml_text = fields_view['arch']
                 view_xml = etree.fromstring(view_xml_text)
 
-                # loop through domains looking for matching fields and editting attributes
-                for domain_key in domains:
-                    domain_value = domains[domain_key]
+                # loop through domains looking for field in xml and editting their readonly attributes
+                for field_name in domains:
+                    domain_value = domains[field_name]
 
                     domain_value_or = copy.deepcopy(domain_value)
                     if not isinstance(domain_value_or, bool) and len(domain_value_or) > 1:
-                        domain_value_or.append('|')
-                        domain_value_or.reverse()
-
+                        domain_value_or.insert(0, '|')
 
                     # get field from xml using xpath
-                    fields = view_xml.xpath("//field[@name='%s']" % domain_key)
+                    fields = view_xml.xpath("//field[@name='%s']" % field_name)
 
                     # if field is not already readonly, add/edit attrs
                     for field in fields:
                         if not field.get('readonly', False):
 
-                            
                             # applicable to all so set readonly
                             if domain_value == True:
                                 field.set('readonly', '1')
@@ -302,9 +301,8 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                     attrs = eval(attrs_text)
                                     if attrs.get('readonly', False):
                                         # concatenate domain with existing domains
-                                        attrs['readonly'] = attrs['readonly'] + domain_value
-                                        attrs['readonly'].append('|')
-                                        attrs['readonly'].reverse()
+                                        attrs['readonly'] = attrs['readonly'].insert(0, domain_value)
+                                        attrs['readonly'].insert(0, '|')
                                     else:
                                         attrs['readonly'] = str( domain_value_or )
 
