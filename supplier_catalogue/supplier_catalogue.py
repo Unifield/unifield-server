@@ -405,10 +405,11 @@ class supplier_catalogue(osv.osv):
             reader.next()
             line_num = 1
             for row in reader:
+                error_list_line = []
                 to_correct_ok = False
                 row_len = len(row)
                 if row_len != 8:
-                    error_list.append(_("""You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
+                    error_list_line.append(_("""You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""))
                 comment = []
                 p_comment = False
                 #Product code
@@ -460,7 +461,7 @@ class supplier_catalogue(osv.osv):
                     if browse_uom.category_id.id != browse_product.uom_id.category_id.id:
                         uom_id = browse_product.uom_id.id
                         to_correct_ok = True
-                        error_list.append(_("""The UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
+                        error_list_line.append(_("""The UoM "%s" was not consistent with the UoM's category ("%s") of the product "%s"."""
                                             ) % (browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
 
                 #Product Min Qty
@@ -470,7 +471,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[3].type in ['int', 'float']:
                         p_min_qty = row.cells[3].data
                     else:
-                        error_list.append(_("""Please, format the line number %s, column "Min Qty".""") % (line_num,))
+                        error_list_line.append(_("""Please, format the line number %s, column "Min Qty".""") % (line_num,))
 
                 #Product Unit Price
                 if not row.cells[4].data :
@@ -481,7 +482,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[4].type in ['int', 'float']:
                         p_unit_price = row.cells[4].data
                     else:
-                        error_list.append(_("""Please, format the line number %s, column "Unit Price".""") % (line_num,))
+                        error_list_line.append(_("""Please, format the line number %s, column "Unit Price".""") % (line_num,))
 
                 #Product Rounding
                 if not row.cells[5].data:
@@ -490,7 +491,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[5] and row.cells[5].type in ['int', 'float']:
                         p_rounding = row.cells[5].data
                     else:
-                        error_list.append(_("""Please, format the line number %s, column "Rounding".""") % (line_num,))
+                        error_list_line.append(_("""Please, format the line number %s, column "Rounding".""") % (line_num,))
 
                 #Product Min Order Qty
                 if not len(row.cells)>=7 or not row.cells[6].data:
@@ -499,7 +500,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[6].type in ['int', 'float']:
                         p_min_order_qty = row.cells[6].data
                     else:
-                        error_list.append(_("""Please, format the line number %s, column "Min Order Qty".""") % (line_num,))
+                        error_list_line.append(_("""Please, format the line number %s, column "Min Order Qty".""") % (line_num,))
 
                 #Product Comment
                 if len(row.cells)>=8 and row.cells[7].data:
@@ -507,12 +508,13 @@ class supplier_catalogue(osv.osv):
                 if comment:
                     p_comment = ', '.join(comment)
 
-                if error_list:
-                    error_list.insert(0, _("""Line %s of the file was exported in the file of the lines not imported: \n""") % (line_num,))
+                if error_list_line:
+                    error_list_line.insert(0, _("""Line %s of the file was exported in the file of the lines not imported:""") % (line_num,))
                     data = file_values[line_num].items()
                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                     ignore_lines += 1
                     line_num += 1
+                    error_list.append('\n -'.join(error_list_line) + '\n')
                     continue
                 line_num += 1
 
