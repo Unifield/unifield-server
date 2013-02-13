@@ -240,16 +240,6 @@ class supplier_catalogue(osv.osv):
         
         return ids
 
-    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
-        res = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = False
-            if any([item for item in obj.line_ids  if item.to_correct_ok]):
-                res[obj.id] = True
-        return res
-
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
@@ -269,7 +259,6 @@ class supplier_catalogue(osv.osv):
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""The file should be in XML Spreadsheet 2003 format. The columns should be in this order :
                                         Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."""),
-        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
         'data': fields.binary(string='File with errors',),
         'filename': fields.char(string='Lines not imported', size=256),
         'filename_template': fields.char(string='Template', size=256),
@@ -386,7 +375,6 @@ class supplier_catalogue(osv.osv):
         vals = {}
         vals['line_ids'], error_list, line_with_error = [], [], []
         msg_to_return = _("All lines successfully imported")
-        error_txt = ''
         ignore_lines = 0
 
         product_obj = self.pool.get('product.product')
@@ -528,7 +516,6 @@ class supplier_catalogue(osv.osv):
                     'rounding': p_rounding,
                     'min_order_qty': p_min_order_qty,
                     'comment': p_comment,
-                    'error_txt': error_txt,
                 }
 
                 vals['line_ids'].append((0, 0, to_write))
@@ -653,7 +640,6 @@ class supplier_catalogue_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):    
             if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  
                 vals['to_correct_ok'] = False
-                vals['error_txt'] = False
             # If product is changed
             if 'product_id' in vals and vals['product_id'] != line.product_id.id:
                 c = context.copy()
@@ -739,7 +725,6 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
         'to_correct_ok': fields.boolean('To correct'),
-        'error_txt': fields.text('Error'),
     }
     
     _constraints = [
