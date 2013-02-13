@@ -366,7 +366,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                                 wiz_context = wizard_values.get('context')
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
                                 self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                                info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the from [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
+                                info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
                                 
                             if m.product_uom.id != l.uom_id.id:
                                 info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
@@ -689,6 +689,12 @@ Reported errors :
         if not context:
             context = {}
         result = super(stock_partial_picking, self).fields_view_get(cr, uid, view_id=view_id, view_type='form', context=context, toolbar=toolbar, submenu=submenu)
+        picking_ids = context.get('active_ids', False)
+
+        if not picking_ids:
+            # not called through an action (e.g. buildbot), return the default.
+            return result
+        
         picking_type = context.get('picking_type')
         if view_type == 'form':
             if picking_type == 'incoming_shipment':
