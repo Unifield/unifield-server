@@ -103,8 +103,8 @@ class report_open_invoices2(report_sxw.rml_parse):
         super(report_open_invoices2, self).__init__(cr, uid, name, context=context)
         self.cur = ''
         self.funcCur = ''
-        self.res = 0.0
-        self.tot = 0.0
+        self.res = 0
+        self.tot = 0
         self.localcontext.update({
             'getLines':self.getLines,
             'getConvert':self.getConvert,
@@ -112,21 +112,26 @@ class report_open_invoices2(report_sxw.rml_parse):
             'getCurTot':self.getCurTot,
             'getRes':self.getRes,
             'getTot':self.getTot,
+            'isDate':self.isDate,
         })
         return
 
+    def isDate(self,date):
+        if date:
+            return True
+        return False
+
     def getRes(self):
         temp = self.res
-        self.res = 0.0
+        self.res = 0
         return temp
 
     def getTot(self):
         temp = self.tot
-        self.tot = 0.0
+        self.tot = 0
         return temp
 
     def getLines(self,option):
-        print "get lines"
         ids = []
         result = []
         sql_request = """
@@ -151,7 +156,6 @@ class report_open_invoices2(report_sxw.rml_parse):
         if option == 'ci':
             self.cr.execute(sql_request % ('out_invoice'))
             result = self.cr.fetchall()
-            print result
         
         # Supplier Invoices
         if option == 'si':
@@ -168,7 +172,6 @@ class report_open_invoices2(report_sxw.rml_parse):
             self.cr.execute(sql_request % ('in_refund'))
             result = self.cr.fetchall()
 
-
         return result
 
     def getConvert(self,id_,amount,option):
@@ -177,9 +180,9 @@ class report_open_invoices2(report_sxw.rml_parse):
         conv = self.pool.get('res.currency').compute(self.cr, self.uid, bro_ac.currency_id.id, bro_ac.journal_id.company_id.currency_id.id, amount or 0.0, round=True,)
 
         if option == 'res':
-            self.res += conv
+            self.res += 1
         elif option == 'tot':
-            self.tot += conv
+            self.tot += 1
 
         return conv
 
