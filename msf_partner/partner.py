@@ -246,7 +246,7 @@ class res_partner(osv.osv):
             # ids list
             purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
             sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '=', 'open')])
+            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])])
             pick_ids = pick_obj.search(cr, uid, ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
             tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
             com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')])
@@ -256,7 +256,7 @@ class res_partner(osv.osv):
                                      _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                        ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)]
                                                       +[so['name'] for so in sale_obj.read(cr, uid, sale_ids)]
-                                                      +[inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
+                                                      +[inv['number'] or inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
                                                       +[pick['name'] for pick in pick_obj.read(cr, uid, pick_ids)]
                                                       +[tend['name'] for tend in tender_obj.read(cr, uid, tender_ids)]
                                                       +[com_vouch['name'] for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids)]
@@ -316,7 +316,7 @@ class res_partner(osv.osv):
             # ids list
             purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
             sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '=', 'open')])
+            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])])
             pick_ids = pick_obj.search(cr, uid, ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
             tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
             com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')])
@@ -327,7 +327,7 @@ class res_partner(osv.osv):
                                     'message': _("Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
                                                 ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)]
                                                                +[so['name'] for so in sale_obj.read(cr, uid, sale_ids)]
-                                                               +[inv['number'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
+                                                               +[inv['number'] or inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
                                                                +[pick['name'] for pick in pick_obj.read(cr, uid, pick_ids)]
                                                                +[tend['name'] for tend in tender_obj.read(cr, uid, tender_ids)]
                                                                +[com_vouch['name'] for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids)]
