@@ -836,7 +836,7 @@ class composition_kit(osv.osv):
             return False
 
         for kit in self.browse(cr, uid, ids, context=context):
-            if kit.composition_type == 'real' and kit.state == 'completed' and not kit.composition.product_id.active:
+            if kit.composition_type == 'real' and kit.state == 'completed' and not kit.composition_product_id.active:
                 raise osv.except_osv(_('Error'), _('The product of the kit composition is inactive. Please change the product.'))
                 return False
 

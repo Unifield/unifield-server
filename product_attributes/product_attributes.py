@@ -377,7 +377,7 @@ class product_attributes(osv.osv):
                                                ('item_kit_id.composition_type', '=', 'real'),
                                                ('item_kit_id.state', '=', 'completed'),
                                               ], context=context)
-            has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('product_id', '=', product.id),
+            has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('composition_product_id', '=', product.id),
                                                                          ('composition_type', '=', 'real'),
                                                                          ('state', '=', 'completed')], context=context)
             has_kit.extend(has_kit2)
@@ -681,6 +681,7 @@ class product_deactivation_error_line(osv.osv_memory):
             context = {}
             
         view_id = False
+        data_obj = self.pool.get('ir.model.data')
         obj = self.pool.get(line.internal_type).browse(cr, uid, line.doc_id)
         
         if line.internal_type == 'composition.kit':
@@ -688,12 +689,13 @@ class product_deactivation_error_line(osv.osv_memory):
             if obj.composition_type == 'real':
                 context.update({'composition_type': 'real'})
         elif line.internal_type == 'stock.picking':
-            view_id = [self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, [line.doc_id], context=context, pick=obj)[1]]
+            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, [line.doc_id], context=context, pick=obj)
         elif line.internal_type == 'sale.order':
             context.update({'procurement_request': obj.procurement_request})
         elif line.internal_type == 'purchase.order':
             context.update({'rfq_ok': obj.rfq_ok})
         elif line.internal_type == 'account.invoice':
+            view_id = data_obj.get_object_reference(cr, uid, 'account', 'invoice_form')
             # Customer Refund
             if obj.type == 'out_refund':
                 context.update({'type':'out_refund', 'journal_type': 'sale_refund'})
@@ -708,9 +710,11 @@ class product_deactivation_error_line(osv.osv_memory):
                 context.update({'type':'in_invoice', 'journal_type': 'inkind'})
             # Intermission voucher out
             elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                view_id = data_obj.get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
                 context.update({'type':'out_invoice', 'journal_type': 'intermission'})
             # Intermission voucher in
             elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                view_id = data_obj.get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
                 context.update({'type':'in_invoice', 'journal_type': 'intermission'})
             # Stock Transfer Voucher
             elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
@@ -722,6 +726,8 @@ class product_deactivation_error_line(osv.osv_memory):
             elif obj.type == 'in_invoice' and obj.register_line_ids:
                 context.update({'type':'in_invoice', 'journal_type': 'purchase'})
 
+        if view_id:
+            view_id = [view_id[1]]
                 
         return view_id, context
 

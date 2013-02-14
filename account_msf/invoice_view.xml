@@ -68,7 +68,7 @@
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
                                     <field name="inactive_product" invisible="1" />
-                                    <field name="inactive_error" />
+                                    <field name="inactive_error" invisible="1" />
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
@@ -198,7 +198,7 @@
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field name="inactive_product" invisible="1" />
-                                    <field name="inactive_error" />
+                                    <field name="inactive_error" invisible="1" />
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
@@ -295,7 +295,7 @@
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
                                     <field name="inactive_product" invisible="1" />
-                                    <field name="inactive_error" />
+                                    <field name="inactive_error" invisible="1" />
                                 </tree>
                             </field>
                             <group col="8" colspan="4">
