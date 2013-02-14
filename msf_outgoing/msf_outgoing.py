@@ -1367,8 +1367,8 @@ class stock_picking(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         pick = kwargs['pick']
         message = kwargs['message']
-        if pick.type == 'out' and pick.subtype == 'picking':
-            domain = [('type','=','out'), ('subtype', '=', 'picking')]
+        if pick.type and pick.subtype:
+            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
             return self.pool.get('res.log').create(cr, uid,
                                                    {'name': message,
                                                     'res_model': pick_obj._name,
@@ -1387,7 +1387,8 @@ class stock_picking(osv.osv):
         pick = kwargs['pick']
         if pick.subtype == 'packing':
             return False
-        elif pick.type == 'out' and pick.subtype == 'picking':
+        # if false the log will be defined by the method _hook_custom_log (which include a domain)
+        if pick.type and pick.subtype:
             return False
 
         return result
