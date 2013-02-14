@@ -560,6 +560,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
         'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
         'from_direct_inv': fields.many2one('account.bank.statement.line', string="Register Line For Direct Invoice"),
+        'posting_date': fields.date('Posting date', readonly=True),
+        'document_date': fields.date('Document date', readonly=True),
     }
 
     _defaults = {

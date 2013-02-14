@@ -296,6 +296,8 @@ class account_move(osv.osv):
             'move_id': move.id,
             'currency_id': currency or False,
             'state': 'dispatch',
+            'posting_date': move.date,
+            'document_date': move.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
