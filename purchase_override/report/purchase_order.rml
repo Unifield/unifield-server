@@ -152,7 +152,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Category : [[ selection(objects[0], 'categ') ]] </para>
+                    <para style="TextInformation">Category : [[ getSel(objects[0], 'categ') ]] </para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -210,7 +210,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Transport mode : [[ selection(objects[0], 'transport_type') ]]</para>
+                    <para style="TextInformation">Transport mode : [[ getSel(objects[0], 'transport_type') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -239,7 +239,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Priority : [[ selection(objects[0], 'priority') ]]</para>
+                    <para style="TextInformation">Priority : [[ getSel(objects[0], 'priority') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
