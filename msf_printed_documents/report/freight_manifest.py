@@ -83,15 +83,16 @@ class freight_manifest(report_sxw.rml_parse):
         sta = self.get_selection(o, 'transport_type')
         return sta
 
-    def get_selection(self, o, field):
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
+#uf-1767: not need anymore because replaced by the method getSel in the server
+#    def get_selection(self, o, field):
+#        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+#        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+#        name = '%s,%s' % (o._name, field)
+#        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+#        if tr_ids:
+#            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+#        else:
+#            return res
 
     def getDataRef(self, ligne):
         if ligne.currency_id:

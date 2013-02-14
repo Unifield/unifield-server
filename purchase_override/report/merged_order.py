@@ -44,17 +44,17 @@ class merged_order(report_sxw.rml_parse):
         
         return ''
             
-                    
-    def _get_selection(self, o, field):
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
-        return res
+#uf-1767: not need anymore because replaced by the method getSel in the server
+#    def _get_selection(self, o, field):
+#        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+#        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+#        name = '%s,%s' % (o._name, field)
+#        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+#        if tr_ids:
+#            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+#        else:
+#            return res
+#        return res
 
 report_sxw.report_sxw('report.purchase.order.merged','purchase.order','addons/purchase_override/report/merged_order.rml',parser=merged_order, header=False)
 
