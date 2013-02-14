@@ -189,6 +189,7 @@ class rml_parse(object):
             'strip_name' : self._strip_name,
             'time' : time,
             'getSel': self.getSel,
+            'getSelValue': self.getSelValue,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -205,6 +206,7 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
+
     def getSel(self, o, field):
         """
         Returns the fields.selection label
@@ -212,15 +214,22 @@ class rml_parse(object):
         sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
         res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
         name = '%s,%s' % (o._name, field)
+        return self.getSelTrans(name, res)
+
+    def getSelValue(self, obj_name, field, value):
+        name = '%s,%s' % (obj_name, field)
+        return self.getSelTrans(name, value)
+
+    def getSelTrans(self, name, value):
         if self.localcontext.get('lang'):
             tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [
-                ('type', '=', 'selection'), ('name', '=', name), ('src', '=', res), ('lang', '=', self.localcontext['lang'])
+                ('type', '=', 'selection'), ('name', '=', name), ('src', '=', value), ('lang', '=', self.localcontext['lang'])
             ])
             if tr_ids:
                 value = self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
                 if value:
                     return value
-        return res
+        return value
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
