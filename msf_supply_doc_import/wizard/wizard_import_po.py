@@ -666,6 +666,8 @@ The columns should be in this values:
                                     processed_lines += 1
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                    # we commit after each iteration to avoid lock on ir.sequence
+                    cr.commit()
             error_log += '\n'.join(error_list)
             notif_log += '\n'.join(notif_list)
             if error_log:
