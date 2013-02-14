@@ -151,6 +151,20 @@ class tender(osv.osv):
             # check some supplier have been selected
             if not tender.supplier_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one supplier!'))
+            #utp-315: check that the suppliers are not inactive (I use a SQL request because the inactive partner are ignored with the browse)
+            sql = """
+            select tsr.supplier_id, rp.name, rp.active
+            from tender_supplier_rel tsr
+            left join res_partner rp
+            on tsr.supplier_id = rp.id
+            where tsr.tender_id=%s
+            and rp.active=False
+            """
+            cr.execute(sql, (ids[0],))
+            inactive_supplier_ids = cr.dictfetchall()
+            if any(inactive_supplier_ids):
+                raise osv.except_osv(_('Warning !'), _("You can't have inactive supplier! Please remove: %s"
+                                                       ) % ' ,'.join([partner['name'] for partner in inactive_supplier_ids]))
             # check some products have been selected
             tender_line_ids = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
             if not tender_line_ids:
