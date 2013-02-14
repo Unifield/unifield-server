@@ -45,11 +45,14 @@ class analytic_account(osv.osv):
         UTP-410: Add the search on active/inactive CC
         """
         arg = []
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
         for x in args:
             if x[0] == 'filter_active' and x[2] == True:
-                arg.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+                arg.append(('date_start', '<=', cmp_date))
                 arg.append('|')
-                arg.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+                arg.append(('date', '>', cmp_date))
                 arg.append(('date', '=', False))
         return arg
 
@@ -261,6 +264,8 @@ class analytic_account(osv.osv):
             args=[]
         if context is None:
             context={}
+        if context.get('hide_inactive', False):
+            args.append(('filter_active', '=', True))
         if context.get('current_model') == 'project.project':
             cr.execute("select analytic_account_id from project_project")
             project_ids = [x[0] for x in cr.fetchall()]
