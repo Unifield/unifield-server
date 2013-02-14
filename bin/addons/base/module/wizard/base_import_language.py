@@ -33,7 +33,7 @@ class base_language_import(osv.osv_memory):
 
     _columns = {
         'name': fields.char('Language Name',size=64 , required=True),
-        'code': fields.char('Code (eg:en__US)',size=5 , required=True),
+        'code': fields.char('Code (eg:en_US)',size=5 , required=True),
         'data': fields.binary('File', required=True),
     }
 
