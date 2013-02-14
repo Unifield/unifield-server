@@ -48,8 +48,6 @@
         'test/deactivate_product_validate_po.yml',
         'test/deactivate_product_fo_draft.yml',
         'test/deactivate_product_ir_draft.yml',
-        'test/deactivate_product_valid_ir.yml',
-        'test/deactivate_product_validate_ir.yml',
     ],
     'installable': True,
     'active': False,

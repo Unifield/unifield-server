@@ -15,6 +15,7 @@
   Then, we a create an IR
 -
   !record {model: sale.order, id: ir1}:
+    name: IR1
     procurement_request: True
     picking_policy: direct
     invoice_quantity: order

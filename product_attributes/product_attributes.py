@@ -377,6 +377,10 @@ class product_attributes(osv.osv):
                                                ('item_kit_id.composition_type', '=', 'real'),
                                                ('item_kit_id.state', '=', 'completed'),
                                               ], context=context)
+            has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('product_id', '=', product.id),
+                                                                         ('composition_type', '=', 'real'),
+                                                                         ('state', '=', 'completed')], context=context)
+            has_kit.extend(has_kit2)
 
             # Check if the product is in an invoice
             has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),

@@ -834,6 +834,12 @@ class composition_kit(osv.osv):
             p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
             return False
+
+        for kit in self.browse(cr, uid, ids, context=context):
+            if kit.composition_type == 'real' and kit.state == 'completed' and not kit.composition.product_id.active:
+                raise osv.except_osv(_('Error'), _('The product of the kit composition is inactive. Please change the product.'))
+                return False
+
         return True
     
     _constraints = [(_composition_kit_constraint, 'Constraint error on Composition Kit.', []),
