@@ -54,7 +54,7 @@ class report_reception(report_sxw.rml_parse):
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
-            'get_selection': self.get_selection,
+#            'get_selection': self.get_selection,
         })
 
     def getOriginRef(self,o):
@@ -98,9 +98,9 @@ class report_reception(report_sxw.rml_parse):
     def getDetail(self,o):
         return o and o.purchase_id and o.purchase_id.details or False
 
-    def getCateg(self,o):
-        sta = self.get_selection(o.purchase_id, 'categ')
-        return sta
+#    def getCateg(self,o):
+#        sta = self.get_selection(o.purchase_id, 'categ')
+#        return sta
 
     def getPOref(self,o):
         return o and o.purchase_id and o.purchase_id.name or False
@@ -125,13 +125,13 @@ class report_reception(report_sxw.rml_parse):
     def getWarehouse(self,o):
         return o.warehouse_id and o.warehouse_id.name or False
 
-    def getTransportMode(self,o):
-        sta = self.get_selection(o.purchase_id, 'transport_type')
-        return sta
+#    def getTransportMode(self,o):
+#        sta = self.get_selection(o.purchase_id, 'transport_type')
+#        return sta
 
-    def getPrio(self,o):
-        sta = self.get_selection(o.purchase_id, 'priority')
-        return sta
+#    def getPrio(self,o):
+#        sta = self.get_selection(o.purchase_id, 'priority')
+#        return sta
 
     def getConfirmedDeliveryDate(self,o):
         if o.purchase_id:

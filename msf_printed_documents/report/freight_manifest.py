@@ -79,9 +79,9 @@ class freight_manifest(report_sxw.rml_parse):
     def getEta(self, o):
         return time.strftime('%d/%m/%Y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
 
-    def getTransport(self, o):
-        sta = self.get_selection(o, 'transport_type')
-        return sta
+#    def getTransport(self, o):
+#        sta = self.get_selection(o, 'transport_type')
+#        return sta
 
 #uf-1767: not need anymore because replaced by the method getSel in the server
 #    def get_selection(self, o, field):

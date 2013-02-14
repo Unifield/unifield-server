@@ -42,7 +42,7 @@ class order_line_allocation(report_sxw.rml_parse):
         super(order_line_allocation, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
+#            'get_selection': self.get_selection,
         })
         
 #uf-1767: not need anymore because replaced by the method getSel in the server
@@ -59,7 +59,7 @@ class po_line_allocation_report(report_sxw.rml_parse):
         super(po_line_allocation_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
+#            'get_selection': self.get_selection,
         })
         
 #uf-1767: not need anymore because replaced by the method getSel in the server

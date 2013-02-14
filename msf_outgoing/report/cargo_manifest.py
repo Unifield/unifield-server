@@ -29,7 +29,7 @@ class cargo_manifest(report_sxw.rml_parse):
         super(cargo_manifest, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
+#            'get_selection': self.get_selection,
         })
         
     def set_context(self, objects, data, ids, report_type=None):

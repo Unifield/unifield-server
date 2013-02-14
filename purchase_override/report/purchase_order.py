@@ -29,7 +29,7 @@ class order(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'to_time': self.str_to_time,
-            'selection': self._get_selection,
+#            'selection': self._get_selection,
             'enumerate': enumerate,
         })
         

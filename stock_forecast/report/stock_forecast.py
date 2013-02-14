@@ -28,21 +28,21 @@ class stock_forecast_report(report_sxw.rml_parse):
         super(stock_forecast_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
+#            'get_selection': self.get_selection,
         })
         
-    def get_selection(self, o, field):
-        """
-        Returns the fields.selection label
-        """
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
+#    def get_selection(self, o, field):
+#        """
+#        Returns the fields.selection label
+#        """
+#        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+#        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+#        name = '%s,%s' % (o._name, field)
+#        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+#        if tr_ids:
+#            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+#        else:
+#            return res
 
 report_sxw.report_sxw('report.stock.forecast.report', 'stock.forecast.line', 'addons/stock_forecast/report/stock_forecast.rml', parser=stock_forecast_report, header="external")
 

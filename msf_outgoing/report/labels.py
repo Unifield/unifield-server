@@ -29,7 +29,7 @@ class labels(report_sxw.rml_parse):
         super(labels, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
+#            'get_selection': self.get_selection,
             'range': range,
         })
            
@@ -42,18 +42,19 @@ class labels(report_sxw.rml_parse):
                 raise osv.except_osv(_('Warning !'), _('Labels are only available for completed Pre-Packing List Objects!'))
         
         return super(labels, self).set_context(objects, data, ids, report_type=report_type)
-        
-    def get_selection(self, o, field):
-        """
-        Returns the fields.selection label
-        """
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
+
+# [uf-1767] method replaced by getSel (server
+#    def get_selection(self, o, field):
+#        """
+#        Returns the fields.selection label
+#        """
+#        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+#        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+#        name = '%s,%s' % (o._name, field)
+#        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+#        if tr_ids:
+#            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+#        else:
+#            return res
 
 report_sxw.report_sxw('report.labels', 'stock.picking', 'addons/msf_outgoing/report/labels.rml', parser=labels, header=False)
