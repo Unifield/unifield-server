@@ -36,7 +36,7 @@ class msf_instance(osv.osv):
         'child_ids': fields.one2many('msf.instance', 'parent_id', 'Children'),
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')]),
+        'top_budget_cost_center_id': fields.many2one('account.analytic.account', 'Top consolidated cost center'),
         'target_cost_center_ids': fields.one2many('account.target.costcenter', 'instance_id', 'Target Cost Centers'),
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
@@ -84,16 +84,25 @@ class msf_instance(osv.osv):
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
-
-    def _check_cost_center_unicity(self, cr, uid, ids, context=None):
+    
+    def onchange_parent_id(self, cr, uid, ids, parent_id, level, context=None):
+        # Some verifications
         if not context:
             context = {}
-        for instance in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('&'),
-                                            ('state', '!=', 'inactive'),
-                                            ('cost_center_id','=',instance.cost_center_id.id)])
-            if len(bad_ids) and len(bad_ids) > 1:
-                return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if parent_id and level == 'project':
+            parent_instance = self.browse(cr, uid, parent_id, context=context)
+            for instance in self.browse(cr, uid, ids, context=context):
+                # delete existing cost center lines
+                old_target_line_ids = [x.id for x in instance.target_cost_center_ids]
+                self.unlink(cr, uid, old_target_line_ids, context=context)
+                # copy existing lines for project
+                for line_to_copy in parent_instance.target_cost_center_ids:
+                    self.pool.get('account.target.costcenter').create(cr, uid, {'instance_id': instance.id,
+                                                                                'cost_center_id': line_to_copy.cost_center_id.id,
+                                                                                'is_target': False,
+                                                                                'parent_id': line_to_copy.id}, context=context)
         return True
 
     def _check_database_unicity(self, cr, uid, ids, context=None):

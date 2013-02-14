@@ -24,16 +24,32 @@ from osv import fields, osv
 class account_target_costcenter(osv.osv):
     _name = 'account.target.costcenter'
     
+    def _get_target_set(self, cr, uid, ids, field_names=None, arg=None, context=None):
+        res = {}
+        if context is None:
+            context = {}
+            
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+            if not line.is_target and line.cost_center_id and line.cost_center_id.id:
+                set_target_lines = self.search(cr, uid, [('cost_center_id', '=', line.cost_center_id.id),
+                                                         ('is_target', '=', 'True')], context=context)
+                if len(set_target_lines) > 0:
+                    res[line.id] = True
+                    
+        return res
+    
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
-        'target': fields.boolean('Is target'),
+        'is_target': fields.boolean('Is target'),
+        'is_target_set': fields.function(_get_target_set, method=True, store=False, string="Is Target set?", type="boolean", readonly="True"),
         'parent_id': fields.many2one('account.target.costcenter', 'Parent'),
         'child_ids': fields.one2many('account.target.costcenter', 'parent_id', 'Children'),
     }
     
     _defaults = {
-        'target': False,
+        'is_target': False,
         'parent_id': False,
     }
     
@@ -42,18 +58,16 @@ class account_target_costcenter(osv.osv):
         # create lines in instance's children
         if 'instance_id' in vals:
             instance = self.pool.get('msf.instance').browse(cr, uid, vals['instance_id'], context=context)
-            if instance and instance.child_ids:
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+            if instance and instance.child_ids and current_instance.level == 'section':
                 for child in instance.child_ids:
                     self.create(cr, uid, {'instance_id': child.id,
                                           'cost_center_id': vals['cost_center_id'],
-                                          'target': False,
+                                          'is_target': False,
                                           'parent_id': res_id})
         return res_id
     
     def unlink(self, cr, uid, ids, context={}):
-        """
-        Do not permit user to delete HQ Entries lines
-        """
         if isinstance(ids, (int, long)):
             ids = [ids]
         # delete lines in instance's children

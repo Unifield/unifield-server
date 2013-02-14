@@ -67,7 +67,9 @@
     instance: Proj. instance
     #parent_id: msf_instance.instance_section
     name: Project 1
-    cost_center_id: analytic_account_kenya
+    target_cost_center_ids:
+      - cost_center_id: analytic_account_kenya
+      - is_target: True
     state: active
     move_prefix: TEST
     reconcile_prefix: T1

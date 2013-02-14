@@ -11,28 +11,37 @@
                     <field name="code"/>
                     <field name="name"/>
                     <field name="level"/>
-                    <newline/>
-                    <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
-                    <field name="instance" readonly="1"/>
-                    <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
-                    <field name="note"/>
-                    <field name="move_prefix"/>
-                    <field name="reconcile_prefix"/>
+                    <notebook colspan="4">
+                        <page string="General Information">
+		                    <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
+		                    <field name="instance" readonly="1"/>
+		                    <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}" on_change="onchange_parent_id(parent_id, level)"/>
+		                    <field name="note"/>
+		                    <field name="move_prefix"/>
+		                    <field name="reconcile_prefix"/>
+                        </page>
+                        <page string="Cost Centers">
+                            <field name="top_budget_cost_center_id" domain="[('category', '=', 'OC'), ('type', '=', 'view')]"/>
+		                    <button name="button_cost_center_wizard" string="Add Cost Centers" type="object" icon="terp-document-new" attrs="{'invisible': [('level', '!=', 'coordo')]}" />
+		                    <group colspan="4">
+			                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section'),()]}" widget="one2many_list" context="{'project_level': level == 'project'}">
+			                        <tree editable="top" string="Cost Centers" hide_new_button="context.get('project_level', False)" hide_delete_button="context.get('project_level', False)">
+			                            <field name="is_target_set" invisible="1"/>
+	                                    <field name="cost_center_id" readonly="1"/>
+			                            <field name="is_target" attrs="{'readonly': [('is_target_set', '!=', False)]}"/>
+			                        </tree>
+			                        <form string="Cost Centers">
+			                            <field name="is_target_set" invisible="1"/>
+			                            <field name="cost_center_id" readonly="1"/>
+			                            <field name="is_target" attrs="{'readonly': [('is_target_set', '!=', False)]}"/>
+			                        </form>
+			                    </field>
+		                    </group>
+                        </page>
+                    </notebook>
                     <field name="state" readonly="1"/>
-                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list">
-                        <tree editable="top" string="Cost Centers">
-                            <field name="cost_center_id" attrs="{'readonly': [('parent.level', '!=', 'coordo')]}"/>
-                            <field name="target"/>
-                        </tree>
-                        <form string="Cost Centers">
-                            <field name="cost_center_id" attrs="{'readonly': [('parent.level', '!=', 'coordo')]}"/>
-                            <field name="target"/>
-                        </form>
-                    </field>
-                    <newline/>
                     <button name="button_deactivate" string="Deactivate" type="object"
                             attrs="{'invisible': [('state', '!=', 'active')]}" icon="terp-check"/>
-                    <button name="button_cost_center_wizard" string="Add Cost Centers" type="object" icon="terp-document-new"/>
                 </form>
             </field>
         </record>

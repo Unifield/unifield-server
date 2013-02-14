@@ -73,8 +73,8 @@ class msf_budget(osv.osv):
         res = super(msf_budget, self).create(cr, uid, vals, context=context)
         # If the "parent" budget does not exist and we're not on the proprietary instance level already, create it.
         budget = self.browse(cr, uid, res, context=context)
-        prop_instance_cost_center = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.cost_center_id.id
-        if budget.cost_center_id and budget.cost_center_id.id != prop_instance_cost_center and budget.cost_center_id.parent_id:
+        prop_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if prop_instance.top_budget_cost_center_id and budget.cost_center_id and budget.cost_center_id.id != prop_instance.top_budget_cost_center_id.id and budget.cost_center_id.parent_id:
             parent_cost_center = budget.cost_center_id.parent_id
             parent_budget_ids = self.search(cr,
                                             uid,
