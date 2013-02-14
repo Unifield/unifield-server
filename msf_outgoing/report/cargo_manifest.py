@@ -41,19 +41,20 @@ class cargo_manifest(report_sxw.rml_parse):
                 raise osv.except_osv(_('Warning !'), _('Cargo Manifest is only available for Shipment Objects (not draft)!'))
         
         return super(cargo_manifest, self).set_context(objects, data, ids, report_type=report_type)
-        
-    def get_selection(self, o, field):
-        """
-        Returns the fields.selection label
-        """
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
+
+# [uf-1767] method replaced by getSel (server)
+#    def get_selection(self, o, field):
+#        """
+#        Returns the fields.selection label
+#        """
+#        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
+#        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+#        name = '%s,%s' % (o._name, field)
+#        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+#        if tr_ids:
+#            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
+#        else:
+#            return res
 
 report_sxw.report_sxw('report.cargo.manifest', 'shipment', 'addons/msf_outgoing/report/cargo_manifest.rml', parser=cargo_manifest, header="external")
 
