@@ -74,9 +74,9 @@
                                     <field name="cost_price" string="Cost Price (FC)" />
                                     <field name="notes" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"/>
-                                    <field name="latest" />
                                     <field name="my_company_id" invisible="1" />
-                                    <field name="supplier"
+                                    <!-- utp-357: the supplier will be selected in the sourcing tool -->
+                                    <field name="supplier" invisible="1"
                                         context="{'product_id': product_id, 'choose_supplier': True}"
                                         attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
