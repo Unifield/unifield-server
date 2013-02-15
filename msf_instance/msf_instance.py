@@ -40,7 +40,7 @@ class msf_instance(osv.osv):
                                    ('active', 'Active'),
                                    ('inactive', 'Inactive')], 'State', required=True),
         'move_prefix': fields.char('Account move prefix', size=5, required=True),
-        'reconcile_prefix': fields.char('Reconcilation prefix', size=2, required=True),
+        'reconcile_prefix': fields.char('Reconcilation prefix', size=5, required=True),
     }
     
     _defaults = {
