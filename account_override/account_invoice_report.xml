@@ -10,7 +10,7 @@
         report_type="webkit"
         header="False"
         auto="False"
-        menu="False"/>
+        menu="True"/>
 
     </data>
 </openerp>
