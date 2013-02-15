@@ -115,9 +115,11 @@
             <field name="model">account.analytic.line</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="priority" eval="30"/>
             <field name="arch" type="xml">
-                <field name="journal_id" position="before">
-                    <field name="instance_id"/>
+                <field name="journal_id" position="replace">
+                    <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                    <field name="journal_id_fake"/>
                 </field>
             </field>
         </record>
