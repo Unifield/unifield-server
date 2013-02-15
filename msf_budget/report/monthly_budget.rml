@@ -9,7 +9,7 @@
             <image x="15" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="790" y="550">Page <pageNumber /></drawString>
+            <drawString x="770" y="550">Page <pageNumber /></drawString>
             <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
             <!--            <drawString x="765" y="520.0">/</drawString>
             <drawString x="770" y="520.0"><pageCount /> </drawString>-->
@@ -19,6 +19,7 @@
     </template>
 
   <stylesheet>
+
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
@@ -51,7 +52,9 @@
     </blockTableStyle>
     <blockTableStyle id="Table10">
       <blockAlignment value="LEFT"/>
-      <blockValign value="TOP"/>
+      <blockValign value="MIDDLE"/>
+
+
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="13,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="13,-1"/>
     </blockTableStyle>
@@ -98,7 +101,9 @@
     </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" textColor="#4c4c4c"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER"/>
+    <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" />
+    <paraStyle name="P3a" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -173,7 +178,7 @@
     <blockTable colWidths="97.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="Table10"  repeatRows="1" >
       <tr>
         <td>
-          <para style="P2">Account</para>
+          <para style="P2a">Account</para>
         </td>
         <td>
           <para style="P2">Jan</para>
@@ -220,46 +225,46 @@
       <tr>
           <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
               <td>
-                <para style="P3">[[ line[0] ]]</para>
+                <para style="P3a">[[ line[0] ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[1] and formatLang(line[1], digits=2, grouping=True ) or 0.0 ]]</para>
+                <para style="P3">[[ line[1] and formatLang(line[1], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[2] ]]</para>
+                <para style="P3">[[ line[2] and formatLang(line[2], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[3] ]]</para>
+                <para style="P3">[[ line[3] and formatLang(line[3], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[4] ]]</para>
+                <para style="P3">[[ line[4] and formatLang(line[4], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[5] ]]</para>
+                <para style="P3">[[ line[5] and formatLang(line[5], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[6] ]]</para>
+                <para style="P3">[[ line[6] and formatLang(line[6], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[7] ]]</para>
+                <para style="P3">[[ line[7] and formatLang(line[7], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[8] ]]</para>
+                <para style="P3">[[ line[8] and formatLang(line[8], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[9] ]]</para>
+                <para style="P3">[[ line[9] and formatLang(line[9], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[10] ]]</para>
+                <para style="P3">[[ line[10] and formatLang(line[10], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[11] ]]</para>
+                <para style="P3">[[ line[11] and formatLang(line[11], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[12] ]]</para>
+                <para style="P3">[[ line[12] and formatLang(line[12], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[13] ]]</para>
+                <para style="P3">[[ line[13] and formatLang(line[13], digits=2, grouping=True ) or '0.0' ]]</para>
               </td>
       </tr>
     </blockTable>

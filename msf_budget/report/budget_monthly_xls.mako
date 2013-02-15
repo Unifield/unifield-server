@@ -84,7 +84,7 @@
 <ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 
 <Table ss:ExpandedColumnCount="15" ss:ExpandedRowCount="319" x:FullColumns="1" x:FullRows="1">
-<Column ss:Width="84.75"/>
+<Column ss:Width="160.75"/>
 <Column ss:AutoFitWidth="0" ss:Width="273"/>
 
 <Row>
@@ -130,55 +130,24 @@
 </Row>
 
 <Row ss:Index="8">
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Account code - Dest. code</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Account desc.</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Jan</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Feb</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Mar</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Apr</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">May</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Jun</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Jul</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Aug</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Sep</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Oct</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Nov</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Dec</Data>
-</Cell>
-<Cell ss:StyleID="s24">
-<Data ss:Type="String">Total</Data>
-</Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Account code - Destination code')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Account description')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Jan')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Feb')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Mar')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Apr')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('May')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Jun')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Jul')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Aug')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Sep')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Oct')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Nov')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Dec')}</Data></Cell>
+<Cell ss:StyleID="s24"><Data ss:Type="String">${_('Total')}</Data></Cell>
 </Row>
 
 % for line in process(o.budget_line_ids):
-
 <Row>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( line[0] )|x}</Data></Cell>
 <Cell ss:StyleID="s23" ><Data ss:Type="String">${( line[1] )|x}</Data></Cell>

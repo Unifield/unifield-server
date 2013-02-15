@@ -33,7 +33,6 @@ class monthly_budget(report_sxw.rml_parse):
         return
 
     def process(self, selected_lines):
-        print "processss"
         result = []
         # Parse each budget line
         budget_line_ids = [budget_line.id for budget_line in selected_lines]
@@ -42,7 +41,7 @@ class monthly_budget(report_sxw.rml_parse):
         for line in selected_lines:
             budget_line_destination_id = line.destination_id and line.destination_id.id or False
             budget_amount = budget_amounts[line.account_id.id, budget_line_destination_id]
-            total = locale.format("%d", sum(budget_amount), grouping=True)
+            total = sum(budget_amount)
             formatted_budget_values = budget_amount
             # Format name
             line_name = line.account_id.code
@@ -57,7 +56,6 @@ class monthly_budget(report_sxw.rml_parse):
             budget_line.append(total)
             # append to result
             result.append(budget_line)
-        print result
         return result
 
 report_sxw.report_sxw('report.msf.pdf.budget.monthly', 'msf.budget', 'addons/msf_budget/report/monthly_budget.rml', parser=monthly_budget, header=False)

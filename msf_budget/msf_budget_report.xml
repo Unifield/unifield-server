@@ -9,14 +9,6 @@
         auto="False"
         menu="False"/>
         
-        <report id="csv_budget_monthly"
-        string="Monthly Budget (CSV)"
-        model="msf.budget"
-        name="msf.csv.budget.monthly"
-        report_type="txt"
-        auto="False"
-        menu="True"/>
-
         <report id="xls_budget_monthly"
         string="Monthly Budget (XLS)"
         model="msf.budget"
@@ -68,6 +60,7 @@
         report_type="txt"
         auto="False"
         menu="False"/>
+
     </data>
 </openerp>
 
