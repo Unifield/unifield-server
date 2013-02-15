@@ -31,6 +31,7 @@ class account_account(osv.osv):
     _inherit = "account.account"
 
     _columns = {
+        'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
             ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')], string="Type for specific treatment", required=True,
             help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 

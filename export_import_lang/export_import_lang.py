@@ -153,7 +153,7 @@ class base_language_import(osv.osv_memory):
         try:
             cr = pooler.get_db(dbname).cursor()
             import_data = self.browse(cr, uid, ids)[0]
-            (filedata, fileformat) = lang_tools.get_data_file(cr, uid, import_data.data)
+            (fileobj, fileformat) = lang_tools.get_data_file(cr, uid, import_data.data)
             if fileformat == 'xml':
                 fileformat = 'csv'
             else:

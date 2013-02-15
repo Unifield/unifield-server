@@ -35,11 +35,11 @@ def get_data_file(cr, uid, data):
     except osv.except_osv:
         fileobj = TemporaryFile('w+b')
         fileobj.write(filedata)
-        fileformat = 'xml'
+        fileformat = 'csv'
     else:
         fileobj = TemporaryFile('w+')
         s_xml.to_csv(to_file=fileobj)
-        fileformat = 'csv'
+        fileformat = 'xml'
     fileobj.seek(0)
 
     return (fileobj, fileformat)

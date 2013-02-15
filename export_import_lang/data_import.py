@@ -75,7 +75,6 @@ class msf_language_import(osv.osv_memory):
             fileobj, fileformat = lang_tools.get_data_file(cr, uid, import_data.data)
 
             reader = csv.DictReader(fileobj, delimiter=",",quotechar='"')
-            first_line = reader.next()
             rejected = []
             trans_obj = self.pool.get('ir.translation')
             line = 0
