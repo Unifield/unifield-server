@@ -422,8 +422,8 @@
     <blockTable  style="Table9a">
         <tr>
           <td>
-			<para style="terp_default_9" alignment="LEFT">[[ o.comment and 'Comments :' or removeParentNode('para') ]]</para>
-			<para style="terp_default_9">[[ (o.comment and format(o.comment )) or removeParentNode('para') ]]</para>
+			<para style="terp_default_9" alignment="LEFT">Comments :</para>
+			<para style="terp_default_9">[[ o.comment and format(o.comment ) or ' ' ]]</para>
           </td>
         </tr>
         <tr>
