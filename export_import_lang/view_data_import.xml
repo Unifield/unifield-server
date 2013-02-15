@@ -15,8 +15,8 @@
                             <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values) or *.xml (XML SpreadSheet 2003"/>
                             <label colspan="4" width="220" string="When using CSV format, please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
                             <label colspan="4" width="220"/>
-                            <label colspan="4" width="220" string="Please check that the first line of your file is:"/>
-                            <label colspan="4" width="220" string="- module,name,src,value"/>
+                            <label colspan="4" width="220" string="Please check that the first line of your file must at least contain:"/>
+                            <label colspan="4" width="220" string="name,src,value"/>
                         </group>
                         <separator orientation="vertical" rowspan="15"/>
                         <group colspan="4" col="4">
