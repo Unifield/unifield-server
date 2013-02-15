@@ -407,8 +407,11 @@ class real_average_consumption(osv.osv):
             # we check the lines that need to be fixed
             if var.line_ids:
                 for var in var.line_ids:
-                    if var.consumed_qty or var.product_id.id==product_tbd or var.uom_id.id==uom_tbd and var.to_correct_ok and not var.just_info_ok:
-                        raise osv.except_osv(_('Warning !'), _('Some lines need to be fixed before.'))
+                    if var.consumed_qty:
+                        if var.product_id.id==product_tbd or var.uom_id.id==uom_tbd and var.to_correct_ok and not var.just_info_ok:
+                            raise osv.except_osv(_('Warning !'), _('Some lines need to be fixed before.'))
+                    else:
+                        self.pool.get('real.average.consumption.line').write(cr, uid, var.id, {},context)
         return True
 
 real_average_consumption()
