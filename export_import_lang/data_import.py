@@ -74,31 +74,31 @@ class msf_language_import(osv.osv_memory):
             import_data = self.browse(cr, uid, ids)[0]
             fileobj, fileformat = lang_tools.get_data_file(cr, uid, import_data.data)
 
-            reader = csv.reader(fileobj, delimiter=",",quotechar='"')
+            reader = csv.DictReader(fileobj, delimiter=",",quotechar='"')
             first_line = reader.next()
             rejected = []
             trans_obj = self.pool.get('ir.translation')
             line = 0
             for row in reader:
                 line += 1
-                if len(row) < 4:
-                    rejected.append(_('Line %s, incorrect column number (%s), expected at least 4.') % (line+1, len(row)))
-                    continue
-
-                if ',' not in row[1]:
-                    rejected.append(_('Line %s, Column B: Incorrect format') % (line+1, ))
-                    continue
-                obj, field = row[1].split(',', 1)
-                obj = obj.strip()
-                field = field.strip()
-                if obj == 'product.product' and field == 'name':
-                    obj = 'product.template'
-
-                obj_ids = self.pool.get(obj).search(cr, uid, [(field, '=', row[2])], context={'lang': 'en_US'})
-                if not obj_ids:
-                    rejected.append(_('Line %s Record %s not found') % (line+1, row[2].decode('utf-8')))
-                    continue
                 try:
+                    if not row.get('src') or not row.get('value') or not row.get('name'):
+                        rejected.append(_('Line %s, incorrect column number src, value and name should not be empty.') % (line+1, ))
+                        continue
+
+                    if ',' not in row['name']:
+                        rejected.append(_('Line %s, Column B: Incorrect format') % (line+1, ))
+                        continue
+                    obj, field = row['name'].split(',', 1)
+                    obj = obj.strip()
+                    field = field.strip()
+                    if obj == 'product.product' and field == 'name':
+                        obj = 'product.template'
+
+                    obj_ids = self.pool.get(obj).search(cr, uid, [(field, '=', row['src'])], context={'lang': 'en_US', 'active_test': False})
+                    if not obj_ids:
+                        rejected.append(_('Line %s Record %s not found') % (line+1, row['src'].decode('utf-8')))
+                        continue
                     cr.execute("""delete from ir_translation
                         where
                             lang=%s and
@@ -110,10 +110,10 @@ class msf_language_import(osv.osv_memory):
                     for obj_id in obj_ids:
                         trans_obj.create(cr, uid, {
                             'lang': import_data.name,
-                            'src': row[2],
+                            'src': row['src'],
                             'name': '%s,%s' % (obj, field),
                             'res_id': obj_id,
-                            'value': row[3],
+                            'value': row['value'],
                             'type': 'model'
                         })
                     cr.commit()
