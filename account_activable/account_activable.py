@@ -66,7 +66,6 @@ class account_account_activable(osv.osv):
             args.append('|')
             args.append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
             args.append(('inactivation_date', '=', False))
-            
         return super(account_account_activable, self).search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
             
