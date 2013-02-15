@@ -234,7 +234,6 @@ class stock_partial_picking(osv.osv_memory):
 
         for row in rows:
             # default values
-            line_data = {}
             file_line_num += 1
 
             # get values from row

@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from mx import DateTime
 
 class import_cell_data(osv.osv_memory):
@@ -58,7 +58,6 @@ class import_cell_data(osv.osv_memory):
         return False
 
     def get_move_line_number(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
-        line_number = False
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             if isinstance(cell_data, (int, long)):
