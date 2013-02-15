@@ -125,9 +125,9 @@ class hq_entries(osv.osv):
                 if data['cost_center_id']:
                     cost_center_name = data['cost_center_id'][1][:3]
                     cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
-                                                                                                 (dest_field, '=', cost_center_name)], context=context)
+                                                                                                 ('name', '=', cost_center_name)], context=context)
                     if len(cost_center_ids) > 0:
-                        cr.execute("select instance_id from account_target_costcenter where cost_center_id in %s and target = True" % (cost_center_ids))
+                        cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s and is_target = True" % (cost_center_ids[0]))
                         instance_id = cr.fetchone()[0]
                         if instance_id:
                             instance_data = self.pool.get('msf.instance').read(cr, uid, instance_id, ['instance'], context=context)
@@ -150,12 +150,10 @@ class account_target_costcenter(osv.osv):
     
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'instance_id':
-            instance_data = self.read(cr, uid, ids, [dest_field], context=context)
             res = []
-            for data in instance_data:
-                if data['instance_id']:
-                    instance_id = data['instance_id'][0]
-                    instance = self.pool.get('msf.instance').browse(cr, uid, instance_id, context=context)
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
                     if instance.state == 'active':
                         res_data = [instance.instance]
                         # if it is a coordo instance, send it to its projects as well
@@ -284,7 +282,7 @@ class account_analytic_line(osv.osv):
         
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
-            cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s and target = True" % (cost_center_id))
+            cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s and is_target = True" % (cost_center_id))
             instance_id = cr.fetchone()[0]
             current_instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
             if instance_id:
@@ -357,8 +355,7 @@ class account_analytic_line(osv.osv):
             if xml_ids[0]:
                 xml_id_record = self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)[0]
                 xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
-                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
+                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center_id, context=context)
                 self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', destination_name, xml_id, instance_name)
 
         return res_id
