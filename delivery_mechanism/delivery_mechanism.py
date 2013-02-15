@@ -428,6 +428,10 @@ class stock_picking(osv.osv):
             # OUT moves to assign
             to_assign_moves = []
             second_assign_moves = []
+            
+            # Link between IN and OUT moves
+            backlinks = []
+            
             # average price computation
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
@@ -514,6 +518,7 @@ class stock_picking(osv.osv):
                             # used for inventory valuation if real-time valuation is enabled.
                             average_values = {'price_unit': product_price,
                                               'price_currency_id': product_currency}
+                                        
                     # the quantity
                     count = count + partial['product_qty']
                     if first:
@@ -524,18 +529,20 @@ class stock_picking(osv.osv):
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
-                            second_assign_moves.append(out_move_id)
-                            if update_out:
-                                # UF-1690 : Remove the location_dest_id from values
-                                out_values = values.copy()
-                                if out_values.get('location_dest_id', False):
-                                    out_values.pop('location_dest_id')
+                            # UF-1690 : Remove the location_dest_id from values
+                            out_values = values.copy()
+                            out_values.update({'state': 'confirmed'})
+                            if out_values.get('location_dest_id', False):
+                                out_values.pop('location_dest_id')
+                                
+                            # If the quantity not matching, 
+                            if not partial['product_qty'] or initial_qty <= count:
                                 move_obj.write(cr, uid, [out_move_id], out_values, context=context)
-                            elif move.product_id.id != partial['product_id']:
-                                # no split but product changed, we have to update the corresponding out move
-                                move_obj.write(cr, uid, [out_move_id], values, context=context)
-                                # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
-                                update_out = True
+                                backlinks.append((move.id, out_move_id))
+                            else:
+                                new_move = move_obj.copy(cr, uid, out_move_id, out_values, context=dict(context, keepLineNumber=True))
+                                backlinks.append((move.id, new_move))
+                                
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
                         values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                         # mark the done IN stock as processed
@@ -553,13 +560,20 @@ class stock_picking(osv.osv):
                         new_move = move_obj.copy(cr, uid, move.id, dict(values, processed_stock_move=True), context=dict(context, keepLineNumber=True))
                         done_moves.append(new_move)
                         if out_move_id:
+                            
                             # UF-1690 : Remove the location_dest_id from values
                             out_values = values.copy()
                             out_values.update({'state': 'confirmed'})
                             if out_values.get('location_dest_id', False):
                                 out_values.pop('location_dest_id')
-                            new_out_move = move_obj.copy(cr, uid, out_move_id, out_values, context=dict(context, keepLineNumber=True))
-                            to_assign_moves.append(new_out_move)
+                                
+                            # If the quantity not matching,
+                            if not partial['product_qty'] or initial_qty <= count:
+                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
+                                backlinks.append((move.id, out_move_id)) 
+                            else:
+                                new_move = move_obj.copy(cr, uid, out_move_id, out_values, context=dict(context, keepLineNumber=True))
+                                backlinks.append((move.id, new_move))
                             
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
@@ -593,23 +607,24 @@ class stock_picking(osv.osv):
                     # average computation - empty if not average
                     defaults.update(average_values)
                     new_back_move = move_obj.copy(cr, uid, move.id, defaults, context=dict(context, keepLineNumber=True))
+                    move_obj.write(cr, uid, [out_move_id], {'product_qty': diff_qty}, context=context)
                     # if split happened
-                    if update_out:
-                        if out_move_id in to_assign_moves:
-                            to_assign_moves.remove(out_move_id)
-                            second_assign_moves.append(out_move_id)
+                    #if update_out:
+#                        if out_move_id in to_assign_moves:
+#                            to_assign_moves.remove(out_move_id)
+#                            second_assign_moves.append(out_move_id)
                         # update out move - quantity is increased, to match the original qty
                         # diff_qty = quantity originally in OUT move - count
-                        out_diff_qty = mirror_data['quantity'] - count
-                        self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
+                    #    out_diff_qty = mirror_data['quantity'] - count
+                    #    self._update_mirror_move(cr, uid, ids, data_back, out_diff_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                 # is negative if some qty was added during the validation -> draft qty is increased
                 if diff_qty < 0:
                     # we update the corresponding OUT object if exists - we want to increase the qty if no split happened
                     # if split happened and quantity is bigger, the quantities are already updated with stock moves creation
                     if not update_out:
-                        if out_move_id in to_assign_moves:
-                            to_assign_moves.remove(out_move_id)
-                            second_assign_moves.append(out_move_id)
+#                        if out_move_id in to_assign_moves:
+#                            to_assign_moves.remove(out_move_id)
+#                            second_assign_moves.append(out_move_id)
                         update_qty = -diff_qty
                         self._update_mirror_move(cr, uid, ids, data_back, update_qty, out_move=out_move_id, context=dict(context, keepLineNumber=True))
                         # no split nor product change but out is updated (qty increased), force update out for update out picking
@@ -625,6 +640,12 @@ class stock_picking(osv.osv):
                 if not move.product_qty and move.state not in ('done', 'cancel'):
                     done_moves.remove(move.id)
                     move.unlink(context=dict(context, call_unlink=True))
+                    
+            for move, out_move in backlinks:
+                if move in done_moves:
+                    move_obj.write(cr, uid, [move], {'state': 'done'}, context=context)
+                    move_obj.action_assign(cr, uid, [out_move])
+                    
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
                 # done moves go to new picking object
@@ -644,16 +665,16 @@ class stock_picking(osv.osv):
                 self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
 
             # Assign all updated out moves
-            for move in move_obj.browse(cr, uid, to_assign_moves):
-                if not move.product_qty and move.state not in ('done', 'cancel'):
-                    to_assign_moves.remove(move.id)
-                    move.unlink(context=dict(context, call_unlink=True))
-            for move in move_obj.browse(cr, uid, second_assign_moves):
-                if not move.product_qty and move.state not in ('done', 'cancel'):
-                    second_assign_moves.remove(move.id)
-                    move.unlink(context=dict(context, call_unlink=True))
-            move_obj.action_assign(cr, uid, second_assign_moves)
-            move_obj.action_assign(cr, uid, to_assign_moves)
+#            for move in move_obj.browse(cr, uid, to_assign_moves):
+#                if not move.product_qty and move.state not in ('done', 'cancel'):
+#                    to_assign_moves.remove(move.id)
+#                    move.unlink(context=dict(context, call_unlink=True))
+#            for move in move_obj.browse(cr, uid, second_assign_moves):
+#                if not move.product_qty and move.state not in ('done', 'cancel'):
+#                    second_assign_moves.remove(move.id)
+#                    move.unlink(context=dict(context, call_unlink=True))
+#            move_obj.action_assign(cr, uid, second_assign_moves)
+#            move_obj.action_assign(cr, uid, to_assign_moves)
 
         return {'type': 'ir.actions.act_window_close'}
     
