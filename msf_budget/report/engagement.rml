@@ -175,7 +175,7 @@
     <para style="P10">Delivery confirmed date: [[ (str(o.delivery_confirmed_date) and str(o.delivery_confirmed_date)) or '' ]]</para>
     <para style="P10">PO reference: [[ (o.name and o.name) or '' ]]</para>
     <para style="P10">Fiscal year: [[ (get_fiscal_year(o) and get_fiscal_year(o)) or ' ' ]]</para>
-    <para style="P10">Currency: [[ o.functional_currency_id and o.functional_currency_id.name or ' ' ]]</para>
+    <para style="P10">Functional currency: [[ o.functional_currency_id and o.functional_currency_id.name or ' ' ]]</para>
     <para style="P10">Report date: [[ time.strftime('%d/%m/%Y') ]]</para>
     <para style="P5">
       <font color="white"> </font>
