@@ -37,7 +37,7 @@ class freight_manifest(report_sxw.rml_parse):
             'get_lines': self.get_lines,
             'getEtd': self.getEtd,
             'getEta': self.getEta,
-            'getTransport': self.getTransport,
+#            'getTransport': self.getTransport,
             'getDataRef': self.getDataRef,
             'getDataPpl': self.getDataPpl,
             'getDataDescr': self.getDataDescr,
