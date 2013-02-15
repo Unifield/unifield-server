@@ -23,8 +23,6 @@ import threading
 import pooler
 from osv import fields, osv
 from tools.translate import _
-# xml parser
-from lxml import etree
 # import xml file
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
