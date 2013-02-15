@@ -217,11 +217,14 @@ class res_partner(osv.osv):
     _constraints = [
     ]
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def get_objects_for_partner(self, cr, uid, ids, context):
+        """
+        According to partner's ids: 
+        return the most important objects linked to him that are not closed or opened
+        """
+        # some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not context:
-            context = {}
         #objects
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
@@ -230,6 +233,30 @@ class res_partner(osv.osv):
         tender_obj = self.pool.get('tender')
         com_vouch_obj = self.pool.get('account.commitment')# for commitment voucher
         ship_obj = self.pool.get('shipment')
+
+        # ids list
+        purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
+        sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
+        invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])])
+        pick_ids = pick_obj.search(cr, uid, ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
+        tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
+        com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')])
+        ship_ids = ship_obj.search(cr, uid,  ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'delivered'])])
+        
+        return ', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)]
+                         +[so['name'] for so in sale_obj.read(cr, uid, sale_ids)]
+                         +[inv['number'] or inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
+                         +[pick['name'] for pick in pick_obj.read(cr, uid, pick_ids)]
+                         +[tend['name'] for tend in tender_obj.read(cr, uid, tender_ids)]
+                         +[com_vouch['name'] for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids)]
+                         +[ship['name'] for ship in ship_obj.read(cr, uid, ship_ids)]
+                         )
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context:
+            context = {}
         
         self._check_main_partner(cr, uid, ids, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
@@ -243,26 +270,11 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
-            # ids list
-            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])])
-            pick_ids = pick_obj.search(cr, uid, ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
-            com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')])
-            ship_ids = ship_obj.search(cr, uid,  ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'delivered'])])
-            if purchase_ids or sale_ids or invoice_ids or pick_ids or tender_ids or com_vouch_ids or ship_ids:
+            objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
+            if objects_linked_to_partner:
                 raise osv.except_osv(_('Warning'),
                                      _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
-                                       ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)]
-                                                      +[so['name'] for so in sale_obj.read(cr, uid, sale_ids)]
-                                                      +[inv['number'] or inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
-                                                      +[pick['name'] for pick in pick_obj.read(cr, uid, pick_ids)]
-                                                      +[tend['name'] for tend in tender_obj.read(cr, uid, tender_ids)]
-                                                      +[com_vouch['name'] for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids)]
-                                                      +[ship['name'] for ship in ship_obj.read(cr, uid, ship_ids)]
-                                                      )
-                                            ))
+                                       ) % (objects_linked_to_partner))
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -304,36 +316,13 @@ class res_partner(osv.osv):
             # some verifications
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            #objects
-            purchase_obj = self.pool.get('purchase.order')
-            sale_obj = self.pool.get('sale.order')
-            account_invoice_obj = self.pool.get('account.invoice') # for Supplier invoice/ Debit Note
-            pick_obj = self.pool.get('stock.picking') # for PICK/ PACK/ PPL/ INCOMING SHIPMENT/ DELIVERY
-            tender_obj = self.pool.get('tender')
-            com_vouch_obj = self.pool.get('account.commitment')# for commitment voucher
-            ship_obj = self.pool.get('shipment')
             
-            # ids list
-            purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])])
-            pick_ids = pick_obj.search(cr, uid, ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-            tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
-            com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')])
-            ship_ids = ship_obj.search(cr, uid,  ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'delivered'])])
-            if purchase_ids or sale_ids or invoice_ids or pick_ids or tender_ids or com_vouch_ids or ship_ids:
+            objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
+            if objects_linked_to_partner:
                 return {'value': {'active': True}, 
                         'warning': {'title': _('Error'), 
                                     'message': _("Some documents linked to this partner needs to be closed or canceled before deactivating the partner: %s"
-                                                ) % (', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)]
-                                                               +[so['name'] for so in sale_obj.read(cr, uid, sale_ids)]
-                                                               +[inv['number'] or inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
-                                                               +[pick['name'] for pick in pick_obj.read(cr, uid, pick_ids)]
-                                                               +[tend['name'] for tend in tender_obj.read(cr, uid, tender_ids)]
-                                                               +[com_vouch['name'] for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids)]
-                                                               +[ship['name'] for ship in ship_obj.read(cr, uid, ship_ids)]
-                                                               )
-                                                     ),}}
+                                                ) % (objects_linked_to_partner,)}}
         return {}
 
     def on_change_partner_type(self, cr, uid, ids, partner_type, sale_pricelist, purchase_pricelist):
