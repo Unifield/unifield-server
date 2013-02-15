@@ -12,10 +12,10 @@
                         <group colspan="3">
                             <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
                             <newline/>
-                            <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values)"/>
-                            <label colspan="4" width="220" string="Please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
+                            <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values) or *.xml (XML SpreadSheet 2003"/>
+                            <label colspan="4" width="220" string="When using CSV format, please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
                             <label colspan="4" width="220"/>
-                            <label colspan="4" width="220" string="When using CSV format, please also check that the first line of your file is one of the following:"/>
+                            <label colspan="4" width="220" string="Please check that the first line of your file is:"/>
                             <label colspan="4" width="220" string="- module,name,src,value"/>
                         </group>
                         <separator orientation="vertical" rowspan="15"/>
@@ -23,6 +23,7 @@
                             <separator string="Import Translation" colspan="4"/>
                             <newline/>
                             <field name="name" width="200"/>
+                            <separator colspan="4" string="To avoid server timeout when trying to upload large file, please zip the file." />
                             <field name="data" colspan="4"/>
                         </group>
                         <group colspan="8" col="8">

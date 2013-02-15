@@ -13,13 +13,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import logging
 from tempfile import TemporaryFile
 import zipfile
-
-def open_requests(self, cr, uid, ids, filter=False, context=None):
-    view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'res_request_trans-act')
-    result = self.pool.get(view[0]).read(cr, uid, view[1], ['view_id', 'view_mode', 'view_type', 'res_model', 'type', 'search_view_id', 'domain'])
-    result['target'] = 'crunch'
-    #result['context'] = {'search_default_import': filter=='import' , 'search_default_export': filter=='export', 'search_default_act_to': uid}
-    return result
+import lang_tools
 
 class base_language_export(osv.osv_memory):
     _inherit = "base.language.export"
@@ -52,7 +46,7 @@ class base_language_export(osv.osv_memory):
         }
 
     def open_requests(self, cr, uid, ids, context=None):
-        return open_requests(self, cr, uid, ids, 'export', context)
+        return lang_tools.open_requests(self, cr, uid, ids, 'export', context)
 
     def _export(self, dbname, uid, ids, context=None):
         #modules = ['account_mcdb']
@@ -153,39 +147,20 @@ class base_language_import(osv.osv_memory):
         }
 
     def open_requests(self, cr, uid, ids, context=None):
-        return open_requests(self, cr, uid, ids, 'import', context)
+        return lang_tools.open_requests(self, cr, uid, ids, 'import', context)
 
     def _import(self, dbname, uid, ids, context=None):
         try:
             cr = pooler.get_db(dbname).cursor()
             import_data = self.browse(cr, uid, ids)[0]
-            filedata = base64.decodestring(import_data.data)
-
-            buf = cStringIO.StringIO(filedata)
-            try:
-                zipf = zipfile.ZipFile(buf, 'r')
-                file_name = zipf.namelist()
-                if not file_name or len(file_name) > 1:
-                    raise osv.except_osv(_('Error'), _('The Zip file should contain only one file'))
-                filedata = zipf.read(file_name[0])
-                zipf.close()
-            except zipfile.BadZipfile:
-                pass
-            buf.close()
-
-            try:
-                s_xml = SpreadsheetXML(xmlstring=filedata)
-            except osv.except_osv:
-                fileobj = TemporaryFile('w+b')
-                fileobj.write(filedata)
-                fileobj.seek(0)
+            (filedata, fileformat) = lang_tools.get_data_file(cr, uid, import_data.data)
+            if fileformat == 'xml':
+                fileformat = 'csv'
+            else:
                 first_line = fileobj.readline().strip().replace('"', '').replace(' ', '')
                 fileformat = first_line.endswith("type,name,res_id,src,value") and 'csv' or 'po'
-            else:
-                fileobj = TemporaryFile('w+')
-                s_xml.to_csv(to_file=fileobj)
                 fileobj.seek(0)
-                fileformat = 'csv'
+
             tools.trans_load_data(cr, fileobj, fileformat, import_data.code, lang_name=import_data.name, context={'overwrite': 1})
             tools.trans_update_res_ids(cr)
             fileobj.close()

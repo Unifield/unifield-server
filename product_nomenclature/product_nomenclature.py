@@ -506,7 +506,6 @@ class product_product(osv.osv):
         '''
         if context is None:
             context = {}
-
         # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
         lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
         if lang_dict.get('context_lang'):

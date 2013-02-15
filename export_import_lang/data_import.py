@@ -20,17 +20,12 @@
 ##############################################################################
 
 import tools
-import base64
-from tempfile import TemporaryFile
 from osv import osv, fields
 import csv
 from tools.translate import _
 import threading
-from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-import zipfile
 import pooler
-import cStringIO
-
+import lang_tools
 
 class msf_language_import(osv.osv_memory):
     """ Language Import """
@@ -38,6 +33,9 @@ class msf_language_import(osv.osv_memory):
     _name = "msf.language.import"
     _description = "Language Import"
     _inherit = "ir.wizard.screen"
+
+    def open_requests(self, cr, uid, ids, context=None):
+        return lang_tools.open_requests(self, cr, uid, ids, 'import', context)
 
     def _get_languages(self, cr, uid, context):
         return self.pool.get('base.language.export')._get_languages(cr, uid, context)
@@ -57,7 +55,7 @@ class msf_language_import(osv.osv_memory):
         """
         thread = threading.Thread(target=self._import_data_bg, args=(cr.dbname, uid, ids, context))
         thread.start()
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'view_msf_import_language_2')[1]
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'export_import_lang', 'view_msf_import_language_2')[1]
         return {
             'view_mode': 'form',
             'view_id': [view_id],
@@ -74,30 +72,7 @@ class msf_language_import(osv.osv_memory):
         try:
             cr = pooler.get_db(dbname).cursor()
             import_data = self.browse(cr, uid, ids)[0]
-            filedata = base64.decodestring(import_data.data)
-
-            buf = cStringIO.StringIO(filedata)
-            try:
-                zipf = zipfile.ZipFile(buf, 'r')
-                file_name = zipf.namelist()
-                if not file_name or len(file_name) > 1:
-                    raise osv.except_osv(_('Error'), _('The Zip file should contain only one file'))
-                filedata = zipf.read(file_name[0])
-                zipf.close()
-            except zipfile.BadZipfile:
-                pass
-            buf.close()
-
-            try:
-                s_xml = SpreadsheetXML(xmlstring=filedata)
-            except osv.except_osv:
-                fileobj = TemporaryFile('w+b')
-                fileobj.write(filedata)
-                fileobj.seek(0)
-            else:
-                fileobj = TemporaryFile('w+')
-                s_xml.to_csv(to_file=fileobj)
-                fileobj.seek(0)
+            fileobj, fileformat = lang_tools.get_data_file(cr, uid, import_data.data)
 
             reader = csv.reader(fileobj, delimiter=",",quotechar='"')
             first_line = reader.next()
@@ -106,8 +81,12 @@ class msf_language_import(osv.osv_memory):
             line = 0
             for row in reader:
                 line += 1
+                if len(row) < 4:
+                    rejected.append(_('Line %s, incorrect column number (%s), expected at least 4.') % (line+1, len(row)))
+                    continue
+
                 if ',' not in row[1]:
-                    rejected.append(_('Line %s, Column B: Incorrect format') % (line, ))
+                    rejected.append(_('Line %s, Column B: Incorrect format') % (line+1, ))
                     continue
                 obj, field = row[1].split(',', 1)
                 obj = obj.strip()
@@ -115,9 +94,9 @@ class msf_language_import(osv.osv_memory):
                 if obj == 'product.product' and field == 'name':
                     obj = 'product.template'
 
-                obj_ids = self.pool.get(obj).search(cr, uid, [(field, '=', row[2])])
+                obj_ids = self.pool.get(obj).search(cr, uid, [(field, '=', row[2])], context={'lang': 'en_US'})
                 if not obj_ids:
-                    rejected.append(_('Line %s Record %s not found') % (line, row[2].decode('utf-8')))
+                    rejected.append(_('Line %s Record %s not found') % (line+1, row[2].decode('utf-8')))
                     continue
                 try:
                     cr.execute("""delete from ir_translation
@@ -140,7 +119,7 @@ class msf_language_import(osv.osv_memory):
                     cr.commit()
                 except Exception, e:
                     cr.rollback()
-                    rejected.append(_('Line %s, system error: %s') % (line, e))
+                    rejected.append(_('Line %s, system error: %s') % (line+1, e))
 
             tools.cache.clean_caches_for_db(cr.dbname)
             fileobj.close()
@@ -150,7 +129,7 @@ class msf_language_import(osv.osv_memory):
                 'name': _('Import Translation Data: %s/%s') % (line-len(rejected), line),
                 'act_from': uid,
                 'act_to': uid,
-                #'export_trans': True,
+                'import_trans': True,
             }
             if rejected:
                 req_val['body'] =  _("The following lines couldn't be imported:\n%s") % ("\n".join(rejected), )
@@ -171,7 +150,7 @@ class msf_language_import(osv.osv_memory):
                 'name': _('Import translation failed'),
                 'act_from': uid,
                 'act_to': uid,
-                #'import_trans': True,
+                'import_trans': True,
                 'body': _('''The process to import the translation file failed !
                 %s
                 ''') % (e,)
