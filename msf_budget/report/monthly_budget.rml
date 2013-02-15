@@ -173,8 +173,6 @@
       <font color="white"> </font>
     </para>
 
-
-
     <blockTable colWidths="97.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="Table10"  repeatRows="1" >
       <tr>
         <td>
@@ -220,7 +218,6 @@
           <para style="P2">Total</para>
         </td>
       </tr>
-
 
       <tr>
           <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
@@ -268,8 +265,6 @@
               </td>
       </tr>
     </blockTable>
-
-
 
   </story>
 </document>
