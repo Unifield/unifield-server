@@ -886,6 +886,40 @@ class analytic_distribution_wizard(osv.osv_memory):
                 line_obj.unlink(cr, uid, id, context=context)
         return True
 
+    def _check_analytic_account_validity(self, cr, uid, ids, context=None):
+        """
+        Check analytic account validity regarding posting/document date.
+        Note: The date in the context will determine 
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for w in self.browse(cr, uid, ids):
+            # UF-1678
+            # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
+            if w.distribution_id and w.posting_date:
+                # First we check cost center distribution line with CC (analytic_id) and destination (destination_id)
+                for cline in self.pool.get('cost.center.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.cost_center_lines], {'date': w.posting_date}):
+                    if not cline.analytic_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') % (cline.analytic_id.code or '', w.posting_date))
+                    if not cline.destination_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (cline.destination_id.code or '', w.posting_date))
+                # Then we check funding pool distribution line with CC (cost_center_id) and destination (destination_id)
+                for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
+                    if not fpline.cost_center_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Cost center %s is not active at this date: %s') % (fpline.cost_center_id.code or '', w.posting_date))
+                    if not fpline.destination_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (fpline.destination_id.code or '', w.posting_date))
+            # UF-1678
+            # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
+            if w.distribution_id and w.document_date:
+                # We only check funding pool distribution line on which there is funding pool analytic account
+                for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
+                    if not fpline.analytic_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Funding Pool %s is not active at this date: %s') % (fpline.analytic_id.code or '', w.document_date))
+        return True
+
     def button_confirm(self, cr, uid, ids, context=None):
         """
         Calculate total of lines and verify that it's equal to total_amount
@@ -930,6 +964,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     account_id = wiz.account_id and wiz.account_id.id or False
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, account_id)
                     break
+        # Check dates for all analytic account type
+        self._check_analytic_account_validity(cr, uid, ids)
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):

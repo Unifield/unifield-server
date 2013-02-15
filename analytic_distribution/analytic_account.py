@@ -33,11 +33,19 @@ class analytic_account(osv.osv):
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
-        Returns the good value according to the doc type
+        If date out of date_start/date of given analytic account, then account is inactive.
+        The comparison could be done via a date given in context.
         '''
         res = {}
-        for id in ids:
-            res[id] = False
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for a in self.browse(cr, uid, ids):
+            res[a.id] = True
+            if a.date_start > cmp_date:
+                res[a.id] = False
+            if a.date and a.date < cmp_date:
+                res[a.id] = False
         return res
 
     def _search_filter_active(self, cr, uid, ids, name, args, context=None):
