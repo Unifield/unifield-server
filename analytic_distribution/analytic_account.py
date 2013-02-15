@@ -62,6 +62,10 @@ class analytic_account(osv.osv):
                 arg.append('|')
                 arg.append(('date', '>', cmp_date))
                 arg.append(('date', '=', False))
+            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append(('date_start', '>', cmp_date))
+                arg.append(('date', '<', cmp_date))
         return arg
 
     def _search_closed_by_a_fp(self, cr, uid, ids, name, args, context=None):
