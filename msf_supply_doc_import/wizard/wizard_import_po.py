@@ -27,7 +27,7 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
-from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION
+from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration
 from msf_order_date import TRANSPORT_TYPE
 
 
@@ -221,8 +221,8 @@ The columns should be in this values:
                 est_transport_lead_time = float(cell_data)
                 to_write_po.update({'est_transport_lead_time': est_transport_lead_time})
             except ValueError, e:
-                to_write['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.') % (cell_data, e))
-                to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+                to_write_po['error_list'].append(_('The Est. Transport Lead Time %s has a wrong value. Details: %s.') % (cell_data, e))
+                to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Transport Mode
         cell_nb = header_index['Transport Mode']
