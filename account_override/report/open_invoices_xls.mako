@@ -110,7 +110,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <NumberFormat ss:Format="Fixed"/>
+   <NumberFormat ss:Format="Standard"/>
   </Style>
 
 
@@ -185,7 +185,7 @@
    </Borders>
    <Font x:Family="Swiss" ss:Bold="1"/>
    <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
-   <NumberFormat ss:Format="Fixed"/>
+   <NumberFormat ss:Format="Standard"/>
   </Style>
 
   <Style ss:ID="s50">
@@ -196,7 +196,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
-   <NumberFormat ss:Format="Fixed"/>
+   <NumberFormat ss:Format="Standard"/>
   </Style>
 
   <Style ss:ID="s51">
@@ -204,19 +204,19 @@
    <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
   </Style>
 
-	<Style ss:ID="s25b">
-		<Font ss:Bold="1"/>
-	</Style>
+    <Style ss:ID="s25b">
+        <Font ss:Bold="1"/>
+    </Style>
 
   <Style ss:ID="short_date2">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
    <NumberFormat ss:Format="Short Date"/>
-	<Borders>
-	<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-	<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-	<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-	<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-	</Borders>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
   </Style>
 
   <Style ss:ID="short_date2a">
@@ -226,52 +226,50 @@
 
  </Styles>
 
+<Worksheet ss:Name="${_('Open Invoices')}">
+    <Table>
+    <Column ss:AutoFitWidth="0" ss:Width="90.5" ss:Span="1"/>
+    <Column ss:Index="3" ss:Width="88.5"/>
+    <Column ss:Width="91.5"/>
+    <Column ss:Width="108"/>
+    <Column ss:Width="63"/>
+    <Column ss:Width="53.25"/>
+    <Column ss:Width="105.75"/>
+    <Column ss:Width="51"/>
+    <Column ss:Width="42.75"/>
+    <Column ss:Width="46.5" ss:Span="1"/>
+    <Column ss:Index="13" ss:Width="49.5"/>
+    <Column ss:Width="39.75"/>
+    <Column ss:Width="45.5"/>
 
 
-<Worksheet ss:Name="Open_Invoices">
+    <Row ss:AutoFitHeight="0" ss:Height="18">
+        <Cell ss:StyleID="s25b">
+        <Data ss:Type="String">${_('OPEN INVOICES')}</Data>
+        </Cell>
+    </Row>
 
-	<Table >
+    <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
-	<Column ss:AutoFitWidth="0" ss:Width="90.5" ss:Span="1"/>
-	<Column ss:Index="3" ss:Width="88.5"/>
-	<Column ss:Width="91.5"/>
-	<Column ss:Width="108"/>
-	<Column ss:Width="63"/>
-	<Column ss:Width="53.25"/>
-	<Column ss:Width="105.75"/>
-	<Column ss:AutoFitWidth="0" ss:Width="51"/>
-	<Column ss:Width="42.75"/>
-	<Column ss:AutoFitWidth="0" ss:Width="46.5" ss:Span="1"/>
-	<Column ss:Index="13" ss:AutoFitWidth="0" ss:Width="49.5"/>
-	<Column ss:AutoFitWidth="0" ss:Width="39.75"/>
-	<Column ss:Width="28.5"/>
+    <Row >
+        <Cell>
+        <Data ss:Type="String">${_('Prop. Instance')}:</Data>
+        </Cell>
+        <Cell ss:StyleID="s21">
+        <Data ss:Type="String">${(company.instance_id and company.instance_id.code or '')|x}</Data>
+        </Cell>
+    </Row>
+    <Row>
+        <Cell>
+        <Data ss:Type="String">${_('Report Date')}:</Data>
+        </Cell>
+        <Cell ss:StyleID="short_date2a" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
+    </Row>
+    <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
-
-	<Row ss:AutoFitHeight="0" ss:Height="18">
-		<Cell ss:StyleID="s25b">
-		<Data ss:Type="String">OPEN INVOICES</Data>
-		</Cell>
-	</Row>
-
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-
-	<Row >
-		<Cell>
-		<Data ss:Type="String">Prop. Instance:</Data>
-		</Cell>
-		<Cell ss:StyleID="s21">
-		<Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
-		</Cell>
-	</Row>
-	<Row>
-		<Cell>
-		<Data ss:Type="String">Report Date:</Data>
-		</Cell>
-		<Cell ss:StyleID="short_date2a" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
-	</Row>
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
+% for (type, title) in [('ci', _('Stock Transfer Vouchers')), ('si', _('Supplier Invoices')), ('cr', _('Customer Refunds')), ('sr', _('Supplier Refunds'))]:
    <Row >
-    <Cell ss:StyleID="s23"><Data ss:Type="String">Stock Transfer Vouchers</Data></Cell>
+    <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
@@ -287,367 +285,87 @@
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s25"/>
    </Row>
-	<Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
-	</Row>
+    <Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
+        <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
+        <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
+        <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
+        <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
+        <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
+        <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
+    </Row>
 
+<% nb_line = 0 %>
 
-% for line in getLines('ci'):
-	<Row>
-		% if isDate(line[1]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
+% for line in getLines(type):
+    <Row>
+        <% nb_line += 1 %>
+        % if line[1]:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
+        % else:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
+        % endif
 
-		% if isDate(line[2]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[3] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
-		% if isDate(line[7]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[8] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[10] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[11] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[9] or '')|x}</Data></Cell>
-        	<Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[10],'res') or 0.0 )|x}</Data></Cell>
-       	 	<Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[11],'tot') or 0.0 )|x}</Data></Cell>
-		<Cell ss:StyleID="s50"><Data ss:Type="String">${( getFuncCur(line[0]) or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[12] or '')|x}</Data></Cell>
-	</Row>
+        % if line[2]:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
+        % else:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
+        % endif
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[3] or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
+        % if line[7]:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
+        % else:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
+        % endif
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[8] or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(line[10] or 0.0)|x}</Data></Cell>
+        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(line[11] or 0.0)|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[9] or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(line[10], line) or 0.0 )|x}</Data></Cell>
+        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(line[11], line) or 0.0 )|x}</Data></Cell>
+        <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[12] and getSelValue('account.invoice', 'state', line[12]) or '')|x}</Data></Cell>
+    </Row>
 % endfor
 
-	<Row ss:AutoFitHeight="0" ss:StyleID="s26">
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s44">
-		<Data ss:Type="String">Sub Total =</Data>
-		</Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getTot()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${( getCurTot() or '')|x}</Data></Cell>
+    <Row ss:AutoFitHeight="0" ss:StyleID="s26">
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s39"/>
+        <Cell ss:StyleID="s40"/>
+        <Cell ss:StyleID="s40"/>
+        <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Sub Total')} =</Data></Cell>
+        % if nb_line:
+            <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number" ></Data></Cell>
+            <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
+        % else:
+            <Cell ss:StyleID="s49" />
+            <Cell ss:StyleID="s49" />
+        % endif
+        <Cell ss:StyleID="s29"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
+        <Cell ss:StyleID="s42"/>
+    </Row>
 
-
-		<Cell ss:StyleID="s42"/>
-	</Row>
-
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-
-   <Row >
-    <Cell ss:StyleID="s31"><Data ss:Type="String">Supplier Invoices</Data></Cell>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s38"/>
-   </Row>
-
-	<Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
-	</Row>
-
-
-% for line in getLines('si'):
-	<Row>
-		% if isDate(line[1]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-
-		% if isDate(line[2]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[3] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
-
-		% if isDate(line[7]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[8] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[10] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[11] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[9] or '')|x}</Data></Cell>
-        	<Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[10],'res') or 0.0 )|x}</Data></Cell>
-        	<Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[11],'tot') or 0.0 )|x}</Data></Cell>
-		<Cell ss:StyleID="s50"><Data ss:Type="String">${( getFuncCur(line[0]) or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[12] or '')|x}</Data></Cell>
-	</Row>
-
+    <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
+    <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 % endfor
-
-
-
-	<Row ss:AutoFitHeight="0" ss:StyleID="s26">
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s44">
-		<Data ss:Type="String">Sub Total =</Data>
-		</Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getTot()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${( getCurTot() or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s42"/>
-	</Row>
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-
-   <Row >
-    <Cell ss:StyleID="s31"><Data ss:Type="String">Customer Refunds</Data></Cell>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s38"/>
-   </Row>
-
-
-	<Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
-	</Row>
-
-
-
-% for line in getLines('cr'):
-
-	<Row>
-		% if isDate(line[1]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		% if isDate(line[2]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[3] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
-		% if isDate(line[7]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[8] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[10] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[11] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[9] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[10],'res') or 0.0 )|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[11],'tot') or 0.0 )|x}</Data></Cell>
-		<Cell ss:StyleID="s50"><Data ss:Type="String">${( getFuncCur(line[0]) or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[12] or '')|x}</Data></Cell>
-	</Row>
-
-% endfor
-
-
-
-	<Row ss:AutoFitHeight="0" ss:StyleID="s26">
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s44">
-		<Data ss:Type="String">Sub Total =</Data>
-		</Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getTot()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${( getCurTot() or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s42"/>
-	</Row>
-
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-	<Row><Cell><Data ss:Type="String"></Data></Cell></Row>
-   <Row >
-    <Cell ss:StyleID="s31"><Data ss:Type="String">Supplier Refunds</Data></Cell>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s38"/>
-   </Row>
-
-	<Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
-		<Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
-		<Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
-	</Row>
-
-
-% for line in getLines('sr'):
-	<Row>
-		% if isDate(line[1]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		% if isDate(line[2]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[3] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
-		% if isDate(line[7]):
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
-		% else:
-			<Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
-		% endif
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[8] or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[10] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33" ><Data ss:Type="Number">${( line[11] or 0.0)|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[9] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[10],'res') or 0.0 )|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${( getConvert(line[0],line[11],'tot') or 0.0 )|x}</Data></Cell>
-		<Cell ss:StyleID="s50"><Data ss:Type="String">${( getFuncCur(line[0]) or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s33"><Data ss:Type="String">${(line[12] or '')|x}</Data></Cell>
-	</Row>
-
-% endfor
-
-	<Row ss:AutoFitHeight="0" ss:StyleID="s26">
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s39"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s40"/>
-		<Cell ss:StyleID="s44">
-		<Data ss:Type="String">Sub Total =</Data>
-		</Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${getTot()}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
-		<Cell ss:StyleID="s29"><Data ss:Type="String">${( getCurTot() or '')|x}</Data></Cell>
-		<Cell ss:StyleID="s42"/>
-	</Row>
   </Table>
-
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <Print>
     <ValidPrinterInfo/>
