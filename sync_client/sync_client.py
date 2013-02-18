@@ -558,8 +558,6 @@ class entity(osv.osv):
 
     @sync_process()
     def sync(self, cr, uid, context=None):
-        from time import sleep
-        sleep(30)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
         self.push_update(cr, uid, context=context)
