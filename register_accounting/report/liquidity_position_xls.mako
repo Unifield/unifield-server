@@ -135,6 +135,7 @@
 </Style> -->
 
 <Style ss:ID="s26" >
+<NumberFormat ss:Format="Fixed"/>
 </Style>
 
 
@@ -224,6 +225,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
+<NumberFormat ss:Format="Fixed"/>
 </Style>
 
 
@@ -247,6 +249,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
+<NumberFormat ss:Format="Fixed"/>
 </Style>
 
 
@@ -259,25 +262,9 @@
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
 </Style>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </Styles>
+
+
 
 
 <Worksheet ss:Name="Liquidity position">
@@ -290,19 +277,15 @@
 <Column ss:AutoFitWidth="0" ss:Width="103.5" ss:Span="1"/>
 <Column  ss:AutoFitWidth="0" ss:Width="51.75"/>
 
-
-
-
-
 <Row>
 <Cell ss:StyleID="s25b" >
-<Data ss:Type="String">LIQUIDITY POSITION</Data>
+<Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
 </Cell>
 </Row>
 <Row ss:Height="13.5"/>
 <Row >
 <Cell>
-<Data ss:Type="String">Report Date:</Data>
+<Data ss:Type="String">${_('Report Date:')}</Data>
 </Cell>
 <Cell ss:StyleID="short_date2" >
 <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
@@ -310,7 +293,7 @@
 </Row>
 <Row>
 <Cell>
-<Data ss:Type="String">Prop Instance: </Data>
+<Data ss:Type="String">${_('Prop Instance: ')}</Data>
 </Cell>
 <Cell>
 <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
