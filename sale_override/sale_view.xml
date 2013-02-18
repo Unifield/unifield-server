@@ -61,12 +61,6 @@
                     <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='invoice_quantity']" position="replace">
                         <field name="invoice_quantity" readonly="1" />
                     </xpath>
-                    <button name="%(sale.action_view_sale_advance_payment_inv)d" position="replace">
-                        <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
-                            <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice"
-                                  type="action" icon="gtk-execute" states="draft,manual" />
-                        </group>
-                    </button>
                     <button name="manual_invoice" position="replace">
                         <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
                             <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>   
