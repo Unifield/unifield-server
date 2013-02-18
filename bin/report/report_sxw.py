@@ -166,6 +166,22 @@ class browse_record_list(list):
     def __str__(self):
         return "browse_record_list("+str(len(self))+")"
 
+def getSel(pool, cr, uid, o, field, context=None):
+    if context is None:
+        context = {}
+    sel = pool.get(o._name).fields_get(cr, uid, [field])
+    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+    name = '%s,%s' % (o._name, field)
+    if context.get('lang'):
+        tr_ids = pool.get('ir.translation').search(cr, uid, [
+            ('type', '=', 'selection'), ('name', '=', name), ('src', '=', res), ('lang', '=', context['lang'])
+        ])
+        if tr_ids:
+            value = pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+            if value:
+                return value
+    return res
+
 class rml_parse(object):
     def __init__(self, cr, uid, name, parents=rml_parents, tag=rml_tag, context=None):
         if not context:
@@ -209,18 +225,7 @@ class rml_parse(object):
         """
         Returns the fields.selection label
         """
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        if self.localcontext.get('lang'):
-            tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [
-                ('type', '=', 'selection'), ('name', '=', name), ('src', '=', res), ('lang', '=', self.localcontext['lang'])
-            ])
-            if tr_ids:
-                value = self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-                if value:
-                    return value
-        return res
+        return getSel(self.pool, self.cr, self.uid, o, field, self.localcontext)
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
