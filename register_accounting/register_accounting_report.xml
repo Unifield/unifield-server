@@ -36,15 +36,16 @@
         auto="True"
         menu="True"/>
         
-        <report id="liquidity_position"
+        <report id="liquidity_position_2"
         string="Liquidity Position"
         model="account.bank.statement"
-        name="liquidity.position"
-        report_type="txt"
-        auto="True"
+        name="liquidity.position.2"
+        file="register_accounting/report/liquidity_position_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
         menu="True"/>
         
-
     </data>
 </openerp>
 

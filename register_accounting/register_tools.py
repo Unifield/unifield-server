@@ -310,4 +310,5 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
             if balance:
                 st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)
     return True
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

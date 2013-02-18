@@ -27,6 +27,7 @@ import pooler
 import locale
 import csv
 import StringIO
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_liquidity_position(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -103,4 +104,97 @@ class report_liquidity_position(report_sxw.report_sxw):
         return (out, 'csv')
 
 report_liquidity_position('report.liquidity.position', 'account.bank.statement', False, parser=False)
+
+
+class report_liquidity_position2(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(report_liquidity_position2, self).__init__(cr, uid, name, context=context)
+        self.res = 0
+        self.cal = 0
+        self.registers = {}
+        self.funcCur = ''
+        self.iter = []
+        self.localcontext.update({
+            'getRegister':self.getRegister,
+            'getConvert':self.getConvert,
+            'getRes':self.getRes,
+            'getCal':self.getCal,
+            'getRegister2':self.getRegister2,
+            'getFuncCur':self.getFuncCur,
+            'getCurTot':self.getCurTot,
+            'getFormula':self.getFormula,
+        })
+        return
+
+    def getFormula(self):
+        formul = ''
+        iters = self.iter[1:]
+        for i in iters:
+            rang = 4 + i
+            formul += '+R[-'+str(rang)+']C'
+        return formul
+
+    def getFuncCur(self,bro_ac):
+        self.funcCur = bro_ac.journal_id and bro_ac.journal_id.company_id and bro_ac.journal_id.company_id.currency_id.name or ''
+        return bro_ac.journal_id and bro_ac.journal_id.company_id and bro_ac.journal_id.company_id.currency_id.name or ''
+
+    def getCurTot(self):
+        return self.funcCur
+
+    def getRes(self):
+        temp = self.res
+        self.res = 0
+        return temp
+ 
+    def getCal(self):
+        temp = self.cal
+        self.cal = 0
+        return temp
+
+    def getRegister2(self):
+        return self.registers
+
+    def getRegister(self):
+        ids = []
+        pool = pooler.get_pool(self.cr.dbname)
+
+        sql_register_ids = """
+            SELECT abs.id FROM account_bank_statement abs
+                LEFT JOIN account_journal aj ON abs.journal_id = aj.id
+            WHERE 
+                aj.type != 'cheque' AND abs.state != 'draft' AND abs.id not in (
+                    SELECT prev_reg_id FROM account_bank_statement WHERE prev_reg_id is not null AND state != 'draft'
+                )
+        """
+
+        self.cr.execute(sql_register_ids)
+        register_ids = [x[0] for x in self.cr.fetchall()]
+        
+        registers = {}
+    
+        for register in pool.get('account.bank.statement').browse(self.cr, self.uid, register_ids):
+            ids.append(register)
+            if registers.has_key(register.instance_id.id):
+                registers[register.instance_id.id] += [register]
+            else:
+                registers[register.instance_id.id] = [register]
+            
+        self.registers = registers
+        for x in registers:
+            self.iter.append(len(registers[x]))
+
+        return registers
+
+    def getConvert(self,cur,func_cur,amount,option):
+        ids = []
+        conv = self.pool.get('res.currency').compute(self.cr, self.uid, cur.id, func_cur.id, amount or 0.0, round=True,)
+
+        if option == 'cal':
+            self.cal += 1
+        elif option == 'reg':
+            self.res += 1
+
+        return float(conv)
+
+SpreadsheetReport('report.liquidity.position.2','account.bank.statement','addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
