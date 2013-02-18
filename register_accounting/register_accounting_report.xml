@@ -20,13 +20,17 @@
         menu="True"
         header="False"/>
         
-        <report id="cheque_inventory"
+        <report
+       	id="cheque_inventory_2"
         string="Cheque Inventory"
         model="account.bank.statement"
-        name="cheque.inventory"
-        report_type="txt"
-        auto="True"
-        menu="True"/>
+        name="cheque.inventory.2"
+        file="register_accounting/report/cheque_inventory_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"
+         />
         
         <report id="open_advances"
         string="Open Advances"
