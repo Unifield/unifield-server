@@ -21,6 +21,9 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
 <Styles>
+
+
+
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
@@ -89,9 +92,9 @@
   </Style>
 
 	<Style ss:ID="s25">
-		<Interior ss:Pattern="Solid" ss:Bold="1"/>
 		<Font ss:Bold="1"/>
 	</Style>
+
 
 
 </Styles>
@@ -102,14 +105,14 @@
 <Column ss:Width="70.5" ss:Span="1"/><Column ss:Index="3" ss:Width="72.75"/><Column ss:Width="67.5"/><Column ss:Width="73.5"/><Column ss:Width="61.5"/><Column ss:Width="75.75"/><Column ss:Width="113.25"/><Column ss:Width="81"/><Column ss:Width="48.75"/><Column ss:Width="199.5"/><Column ss:AutoFitWidth="0" ss:Width="229.5"/><Column ss:Width="57.75"/><Column ss:Width="44.25"/><Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
 
     <Row>
-        <Cell ss:StyleID="s25" ><Data ss:Type="String">CHEQUE INVENTORY</Data></Cell>
+        <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('CHEQUE INVENTORY')}</Data></Cell>
     </Row>
 	<Row ss:Index="3">
-		<Cell ss:StyleID="title" ><Data ss:Type="String">Instance:</Data></Cell>
+		<Cell ss:StyleID="title" ><Data ss:Type="String">${_('Instance:')}</Data></Cell>
 		<Cell ss:StyleID="title" ><Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
 	</Row>
 	<Row>
-		<Cell ss:StyleID="title" ><Data ss:Type="String">Report Date:</Data></Cell>
+		<Cell ss:StyleID="title" ><Data ss:Type="String">${_('Report Date:')}</Data></Cell>
 	<Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
 	</Row>
 
