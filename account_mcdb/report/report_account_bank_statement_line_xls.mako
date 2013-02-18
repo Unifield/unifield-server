@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>${_('Journal Items')}</Title>
+<Title>${_('Register Lines')}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssH">
@@ -39,33 +39,18 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="17" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
+<Table ss:ExpandedColumnCount="16" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
 x:FullRows="1">
-% for x in range(0,17):
+% for x in range(0,16):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Out. Amount'), _('Out. Currency'), _('Reconcile'), _('State')]:
+% for header in [_('Document Date'), _('Posting Date'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Account'), _('Third Party'), _('Amount In'), _('Amount Out'), _('Book. Currency'), _('Output Amount'), _('Output Currency'), _('State'), _('Register Name')]:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
 % for o in objects:
 <Row>
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.ref or '')|x}</Data>
-</Cell>
 % if o.document_date and o.document_date != 'False':
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
@@ -85,19 +70,25 @@ x:FullRows="1">
 </Cell>
 % endif
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.period_id and o.period_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.sequence_for_reference or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${(o.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${(o.ref or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${o.account_id and o.account_id.code or ''} - ${(o.account_id and o.account_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.partner_txt or '')|x}</Data>
+        <Data ss:Type="String">${(o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="Number">${o.debit_currency or '0.0'}</Data>
+        <Data ss:Type="Number">${o.amount_in or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="Number">${o.credit_currency or '0.0'}</Data>
+        <Data ss:Type="Number">${o.amount_out or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data>
@@ -109,15 +100,15 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.output_currency and o.output_currency.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '')|x}</Data>
+        <Data ss:Type="String">${getSel(o, 'state')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${getSel(o,'state')}</Data>
+        <Data ss:Type="String">${o.statement_id and o.statement_id.name or ''}</Data>
 </Cell>
 </Row>
 % endfor
 </Table>
-<AutoFilter x:Range="R1C1:R1C17" xmlns="urn:schemas-microsoft-com:office:excel">
+<AutoFilter x:Range="R1C1:R1C14" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
 </Workbook>

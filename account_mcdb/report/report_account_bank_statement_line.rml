@@ -22,8 +22,8 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
       <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
-      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="16,-1"/>
-      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="16,-1" thickness="0.5"/>
+      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="13,-1"/>
+      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="13,-1" thickness="0.5"/>
       <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
     </blockTableStyle>
     <initialize>
@@ -33,7 +33,6 @@
     <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
-    <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -48,30 +47,15 @@
     <blockTable colWidths="1162.0" style="Tableau1">
       <tr>
         <td>
-          <para style="P1">Journal Items</para>
+          <para style="P1">Register Lines</para>
         </td>
       </tr>
     </blockTable>
     <para style="P2">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="48.0,46.0,52.0,113.0,113.0,63.0,63.0,39.0,120.0,152.0,61.0,61.0,44.0,66.0,41.0,43.0,38.0" style="Tableau3">
+    <blockTable style="Tableau3">
       <tr>
-        <td>
-          <para style="P3">Proprietary Instance</para>
-        </td>
-        <td>
-          <para style="P3">Journal Code</para>
-        </td>
-        <td>
-          <para style="P3">Entry Sequence</para>
-        </td>
-        <td>
-          <para style="P3">DESCRIPTION</para>
-        </td>
-        <td>
-          <para style="P3">CODE</para>
-        </td>
         <td>
           <para style="P3">Document Date</para>
         </td>
@@ -79,7 +63,13 @@
           <para style="P3">Posting Date</para>
         </td>
         <td>
-          <para style="P3">Period</para>
+          <para style="P3">Entry Sequence</para>
+        </td>
+        <td>
+          <para style="P3">Description</para>
+        </td>
+        <td>
+          <para style="P3">Reference</para>
         </td>
         <td>
           <para style="P3">Account</para>
@@ -88,13 +78,13 @@
           <para style="P3">Third Party</para>
         </td>
         <td>
-          <para style="P3">Book. Debit</para>
+          <para style="P3">Amount In</para>
         </td>
         <td>
-          <para style="P3">Book. Credit</para>
+          <para style="P3">Amount Out</para>
         </td>
         <td>
-          <para style="P3">Book. Currency</para>
+          <para style="P3">Currency</para>
         </td>
         <td>
           <para style="P3">Out. Amount</para>
@@ -103,22 +93,22 @@
           <para style="P3">Out. Currency</para>
         </td>
         <td>
-          <para style="P3">Reconcile</para>
+          <para style="P3">State</para>
         </td>
         <td>
-          <para style="P3">State</para>
+          <para style="P3">Register Name</para>
         </td>
       </tr>
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <para style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</para>
+          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
         </td>
         <td>
-          <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
+          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.move_id and o.move_id.name or '' ]]</para>
+          <para style="P3">[[ o.sequence_for_reference or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.name or '' ]]</para>
@@ -127,40 +117,31 @@
           <para style="P3">[[ o.ref or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.document_date, date=True) or '']]</para>
-        </td>
-        <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
-        </td>
-        <td>
-          <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>
-        </td>
-        <td>
           <para style="P3">[[ o.account_id and o.account_id.code or '' ]] [[ o.account_id and o.account_id.name or '']]</para>
         </td>
         <td>
-          <para style="P3">[[ o.partner_txt or '' ]]</para>
+          <para style="P3">[[ o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.name or '' ]]</para>
         </td>
         <td>
-          <para style="P4">[[ o.debit_currency or '0.0' ]]</para>
+          <para style="P3">[[ o.amount_in or 0.0 ]]</para>
         </td>
         <td>
-          <para style="P4">[[ o.credit_currency or '0.0' ]]</para>
+          <para style="P3">[[ o.amount_out or 0.0 ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.currency_id and o.currency_id.name or '' ]]</para>
+          <para style="P3">[[ o.statement_id and o.statement_id.currency and o.statement_id.currency.name or '' ]]</para>
         </td>
         <td>
-          <para style="P4">[[ o.output_amount or '0.0' ]]</para>
+          <para style="P4">[[ o.output_amount or 0.0 ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '' ]]</para>
+          <para style="P3">[[getSel(o, 'state')]]</para>
         </td>
         <td>
-          <para style="P3">[[getSel(o, 'state')]]</para>
+          <para style="P3">[[ o.statement_id and o.statement_id.name or '' ]]</para>
         </td>
       </tr>
     </blockTable>
