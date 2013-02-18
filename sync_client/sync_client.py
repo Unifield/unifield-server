@@ -175,6 +175,7 @@ class entity(osv.osv):
                     raise already_syncing_error
 
                 # Lock is acquired, so don't put any code outside the try...catch!!
+                res = False
                 try:
                     # are we creating a new log line?
                     make_log = not getattr(self, 'log_id', False)
