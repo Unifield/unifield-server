@@ -54,4 +54,3 @@ jQuery(document).ready(function() {
 });
 
 </script>''' + output[form_insertion_point:]
-

@@ -34,10 +34,36 @@ import traceback
 import logging
 from sync_common.common import sync_log
 
-from threading import Thread
+from threading import Thread, RLock
 import pooler
 
-class entity(osv.osv, Thread):
+import functools
+
+class SkipStep(StandardError):
+    pass
+
+class BackgroundSynchronisation(Thread):
+
+    def __init__(self, dbname, uid, context):
+        super(BackgroundSynchronisation, self).__init__()
+        self.dbname = dbname
+        self.uid = uid
+        self.context = context
+
+    def run(self):
+        db, pool = pooler.get_db_and_pool(self.dbname)
+        cr = db.cursor()
+        try:
+            pool.get('sync.client.entity').sync(cr, self.uid, self.context)
+            cr.commit()
+        except:
+            pass
+        finally:
+            cr.close()
+
+already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
+
+class entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
@@ -102,7 +128,6 @@ class entity(osv.osv, Thread):
         'max_update' : fields.integer('Max Update Sequence', readonly=True),
         'message_to_send' : fields.function(_get_nb_message_send, method=True, string='Nb message to send', type='integer', readonly=True),
         'update_to_send' : fields.function(_get_nb_update_send, method=True, string='Nb update to send', type='integer', readonly=True),
-        'is_syncing' : fields.boolean("Is Currently Syncing?"),
     }
     
     _constraints = [
@@ -127,141 +152,156 @@ class entity(osv.osv, Thread):
         ids = self.search(cr, uid, [], context=context)
         return self.browse(cr, uid, ids, context=context)[0]
     
-    def set_syncing(self, cr, uid, status, context=None):
-        self.write(cr, uid, self.search(cr, uid, []), {'is_syncing':status}, context=context)
-
     def generate_uuid(self):
         return uuid.uuid1().hex
         
     def get_uuid(self, cr, uid, context=None):
         return self.get_entity(cr, uid, context=context).identifier
 
-    def _handle_error(self, e):
-        try:
-            msg = list(e)
-            if e[-1] != "\n": e.append("\n")
-            return "".join(e)
-        except: return str(e) + "\n"
+    def __init__(self, *args, **kwargs):
+        self.sync_lock = RLock()
+        super(entity, self).__init__(*args, **kwargs)
 
-    def stateSync(self, state, log, step, message=None):
-        if message:
-            error = "%s: %s" % (self.state_prefix[step], message)
-            log['error'] = log.get('error', '') + error
-        log[step] = state
-        return log[step]
+    def sync_process(step='status'):
+        is_step = not (step == 'status')
 
-    #def _log_error(self, log, e):
-    def errorSync(self, e, log, step):
-        error = sync_log(self, e, 'error', traceback=True)
-        log['error'] = log.get('error', '') + "%s: %s" % (self.state_prefix[step], error)
-        log[step] = 'failed'
-        return log[step]
+        def decorator(fn):
+
+            @functools.wraps(fn)
+            def wrapper(self, cr, uid, context=None, *args, **kwargs):
+
+                # First, check if we can acquire the lock or return False
+                if not self.sync_lock.acquire(blocking=False):
+                    raise already_syncing_error
+
+                # Lock is acquired, so don't put any code outside the try...catch!!
+                try:
+                    # are we creating a new log line?
+                    make_log = not getattr(self, 'log_id', False)
+                    
+                    # we have to make the log
+                    if make_log:
+                        # let's make the private log cursor
+                        self.log_cr = pooler.get_db(cr.dbname).cursor()
+                        self.log_cr.autocommit(True)
+
+                        # Init log dict for sync.monitor
+                        self.log_info = {
+                            'error' : '',
+                            'status' : 'in-progress',
+                            'data_pull' : 'null',
+                            'msg_pull' : 'null',
+                            'data_push' : 'null',
+                            'msg_push' : 'null',
+                        }
+                        # already create the log to get the id early
+                        self.log_id = self.pool.get('sync.monitor').create(self.log_cr, uid, self.log_info, context=context)
+
+                        # Check if connection is up
+                        con = self.pool.get('sync.client.sync_server_connection')
+                        con.connect(cr, uid, context=context)
+                        # connect() raise an osv.except_osv if something goes wrong
+                        # Check for update (if connection is up)
+                        if hasattr(self, 'upgrade'):
+                            # TODO: replace the return value of upgrade to a status and raise an error on required update
+                            up_to_date = self.upgrade(cr, uid, context=context)
+                            if not up_to_date[0]:
+                                raise osv.except_osv(_("Error!"), _("Revision Update Failed: %s") % up_to_date[1])
+                            elif 'last' not in up_to_date[1].lower():
+                                self.log_info['error'] += "Revision Update Status: " + up_to_date[1]
+
+                    # update log line
+                    self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
+
+                    # ah... we can now call the function!
+                    res = fn(self, cr, uid, *args, **kwargs)
+                except SkipStep:
+                    # res failed but without exception
+                    assert is_step, "Cannot have a SkipTest error outside a sync step process!"
+                    self.log_info[step] = 'null'
+                    self.log_info['error'] += "%s: Not a valid state, skipped.\n" % self.state_prefix[step]
+                    if make_log:
+                        raise osv.except_osv(_('Error!'), "You cannot perform this action now.")
+                except osv.except_osv, e:
+                    self.log_info[step] = 'failed'
+                    if not is_step:
+                        self.log_info['error'] += e.value
+                    raise
+                except BaseException, e:
+                    self.log_info[step] = 'failed'
+                    error = unicode(e)
+                    if is_step:
+                        self._logger.exception('Error in sync_process at step %s' % step)
+                        self.log_info['error'] += "%s: %s\n" % (self.state_prefix[step], error)
+                    if make_log:
+                        raise osv.except_osv(_('Error!'), error)
+                    else:
+                        raise
+                else:
+                    self.log_info[step] = 'ok'
+                    if isinstance(res, (str, unicode)) and res:
+                        if is_step:
+                            self.log_info['error'] += "%s: %s\n" % (self.state_prefix[step], res)
+                        else:
+                            self.log_info['error'] += res + "\n"
+                finally:
+                    # if we created the log, we close it
+                    if make_log:
+                        self.log_info['status'] = self.log_info[step]
+                        self.log_info['end'] = fields.datetime.now()
+                    # update the log
+                    self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
+                    # if we created the log, we close it
+                    if make_log:
+                        self.log_id = False
+                        self.log_cr.close()
+                    # gotcha!
+                    self.sync_lock.release()
+                return res
+
+            return wrapper
+        return decorator
+
+    def last_log_status(self, cr, uid, context=None):
+        if not hasattr(self, 'log_info'):
+            monitor = self.pool.get("sync.monitor")
+            monitor_ids = monitor.search(cr, uid, [], context=context, limit=1, order='sequence_number desc')
+            if monitor_ids:
+                self.log_info = monitor.read(cr, uid, monitor_ids, context=context)[0]
+            else:
+                self.log_info = {}
+        return self.log_info
        
-    def startSync(self, cr, uid, log=None, step='status', context=None):
-        assert log.has_key('log_id') if log else True, \
-               "Inconsistent state! Please report it to the developper team."
-        # Prevent synchronization to be started multiple times
-        me = self.get_entity(cr, uid, context)
-        if me.is_syncing:
-            return (None, log)
-
-        # First time we run into startSync()
-        if log is None:
-            # Init log dict for sync.monitor
-            log = {
-                'error' : '',
-                'status' : 'in-progress',
-                'data_pull' : 'null',
-                'msg_pull' : 'null',
-                'data_push' : 'null',
-                'msg_push' : 'null',
-                'standalone' : (step != 'status'),
-            }
-            # Check if connection is up
-            if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
-                log.update({
-                    'end' : fields.datetime.now(),
-                    'error' : log['error'] + "Not connected to server. Please check password and connection status in the Connection Manager",
-                    'status' : 'failed',
-                })
-            # Check for update (if connection is up)
-            elif hasattr(self, 'upgrade'):
-                up_to_date = self.upgrade(cr, uid, context=context)
-                if not up_to_date[0]:
-                    log.update({
-                        'end' : fields.datetime.now(),
-                        'error' : log['error'] + "Revision Update failed: " + up_to_date[1],
-                        'status' : 'failed',
-                    })
-                elif 'last' not in up_to_date[1].lower():
-                    log['error'] += "Revision Update Status: " + up_to_date[1]
-            # Raise when error occure
-            if log['status'] == 'failed':
-                self.pool.get('sync.monitor').create(cr, uid, log)
-                cr.commit()
-                raise osv.except_osv(_('Error!'), _(log['error']))
-        # The log exists and its global status is not in-progress, exiting...
-        elif log['status'] != 'in-progress':
-            return (None, log)
-        
-        log[step] = 'in-progress'
-        if step != 'status':
-            self.set_syncing(cr, uid, True)
-
-        # Write on the log or create a new one
-        if log.has_key('log_id'):
-            self.pool.get('sync.monitor').write(cr, uid, [log['log_id']], log, context=context)
-        else:
-            log['log_id'] = self.pool.get('sync.monitor').create(cr, uid, log, context=context)
-        cr.commit()
-
-        return ('ok', log)
- 
-    def stopSync(self, cr, uid, log, step='status', status=None, context=None):
-        if log[step] == 'in-progress':
-            log[step] = status or 'ok'
-        if step != 'status':
-            self.set_syncing(cr, uid, False)
-            if status == 'failed' or log['standalone']:
-                log['status'] = status
-        # Update log
-        log['end'] = fields.datetime.now()
-        self.pool.get('sync.monitor').write(cr, uid, [log['log_id']], log, context=context)
-        cr.commit()
-        return log[step] == 'ok'
-
     """
         Push Update
     """
-    def push_update(self, cr, uid, log=None, context=None):
-        (status, log) = self.startSync(cr, uid, log=log, step='data_push', context=context)
-        if status is None: return False
+    @sync_process('data_push')
+    def push_update(self, cr, uid, context=None):
 
         context = context or {}
         entity = self.get_entity(cr, uid, context)
         
         if entity.state not in ['init', 'update_send', 'update_validate']: 
-            self.stateSync('null', log, 'data_push', message="Not valid state: " + entity.state)
-            return False
-        
-        try :
-            cont = False
-            if cont or entity.state == 'init':
-                self.create_update(cr, uid, context=context)
-                cont = True
-                self._logger.info("init")
-            if cont or entity.state == 'update_send':
-                self.send_update(cr, uid, context=context)
-                cont = True
-                self._logger.info("sent update")
-            if cont or entity.state == 'update_validate':
-                self.validate_update(cr, uid, context=context)
-                self._logger.info("validate update")
-        except BaseException, e:
-            status = self.errorSync(e, log, 'data_push')
+           raise SkipStep
+    
+        cont = False
+        if cont or entity.state == 'init':
+            self.create_update(cr, uid, context=context)
+            cr.commit()
+            cont = True
+            self._logger.info("init")
+        if cont or entity.state == 'update_send':
+            self.send_update(cr, uid, context=context)
+            cr.commit()
+            cont = True
+            self._logger.info("sent update")
+        if cont or entity.state == 'update_validate':
+            self.validate_update(cr, uid, context=context)
+            cr.commit()
+            self._logger.info("validate update")
 
-        self.stopSync(cr, uid, log, step='data_push', status=status, context=None)
         return True
+
     
     def create_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -284,6 +324,7 @@ class entity(osv.osv, Thread):
         
         set_rules(entity.id)
         prepare_update(entity.id)
+        return True
         #state init => update_send
         
     def send_update(self, cr, uid, context=None):
@@ -314,6 +355,7 @@ class entity(osv.osv, Thread):
             send_more = send_package(entity.id)
             i += 1
         #state update_send => update_validate
+        return True
 
     def validate_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -328,33 +370,30 @@ class entity(osv.osv, Thread):
         elif res and not res[0]:
             raise Exception, res[1]
         #state update validate => init 
-    
+        return True
     
     
     """
         Pull update
     """
-    def pull_update(self, cr, uid, recover=False, log=None, context=None):
-        (status, log) = self.startSync(cr, uid, log=log, step='data_pull', context=context)
-        if status is None: return False
-
+    @sync_process('data_pull')
+    def pull_update(self, cr, uid, recover=False, context=None):
+        
         context = context or {}
         entity = self.get_entity(cr, uid, context)
+        
         if entity.state not in ['init', 'update_pull']: 
-            self.stateSync('null', log, 'data_pull', message="Not valid state: " + entity.state)
-            return False
+            raise SkipStep
         
-        try:
-            if entity.state == 'init': 
-                self.set_last_sequence(cr, uid, context)
-            self.retrieve_update(cr, uid, recover=recover, context=context)
-            cr.commit()
-            log['error'] += self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
-        except BaseException, e:
-            status = self.errorSync(e, log, 'data_pull')
+        if entity.state == 'init': 
+            self.set_last_sequence(cr, uid, context)
         
-        self.stopSync(cr, uid, log, step='data_pull', status=status, context=None)
-        return True
+        self.retrieve_update(cr, uid, recover=recover, context=context)
+        cr.commit()
+
+        res = self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
+        cr.commit()
+        return res
     
 
     def set_last_sequence(self, cr, uid, context=None):
@@ -365,6 +404,8 @@ class entity(osv.osv, Thread):
             return self.write(cr, uid, entity.id, {'max_update' : res[1]}, context=context)
         elif res and not res[0]:
             raise Exception, res[1]
+
+        return True
 
     def retrieve_update(self, cr, uid, recover=False, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -397,25 +438,21 @@ class entity(osv.osv, Thread):
     """
         Push message
     """
-    def push_message(self, cr, uid, log=None, context=None):
-        (status, log) = self.startSync(cr, uid, log=log, step='msg_push', context=context)
-        if status is None: return False
+    @sync_process('msg_push')
+    def push_message(self, cr, uid, context=None):
 
         context = context or {}
         entity = self.get_entity(cr, uid, context)
         
         if entity.state not in ['init', 'msg_push']: 
-            self.stateSync('null', log, 'msg_push', message="Not valid state: " + entity.state)
-            return False
+            raise SkipStep
         
-        try:
-            if entity.state == 'init':
-                self.create_message(cr, uid, context)
-            self.send_message(cr, uid, context)
-        except BaseException, e:
-            status = self.errorSync(e, log, 'msg_push')
-        
-        self.stopSync(cr, uid, log, step='msg_push', status=status, context=None)
+        if entity.state == 'init':
+            self.create_message(cr, uid, context)
+            cr.commit()
+        self.send_message(cr, uid, context)
+        cr.commit()
+
         return True
         
     def create_message(self, cr, uid, context=None):
@@ -451,9 +488,8 @@ class entity(osv.osv, Thread):
     """ 
         Pull message
     """
+    @sync_process('msg_pull')
     def pull_message(self, cr, uid, recover=False, log=None, context=None):
-        (status, log) = self.startSync(cr, uid, log=log, step='msg_pull', context=context)
-        if status is None: return False
 
         context = context or {}
         entity = self.get_entity(cr, uid, context)
@@ -462,16 +498,13 @@ class entity(osv.osv, Thread):
             proxy.message_recover_from_seq(entity.identifier, entity.message_last, context)
 
         if not entity.state in ['init']:
-            self.stateSync('null', log, 'msg_pull', message="Not valid state: " + entity.state)
-            return False
+            raise SkipStep
         
-        try: 
-            self.get_message(cr, uid, context)
-            self.execute_message(cr, uid, context)
-        except BaseException, e:
-            status = self.errorSync(e, log, 'msg_pull')
-        
-        self.stopSync(cr, uid, log, step='msg_pull', status=status, context=None)
+        self.get_message(cr, uid, context)
+        cr.commit()
+        self.execute_message(cr, uid, context)
+        cr.commit()
+
         return True
         
     def get_message(self, cr, uid, context):
@@ -509,59 +542,57 @@ class entity(osv.osv, Thread):
     """
     def sync_threaded(self, cr, uid, context=None):
         # Check if connection is up
-        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
-            raise osv.except_osv(_('Error!'), _("Not connected to server. Please check password and connection status in the Connection Manager"))
+        self.pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
+        # Check if we are not already syncing
+        self.is_syncing(raise_on_syncing=True)
         # Check for update (if connection is up)
-        elif hasattr(self, 'upgrade'):
+        if hasattr(self, 'upgrade'):
             up_to_date = self.upgrade(cr, uid, context=context)
             if not up_to_date[0]:
                 cr.commit()
                 raise osv.except_osv(_('Error!'), _(up_to_date[1]))
         context = context or {}
-        self.data = [cr, uid, context]
-        Thread.__init__(self)
-        self.start()
+        t = BackgroundSynchronisation(cr.dbname, uid, context)
+        t.start()
         return True
-    
-    def sync(self, cr, uid, context=None):
-        context = context or {}
 
-        (status, log) = self.startSync(cr, uid, context=context)
-        if status is None:
-            raise osv.except_osv(_('Error!'), _('Unable to start the synchronization process now!'))
-       
-        self.pull_update(cr, uid, log=log, context=context)
-        self.pull_message(cr, uid, log=log, context=context)
-        self.push_update(cr, uid, log=log, context=context)
-        self.push_message(cr, uid, log=log, context=context)
-            
-        return self.stopSync(cr, uid, log)
-        
-    def run(self):
-        cr = self.data[0]
-        uid = self.data[1]
-        context = self.data[2]
-        cr = pooler.get_db(cr.dbname).cursor()
-        self.sync(cr, uid, context)
-        cr.close()
+    @sync_process()
+    def sync(self, cr, uid, context=None):
+        from time import sleep
+        sleep(30)
+        self.pull_update(cr, uid, context=context)
+        self.pull_message(cr, uid, context=context)
+        self.push_update(cr, uid, context=context)
+        self.push_message(cr, uid, context=context)
+        return True
         
     def get_upgrade_status(self, cr, uid, context=None):
         return ""
 
+    # Check if lock can be acquired or not
+    def is_syncing(self, raise_on_syncing=False):
+        acquired = self.sync_lock.acquire(blocking=False)
+        if not acquired:
+            if raise_on_syncing:
+                raise already_syncing_error
+            return True
+        self.sync_lock.release()
+        return False
+
     def get_status(self, cr, uid, context=None):
-        if not self.pool.get('sync.client.sync_server_connection')._get_connection_manager(cr, uid, context=context).state == 'Connected':
+        if not self.pool.get('sync.client.sync_server_connection').is_connected:
             return "Not Connected"
-        me = self.get_entity(cr, uid, context)
-        if me.is_syncing:
+
+        if self.is_syncing():
             return "Syncing..."
-        monitor = self.pool.get("sync.monitor")
-        monitor_ids = monitor.search(cr, uid, [], context=context)
-        if monitor_ids:
-            last_log = monitor.browse(cr, uid, monitor_ids[0], context=context)
-            status = filter(lambda x:x[0] == last_log.status, self.pool.get("sync.monitor")._columns['status'].selection)[0][1] if last_log.status else 'Unknown Status'
-            return "Last Sync: %s at %s" % (status, last_log.end)
-        else:
-            return "Connected"
+        
+        last_log = self.last_log_status(cr, uid)
+        if last_log:
+            status_dict = dict( self.pool.get("sync.monitor")._columns['status'].selection )
+            status = status_dict[last_log['status']]
+            return "Last Sync: %s at %s" % (status, last_log['end'])
+
+        return "Connected"
    
 entity()
 
@@ -576,45 +607,53 @@ class sync_server_connection(osv.osv):
         This class is also a singleton
         
     """     
+
     def _auto_init(self,cr,context=None):
         res = super(sync_server_connection,self)._auto_init(cr,context=context)
         if not self.search(cr, 1, [], context=context):
             self.create(cr, 1, {}, context=context)
         return res
     
+    def _is_connected(self):
+        return getattr(self, '_uid', 0) > 0
+    
+    is_connected = property(_is_connected)
+
     def _get_state(self, cr, uid, ids, name, arg, context=None):
-        res = {}
-        for connection in self.browse(cr, uid, ids, context=context):
-            ## Make sure we get an integer (xmlrpc bug fixed in 6.1 server)
-            res[connection.id] = "Connected" if int(connection.uid) and connection.password else "Disconnected"
-        return res
- 
-    _password = {}
-    _uid = {}
+        return dict.fromkeys(ids, "Connected" if getattr(self, '_uid', False) else "Disconnected")
 
     def _get_password(self, cr, uid, ids, field, arg, context):
-        return dict.fromkeys(ids, self._password.get(cr.dbname))
+        return dict.fromkeys(ids, getattr(self, '_password', ''))
 
     def _set_password(self, cr, uid, ids, field, password, arg, context):
-        self._password[cr.dbname] = password
+        self._password = password
+
+    def _get_uid(self, cr, uid, ids, field, arg, context):
+        return dict.fromkeys(ids, getattr(self, '_uid', ''))
+
+    def unlink(self, cr, uid, ids, context=None):
+        self._uid = False
+        return super(sync_server_connection, self).unlink(cr, uid, ids, context=context)
 
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
     _rec_name = 'host'
 
     _columns = {
-        'host': fields.char('Host', help='Synchronization server host name', size=256),
+        'active': fields.boolean('Active'),
+        'host': fields.char('Host', help='Synchronization server host name', size=256, required=True),
         'port': fields.integer('Port', help='Synchronization server connection port'),
         'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
-        'uid': fields.integer('Uid on synchro server', readonly=True),
+        'uid': fields.function(_get_uid, string='Uid on synchro server', readonly=True, type='char', method=True),
         'password': fields.function(_get_password, fnct_inv=_set_password, string='Password', type='char', method=True, store=False),
         'state' : fields.function(_get_state, method=True, string='State', type="char", readonly=True, store=False),
         'max_size' : fields.integer("Max Packet Size"),
     }
-    
+
     _defaults = {
+        'active': True,
         'host' : 'sync.unifield.org',
         'port' : 8070,
         'protocol': 'netrpc_gzip',
@@ -625,6 +664,8 @@ class sync_server_connection(osv.osv):
     
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
+        if not ids:
+            raise osv.except_osv('Connection Error', "Connection manager not set!")
         return self.browse(cr, uid, ids, context=context)[0]
     
     def connector_factory(self, con):
@@ -639,23 +680,34 @@ class sync_server_connection(osv.osv):
         elif con.protocol == 'netrpc_gzip':
             connector = rpc.GzipNetRPCConnector(con.host, con.port)
         else:
-            raise Exception('Unknown protocol: %s' % con.protocol)
+            raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
- 
-    def connect(self, cr, uid, ids, context=None):
-        try:
-            for con in self.browse(cr, uid, ids, context=context):
-                if not con.database:
-                    raise osv.except_osv(_("Error"), _("Missing database name"))
-                connector = self.connector_factory(con)
-                
-                cnx = rpc.Connection(connector, con.database, con.login, con.password)
-                if cnx.user_id:
-                    self.write(cr, uid, con.id, {'uid' : cnx.user_id}, context=context)
-            self.pool.get('sync.client.entity').set_syncing(cr, uid, False)
+
+    def connect(self, cr, uid, ids=None, context=None):
+        if getattr(self, '_uid', False):
             return True
+        try: 
+            con = self._get_connection_manager(cr, uid, context=context)
+            connector = self.connector_factory(con)
+            if not getattr(self, '_password', False):
+                self._password = con.login
+            cnx = rpc.Connection(connector, con.database, con.login, self._password)
+            if cnx.user_id:
+                self._uid = cnx.user_id
+            else:
+                raise osv.except_osv('Not Connected', "Not connected to server. Please check password and connection status in the Connection Manager")
         except socket.error, e:
             raise osv.except_osv(_("Error"), _(e.strerror))
+        except osv.except_osv:
+            raise
+        except BaseException, e:
+            raise osv.except_osv(_("Error"), _(unicode(e)))
+        
+        return True
+
+    def action_connect(self, cr, uid, ids, context=None):
+        self.connect(cr, uid, ids, context=context)
+        return {}
     
     def get_connection(self, cr, uid, model, context=None):
         """
@@ -666,16 +718,22 @@ class sync_server_connection(osv.osv):
         connector = self.connector_factory(con)
         cnx = rpc.Connection(connector, con.database, con.login, con.password, con.uid)
         return rpc.Object(cnx, model)
-    
-    def disconnect(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'uid' : False}, context=context)
+
+    def disconnect(self, cr, uid, context=None):
+        self._uid = False
         return True
-    
-    def _entity_connection(self,cr,uid,ids,context=None):     
-        return self.search(cr, uid,[(1, '=', 1)],context=context,count=True) == 1
-    
-    _constraints = [
-        (_entity_connection, _('The connection parameter is unique, you cannot create a new one'), ['host'])
+        
+    def action_disconnect(self, cr, uid, ids, context=None):
+        self.disconnect(cr, uid, context=context)
+        return {}
+
+    def write(self, *args, **kwargs):
+        # reset connection flag when data changed
+        self._uid = False
+        return super(sync_server_connection, self).write(*args, **kwargs)
+
+    _sql_constraints = [
+        ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one') 
     ]
 
 sync_server_connection()

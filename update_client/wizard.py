@@ -135,8 +135,7 @@ class upgrade(osv.osv_memory):
 
     def _generate(self, cr, uid, context=None):
         """Make the wizard caption"""
-        me = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
-        if me.is_syncing:
+        if self.pool.get('sync.client.entity').is_syncing():
             return "Blocked during synchro.\n\nPlease try again later."
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
@@ -162,8 +161,7 @@ class upgrade(osv.osv_memory):
         return text
 
     def _get_state(self, cr, uid, context=None):
-        me = self.pool.get('sync.client.entity').get_entity(cr, uid, context)
-        if me.is_syncing:
+        if self.pool.get('sync.client.entity').is_syncing():
             return 'blocked'
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
