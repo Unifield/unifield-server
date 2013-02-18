@@ -8,50 +8,53 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Real consumption reporting">
-                    <separator colspan="4" string="General information" />
-                    <field name="name" readonly="1" />
-                    <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="cons_location_id" attrs="{'readonly': [('created_ok', '=', True)]}" context="{'no3buttons': True}"/>
-                    <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <group colspan="2" col="2">
-                        <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                        <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
-                    </group>
-                    <!-- uf-1344 we export as xml file -->
-                    <button name="export_rac" colspan="2" string="Export lines" icon="terp-mail-forward" type="object" />
-                    <separator colspan="4" string="Period of consumption" />
-                    <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': ['|',('created_ok', '=', True), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="4" col="6">
+                        <field name="id" invisible="1" />
+                        <separator colspan="6" string="General information" />
+                       <field name="name" readonly="1" colspan="3" />
+                        <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="2"/>
+                        <field name="cons_location_id" attrs="{'readonly': ['|', ('id', '!=', 0), ('created_ok', '=', True)]}" context="{'no3buttons': True}" colspan="2"/>
+                        <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', ('id', '=', 0), ('created_ok', '=', True)]}" />
+                        <group colspan="3" col="2">
+                            <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
+                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
+                        </group>
+                        <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
+                        <separator colspan="6" string="Period of consumption" />
+                        <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <separator colspan="6" string="Product filters" />
+                        <field name="sublist_id" attrs="{'readonly': ['|',('created_ok', '=', True), ('nomen_manda_0', '!=', False)]}" colspan="3" />
 
-                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
-                        <field name="nomen_manda_0"
-                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-                            widget="selection"
-                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_1"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_2"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_3"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                    </group>
+                        <group colspan="3" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                            <field name="nomen_manda_0"
+                                domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                                widget="selection"
+                                on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                            <field name="nomen_manda_1"
+                                domain="[('id','=', 0)]"
+                                widget="selection"
+                                get_selection="get_nomen"
+                                on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                            <field name="nomen_manda_2"
+                                domain="[('id','=', 0)]"
+                                widget="selection"
+                                get_selection="get_nomen"
+                                on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                            <field name="nomen_manda_3"
+                                domain="[('id','=', 0)]"
+                                widget="selection"
+                                get_selection="get_nomen"
+                                on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                        </group>
 
-                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <button colspan="6" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    </group>
                     <separator colspan="4" string="Products" />
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
                     confirm="Are you sure that you want to remove all lines?" invisible="1"/>
@@ -388,6 +391,23 @@
             menu="False"
             />
 
+        <record id="view_real_consumption_change_location" model="ir.ui.view">
+            <field name="name">real.consumption.change.location.form.view</field>
+            <field name="model">real.consumption.change.location</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change location">
+                    <separator colspan="4" string="New location" />
+                    <label colspan="4" string="Are you sure you want to change the consumer location ? It will change the indicative stock, so please check the report lines before validating" />
+                    <label colspan="4" string=" "/>
+                    <field name="location_id" required="1" domain="[('usage', '=', 'internal')]" />
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="2"> </label>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="change_location" string="Change location" type="object" icon="gtk-preferences" />
+                </form>
+            </field>
+        </record>
 
     </data>
 </openerp>
