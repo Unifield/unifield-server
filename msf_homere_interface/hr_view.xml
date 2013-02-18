@@ -25,12 +25,12 @@
                     <field name="parent_id"/>
                 </group>
                 <group colspan="4" col="8">
-                    <field name="destination_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
-                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
-                    <field name="funding_pool_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
+                  <field name="destination_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" attrs="{'invisible': [('employee_type', '!=', 'local')]}" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="funding_pool_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <newline />
-                    <field name="free1_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
-                    <field name="free2_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}"/>
+                    <field name="free1_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free2_id" attrs="{'invisible': [('employee_type', '!=', 'local')]}" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 </group>
                 <notebook colspan="6">
                     <page string="Personal Information">
@@ -106,11 +106,11 @@
                   <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
                 </field>
                 <field name="job_id" position="after">
-                    <field name="destination_id"/>
-                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)"/>
-                    <field name="funding_pool_id"/>
-                    <field name="free1_id"/>
-                    <field name="free2_id"/>
+                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 </field>
             </data>
         </field>
@@ -129,11 +129,11 @@
                 <field name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                 <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
                 <field name="job_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                <field name="destination_id" domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)"/>
-                <field name="funding_pool_id"/>
-                <field name="free1_id"/>
-                <field name="free2_id"/>
+                <field name="destination_id" domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                 <field name="active" invisible="1"/>
                 <field name="employee_type" invisible="1"/>
             </tree>
