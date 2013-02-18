@@ -87,4 +87,12 @@ class sync_manager(osv.osv_memory):
         self.pool.get('sync.client.entity').pull_message(cr, uid, recover=True, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
+    def recover_data_and_messages(self, cr, uid, ids, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        self.pull_all_data(cr, uid, ids, context=context)
+        self.recover_message(cr, uid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
 sync_manager()
