@@ -641,11 +641,6 @@ class stock_picking(osv.osv):
                     done_moves.remove(move.id)
                     move.unlink(context=dict(context, call_unlink=True))
                     
-            for move, out_move in backlinks:
-                if move in done_moves:
-                    move_obj.write(cr, uid, [move], {'state': 'done'}, context=context)
-                    move_obj.action_assign(cr, uid, [out_move])
-                    
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
                 # done moves go to new picking object
@@ -659,6 +654,11 @@ class stock_picking(osv.osv):
             else:
                 self.action_move(cr, uid, [pick.id])
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                
+            for move, out_move in backlinks:
+                if move in done_moves:
+                    move_obj.write(cr, uid, [move], {'state': 'done'}, context=context)
+                    move_obj.action_assign(cr, uid, [out_move])
             
             # update the out version
             if update_pick_version:
