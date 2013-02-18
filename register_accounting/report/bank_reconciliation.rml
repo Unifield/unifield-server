@@ -1,10 +1,27 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(595.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
-    <pageTemplate id="first">
-      <frame id="first" x1="15.0" y1="42.0" width="539" height="758"/>
+
+
+    <template pageSize="(595.0,842.0)" title="test" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
+
+        <pageGraphics>
+            <fill color="blue"/>
+            <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+            <image x="35" y="790.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="285" y="10.0">Page <pageNumber /></drawString>
+            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
+            <!--            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+        </pageGraphics>
+
     </pageTemplate>
-  </template>
+    </template>
+
+
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
@@ -65,20 +82,31 @@
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
+
+
     <blockTableStyle id="Table42">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="0,-1" stop="0,-1"/>
-      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="2,-1" stop="2,-1"/>
-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,0" stop="1,-1"/>
-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,0" stop="2,-1"/>
+      <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="0,-1" stop="2,-1"/>
       <lineStyle kind="LINEBEFORE" colorName="#000000" start="3,0" stop="3,-1"/>
       <lineStyle kind="LINEAFTER" colorName="#000000" start="3,0" stop="3,-1"/>
-      <lineStyle kind="LINEABOVE" colorName="#000000" start="1,-2" stop="1,-2"/>
       <lineStyle kind="LINEABOVE" colorName="#000000" start="3,-2" stop="3,-2"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
     </blockTableStyle>
+
+
+
+    <blockTableStyle id="Table100">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,0" />
+      <lineStyle kind="LINEAFTER" colorName="#000000" start="0,0" />
+      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
+    </blockTableStyle>
+
+
+
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
@@ -154,7 +182,7 @@
     <para style="P6">
       <font color="white"> </font>
     </para>
-    <blockTable style="Table3">
+    <blockTable style="Table100">
       <tr>
         <td>
           <para style="P13">Register name: [[ o.name ]]</para>
@@ -178,27 +206,21 @@
         </td>
       </tr>
     </blockTable>
-    <para style="P6">
-      <font color="white"> </font>
-    </para>
-    <para style="P6">
-      <font color="white"> </font>
-    </para>
-    <blockTable style="Table3">
+    <blockTable style="Table100">
       <tr>
         <td>
-          <para style="P13">Starting Balance: [[ o.balance_start and o.balance_start or '0.0' ]]</para>
+          <para style="P13">Starting Balance: [[ o.balance_start and formatLang(o.balance_start, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P13">Bank register balance: [[ o.balance_end_real and o.balance_end_real or '0.0' ]]</para>
+          <para style="P13">Bank statement balance: [[ o.balance_end_real and formatLang(o.balance_end_real, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
       </tr>
       <tr>
         <td>
-          <para style="P13">Calculated Balance: [[ o.balance_end and o.balance_end or '0.0' ]]</para>
+          <para style="P13">Calculated Balance: [[ o.balance_end and formatLang(o.balance_end, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
         <td>
-          <para style="P13">Gap: [[ o.balance_gap and o.balance_gap or '0.0' ]]</para>
+          <para style="P13">Gap: [[ o.balance_gap and formatLang(o.balance_gap, digits=2, grouping=True) or '0.0' ]]</para>
         </td>
       </tr>
     </blockTable>
@@ -208,17 +230,34 @@
     <para style="P6">
       <font color="white"> </font>
     </para>
-    <para style="P7">Comments:</para>
-    <blockTable colWidths="533.0" style="Table7">
+
+
+
+
+    <blockTable style="Table100">  
+		<tr>
+		    <td>
+				<para style="P7">Comments:</para>
+		    </td>
+		</tr>
       <tr>
         <td>
           <para style="P11">[[ format(o.notes or '') ]]</para>
         </td>
       </tr>
+		<tr><td><para style="P6"></para></td></tr>
+		<tr><td><para style="P6"></para></td></tr>
+		<tr><td><para style="P6"></para></td></tr>
+		<tr><td><para style="P6"></para></td></tr>
+		<tr><td><para style="P6"></para></td></tr>
+		<tr><td><para style="P6"></para></td></tr>
     </blockTable>
-    <para style="P27">
+
+
+    <para style="P6">
       <font color="white"> </font>
     </para>
+
     <para style="P7">State: [[ get_selection(o.state) ]]</para>
     <para style="P7">Report date: [[ time.strftime('%d/%m/%Y %H:%M') ]]</para>
     <para style="P6">
@@ -227,6 +266,10 @@
     <para style="P6">
       <font color="white"> </font>
     </para>
+
+
+
+
     <blockTable style="Table42">
       <tr>
         <td>
@@ -250,12 +293,51 @@
           <para style="P26">blank text</para>
         </td>
         <td>
-          <para style="P6">(Name, Function)</para>
+          <para style="P6"></para>
         </td>
         <td>
           <para style="P26">blank text</para>
         </td>
       </tr>
     </blockTable>
+
+    <para style="P6">
+      <font color="white"> </font>
+    </para>
+
+
+    <blockTable style="Table42">
+      <tr>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P6">(Name, Function)</para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+        <td>
+          <para style="P6"></para>
+        </td>
+        <td>
+          <para style="P26">blank text</para>
+        </td>
+      </tr>
+    </blockTable>
+
+
+
   </story>
 </document>
