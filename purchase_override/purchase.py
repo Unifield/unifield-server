@@ -311,14 +311,18 @@ class purchase_order(osv.osv):
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
             
         self._check_service(cr, uid, ids, vals, context=context)
-            
-        if vals.get('order_type'):
-            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
-                vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct',]:
-                vals.update({'invoice_method': 'order'})
-            else:
-                vals.update({'invoice_method': 'picking'})
+
+        for order in self.browse(cr, uid, ids, context=context):
+            partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id), context=context).partner_type
+            if vals.get('order_type'):
+                if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
+                    vals.update({'invoice_method': 'manual'})
+                elif vals.get('order_type') in ['direct',] and partner_type != 'esc':
+                    vals.update({'invoice_method': 'order'})
+                elif vals.get('order_type') in ['direct',] and partner_type == 'esc':
+                    vals.update({'invoice_method': 'manual'})
+                else:
+                    vals.update({'invoice_method': 'picking'})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -375,7 +379,7 @@ class purchase_order(osv.osv):
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
-            if partner.partner_type in ('internal', 'esc') and order_type == 'regular':
+            if partner.partner_type in ('internal', 'esc') and order_type in ('regular', 'direct'):
                 v['invoice_method'] = 'manual'
             elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
@@ -1072,7 +1076,8 @@ stock moves which are already processed : '''
             self.log(cr, uid, order.id, message)
             
             if order.order_type == 'direct':
-                self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
+                if order.partner_id.partner_type != 'esc':
+                    self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
                 for line in order.order_line:
                     if line.procurement_id: todo.append(line.procurement_id.id)
                     
@@ -1323,6 +1328,9 @@ stock moves which are already processed : '''
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'order'})
+                if vals.get('partner_id'):
+                    if self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id'), context=context).partner_type == 'esc':
+                        vals.update({'invoice_method': 'manual'})
             else:
                 vals.update({'invoice_method': 'picking'})
             
