@@ -217,10 +217,13 @@ class rml_parse(object):
         return self.getSelTrans(name, res)
 
     def getSelValue(self, obj_name, field, value):
+        sel = self.pool.get(obj_name).fields_get(self.cr, self.uid, [field])
+        res = dict(sel[field]['selection']).get(value, value)
         name = '%s,%s' % (obj_name, field)
-        return self.getSelTrans(name, value)
+        return self.getSelTrans(name, res)
 
     def getSelTrans(self, name, value):
+
         if self.localcontext.get('lang'):
             tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [
                 ('type', '=', 'selection'), ('name', '=', name), ('src', '=', value), ('lang', '=', self.localcontext['lang'])
