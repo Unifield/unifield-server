@@ -47,6 +47,7 @@
                 <search string="Synchronization Monitor">
                     <field name="create_date"/>
                     <field name="sequence"/>
+                    <filter icon="terp-gtk-stop" domain="[('sequence','=',False)]" string="Not Validated"/>
                     <newline/>
                     <field name="rule_id"/>
                     <field name="model"/>
@@ -59,7 +60,8 @@
             <field name="model">sync.server.update</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Synchronization Monitor">
+                <tree string="Synchronization Monitor"
+                      colors="red:sequence==0">
                     <field name="source"/>
                     <field name="create_date"/>
                     <field name="sequence"/>
