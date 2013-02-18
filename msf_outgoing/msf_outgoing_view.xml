@@ -1243,7 +1243,8 @@
 								<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo" />
 								<button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo"/>
 								<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" />
-								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}" />
+								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}" 
+								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
 						<page string="Document Information">
