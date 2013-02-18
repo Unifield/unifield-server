@@ -9,8 +9,6 @@
             <field name="arch" type="xml">
                 <form string="Split line">
                     <separator colspan="4" string="Quantities" />
-                    <field name="filename" invisible="1"  />
-                    <field name="data" filename="filename" readonly="1" colspan="4" />
                     <field name="original_qty" />
                     <field name="old_line_qty" />
                     <field name="new_line_qty" on_change="line_qty_change(original_qty, new_line_qty)" />

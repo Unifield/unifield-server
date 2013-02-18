@@ -299,6 +299,8 @@ class sale_order(osv.osv):
         '''
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:

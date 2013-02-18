@@ -262,6 +262,8 @@ class purchase_order(osv.osv):
         '''
         Avoid the saving of a PO with non service products on Service PO
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
         
@@ -1584,7 +1586,7 @@ class purchase_order_merged_line(osv.osv):
             return False, False
 
         new_price = False
-        new_qty = line.product_qty + product_qty
+        new_qty = line.product_qty + float(product_qty)
         
         if (po_line_id and not change_price_ok and not po_line.order_id.rfq_ok) or (not po_line_id and not change_price_ok):    
             # Get the catalogue unit price according to the total qty

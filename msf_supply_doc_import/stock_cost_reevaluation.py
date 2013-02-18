@@ -19,13 +19,8 @@
 #
 ##############################################################################
 
-from datetime import datetime
-
 from osv import osv
 from osv import fields
-import logging
-import tools
-from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -46,7 +41,6 @@ class stock_cost_reevaluation(osv.osv):
 
         product_obj = self.pool.get('product.product')
         obj_data = self.pool.get('ir.model.data')
-        import_to_correct = False
 
         vals = {}
         vals['reevaluation_line_ids'] = []

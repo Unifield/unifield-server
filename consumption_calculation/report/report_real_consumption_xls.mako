@@ -40,52 +40,66 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
-  <Style ss:ID="short_date">
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-   </Borders>
-   <NumberFormat ss:Format="Short Date"/>
-  </Style>
+    <Style ss:ID="short_date">
+     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+     <Borders>
+      <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+      <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+     </Borders>
+     <NumberFormat ss:Format="Short Date"/>
+    </Style>
 </Styles>
-## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
+## ==================================== we loop over the real_average_consumption so "objects" == real_average_consumption  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
 
 ## definition of the columns' size
-<% nb_of_columns = 6 %>
+<% nb_of_columns = 7 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="320" />
-% for x in range(2,nb_of_columns):
-<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="300" />
+% for x in range(2,nb_of_columns - 1):
+<Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
-    
-## we loop over the tender_line_ids
+<Column ss:AutoFitWidth="1" ss:Width="250" />
+
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product UOM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Consumed Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Remark')}</Data></Cell>
     </Row>
-    % for line in o.tender_line_ids:
+    ## we loop over the products line
+    % for line in o.line_ids:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        % if o.requested_date :
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
-        %endif
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.uom_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="short_date" >
+            % if line.expiry_date and line.expiry_date != 'False':
+                <Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+        <Cell ss:StyleID="line" >
+            % if line.consumed_qty:
+                <Data ss:Type="Number">${(line.consumed_qty or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
+        </Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.remark or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>
-<x:WorksheetOptions/></ss:Worksheet>
+<x:WorksheetOptions/>
+</ss:Worksheet>
 % endfor
 </Workbook>
