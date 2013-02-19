@@ -117,7 +117,7 @@ The columns should be in this values:""")
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """% %"""  % (message, ', \n'.join(columns_for_po_line_import), ),
+                                                                            'message': """%s %s"""  % (message, ', \n'.join(columns_for_po_line_import), ),
                                                                             'state': 'draft',},
                                                                    context)
         return {'type': 'ir.actions.act_window',
