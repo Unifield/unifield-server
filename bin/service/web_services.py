@@ -227,7 +227,7 @@ class db(netsvc.ExportService):
 
         self._create_empty_database(db_name)
 
-        cmd = [tools.misc.find_pg_tool('pg_restore'), '--no-owner']
+        cmd = [tools.misc.find_pg_tool('pg_restore'), '--no-owner', '--no-acl']
         if tools.config['db_user']:
             cmd.append('--username=' + tools.config['db_user'])
         if tools.config['db_host']:
