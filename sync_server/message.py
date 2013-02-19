@@ -62,6 +62,8 @@ class message(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an error message if a is False
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pushing-messages')
+
         for data in package:
             destination = self._get_destination(cr, uid, data['dest'], context=context)
             if not destination:
@@ -78,6 +80,7 @@ class message(osv.osv):
                 'destination': destination,
                 'source': entity.id,
             }, context=context)
+
         return (True, "Message received")
     
     def _get_destination(self, cr, uid, dest, context=None):
@@ -111,9 +114,12 @@ class message(osv.osv):
 
             @return : list : list of messages
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pulling-messages')
+
         ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
         if not ids:
             return False
+
         packet = []
         for data in self.browse(cr, uid, ids, context=context):
             message = {
@@ -139,9 +145,12 @@ class message(osv.osv):
 
             @return : True or raise an error
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pulling-messages')
+
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
+
         return True
         
     def recovery(self, cr, uid, entity, start_seq, context=None):

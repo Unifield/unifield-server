@@ -177,6 +177,8 @@ class entity(osv.osv):
                 # Lock is acquired, so don't put any code outside the try...catch!!
                 res = False
                 try:
+                    entity = self.get_entity(cr, uid, context=context)
+
                     # are we creating a new log line?
                     make_log = not getattr(self, 'log_id', False)
                     
@@ -217,6 +219,11 @@ class entity(osv.osv):
 
                     # ah... we can now call the function!
                     res = fn(self, cr, uid, *args, **kwargs)
+
+                    # is the synchronization finished?
+                    if make_log:
+                        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+                        proxy.end_synchronization(entity.identifier, context)
                 except SkipStep:
                     # res failed but without exception
                     assert is_step, "Cannot have a SkipTest error outside a sync step process!"

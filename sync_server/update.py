@@ -162,6 +162,8 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pushing-updates')
+
         data = {
             'source': entity.id,
             'model': packet['model'],
@@ -206,9 +208,13 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pushing-updates')
+
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
         sequence = self._get_next_sequence(cr, uid, context=context)
+
         self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
+
         return (True, "Push session validated")
         
     def _get_next_sequence(self, cr, uid, context=None):
@@ -308,10 +314,12 @@ class update(osv.osv):
                      - None when no update need to be sent
                      - A dict that format a packet for the client
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pulling-updates')
+
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:
             return None
-        
+
         base_query = ("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE sync_server_update.rule_id in ("""+"%s,"*(len(rules)-1)+"%s"+""") AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""") % (tuple(rules) + (last_seq, max_seq))
 
         ## Recover add own client updates to the list
@@ -329,7 +337,7 @@ class update(osv.osv):
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
             if not ids and update_master is None:
-                return None
+                break
             for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
                 if update_master is None:
                     update_master = update
