@@ -79,7 +79,8 @@ class wiz_common_import(osv.osv_memory):
         for k,v in header_index.items():
             if k not in real_columns:
                 vals = {'state': 'draft',
-                        'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' % (k, ','.join(real_columns))}
+                        'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s'
+                                     ) % (k, ','.join(real_columns))}
                 return False, vals
         return True, True
 
