@@ -149,6 +149,7 @@
                         <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
                     </xpath>
                     <xpath expr="/search//filter[@string='Sales']" position="replace">
+                        <filter icon="terp-check" string="Confirmed" domain="[('state','in',('manual','progress'))]"/>
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state_hidden_sale_order','=','done')]"/>
                     </xpath>
 
