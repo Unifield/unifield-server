@@ -22,9 +22,7 @@
  </ExcelWorkbook>
 
 
-
 <Styles>
-
 <Style ss:ID="Default" ss:Name="Normal">
 <Alignment ss:Vertical="Bottom"/>
 <Borders/>
@@ -42,6 +40,17 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 </Style>
+
+<Style ss:ID="s21a">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font  ss:Bold="1"/>
+</Style>
+
 <Style ss:ID="s22">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -248,7 +257,6 @@
 </Borders>
 </Style>
 
-
 <Style ss:ID="s49">
 <Borders>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -264,7 +272,6 @@
 <Font x:Family="Swiss" ss:Bold="1"/>
 <NumberFormat ss:Format="Standard"/>
 </Style>
-
 
 <Style ss:ID="s50">
 <Font x:Family="Swiss" ss:Bold="1"/>
@@ -291,10 +298,6 @@
 <NumberFormat ss:Format="Short Date"/>
 <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
 </Style>
-
-
-
-
 </Styles>
 
 % for o in objects:
@@ -313,7 +316,7 @@
 <Column ss:Index="13" ss:AutoFitWidth="0" ss:Width="57.75"/>
 <Column ss:AutoFitWidth="0" ss:Width="62.25"/>
 <Row>
-<Cell ss:StyleID="s21">
+<Cell ss:StyleID="s21a">
 <Data ss:Type="String">${_('FINANCIAL REPORT for financing contract')}</Data>
 </Cell>
 <Cell ss:StyleID="s21"/>
@@ -335,11 +338,9 @@
 </Cell>
 </Row>
 
-
-
 <Row>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Financing contract name:</Data>
+<Data ss:Type="String">${_('Financing contract name:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${( o.name or '')|x}</Data>
@@ -347,7 +348,7 @@
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Financing contract code:</Data>
+<Data ss:Type="String">${_('Financing contract code:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${( o.code or '')|x}</Data>
@@ -355,7 +356,7 @@
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Grant amount:</Data>
+<Data ss:Type="String">${_('Grant amount:')}</Data>
 </Cell>
 <Cell ss:StyleID="s24">
 <Data ss:Type="Number">${( o.grant_amount or '')|x}</Data>
@@ -364,54 +365,50 @@
 
 <Row>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Reporting currency:</Data>
+<Data ss:Type="String">${_('Reporting currency:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${(  o.reporting_currency and o.reporting_currency.name or '')|x}</Data>
 </Cell>
 </Row>
 
-
 <Row>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Eligible from:</Data>
+<Data ss:Type="String">${_('Eligible from:')}</Data>
 </Cell>
 <Cell ss:StyleID="short_date2">
 <Data ss:Type="DateTime">${ o.eligibility_from_date or '' |n}T00:00:00.000</Data>
 </Cell>
 <Cell ss:StyleID="s26">
-<Data ss:Type="String">to:</Data>
+<Data ss:Type="String">${_('to:')}</Data>
 </Cell>
 <Cell ss:StyleID="short_date_color">
 <Data ss:Type="DateTime">${ o.eligibility_to_date |n}T00:00:00.000</Data>
 </Cell>
-<Cell ss:StyleID="s27"/>
-<Cell ss:StyleID="s27"/>
+<Cell />
+<Cell />
 </Row>
-
 
 <Row ss:Index="11">
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Reporting type:</Data>
+<Data ss:Type="String">${_('Reporting type:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">${( o.reporting_type  or '')|x}</Data>
+<Data ss:Type="String">${( o.reporting_type and getSelValue('financing.contract.contract', 'reporting_type',  o.reporting_type) or '')|x}</Data>
+
 </Cell>
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">Cost centers:</Data>
+<Data ss:Type="String">${_('Cost centers:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${( getCostCenter(o)  or '')|x}</Data>
 </Cell>
 </Row>
 
-
 <Row >
-
 </Row>
-
 
 <Row ss:AutoFitHeight="0" ss:Height="27.75" ss:StyleID="s29">
 <Cell ss:StyleID="s30">
@@ -460,8 +457,7 @@
 
 
 % for code in getLines(o):
-
-% for line in getLines(o)[code]:
+% for line in getLines2()[code]:
 
 <Row>
 <Cell ss:StyleID="s35">
@@ -495,16 +491,16 @@
 <Data ss:Type="String">${( line[0] and line[0].account_id and line[0].account_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s38">
-<Data ss:Type="Number">${( getBookAm(o,line[0]) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s36">
-<Data ss:Type="String">${( o.reporting_currency and o.reporting_currency.name or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s38">
 <Data ss:Type="Number">${( line[0] and line[0].amount_currency  or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="s39">
+<Cell ss:StyleID="s36">
 <Data ss:Type="String">${( line[0] and line[0].currency_id and line[0].currency_id.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="s38">
+<Data ss:Type="Number">${( getBookAm(o,line[0]) or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="s39">
+<Data ss:Type="String">${( o.reporting_currency and o.reporting_currency.name or '')|x}</Data>
 </Cell>
 </Row>
 % endfor
@@ -519,15 +515,19 @@
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="s49a"><Data ss:Type="String">Sub-total</Data></Cell>
-<Cell ss:StyleID="s49a"><Data ss:Type="Number">2351</Data></Cell>
+<Cell ss:StyleID="s49a"><Data ss:Type="String">${_('Sub-total')}</Data></Cell>
+<Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub1()}]C:R[-1]C)">
+<Data ss:Type="Number"></Data>
+</Cell>
 <Cell ss:StyleID="s36"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="s49a"><Data ss:Type="Number">25125</Data></Cell>
+<Cell ss:StyleID="s49a" ss:Formula="=SUM(R[-${getSub2()}]C:R[-1]C)">
+<Data ss:Type="Number"></Data>
+</Cell>
+
 <Cell ss:StyleID="s39"><Data ss:Type="String"></Data></Cell>
 </Row>
 
 % endfor
-
 
 <Row>
 <Cell  ss:StyleID="s49"></Cell>
@@ -540,14 +540,14 @@
 <Cell  ss:StyleID="s49"></Cell>
 <Cell  ss:StyleID="s49"></Cell>
 <Cell  ss:StyleID="s49">
-<Data ss:Type="String">Total</Data>
+<Data ss:Type="String">${_('Total')}</Data>
 </Cell>
-<Cell  ss:StyleID="s49">
-<Data ss:Type="Number">-1805.43</Data>
+<Cell  ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
+<Data ss:Type="Number"></Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
-<Cell ss:StyleID="s49">
-<Data ss:Type="Number">-1805.43</Data>
+<Cell ss:StyleID="s49" ss:Formula="=${getFormula()}+R[-1]C">
+<Data ss:Type="Number"></Data>
 </Cell>
 <Cell  ss:StyleID="s49"></Cell>
 </Row>
@@ -559,61 +559,49 @@
 <Row>
 <Cell>
 
-
-<Data ss:Type="String">Open date:</Data>
+<Data ss:Type="String">${_('Open date:')}</Data>
 </Cell>
-% if o.open_date:
+% if isDate(o.open_date):
 	<Cell ss:StyleID="short_date2">
 	<Data ss:Type="DateTime">${ o.open_date or '' |n}T00:00:00.000</Data>
 	</Cell>
 % else:
-	<Cell ss:StyleID="short_date2">
-	<Data ss:Type="String">cdscdcds</Data>
+	<Cell >
+	<Data ss:Type="String"></Data>
 	</Cell>
 % endif
 </Row>
 
-
 <Row>
 <Cell>
-<Data ss:Type="String">Soft-closed date:</Data>
+<Data ss:Type="String">${_('Soft-closed date:')}</Data>
 </Cell>
 
-% if o.soft_closed_date:
+% if isDate(o.soft_closed_date):
 	<Cell ss:StyleID="short_date2">
 	<Data ss:Type="DateTime">${ o.soft_closed_date or '' |n}T00:00:00.000</Data>
 	</Cell>
-% else:
-	<Cell ss:StyleID="short_date2">
-	<Data ss:Type="String"></Data>
-	</Cell>
 % endif
 </Row>
 
 <Row>
 <Cell>
-<Data ss:Type="String">Hard-closed date:</Data>
+<Data ss:Type="String">${_('Hard-closed date:')}</Data>
 </Cell>
 
-
-% if o.hard_closed_date:
+% if isDate(o.hard_closed_date):
 	<Cell ss:StyleID="short_date2">
 	<Data ss:Type="DateTime">${ o.hard_closed_date or '' |n}T00:00:00.000</Data>
 	</Cell>
-% else:
-	<Cell ss:StyleID="short_date2">
-	<Data ss:Type="String"></Data>
-	</Cell>
 % endif
-
 
 </Row>
 <Row>
 <Cell>
-<Data ss:Type="String">State:</Data>
+<Data ss:Type="String">${_('State:')}</Data>
 </Cell>
 <Cell>
-<Data ss:Type="String">Open</Data>
+<Data ss:Type="String">${( o.state and getSelValue('financing.contract.contract', 'state', o.state) or '')|x}</Data>
 </Cell>
 </Row>
 </Table>

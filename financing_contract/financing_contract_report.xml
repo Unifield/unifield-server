@@ -8,6 +8,16 @@
         report_type="txt"
         auto="True"
         menu="True"/>
+
+        <report id="allocated_expenses_2"
+        string="Allocated Expenses 2"
+        model="financing.contract.contract"
+        name="financing.allocated.expenses.2"
+        file="financing_contract/report/project_expenses_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
         
         <report id="project_expenses"
         string="Project Expenses"
