@@ -142,19 +142,12 @@ class financing_contract_contract(osv.osv):
         analytic_domain = []
         account_domain = format_line_obj._create_account_destination_domain(account_destination_ids)
         date_domain = eval(general_domain['date_domain'])
-        if reporting_type == 'allocated':
-            analytic_domain = [date_domain[0],
-                               date_domain[1],
-                               ('is_reallocated', '=', False),
-                               ('is_reversal', '=', False),
-                               eval(general_domain['funding_pool_domain'])]
-        else: 
-            analytic_domain = [date_domain[0],
-                               date_domain[1],
-                               ('is_reallocated', '=', False),
-                               ('is_reversal', '=', False),
-                               eval(general_domain['funding_pool_domain']),
-                               eval(general_domain['cost_center_domain'])]
+        analytic_domain = [date_domain[0],
+                           date_domain[1],
+                           ('is_reallocated', '=', False),
+                           ('is_reversal', '=', False),
+                           eval(general_domain['funding_pool_domain']),
+                           eval(general_domain['cost_center_domain'])]
         analytic_domain += account_domain
             
         return analytic_domain

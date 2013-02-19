@@ -32,6 +32,8 @@ import netsvc
 import csv
 from tempfile import TemporaryFile
 
+from product._common import rounding
+
 
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
@@ -421,14 +423,14 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
+            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00 and not context.get('noraise'):
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
                                                     ('type', '=', 'internal'),
                                                     ('product_id', '=', obj.product_id.id)])
                 expiry_date = obj.expiry_date
                 if not prod_ids:
                     raise osv.except_osv(_('Error'), 
-                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date))
+                        _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or 'No expiry date set'))
                 prodlot_id = prod_ids[0]
 
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
@@ -464,14 +466,31 @@ class real_average_consumption_line(osv.osv):
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
     }
 
-    _constraints = [
-        (_check_qty, "The Qty Consumed can't be greater than the Indicative Stock", ['consumed_qty']),
-    ]
-
     _sql_constraints = [
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
     ]
 
+    def create(self, cr, uid, values=None, context=None):
+        '''
+        Call the constraint
+        '''
+        new_id = super(real_average_consumption_line, self).create(cr, uid, values, context=context)
+
+        if not self._check_qty(cr, uid, [new_id], context=context):
+            raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+
+        return new_id
+
+    def write(self, cr, uid, ids, values=None, context=None):
+        '''
+        Call the constraint
+        '''
+        res = super(real_average_consumption_line, self).write(cr, uid, ids, values, context=context)
+
+        if not self._check_qty(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+
+        return res
 
     def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, remark=False, context=None):
         '''
@@ -603,9 +622,22 @@ class real_average_consumption_line(osv.osv):
             v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
         
         return {'value': v, 'domain': d}
-    
-real_average_consumption_line()
 
+    def copy(self, cr, uid, line_id, default=None, context=None):
+        if not context:
+            context = {}
+
+        if not default:
+            default = {}
+
+        default.update({'prodlot_id': False, 'expiry_date': False})
+
+        if 'consumed_qty' in default and default['consumed_qty'] < 0.00:
+            default['consumed_qty'] = 0.00
+
+        return super(real_average_consumption_line, self).copy(cr, uid, line_id[0], default=default, context={'noraise': True})
+
+real_average_consumption_line()
 
 class monthly_review_consumption(osv.osv):
     _name = 'monthly.review.consumption'

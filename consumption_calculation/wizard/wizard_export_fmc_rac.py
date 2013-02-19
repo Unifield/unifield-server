@@ -68,8 +68,9 @@ class wizard_export_rac(osv.osv_memory):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'real.average.consumption',
                 'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'context': context,
                 'res_id': res_id}   
         
 wizard_export_rac()
