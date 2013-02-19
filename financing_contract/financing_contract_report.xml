@@ -16,6 +16,16 @@
         report_type="txt"
         auto="True"
         menu="True"/>
+
+        <report id="project_expenses_2"
+        string="Project Expenses 2"
+        model="financing.contract.contract"
+        name="financing.project.expenses.2"
+        file="financing_contract/report/project_expenses_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
         
         <report id="contract"
         string="Export Contract info - pdf"
