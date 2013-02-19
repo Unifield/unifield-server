@@ -32,6 +32,7 @@ import base64
 #from msf_supply_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_supply_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
+from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
 
 
 class purchase_order(osv.osv):
@@ -107,10 +108,18 @@ class purchase_order(osv.osv):
         columns_header = columns_header_for_po_line_import
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        message = _("""
+        IMPORTANT : The first line will be ignored by the system.
+        The file should be in XML 2003 format.
+
+The columns should be in this values:""")
         export_id = self.pool.get('wizard.import.po.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
-                                                                            'po_id': ids[0]}, context)
+                                                                            'po_id': ids[0],
+                                                                            'message': """% %"""  % (message, ', \n'.join(columns_for_po_line_import), ),
+                                                                            'state': 'draft',},
+                                                                   context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.line',
                 'res_id': export_id,
