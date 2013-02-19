@@ -528,7 +528,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick = kwargs['pick']
         move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), 
-                                             ('state', 'in', ('waiting', 'confirmed'))], order='product_qty desc')
+                                             ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
         
         return move_ids
 

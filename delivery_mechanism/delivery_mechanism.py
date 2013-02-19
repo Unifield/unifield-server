@@ -451,9 +451,11 @@ class stock_picking(osv.osv):
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_move_id = mirror_data['move_id']
                 # update out flag
-                update_out = (len(partial_datas[pick.id][move.id]) > 1)
+                count_partial = len(partial_datas[pick.id][move.id])
+                update_out = count_partial > 1
                 # average price computation, new values - should be the same for every partial
                 average_values = {}
+
                 
                 # partial list
                 for partial in partial_datas[pick.id][move.id]:
@@ -520,6 +522,7 @@ class stock_picking(osv.osv):
                                               'price_currency_id': product_currency}
                                         
                     # the quantity
+                    count_partial -= 1
                     count = count + partial['product_qty']
                     if first:
                         first = False
@@ -536,7 +539,8 @@ class stock_picking(osv.osv):
                                 out_values.pop('location_dest_id')
                                 
                             # If the quantity not matching, 
-                            if not partial['product_qty'] or initial_qty <= count:
+                            #if not partial['product_qty'] or initial_qty <= count:
+                            if not count_partial and initial_qty <= count:
                                 move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                                 backlinks.append((move.id, out_move_id))
                             else:
@@ -568,7 +572,8 @@ class stock_picking(osv.osv):
                                 out_values.pop('location_dest_id')
                                 
                             # If the quantity not matching,
-                            if not partial['product_qty'] or initial_qty <= count:
+                            #if not partial['product_qty'] or initial_qty <= count:
+                            if not count_partial and initial_qty <= count:
                                 move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                                 backlinks.append((move.id, out_move_id)) 
                             else:
