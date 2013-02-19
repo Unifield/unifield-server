@@ -769,6 +769,16 @@ class stock_picking(osv.osv):
         pick = kwargs['pick']
         return [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
 
+    def _hook_action_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
+        
+        -  when product is Expiry date mandatory, a "pre-assignment" of batch numbers regarding the available quantity
+        and location logic in addition to FEFO logic (First expired first out).
+        '''
+        return True
+
     def action_assign(self, cr, uid, ids, context=None, *args):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
@@ -782,6 +792,7 @@ class stock_picking(osv.osv):
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
             move_obj.action_assign(cr, uid, move_ids)
+            self._hook_action_assign_batch(cr, uid, ids, context=context)
         return True
 
     def force_assign(self, cr, uid, ids, *args):
@@ -2050,10 +2061,20 @@ class stock_move(osv.osv):
         self.write(cr, uid, ids, {'state': 'assigned'})
         return True
 
+    def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the cancel_assign method from stock>stock.py>stock_move class
+        
+        -  it erases the batch number associated if any and reset the source location to the original one.
+        '''
+        return True
+
     def cancel_assign(self, cr, uid, ids, context=None):
         """ Changes the state to confirmed.
         @return: True
         """
+        self._hook_cancel_assign_batch(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
         return True
     
