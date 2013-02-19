@@ -86,7 +86,7 @@
                         <separator string="Domain" colspan="2"/>
                         <field name="domain" on_change="invalidate(model_ref)" colspan="2" nolabel="1"/>
                         <separator string="Included fields (required)" colspan="2"/>
-                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref)" domain="[('model_id','in', model_ids),('ttype','not in',['one2many','reference'])]">
+                        <field name="included_fields_sel" nolabel="1" on_change="on_change_included_fields(included_fields_sel, model_ref)" domain="[('model_id','in', model_ids),('ttype','not in',['one2many'])]">
                             <tree string="Included fields">
                                 <field name="name"/>
                                 <field name="field_description"/>
