@@ -639,7 +639,6 @@ class sale_order(osv.osv):
         
         - allow to modify the data for stock move creation
         '''
-        line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_stock_move(cr, uid, ids, context=context, *args, **kwargs)
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
         result['price_currency_id'] = self.browse(cr, uid, ids[0], context=context).pricelist_id.currency_id.id
@@ -670,6 +669,7 @@ class sale_order(osv.osv):
         
         - allow to customize the execution condition
         '''
+        line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         if line.order_id.procurement_request:
             if line.type == 'make_to_order':
