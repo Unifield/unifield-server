@@ -670,7 +670,6 @@ class sale_order(osv.osv):
         
         - allow to customize the execution condition
         '''
-        line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         if line.order_id.procurement_request:
             if line.type == 'make_to_order':
