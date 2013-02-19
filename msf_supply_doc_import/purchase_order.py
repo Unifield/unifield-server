@@ -335,13 +335,13 @@ class purchase_order_line(osv.osv):
             uom = res.get('value', {}).get('product_uom', False)
             warning_msg = res.get('warning', {}).get('message', '')
             text_error += '\n %s' % warning_msg
-            text_error += 'We use the price mechanism to compute the Price Unit.'
+            text_error += _('We use the price mechanism to compute the Price Unit.')
             to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
         if uom:
             self.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
         else:
             uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            text_error += '\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.'
+            text_error += _('\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.')
             to_write.update({'product_uom': uom, 'text_error': text_error})
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
@@ -363,9 +363,9 @@ class purchase_order_line(osv.osv):
             uom = uom_obj.browse(cr, uid, uom_id, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
                 # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += """\n You have to select a product UOM in the same category than the UOM of the product.
+                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
                 The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """ % (product.uom_id.category_id.name, uom.category_id.name)
+                """) % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
@@ -374,7 +374,7 @@ class purchase_order_line(osv.osv):
             return to_write.update({'product_uom': product_uom})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
             # this is inspired by the on_change in purchase>purchase.py: product_uom_change
-            text_error += "\n The UoM was not defined so we set the price unit to 0.0."
+            text_error += _("\n The UoM was not defined so we set the price unit to 0.0.")
             return to_write.update({'text_error': text_error,
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
@@ -391,16 +391,16 @@ class purchase_order_line(osv.osv):
             if vals.get('product_uom') or vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
                 if vals.get('product_uom'):
                     if vals.get('product_uom') == tbd_uom:
-                        message += 'You have to define a valid UOM, i.e. not "To be define".'
+                        message += _('You have to define a valid UOM, i.e. not "To be defined".')
                 if vals.get('nomen_manda_0'):
                     if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
-                        message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                        message += _('You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_1'):
                     if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
-                        message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                        message += _('You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_2'):
                     if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
-                        message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                        message += _('You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 # the 3rd level is not mandatory
                 if message:
                     raise osv.except_osv(_('Warning !'), _(message))
