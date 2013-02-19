@@ -68,7 +68,7 @@ class account_invoice(osv.osv):
             'invoice_id': invoice.id,
             'currency_id': currency or False,
             'state': 'dispatch',
-            'posting_date': invoice.date,
+            'posting_date': invoice.date_invoice,
             'document_date': invoice.document_date,
         }
         if context.get('from_direct_inv'):
@@ -145,7 +145,7 @@ class account_invoice_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': invoice_line.account_id and invoice_line.account_id.id or False,
-            'posting_date': invoice_line.invoice_id.date,
+            'posting_date': invoice_line.invoice_id.date_invoice,
             'document_date': invoice_line.invoice_id.document_date,
         }
         if context.get('from_direct_inv'):
