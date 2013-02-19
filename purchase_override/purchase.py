@@ -1051,7 +1051,7 @@ stock moves which are already processed : '''
         for order in self.browse(cr, uid, ids):
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
-            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission':
+            if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
                 self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
