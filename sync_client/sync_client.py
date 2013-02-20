@@ -200,12 +200,12 @@ class entity(osv.osv):
 
                         # Check if connection is up
                         con = self.pool.get('sync.client.sync_server_connection')
-                        con.connect(cr, uid, context=context)
+                        con.connect(self.log_cr, uid, context=context)
                         # connect() raise an osv.except_osv if something goes wrong
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
-                            up_to_date = self.upgrade(cr, uid, context=context)
+                            up_to_date = self.upgrade(self.log_cr, uid, context=context)
                             if not up_to_date[0]:
                                 raise osv.except_osv(_("Error!"), _("Revision Update Failed: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
