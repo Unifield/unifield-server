@@ -249,20 +249,23 @@ class import_data(osv.osv_memory):
                     if ids_to_update:
                         impobj.write(cr, uid, ids_to_update, data)
                         nb_update_success += 1
+                        cr.commit()
                     else:
                         impobj.create(cr, uid, data)
                         nb_succes += 1
+                        cr.commit()
                 else:
                     impobj.create(cr, uid, data)
                     nb_succes += 1
+                    cr.commit()
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s'%e.value)
-                cr.commit()
+                cr.rollback()
                 row.append("Line %s, row: %s, %s"%(i, n, e.value))
                 writer.writerow(row)
                 nb_error += 1
             except Exception, e:
-                cr.commit()
+                cr.rollback()
                 logging.getLogger('import data').info('Error %s'%e)
                 row.append("Line %s, row: %s, %s"%(i, n, e))
                 writer.writerow(row)
