@@ -39,7 +39,7 @@
 	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}"
 	                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent"
-	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <group colspan="2" col="3">
 	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
