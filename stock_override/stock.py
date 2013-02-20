@@ -655,6 +655,66 @@ class stock_picking(osv.osv):
                     move_obj.action_assign(cr, uid, not_assigned_move)
         return True
 
+    def _hook_action_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
+        
+        -  when product is Expiry date mandatory, we "pre-assign" batch numbers regarding the available quantity
+        and location logic in addition to FEFO logic (First expired first out).
+        '''
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        loc_obj = self.pool.get('stock.location')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                if move.product_id.perishable: # perishable for perishable or batch management
+                    if move.state == 'assigned': # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
+                        needed_qty = move.product_qty
+                        res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+                        if 'fefo' in res: 
+                            values = {'name': move.name,
+                                      'picking_id': pick.id,
+                                      'product_uom': move.product_uom.id,
+                                      'product_id': move.product_id.id,
+                                      'date_expected': move.date_expected,
+                                      'date': move.date,
+                                      'state': 'assigned',
+                                      'location_dest_id': move.location_dest_id.id,
+                                      'reason_type_id': move.reason_type_id.id,
+                                      }
+                            for loc in res['fefo']:
+                                # we ignore the batch that are outdated
+                                expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                                if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                                    # as long all needed are not fulfilled
+                                    if needed_qty:
+                                        # if the batch already exists and qty is enough, it is available (assigned)
+                                        if needed_qty <= loc['qty']:
+                                            if move.prodlot_id.id == loc['prodlot_id']:
+                                                move_obj.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                            else:
+                                                move_obj.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
+                                                                            'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                                needed_qty = 0.0
+                                        elif needed_qty:
+                                            # we take all available
+                                            selected_qty = loc['qty']
+                                            needed_qty -= selected_qty
+                                            dict_for_create = {}
+                                            dict_for_create = values.copy()
+                                            dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                            move_obj.create(cr, uid, dict_for_create, context)
+                                            move_obj.write(cr, uid, move.id, {'product_qty': needed_qty})
+                    elif move.state == 'confirmed':
+                        # we remove the prodlot_id in case that the move is not available
+                        move_obj.write(cr, uid, move.id, {'prodlot_id': False}, context)
+        return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
+
 stock_picking()
 
 # ----------------------------------------------------
@@ -873,6 +933,20 @@ class stock_move(osv.osv):
         '''
         move = kwargs['move']
         return move.location_id.usage == 'supplier'
+
+    def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the cancel_assign method from stock>stock.py>stock_move class
+        
+        -  it erases the batch number associated if any and reset the source location to the original one.
+        '''
+        for line in self.browse(cr, uid, ids, context):
+            if line.prodlot_id:
+                self.write(cr, uid, ids, {'prodlot_id': False, 'expired_date': False})
+            if line.location_id.location_id and line.location_id.location_id.usage != 'view':
+                self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
+        return True
 
     def _hook_copy_stock_move(self, cr, uid, res, move, done, notdone):
         while res:
