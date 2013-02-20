@@ -129,9 +129,16 @@ class report_liquidity_position2(report_sxw.rml_parse):
     def getFormula(self):
         formul = ''
         iters = self.iter[1:]
-        for i in iters:
-            rang = 4 + i
+        temp = self.iter[1:]
+        tour = 1
+        for i in temp:
+            tour += 1
+            nb = 0
+            for x in iters:
+                nb += x + 1
+            rang = nb + 1
             formul += '+R[-'+str(rang)+']C'
+            iters = self.iter[tour:]
         return formul
 
     def getFuncCur(self,bro_ac):
