@@ -151,8 +151,8 @@ class import_data(osv.osv_memory):
             return newids[0]
 
         def process_data(field, value, fields_def):
-            if not value:
-                return 
+            if not value or field not in fields_def:
+                return
             if '.' not in field:
                 # type datetime, date, bool, int, float
                 if value and fields_def[field]['type'] == 'boolean':
