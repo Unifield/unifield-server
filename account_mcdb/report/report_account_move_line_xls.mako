@@ -112,7 +112,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.state or ''}</Data>
+        <Data ss:Type="String">${getSel(o,'state')}</Data>
 </Cell>
 </Row>
 % endfor
