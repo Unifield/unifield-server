@@ -65,6 +65,7 @@ class wizard_interactive_report(osv.osv_memory):
         return max_parent_hierarchy
     
     def _get_interactive_data(self, cr, uid, contract_id, context=None):
+        print "get interactive data"
         res = {}
         contract_obj = self.pool.get('financing.contract.contract')
         # Context updated with wizard's value
@@ -167,6 +168,8 @@ class wizard_interactive_report(osv.osv_memory):
                 final_line += temp_line[6:9]
             analytic_data.append(final_line)
             
+        if context.get('mako',False):
+            return analytic_data
         data = header_data + [[]] + analytic_data + [[]] + footer_data
         return data
     

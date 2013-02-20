@@ -386,6 +386,8 @@
                         <group colspan="4" col="6">
                             <button special="cancel" string="Cancel" icon="gtk-cancel"/>
                             <button name="button_create_budget" string="Create report" type="object" icon="gtk-ok"/>
+                            <button name="button_create_budget_2" string="Create report 2" type="object" icon="gtk-ok"/>
+
                         </group>
                     </form>
                 </field>

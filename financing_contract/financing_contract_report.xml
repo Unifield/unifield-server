@@ -35,6 +35,16 @@
         menu="True"
         header="False"/>
 
+        <report id="financing_interactive_2"
+        string="Financing interactive 2"
+        model="financing.contract.contract"
+        name="financing.interactive.2"
+        file="financing_contract/report/financing_interactive_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+
     </data>
 </openerp>
 

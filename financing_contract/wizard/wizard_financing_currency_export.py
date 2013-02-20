@@ -45,6 +45,7 @@ class wizard_financing_currency_export(osv.osv_memory):
     }
 
     def button_create_budget(self, cr, uid, ids, context=None):
+        print "bouton create"
         if context is None:
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
@@ -55,5 +56,19 @@ class wizard_financing_currency_export(osv.osv_memory):
             data['out_currency'] = wizard.out_currency.id
 
         return {'type': 'ir.actions.report.xml', 'report_name': 'financing.interactive', 'datas': data}
+
+
+    def button_create_budget_2(self, cr, uid, ids, context=None):
+        print "bouton create"
+        if context is None:
+            context = {}
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        data = {}
+        data['ids'] = context.get('active_ids', [])
+        data['model'] = context.get('active_model', 'ir.ui.menu')
+        if wizard.out_currency:
+            data['out_currency'] = wizard.out_currency.id
+
+        return {'type': 'ir.actions.report.xml', 'report_name': 'financing.interactive.2', 'datas': data}
     
 wizard_financing_currency_export()
