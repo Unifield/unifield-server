@@ -212,6 +212,7 @@ class entity(osv.osv):
                                 self.log_info['error'] += "Revision Update Status: " + up_to_date[1]
 
                     # update log line
+                    self.log_info[step] = 'in-progress'
                     self.pool.get('sync.monitor').write(self.log_cr, uid, [self.log_id], self.log_info, context=context)
 
                     # ah... we can now call the function!
