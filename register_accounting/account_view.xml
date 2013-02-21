@@ -374,7 +374,7 @@
                     <field name="functional_out"/>
                     <field name="functional_currency_id"/>
                     <field name="state"/>
-                    <field name="statement_id"/>
+                    <field name="statement_id" string="Register Name"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
                 </tree>
             </field>

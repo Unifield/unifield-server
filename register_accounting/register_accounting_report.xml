@@ -32,24 +32,26 @@
         menu="True"
          />
         
-		<report
-		id="open_advances_2"
-		string="Open Advances"
-		model="account.bank.statement"
-		name="open.advances.2"
-		file="register_accounting/report/open_advances_xls.mako"
-		report_type="webkit"
-		header="False"
-		auto="False"
-		menu="True"
-		 />
+	<report
+	id="open_advances_2"
+	string="Open Advances"
+	model="account.bank.statement"
+	name="open.advances.2"
+	file="register_accounting/report/open_advances_xls.mako"
+	report_type="webkit"
+	header="False"
+	auto="False"
+	menu="True"
+	 />
 
         <report id="liquidity_position"
         string="Liquidity Position"
         model="account.bank.statement"
-        name="liquidity.position"
-        report_type="txt"
-        auto="True"
+        name="liquidity.position.2"
+        file="register_accounting/report/liquidity_position_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
         menu="True"/>
         
     </data>

@@ -196,6 +196,7 @@
     <Cell ss:StyleID="s64"/>
     <Cell ss:StyleID="s64"/>
     <Cell ss:StyleID="s64"><Data ss:Type="String">test comment</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">test comment</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s65"/>

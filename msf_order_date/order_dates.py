@@ -397,7 +397,7 @@ def common_onchange_date_order(self, cr, uid, ids, part=False, date_order=False,
     
     return res
 
-def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
+def common_onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
     '''
     Common function when Partner is changing
     '''
@@ -1096,7 +1096,7 @@ class sale_order(osv.osv):
         res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, requested_date=requested_date, type=get_type(self), res=res, context=context)
         return res
     
-    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
+    def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, date_order=False, transport_lt=0, context=None):
         '''
         Fills the Requested and Confirmed delivery dates
         
@@ -1106,9 +1106,9 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, order_type)
         # compute requested date and transport type
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=part, order_type=order_type, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:

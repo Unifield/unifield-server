@@ -37,6 +37,7 @@ class account_analytic_journal(osv.osv):
         return res
     
     _columns = {
+        'name': fields.char('Journal Name', size=64, required=True, translate=True),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
@@ -80,6 +81,7 @@ class account_journal(osv.osv):
         return res
     
     _columns = {
+        'name': fields.char('Journal Name', size=64, required=True, translate=True),
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }

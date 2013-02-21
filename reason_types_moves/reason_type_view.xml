@@ -195,7 +195,7 @@
                         <field name="min_date" />
                     </xpath>
                     <xpath expr="/search//field[@name='company_id']" position="replace" />
-                    <xpath expr="/search//filter[@string='Done']" position="attributes">
+                    <xpath expr="/search//filter[@name='done']" position="attributes">
                         <attribute name="string">Closed</attribute>
                     </xpath>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
