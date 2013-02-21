@@ -250,7 +250,7 @@ class create_picking(osv.osv_memory):
                 <label string="" colspan="2"/>
                 <group col="4" colspan="2">
                 <button icon='gtk-cancel' special="cancel"
-                    string="_Cancel" />"""
+                    string="%s" />""" % _('_Cancel')
 
         if step == 'ppl2':
             _moves_arch_lst += """
