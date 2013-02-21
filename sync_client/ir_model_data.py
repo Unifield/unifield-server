@@ -189,26 +189,36 @@ class ir_model_data_sync(osv.osv):
         return res
     
     def create(self,cr,uid,values,context=None):
-        res_id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
-        if values.get('module') and values.get('module') != 'sd':
-            name = "%s_%s" % (values.get('module'), values.get('name'))
-            duplicate_ids  = super(ir_model_data_sync, self).search(cr, uid, [('module', '=', 'sd'), ('name', '=', name)], context=context)
-            if duplicate_ids:
-                record = self.get_record(cr, uid, 'sd.' + name, context)
+        if values['module'] == 'sd':
+            assert self.search(cr, uid, [('module','=','sd'),('model','=',values['model']),('res_id','=',values['res_id'])], count=True, context=context) == 0, \
+                   "Oops...! Cannot create another 'sd' xml_id for object model=%s id=%s" \
+                   % (values['model'], values['res_id'])
+
+        id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
+
+        if not values['module'] == 'sd':
+            xmlid = "%s_%s" % (values['module'], values['name'])
+            sd_ids  = self.search(cr, uid, [('module', '=', 'sd'), ('name', '=', xmlid)], context=context)
+            assert len(id_ids) < 2, \
+                   "Oops...! I already have multiple 'sd' xml_ids for this object id=%s" % xmlid
+
             args = {
                     'noupdate' : False, # don't set to True otherwise import won't work
-                    'model' : values.get('model'),
-                    'module' : 'sd',#model._module,
-                    'name' : name,
-                    'res_id' : duplicate_ids and record or values.get('res_id'),
-                    }
-            
-            if duplicate_ids:
-                super(ir_model_data_sync, self).write(cr, uid, duplicate_ids, args, context=context)
+                    'model' : values['model'],
+                    'module' : 'sd',
+                    'name' : xmlid,
+                    'res_id' : values['res_id'],
+                   }
+            if sd_ids:
+                data = self.browse(cr, uid, sd_ids, context=context)[0]
+                assert data.res_id == values['res_id'], \
+                       "Oops...! There is multiple resources for a unique xml_id! Expected: %s, got: %s" \
+                       % (values['res_id'], data.res_id)
+                super(ir_model_data_sync, self).write(cr, uid, sd_ids, args, context=context)
             else:
                 super(ir_model_data_sync, self).create(cr, uid, args, context=context)
     
-        return res_id
+        return id
 
     def get(self, cr, uid, model, ids, context=None):
         res_type = type(ids)
