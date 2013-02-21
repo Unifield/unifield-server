@@ -85,7 +85,7 @@ class unifield_setup_configuration(osv.osv):
         'lang_id': lambda *a: 'en_MF',
         'unallocated_ok': lambda *a: False,
         'fixed_asset_ok': lambda *a: False,
-        'payroll_ok': lambda *a: False,
+        'payroll_ok': lambda *a: True,
     }
     
     _constraints = [

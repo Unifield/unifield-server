@@ -40,6 +40,7 @@ class purchase_order_line(osv.osv):
         seller_delay = kwargs['seller_delay']
         context = kwargs['context']
         res = kwargs['res']
+        rounding_qty = product_qty
         
         partner_price = self.pool.get('pricelist.partnerinfo')
         suppinfo_obj = self.pool.get('product.supplierinfo')
@@ -61,10 +62,10 @@ class purchase_order_line(osv.osv):
             
         domain_cur = [('currency_id', '=', currency_id)]
         domain_cur.extend(domain)
-        
-        info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+
+        info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
         if not info_prices:
-            info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+            info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity desc, id desc', limit=1, context=context)
             
         if info_prices:
 #            info = partner_price.browse(cr, uid, info_price, context=context)[0]
@@ -76,12 +77,18 @@ class purchase_order_line(osv.osv):
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set for a minimal quantity of %s '\
                                                                             '(the min quantity of the price list), it might change at the '\
                                                                             'supplier confirmation.') % product_qty}})
-                
-            if info.rounding and product_qty%info.rounding != 0:
+            if info.rounding and rounding_qty%info.rounding != 0:
                 if not res.get('warning', {}).get('message', False):
-                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a packaging ' \
-                                                                                'which is a multiple of %s.') % info.rounding}})
-                product_qty = product_qty + (info.rounding - product_qty%info.rounding)
+                    res.update({'warning': {'title': _('Warning'), 'message': _('A rounding value of %s UoM has been set for ' \
+                                                                                'this product, you should than modify ' \
+                                                                                'the quantity ordered to match the supplier criteria.') % info.rounding}})
+                else:
+                    message = _('A rounding value of %s UoM has been set for ' \
+                                'this product, you should than modify ' \
+                                'the quantity ordered to match the supplier criteria.') % info.rounding
+                    message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
+                    res['warning'].update({'message': message})
+                product_qty = rounding_qty + (info.rounding - rounding_qty%info.rounding)
                     
         return res, product_qty, product_qty, seller_delay
     
