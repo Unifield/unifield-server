@@ -264,7 +264,7 @@ class msf_budget_line(osv.osv):
                 if (budget_line.account_id.id, budget_line_destination_id) in budget_amounts:
                     line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
                 if (budget_line.account_id.id, budget_line_destination_id) in comm_amounts:
-                    line_comm_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
+                    line_comm_amounts = comm_amounts[budget_line.account_id.id, budget_line_destination_id]
                 
 
                 line_code = budget_line.account_id.code
@@ -286,9 +286,11 @@ class msf_budget_line(osv.osv):
                                                            line_actual_amounts,
                                                            line_comm_amounts,
                                                            context=context)
+
                 line_values.append(total_amounts['budget_amount'])
-                line_values.append(total_amounts['actual_amount'])
                 line_values.append(total_amounts['comm_amount'])
+                line_values.append(total_amounts['actual_amount'])
+
                 # add to result
                 res.append(line_values)
             

@@ -128,8 +128,23 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getLines': self.getLines,
             'byMonth': self.byMonth,
             'isComm': self.isComm,
+            'getBreak': self.getBreak,
+            'getComm': self.getComm,
+
         })
         return
+
+    def getComm(self,):
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'commitment' in parameters and parameters['commitment']:
+            return 'Yes'
+        return 'No'
+
+    def getBreak(self,):
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'breakdown' in parameters and parameters['breakdown'] == 'year':
+            return 'Total figure'
+        return 'By month'
 
     def byMonth(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})
@@ -177,6 +192,8 @@ class report_budget_actual_2(report_sxw.rml_parse):
             formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
             formatted_monthly_amounts.append(formatted_amount_line)
         result += formatted_monthly_amounts
+
+        print result[1:5]
 
         return result[1:5]
 
