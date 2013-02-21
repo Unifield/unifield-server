@@ -53,7 +53,24 @@ class one2many_budget_lines(fields.one2many):
 
 class msf_budget_line(osv.osv):
     _name = "msf.budget.line"
-    
+
+    def _get_comm_amounts(self, cr, uid, ids, context=None):
+        res = {}
+        if context is None:
+            context = {}
+        engagement_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement')], context=context)
+        budget_line_ids = []
+        if len(ids) > 0:
+            budget = self.browse(cr, uid, ids[0], context=context).budget_id
+            output_currency_id = budget.currency_id.id
+            cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(budget.cost_center_id)
+            actual_domain = [('cost_center_id', 'in', cost_center_ids)]
+            actual_domain.append(('date', '>=', budget.fiscalyear_id.date_start))
+            actual_domain.append(('date', '<=', budget.fiscalyear_id.date_stop))
+            actual_domain.append(('journal_id', 'not in', engagement_journal_ids))
+            res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)
+        return res
+
     def _get_actual_amounts(self, cr, uid, ids, context=None):
         # Input: list of budget lines
         # Output: a dict of list {general_account_id: [jan_actual, feb_actual,...]}
@@ -79,8 +96,8 @@ class msf_budget_line(osv.osv):
             # 3. commitments
             # if commitments are set to False in context, the engagement analytic journals are removed
             # from the domain
-            if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
-                actual_domain.append(('journal_id', 'not in', engagement_journal_ids))
+            #if 'commitment' in context and not context['commitment'] and len(engagement_journal_ids) > 0:
+            #    actual_domain.append(('journal_id', 'not in', engagement_journal_ids))
             
             # Call budget_tools method
             res = self.pool.get('msf.budget.tools')._get_actual_amounts(cr, uid, output_currency_id, actual_domain, context=context)
@@ -142,18 +159,21 @@ class msf_budget_line(osv.osv):
 
         return res
     
-    def _compute_total_amounts(self, cr, uid, budget_amount_list, actual_amount_list, context=None):
+    def _compute_total_amounts(self, cr, uid, budget_amount_list, actual_amount_list, comm_amount_list, context=None):
         # period_id
         if context is None:
             context = {}
         budget_amount = 0
         actual_amount = 0
+        comm_amount = 0
         month_stop = 0
+
         if 'period_id' in context:
             period = self.pool.get('account.period').browse(cr, uid, context['period_id'], context=context)
             month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
         else:
             month_stop = 12
+
         # actual amount
         if actual_amount_list:
             for i in range(month_stop):
@@ -162,8 +182,13 @@ class msf_budget_line(osv.osv):
         if budget_amount_list:
             for i in range(month_stop):
                 budget_amount += budget_amount_list[i]
+        # comm amount
+        if comm_amount_list:
+            for i in range(month_stop):
+                comm_amount += comm_amount_list[i]
                 
         return {'actual_amount': actual_amount,
+                'comm_amount': comm_amount,
                 'budget_amount': budget_amount}
     
     def _get_total_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
@@ -173,6 +198,7 @@ class msf_budget_line(osv.osv):
         
         actual_amounts = self._get_actual_amounts(cr, uid, ids, context)
         budget_amounts = self._get_budget_amounts(cr, uid, ids, context)
+        comm_amounts = self._get_comm_amounts(cr, uid, ids, context)
         
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
@@ -185,16 +211,22 @@ class msf_budget_line(osv.osv):
                                                        (budget_line.account_id.id, budget_line_destination_id) in actual_amounts \
                                                        and actual_amounts[budget_line.account_id.id, budget_line_destination_id] \
                                                        or [0] * 12,
+                                                       (budget_line.account_id.id, budget_line_destination_id) in comm_amounts \
+                                                       and comm_amounts[budget_line.account_id.id, budget_line_destination_id] \
+                                                       or [0] * 12,
                                                        context=context)
+
             actual_amount = line_amounts['actual_amount']
             budget_amount = line_amounts['budget_amount']
-                    
+            comm_amount = line_amounts['comm_amount']
+
             # We have budget amount and actual amount, compute the remaining ones
             percentage = 0.0
             if budget_amount != 0.0:
                 percentage = round((actual_amount / budget_amount) * 100.0)
             res[budget_line.id] = {'budget_amount': budget_amount,
                                    'actual_amount': actual_amount,
+                                   'comm_amount': comm_amount,
                                    'balance': budget_amount - actual_amount,
                                    'percentage': percentage}
         
@@ -207,6 +239,7 @@ class msf_budget_line(osv.osv):
             
         actual_amounts = self._get_actual_amounts(cr, uid, ids, context)
         budget_amounts = self._get_budget_amounts(cr, uid, ids, context)
+        comm_amounts = self._get_comm_amounts(cr, uid, ids, context)
         
         # if period id, only retrieve a subset
         month_stop = 0
@@ -219,35 +252,43 @@ class msf_budget_line(osv.osv):
         # Browse each line
         for budget_line in self.browse(cr, uid, ids, context=context):
             budget_line_destination_id = budget_line.destination_id and budget_line.destination_id.id or False
+
             if budget_line.line_type == 'view' \
                 or ('granularity' in context and context['granularity'] == 'all') \
                 or ('granularity' in context and context['granularity'] == 'expense' and budget_line.line_type != 'destination'):
                 line_actual_amounts = [0] * 12
                 line_budget_amounts = [0] * 12
+                line_comm_amounts = [0] * 12
                 if (budget_line.account_id.id, budget_line_destination_id) in actual_amounts:
                     line_actual_amounts = actual_amounts[budget_line.account_id.id, budget_line_destination_id]
                 if (budget_line.account_id.id, budget_line_destination_id) in budget_amounts:
                     line_budget_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
+                if (budget_line.account_id.id, budget_line_destination_id) in comm_amounts:
+                    line_comm_amounts = budget_amounts[budget_line.account_id.id, budget_line_destination_id]
                 
-                line_name = budget_line.account_id.code
+
+                line_code = budget_line.account_id.code
                 if budget_line.destination_id:
-                    line_name += " " + budget_line.destination_id.code
-                line_name += " " + budget_line.account_id.name
-                line_values = [line_name]
+                    line_code += " " + budget_line.destination_id.code
+                line_name = budget_line.account_id.name
+                line_values = [(line_code,line_name)]
+
                 if 'breakdown' in context and context['breakdown'] == 'month':
                     # Need to add breakdown values
                     for i in range(month_stop):
-                        
                         line_values.append(line_budget_amounts[i])
+                        line_values.append(line_comm_amounts[i])
                         line_values.append(line_actual_amounts[i])
                 
                 total_amounts = self._compute_total_amounts(cr,
                                                            uid,
                                                            line_budget_amounts,
                                                            line_actual_amounts,
+                                                           line_comm_amounts,
                                                            context=context)
                 line_values.append(total_amounts['budget_amount'])
                 line_values.append(total_amounts['actual_amount'])
+                line_values.append(total_amounts['comm_amount'])
                 # add to result
                 res.append(line_values)
             
@@ -275,6 +316,7 @@ class msf_budget_line(osv.osv):
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
         'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
         'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
+        'comm_amount': fields.function(_get_total_amounts, method=True, store=False, string="Commitments amount", type="float", readonly="True", multi="all"),
         'balance': fields.function(_get_total_amounts, method=True, store=False, string="Balance", type="float", readonly="True", multi="all"),
         'percentage': fields.function(_get_total_amounts, method=True, store=False, string="Percentage", type="float", readonly="True", multi="all"),
         'parent_id': fields.many2one('msf.budget.line', 'Parent Line'),
