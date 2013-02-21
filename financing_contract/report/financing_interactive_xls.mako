@@ -437,18 +437,22 @@
 <Cell ss:StyleID="s27">
 <Data ss:Type="String">${_('Name')}</Data>
 </Cell>
-<Cell ss:StyleID="s27">
-<Data ss:Type="String">${_('Earmarked - Budget')}</Data>
-</Cell>
-<Cell ss:StyleID="s27">
-<Data ss:Type="String">${_('Earmarked - Actuals')}</Data>
-</Cell>
-<Cell ss:StyleID="s27">
-<Data ss:Type="String">${_('Earmarked - Balanc')}e</Data>
-</Cell>
-<Cell ss:StyleID="s27">
-<Data ss:Type="String">${_('Earmarked - %used')}</Data>
-</Cell>
+
+% if checkType(o):
+	<Cell ss:StyleID="s27">
+	<Data ss:Type="String">${_('Earmarked - Budget')}</Data>
+	</Cell>
+	<Cell ss:StyleID="s27">
+	<Data ss:Type="String">${_('Earmarked - Actuals')}</Data>
+	</Cell>
+	<Cell ss:StyleID="s27">
+	<Data ss:Type="String">${_('Earmarked - Balanc')}e</Data>
+	</Cell>
+	<Cell ss:StyleID="s27">
+	<Data ss:Type="String">${_('Earmarked - %used')}</Data>
+	</Cell>
+% endif
+
 <Cell ss:StyleID="s27">
 <Data ss:Type="String">${_('Total Project - Budget')}</Data>
 </Cell>
@@ -473,6 +477,7 @@
 <Cell ss:StyleID="s30">
 <Data ss:Type="String">${( line[1] or '')|x}</Data>
 </Cell>
+
 <Cell ss:StyleID="s31">
 <Data ss:Type="Number">${( line[2] or '')|x}</Data>
 </Cell>
@@ -482,23 +487,32 @@
 <Cell ss:StyleID="s32" ss:Formula="=+RC[-2]-RC[-1]">
 <Data ss:Type="Number"></Data>
 </Cell>
-<Cell ss:StyleID="s33">
+% if checkType(o):
+	<Cell ss:StyleID="s33">
+% else:
+	<Cell ss:StyleID="s35">
+% endif
+
 <Data ss:Type="String">${( line[4] or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="s31">
-<Data ss:Type="Number">${( line[5] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s31">
-<Data ss:Type="Number">${( line[6] or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s34" ss:Formula="=+RC[-2]-RC[-1]">
-<Data ss:Type="Number"></Data>
-</Cell>
-<Cell ss:StyleID="s35">
-<Data ss:Type="String">${( line[7] or '')|x}</Data>
-</Cell>
+
+% if checkType(o):
+	<Cell ss:StyleID="s31">
+	<Data ss:Type="Number">${( line[5] or '')|x}</Data>
+	</Cell>
+	<Cell ss:StyleID="s31">
+	<Data ss:Type="Number">${( line[6] or '')|x}</Data>
+	</Cell>
+	<Cell ss:StyleID="s34" ss:Formula="=+RC[-2]-RC[-1]">
+	<Data ss:Type="Number"></Data>
+	</Cell>
+	<Cell ss:StyleID="s35">
+	<Data ss:Type="String">${( line[7] or '')|x}</Data>
+	</Cell>
+% endif
 </Row>
 % endfor
+
 
 
 <Row ss:AutoFitHeight="0" ss:Height="13.5">
@@ -515,21 +529,30 @@
 <Cell ss:StyleID="s45" ss:Formula="=+RC[-2]-RC[-1]">
 <Data ss:Type="Number"></Data>
 </Cell>
-<Cell ss:StyleID="s46">
+% if checkType(o):
+	<Cell ss:StyleID="s46">
+% else:
+	<Cell ss:StyleID="s48">
+% endif
 <Data ss:Type="String">${( getTot(2) or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="s44">
-<Data ss:Type="Number">${( getTot(3) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s44">
-<Data ss:Type="Number">${( getTot(4) or '')|x}</Data>
-</Cell>
-<Cell ss:StyleID="s47" ss:Formula="=+RC[-2]-RC[-1]">
-<Data ss:Type="Number"></Data>
-</Cell>
-<Cell ss:StyleID="s48">
-<Data ss:Type="String">${( getTot(5) or '')|x}</Data>
-</Cell>
+
+% if checkType(o):
+	<Cell ss:StyleID="s44">
+	<Data ss:Type="Number">${( getTot(3) or '')|x}</Data>
+	</Cell>
+	<Cell ss:StyleID="s44">
+	<Data ss:Type="Number">${( getTot(4) or '')|x}</Data>
+	</Cell>
+	<Cell ss:StyleID="s47" ss:Formula="=+RC[-2]-RC[-1]">
+	<Data ss:Type="Number"></Data>
+	</Cell>
+	<Cell ss:StyleID="s48">
+	<Data ss:Type="String">${( getTot(5) or '')|x}</Data>
+	</Cell>
+% endif
+
+
 </Row>
 
 
