@@ -25,6 +25,7 @@ from osv import osv, orm
 from lxml import etree
 import logging
 import copy
+from datetime import datetime
 
 def _get_instance_level(self, cr, uid):
     user = self.pool.get('res.users').browse(cr, 1, uid)
@@ -134,11 +135,73 @@ orm.orm.create = create
 
 super_write = orm.orm.write
 
+def _values_equate(field_type, current_value, new_value):
+    """
+    discern if two values differ or not, for each file type that is different in the database read() value and the web write vals data value (boring)  
+    """
+    
+    # directly test against each other
+    if current_value == new_value:
+        return True
+    
+    # if both evaluate to False, they equate
+    if bool(current_value) == False and bool(new_value) == False:
+        return True
+    
+    # if one evals to False and the other does not, they are different
+    if field_type != 'many2many' and ((not new_value and current_value) or (new_value and not current_value)):
+        return False
+    
+    # type specifics...
+    if field_type == 'one2many':
+       if isinstance(new_value, (list, tuple)):
+           if new_value:
+               if isinstance(new_value[0], (list, tuple)):
+                   return False 
+    if field_type == 'date':
+        if current_value and new_value:
+            try:
+                new_date = datetime.strptime(new_value, '%d/%b/%Y')
+                current_date = datetime.strptime(current_value, '%Y-%m-%d')
+                if new_date == current_date:
+                    return True
+            except ValueError as e:
+                logging.getLogger().warn('Could not parse either %s or %s for a date field when checking differences for Field Access Rules' % (current_value, new_value))
+    if field_type == 'reference':
+        if isinstance(new_value, (list, tuple)):
+            if ',' in current_value:
+                model, id = current_value.split(',', 1)
+                if new_value[0] == id and new_value[1] == model:
+                    return True
+        if isinstance(new_value, (str, unicode)):
+            if ',' in new_value:
+                new_model, new_id = new_value.split(',', 1)
+                model, id = current_value.split(',', 1)
+                if new_id == id and new_model == model:
+                    return True
+    if field_type == 'many2many':
+        if isinstance(new_value, (list, tuple)):
+            if new_value:
+                if isinstance(new_value[0], (list, tuple)):
+                    if isinstance(new_value[0][0], (int, long, float, complex)):
+                        if not new_value[0][2]:
+                            return True
+    if field_type == 'many2one':
+        if isinstance(current_value, tuple):
+            if current_value[0] == new_value:
+                return True
+        if isinstance(current_value, osv.orm.browse_record):
+            if current_value.id == new_value:
+                return True
+
+    return False
+
 def write(self, cr, uid, ids, vals, context=None):
     """
     Check if user has write_access for each field in target record with applicable Field Access Rules. If not, throw exception.
     Also if syncing, check if field value should be synced on write, based on Field Access Rules.
     """
+    
     context = context or {}
     
     if not isinstance(ids, list):
@@ -165,13 +228,13 @@ def write(self, cr, uid, ids, vals, context=None):
     if rules_search:
 
         rules = rules_pool.browse(cr, 1, rules_search, context=context)
-        current_records = self.browse(cr, 1, ids, context=context)
+        current_records = self.read(cr, 1, ids, context=context)
 
         # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
         if uid != 1:
             for record in current_records:
                 for rule in rules:
-                    if _record_matches_domain(self, cr, record.id, rule.domain_text):
+                    if _record_matches_domain(self, cr, record['id'], rule.domain_text):
     
                         # rule applies for this record so throw exception if we are trying to edit a field without write_access
                         # for each rule
@@ -180,12 +243,21 @@ def write(self, cr, uid, ids, vals, context=None):
                             if not line.write_access:
                                 # and whose field name is in the new values list
                                 if line.field.name in vals:
+                                    
+                                    # (accommodate bug where a disabled reference field in web returns a list instead of a comma separated string:)
+                                    if line.field.name in self._columns and self._columns[line.field.name]._type == 'reference':
+                                        if isinstance(vals[line.field.name], (list, tuple)):
+                                            if vals[line.field.name][0]:
+                                                vals[line.field.name] = vals[line.field.name][1] + ',' + vals[line.field.name][0]
+                                            else:
+                                                vals[line.field.name] = ''
+                                        elif vals[line.field.name] and ',' not in vals[line.field.name]:
+                                            vals[line.field.name] = record[line.field.name]
+                                    
                                     # and whose current value is different from the new value in the new values list
-                                    if getattr(record, line.field.name, vals[line.field.name]) != vals[line.field.name]:
-                                        # (in this case, values resolving to False, equate. For example, False == None)
-                                        if not (bool(getattr(record, line.field.name, vals[line.field.name])) == False and bool(vals[line.field.name]) == False):
-                                            # throw access denied error
-                                            raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
+                                    if not _values_equate(self._columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
+                                        # throw access denied error
+                                        raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if context.get('sync_data') or user.login == 'msf_field_access_rights_benchmarker':
@@ -196,7 +268,7 @@ def write(self, cr, uid, ids, vals, context=None):
 
                 # iterate over rules and see if they match the current record
                 for rule in rules:
-                    if _record_matches_domain(self, cr, record.id, rule.domain_text):
+                    if _record_matches_domain(self, cr, record['id'], rule.domain_text):
 
                         # for each rule, if value has changed and value_not_synchronized_on_write then delete key from new_values
                         for line in rule.field_access_rule_line_ids:
@@ -205,8 +277,8 @@ def write(self, cr, uid, ids, vals, context=None):
                                 # if we have a new value for the field
                                 if line.field.name in new_values:
                                     # if the current field value is different from the new field value
-                                    if hasattr(record, line.field.name):
-                                        if new_values[line.field.name] != getattr(record, line.field.name):
+                                    if line.field.name in record:
+                                        if new_values[line.field.name] != record[line.field.name]:
                                             # remove field from new_values
                                             del new_values[line.field.name]
                                     else:
@@ -214,7 +286,7 @@ def write(self, cr, uid, ids, vals, context=None):
 
                 # if we still have new values to write, write them for the current record
                 if new_values:
-                    super_write(self, cr, uid, record.id, new_values, context=context)
+                    super_write(self, cr, uid, record['id'], new_values, context=context)
         else:
             return super_write(self, cr, uid, ids, vals, context=context)
     else:
