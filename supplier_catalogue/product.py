@@ -527,9 +527,9 @@ class res_currency(osv.osv):
             if property_ids:
                 properties = property_obj.browse(cr, uid, property_ids, context=context)
                 partner_list = ' / '.join(x.res_id.name for x in properties)
-                raise osv.except_osv(_('Error !'), 
+                raise osv.except_osv(_('Error !'),
                                      _('You cannot uncheck the Section checkbox because this currency is used on these \'Inter-section\' partners : \
-                                      %s' % partner_list))
+                                      %s') % (partner_list,))
 
         # Check if ESC partners used one of these currencies
         if 'is_esc_currency' in values and not values['is_esc_currency']:

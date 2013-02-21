@@ -5,7 +5,7 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>Analytic Journal Items</Title>
+<Title>${_('Analytic Journal Items')}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssH">
@@ -50,11 +50,11 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Ref.', 'Document Date', 'Posting Date', 'Period', 'G/L Account', 'Ana. Account', 'Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency', 'Out. Amount', 'Out. Currency', 'Reversal Origin']:
-    % if header == 'Ana. Account' and data.get('context') and data.get('context').get('display_fp'):
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">Destination</Data></Cell>
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">Cost Center</Data></Cell>
-        <Cell ss:StyleID="ssH"><Data ss:Type="String">Funding Pool</Data></Cell>
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('G/L Account'), _('Ana. Account'), _('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency'), _('Out. Amount'), _('Out. Currency'), _('Reversal Origin')]:
+    % if header == _('Ana. Account') and data.get('context') and data.get('context').get('display_fp'):
+        <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+        <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+        <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Funding Pool')}</Data></Cell>
     % else:
         <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
     % endif

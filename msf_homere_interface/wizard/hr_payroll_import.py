@@ -90,7 +90,7 @@ class hr_payroll_import(osv.osv_memory):
         try:
             line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], '%d/%m/%Y'))
         except ValueError, e:
-            raise osv.except_osv(_('Error'), _('Wrong format for date: %s' % date[0]))
+            raise osv.except_osv(_('Error'), _('Wrong format for date: %s') % date[0])
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
             raise osv.except_osv(_('Warning'), _('No open period found for given date: %s') % (line_date,))

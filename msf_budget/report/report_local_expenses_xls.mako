@@ -110,12 +110,12 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 ## LINES +++++++++++++++++++++++++++++++++++
 ## HEADER OF LINES -------------------------
 <Row>
-<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Account code</Data></Cell>
-<Cell ss:StyleID="ssBoldLeft"><Data ss:Type="String">Account name</Data></Cell>
+<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">${_('Account code')}</Data></Cell>
+<Cell ss:StyleID="ssBoldLeft"><Data ss:Type="String">${_('Account name')}</Data></Cell>
 % for month in month_list:
     <Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">${month}</Data></Cell>
 % endfor
-<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">Total</Data></Cell>
+<Cell ss:StyleID="ssBoldCenter"><Data ss:Type="String">${_('Total')}</Data></Cell>
 </Row>
 
 ## CONTENT OF LINES -------------------------
