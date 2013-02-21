@@ -332,7 +332,6 @@
 </Row>
 
 % for reg in getRegister():
-
 	% for o in getRegister2()[reg]:
 	<Row>
         <Cell ss:StyleID="s25" >
@@ -428,11 +427,11 @@
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
-	<Data ss:Type="Number">75020</Data>
+	<Data ss:Type="Number"></Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
-	<Data ss:Type="Number">70589</Data>
+	<Data ss:Type="Number"></Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s51">
