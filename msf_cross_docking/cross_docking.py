@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+from datetime import datetime
 from osv import osv
 from osv import fields
 from tools.translate import _
@@ -537,6 +538,24 @@ class stock_move(osv.osv):
             default_data.update({'location_dest_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
         return default_data
 
+    def fefo_update(self, cr, uid, ids, context=None):
+        """
+        Update batch, Epiry Date, Location according to FEFO logic
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # FEFO logic
+        for todo_browse in self.browse(cr, uid, ids, context=context):
+            res = self.pool.get('stock.location').compute_availability(cr, uid, [todo_browse.location_id.id], True, 
+                                                                       todo_browse.product_id.id, todo_browse.product_uom.id, context=context)
+            for loc in res['fefo']:
+                # we ignore the batch that are outdated
+                expired_date = self.pool.get('stock.production.lot').read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                    self.write(cr, uid, ids, {'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+        return True
+
+
     def button_cross_docking(self, cr, uid, ids, context=None):
         """
         for each stock move we enable to change the source location to cross docking
@@ -564,7 +583,8 @@ class stock_move(osv.osv):
             self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
-
+            #FEFO
+            self.fefo_update(cr, uid, ids, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
@@ -612,6 +632,9 @@ class stock_move(osv.osv):
             self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
+            
+            #FEFO
+            self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
