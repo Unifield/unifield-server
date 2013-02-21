@@ -193,9 +193,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
             formatted_monthly_amounts.append(formatted_amount_line)
         result += formatted_monthly_amounts
 
-        print result[1:5]
-
-        return result[1:5]
+        return result
 
 SpreadsheetReport('report.budget.criteria.2','msf.budget','addons/msf_budget/report/budget_criteria_xls.mako', parser=report_budget_actual_2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
