@@ -92,17 +92,11 @@ class product_attributes(osv.osv):
         
         for product in self.browse(cr, uid, ids, context=context):
             res[product.id] = []
-            res[product.id].append(product.nomen_manda_0.id)
-            res[product.id].append(product.nomen_manda_1.id)
-            res[product.id].append(product.nomen_manda_2.id)
-            res[product.id].append(product.nomen_manda_3.id)
-            res[product.id].append(product.nomen_sub_0.id)
-            res[product.id].append(product.nomen_sub_1.id)
-            res[product.id].append(product.nomen_sub_2.id)
-            res[product.id].append(product.nomen_sub_3.id)
-            res[product.id].append(product.nomen_sub_4.id)
-            res[product.id].append(product.nomen_sub_5.id)
-            
+            nomen_field_names = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3', 'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5']
+            for field in nomen_field_names:
+                value = getattr(product, field, False).id
+                if value:
+                    res[product.id].append(value)
         return res
     
     def _search_nomen(self, cr, uid, obj, name, args, context=None):
