@@ -291,7 +291,8 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                 field.set('readonly', '1')
                                 
                                 # remove attrs if present
-                                del field.attrib['attrs']
+                                if 'attrs' in field.attrib:
+                                    del field.attrib['attrs']
                             else:
                                 # find attrs
                                 attrs_text = field.get('attrs', False)
