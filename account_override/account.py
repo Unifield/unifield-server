@@ -31,6 +31,7 @@ class account_account(osv.osv):
     _inherit = "account.account"
 
     _columns = {
+        'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
             ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')], string="Type for specific treatment", required=True,
             help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 
@@ -170,17 +171,22 @@ class account_move(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        Check that we can write on this if we come from web menu
+        Check that we can write on this if we come from web menu or synchronisation.
         """
         if not context:
             context = {}
-        if context.get('from_web_menu', False):
+        if context.get('from_web_menu', False) or context.get('sync_data', False):
+            # by default, from synchro, we just need to update period_id and journal_id
+            fields = ['journal_id', 'period_id']
+            # from web menu, we also update document_date and date
+            if context.get('from_web_menu', False):
+                fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
-                for el in ['document_date', 'date', 'journal_id', 'period_id']:
+                for el in fields:
                     if el in vals:
                         context[el] = vals.get(el)
                         for ml in m.line_id:

@@ -34,6 +34,7 @@
     ],
     "update_xml": [
         "view.xml",
+        "view_data_import.xml",
     ],
     "demo_xml": [
     ],

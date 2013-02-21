@@ -228,5 +228,8 @@
             <field name="context">{'from_web_menu': True}</field>
         </record>
 
+    <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
+    <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
+
     </data>
 </openerp>
