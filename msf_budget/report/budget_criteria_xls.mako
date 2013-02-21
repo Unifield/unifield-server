@@ -1,0 +1,635 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Author>MSFUser</Author>
+  <LastAuthor>MSFUser</LastAuthor>
+  <Created>2012-06-18T15:46:09Z</Created>
+  <Company>Medecins Sans Frontieres</Company>
+  <Version>11.9999</Version>
+ </DocumentProperties>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>13170</WindowHeight>
+  <WindowWidth>19020</WindowWidth>
+  <WindowTopX>120</WindowTopX>
+  <WindowTopY>60</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+ </ExcelWorkbook>
+
+
+
+
+
+
+
+
+<Styles>
+<Style ss:ID="Default" ss:Name="Normal">
+<Alignment ss:Vertical="Bottom"/>
+<Borders/>
+<Font/>
+<Interior/>
+<NumberFormat/>
+<Protection/>
+</Style>
+<Style ss:ID="s20" ss:Name="Percent">
+<NumberFormat ss:Format="0%"/>
+</Style>
+<Style ss:ID="s21">
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s22">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+</Style>
+<Style ss:ID="s23">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+</Style>
+<Style ss:ID="s24">
+<Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s25">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s26">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+</Style>
+<Style ss:ID="s27">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+</Style>
+
+<Style ss:ID="s27a">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+</Style>
+
+
+<Style ss:ID="s32">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s33">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s34">
+<Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s39">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s41" ss:Parent="s20">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="0.0%"/>
+</Style>
+<Style ss:ID="s46">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s47" ss:Parent="s20">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="0.0%"/>
+</Style>
+<Style ss:ID="s53">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s54" ss:Parent="s20">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="0.0%"/>
+</Style>
+<Style ss:ID="s67">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior/>
+</Style>
+<Style ss:ID="s68">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+
+<Style ss:ID="s68a">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+
+
+
+<Style ss:ID="s69">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s70">
+<Borders>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s75">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+</Style>
+
+<Style ss:ID="s75a">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+</Style>
+
+
+<Style ss:ID="s76">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+
+<Style ss:ID="s76a">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+
+
+<Style ss:ID="s77">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s78">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+</Style>
+<Style ss:ID="s79">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+</Style>
+<Style ss:ID="s84">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+</Style>
+
+
+<Style ss:ID="s84a">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+</Style>
+
+
+<Style ss:ID="s85">
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Font x:Family="Swiss" ss:Bold="1"/>
+<Interior ss:Color="#CCFFCC" ss:Pattern="Solid"/>
+</Style>
+<Style ss:ID="s86">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+
+<Style ss:ID="s86a">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+
+<Style ss:ID="s87">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+</Borders>
+<Interior ss:Color="#CCFFCC" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s88">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s89">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#CCFFCC" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s90">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+<Style ss:ID="s91">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior ss:Color="#CCFFCC" ss:Pattern="Solid"/>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+
+<Style ss:ID="short_date3">
+<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="Short Date"/>
+</Style>
+
+<Style ss:ID="s21b">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font  ss:Bold="1"/>
+</Style>
+</Styles>
+
+
+% for o in objects:
+<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+
+
+<Table ss:ExpandedColumnCount="43" ss:ExpandedRowCount="326" x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="0" ss:Width="100.5"/>
+<Column ss:AutoFitWidth="0" ss:Width="267"/>
+<Column ss:Index="43" ss:AutoFitWidth="0" ss:Width="62.25"/>
+
+<Row>
+<Cell ss:StyleID="s21b">
+<Data ss:Type="String">${_('BUDGET VS. ACTUALS')}</Data>
+</Cell>
+</Row>
+
+
+<Row ss:Index="3">
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Budget name:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( o.name or '' )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Budget code:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( o.code or '' )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Fiscal year:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( o.fiscalyear_id and o.fiscalyear_id.name or '' )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Cost center:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( o.cost_center_id and o.cost_center_id.code or '' )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Decision moment:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( o.decision_moment_id and o.decision_moment_id.name or '' )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Version:')}</Data>
+</Cell>
+<Cell ss:StyleID="s24">
+<Data ss:Type="Number">${( o.version or '' )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Commitments:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( getComm() )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Breakdown:')}</Data>
+</Cell>
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( getBreak() )|x}</Data>
+</Cell>
+</Row>
+<Row>
+<Cell ss:StyleID="s22">
+<Data ss:Type="String">${_('Granularity:')}</Data>
+</Cell>
+
+<Cell ss:StyleID="s23">
+<Data ss:Type="String">${( o.display_type and getSel(o, 'display_type',  ) or '')|x}</Data>
+</Cell>
+
+</Row>
+<Row ss:AutoFitHeight="0" ss:Height="6"/>
+<Row>
+<Cell ss:StyleID="s25">
+<Data ss:Type="String">${_('Report Date:')}</Data>
+</Cell>
+<Cell ss:StyleID="short_date3">
+<Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
+</Cell>
+</Row>
+<Row ss:AutoFitHeight="0" ss:Height="13.5"/>
+
+<Row ss:AutoFitHeight="0" ss:Height="24" ss:StyleID="s26">
+% if not byMonth():
+	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
+	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
+	% if isComm():
+		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
+		<Cell ss:StyleID="s84a"><Data ss:Type="String">${_('Total (Comm.)')}</Data></Cell>
+		<Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
+	% else:
+		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
+		<Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
+	% endif
+% endif
+% if byMonth():
+	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
+	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
+	% if isComm():
+		% for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
+			<Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
+			<Cell ss:StyleID="s67"><Data ss:Type="String">${_(x + ' (Comm.)')}</Data></Cell>
+			<Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
+		% endfor
+	% else:
+		% for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
+			<Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
+			<Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
+		% endfor
+	% endif
+	<Cell ss:StyleID="s32"><Data ss:Type="String">${_('Total Balance')}</Data></Cell>
+	<Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
+% endif
+</Row>
+
+
+% for line in getLines(o.budget_line_ids):
+<Row>
+% if not byMonth():
+	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
+	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
+	% if isComm():
+		<Cell ss:StyleID="s84"><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
+		<Cell ss:StyleID="s84a"><Data ss:Type="String">${( line[2] )|x}</Data></Cell>
+		<Cell ss:StyleID="s85"><Data ss:Type="String">${( line[3] )|x}</Data></Cell>
+	% else:
+		<Cell ss:StyleID="s84"><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
+		<Cell ss:StyleID="s85"><Data ss:Type="String">${( line[3] )|x}</Data></Cell>
+	% endif
+% endif
+
+% if byMonth():
+	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
+	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
+	% if isComm():
+		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
+			<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[x] or 0 )|x}</Data></Cell>
+			<Cell ss:StyleID="s68"><Data ss:Type="Number">${( line[x+1] or 0 )|x}</Data></Cell>
+			<Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[x+2] or 0 )|x}</Data></Cell>
+		% endfor
+	% else:
+		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
+			<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[x] or 0 )|x}</Data></Cell>
+			<Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[x+2] or 0 )|x}</Data></Cell>
+		% endfor
+	% endif
+	<Cell ss:StyleID="s39"><Data ss:Type="Number">234244</Data></Cell>
+	<Cell ss:StyleID="s41"><Data ss:Type="Number">1.8408358</Data></Cell>
+% endif
+</Row>
+% endfor
+
+<Row>
+% if not byMonth():
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+% endif
+% if byMonth():
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	% if isComm():
+		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
+		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+		% endfor
+	% else:
+		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
+		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+		% endfor
+	% endif
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+% endif
+</Row>
+
+
+</Table>
+<x:WorksheetOptions/>
+</ss:Worksheet>
+% endfor
+</Workbook>
