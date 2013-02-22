@@ -438,6 +438,10 @@ class stock_picking(osv.osv):
             # Link between IN and OUT moves
             backlinks = []
             
+            # OUT/PICK to prepare
+            out_picks = []
+            pick_moves = []
+            
             # average price computation
             product_avail = {}
             # increase picking version - all case where update_out is True + when the qty is bigger without split nor product change
@@ -574,6 +578,11 @@ class stock_picking(osv.osv):
                         if not partial_qty:
                             break
                         
+                        out_pick = out_move.picking_id
+                        if out_pick and out_pick.type == 'out' and out_pick.subtype == 'picking' and \
+                           out_pick.state == 'draft' and out_pick.id not in out_picks:
+                            out_picks.append(out_move.picking_id.id)
+                        
                         out_move = move_obj.browse(cr, uid, out_move.id, context=context)
                         count_out -= 1
                         
@@ -684,10 +693,26 @@ class stock_picking(osv.osv):
                 if move in done_moves:
                     move_obj.write(cr, uid, [move], {'state': 'done'}, context=context)
                     move_obj.action_assign(cr, uid, [out_move])
+                    pick_moves.append(out_move)
             
             # update the out version
             if update_pick_version:
                 self.write(cr, uid, [update_pick_version], {'update_version_from_in_stock_picking': mirror_data['picking_version']+1}, context=context)
+                
+                
+            # Create the first picking ticket if we are on a draft picking ticket
+            for picking in self.browse(cr, uid, out_picks, context=context):
+                if picking.type == 'out' and picking.subtype == 'picking' and picking.state == 'draft':
+                    wiz = self.create_picking(cr, uid, [picking.id], context=context)
+                    wiz_obj = self.pool.get(wiz['res_model'])
+                    # We delete the lines which is not from the IN
+                    for line in wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking:
+                        if line.move_id.id not in pick_moves:
+                            line.unlink(cr, uid)
+                    # We copy all data in lines
+                    wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
+                    # We process the creation of the picking
+                    wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz['context'])
 
             # Assign all updated out moves
 #            for move in move_obj.browse(cr, uid, to_assign_moves):
