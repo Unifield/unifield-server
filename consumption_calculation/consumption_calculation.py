@@ -531,13 +531,6 @@ class real_average_consumption_line(osv.osv):
 
         return True
 
-    def create(self, cr, uid, vals, context=None):
-        if context is None:
-            context = {}
-        res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
-        self._check_qty(cr, uid, res, context)
-        return res
-
     def check_product_uom(self, cr, uid, ids, product_id, product_uom, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
@@ -554,36 +547,6 @@ class real_average_consumption_line(osv.osv):
                     'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")
                 }
         return {'warning': warning}
-
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not context.get('import_in_progress') and not context.get('button'):
-            obj_data = self.pool.get('ir.model.data')
-            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
-            message = ''
-            if vals.get('uom_id'):
-                if vals.get('uom_id') == tbd_uom:
-                    message += _('You have to define a valid UOM, i.e. not "To be define".')
-            if vals.get('product_id'):
-                if vals.get('product_id') == tbd_product:
-                    message += _('You have to define a valid product, i.e. not "To be define".')
-            if vals.get('uom_id') and vals.get('product_id'):
-                product_id = vals.get('product_id')
-                product_uom = vals.get('uom_id')
-                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
-                if res and res['warning']:
-                    message += res['warning']['message']
-            if message:
-                raise osv.except_osv(_('Warning !'), message)
-            else:
-                vals['text_error'] = False
-        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
-        self._check_qty(cr, uid, ids, context)
-        return res
 
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
@@ -619,26 +582,48 @@ class real_average_consumption_line(osv.osv):
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
     ]
 
-    def create(self, cr, uid, values=None, context=None):
+    def create(self, cr, uid, vals=None, context=None):
         '''
         Call the constraint
         '''
-        new_id = super(real_average_consumption_line, self).create(cr, uid, values, context=context)
-
-        if not self._check_qty(cr, uid, [new_id], context=context):
+        if context is None:
+            context = {}
+        res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
+        check = self._check_qty(cr, uid, res, context)
+        if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+        return res
 
-        return new_id
-
-    def write(self, cr, uid, ids, values=None, context=None):
-        '''
-        Call the constraint
-        '''
-        res = super(real_average_consumption_line, self).write(cr, uid, ids, values, context=context)
-
-        if not self._check_qty(cr, uid, ids, context=context):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('import_in_progress') and not context.get('button'):
+            obj_data = self.pool.get('ir.model.data')
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            message = ''
+            if vals.get('uom_id'):
+                if vals.get('uom_id') == tbd_uom:
+                    message += _('You have to define a valid UOM, i.e. not "To be define".')
+            if vals.get('product_id'):
+                if vals.get('product_id') == tbd_product:
+                    message += _('You have to define a valid product, i.e. not "To be define".')
+            if vals.get('uom_id') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('uom_id')
+                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), message)
+            else:
+                vals['text_error'] = False
+        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        check = self._check_qty(cr, uid, ids, context)
+        if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
-
         return res
 
     def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, remark=False, context=None):
