@@ -67,7 +67,7 @@ class financing_contract_contract(osv.osv):
                 domain += self.pool.get('financing.contract.format.line')._get_analytic_domain(cr, uid, actual, 'allocated_real')
             # Find analytic lines
             al_ids = self.pool.get('account.analytic.line').search(cr, uid, domain)
-            move_ids = [x and x.get('move_id', False) and x.get('move_id')[0] and x.get('move_id')[0] for x in self.pool.get('account.analytic.line').read(cr, uid, al_ids, ['move_id'])]
+            move_ids = [x.get('move_id')[0] for x in self.pool.get('account.analytic.line').read(cr, uid, al_ids, ['move_id']) if x.get('move_id')]
             # Search statement lines that are draft/temp and which have a move id compatible
             absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', '=', 'temp'), ('move_ids', 'in', move_ids)])
             if absl_ids:
