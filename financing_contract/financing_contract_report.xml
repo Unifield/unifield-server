@@ -41,7 +41,7 @@
         header="False"/>
 
         <report id="financing_interactive_2"
-        string="Financing interactive 2"
+        string="Financing interactive"
         model="financing.contract.contract"
         name="financing.interactive.2"
         file="financing_contract/report/financing_interactive_xls.mako"

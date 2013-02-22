@@ -64,8 +64,6 @@ class contract(report_sxw.rml_parse):
                       'account_list': account_list}
             result.append(values)
 
-        print "resuluuuuuuuuut"
-        print result
         return result
         
 

@@ -45,7 +45,6 @@ class wizard_financing_currency_export(osv.osv_memory):
     }
 
     def button_create_budget(self, cr, uid, ids, context=None):
-        print "bouton create"
         if context is None:
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
@@ -59,7 +58,6 @@ class wizard_financing_currency_export(osv.osv_memory):
 
 
     def button_create_budget_2(self, cr, uid, ids, context=None):
-        print "bouton create"
         if context is None:
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
