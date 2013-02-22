@@ -536,12 +536,14 @@
 	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
 	% if isComm():
 		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
-		<Cell ss:StyleID="s84a"><Data ss:Type="String">${_('Total (Comm.)')}</Data></Cell>
+		<Cell ss:StyleID="s67"><Data ss:Type="String">${_('Total (Comm.)')}</Data></Cell>
 		<Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
 	% else:
 		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
 		<Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
 	% endif
+	<Cell ss:StyleID="s32"><Data ss:Type="String">${_('Total Balance')}</Data></Cell>
+	<Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
 % endif
 % if byMonth():
 	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
@@ -570,13 +572,21 @@
 	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
 	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
 	% if isComm():
-		<Cell ss:StyleID="s84"><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
-		<Cell ss:StyleID="s84a"><Data ss:Type="String">${( line[2] )|x}</Data></Cell>
-		<Cell ss:StyleID="s85"><Data ss:Type="String">${( line[3] )|x}</Data></Cell>
+		<Cell ss:StyleID="s86"><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
+		<Cell ss:StyleID="s68"><Data ss:Type="String">${( line[2] )|x}</Data></Cell>
+		<Cell ss:StyleID="s87"><Data ss:Type="String">${( line[3] )|x}</Data></Cell>
 	% else:
 		<Cell ss:StyleID="s84"><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
 		<Cell ss:StyleID="s85"><Data ss:Type="String">${( line[3] )|x}</Data></Cell>
 	% endif
+	% if isComm():
+		<Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="=(RC[-4]-RC[-3]-RC[-2])/RC[-4]"><Data ss:Type="Number" ></Data></Cell>
+	% else:
+		<Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="=(RC[-3]-RC[-2])/RC[-3]"><Data ss:Type="Number" ></Data></Cell>
+	% endif
+
 % endif
 
 % if byMonth():
@@ -594,8 +604,13 @@
 			<Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[x+2] or 0 )|x}</Data></Cell>
 		% endfor
 	% endif
-	<Cell ss:StyleID="s39"><Data ss:Type="Number">234244</Data></Cell>
-	<Cell ss:StyleID="s41"><Data ss:Type="Number">1.8408358</Data></Cell>
+	% if isComm():
+		<Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="=(RC[-4]-RC[-3]-RC[-2])/RC[-4]"><Data ss:Type="Number" ></Data></Cell>
+	% else:
+		<Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="=(RC[-3]-RC[-2])/RC[-3]"><Data ss:Type="Number" ></Data></Cell>
+	% endif
 % endif
 </Row>
 % endfor
@@ -606,6 +621,13 @@
 	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	% if isComm():
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	% endif
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+
+
 % endif
 % if byMonth():
 	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>

@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <report id="budget_criteria"
-        string="Budget vs. Actuals"
-        model="msf.budget"
-        name="msf.budget.criteria"
-        report_type="txt"
-        auto="False"
-        menu="False"/>
-
         <report id="budget_criteria_2"
-        string="Budget vs. Actuals 2"
+        string="Budget vs. Actuals"
         model="msf.budget"
         name="budget.criteria.2"
         file="msf_budget/report/budget_criteria_xls.mako"

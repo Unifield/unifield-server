@@ -41,23 +41,6 @@ class wizard_budget_criteria_export(osv.osv_memory):
         'granularity': 'all',
     }
 
-    def button_create_budget(self, cr, uid, ids, context=None):
-        wizard = self.browse(cr, uid, ids[0], context=context)
-        data = {}
-        data['ids'] = context.get('active_ids', [])
-        data['model'] = context.get('active_model', 'ir.ui.menu')
-        if 'active_id' in context:
-            # add parameters
-            data['form'] = {}
-            data['form'].update({'commitment': wizard.commitment})
-            data['form'].update({'breakdown': wizard.breakdown})
-            data['form'].update({'granularity': wizard.granularity})
-            if wizard.currency_table_id:
-                data['form'].update({'currency_table_id': wizard.currency_table_id.id})
-            if wizard.period_id:
-                data['form'].update({'period_id': wizard.period_id.id})
-
-        return {'type': 'ir.actions.report.xml', 'report_name': 'msf.budget.criteria', 'datas': data}
 
     def button_create_budget_2(self, cr, uid, ids, context=None):
         wizard = self.browse(cr, uid, ids[0], context=context)
