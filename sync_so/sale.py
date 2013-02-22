@@ -30,6 +30,17 @@ import pprint
 import so_po_common
 pp = pprint.PrettyPrinter(indent=4)
 
+
+class sale_order_line_sync(osv.osv):
+    _inherit = "sale.order.line"
+    
+    _columns = {
+        'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
+    }
+    
+sale_order_line_sync()
+
+
 class sale_order_sync(osv.osv):
     _inherit = "sale.order"
     
@@ -52,7 +63,7 @@ class sale_order_sync(osv.osv):
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
         for line in header_result['order_line']:
-            line[2].update({'confirmed_delivery_date': False})
+            line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id']})
             order_line.append((0, 0, line[2]))
         header_result['order_line'] = order_line
         

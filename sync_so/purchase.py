@@ -31,6 +31,17 @@ import netsvc
 import so_po_common
 pp = pprint.PrettyPrinter(indent=4)
 
+
+class purchase_order_line_sync(osv.osv):
+    _inherit = 'purchase.order.line'
+    
+    _columns = {
+        'original_purchase_line_id': fields.text(string='Original purchase line id'),
+    }
+    
+purchase_order_line_sync()
+
+
 class purchase_order_sync(osv.osv):
     
     _inherit = "purchase.order"
@@ -83,11 +94,33 @@ class purchase_order_sync(osv.osv):
         default = {}
         default.update(header_result)
         
+        line_obj = self.pool.get('purchase.order.line')
+        i = 0
+        for line in default['order_line']:
+            orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', line[2]['original_purchase_line_id'])])
+            if orig_line:
+                orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
+                default['order_line'][i][2].update({'move_dest_id': orig_line.move_dest_id.id})
+        
         res_id = self.create(cr, uid, default , context=context)
         so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
         
+        proc_ids = []
+        order_ids = []
+        order = self.browse(cr, uid, res_id, context=context)
+        for order_line in order.order_line:
+            if order_line.original_purchase_line_id:
+                orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id)], context=context)
+                if orig_line:
+                    line = line_obj.browse(cr, uid, orig_line[0], context=context)
+                    proc_ids.append(line.procurement_id.id)
+                    order_ids.append(line.order_id.id)
+                    
+        self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
+        netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
+        
         # after created this splitted PO, pass it to the confirmed, as the split SO has been done so too.
-        if so_info.state == 'confirmed':
+        if so_info.state in ('confirmed', 'progress'):
             netsvc.LocalService("workflow").trg_validate(uid, 'purchase.order', res_id, 'purchase_confirm', cr)
         else:
             self.write(cr, uid, res_id, {'state': 'sourced' } , context=context)
