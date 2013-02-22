@@ -894,9 +894,9 @@ class stock_move(osv.osv):
                                         dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
                                         self.create(cr, uid, dict_for_create, context)
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
-                            # if the batch is outdated, we remove it
-                            else:
-                                self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+                    # if the batch is outdated, we remove it
+                    if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
+                        self.write(cr, uid, move.id, {'prodlot_id': False}, context)
             elif move.state == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
