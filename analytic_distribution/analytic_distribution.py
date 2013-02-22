@@ -231,10 +231,6 @@ class analytic_distribution(osv.osv):
             return res
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # UF-1815 Bug: remove False that appears in [ids]
-        if False in ids:
-            while False in ids:
-                ids.remove(False)
         # Browse given invoices
         for distrib in self.browse(cr, uid, ids, context=context):
             txt = ''
