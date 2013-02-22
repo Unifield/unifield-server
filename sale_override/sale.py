@@ -184,10 +184,10 @@ class sale_order(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
-                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
@@ -204,12 +204,13 @@ class sale_order(osv.osv):
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
         'pricelist_id': fields.many2one('product.pricelist', 'Currency', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}, help="Currency for current field order."),
         'validated_date': fields.date(string='Validated date', help='Date on which the FO was validated.'),
+        'invoice_quantity': fields.selection([('order', 'Ordered Quantities'), ('procurement', 'Shipped Quantities')], 'Invoice on', help="The sale order will automatically create the invoice proposition (draft invoice). Ordered and delivered quantities may not be the same. You have to choose if you want your invoice based on ordered or shipped quantities. If the product is a service, shipped quantities means hours spent on the associated tasks.", required=True, readonly=True),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
             ('postpaid', 'Invoice On Order After Delivery'),
             ('picking', 'Invoice From The Picking'),
-        ], 'Shipping Policy', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]},
+        ], 'Shipping Policy', required=True, readonly=True,
             help="""The Shipping Policy is used to synchronise invoice and delivery operations.
   - The 'Pay Before delivery' choice will first generate the invoice and then generate the picking order after the payment of this invoice.
   - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
@@ -226,6 +227,7 @@ class sale_order(osv.osv):
     
     _defaults = {
         'order_type': lambda *a: 'regular',
+        'invoice_quantity': lambda *a: 'procurement',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'other',
         'loan_duration': lambda *a: 2,
@@ -246,6 +248,22 @@ class sale_order(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot made a Field order to your own company !'))
 
         return True
+
+    def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, *a, **b):
+        '''
+        Set the intl_customer_ok field if the partner is an ESC or an international partner
+        '''
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
+
+        if part and order_type:
+            res2 = self.onchange_order_type(cr, uid, ids, order_type, part)
+            if res2.get('value'):
+                if res.get('value'):
+                    res['value'].update(res2['value'])
+                else:
+                    res.update({'value': res2['value']})
+
+        return res
 
     def onchange_categ(self, cr, uid, ids, categ, context=None):
         '''
@@ -281,6 +299,8 @@ class sale_order(osv.osv):
         '''
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
@@ -292,7 +312,7 @@ class sale_order(osv.osv):
                     return False
 
         return True
-    
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -304,6 +324,18 @@ class sale_order(osv.osv):
         # Don't allow the possibility to make a SO to my owm company
         if 'partner_id' in vals and not context.get('procurement_request') and not vals.get('procurement_request'):
             self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        if 'partner_id' in vals and vals.get('yml_module_name') != 'sale':
+            partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'])
+            if vals.get('order_type', 'regular') != 'regular' or (vals.get('order_type', 'regular') == 'regular' and partner.partner_type == 'internal'):
+                vals['order_policy'] = 'manual'
+            else:
+                vals['order_policy'] = 'picking'
+        elif vals.get('yml_module_name') == 'vals':
+            if not vals.get('order_policy'):
+                vals['order_policy'] = 'picking'
+            if not vals.get('invoice_quantity'):
+                vals['invoice_quantity'] = 'order'
 
         res = super(sale_order, self).create(cr, uid, vals, context)
         self._check_service(cr, uid, [res], vals, context=context)
@@ -322,6 +354,15 @@ class sale_order(osv.osv):
                 for obj in self.read(cr, uid, ids, ['procurement_request']):
                     if not obj['procurement_request']:
                         self._check_own_company(cr, uid, vals['partner_id'], context=context)
+
+        for order in self.browse(cr, uid, ids, context=context):
+            if order.yml_module_name == 'sale':
+                continue
+            partner = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id))
+            if vals.get('order_type', order.order_type) != 'regular' or (vals.get('order_type', order.order_type) == 'regular' and partner.partner_type == 'internal'):
+                vals['order_policy'] = 'manual'
+            else:
+                vals['order_policy'] = 'picking'
 
         self._check_service(cr, uid, ids, vals, context=context)
 
@@ -434,6 +475,7 @@ class sale_order(osv.osv):
                         fo_name = so.name + '-' + selec_name
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
+                                                              'delivery_requested_date': so.delivery_requested_date,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
@@ -779,8 +821,7 @@ class sale_order(osv.osv):
 
             #if invoice_error_ids:
             #    invoices_ref = ' / '.join(x.number for x in self.pool.get('account.invoice').browse(cr, uid, invoice_error_ids, context=context))
-            #    raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem.' \
-            #                'Invoices references : %s') % invoices_ref)            
+            #    raise osv.except_osv(_('Error'), _('The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem. Invoices references : %s') % invoices_ref)
 
         # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
@@ -859,14 +900,15 @@ class sale_order(osv.osv):
             # from action_wait sale_override
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
-            if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-                for line in order.order_line:
-                    lines.append(line.id)
-            elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
-                self.write(cr, uid, [order.id], {'order_policy': 'manual'})
-                for line in order.order_line:
-                    lines.append(line.id)
+            if order.yml_module_name != 'sale':
+                if order.partner_id.partner_type == 'internal' and order.order_type == 'regular':
+                    self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+                    for line in order.order_line:
+                        lines.append(line.id)
+                elif order.order_type in ['donation_exp', 'donation_st', 'loan']:
+                    self.write(cr, uid, [order.id], {'order_policy': 'manual'})
+                    for line in order.order_line:
+                        lines.append(line.id)
 # COMMENTED because of SP4 WM 12: Invoice Control
 #            elif not order.from_yml_test:
 #                self.write(cr, uid, [order.id], {'order_policy': 'manual'})

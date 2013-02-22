@@ -42,7 +42,7 @@ product_supply_source()
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
     _columns = {
-        'code': fields.char('Justification Code', size=32),
+        'code': fields.char('Justification Code', size=32, translate=True),
         'description': fields.char('Justification Description', size=256),
     }
     
