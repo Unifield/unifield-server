@@ -1438,6 +1438,7 @@ class stock_picking(osv.osv):
             default.update(purchase_id=False)
             default.update(partner_id=False)
             default.update(partner_id2=False)
+            default.update(address_id=False)
             default.update(order_category=False)
         
         context['not_workflow'] = True
