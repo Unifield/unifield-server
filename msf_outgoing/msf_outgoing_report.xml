@@ -14,8 +14,8 @@
                 string="Pro Forma Invoice" />
                 
         <report auto="False" 
-                id="report_invoice" 
-                model="shipment" 
+                id="report_invoice"
+                model="shipment"
                 name="invoice"
                 header="False"
                 rml="addons/msf_outgoing/report/invoice.rml"
