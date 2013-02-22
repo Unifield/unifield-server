@@ -62,7 +62,7 @@ class message(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an error message if a is False
         """
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pushing-messages')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Pushing messages...')
 
         for data in package:
             destination = self._get_destination(cr, uid, data['dest'], context=context)
@@ -114,7 +114,7 @@ class message(osv.osv):
 
             @return : list : list of messages
         """
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pulling-messages')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Pulling messages...')
 
         ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
         if not ids:
@@ -145,7 +145,7 @@ class message(osv.osv):
 
             @return : True or raise an error
         """
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'pulling-messages')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Confirm messages...')
 
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids), ('destination', '=', entity.id)], context=context)
         if ids:

@@ -111,9 +111,9 @@ class entity(osv.osv):
             if entity.identifier in self._activity_pool:
                 activity, date = self._activity_pool[entity.identifier]
                 delay = datetime.now() - date
-                res[entity.id] = 'inactive' if delay > MAX_ACTIVITY_DELAY else activity
+                res[entity.id] = '%s (stalling)' % activity if delay > MAX_ACTIVITY_DELAY else activity
             else:
-                res[entity.id] = 'inactive'
+                res[entity.id] = 'Inactive'
         return res
 
     def set_activity(self, cr, uid, entity, activity, context={}):
@@ -135,12 +135,7 @@ class entity(osv.osv):
         'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Instances'),
         'update_token' : fields.char('Update security token', size=256),
 
-        'activity' : fields.function(_get_activity, type='selection', string="Activity", method=True,
-                                     selection=[('inactive','Inactive'),
-                                                ('pulling-updates','Pulling updates...'),
-                                                ('pushing-updates','Pushing updates...'),
-                                                ('pulling-messages','Pulling messages...'),
-                                                ('pushing-messages','Pushing messages...')]),
+        'activity' : fields.function(_get_activity, type='char', string="Activity", method=True),
         'last_activity' : fields.datetime("Date of last activity", readonly=True),
     }
    
@@ -346,7 +341,7 @@ class entity(osv.osv):
         
     @check_validated
     def end_synchronization(self, cr, uid, entity, context=None):
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'inactive')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Inactive')
         return (True, "Instance %s has finished the synchronization" % entity.identifier)
 
     @check_validated
