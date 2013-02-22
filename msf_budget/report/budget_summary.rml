@@ -1,10 +1,23 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(595.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
-    <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="42.0" width="539" height="756"/>
+
+    <template pageSize="(595.0,842.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
+        <pageGraphics>
+            <fill color="blue"/>
+            <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
+            <image x="35" y="790.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="275" y="10.0">Page <pageNumber /></drawString>
+            <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
+            <!--            <drawString x="765" y="520.0">/</drawString>
+            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+        </pageGraphics>
     </pageTemplate>
-  </template>
+    </template>
+
   <stylesheet>
     <blockTableStyle id="Standard_Outline">
       <blockAlignment value="LEFT"/>
@@ -39,6 +52,7 @@
     <blockTableStyle id="Table10">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,0" stop="13,-1"/>
       <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="13,-1"/>
     </blockTableStyle>
     <blockTableStyle id="Table8">
@@ -83,15 +97,16 @@
       <paraStyle name="all" alignment="justify"/>
     </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" textColor="#4c4c4c"/>
-    <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER"/>
+    <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P8" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="15.0" leading="19" alignment="LEFT" spaceBefore="12.0" spaceAfter="6.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="11.0" leading="10" alignment="RIGHT" spaceBefore="2.0" spaceAfter="2.0"/>
+
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -153,7 +168,9 @@
     <para style="P5">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="139.0,100.0,100.0,100.0,100.0" style="Table10">
+
+
+    <blockTable colWidths="139.0,100.0,100.0,100.0,100.0" style="Table10" repeatRows="1">
       <tr>
         <td>
           <para style="P2">Account</para>
@@ -171,32 +188,26 @@
           <para style="P2">Percentage</para>
         </td>
       </tr>
-    </blockTable>
-    <blockTable style="Table8">
       <tr>
-        <td>
           <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
-          <blockTable colWidths="139.0,100.0,100.0,100.0,100.0" style="Table12">
-            <tr>
               <td>
                 <para style="P3">[[ line[0] ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[1] ]]</para>
+                <para style="P3">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[2] ]]</para>
+                <para style="P3">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[3] ]]</para>
+                <para style="P3">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[4] ]]</para>
+                <para style="P3">[[ line[4] and formatLang(line[4], digits=1, grouping=True ) or '0.0' ]] %</para>
               </td>
-            </tr>
-          </blockTable>
-        </td>
       </tr>
     </blockTable>
+
+
   </story>
 </document>
