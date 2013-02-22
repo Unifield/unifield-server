@@ -333,6 +333,7 @@ class update_received(osv.osv):
 
             def success(update_ids, versions):
                 self.write(cr, uid, update_ids, {
+                    'editable' : False,
                     'run' : True,
                     'log' : '',
                 }, context=context)
