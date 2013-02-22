@@ -174,9 +174,9 @@ class analytic_line(osv.osv):
             self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-    def update_account(self, cr, uid, ids, account_id, context=None):
+    def update_account(self, cr, uid, ids, account_id, date=False, context=None):
         """
-        Update account on given analytic lines with account_id
+        Update account on given analytic lines with account_id on given date
         """
         # Some verifications
         if not context:
@@ -185,6 +185,8 @@ class analytic_line(osv.osv):
             ids = [ids]
         if not account_id:
             return False
+        if not date:
+            date = strftime('%Y-%m-%d')
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
@@ -200,14 +202,14 @@ class analytic_line(osv.osv):
                 # if period is not closed, so override line.
                 if period and period.state != 'done':
                     # Update account
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': strftime('%Y-%m-%d'), 
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
                     self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': strftime('%Y-%m-%d'),
+                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date}, context=context)
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})

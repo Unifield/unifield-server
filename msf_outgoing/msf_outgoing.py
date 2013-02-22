@@ -949,7 +949,7 @@ class shipment(osv.osv):
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('is_current_instance', '=', True)])
             if not journal_ids:
-                raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
+                raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
             invoice_vals['journal_id'] = journal_ids[0]
                 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,

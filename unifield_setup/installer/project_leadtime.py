@@ -71,7 +71,7 @@ class project_leadtime_setup(osv.osv_memory):
         payload = self.browse(cr, uid, ids[0], context=context)
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         
-        self.pool.get('res.company').write(cr, uid, company.id, {'preparation_lead_time': payload.preparation_leadtime,
+        self.pool.get('res.company').write(cr, 1, company.id, {'preparation_lead_time': payload.preparation_leadtime,
                                                                  'shipment_lead_time': payload.shipment_leadtime}, context=context)
     
 project_leadtime_setup()

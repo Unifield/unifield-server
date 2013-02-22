@@ -247,6 +247,7 @@
     <Cell ss:StyleID="s64"><Data ss:Type="String">XX</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">11</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">test comment</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">test comment</Data></Cell>
    </Row>
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">

@@ -25,6 +25,9 @@ from product._common import rounding
 from tools.translate import _
 import netsvc
 
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+import base64
+
 
 class split_purchase_order_line_wizard(osv.osv_memory):
     _name = 'split.purchase.order.line.wizard'
