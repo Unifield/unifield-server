@@ -190,16 +190,15 @@ class ir_model_data_sync(osv.osv):
     
     def create(self,cr,uid,values,context=None):
         if values['module'] == 'sd':
-            assert self.search(cr, uid, [('module','=','sd'),('model','=',values['model']),('res_id','=',values['res_id'])], count=True, context=context) == 0, \
-                   "Oops...! Cannot create another 'sd' xml_id for object model=%s id=%s" \
-                   % (values['model'], values['res_id'])
+            old_xmlids = self.search(cr, uid, [('module','=','sd'),('model','=',values['model']),('res_id','=',values['res_id'])], context=context)
+            self.unlink(cr, uid, old_xmlids, context=context)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
 
         if not values['module'] == 'sd':
             xmlid = "%s_%s" % (values['module'], values['name'])
             sd_ids  = self.search(cr, uid, [('module', '=', 'sd'), ('name', '=', xmlid)], context=context)
-            assert len(id_ids) < 2, \
+            assert len(sd_ids) < 2, \
                    "Oops...! I already have multiple 'sd' xml_ids for this object id=%s" % xmlid
 
             args = {
