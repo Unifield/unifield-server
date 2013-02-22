@@ -48,9 +48,9 @@ class report_interactive(report_sxw.rml_parse):
         for x in csv_data[1:]:
             code = x[0] and x[0] or x[1] and x[1] or x[2] and x[2]
             if contract.reporting_type == 'project':
-                temp = [code] + [x[3]] + [int(x[4])] + [int(x[5])] + [x[6]] 
+                temp = [code] + [int(x[3])] + [int(x[4])] + [int(x[5])] + [x[6]] 
             else:
-                temp = [code] + [x[3]] + [int(x[4])] + [int(x[5])] + [x[6]] + [int(x[7])] + [int(x[8])]  + [x[9]]
+                temp = [code] + [int(x[3])] + [int(x[4])] + [int(x[5])] + [x[6]] + [int(x[7])] + [int(x[8])]  + [x[9]]
             lines += [temp]
         return lines
 
