@@ -394,7 +394,7 @@
 <Data ss:Type="String">${_('Reporting type:')}</Data>
 </Cell>
 <Cell ss:StyleID="s21">
-<Data ss:Type="String">${( o.reporting_type and getSelValue('financing.contract.contract', 'reporting_type',  o.reporting_type) or '')|x}</Data>
+<Data ss:Type="String">${( o.reporting_type and getSel(o, 'reporting_type') or '')|x}</Data>
 
 </Cell>
 </Row>
@@ -601,7 +601,7 @@
 <Data ss:Type="String">${_('State:')}</Data>
 </Cell>
 <Cell>
-<Data ss:Type="String">${( o.state and getSelValue('financing.contract.contract', 'state', o.state) or '')|x}</Data>
+<Data ss:Type="String">${( o.state and getSel(o, 'state') or '')|x}</Data>
 </Cell>
 </Row>
 </Table>
