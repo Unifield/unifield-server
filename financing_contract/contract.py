@@ -74,22 +74,23 @@ class financing_contract_contract(osv.osv):
                 res = absl_ids
             # Search draft posted statement lines
             fp_ids = [x and x.funding_pool_id and x.funding_pool_id.id for x in c.funding_pool_ids]
-            sql = """SELECT absl.id
-            FROM account_bank_statement_line AS absl, funding_pool_distribution_line AS fp
-            WHERE distribution_id = analytic_distribution_id
-            AND fp.analytic_id in %s
-            AND absl.id in (
-                SELECT st.id
-                FROM account_bank_statement_line st
-                    LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
-                    LEFT JOIN account_move am ON am.id = rel.statement_id
-                WHERE (rel.statement_id is null OR am.state != 'posted')
-                ORDER BY st.id
-            ) ORDER BY absl.id"""
-            cr.execute(sql, (tuple(fp_ids),))
-            sql_res = cr.fetchall()
-            if sql_res:
-                res += [x and x[0] for x in sql_res]
+            if fp_ids:
+                sql = """SELECT absl.id
+                FROM account_bank_statement_line AS absl, funding_pool_distribution_line AS fp
+                WHERE distribution_id = analytic_distribution_id
+                AND fp.analytic_id in %s
+                AND absl.id in (
+                    SELECT st.id
+                    FROM account_bank_statement_line st
+                        LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id
+                        LEFT JOIN account_move am ON am.id = rel.statement_id
+                    WHERE (rel.statement_id is null OR am.state != 'posted')
+                    ORDER BY st.id
+                ) ORDER BY absl.id"""
+                cr.execute(sql, (tuple(fp_ids),))
+                sql_res = cr.fetchall()
+                if sql_res:
+                    res += [x and x[0] for x in sql_res]
         return res
 
     def contract_soft_closed(self, cr, uid, ids, *args):
@@ -98,6 +99,11 @@ class financing_contract_contract(osv.osv):
         Otherwise set contract as soft closed.
         """
         # Search draft/temp posted register lines
+        if isinstance(ids, (long, int)):
+            ids = [ids]
+        for cont in self.read(cr, uid, ids, ['funding_pool_ids']):
+            if not cont['funding_pool_ids']:
+                raise osv.except_osv(_('Error'), _("This contract can not be soft-closed because it is not linked to any funding pool."))
         reg_lines = self.search_draft_or_temp_posted_register_lines(cr, uid, ids)
         if reg_lines:
             msg= ''
