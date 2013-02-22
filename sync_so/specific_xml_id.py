@@ -145,43 +145,6 @@ class account_analytic_line(osv.osv):
     
     _inherit = 'account.analytic.line'
     _delete_owner_field = 'cost_center_id'
-    
-    def get_xml_id_from_reference(self, cr, uid, line_ref, context=None):
-        if line_ref:
-            (line_model, line_id) = line_ref.split(',')
-            xml_ids = self.pool.get('ir.model.data').get(cr,
-                                                         uid,
-                                                         self.pool.get(line_model),
-                                                         [line_id],
-                                                         context=context)
-            if len(xml_ids) > 0:
-                xml_record = self.pool.get('ir.model.data').browse(cr, uid, xml_ids[0], context=context)
-                return '%s.%s' % (xml_record.module, xml_record.name)
-        return False
-
-    def write_reference_to_destination(self, cr, uid, reference, reference_field, destination_name, xml_id, instance_name):
-        instance_obj = self.pool.get('msf.instance')
-        
-        if not destination_name or not reference:
-            return
-        if destination_name != instance_name:
-            reference_xml_id = self.get_xml_id_from_reference(cr, uid, reference, context={})
-            message_data = {
-                    'identifier' : 'write_%s_reference_to_%s' % (xml_id, destination_name),
-                    'sent' : False,
-                    'generate_message' : True,
-                    'remote_call': self._name + ".message_write_reference",
-                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s', 'field': '%s', 'reference' : '%s'}]" % (self._name, xml_id, reference_field, reference_xml_id),
-                    'destination_name': destination_name
-            }
-            self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
-        # generate message for parent instance
-        instance_ids = instance_obj.search(cr, uid, [("instance", "=", destination_name)])
-        if instance_ids:
-            instance_record = instance_obj.browse(cr, uid, instance_ids[0])
-            parent = instance_record.parent_id and instance_record.parent_id.instance or False
-            if parent:
-                self.write_reference_to_destination(cr, uid, reference, reference_field, parent, xml_id, instance_name)
         
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_code, context=None):
         if cost_center_code:
@@ -217,7 +180,7 @@ class account_analytic_line(osv.osv):
         return res
     
     def write(self, cr, uid, ids, vals, context=None):
-        if not 'cost_center_id' in vals and not 'distrib_line_id' in vals:
+        if not 'cost_center_id' in vals:
             return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
         if isinstance(ids, (long, int)):
@@ -244,27 +207,9 @@ class account_analytic_line(osv.osv):
             if not old_destination_name == new_destination_name:
                 # Send delete message, but not to parents of the current instance
                 generate_message_for_destination(self, cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
-            elif 'distrib_line_id' in vals:
-                self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', new_destination_name, xml_id, instance_name)
             
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
-    
-    def create(self, cr, uid, vals, context=None):
-        res_id = super(account_analytic_line, self).create(cr, uid, vals, context=context)
-        
-        if 'distrib_line_id' in vals and 'cost_center_id' in vals and res_id:
-            instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
-            cost_center_id = vals['cost_center_id']
-            xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, [res_id], context=context)
-            if xml_ids[0]:
-                xml_id_record = self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)[0]
-                xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
-                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
-                self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', destination_name, xml_id, instance_name)
-
-        return res_id
 
 account_analytic_line()
 
