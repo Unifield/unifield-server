@@ -77,6 +77,12 @@ class stock_move(osv.osv):
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):
             defaults.update({'line_number': False})
+        # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
+        picking_type = context.get('picking_type')
+        subtype = context.get('subtype')
+        if picking_type and picking_type == 'incoming_shipment' and subtype and subtype == 'in':
+            input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+            defaults.update(location_dest_id=input_loc)
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
