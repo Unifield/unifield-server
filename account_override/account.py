@@ -182,7 +182,7 @@ class account_move(osv.osv):
             if context.get('from_web_menu', False):
                 fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys':
+                if context.get('from_web_menu', False) and m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
