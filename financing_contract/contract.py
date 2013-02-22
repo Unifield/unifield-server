@@ -101,7 +101,7 @@ class financing_contract_contract(osv.osv):
         # Search draft/temp posted register lines
         if isinstance(ids, (long, int)):
             ids = [ids]
-        for cont in self.read(cr, uid, ['funding_pool_ids']):
+        for cont in self.read(cr, uid, ids, ['funding_pool_ids']):
             if not cont['funding_pool_ids']:
                 raise osv.except_osv(_('Error'), _("This contract can not be soft-closed because it does not linked to any funding pool."))
         reg_lines = self.search_draft_or_temp_posted_register_lines(cr, uid, ids)
