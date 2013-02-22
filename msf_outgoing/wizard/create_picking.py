@@ -207,7 +207,7 @@ class create_picking(osv.osv_memory):
 
         if step in ['create', 'validate', 'returnproducts']:
             _moves_arch_lst += """
-                <button name="select_all" string="Ms"
+                <button name="select_all" string="%s"
                     colspan="1" type="object"  icon="gtk-jump-to" />
                 <button name="deselect_all" string="%s"
                     colspan="1" type="object" icon="gtk-undo" />""" % (_('Copy all'), _('Clear all'))
@@ -546,6 +546,7 @@ class create_picking(osv.osv_memory):
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0
             # for each picking
             partial_datas[pick.id] = {}
             # out moves for delivery
@@ -554,6 +555,7 @@ class create_picking(osv.osv_memory):
             for move in memory_moves_list:
                 # !!! only take into account if the quantity is greater than 0 !!!
                 if move.quantity:
+                    total_qty += move.quantity
                     partial_datas[pick.id].setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                                                    'product_id': move.product_id.id,
                                                                                    'product_qty': move.quantity,
@@ -564,6 +566,8 @@ class create_picking(osv.osv_memory):
                                                                                    })
                     # override : add hook call
                     partial_datas = self.do_create_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
+            if not total_qty and not context.get('yml_test'):
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
@@ -638,13 +642,14 @@ class create_picking(osv.osv_memory):
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0.00
             # for each picking
             partial_datas[pick.id] = {}
             # out moves for delivery
             memory_moves_list = partial.product_moves_picking
             # organize data according to move id
             for move in memory_moves_list:
-                
+                total_qty += move.quantity
                 partial_datas[pick.id].setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                                                'product_id': move.product_id.id,
                                                                                'product_qty': move.quantity,
@@ -655,6 +660,8 @@ class create_picking(osv.osv_memory):
                                                                                })
                 # override : add hook call
                 partial_datas = self.do_validate_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
+            if not total_qty:
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities

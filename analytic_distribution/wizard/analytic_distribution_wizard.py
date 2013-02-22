@@ -303,6 +303,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [vals.get('wizard_id')], context=context)
             if wiz and wiz[0] and wiz[0].total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].total_amount) * 100.0)})
+        if vals.get('percentage', False) == 0.0:
+            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
@@ -326,6 +328,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
             wiz = self.browse(cr, uid, ids, context=context)
             if wiz and wiz[0].wizard_id and wiz[0].wizard_id.total_amount:
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].wizard_id.total_amount) * 100.0)})
+        if vals.get('percentage', False) == 0.0:
+            raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
         res = super(analytic_distribution_wizard_lines, self).write(cr, uid, ids, vals, context=context)
         # Retrieve wizard_id field
         data = self.read(cr, uid, [ids[0]], ['wizard_id'], context=context)

@@ -71,7 +71,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
     </Row>
     % for line in o.tender_line_ids:
     <Row>
