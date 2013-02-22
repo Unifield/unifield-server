@@ -1276,7 +1276,7 @@ class purchase_order(osv.osv):
         Check order type and partner type compatibilities.
         """
         compats = {
-            'regular':       ['internal', 'intermission', 'section', 'external'],
+            'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
             'donation_st':   ['internal', 'intermission', 'section'],
             'loan':          ['internal', 'intermission', 'section', 'external'],
             'donation_exp':  ['internal', 'intermission', 'section'],

@@ -777,6 +777,8 @@ class purchase_order(osv.osv):
         '''
         Set the reference at this step
         '''
+        if context is None:
+            context = {}
         if context.get('rfq_ok', False) and not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
         elif not vals.get('name', False):

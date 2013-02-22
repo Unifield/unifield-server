@@ -12,7 +12,7 @@
                 <data>
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']/tree/field[@name='state']" position="after" >
                     <field name="to_correct_ok" invisible="1"/>
-                    <field name="text_error" attrs="{'invisible':[('to_correct_ok', '=', False)]}" readonly="1" />
+                    <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
@@ -27,12 +27,13 @@
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Tender Lines']/field[@name='tender_line_ids']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*" align="0.0" invisible="1"/>
-                    <field name="file_to_import" colspan="2" />
-                    <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" invisible="1"/>
+                    <button name="wizard_import_tender_line" string="Import the file" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
+                    <field name="hide_column_error_ok" invisible="1" colspan="1" />
                 </group>
+                </xpath>
+                <xpath expr="/form//field[@name='tender_line_ids']" position="attributes" >
+                    <attribute name="context">{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}</attribute>
                 </xpath>
                 </data>
             </field>

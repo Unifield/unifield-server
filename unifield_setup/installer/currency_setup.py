@@ -23,6 +23,8 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
+import time
+
 
 class currency_setup(osv.osv_memory):
     _name = 'currency.setup'
@@ -122,10 +124,12 @@ class currency_setup(osv.osv_memory):
             self.pool.get('account.analytic.account').write(cr, uid, [analytic_id], {'currency_id': cur_id})
 
         # product.product
-        product_ids = self.pool.get('product.product').search(cr, uid, [('currency_id', '=', 1)])
-        product2_ids = self.pool.get('product.product').search(cr, uid, [('field_currency_id', '=', 1)])
-        self.pool.get('product.product').write(cr, uid, product_ids, {'currency_id': cur_id})
-        self.pool.get('product.product').write(cr, uid, product2_ids, {'field_currency_id': cur_id})
+        # UF-1766 : Pass out the OpenObject framework to gain time on currency change with a big amount of products
+        cr.execute('UPDATE product_product SET currency_id = %s, field_currency_id = %s', (cur_id, cur_id))
+#        product_ids = self.pool.get('product.product').search(cr, uid, [('currency_id', '=', 1)])
+#        product2_ids = self.pool.get('product.product').search(cr, uid, [('field_currency_id', '=', 1)])
+#        self.pool.get('product.product').write(cr, uid, product_ids, {'currency_id': cur_id})
+#        self.pool.get('product.product').write(cr, uid, product2_ids, {'field_currency_id': cur_id})
 
         # account.model
         model_ids = self.pool.get('account.model').search(cr, uid, [('currency_id', '=', 1)])

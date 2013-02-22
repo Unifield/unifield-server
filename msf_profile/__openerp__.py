@@ -111,17 +111,18 @@
         "msf_supply_doc_import",
         "mission_stock_cron",
         "report_webkit_override",
+        "export_import_lang",
     ],
     "update_xml": [
         "report.xml",
         "purchase_double_validation_workflow.xml",
         "usability.xml",
         "user_access_configurator_view.xml",
-        "msf_profile_wizard.xml",
     ],
     "demo_xml": [
     ],
     "function": [('user.access.configurator', 'do_update_after_module_install')],
+# add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
         'test/unique_fields_views.yml',
         'test/inherited_views.yml',

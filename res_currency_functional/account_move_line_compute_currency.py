@@ -111,7 +111,7 @@ class account_move_line_compute_currency(osv.osv):
                     break
             
             if not period_id:
-                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s' % current_date))
+                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s') % current_date)
             
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)

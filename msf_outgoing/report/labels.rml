@@ -100,7 +100,7 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and 'Your Order:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and translate('Your Order:') or ' ' ]]</para>
             </td>
             <td>
               <para style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</para>
@@ -108,7 +108,7 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.packing_parcel_number and 'Parcel No:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.packing_parcel_number and translate('Parcel No:') or ' ' ]]</para>
             </td>
             <td>
               <para style="P2">[[ stock_picking.ppl_customize_label.packing_parcel_number and '%s / %s'%(titi, stock_picking.num_of_packs) or ' ' ]]</para>
@@ -116,7 +116,7 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and 'Our Pre Packing List Reference:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and translate('Our Pre Packing List Reference:') or ' ' ]]</para>
             </td>
             <td>
               <para style="P3">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and stock_picking.name or ' ' ]]</para>
@@ -124,7 +124,7 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.destination_partner and 'Project Destination:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.destination_partner and translate('Project Destination:') or ' ' ]]</para>
             </td>
             <td>
               <para style="P3">[[ stock_picking.ppl_customize_label.destination_partner and stock_picking.sale_id.partner_id.name or ' ' ]]</para>
@@ -132,7 +132,7 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.destination_address and 'Project Destination Address:' or '' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.destination_address and translate('Project Destination Address:') or '' ]]</para>
             </td>
             <td>
               <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
@@ -142,7 +142,7 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.weight and 'Weight:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.weight and translate('Weight:') or ' ' ]]</para>
             </td>
             <td>
               <para style="P3">[[ stock_picking.ppl_customize_label.weight and str(pack_family.weight or '0.0') + ' kg' or ' ' ]]</para>
@@ -150,10 +150,10 @@
           </tr>
           <tr>
             <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and 'Specific Information:' or ' ' ]]</para>
+              <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and translate('Specific Information:') or ' ' ]]</para>
             </td>
             <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and 'KC / ' or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and 'DG / ' or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and 'N' or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and translate('N') or ' ' ]]</para>
             </td>
           </tr>
         </blockTable>

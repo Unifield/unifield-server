@@ -50,6 +50,14 @@ class sale_order(osv.osv):
                     return {'warning': {'title': _('Error'), 'message': msg}}
         else:
             pass
+
+
+        if partner_id and order_type:
+            res.update({'value': {'order_policy': 'picking'}})
+            partner = self.pool.get('res.partner').browse(cr, uid, partner_id)
+            if order_type != 'regular' or (order_type == 'regular' and partner.partner_type == 'internal'):
+                res.update({'value': {'order_policy': 'manual'}})
+
         return res
 
     def _check_order_type_and_partner(self, cr, uid, ids, context=None):
