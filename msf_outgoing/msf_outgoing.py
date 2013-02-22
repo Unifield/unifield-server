@@ -1431,6 +1431,14 @@ class stock_picking(osv.osv):
         default.update(backorder_ids=[])
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
+        # reset the partner_id,partner_id2, purchase_id, order_category for the incoming_shipment
+        picking_type = context.get('picking_type')
+        subtype = context.get('subtype')
+        if picking_type and picking_type == 'incoming_shipment' and subtype and subtype == 'in':
+            default.update(purchase_id=False)
+            default.update(partner_id=False)
+            default.update(partner_id2=False)
+            default.update(order_category=False)
         
         context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
