@@ -33,6 +33,7 @@ class workflow_service(netsvc.Service):
         self.exportMethod(self.trg_delete)
         self.exportMethod(self.trg_create)
         self.exportMethod(self.trg_validate)
+        self.exportMethod(self.trg_change_subflow)
         self.exportMethod(self.trg_redirect)
         self.exportMethod(self.trg_trigger)
         self.exportMethod(self.clear_cache)
@@ -80,6 +81,29 @@ class workflow_service(netsvc.Service):
             res2 = instance.validate(cr, id, ident, signal)
             result = result or res2
         return result
+    
+    # change the subflow of workitems attached to the 'main_ids' of 'main_type' object
+    # by the subflow of the new resource defined by the 'res_type' object and the 'res_ids' ids 
+    def trg_change_subflow(self, uid, main_type, main_ids, res_type, res_ids, new_rid, cr):
+        # get ids of wkf instances for the old resource (res_id)
+#CHECKME: shouldn't we get only active instances?
+        cr.execute('select id, wkf_id from wkf_instance where res_id in %s and res_type=%s', (tuple(res_ids), res_type))
+        for old_inst_id, wkf_id in cr.fetchall():
+            # first active instance for new resource (new_rid), using same wkf
+            cr.execute(
+                'SELECT id '\
+                'FROM wkf_instance '\
+                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s', 
+                (new_rid, res_type, wkf_id, 'active'))
+            new_id = cr.fetchone()
+            if new_id:
+                cr.execute('select id from wkf_instance where res_type=%s and res_id in %s', (main_type, tuple(main_ids)))
+                for (inst_id,) in cr.fetchall():
+                    # select all workitems which "wait" for the old instance
+                    cr.execute('select id from wkf_workitem where subflow_id=%s and inst_id = %s', (old_inst_id, inst_id))
+                    for (item_id,) in cr.fetchall():
+                        # redirect all those workitems to the wkf instance of the new resource
+                        cr.execute('update wkf_workitem set subflow_id=%s where id=%s', (new_id[0], item_id))
 
     # make all workitems which are waiting for a (subflow) workflow instance
     # for the old resource point to the (first active) workflow instance for
