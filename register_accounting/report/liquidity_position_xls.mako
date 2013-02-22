@@ -395,7 +395,7 @@
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s32">
-	<Data ss:Type="String">Sub-Total =</Data>
+	<Data ss:Type="String">${_('Sub-Total =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getCal()}]C:R[-1]C)" >
@@ -423,7 +423,7 @@
 	<Cell ss:StyleID="s25c"/>
 
 	<Cell  ss:StyleID="s49">
-	<Data ss:Type="String">Grand Total =</Data>
+	<Data ss:Type="String">${_('Grand Total =')}</Data>
 	<NamedCell ss:Name="Print_Area"/>
 	</Cell>
 	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
