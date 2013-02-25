@@ -42,10 +42,11 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
         
+        # view_id == 0 if view generated on fly by openerp because no custom view specified, therefore we will have no rules
         if view_id:
             search_ids = rules_pool._get_family_ids(cr, view_id)
         else:
-            search_ids = [view_id]
+            return fields_view
         
         rules_search = rules_pool.search(cr, 1, [('view_id', 'in', search_ids)])
 
