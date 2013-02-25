@@ -24,6 +24,7 @@ from __future__ import with_statement
 from osv import orm, osv
 from osv import fields
 import tools
+from tools.translate import _
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 import logging
@@ -162,7 +163,7 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Pushing updates...')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pushing updates...'))
 
         data = {
             'source': entity.id,
@@ -208,7 +209,7 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Confirm updates...')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
 
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
         sequence = self._get_next_sequence(cr, uid, context=context)
@@ -314,7 +315,7 @@ class update(osv.osv):
                      - None when no update need to be sent
                      - A dict that format a packet for the client
         """
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Pulling updates...')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
 
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:

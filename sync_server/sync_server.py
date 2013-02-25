@@ -24,6 +24,7 @@ from osv import fields
 
 import uuid
 import tools
+from tools.translate import _
 import pprint
 import logging
 from datetime import datetime, timedelta
@@ -111,9 +112,11 @@ class entity(osv.osv):
             if entity.identifier in self._activity_pool:
                 activity, date = self._activity_pool[entity.identifier]
                 delay = datetime.now() - date
-                res[entity.id] = '%s (stalling)' % activity if delay > MAX_ACTIVITY_DELAY else activity
+                res[entity.id] = _('%s (stalling)') % activity \
+                                 if (delay > MAX_ACTIVITY_DELAY and '...' in activity) \
+                                 else activity
             else:
-                res[entity.id] = 'Inactive'
+                res[entity.id] = _('Inactive')
         return res
 
     def set_activity(self, cr, uid, entity, activity, context={}):
@@ -341,7 +344,7 @@ class entity(osv.osv):
         
     @check_validated
     def end_synchronization(self, cr, uid, entity, context=None):
-        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, 'Inactive')
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Inactive'))
         return (True, "Instance %s has finished the synchronization" % entity.identifier)
 
     @check_validated
