@@ -164,6 +164,10 @@ class hq_entries_import_wizard(osv.osv_memory):
                 })
             if employee.funding_pool_id:
                 fp = self.pool.get('account.analytic.account').browse(cr, uid, employee.funding_pool_id.id)
+                vals.update({
+                    'analytic_id_first_value': employee.funding_pool_id.id,
+                    'analytic_id': employee.funding_pool_id.id,
+                })
             if employee.free1_id:
                 vals.update({
                     'free1_id': employee.free1_id.id,
