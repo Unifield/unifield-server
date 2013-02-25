@@ -334,8 +334,10 @@
                          <field name="line_type"/>
                         <field name="allocated_budget" digits="(24,0)" widget="float"/>
                         <field name="allocated_real" digits="(24,0)" widget="float"/>
+                        <field name="allocated_balance" digits="(24,0)" widget="float"/>
                         <field name="project_budget" digits="(24,0)" widget="float"/>
                         <field name="project_real" digits="(24,0)" widget="float"/>
+                        <field name="project_balance" digits="(24,0)" widget="float"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
