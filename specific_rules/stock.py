@@ -407,21 +407,32 @@ class stock_cost_reevaluation(osv.osv):
         'state': lambda *a: 'draft',
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
-    
+
+    _sql_constraints = [
+        ('name_unique', "unique(name)", 'The Reference of the Product Cost Revaluation must be unique'),
+    ]
+
     def copy(self, cr, uid, ids, default=None, context=None):
         '''
         Set the state to 'draft' and the creation date to the current date
         '''
         if not default:
             default = {}
-            
+        name = self.read(cr, uid, ids, ['name'])['name']
+        i = 1
+        new_name = '%s (copy %s)' % (name, i)
+        while self.search_count(cr, uid, [('name', '=', new_name)]):
+            i += 1
+            new_name = '%s (copy %s)' % (name, i)
+
         if not 'state' in default:
             default.update({'state': 'draft'})
 
-        default.update({'date': time.strftime('%Y-%m-%d')})
+        default.update({'date': time.strftime('%Y-%m-%d'),
+                        'name': new_name})
             
         return super(stock_cost_reevaluation, self).copy(cr, uid, ids, default=default, context=context)
-    
+
     def action_confirm(self, cr, uid, ids, context=None):
         '''
         Confirm the cost reevaluation (don't change the price at this time)

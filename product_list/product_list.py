@@ -258,7 +258,7 @@ class product_template(osv.osv):
     _inherit = 'product.template'
 
     _columns = {
-        'name': fields.char(size=60, string='DESCRIPTION', required=True),
+        'name': fields.char(size=60, string='DESCRIPTION', required=True, translate=True),
     }
 product_template()
 

@@ -262,6 +262,8 @@ class purchase_order(osv.osv):
         '''
         Avoid the saving of a PO with non service products on Service PO
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
         
@@ -311,14 +313,18 @@ class purchase_order(osv.osv):
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
             
         self._check_service(cr, uid, ids, vals, context=context)
-            
-        if vals.get('order_type'):
-            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
-                vals.update({'invoice_method': 'manual'})
-            elif vals.get('order_type') in ['direct',]:
-                vals.update({'invoice_method': 'order'})
-            else:
-                vals.update({'invoice_method': 'picking'})
+
+        for order in self.browse(cr, uid, ids, context=context):
+            partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id), context=context).partner_type
+            if vals.get('order_type'):
+                if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
+                    vals.update({'invoice_method': 'manual'})
+                elif vals.get('order_type') in ['direct',] and partner_type != 'esc':
+                    vals.update({'invoice_method': 'order'})
+                elif vals.get('order_type') in ['direct',] and partner_type == 'esc':
+                    vals.update({'invoice_method': 'manual'})
+                else:
+                    vals.update({'invoice_method': 'picking'})
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -375,7 +381,7 @@ class purchase_order(osv.osv):
 
         if partner_id and partner_id != local_market:
             partner = partner_obj.browse(cr, uid, partner_id)
-            if partner.partner_type in ('internal', 'esc') and order_type == 'regular':
+            if partner.partner_type in ('internal', 'esc') and order_type in ('regular', 'direct'):
                 v['invoice_method'] = 'manual'
             elif partner.partner_type not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
@@ -798,11 +804,19 @@ stock moves which are already processed : '''
         
         # objects
         sol_obj = self.pool.get('sale.order.line')
+        so_obj =  self.pool.get('sale.order')
         
         # code from wkf_approve_order
         self.common_code_from_wkf_approve_order(cr, uid, ids, context=context)
         # set the state of purchase order to confirmed_wait
         self.write(cr, uid, ids, {'state': 'confirmed_wait'}, context=context)
+        # corresponding sale order
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        # from so, list corresponding po
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+        list_po_name = ', '.join([linked_po.name for linked_po in self.browse(cr, uid, all_po_ids, context) if linked_po.id != ids[0]])
+        self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
+                                 ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
         # sale order lines with modified state
         sol_ids = self.get_sol_ids_from_po_ids(cr, uid, ids, context=context)
         if sol_ids:
@@ -1047,7 +1061,7 @@ stock moves which are already processed : '''
         for order in self.browse(cr, uid, ids):
             # Create commitments for each PO only if po is "from picking"
             # UTP-114: No Commitment Voucher on PO that are 'purchase_list'!
-            if order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission':
+            if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
                 self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             # Don't accept the confirmation of regular PO with 0.00 unit price lines
             if order.order_type == 'regular':
@@ -1072,7 +1086,8 @@ stock moves which are already processed : '''
             self.log(cr, uid, order.id, message)
             
             if order.order_type == 'direct':
-                self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
+                if order.partner_id.partner_type != 'esc':
+                    self.write(cr, uid, [order.id], {'invoice_method': 'order'}, context=context)
                 for line in order.order_line:
                     if line.procurement_id: todo.append(line.procurement_id.id)
                     
@@ -1323,6 +1338,9 @@ stock moves which are already processed : '''
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'order'})
+                if vals.get('partner_id'):
+                    if self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id'), context=context).partner_type == 'esc':
+                        vals.update({'invoice_method': 'manual'})
             else:
                 vals.update({'invoice_method': 'picking'})
             
@@ -1584,7 +1602,7 @@ class purchase_order_merged_line(osv.osv):
             return False, False
 
         new_price = False
-        new_qty = line.product_qty + product_qty
+        new_qty = line.product_qty + float(product_qty)
         
         if (po_line_id and not change_price_ok and not po_line.order_id.rfq_ok) or (not po_line_id and not change_price_ok):    
             # Get the catalogue unit price according to the total qty

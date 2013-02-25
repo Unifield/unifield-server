@@ -225,12 +225,12 @@ class analytic_distribution(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         # Prepare some values
         res = {}
         if not ids:
             return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Browse given invoices
         for distrib in self.browse(cr, uid, ids, context=context):
             txt = ''

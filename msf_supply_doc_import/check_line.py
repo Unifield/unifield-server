@@ -58,7 +58,6 @@ def get_log_message(**kwargs):
     """
     Define log message
     """
-    obj = kwargs.get('obj', False)
     to_write = kwargs['to_write']
     # nb_lines_error and tender are just for tender
     nb_lines_error = kwargs.get('nb_lines_error', False)
@@ -96,15 +95,18 @@ def product_value(cr, uid, **kwargs):
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 0
     try:
-        if row.cells[0] and row.cells[0].data:
-            product_code = row.cells[0].data
-            if product_code and row.cells[0].type == 'str':
+        if row.cells[cell_nb] and row.cells[cell_nb].data:
+            product_code = row.cells[cell_nb].data
+            if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
                 p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                 if not p_ids:
                     comment += ' Code: %s' % (product_code)
-                    msg = 'The Product\'s Code is not found in the database.'
+                    msg = 'Product code doesn\'t exist in the DB.'
                 else:
                     default_code = p_ids[0]
                     proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
@@ -126,16 +128,24 @@ def quantity_value(**kwargs):
     Compute qty value of the cell.
     """
     row = kwargs['row']
-    product_qty = kwargs['to_write']['product_qty']
+    if kwargs.get('real_consumption', False):
+        product_qty = kwargs['to_write']['consumed_qty']
+    elif kwargs.get('monthly_consumption', False):
+        product_qty = kwargs['to_write']['fmc']
+    else:
+        product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 2
     try:
-        if not row.cells[2]:
+        if not row.cells[cell_nb]:
             warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
         else:
-            if row.cells[2].type in ['int', 'float']:
-                product_qty = row.cells[2].data
+            if row.cells[cell_nb].type in ['int', 'float']:
+                product_qty = row.cells[cell_nb].data
             else:
                 error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
     # if the cell is empty
@@ -156,12 +166,17 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
+    # some object have not there uom at the 3rd column, so we pass them the relevant cell number (i.e. 2 for real consumption report)
+    cell_nb = kwargs.get('cell_nb', False)
+    if not cell_nb:
+        cell_nb = 3
     msg = ''
+    cell_nb = kwargs.get('cell_nb', 3)
     try:
         # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
-        if row.cells[3] and str(row.cells[3]) != str(None):
-            if row.cells[3].type == 'str':
-                uom_name = row.cells[3].data.strip()
+        if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+            if row.cells[cell_nb].type == 'str':
+                uom_name = row.cells[cell_nb].data.strip()
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
                 if uom_ids:
                     uom_id = uom_ids[0]
@@ -199,17 +214,18 @@ def compute_price_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     price = kwargs['price'] or 'Price'
     price_unit_defined = False
+    cell_nb = kwargs.get('cell_nb', 4)
     try:
-        if not row.cells[4] or not row.cells[4].data:
+        if not row.cells[cell_nb] or not row.cells[cell_nb].data:
             if default_code:
                 warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
             else:
                 error_list.append('The Price and Product not found.')
-        elif row.cells[4].type not in ['int', 'float'] and not default_code:
+        elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
             error_list.append('The Price Unit was not a number and no product was found.')
-        elif row.cells[4].type in ['int', 'float']:
+        elif row.cells[cell_nb].type in ['int', 'float']:
             price_unit_defined = True
-            price_unit = row.cells[4].data
+            price_unit = row.cells[cell_nb].data
         else:
             error_list.append('The Price Unit was not defined properly.')
     # if nothing is found at the line index (empty cell)
@@ -230,9 +246,10 @@ def compute_date_value(**kwargs):
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
+    cell_nb = kwargs.get('cell_nb', 5)
     try:
-        if row.cells[5] and row.cells[5].type == 'datetime':
-            date_planned = row.cells[5].data
+        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
+            date_planned = row.cells[cell_nb].data
         else:
             warning_list.append('The date format was not correct. The date from the header has been taken.')
     # if nothing is found at the line index (empty cell)
@@ -252,7 +269,7 @@ def compute_currency_value(cr, uid, **kwargs):
     browse_sale = kwargs.get('browse_sale', False)
     browse_purchase = kwargs.get('browse_purchase', False)
     # the cell number change between Internal Request and Sale Order
-    cell_nb = kwargs['cell']
+    cell_nb = kwargs['cell_nb']
     fc_id = False
     msg = ''
     try:
@@ -298,7 +315,7 @@ def comment_value(**kwargs):
     comment = kwargs['to_write']['comment']
     warning_list = kwargs['to_write']['warning_list']
     # the cell number change between Internal Request and Sale Order
-    cell_nb = kwargs['cell']
+    cell_nb = kwargs['cell_nb']
     try:
         if not row.cells[cell_nb]:
             warning_list.append("No comment was defined")
