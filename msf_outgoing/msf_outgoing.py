@@ -1433,10 +1433,8 @@ class stock_picking(osv.osv):
         default.update(pack_family_memory_ids=[])
         # reset all the m2o fields that are not required for the incoming_shipment
         picking_type = context.get('picking_type')
-        subtype = context.get('subtype')
-        if picking_type and picking_type == 'incoming_shipment' and subtype and subtype == 'in':
+        if picking_type and picking_type == 'incoming_shipment':
             for field in (self._columns and self._columns.keys()):
-                test = dir(self._columns[field])
                 if self._columns[field]._type == 'many2one' and not self._columns[field].required:
                     default.update({field: False})
         
