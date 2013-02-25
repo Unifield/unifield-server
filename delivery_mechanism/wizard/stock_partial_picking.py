@@ -146,7 +146,7 @@ class stock_partial_picking(osv.osv_memory):
                 partial_datas[pick.id].setdefault(move.move_id.id, []).append(values)
 
             if not total_qty:
-                raise osv.except_osv(_('Processing Error'), _('No quantity to process, please fill quantity to process before processing the moves'))
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
             # treated moves
             move_ids = partial_datas[pick.id].keys()
             # all moves

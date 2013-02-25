@@ -36,7 +36,7 @@
                     </group>
                     <notebook colspan="4">
                     	<page string="Composition Items">
-                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                    		<field name="composition_item_ids" mode="tree,form" nolabel="True" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="4">
                     			<form string="Theoretical Kit Item">
 				                    <group col="6" colspan="4">
 				            			<notebook colspan="4">

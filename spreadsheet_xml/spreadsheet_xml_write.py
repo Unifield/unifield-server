@@ -8,6 +8,10 @@ from osv import osv
 from report_webkit.webkit_report import WebKitParser
 from report import report_sxw
 
+from mako.template import Template
+from mako import exceptions
+from tools.misc import file_open
+
 class SpreadsheetReport(WebKitParser):
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -28,3 +32,17 @@ class SpreadsheetReport(WebKitParser):
     def create(self, cr, uid, ids, data, context=None):
         a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
+
+
+
+class SpreadsheetCreator(object):
+    def __init__(self, title, headers, datas):
+        self.headers = headers
+        self.datas = datas
+        self.title = title
+
+    def get_xml(self, default_filters=[]):
+        f, filename = file_open('addons/spreadsheet_xml/report/spreadsheet_writer_xls.mako', pathinfo=True)
+        f[0].close()
+        tmpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8', default_filters=default_filters)
+        return tmpl.render(objects=self.datas, headers=self.headers, title= self.title)

@@ -613,7 +613,7 @@ def _check_domain(self, cr, uid, vals=[], domain=[], model=False, res_id=False):
     res = True
     pool = pooler.get_pool(cr.dbname)
     for d in tuple(domain):
-        assert d[1] in ('=', '!=', 'in', 'not in'), _("'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators" %(d[1]))
+        assert d[1] in ('=', '!=', 'in', 'not in'), _("'%s' Not comprehensive operator... Please use only '=', '!=', 'in' and 'not in' operators") %(d[1])
             
         if len(d[0].split('.')) == 2 and model:
             p_rel, p_field = d[0].split('.')
