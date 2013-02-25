@@ -133,7 +133,6 @@ def create(self, cr, uid, vals, context=None):
 
 orm.orm.create = create
 
-super_write = orm.orm.write
 
 def _values_equate(field_type, current_value, new_value):
     """
@@ -196,6 +195,36 @@ def _values_equate(field_type, current_value, new_value):
 
     return False
 
+
+def _get_family(obj, family):
+    if hasattr(obj, '_inherits'):
+        if obj._inherits:
+            for key in obj._inherits:
+                if key not in family:
+                    family.append(key)
+                if key != obj._name:
+                    _get_family(obj.pool.get(key), family)
+            
+    if hasattr(obj, '_inherit'):
+        if obj._inherit:
+            if obj._inherit not in family:
+                family.append(obj._inherit)
+            if obj._inherit != obj._name:
+                _get_family(obj.pool.get(obj._inherit), family)
+
+
+def _get_rules_for_family(self, cr, rules_pool, instance_level, groups):
+    family = [self._name]
+    _get_family(self, family)
+    return rules_pool.search(cr, 1, ['&', ('model_name', 'in', family), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+
+def _get_family_names(self, cr, rules_pool, instance_level, groups):
+    family = [self._name]
+    _get_family(self, family)
+    return family
+
+super_write = orm.orm.write
+
 def write(self, cr, uid, ids, vals, context=None):
     """
     Check if user has write_access for each field in target record with applicable Field Access Rules. If not, throw exception.
@@ -222,13 +251,20 @@ def write(self, cr, uid, ids, vals, context=None):
         logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
         return super_write(self, cr, uid, ids, vals, context=context)
     
-    rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+    rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
 
     # if have rules
     if rules_search:
 
+        # get rules for this object, the current records values, the names of all parent classes (recursively) and columns for the whole family
         rules = rules_pool.browse(cr, 1, rules_search, context=context)
         current_records = self.read(cr, 1, ids, context=context)
+        family = _get_family_names(self, cr, rules_pool, instance_level, groups)
+        columns = reduce(lambda x, y: dict(x.items() + y.items()), [self.pool.get(model)._columns for model in family])
+        
+        fields_blacklist = [
+            'nomenclature_description'
+        ]
 
         # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
         if uid != 1:
@@ -241,23 +277,27 @@ def write(self, cr, uid, ids, vals, context=None):
                         for line in rule.field_access_rule_line_ids:
                             # that has write_access denied
                             if not line.write_access:
-                                # and whose field name is in the new values list
-                                if line.field.name in vals:
-                                    
-                                    # (accommodate bug where a disabled reference field in web returns a list instead of a comma separated string:)
-                                    if line.field.name in self._columns and self._columns[line.field.name]._type == 'reference':
-                                        if isinstance(vals[line.field.name], (list, tuple)):
-                                            if vals[line.field.name][0]:
-                                                vals[line.field.name] = vals[line.field.name][1] + ',' + vals[line.field.name][0]
-                                            else:
-                                                vals[line.field.name] = ''
-                                        elif vals[line.field.name] and ',' not in vals[line.field.name]:
-                                            vals[line.field.name] = record[line.field.name]
-                                    
-                                    # and whose current value is different from the new value in the new values list
-                                    if not _values_equate(self._columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
-                                        # throw access denied error
-                                        raise osv.except_osv('Access Denied', 'You are trying to edit a value that you don\'t have access to edit')
+                                # check field name blacklist
+                                if line.field.name not in fields_blacklist:
+                                
+                                    # and whose field name is in the new values list
+                                    if line.field.name in vals:
+                                        
+                                        # (accommodate bug where a disabled reference field in web returns a list instead of a comma separated string:)
+                                        if line.field.name in columns and columns[line.field.name]._type == 'reference':
+                                            if isinstance(vals[line.field.name], (list, tuple)):
+                                                if vals[line.field.name][0]:
+                                                    vals[line.field.name] = vals[line.field.name][1] + ',' + vals[line.field.name][0]
+                                                else:
+                                                    vals[line.field.name] = ''
+                                            elif vals[line.field.name] and ',' not in vals[line.field.name]:
+                                                vals[line.field.name] = record[line.field.name]
+                                        
+                                        # and whose current value is different from the new value in the new values list
+                                        if not _values_equate(columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
+                                            # throw access denied error
+                                            logging.getLogger().warn("Access denied to field %s of model %s" % (line.field.name, self._name if hasattr(self, '_name') else '[error getting model name]'))
+                                            raise osv.except_osv('Access Denied', 'You are trying to edit a field (%s) that you don\'t have permission to edit' % line.field.name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if context.get('sync_data') or user.login == 'msf_field_access_rights_benchmarker':
@@ -318,9 +358,9 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
         if not rules_pool:
             logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
             return fields_view
+        
+        rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
     
-        rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
-
         # if have rules
         if rules_search:
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
