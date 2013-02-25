@@ -87,6 +87,9 @@ class workflow_service(netsvc.Service):
     def trg_change_subflow(self, uid, main_type, main_ids, res_type, res_ids, new_rid, cr):
         # get ids of wkf instances for the old resource (res_id)
 #CHECKME: shouldn't we get only active instances?
+        if not res_ids:
+            return
+
         cr.execute('select id, wkf_id from wkf_instance where res_id in %s and res_type=%s', (tuple(res_ids), res_type))
         for old_inst_id, wkf_id in cr.fetchall():
             # first active instance for new resource (new_rid), using same wkf
