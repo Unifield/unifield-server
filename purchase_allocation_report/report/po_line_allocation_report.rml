@@ -214,10 +214,10 @@
                 <para style="Information">[[ line.currency_id.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.destination_id.name ]] / [[ line.cost_center_id.name ]]</para>
+                <para style="Information">[[ line.destination_id.code ]] [[ line.destination_id.name ]] / [[ line.cost_center_id.code ]] [[ line.cost_center_id.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ line.account_id.name ]]</para>
+                <para style="Information">[[ line.account_id.code ]]  [[ line.account_id.name ]]</para>
             </td>
             <td>
                 <para style="Information">[[ line.source_doc ]]</para>
