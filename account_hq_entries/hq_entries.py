@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
-from collections import defaultdict
 from lxml import etree
 
 class hq_entries_validation_wizard(osv.osv_memory):
@@ -102,9 +101,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
-                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
-                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     del common_vals['destination_id']
                     if f1_id:
@@ -172,7 +169,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             if same_document_date:
                 self.pool.get('account.move').write(cr, uid, [move_id], {'document_date': document_date})
             # Post move
-            post = self.pool.get('account.move').post(cr, uid, [move_id])
+            self.pool.get('account.move').post(cr, uid, [move_id])
         return res
 
     def validate(self, cr, uid, ids, context=None):
@@ -187,7 +184,6 @@ class hq_entries_validation_wizard(osv.osv_memory):
             active_ids = [active_ids]
         # Fetch some data
         ana_line_obj = self.pool.get('account.analytic.line')
-        distrib_obj = self.pool.get('account.analytic.distribution')
         distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
         # Search an analytic correction journal
