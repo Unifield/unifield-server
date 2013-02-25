@@ -136,8 +136,7 @@ class update_to_send(osv.osv):
 
     _logger = logging.getLogger('sync.client')
 
-    def create_update(self, cr, uid, rule_id, session_id, context=None):
-        context = dict(context or {})
+    def create_update(self, cr, uid, rule_id, session_id, context={}):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         obj = self.pool.get(rule.model.model)
         
@@ -156,15 +155,16 @@ class update_to_send(osv.osv):
             eval_poc_domain(obj, cr, uid, domain, context=context),
             included_fields, context=context)
         if not ids_to_compute:
-            return
-        context['sync_context'] = True
-        fields_ref = obj.fields_get(cr, uid, [], context=context)
+            return 0
+
+        sync_context = dict(context, sync_context=True)
+        fields_ref = obj.fields_get(cr, uid, [], context=sync_context)
         fields_ref['id'] = dict()
         ustr_included_fields = tools.ustr(included_fields)
-        owners = obj.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, context)
-        datas = obj.export_data(cr, uid, ids_to_compute, included_fields, context=context)['datas']
-        xml_ids = [link_with_ir_model(obj, cr, uid, id, context=context) for id in ids_to_compute]
-        versions = obj.version(cr, uid, ids_to_compute, context=context)
+        owners = obj.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, sync_context)
+        datas = obj.export_data(cr, uid, ids_to_compute, included_fields, context=sync_context)['datas']
+        xml_ids = [link_with_ir_model(obj, cr, uid, id, context=sync_context) for id in ids_to_compute]
+        versions = obj.version(cr, uid, ids_to_compute, context=sync_context)
         clean_included_fields = self._clean_included_fields(cr, uid, included_fields)
         for (i, row) in enumerate(datas):
             self.create(cr, uid, {
@@ -176,8 +176,10 @@ class update_to_send(osv.osv):
                 'xml_id' : xml_ids[i],
                 'fields' : ustr_included_fields,
                 'owner' : owners[i],
-            }, context=context)
+            }, context=sync_context)
             self._logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
+
+        return len(datas)
 
     def create_package(self, cr, uid, session_id, packet_size, context=None):
         ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, context=context)
