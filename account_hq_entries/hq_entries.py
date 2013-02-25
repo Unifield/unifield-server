@@ -321,6 +321,8 @@ class hq_entries(osv.osv):
         # C/ (account/DEST) in FP except B
         # D/ CC in FP except when B
         # E/ DEST in list of available DEST in ACCOUNT
+        # F/ Check posting date with cost center and destination if exists
+        # G/ Check document date with funding pool
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -369,6 +371,21 @@ class hq_entries(osv.osv):
                 if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     continue
+            # Date checks
+            # F Check
+            if line.cost_center_id:
+                cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, context={'date': line.date})
+                if cc and cc.filter_active is False:
+                    res[line.id] = 'invalid'
+            if line.destination_id:
+                dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
+                if dest and dest.filter_active is False:
+                    res[line.id] = 'invalid'
+            # G Check
+            if line.analytic_id:
+                fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
+                if fp and fp.filter_active is False:
+                    res[line.id] = 'invalid'
         return res
 
     _columns = {
