@@ -203,7 +203,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'text_error': error,
                              'just_info_ok': just_info_ok,}
 
-                if line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
+                if product_id and batch and line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
                     error_log += _("""The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique.
 """) % (line_num, product_obj.read(cr, uid, product_id, ['default_code'])['default_code'], not batch and 'Not specified' or prodlot_obj.read(cr, uid, batch, ['name'])['name'])
                     ignore_lines += 1
