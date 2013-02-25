@@ -297,7 +297,7 @@ def write(self, cr, uid, ids, vals, context=None):
                                         if not _values_equate(columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
                                             # throw access denied error
                                             logging.getLogger().warn("Access denied to field %s of model %s" % (line.field.name, self._name if hasattr(self, '_name') else '[error getting model name]'))
-                                            raise osv.except_osv('Access Denied', 'You are trying to edit a field (%s) that you don\'t have permission to edit' % line.field.name)
+                                            raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % line.field.name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if context.get('sync_data') or user.login == 'msf_field_access_rights_benchmarker':
