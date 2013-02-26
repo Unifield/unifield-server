@@ -25,7 +25,6 @@
                         <field name="document_date_from" string="Document date"/>
                         <field name="posting_date_from" string="Posting date"/>
                         <field name="document_code"/>
-                        <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}"/>
                     </group>
                     <group colspan="2" col="2">
                         <field name="document_date_to" string="to"/>
