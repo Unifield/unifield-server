@@ -291,6 +291,9 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        # If partner_type have been set to False (UF-1789)
+        if 'partner_type' in vals and not vals.get('partner_type'):
+            vals.update({'partner_txt': False})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -306,6 +309,9 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        # If partner_type have been set to False (UF-1789)
+        if 'partner_type' in vals and not vals.get('partner_type'):
+            vals.update({'partner_txt': False})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()
