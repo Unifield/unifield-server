@@ -124,10 +124,16 @@ class hq_entries(osv.osv):
             for data in cost_center_data:
                 if data['cost_center_id']:
                     cost_center_name = data['cost_center_id'][1][:3]
-                    instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', 'like', cost_center_name), ('level', '=', 'coordo')], context=context)
-                    if instance_ids:
-                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-                        res.append(instance_data['instance'])
+                    cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
+                                                                                                 ('code', '=', cost_center_name)], context=context)
+                    if len(cost_center_ids) > 0:
+                        cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s and is_target = True" % (cost_center_ids[0]))
+                        instance_id = cr.fetchone()
+                        if instance_id:
+                            instance_data = self.pool.get('msf.instance').read(cr, uid, instance_id[0], ['instance'], context=context)
+                            res.append(instance_data['instance'])
+                        else:
+                            res.append(False)
                     else:
                         res.append(False)
                 else:
@@ -183,12 +189,13 @@ class account_analytic_line(osv.osv):
             if parent:
                 self.write_reference_to_destination(cr, uid, reference, reference_field, parent, xml_id, instance_name)
         
-    def get_instance_name_from_cost_center(self, cr, uid, cost_center_code, context=None):
-        if cost_center_code:
-            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id.code', '=ilike', cost_center_code[:5] + '%')], context=context)
-            current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-            if instance_ids:
-                instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
+    def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
+        if cost_center_id:
+            cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s and is_target = True" % (cost_center_id))
+            instance_id = cr.fetchone()
+            current_instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance_id:
+                instance_data = self.pool.get('msf.instance').read(cr, uid, instance_id[0], ['instance'], context=context)
                 return instance_data['instance']
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
