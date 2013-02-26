@@ -110,6 +110,8 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
         if len(a) and len(a) > 1:
             b = self.pool.get(a[0]).browse(cr, uid, [int(a[1])], context=context)
             res = b and b[0] and b[0].name or ''
+            if a[0] == "account.journal":
+                res = b and b[0] and b[0].code or ''
             return res
     if 'partner_id' in vals and vals.get('partner_id', False):
         partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')], context=context)
