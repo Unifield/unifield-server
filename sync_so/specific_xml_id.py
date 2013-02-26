@@ -127,11 +127,14 @@ class hq_entries(osv.osv):
                     cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
                                                                                                  ('code', '=', cost_center_name)], context=context)
                     if len(cost_center_ids) > 0:
-                        instance_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_ids[0]),
-                                                                                                   ('is_target', '=', True)])
-                        if len(instance_ids) > 0:
-                            instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-                            res.append(instance_data['instance'])
+                        target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_ids[0]),
+                                                                                                 ('is_target', '=', True)])
+                        if len(target_ids) > 0:
+                            target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
+                            if target.instance_id and target.instance_id.instance:
+                                res.append(target.instance_id.instance)
+                            else:
+                                res.append(False)
                         else:
                             res.append(False)
                     else:
@@ -191,13 +194,15 @@ class account_analytic_line(osv.osv):
         
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
-            instance_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
+            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
                                                                                        ('is_target', '=', True)])
             current_instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-            if len(instance_ids) > 0:
-                instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-                return instance_data['instance']
-            elif current_instance.parent_id and current_instance.parent_id.instance:
+            if len(target_ids) > 0:
+                target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
+                if target.instance_id and target.instance_id.instance:
+                    return target.instance_id.instance
+                
+            if current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 return current_instance.parent_id.instance
             else:
