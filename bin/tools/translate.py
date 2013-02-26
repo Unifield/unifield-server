@@ -673,9 +673,15 @@ def trans_generate(lang, modules, cr):
                     if not model_data_ids:
                         push_translation(module, 'model', name, 0, encode(obj_value[field_name]))
 
-            if hasattr(field_def, 'selection') and isinstance(field_def.selection, (list, tuple)):
-                for dummy, val in field_def.selection:
-                    push_translation(module, 'selection', name, 0, encode(val))
+            if hasattr(field_def, 'selection'):
+                sel = False
+                if callable(field_def.selection):
+                    sel = field_def.selection(objmodel, cr, uid)
+                else:
+                    sel = field_def.selection
+                if isinstance(sel, (list, tuple)):
+                    for dummy, val in sel:
+                        push_translation(module, 'selection', name, 0, encode(val))
 
         elif model=='ir.actions.report.xml':
             name = encode(obj.report_name)
