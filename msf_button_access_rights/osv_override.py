@@ -63,23 +63,23 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                 button_name = button.attrib.get('name', '')
                 
                 # check if rule gives user access to button
-                rule_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
-                if rule_for_button:
+                rules_for_button = [rule for rule in rules if getattr(rule, 'name', False) == button_name]
+                if rules_for_button:
                     
                     # might have multiple rules (from inherited views), so concatenate groups lists
-                    groups_with_duplicates = [r.group_ids for r in rule_for_button]
+                    groups_with_duplicates = [r.group_ids for r in rules_for_button]
                     groups = []
                     for group in groups_with_duplicates:
                         if isinstance(group, (list, tuple)):
                             for g in group:
-                                if g not in groups:
-                                    groups.append(g)
+                                if g.id not in groups:
+                                    groups.append(g.id)
                     
                     access = False
                     
                     if groups:
                         user = self.pool.get('res.users').read(cr, 1, uid)
-                        if set(user['groups_id']).intersection([g.id for g in rule.group_ids]):
+                        if set(user['groups_id']).intersection(groups):
                             access = True
                     else:
                         access = True
