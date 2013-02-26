@@ -29,21 +29,8 @@ class res_currency_rate(osv.osv):
     _name = 'res.currency.rate'
     _inherit = 'res.currency.rate'
 
-    def _check_rate_unicity(self, cr, uid, ids, context=None):
-        """
-        Check that no rate exists on the same currency with the same date
-        """
-        if not context:
-            context = {}
-        for rate in self.browse(cr, uid, ids):
-            rate_ids = self.search(cr, uid, [('name', '=', rate.name), ('currency_id', '=', rate.currency_id.id)])
-            if rate_ids and len(rate_ids) > 1:
-                raise osv.except_osv('Error', 'You can not have more than one rate valid for a currency on a given date.')
-                return False
-        return True
-
-    _constraints = [
-        (_check_rate_unicity, "Only one rate per date is accorded.", ['currency_id', 'name']),
+    _sql_constraints = [
+        ('rate_unique', 'unique(name, currency_id)', "Only one rate per date is accorded."),
     ]
 
 res_currency_rate()
