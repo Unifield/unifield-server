@@ -85,9 +85,15 @@ class sync_monitor(osv.osv):
 
     def __init__(self, pool, cr):
         super(sync_monitor, self).__init__(pool, cr)
+        self.last_status = None
+        # check table existence
+        cr.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename = %s;",
+                   [self._table])
+        if not cr.fetchone(): return
+        # check rows existence
         monitor_ids = self.search(cr, 1, [], limit=1, order='sequence_number desc')
-        if not monitor_ids:
-            return None
+        if not monitor_ids: return
+        # get the status of the last row
         row = self.read(cr, 1, monitor_ids, ['status', 'end'])[0]
         self.last_status = (row['status'], row['end'])
 
