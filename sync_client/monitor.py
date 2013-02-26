@@ -55,7 +55,7 @@ class MonitorLogger(object):
             self.messages.append(message)
 
     def switch(self, step, status):
-        if status == 'error':
+        if status == 'failed':
             self.success = False
         self.info[step] = status
         if step == 'status':
