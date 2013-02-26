@@ -423,6 +423,10 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                 else:
                                     field.set('attrs', str( {'readonly': domain_value_or} ))
 
+                        # add 'hidden by field access rules' flag
+                        if field_name in self._columns:
+                            field.attrib['help'] = '[Field Disabled by Field Access Rights] ' + self._columns[field_name].help
+                                
                 # get the modified xml string and return it
                 fields_view['arch'] = etree.tostring(view_xml)
                 return fields_view
