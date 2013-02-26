@@ -260,9 +260,9 @@
             </field>
         </record>
 
-    <!-- Actions to display search view analytic OR G/L-->
+    <!-- Actions to display search view (analytic OR G/L) -->
         <record id="action_account_mcdb" model="ir.actions.act_window">
-            <field name="name">Selector - G/L</field>
+            <field name="name">G/L Selector - Saved queries</field>
             <field name="res_model">account.mcdb</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -273,11 +273,34 @@
         </record>
 
         <record id="action_account_mcdb_analytic" model="ir.actions.act_window">
-            <field name="name">Selector - Analytic</field>
+            <field name="name">Analytic Selector - Saved queries</field>
             <field name="res_model">account.mcdb</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_mcdb_tree"/>
+            <field name="search_view_id" ref="account_mcdb_analytic_search"/>
+            <field name="context">{'from': 'account.analytic.line', 'search_default_user': uid}</field>
+            <field name="domain">[('description', '!=', False), ('model', '=', 'account.analytic.line')]</field>
+        </record>
+
+    <!-- Actions to display form view (analytic OR G/L) -->
+        <record id="action_account_mcdb_form" model="ir.actions.act_window">
+            <field name="name">G/L Selector</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="account_mcdb_form"/>
+            <field name="search_view_id" ref="account_mcdb_search"/>
+            <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
+            <field name="context">{'search_default_user': uid}</field>
+        </record>
+
+        <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
+            <field name="name">Analytic Selector</field>
+            <field name="res_model">account.mcdb</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form,tree</field>
+            <field name="view_id" ref="account_mcdb_analytic_form"/>
             <field name="search_view_id" ref="account_mcdb_analytic_search"/>
             <field name="context">{'from': 'account.analytic.line', 'search_default_user': uid}</field>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.analytic.line')]</field>
@@ -312,8 +335,10 @@
 
     <!-- Menu -->
         <menuitem id="menu_finance_mcdb" name="Selector" parent="account.menu_finance" sequence="9"/>
-        <menuitem string="Selector - G/L" action="action_account_mcdb" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
-        <menuitem string="Selector - Analytic" action="action_account_mcdb_analytic" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="2"/>
+        <menuitem string="G/L Selector" action="action_account_mcdb_form" id="menu_finance_mcdb_move_line" parent="menu_finance_mcdb" sequence="1"/>
+        <menuitem string="G/L Selector - Saved queries" action="action_account_mcdb" id="menu_finance_mcdb_move_line_search" parent="menu_finance_mcdb" sequence="2"/>
+        <menuitem string="Analytic Selector" action="action_account_mcdb_analytic_form" id="menu_finance_mcdb_analytic_move_line" parent="menu_finance_mcdb" sequence="3"/>
+        <menuitem string="Analytic Selector - Saved queries" action="action_account_mcdb_analytic" id="menu_finance_mcdb_analytic_move_line_search" parent="menu_finance_mcdb" sequence="4"/>
 
     <!-- Redefine MCDB to add instance -->
         <record id="account_mcdb_form_instance_inherit" model="ir.ui.view">
