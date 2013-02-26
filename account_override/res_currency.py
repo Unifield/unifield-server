@@ -47,15 +47,18 @@ class res_currency(osv.osv):
         if not context:
             context = {}
         for c in self.browse(cr, uid, ids):
+            if not c.currency_name:
+                continue
             sql = """SELECT id, name
             FROM res_currency
-            WHERE (currency_name ilike %s)
-            AND (active in ('t', 'f'))"""
+            WHERE currency_name ilike %s"""
             if c.currency_table_id:
-                sql += """\nAND currency_table_id = %s""" % c.currency_table_id.id
-            cr.execute(sql, (ustr(c.currency_name),))
+                sql += """\nAND currency_table_id in %s"""
+                cr.execute(sql, (c.currency_name, tuple([c.currency_table_id.id])))
+            else:
+                cr.execute(sql, (c.currency_name,))
             bad_ids = cr.fetchall()
-            if len(bad_ids) and len(bad_ids) > 1:
+            if bad_ids and len(bad_ids) > 1:
                 return False
         return True
 
@@ -67,15 +70,18 @@ class res_currency(osv.osv):
         if not context:
             context = {}
         for c in self.browse(cr, uid, ids):
+            if not c.name:
+                continue
             sql = """SELECT id, name
             FROM res_currency
-            WHERE (name ilike %s)
-            AND (active in ('t', 'f'))"""
+            WHERE name ilike %s"""
             if c.currency_table_id:
-                sql += """\nAND currency_table_id = %s""" % c.currency_table_id.id
-            cr.execute(sql, (ustr(c.name),))
+                sql += """\nAND currency_table_id in %s"""
+                cr.execute(sql, (c.name, tuple([c.currency_table_id.id])))
+            else:
+                cr.execute(sql, (c.name,))
             bad_ids = cr.fetchall()
-            if len(bad_ids) and len(bad_ids) > 1:
+            if bad_ids and len(bad_ids) > 1:
                 return False
         return True
 
