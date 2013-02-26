@@ -161,6 +161,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                 batch_list = prodlot_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)])
                                 if batch_list:
                                     batch = batch_list[0]
+                                else:
+                                    error += _("Line %s of the imported file  : the expiry date does not match with any batch number of the product\n") % (line_num,)
                             else:
                                 # if the expiry date and batch exist, the expiry date indicated here and the one on the batch should be the same
                                 if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)]):
