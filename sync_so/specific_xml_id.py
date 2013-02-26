@@ -196,7 +196,7 @@ class account_analytic_line(osv.osv):
         if cost_center_id:
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
                                                                                        ('is_target', '=', True)])
-            current_instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
             if len(target_ids) > 0:
                 target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
                 if target.instance_id and target.instance_id.instance:
