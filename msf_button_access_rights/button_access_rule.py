@@ -38,10 +38,7 @@ class button_access_rule(osv.osv):
         res = dict.fromkeys(ids, '')
         records = self.browse(cr, uid, ids)
         for record in records:
-            group_names = ''
-            for g in record.group_ids:
-                group_names = group_names + g.name + ', '
-            res[record.id] = group_names[:-2]
+            res[record.id] = ', '.join([g.name for g in record.group_ids])
         return res
 
     _columns = {
@@ -66,7 +63,7 @@ class button_access_rule(osv.osv):
     
     def _get_family_ids(self, cr, view_id):
         """
-        Return a list of ids for all the children of view_id + view_id 
+        Return a list of ids for all the children of view_id (and contains the view_id itself)
         """
         family_ids = [view_id]
         last_ids = [view_id]
