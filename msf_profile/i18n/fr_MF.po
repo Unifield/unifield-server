@@ -2806,6 +2806,7 @@ msgstr "Caisse: "
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:purchase.order.line,po_state:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_state:0
 #: view:report.stock.move:0
 #: selection:report.stock.move,state:0
 #: selection:stock.move,state:0
@@ -7420,6 +7421,9 @@ msgstr "Fichier du module importé avec succès !"
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:purchase.order.line,po_state:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_line_state:0
+#: selection:sourcing.line,sale_order_state:0
+#: selection:sourcing.line,state:0
 #: selection:initial.stock.inventory,state:0
 #: selection:report.stock.inventory,state:0
 #: selection:report.stock.move,state:0
@@ -19357,6 +19361,7 @@ msgstr "Vous ne pouvez pas créer un numéro de lot standard pour un produit don
 #: selection:sale.report,state:0
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_state:0
 msgid "Shipping Exception"
 msgstr "Expédition Exception"
 
@@ -19953,6 +19958,7 @@ msgstr "Mouvements pour ce lot de production"
 #: selection:purchase.order.line,po_state:0
 #: selection:sourcing.line,sale_order_state_search:0
 #: selection:purchase.order.line,order_state:0
+#: selection:sourcing.line,sale_order_state:0
 msgid "Invoice Exception"
 msgstr "Exception Facture"
 
@@ -27402,7 +27408,7 @@ msgstr "Produit disponible"
 msgid "FO - draft"
 msgstr "Commande de Terrain - brouillon"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, out_step, base, stock, return_claim, analytic_distribution, msf_supply_doc_import
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, out_step, base, stock, return_claim, analytic_distribution, msf_supply_doc_import, sourcing
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -27434,6 +27440,8 @@ msgstr "Commande de Terrain - brouillon"
 #: selection:wizard.import.ir.line,state:0
 #: selection:wizard.import.po.line,state:0
 #: selection:wizard.import.tender.line,state:0
+#: selection:sourcing.line,sale_order_line_state:0
+#: selection:sourcing.line,state:0
 msgid "Done"
 msgstr "Terminé"
 
@@ -30554,10 +30562,12 @@ msgstr "Enregistrer un Contrat"
 msgid "Note Type"
 msgstr "Type de Note"
 
-#. modules: procurement, sale, purchase
+#. modules: procurement, sale, purchase, sourcing
 #: selection:procurement.order,state:0
 #: view:purchase.order:0
 #: selection:sale.order.line,state:0
+#: selection:sourcing.line,sale_order_line_state:0
+#: selection:sourcing.line,state:0
 msgid "Exception"
 msgstr "Exception"
 
@@ -35069,6 +35079,7 @@ msgstr "Prévisions"
 #: selection:sale.report,state:0
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_state:0
 msgid "Waiting Schedule"
 msgstr "En attente"
 
@@ -36545,6 +36556,9 @@ msgstr "Dépendance du Module"
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:purchase.order.line,po_state:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_line_state:0
+#: selection:sourcing.line,sale_order_state:0
+#: selection:sourcing.line,state:0
 #: selection:initial.stock.inventory,state:0
 #: selection:stock.cost.reevaluation,state:0
 #: selection:report.stock.inventory,state:0
@@ -38152,6 +38166,7 @@ msgstr "Type de ligne"
 #: selection:sourcing.line,sale_order_state_search:0
 #: view:stock.move:0
 #: selection:stock.move.split.lines,action:0
+#: selection:sourcing.line,sale_order_state:0
 msgid "Split"
 msgstr "Fractionner"
 
@@ -40014,6 +40029,9 @@ msgstr "Compte- Correspondance"
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:purchase.order.line,po_state:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_line_state:0
+#: selection:sourcing.line,sale_order_state:0
+#: selection:sourcing.line,state:0
 #: selection:initial.stock.inventory,state:0
 #: selection:stock.cost.reevaluation,state:0
 #: selection:report.stock.inventory,state:0
@@ -43283,6 +43301,7 @@ msgstr "Commande de Terrain – validée"
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:purchase.order.line,po_state:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_state:0
 #: selection:purchase.order.line,order_state:0
 #: selection:sync.client.child_entity,state:0
 msgid "Validated"
@@ -63742,6 +63761,9 @@ msgstr "Votre référence"
 #: field:sale.order.line.followup,sourced_ok:0
 #: view:sourcing.line:0
 #: selection:sourcing.line,sale_order_state_search:0
+#: selection:sourcing.line,sale_order_line_state:0
+#: selection:sourcing.line,sale_order_state:0
+#: selection:sourcing.line,state:0
 msgid "Sourced"
 msgstr "Sourcé"
 
