@@ -429,6 +429,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 values.update({'location_dest_id': cross_docking_location})
+                values.update({'cd_from_bo': True})
             elif var.dest_type == 'to_stock':
                 var.source_type = None
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because
@@ -442,6 +443,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 else:
                     # treat moves towards STOCK if NOT SERVICE
                     values.update({'location_dest_id': stock_location_input})
+                values.update({'cd_from_bo': False})
         return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):

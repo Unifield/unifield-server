@@ -20,7 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
-
+import traceback
 import time
 
 from tools.translate import _
@@ -387,7 +387,6 @@ class stock_picking(osv.osv):
         values = kwargs.get('values')
         assert values is not None, 'missing values'
         return values
-
     
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         '''
@@ -399,6 +398,7 @@ class stock_picking(osv.osv):
         assert context, 'context is not defined'
         assert 'partial_datas' in context, 'partial datas not present in context'
         partial_datas = context['partial_datas']
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -628,10 +628,11 @@ class stock_picking(osv.osv):
             # At first we confirm the new picking (if necessary) - **corrected** inverse openERP logic !
             if backorder_id:
                 # done moves go to new picking object
-                move_obj.write(cr, uid, done_moves, {'picking_id': backorder_id}, context=context)
+
+                move_obj.write(cr, uid, done_moves, {'picking_id': backorder_id, }, context=context)
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id}, context=context)
+                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id,'cd_from_bo':values.get('cd_from_bo',False)}, context=context)
                 self.action_move(cr, uid, [backorder_id])
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
