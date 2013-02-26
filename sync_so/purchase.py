@@ -97,7 +97,7 @@ class purchase_order_sync(osv.osv):
         line_obj = self.pool.get('purchase.order.line')
         i = 0
         for line in default['order_line']:
-            orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', line[2]['original_purchase_line_id'])])
+            orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', line[2].get('original_purchase_line_id'))])
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
                 default['order_line'][i][2].update({'move_dest_id': orig_line.move_dest_id.id})
