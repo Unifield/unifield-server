@@ -29,7 +29,9 @@ class product_list(osv.osv):
     _inherit = 'product.list'
 
     _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Comment'),
+        'file_to_import': fields.binary(string='File to import', filters='*.xml',
+                                        help=_("""You can use the template of the export for the format that you need to use. \n
+                                        The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Comment""")),
     }
 
     def import_file(self, cr, uid, ids, context=None):

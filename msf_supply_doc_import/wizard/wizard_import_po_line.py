@@ -55,17 +55,6 @@ class wizard_import_po_line(osv.osv_memory):
                                   string="State", required=True, readonly=True),
     }
 
-    _defaults = {
-        'message': lambda *a : """
-        IMPORTANT : The first line will be ignored by the system.
-        The file should be in XML 2003 format.
-
-The columns should be in this values:
-%s
-""" % (', \n'.join(columns_for_po_line_import), ),
-        'state': lambda *a: 'draft',
-    }
-
     def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
@@ -129,7 +118,7 @@ The columns should be in this values:
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += """Line %s: You should have exactly %s columns in this order: %s \n""" % (line_num, template_col_count,','.join(columns_for_po_line_import))
+                    message += _("""Line %s: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_po_line_import))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -199,7 +188,8 @@ The columns should be in this values:
                         complete_lines += 1
 
                 except IndexError, e:
-                    error_log += _("The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
+                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
+                                   ) % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -207,12 +197,12 @@ The columns should be in this values:
                 except osv.except_osv as osv_error:
                     osv_value = osv_error.value
                     osv_name = osv_error.name
-                    message += _("Line %s in your Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                     ignore_lines += 1
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 except Exception, e:
-                    message += _("""Line %s: Uncaught error: %s""") % (line_num, e)
+                    message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
                 finally:
@@ -254,7 +244,7 @@ Importation completed in %s!
         for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
             po_id = wiz_read['po_id']
             if not wiz_read['file']:
-                return self.write(cr, uid, ids, {'message': "Nothing to import"})
+                return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
                 # iterator on rows
@@ -291,7 +281,7 @@ Otherwise, you can continue to use Unifield.""")
             po_id = wiz_read['po_id']
             po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
+                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (po_name, )})
         return False
 
     def cancel(self, cr, uid, ids, context=None):
