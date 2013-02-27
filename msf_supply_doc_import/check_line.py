@@ -158,6 +158,7 @@ def compute_uom_value(cr, uid, **kwargs):
     """
     Retrieves product UOM from Excel file
     """
+    context = kwargs['context']
     row = kwargs['row']
     uom_obj = kwargs['uom_obj']
     product_obj = kwargs['product_obj']
@@ -177,7 +178,7 @@ def compute_uom_value(cr, uid, **kwargs):
         if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
             if row.cells[cell_nb].type == 'str':
                 uom_name = row.cells[cell_nb].data.strip()
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
+                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                 if uom_ids:
                     uom_id = uom_ids[0]
             else:
