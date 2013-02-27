@@ -265,7 +265,7 @@ class product_nomenclature(osv.osv):
         ret = {}
         for id in ids:
             ret[id] = value
-
+        print ret
         return ret
 
     def _get_childs(self, cr, uid, narg, ids):
@@ -282,7 +282,6 @@ class product_nomenclature(osv.osv):
             return []
         narg = []
         for arg in args:
-            id_rech = self.search(cr,uid,[('parent_id','=',arg[2])])
             ids_rech = self._get_childs(cr, uid, narg, [arg[2]])
         ids_rech += [arg[2]]
         return [('id','in',ids_rech)]
@@ -354,6 +353,26 @@ class product_nomenclature(osv.osv):
             result['value'] = newval
         return result
     
+    def _get_fake(self, cr, uid, ids, fields, *a, **b):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        return ret
+
+    def _search_nomen_type_s(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        narg = []
+        for arg in args:
+            id_rech = self.search(cr,uid,[('parent_id','=',arg[2])])
+            if arg[2] == 'mandatory':
+                narg += [('type','=',arg[2])]
+            else:
+                narg += [('type','=',arg[2] )]
+        return narg
+
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
     _columns = {
@@ -380,6 +399,8 @@ class product_nomenclature(osv.osv):
         'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
+
+        'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'),('optional', 'Optional')],  string='Nomenclature type', fnct_search=_search_nomen_type_s ),
 
     }
 

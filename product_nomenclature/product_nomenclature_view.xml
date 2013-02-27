@@ -243,6 +243,7 @@
 		        <search string="Link nomenclature/category">
 		            <field name="name" />
 		            <field name="category_id" />
+				<field name="nomen_type_s"  />
 
 				<newline />
 						<group expand="1" string="Nomenclature Filters...">
@@ -263,7 +264,7 @@
 								 widget="selection"
 								on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, True, context)" />
 						</group>
-
+						<newline />
 
 
 		        </search>
