@@ -668,7 +668,7 @@ class composition_kit(osv.osv):
                 lot_name = obj.composition_lot_id.name
                 prod_name = obj.composition_product_id.name
                 exp_obj = datetime.strptime(value, db_date_format)
-                lot_obj.log(cr, uid, obj.composition_lot_id.id, _('Expiry Date of Batch Number %s for product %s has been updated to %s.'%(lot_name,prod_name,exp_obj.strftime(date_format))))
+                lot_obj.log(cr, uid, obj.composition_lot_id.id, _('Expiry Date of Batch Number %s for product %s has been updated to %s.')%(lot_name,prod_name,exp_obj.strftime(date_format)))
             else:
                 # not lot because the product is not batch managment, we have a reference instead, we write in composition_ref_exp
                 self.write(cr, uid, ids, {'composition_ref_exp': value}, context=context)

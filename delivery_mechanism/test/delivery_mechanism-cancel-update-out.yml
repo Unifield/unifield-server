@@ -4,7 +4,7 @@
   !record {model: sale.order, id: so_J}:
     company_id: base.main_company
     date_order: '2011-04-13'
-    invoice_quantity: order
+    invoice_quantity: procurement
     order_policy: manual
     partner_id: partner_A
     partner_invoice_id: address_A
@@ -112,7 +112,7 @@
           # the move should be canceled
           assert move.state == 'cancel', 'the out move product B should be canceled - cancel - %s'%move.state
       # check the sale order, it should be manually corrected
-      assert obj.sale_id.state == 'manual', 'corresponding sale order state is wrong - manual - %s'%obj.sale_id.state
+      assert obj.sale_id.state == 'done', 'corresponding sale order state is wrong - done - %s'%obj.sale_id.state
     # all qty must be empty
     assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
     assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty

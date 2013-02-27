@@ -175,6 +175,22 @@ class product_list_report_xls(WebKitParser):
 
 product_list_report_xls('report.product.list.xls', 'product.list', 'addons/msf_supply_doc_export/report/product_list_xls.mako')
 
+class composition_kit_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(composition_kit_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(composition_kit_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+composition_kit_xls('report.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_composition_kit_xls.mako')
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
@@ -264,6 +280,14 @@ class ir_values(osv.osv):
                     if v[2]['report_name'] in ('picking.ticket', 'labels'):
                         new_act.append(v)
                 values = new_act
+
+        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if context.get('composition_type')=='theoretical' and v[2]['report_name'] == 'composition.kit.xls':
+                    new_act.append(v)
+            values = new_act
+
         return values
 
 ir_values()
