@@ -176,8 +176,7 @@ def compute_uom_value(cr, uid, **kwargs):
     msg = ''
     cell_nb = kwargs.get('cell_nb', 3)
     try:
-        # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
-        if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
             if row.cells[cell_nb].type == 'str':
                 uom_name = row.cells[cell_nb].data.strip()
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
