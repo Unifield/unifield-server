@@ -146,6 +146,97 @@ class hq_entries(osv.osv):
 
 hq_entries()
 
+
+class account_target_costcenter(osv.osv):
+    
+    _inherit = 'account.target.costcenter'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if dest_field == 'instance_id':
+            res = []
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                res_data.append(project.instance)
+                        res.append(res_data)
+                    else:
+                        res.append(False)
+                else:
+                    res.append(False)
+            return res
+        return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+    
+    def create(self, cr, uid, vals, context={}):
+        res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
+        # create lines in instance's children
+        if 'instance_id' in vals:
+            instance = self.pool.get('msf.instance').browse(cr, uid, vals['instance_id'], context=context)
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+            if instance.state == 'active' and current_instance.level == 'section':
+                # "touch" cost center if instance is active (to sync to new targets)
+                self.pool.get('account.analytic.account').write(cr, uid, [vals['cost_center_id']], {'category': 'OC'}, context=context)
+                self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
+                                                                         'res_id' : vals['cost_center_id'],
+                                                                         'fields_modif' : "['category']"}, context=context)
+        return res_id
+
+account_target_costcenter()
+
+class account_analytic_account(osv.osv):
+    
+    _inherit = 'account.analytic.account'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        # get all active project instance with the cost center in one of its target lines 
+        if dest_field == 'category':
+            if isinstance(ids, (long, int)):
+                ids = [ids]
+            res = []
+            for id in ids:
+                cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s" % (id))
+                instance_ids = [x[0] for x in cr.fetchall()]
+                if len(instance_ids) > 0:
+                    res_temp = []
+                    for instance_id in instance_ids:
+                        cr.execute("select instance from msf_instance where id = %s and state = 'active'" % (instance_id))
+                        res_temp.append(cr.fetchone()[0])
+                    res.append(res_temp)
+                else:
+                    res.append(False)
+            return res
+        
+        return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+account_analytic_account()
+
+class msf_instance(osv.osv):
+    
+    _inherit = 'msf.instance'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if 'state' in vals and vals['state'] == 'active' and current_instance.level == 'section':
+            for instance in self.browse(cr, uid, ids, context=context):
+                if instance.state != 'active':
+                    # only for now-activated instances (first push)
+                    # touch cost centers and account_Target_cc lines in order to sync them
+                    target_ids = [x.id for x in instance.target_cost_center_ids]
+                    cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
+                    self.pool.get('account.target.costcenter').write(cr, uid, target_ids, {'instance': instance.id}, context=context)
+                    self.pool.get('account.analytic.account').write(cr, uid, cost_center_ids, {'category': 'OC'}, context=context)
+                    for cost_center_id in cost_center_ids:
+                        self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
+                                                                                 'res_id' : cost_center_id,
+                                                                                 'fields_modif' : "['category']"}, context=context)
+        return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+
+msf_instance()
+
 from sync_common.common import format_data_per_id 
 from sync_client.ir_model_data import generate_message_for_destination
 

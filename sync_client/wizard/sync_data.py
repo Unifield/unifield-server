@@ -165,17 +165,23 @@ class update_to_send(osv.osv):
         versions = obj.version(cr, uid, ids_to_compute, context=context)
         clean_included_fields = self._clean_included_fields(cr, uid, included_fields)
         for (i, row) in enumerate(datas):
-            self.create(cr, uid, {
-                'session_id' : session_id,
-                'values' : tools.ustr(row),
-                'model' : rule.model.id,
-                'version' : versions[i] + 1,
-                'rule_id' : rule.id,
-                'xml_id' : xml_ids[i],
-                'fields' : ustr_included_fields,
-                'owner' : owners[i],
-            }, context=context)
-            self._logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
+            update_owners = []
+            if not issubclass(type(owners[i]), (list, tuple)):
+                update_owners = [owners[i]]
+            else:
+                update_owners = owners[i]
+            for update_owner in update_owners:
+                self.create(cr, uid, {
+                    'session_id' : session_id,
+                    'values' : tools.ustr(row),
+                    'model' : rule.model.id,
+                    'version' : versions[i] + 1,
+                    'rule_id' : rule.id,
+                    'xml_id' : xml_ids[i],
+                    'fields' : ustr_included_fields,
+                    'owner' : update_owner,
+                }, context=context)
+                self._logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
 
     def create_package(self, cr, uid, session_id, packet_size, context=None):
         ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, context=context)
