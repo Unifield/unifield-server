@@ -265,6 +265,7 @@ def compute_currency_value(cr, uid, **kwargs):
     """
     Retrieves Currency from Excel file or take the one from the parent
     """
+    context = kwargs['context']
     row = kwargs['row']
     functional_currency_id = kwargs['to_write']['functional_currency_id']
     warning_list = kwargs['to_write']['warning_list']
@@ -281,7 +282,7 @@ def compute_currency_value(cr, uid, **kwargs):
             if curr:
                 if row.cells[cell_nb].type == 'str':
                     curr_name = curr.strip().upper()
-                    currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
+                    currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)], context=context)
                     if currency_ids and browse_sale:
                         if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
                             fc_id = currency_ids[0]
