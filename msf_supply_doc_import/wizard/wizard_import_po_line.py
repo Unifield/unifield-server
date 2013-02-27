@@ -19,6 +19,7 @@
 #
 ##############################################################################
 import threading
+import logging
 import pooler
 from osv import osv, fields
 from tools.translate import _
@@ -204,6 +205,7 @@ class wizard_import_po_line(osv.osv_memory):
                 except UnicodeEncodeError as e:
                     message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    logging.getLogger('import purchase order').info('Error %s' % e)
                     continue
 #                except Exception, e:
 #                    message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
