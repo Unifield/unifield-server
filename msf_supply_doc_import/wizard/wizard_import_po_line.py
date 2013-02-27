@@ -134,41 +134,41 @@ class wizard_import_po_line(osv.osv_memory):
     
                     # Cell 0: Product Code
                     p_value = {}
-                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, cell_nb=header_index['Product Code'],product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
                                      'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
     
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, cell_nb=header_index['Quantity'], row=row, to_write=to_write, context=context)
+                    qty_value = check_line.quantity_value(product_obj=product_obj, cell_nb=header_index[_('Quantity')], row=row, to_write=to_write, context=context)
                     to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'],
                                      'warning_list': qty_value['warning_list']})
     
                     # Cell 3: UOM
                     uom_value = {}
-                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, cell_nb=header_index['UoM'], product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('UoM')], product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
     
                     # Cell 4: Price
                     price_value = {}
-                    price_value = check_line.compute_price_value(row=row, to_write=to_write, cell_nb=header_index['Price'], price='Cost Price', context=context)
+                    price_value = check_line.compute_price_value(row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price', context=context)
                     to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
                                      'warning_list': price_value['warning_list'], 'price_unit_defined': price_value['price_unit_defined']})
     
                     # Cell 5: Delivery Request Date
                     date_value = {}
-                    date_value = check_line.compute_date_value(cell_nb=header_index['Delivery requested date'], row=row, to_write=to_write, context=context)
+                    date_value = check_line.compute_date_value(cell_nb=header_index[_('Delivery requested date')], row=row, to_write=to_write, context=context)
                     to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
     
                     # Cell 6: Currency
                     curr_value = {}
-                    curr_value = check_line.compute_currency_value(cr, uid, cell_nb=header_index['Currency'], browse_purchase=po_browse,
+                    curr_value = check_line.compute_currency_value(cr, uid, cell_nb=header_index[_('Currency')], browse_purchase=po_browse,
                                                         currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
     
                     # Cell 7: Comment
                     c_value = {}
-                    c_value = check_line.comment_value(row=row, cell_nb=header_index['Comment'], to_write=to_write, context=context)
+                    c_value = check_line.comment_value(row=row, cell_nb=header_index[_('Comment')], to_write=to_write, context=context)
                     to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                     to_write.update({
                         'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red

@@ -135,7 +135,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                         if prod.batch_management and not row[3]:
                             error += _("Line %s of the imported file: Batch Number required\n") % (line_num, prod.default_code)
                         if row[3]:
-                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])])
+                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])], context=context)
                             if not lot and consumed_qty:
                                 error +=  _("Line %s of the imported file: Batch Number %s not found. \n") % (line_num, row[3])
                             elif lot:
@@ -158,14 +158,14 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                         """) % (line_num, row[4], e)
                         if expiry_date and product_id:
                             if not batch:
-                                batch_list = prodlot_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)])
+                                batch_list = prodlot_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)], context=context)
                                 if batch_list:
                                     batch = batch_list[0]
                                 else:
                                     error += _("Line %s of the imported file  : the expiry date does not match with any batch number of the product\n") % (line_num,)
                             else:
                                 # if the expiry date and batch exist, the expiry date indicated here and the one on the batch should be the same
-                                if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)]):
+                                if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)], context=context):
                                     batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
                                     expiry_date = batch_read['life_date']
                                     error += _("""Line %s of the imported file: expiry date has been changed to %s which is the system BN date (was wrong in the file)
