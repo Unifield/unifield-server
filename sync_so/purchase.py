@@ -113,11 +113,14 @@ class purchase_order_sync(osv.osv):
                 orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id)], context=context)
                 if orig_line:
                     line = line_obj.browse(cr, uid, orig_line[0], context=context)
-                    proc_ids.append(line.procurement_id.id)
-                    order_ids.append(line.order_id.id)
+                    if line.procurement_id:
+                        proc_ids.append(line.procurement_id.id)
+                    if line.order_id:
+                        order_ids.append(line.order_id.id)
                     
-        self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
-        netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
+        if proc_ids:
+            self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
+            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
         
         # after created this splitted PO, pass it to the confirmed, as the split SO has been done so too.
         if so_info.state in ('confirmed', 'progress'):
