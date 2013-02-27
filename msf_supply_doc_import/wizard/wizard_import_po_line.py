@@ -201,10 +201,10 @@ class wizard_import_po_line(osv.osv_memory):
                     ignore_lines += 1
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     continue
-                except Exception, e:
-                    message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
-                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    continue
+#                except Exception, e:
+#                    message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
+#                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+#                    continue
                 finally:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     cr.commit()
