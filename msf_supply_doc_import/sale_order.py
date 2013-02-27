@@ -65,6 +65,20 @@ class sale_order(osv.osv):
 #                                                """ % MAX_LINES_NB),
 #    }
 
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.order_line  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
+    _columns = {
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
+    }
+
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
         Remove lines

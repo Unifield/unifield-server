@@ -429,7 +429,7 @@ class procurement_request_line(osv.osv):
         'date_planned': _get_planned_date,
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'product_ok': False,
-        'comment_ok': False,
+        'comment_ok': True,
     }
     
 
