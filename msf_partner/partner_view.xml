@@ -98,7 +98,7 @@
         <!-- id: view_partner_property_purchase_form, name: res.partner.purchase.property.form.inherit, inherit_id: purchase.view_partner_property_form was here -->
         <!-- id: view_partner_property_sale_form, name: res.partner.sale.property.form.inherit, inherit_id: product.view_partner_property_form was here -->
 
-        <record id="msf_view_tree_repalce" model="ir.ui.view">
+        <record id="msf_view_tree_replace" model="ir.ui.view">
             <field name="name">msf.view.partner.tree.replace</field>
             <field name="model">res.partner</field>
             <field name="type">tree</field>
