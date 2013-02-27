@@ -75,7 +75,7 @@ Product Code*, Product Description*, Comment""" % line_num))
             product_code = row.cells[0].data
             if product_code:
                 product_code = product_code.strip()
-                product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
+                product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
                 if product_ids:
                     product_id = product_ids[0]
 
@@ -83,7 +83,7 @@ Product Code*, Product Description*, Comment""" % line_num))
             p_name = row.cells[1].data
             if not product_id and p_name:
                 p_name = p_name.strip()
-                product_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
+                product_ids = product_obj.search(cr, uid, [('name', '=', p_name)], context=context)
                 if product_ids:
                     product_id = product_ids[0]
 

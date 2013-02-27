@@ -128,7 +128,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     if product_code in product_cache:
                         product_id = product_cache.get(product_code)
                     if not product_id:
-                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
+                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
                         if product_ids:
                             product_id = product_ids[0]
                             product_cache.update({product_code: product_id})
@@ -146,7 +146,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 try:
                     p_name = p_name.strip()
-                    product_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
+                    product_ids = product_obj.search(cr, uid, [('name', '=', p_name)], context=context)
                     if not product_ids:
                         to_correct_ok = True
                         import_to_correct = True
@@ -193,7 +193,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 try:
                     location_name = loc_id.strip()
-                    loc_ids = location_obj.search(cr, uid, [('name', '=', location_name)])
+                    loc_ids = location_obj.search(cr, uid, [('name', '=', location_name)], context=context)
                     if not loc_ids:
                         location_id = False
                         to_correct_ok = True
@@ -250,7 +250,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 if hidden_perishable_mandatory and not expiry:
                     comment += _('Expiry date is missing.\n')
             else:
-                product_uom = self.pool.get('product.uom').search(cr, uid, [])[0]
+                product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
                 hidden_batch_management_mandatory = False
                 hidden_perishable_mandatory = False
 
