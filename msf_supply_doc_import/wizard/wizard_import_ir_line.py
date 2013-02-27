@@ -116,6 +116,7 @@ The columns should be in this values:
                     'date_planned': fo_browse.delivery_requested_date,
                     'functional_currency_id': fo_browse.pricelist_id.currency_id.id,
                     'price_unit': 1,  # in case that the product is not found and we do not have price
+                    'cost_price': 0,
                     'product_qty': 1,
                     'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
                     'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
@@ -148,7 +149,7 @@ The columns should be in this values:
                     # Cell 0: Product Code
                     p_value = {}
                     p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
+                    to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'cost_price': p_value['cost_price'],
                                      'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
     
                     # Cell 2: Quantity
@@ -158,8 +159,8 @@ The columns should be in this values:
     
                     # Cell 3: Cost Price
                     price_value = {}
-                    price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Field Price', context=context)
-                    to_write.update({'cost_price': price_value['price_unit'], 'error_list': price_value['error_list'],
+                    price_value = check_line.compute_price_value(cell_nb=3, row=row, to_write=to_write, price='Cost Price', context=context)
+                    to_write.update({'cost_price': price_value['cost_price'], 'error_list': price_value['error_list'],
                                      'warning_list': price_value['warning_list']})
     
                     # Cell 4: UoM
