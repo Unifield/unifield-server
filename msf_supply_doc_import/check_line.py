@@ -24,6 +24,7 @@ This module is dedicated to help checking lines of Excel file at importation.
 """
 from msf_supply_doc_import import MAX_LINES_NB
 from tools.translate import _
+import logging
 
 
 def check_nb_of_lines(**kwargs):
@@ -51,7 +52,9 @@ def check_empty_line(**kwargs):
         try:
             if row.cells[cell].data:
                 return True
-        except TypeError:
+        except TypeError as e:
+            # Errors should never pass silently.
+            logging.getLogger('check empty line').info('Error %s' % e)
             pass
 
 
