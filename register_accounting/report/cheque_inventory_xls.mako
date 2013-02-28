@@ -104,6 +104,7 @@
 <Table ss:ExpandedColumnCount="17">
 <Column ss:Width="70.5" ss:Span="1"/><Column ss:Index="3" ss:Width="72.75"/><Column ss:Width="67.5"/><Column ss:Width="73.5"/><Column ss:Width="61.5"/><Column ss:Width="75.75"/><Column ss:Width="113.25"/><Column ss:Width="81"/><Column ss:Width="48.75"/><Column ss:Width="199.5"/><Column ss:AutoFitWidth="0" ss:Width="229.5"/><Column ss:Width="57.75"/><Column ss:Width="44.25"/><Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
 
+
     <Row>
         <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('CHEQUE INVENTORY')}</Data></Cell>
     </Row>
@@ -130,10 +131,11 @@
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Reference')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Account')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Third Parties')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount In')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount Out')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. Amount')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. CCY')}</Data></Cell>
+
 	</Row>
     % for line in o.line_ids:
         % if line.statement_id.journal_id.type == 'cheque' and not line.amount >= 0.0 and line.first_move_line_id :
@@ -142,21 +144,18 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.journal_id and line.statement_id.journal_id.code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.state or '')|x}</Data></Cell>
-
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and getSel(line,'state') or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
-
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.cheque_number and line.cheque_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.sequence_for_reference and line.sequence_for_reference or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id and line.first_move_line_id.ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.account_id and line.account_id.code and line.account_id.name and line.account_id.code + ' ' + line.account_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id and line.first_move_line_id.partner_txt or '')|x}</Data></Cell>
-
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.amount_in and line.amount_in or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.amount_out and line.amount_out or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id and line.currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.functional_out and line.functional_out or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
 
     </Row>
