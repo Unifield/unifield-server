@@ -14,6 +14,7 @@
   !python {model: tender}: |
     wizard_values = self.wizard_import_tender_line(cr, uid, ref("t1"), context)
     assert wizard_values.get('res_model', False) == 'wizard.import.tender.line', "Wizard should be wizard.import.tender.line"
+    self.pool.get('wizard.import.tender.line').cancel(cr, uid, wizard_values['res_id'], context)
 -
   Import tender lines
 -
@@ -23,7 +24,6 @@
     file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'tender.xml')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
-    logging.getLogger('tests').log(logging.TEST, 'Tender is %s.' % ref('t1'))
     vals={'file': file64,
           'filename_template': 'template.xls',
           'filename': 'Lines_Not_Imported.xls',
@@ -37,7 +37,7 @@
     logging.getLogger('tests').log(logging.TEST, 'We refresh the view.')
     self.dummy(cr, uid, wizard_id, context)
     wiz_read = self.read(cr, uid, wizard_id, ['state', 'percent_completed', 'data'])
-    logging.getLogger('tests').log(logging.TEST, 'The import is finished (%s). \n Completed: %s' % (wiz_read['state'], wiz_read['percent_completed']))
+    logging.getLogger('tests').log(logging.TEST, 'The import is finished. Completed: %s' % (wiz_read['percent_completed']))
     logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error.')
     fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['data']))
     rows = fileobj.getRows()
