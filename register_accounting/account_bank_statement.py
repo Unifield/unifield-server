@@ -1511,12 +1511,11 @@ class account_bank_statement_line(osv.osv):
         if 'employee_id' or 'partner_type' in values:
             res = []
             for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id']):
-                if not line.get('analytic_distribution_id', False) and (not 'analytic_distribution_id' in values or values.get('analytic_distribution_id') is False):
-                    if not 'account_id' in values:
-                        values.update({'account_id': line.get('account_id')[0]})
-                    if not 'statement_id' in values:
-                        values.update({'statement_id': line.get('statement_id')[0]})
-                    values = self._update_employee_analytic_distribution(cr, uid, values)
+                if not 'account_id' in values:
+                    values.update({'account_id': line.get('account_id')[0]})
+                if not 'statement_id' in values:
+                    values.update({'statement_id': line.get('statement_id')[0]})
+                values = self._update_employee_analytic_distribution(cr, uid, values)
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
                 res.append(tmp)
             return res
