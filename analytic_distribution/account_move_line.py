@@ -263,7 +263,7 @@ class account_move_line(osv.osv):
             if l.move_id.status != 'manu':
                 continue
             # Do not continue if no employee or no cost center (could not be invented)
-            if not l.employee_id or not l.employee_id.cost_center_id or l.analytic_distribution_id:
+            if not l.employee_id or not l.employee_id.cost_center_id:
                 continue
             if l.account_id and l.account_id.user_type.code == 'expense':
                 vals = {'cost_center_id': l.employee_id.cost_center_id.id}
@@ -295,6 +295,8 @@ class account_move_line(osv.osv):
                         self.pool.get('free.1.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free1_id.id})
                     if l.employee_id.free2_id:
                         self.pool.get('free.2.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 200.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free2_id.id})
+                    if context.get('from_write', False):
+                        return {'analytic_distribution_id': distrib_id,}
                     # Write analytic distribution on the move line
                     self.pool.get('account.move.line').write(cr, uid, [l.id], {'analytic_distribution_id': distrib_id})
                 else:
@@ -326,6 +328,7 @@ class account_move_line(osv.osv):
                 # Add account_id because of an error with account_activable module for checking date
                 if not 'account_id' in vals and 'date' in vals:
                     vals.update({'account_id': ml.account_id and ml.account_id.id or False})
+                vals.update(self._check_employee_analytic_distribution(cr, uid, [ml.id], context={'from_write': True}))
                 tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
                 res.append(tmp_res)
             return res
