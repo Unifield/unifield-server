@@ -15,7 +15,7 @@
     order_type: regular
     categ: other
 -
-  Import PO lines
+  Import PO lines (NB: the code for testing the import of the RfQ is the same)
 -
   !python {model: purchase.order}: |
     import addons, base64, logging

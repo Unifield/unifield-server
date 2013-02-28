@@ -50,7 +50,7 @@
     "demo_xml": [],
     "test": [
         'test/data.yml',
-#        'test/import_so.yml',
+        'test/import_so.yml',
         'test/import_ir.yml',
         'test/import_tender.yml',
         'test/import_composition_kit.yml',
