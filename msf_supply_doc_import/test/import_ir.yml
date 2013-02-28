@@ -14,19 +14,36 @@
     picking_policy: direct
     pricelist_id: product.list0
     shop_id: sale.shop
+    procurement_request: True
 -
-  Import Internal request lines
+  Open the import wizard for the IR
 -
   !python {model: sale.order}: |
+    wiz_values = self.wizard_import_ir_line(cr, uid, ref('ir1'), context)
+    res_model = wiz_values['res_model']
+    assert res_model == 'wizard.import.ir.line', ("The wizard model should be 'wizard.import.ir.line' and it is %s" % res_model)
+    assert wiz_values['context'].get('active_id') == ref("ir1"), ("The reference to the IR doesn't exist")
+-
+  Import the file through the wizard for the IR
+-
+  !python {model: wizard.import.ir.line}: |
     import addons, base64, logging
-    
-    # we update the context value in order to call the method "import_internal_req"
-    context.update({'_terp_view_name': 'Internal Requests'})
-    logging.getLogger('tests').log(logging.TEST, 'We import ir.xml.')
+    wiz_ids = self.search(cr, uid, [('fo_id', '=', ref('ir1'))])
+    assert len(wiz_ids) == 1, ("There should be one wizard open at a time")
     # get the file path
     file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'ir.xml')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
-    self.write(cr, uid, ref("ir1"), {'file_to_import': file64}, context=context)
-    self.import_file(cr, uid, [ref("ir1")], context=context)
-
+    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard.')
+    self.write(cr, uid, wiz_ids, {'file': file64}, context)
+    context['yml_test'] = True
+    logging.getLogger('tests').log(logging.TEST, 'We import the file.')
+    self.import_file(cr, uid, wiz_ids, context)
+    self.close_import(cr, uid, wiz_ids, context)
+-
+  Check the lines imported on the IR
+-
+  !python {model: sale.order}: |
+    ir = self.browse(cr, uid, ref('ir1'), context)
+    count_line_imported = len(ir.order_line)
+    assert count_line_imported==12, ("The number of lines imported should be 12 but it is %s" % count_line_imported)

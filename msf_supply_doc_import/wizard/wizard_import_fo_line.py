@@ -69,7 +69,10 @@ The columns should be in this values:
         '''
         Import file
         '''
-        cr = pooler.get_db(dbname).cursor()
+        if not context.get('yml_test', False):
+            cr = pooler.get_db(dbname).cursor()
+        else:
+            cr = dbname
         
         if context is None:
             context = {}
@@ -207,6 +210,7 @@ The columns should be in this values:
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
                     continue
                 except osv.except_osv as osv_error:
                     osv_value = osv_error.value
@@ -215,10 +219,12 @@ The columns should be in this values:
                     ignore_lines += 1
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
                     continue
                 finally:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    cr.commit()
+                    if not context.get('yml_test', False):
+                        cr.commit()
         
             error_log += '\n'.join(error_list)
             if error_log:
@@ -241,8 +247,9 @@ Importation completed in %s!
             self.write(cr, uid, ids, wizard_vals, context=context)
             # we reset the state of the FO to draft (initial state)
             sale_obj.write(cr, uid, fo_id, {'state': 'draft'}, context)
-            cr.commit()
-            cr.close()
+            if not context.get('yml_test', False):
+                cr.commit()
+                cr.close()
 
 
     def import_file(self, cr, uid, ids, context=None):
@@ -274,8 +281,11 @@ Importation completed in %s!
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
             sale_obj.write(cr, uid, fo_id, {'state': 'done'}, context)
-        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-        thread.start()
+        if not context.get('yml_test', False):
+            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+            thread.start()
+        else:
+            self._import(cr, uid, ids, context)
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
