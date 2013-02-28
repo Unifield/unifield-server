@@ -54,16 +54,6 @@ class wizard_import_fo_line(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
-    
-    _defaults = {
-        'message': lambda *a : _("""
-        IMPORTANT : The first line will be ignored by the system.
-        The file should be in XML 2003 format.
-The columns should be in this values:
-%s
-""") % (', \n'.join(columns_for_fo_line_import), ),
-        'state': lambda *a: 'draft',
-    }
 
     def _import(self, dbname, uid, ids, context=None):
         '''
