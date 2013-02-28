@@ -134,7 +134,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
                          'item_qty': to_write['qty'],
                          'item_module': module,
                          'item_kit_id': item_kit_id,
-                         'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+                         'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                          'text_error': '\n'.join(to_write['error_list'])}
 
             context['import_in_progress'] = True

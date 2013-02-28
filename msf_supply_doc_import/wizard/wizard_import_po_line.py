@@ -172,8 +172,8 @@ class wizard_import_po_line(osv.osv_memory):
                     c_value = check_line.comment_value(row=row, cell_nb=header_index[_('Comment')], to_write=to_write, context=context)
                     to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                     to_write.update({
-                        'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
-                        'show_msg_ok': [True for x in to_write['warning_list']],  # the lines with show_msg_ok=True won't change color, it is just info
+                        'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
+                        'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
                         'order_id': po_browse.id,
                         'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
                     })

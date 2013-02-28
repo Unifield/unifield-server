@@ -149,7 +149,7 @@ The columns should be in this values:
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
     
                     to_write.update({
-                        'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+                        'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                         'text_error': '\n'.join(to_write['error_list']),
                         'tender_id': tender_id,
                     })
