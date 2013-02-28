@@ -286,7 +286,7 @@ class account_analytic_line(osv.osv):
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:
             target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
-                                                                                       ('is_target', '=', True)])
+                                                                                     ('is_target', '=', True)])
             current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
             if len(target_ids) > 0:
                 target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
@@ -306,12 +306,11 @@ class account_analytic_line(osv.osv):
             return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
         
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
         res = []
-        for data in cost_center_data:
-            if data['cost_center_id']:
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, data['cost_center_id'][0], context=context)
-                res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context))
+        for line_id in ids:
+            line_data = self.browse(cr, uid, line_id, context=context)
+            if line_data.cost_center_id:
+                res.append(self.get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res.append(current_instance.parent_id.instance)
@@ -339,10 +338,8 @@ class account_analytic_line(osv.osv):
             else:
                 new_cost_center_id = old_cost_center_id
             
-            old_cost_center = self.pool.get('account.analytic.account').browse(cr, uid, old_cost_center_id, context=context)
-            old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center.code, context=context)
-            new_cost_center = self.pool.get('account.analytic.account').browse(cr, uid, new_cost_center_id, context=context)
-            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center.code, context=context)
+            old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
             
             if not old_destination_name == new_destination_name:
                 # Send delete message, but not to parents of the current instance
@@ -363,8 +360,7 @@ class account_analytic_line(osv.osv):
             if xml_ids[0]:
                 xml_id_record = self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)[0]
                 xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, cost_center_id, context=context)
-                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
+                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center_id, context=context)
                 self.write_reference_to_destination(cr, uid, vals['distrib_line_id'], 'distrib_line_id', destination_name, xml_id, instance_name)
 
         return res_id
