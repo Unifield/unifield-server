@@ -44,7 +44,7 @@ class account_account(osv.osv):
             res[a.id] = True
             if a.activation_date > cmp_date:
                 res[a.id] = False
-            if a.inactivation_date and a.inactivation_date < cmp_date:
+            if a.inactivation_date and a.inactivation_date <= cmp_date:
                 res[a.id] = False
         return res
 
@@ -65,7 +65,7 @@ class account_account(osv.osv):
             elif x[0] == 'filter_active' and x[2] == False:
                 arg.append('|')
                 arg.append(('activation_date', '>', cmp_date))
-                arg.append(('inactivation_date', '<', cmp_date))
+                arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
     _columns = {
