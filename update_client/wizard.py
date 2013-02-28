@@ -82,7 +82,10 @@ class upgrade(osv.osv_memory):
         text = ""
         currev = revisions._get_last_revision(cr, uid, context=context)
         if currev:
-            text += _("The current revision is %s (%s at %s) and has been applied at %s.") % (currev.name, currev.sum, currev.date, currev.applied)
+            if all([currev.name, currev.date]):
+                text += _("The current revision is %s (%s at %s) and has been applied at %s.") % (currev.name, currev.sum, currev.date, currev.applied)
+            else:
+                text += _("The server last sum is %s and has been applied on that database at %s.") % (currev.sum, currev.applied)
         else:
             text += _("No revision has been applied yet.")
         text += "\n"
