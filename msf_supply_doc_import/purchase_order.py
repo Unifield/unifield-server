@@ -104,6 +104,8 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'active_id': ids[0]})
         columns_header = columns_header_for_po_line_import
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
@@ -112,12 +114,12 @@ class purchase_order(osv.osv):
         IMPORTANT : The first line will be ignored by the system.
         The file should be in XML 2003 format.
 
-The columns should be in this values:""")
+The columns should be in this values: """)
         export_id = self.pool.get('wizard.import.po.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """%s %s"""  % (message, ', \n'.join(columns_for_po_line_import), ),
+                                                                            'message': """%s %s"""  % (message, ', '.join([_(f) for f in columns_for_po_line_import]), ),
                                                                             'state': 'draft',},
                                                                    context)
         return {'type': 'ir.actions.act_window',
