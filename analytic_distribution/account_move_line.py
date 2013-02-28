@@ -280,7 +280,7 @@ class account_move_line(osv.osv):
                             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
                         except ValueError:
                             msf_fp_id = 0
-                        vals.update({'funding_pool_id': msf_fp_id})
+                        vals.update({'analytic_id': msf_fp_id})
                 # Create analytic distribution
                 if 'cost_center_id' in vals and 'analytic_id' in vals and 'destination_id' in vals:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'name': 'check_employee_analytic_distribution'})
@@ -328,7 +328,9 @@ class account_move_line(osv.osv):
                 # Add account_id because of an error with account_activable module for checking date
                 if not 'account_id' in vals and 'date' in vals:
                     vals.update({'account_id': ml.account_id and ml.account_id.id or False})
-                vals.update(self._check_employee_analytic_distribution(cr, uid, [ml.id], context={'from_write': True}))
+                check = self._check_employee_analytic_distribution(cr, uid, [ml.id], context={'from_write': True})
+                if check and isinstance(check, dict):
+                    vals.update(check)
                 tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
                 res.append(tmp_res)
             return res
