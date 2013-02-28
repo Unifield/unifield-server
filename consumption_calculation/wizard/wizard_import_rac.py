@@ -37,13 +37,13 @@ class wizard_import_rac(osv.osv_memory):
     }
     
     _defaults = {
-        'message': lambda *a : """
+        'message': lambda *a : _("""
         IMPORTANT : The first line will be ignored by the system.
         
         The file should be in XML 2003 format.
         The columns should be in this order :
            Product Code ; Product Description ; UoM ; Batch Number ; Expiry Date (DD/MM/YYYY) (ignored if batch number is set) ; Consumed quantity ; Remark
-        """
+        """)
     }
     
     def default_get(self, cr, uid, fields, context=None):

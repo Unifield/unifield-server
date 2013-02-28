@@ -23,12 +23,15 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
+from msf_supply_doc_import import GENERIC_MESSAGE
 # import below commented in utp-1344: becomes useless as the import is done in wizard
 #from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 #import check_line
 #from msf_supply_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_supply_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
+from msf_supply_doc_import import GENERIC_MESSAGE
+from msf_supply_doc_import.wizard import TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
 
 
 class tender(osv.osv):
@@ -169,10 +172,13 @@ class tender(osv.osv):
         context.update({'active_id': ids[0]})
         columns_header = columns_header_for_tender_line_import
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-                                                                            'filename_template': 'template.xls',
-                                                                            'filename': 'Lines_Not_Imported.xls',
-                                                                            'tender_id': ids[0]}, context)
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': file,
+                                                                                'filename_template': 'template.xls',
+                                                                                'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_tender_line_import]), ),
+                                                                                'filename': 'Lines_Not_Imported.xls',
+                                                                                'tender_id': ids[0],
+                                                                                'state': 'draft',}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.tender.line',
                 'res_id': export_id,
