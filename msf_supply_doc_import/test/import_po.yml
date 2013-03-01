@@ -4,11 +4,11 @@
   !record {model: purchase.order, id: po1}:
     name: My PO test
     company_id: base.main_company
-    date_order: !eval time.strftime('%Y-%m-%d')
+    date_order: '2011-04-01'
     delivery_requested_date: '2011-04-13'
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
+    minimum_planned_date: '2011-04-13'
     partner_address_id: address_A
     partner_id: partner_A
     pricelist_id: purchase.list0
