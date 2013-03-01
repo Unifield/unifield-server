@@ -965,7 +965,10 @@ def trans_update_res_ids(cr):
 
 def get_locales(lang=None):
     if lang is None:
-        lang = locale.getdefaultlocale()[0]
+        if os.name == 'nt' and os.environ.get('LANG'):
+            lang = os.environ['LANG']
+        else:
+            lang = locale.getdefaultlocale()[0]
 
     if os.name == 'nt':
         lang = _LOCALE2WIN32.get(lang, lang)
