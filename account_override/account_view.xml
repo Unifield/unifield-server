@@ -191,11 +191,6 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//filter[@string='To Review']" position="replace"/>
-                    <xpath expr="//field[@name='partner_id']" position="replace">
-                        <field name="partner_id" invisible="1"/>
-                        <field name="partner_type"/>
-                        <newline/>
-                    </xpath>
                     <xpath expr="//field[@name='journal_id']" position="replace">
                         <field name="journal_id"/>
                         <field name="journal_type"/>
