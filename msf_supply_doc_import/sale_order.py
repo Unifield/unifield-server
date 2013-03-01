@@ -335,7 +335,7 @@ class sale_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = columns_header_for_ir_line_import
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_ir_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': file,
@@ -362,7 +362,7 @@ class sale_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = columns_header_for_fo_line_import
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_fo_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.fo.line').create(cr, uid, {'file': file,
