@@ -4,10 +4,11 @@
   !record {model: purchase.order, id: po2}:
     name: My PO test in French
     company_id: base.main_company
-    date_order: !eval time.strftime('%Y-%m-%d')
+    date_order: '2011-04-01'
+    delivery_requested_date: '2011-04-13'
     invoice_method: order
     location_id: stock.stock_location_stock
-    minimum_planned_date: !eval time.strftime('%Y-%m-%d')
+    minimum_planned_date: '2011-04-13'
     partner_address_id: address_A
     partner_id: partner_A
     pricelist_id: purchase.list0
@@ -80,8 +81,40 @@
   Check po lines imported in French
 -
   !python {model: purchase.order}: |
+    import logging
     po = self.browse(cr, uid, ref('po2'), context)
     count_line_imported = len(po.order_line)
     assert count_line_imported==15, ("The number of lines imported should be 15 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in po.order_line if line.to_correct_ok])
-    assert count_line_with_errors==13, ("The number of lines with errors should be 13 but it is %s" % count_line_with_errors)
+    assert count_line_with_errors==14, ("The number of lines with errors should be 14 but it is %s" % count_line_with_errors)
+    pol_obj = self.pool.get('purchase.order.line')
+    ProdA_ids = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('default_code', '=', 'ProdA')], context=context)
+    read_ProdA = pol_obj.read(cr, uid, ProdA_ids, ['price_unit', 'product_uom', 'type', 'date_planned', 'product_qty', 'functional_currency_id', 'comment'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, "Check the price of the product ('ProdA') if it was fulfill.")
+    assert read_ProdA['price_unit'] == 3.15, ("The price was defined in the xml file, it must be this one (3.15) but is is %s" % read_ProdA['price_unit'])
+    logging.getLogger('tests').log(logging.TEST, 'Check the UOM of the product if it was fulfill and right.')
+    uom_unit = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')[1]
+    assert read_ProdA['product_uom'][0] == uom_unit, ("The UOM was not defined in the xml file, it should be this one (PCE)")
+    logging.getLogger('tests').log(logging.TEST, 'Check the date of the line if it was fulfill and right.')
+    assert read_ProdA['date_planned']=='2012-08-12', ("The date was not correct it should be 2012-08-12")
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the line if it was fulfill ('ProdA').")
+    assert read_ProdA['product_qty']==2, ("The quantity was not correct, it should be 2 and it was %s" % read_ProdA['product_qty'])
+    logging.getLogger('tests').log(logging.TEST, "Check the currency of the line if it was fulfill ('ProdA').")
+    curr_eur = self.pool.get('res.currency').search(cr, uid, [('name', '=', 'EUR')], context=context)[0]
+    assert read_ProdA['functional_currency_id'][0]==curr_eur, ("The currency was not correct, it should be EUR")
+    logging.getLogger('tests').log(logging.TEST, "Check the comment of the line if it was fulfill ('ProdA').")
+    assert read_ProdA['comment']=='test comment', ("The comment was not correct, it should be 'test comment'")
+    
+    ProdB_ids = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('default_code', '=', 'ProdB')], context=context)
+    read_ProdB = pol_obj.read(cr, uid, ProdB_ids, ['price_unit', 'product_uom', 'type', 'date_planned', 'product_qty', 'functional_currency_id'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, "Check the price of the product ('ProdB') if it was empty")
+    assert read_ProdB['price_unit'] == 187.0, ("The price was not defined in the xml file, it should be the one of the product ProdB (187.0) but is is %s" % read_ProdB['price_unit'])
+    logging.getLogger('tests').log(logging.TEST, "Check the UOM of the product if it was empty ('ProdB')")
+    uom_km = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_km')[1]
+    assert read_ProdB['product_uom'][0] == uom_km, ("The UOM was not defined in the xml file, it should be the one of the product ProdB (km)")
+    logging.getLogger('tests').log(logging.TEST, "Check the date of the line if it was empty ('ProdB').")
+    assert read_ProdB['date_planned']=='2011-04-13', ("The date was not correct it should be the one of the Purchase Order ('2011-04-13')")
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the line if it was empty ('ProdB').")
+    assert read_ProdB['product_qty']==1, ("The quantity was empty, it should be 1 and it was %s. ('ProdB')" % read_ProdB['product_qty'])
+    logging.getLogger('tests').log(logging.TEST, "Check the currency of the line if it was empty ('ProdB').")
+    assert read_ProdB['functional_currency_id'][0]==po.pricelist_id.currency_id.id, ("The currency was not correct, it should be the currency of the pricelist of the Purchase Order")

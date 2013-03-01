@@ -84,16 +84,16 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">EUR</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">test comment</Data></Cell>
     </Row>
-    <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">ProdB</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">1.00</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">km</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">27.00</Data></Cell>
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">2012-08-12T00:00:00.000</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">EUR</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-    </Row>
+   <Row ss:AutoFitHeight="0">
+        <Cell ss:StyleID="s63"><Data ss:Type="String">ProdB</Data></Cell>
+        <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s63"><Data ss:Type="Number">1</Data></Cell>
+        <Cell ss:StyleID="s63"/>
+        <Cell ss:StyleID="s63"><Data ss:Type="Number">0.0</Data></Cell>
+        <Cell ss:StyleID="s63"/>
+        <Cell ss:StyleID="s63"/>
+        <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+   </Row>
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">ADAPPRINSB2</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">(printer) SWITCH BOX passive, 2 outlets to 1 printer</Data></Cell>
