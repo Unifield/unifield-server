@@ -32,7 +32,7 @@
         break
     expected_header = ['Code Produit', 'Description Produit', 'Quantité', 'UdM', 'Prix', 'Date de Livraison Souhaitée']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
-    self.pool.get('wizard.import.tender.line').cancel(cr, uid, wizard_values['res_id'], context)
+    self.pool.get(res_model).cancel(cr, uid, wizard_values['res_id'], context)
 -
   Import tender lines in French
 -
