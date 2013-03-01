@@ -70,8 +70,25 @@
   Check tender lines imported in French
 -
   !python {model: tender}: |
+    import logging
     tender = self.browse(cr, uid, ref('t2'), context)
     count_line_imported = len(tender.tender_line_ids)
-    assert count_line_imported==15, ("The number of lines imported should be 15 but it is %s" % count_line_imported)
+    assert count_line_imported==14, ("The number of lines imported should be 14 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in tender.tender_line_ids if line.to_correct_ok])
     assert count_line_with_errors==13, ("The number of lines with errors should be 13 but it is %s" % count_line_with_errors)
+    tender_line_obj = self.pool.get('tender.line')
+    ProdA_ids = tender_line_obj.search(cr, uid, [('tender_id', '=', tender.id), ('product_id', '=', 'ProdA')], context=context)
+    read_ProdA = tender_line_obj.read(cr, uid, ProdA_ids, ['qty', 'product_uom'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the product ('ProdA') if it was fulfill.")
+    assert read_ProdA['qty'] == 2, ("The quantity was defined in the xml file, it must be this one (2) but is is %s" % read_ProdA['qty'])
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the product ('ProdA') if it was fulfill.")
+    uom_unit = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')[1]
+    assert read_ProdA['product_uom'][0] == uom_unit, ("The product_uom was defined in the xml file, it must be this one (PCE) but is is %s" % read_ProdA['product_uom'])
+
+    ProdB_ids = tender_line_obj.search(cr, uid, [('tender_id', '=', tender.id), ('product_id', '=', 'ProdB')], context=context)
+    read_ProdB = tender_line_obj.read(cr, uid, ProdB_ids, ['qty', 'product_uom'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the product ('ProdB') if it was empty.")
+    assert read_ProdB['qty'] == 1, ("The quantity was defined in the xml file, it must be this one (1) but is is %s" % read_ProdB['qty'])
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the product ('ProdB') if it was empty.")
+    uom_unit = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')[1]
+    assert read_ProdB['product_uom'][0] == uom_unit, ("The product_uom was defined in the xml file, it must be this one (PCE) but is is %s" % read_ProdB['product_uom'])
