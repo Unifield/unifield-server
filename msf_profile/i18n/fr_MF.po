@@ -34005,7 +34005,7 @@ msgstr "Vous pouvez commencer à configurer le système, ou vous connecter direc
 #: field:wizard.account.invoice.line,analytic_distribution_id:0
 #: field:wizard.advance.line,analytic_distribution_id:0
 msgid "Analytic Distribution"
-msgstr "Allocation Analytique."
+msgstr "Allocation Analytique"
 
 #. module: base
 #: field:ir.translation,xml_id:0
@@ -56544,10 +56544,21 @@ msgstr "Vous devez attribuer une valeur positive ou égale à 0."
 msgid "Compute"
 msgstr "Calculer"
 
-#. modules: analytic_distribution_supply, analytic_distribution
+#. modules: register_accounting, analytic_distribution_supply, account_corrections, account_subscription, msf_accrual, analytic_distribution
 #: field:account.commitment,analytic_distribution_id:0
 #: field:account.commitment.line,analytic_distribution_id:0
 #: field:sale.order,analytic_distribution_id:0
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:142
+#: code:addons/account_subscription/account_model.py:165
+#: code:addons/analytic_distribution/account_commitment.py:576
+#: code:addons/analytic_distribution/account_move_line.py:244
+#: code:addons/analytic_distribution/invoice.py:161
+#: code:addons/analytic_distribution_supply/purchase.py:458
+#: code:addons/analytic_distribution_supply/sale.py:358
+#: code:addons/msf_accrual/msf_accrual_line.py:301
+#: code:addons/register_accounting/wizard/direct_invoice.py:307
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:129
+#, python-format
 msgid "Analytic distribution"
 msgstr "Allocation analytique"
 
@@ -59406,7 +59417,7 @@ msgstr "Valide à partir de (date)"
 #. module: base
 #: selection:base.language.export,format:0
 msgid "PO File"
-msgstr "Fichier Bon de Commande"
+msgstr "Fichier au format PO"
 
 #. modules: purchase, sd
 #: model:process.node,name:purchase.process_node_rfq_draft
@@ -66396,3 +66407,25 @@ msgstr "Solde calculé dans la devise du registre"
 #, python-format
 msgid "Register Balance in functional currency"
 msgstr "Solde du registre en devise fonctionnelle"
+
+#. modules: analytic_distribution_invoice, analytic_distribution, analytic_distribution_supply, account_subscription
+#: code:addons/account_subscription/account_model.py:94
+#: code:addons/analytic_distribution/account_move_line.py:94
+#: code:addons/analytic_distribution_invoice/invoice.py:231
+#: code:addons/analytic_distribution_supply/purchase.py:349
+#: code:addons/analytic_distribution_supply/sale.py:272
+#, python-format
+msgid " (from header)"
+msgstr " (de l'entête)"
+
+#. modules: register_accounting, analytic_distribution, analytic_distribution_supply, account_subscription
+#: code:addons/account_subscription/account_model.py:326
+#: code:addons/analytic_distribution/account.py:312
+#: code:addons/analytic_distribution/account_commitment.py:206
+#: code:addons/analytic_distribution/invoice.py:86
+#: code:addons/analytic_distribution_supply/purchase.py:103
+#: code:addons/analytic_distribution_supply/sale.py:72
+#: code:addons/register_accounting/wizard/direct_invoice.py:217
+#, python-format
+msgid "Global analytic distribution"
+msgstr "Allocation Analytique Globale"
