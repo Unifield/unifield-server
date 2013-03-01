@@ -203,10 +203,10 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             retour = False
             for line in po.order_line:
-                ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id)])
-                for sol in self.pool.get('sale.order.line').browse(cr, uid, ids_proc):
-                    if not sol.order_id.procurement_request:
-                        retour = True
+                ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),
+                                                                           ('order_id.procurement_request', '=', False)])
+                if ids_proc:
+                    retour = True
             res[po.id] = retour
         return res
 
