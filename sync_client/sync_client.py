@@ -269,11 +269,9 @@ class entity(osv.osv):
             cont = updates_count > 0
             self._logger.info("init")
         if cont or entity.state == 'update_send':
-            updates_count = self.send_update(cr, uid, context=context)
+            updates_count = self.send_update(cr, uid, logger=logger, context=context)
             cr.commit()
             cont = True
-            if logger and updates_count:
-                logger.append("Update(s) sent: %d" % updates_count)
             self._logger.info("sent update")
         if cont or entity.state == 'update_validate':
             server_sequence = self.validate_update(cr, uid, context=context)
@@ -310,28 +308,36 @@ class entity(osv.osv):
         return updates_count
         #state init => update_send
         
-    def send_update(self, cr, uid, context=None):
-        def send_package(entity):
-            max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
-            res = self.pool.get('sync.client.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
-            if not res:
-                return 0
-            ids = res[0]
-            packet = res[1]
-            
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+    def send_update(self, cr, uid, logger=None, context=None):
+        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        entity = self.get_entity(cr, uid, context=context)
+
+        def create_package():
+            return self.pool.get('sync.client.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
+
+        def send_package(ids, packet):
             res = proxy.receive_package(entity.identifier, packet, context)
             if not res[0]:
                 raise Exception, res[1]
             self.pool.get('sync.client.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
             return len(ids)
-        
-        entity = self.get_entity(cr, uid, context=context)
+
+        # get update count
+        max_updates = self.pool.get('sync.client.update_to_send').search(cr, uid, [('sent','=',False)], count=True, context=context)
+        if max_updates == 0:
+            return 0
+
         updates_count = 0
-        while True:
-            updates_sent = send_package(entity)
-            if updates_sent == 0: break
+        logger_index = None
+        res = create_package()
+        while res:
+            updates_sent = send_package(*res)
             updates_count += updates_sent
+            if logger:
+                if logger_index is None: logger_index = logger.append()
+                logger.replace(logger_index, "Update(s) sent: %d/%d" % (updates_count, max_updates))
+            res = create_package()
 
         #state update_send => update_validate
         return updates_count
@@ -366,9 +372,7 @@ class entity(osv.osv):
         if entity.state == 'init': 
             self.set_last_sequence(cr, uid, context)
         
-        updates_count = self.retrieve_update(cr, uid, recover=recover, context=context)
-        if logger and updates_count:
-            logger.append("Update(s) received: %d" % updates_count)
+        updates_count = self.retrieve_update(cr, uid, recover=recover, logger=logger, context=context)
         cr.commit()
 
         res = self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
@@ -387,7 +391,7 @@ class entity(osv.osv):
 
         return True
 
-    def retrieve_update(self, cr, uid, recover=False, context=None):
+    def retrieve_update(self, cr, uid, recover=False, logger=None, context=None):
         entity = self.get_entity(cr, uid, context)
         last = False
         last_seq = entity.update_last
@@ -398,11 +402,15 @@ class entity(osv.osv):
         if last_seq >= max_seq:
             last = True
         updates_count = 0
+        logger_index = None
         while not last:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_update(entity.identifier, last_seq, offset, max_packet_size, max_seq, recover, context)
             if res and res[0]:
                 updates_count += self.pool.get('sync.client.update_received').unfold_package(cr, uid, res[1], context=context)
+                if logger and updates_count:
+                    if logger_index is None: logger_index = logger.append()
+                    logger.replace(logger_index, "Update(s) received: %d" % updates_count)
                 last = res[2]
                 if res[1]:
                     offset = res[1]['offset']
