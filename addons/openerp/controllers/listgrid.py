@@ -253,6 +253,12 @@ class List(SecuredController):
         if params.view_type == 'form':
             params['_terp_nodefault'] = True
 
+        # clean defaults groupby if options available 
+        if params['_terp_search_data'] and params['_terp_search_data'].get('group_by_ctx',False):
+            for k,v in params.context.items():
+                if k.startswith('search_default') and k[15:] not in params['_terp_search_data'].get('group_by_ctx',False):
+                    del params['_terp_context'][k]
+
         if params.get('_terp_clear'):
             params.search_domain, params.filter_domain, params.ids = [], [], []
             params.search_data = {}
