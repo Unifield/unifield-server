@@ -27169,7 +27169,7 @@ msgstr "Qtés consommées"
 #: view:account.bank.statement:0
 #: selection:account.bank.statement.line,state:0
 msgid "Hard"
-msgstr "Hard"
+msgstr "Comptabilisé"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_account_open_closed_fiscalyear
