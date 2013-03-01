@@ -198,13 +198,12 @@ class purchase_order(osv.osv):
                 
         return res
 
-    def _is_po_from_fo(self, cr, uid, ids, field_name, args, context=None):
+    def _is_po_from_ir(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
             retour = False
             for line in po.order_line:
-                ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),
-                                                                           ('order_id.procurement_request', '=', False)])
+                ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),])
                 if ids_proc:
                     retour = True
             res[po.id] = retour
@@ -254,7 +253,7 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
-        'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
+        'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
 
     }
     
