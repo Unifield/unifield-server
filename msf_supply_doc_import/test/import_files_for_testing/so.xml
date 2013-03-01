@@ -96,7 +96,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="Number">3.15</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2012-08-12T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">test comment fo</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell ss:StyleID="s63"><Data ss:Type="String">ProdB</Data></Cell>
