@@ -1,5 +1,5 @@
 -
-  Create a Sale Order 1 (SO1)
+  Create a Sale Order 1 (SO1) in English
 -
   !record {model: sale.order, id: so1}:
     name: My FO test
@@ -16,7 +16,7 @@
     shop_id: sale.shop
     delivery_requested_date: !eval time.strftime('%Y-%m-%d')
 -
-  Open the import wizard for the SO
+  Open the import wizard for the SO in English
 -
   !python {model: sale.order}: |
     wiz_values = self.wizard_import_fo_line(cr, uid, ref('so1'), context)
@@ -34,14 +34,14 @@
     file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'so.xml')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
-    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard.')
+    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard in English.')
     self.write(cr, uid, wiz_ids, {'file': file64}, context)
     context['yml_test'] = True
     logging.getLogger('tests').log(logging.TEST, 'We import the file.')
     self.import_file(cr, uid, wiz_ids, context)
     self.close_import(cr, uid, wiz_ids, context)
 -
-  Check the lines imported on the fo
+  Check the lines imported on the fo in English
 -
   !python {model: sale.order}: |
     fo = self.browse(cr, uid, ref('so1'), context)

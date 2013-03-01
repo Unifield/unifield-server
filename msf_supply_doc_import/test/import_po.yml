@@ -1,5 +1,5 @@
 -
-  Create Purchase Order (PO1)
+  Create Purchase Order (PO1) in English
 - 
   !record {model: purchase.order, id: po1}:
     name: My PO test
@@ -22,7 +22,7 @@
     assert wizard_values.get('res_model', False) == 'wizard.import.po.line', "Wizard should be wizard.import.po.line"
     self.pool.get('wizard.import.po.line').cancel(cr, uid, wizard_values['res_id'], context)
 -
-  Import po lines
+  Import po lines in English
 -
   !python {model: wizard.import.po.line}: |
     import addons, base64, logging
@@ -38,7 +38,7 @@
     wizard_id = self.create(cr, uid, vals, context)
     read_wiz = self.read(cr, uid, wizard_id, ['file'], context)['file']
     assert read_wiz, ('The file was not written in wizard')
-    logging.getLogger('tests').log(logging.TEST, 'We create the wizard import po.xml.')
+    logging.getLogger('tests').log(logging.TEST, 'We create the wizard import po.xml. in English')
     # the yml_test is important to avoid going through the threading method
     context.update({'yml_test': True, 'lang': lang})
     logging.getLogger('tests').log(logging.TEST, 'We import po.xml.')
@@ -48,7 +48,7 @@
     wiz_read = self.read(cr, uid, wizard_id, ['state', 'percent_completed', 'data'])
     assert wiz_read['percent_completed'], ("Nothing was imported")
     logging.getLogger('tests').log(logging.TEST, 'The import is finished. Completed: %s' % (wiz_read['percent_completed']))
-    logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error.')
+    logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error. in English')
     fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['data']))
     rows = fileobj.getRows()
     rows.next()
@@ -57,7 +57,7 @@
         count_row += 1
     assert count_row==2, ("The file should contain 2 lines but the number of lines is %s" % count_row)
 -
-  Check po lines imported
+  Check po lines imported in English
 -
   !python {model: purchase.order}: |
     po = self.browse(cr, uid, ref('po1'), context)
