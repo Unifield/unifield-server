@@ -450,6 +450,23 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
         
         return True
+
+    def sale_except_correction(self, cr, uid, ids, context=None):
+        '''
+        Remove the link between a Field order and the canceled procurement orders
+        '''
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if line.procurement_id and line.procurement_id.state == 'cancel':
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'state': 'exception',
+                                                                                'manually_corrected': True,
+                                                                                'procurement_id': False}, context=context)
+            if (order.order_policy == 'manual'):
+                self.write(cr, uid, [order.id], {'state': 'manual'})
+            else:
+                self.write(cr, uid, [order.id], {'state': 'progress'})
+
+        return
     
     def wkf_split_done(self, cr, uid, ids, context=None):
         '''
@@ -671,6 +688,8 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
+        if line.manually_corrected:
+            return False
         if line.order_id.procurement_request:
             if line.type == 'make_to_order':
                 result = False
@@ -688,9 +707,8 @@ class sale_order(osv.osv):
         order = kwargs['order']
         result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         
-        # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
-        # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
-        return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
+        # for new Fo split logic, we create procurement order in action_ship_create only for IR
+        return result and (line.order_id.procurement_request or order.yml_module_name == 'sale')
 
     def _hook_ship_create_product_id(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -1057,6 +1075,7 @@ class sale_order_line(osv.osv):
                 # This field is used to identify the FO PO line between 2 instances of the sync
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
                 'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
+                'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
                 }
 
     _sql_constraints = [
