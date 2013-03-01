@@ -261,4 +261,54 @@ class account_move_line(osv.osv):
         return res
 
 account_move_line()
+
+class account_move_reconcile(osv.osv):
+    _name = 'account.move.reconcile'
+    _inherit = 'account.move.reconcile'
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
+        """
+        if not context:
+            context = {}
+        res = super(account_move_reconcile, self).create(cr, uid, vals, context)
+        if res:
+            tmp_res = res
+            if isinstance(res, (int, long)):
+                tmp_res = [tmp_res]
+            for r in self.browse(cr, uid, tmp_res):
+                t = [x.id for x in r.line_id]
+                p = [x.id for x in r.line_partial_ids]
+                d = self.name_get(cr, uid, [r.id])
+                name = ''
+                if d and d[0] and d[0][1]:
+                    name = d[0][1]
+                self.pool.get('account.move.line').write(cr, uid, t+p, {'reconcile_txt': name})
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
+        if res:
+            tmp_res = res
+            if isinstance(res, (int, long)):
+                tmp_res = [tmp_res]
+            for r in self.browse(cr, uid, tmp_res):
+                t = [x.id for x in r.line_id]
+                p = [x.id for x in r.line_partial_ids]
+                d = self.name_get(cr, uid, [r.id])
+                name = ''
+                if d and d[0] and d[0][1]:
+                    name = d[0][1]
+                self.pool.get('account.move.line').write(cr, uid, t+p, {'reconcile_txt': name})
+        return res
+
+account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

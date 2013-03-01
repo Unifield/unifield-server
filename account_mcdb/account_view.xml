@@ -35,7 +35,7 @@
                     <field name="output_amount_debit"/>
                     <field name="output_amount_credit"/>
                     <field name="output_currency"/>
-                    <field name="reconcile_total_partial_id" />
+                    <field name="reconcile_txt" />
                     <field name="state"/>
                     <field name="statement_id" invisible="1"/>
                 </tree>

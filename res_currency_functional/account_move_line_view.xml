@@ -28,7 +28,7 @@
                     <field name="debit" sum="Total Func. Debit"/>
                     <field name="credit" sum="Total Func. Credit"/>
                     <field name="functional_currency_id"/>
-                    <field name="reconcile_total_partial_id"/>
+                    <field name="reconcile_txt"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -123,7 +123,7 @@
                     <field name="debit" sum="Total Functional Debit" readonly="1"/>
                     <field name="credit" sum="Total Functional Credit" readonly="1"/>
                     <field name="functional_currency_id" readonly="1"/>
-                    <field name="reconcile_total_partial_id" readonly="1"/>
+                    <field name="reconcile_txt" readonly="1"/>
                     <field name="state"/>
                 </tree>
             </field>
