@@ -23703,7 +23703,7 @@ msgstr "Tâches"
 #: model:product.uom,name:product.product_uom_cm
 #: model:product.uom,name:sd.product_product_uom_cm
 msgid "cm"
-msgstr "country_id"
+msgstr "cm"
 
 #. module: unifield_setup
 #: view:restrictive.country.setup:0
