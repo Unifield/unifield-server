@@ -19,10 +19,28 @@
   Open the import wizard for the IR in French
 -
   !python {model: sale.order}: |
+    import base64, logging
+    from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+    # we set the lang to English to test the translation of the template's header columns
+    lang = 'fr_MF'
+    context.update({'yml_test': True, 'lang': lang})
     wiz_values = self.wizard_import_ir_line(cr, uid, ref('ir2'), context)
     res_model = wiz_values['res_model']
     assert res_model == 'wizard.import.ir.line', ("The wizard model should be 'wizard.import.ir.line' and it is %s" % res_model)
+    logging.getLogger('tests').log(logging.TEST, 'We check the header of the template (translation)')
+    template = self.pool.get(res_model).read(cr, uid, wiz_values['res_id'], ['file'])['file']
+    fileobj = SpreadsheetXML(xmlstring=base64.decodestring(template))
+    rows = fileobj.getRows()
+    column_header = []
+    for first_row in rows:
+        for cell in range(len(first_row)):
+            cell_data = first_row.cells[cell].data
+            column_header.append(cell_data)
+        break
+    expected_header = ['Code Produit', 'Description Produit', 'Quantité', 'UdM', 'Devises', 'Commentaire']
+    assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
     assert wiz_values['context'].get('active_id') == ref("ir2"), ("The reference to the IR doesn't exist")
+    self.pool.get(res_model).cancel(cr, uid, wiz_values['res_id'], context)
 -
   Import the file through the wizard for the IR in French
 -
