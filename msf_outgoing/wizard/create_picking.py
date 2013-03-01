@@ -254,8 +254,8 @@ class create_picking(osv.osv_memory):
 
         if step == 'ppl2':
             _moves_arch_lst += """
-                <button name="back_ppl1" string="previous"
-                    colspan="1" type="object" icon="gtk-go-back" />"""
+                <button name="back_ppl1" string="%s"
+                    colspan="1" type="object" icon="gtk-go-back" />""" % _('Previous')
                     
                     
         _moves_arch_lst += """

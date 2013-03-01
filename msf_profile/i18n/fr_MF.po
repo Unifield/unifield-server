@@ -45713,11 +45713,12 @@ msgstr "Information sur le Paiement"
 msgid "%s does not exist"
 msgstr "%s n'existe pas"
 
-#. modules: sync_client, base, sd
+#. modules: sync_client, base, sd, msf_outgoing
 #: field:ir.actions.todo,previous:0
 #: view:res.config:0
 #: view:sync.client.register_entity:0
 #: view:sync.client.register_entity:0
+#: code:addons/msf_outgoing/wizard/create_picking.py:258
 msgid "Previous"
 msgstr "Précédent"
 
