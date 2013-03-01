@@ -548,12 +548,6 @@ class stock_picking(osv.osv):
                         move_obj.write(cr, uid, [move.id], dict(values, processed_stock_move=True), context=context)
                         done_moves.append(move.id)
                                 
-                        # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
-                        values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
-                        # mark the done IN stock as processed
-                        move_obj.write(cr, uid, [move.id], dict(values, processed_stock_move=True), context=context)
-                        done_moves.append(move.id)
-
                     else:
                         # split happened during the validation
                         # copy the stock move and set the quantity
@@ -587,7 +581,7 @@ class stock_picking(osv.osv):
                         count_out -= 1
                         
                         
-                        if partial_qty < out_move.product_qty:
+                        if count_partial or partial_qty < out_move.product_qty:
                             # Split the out move
                             new_move = move_obj.copy(cr, uid, out_move.id, dict(out_values, product_qty=partial_qty, in_out_updated=True), context=dict(context, keepLineNumber=True))
                             # Update the initial out move qty
@@ -772,8 +766,19 @@ class stock_picking(osv.osv):
                 if out_move_id:
                     out_move = move_obj.browse(cr, uid, out_move_id, context=context)
                     cond1 = out_move.picking_id.subtype == 'standard'
-                    cond2 = out_move.picking_id.subtype == 'picking' and not out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
-                    if (cond1 or cond2) and out_move.picking_id.type == 'out' and not out_move.product_qty:
+                    cond2 = out_move.picking_id.subtype == 'picking' and out_move.picking_id.has_picking_ticket_in_progress(context=context)[out_move.picking_id.id]
+                    if out_move.picking_id.subtype in ('standard', 'picking') and out_move.picking_id.type == 'out' and not out_move.product_qty:
+                        # replace the stock move in the procurement order by the non cancelled stock move
+                        if (cond1 or cond2) and out_move.picking_id and out_move.picking_id.sale_id:
+                            sale_id = out_move.picking_id.sale_id.id
+                            move_id = move_obj.search(cr, uid, [('picking_id.type', '=', 'out'),
+                                                                ('picking_id.subtype', 'in', ('standard', 'picking')),
+                                                                ('picking_id.sale_id', '=', sale_id),
+                                                                ('state', 'not in', ('done', 'cancel')),  
+                                                                ('processed_stock_move', '=', True),], context=context)
+                            if move_id:
+                                proc_id = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', out_move_id)], context=context)
+                                self.pool.get('procurement.order').write(cr, uid, proc_id, {'move_id': move_id[0]}, context=context)
                         # the corresponding move can be canceled - the OUT picking workflow is triggered automatically if needed
                         move_obj.action_cancel(cr, uid, [out_move_id], context=context)
                         # open points:
