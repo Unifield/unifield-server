@@ -690,7 +690,7 @@ def trans_generate(lang, modules, cr):
             if hasattr(field_def, 'selection'):
                 sel = False
                 if callable(field_def.selection):
-                    sel = field_def.selection(objmodel, cr, uid)
+                    sel = field_def.selection(objmodel, cr, uid, None)
                 else:
                     sel = field_def.selection
                 if isinstance(sel, (list, tuple)):

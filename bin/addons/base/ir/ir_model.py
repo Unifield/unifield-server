@@ -412,8 +412,9 @@ class ir_model_fields(osv.osv):
             sel = dict(pool_obj._columns[field].selection)
         elif field in pool_obj._inherit_fields and hasattr(pool_obj._inherit_fields[field], 'selection'):
             sel = dict(pool_obj._inherit_fields[field].selection)
+        if callable(sel):
+            sel = sel(pool_obj, cr, uid, context)
         sel_value = sel.get(value, value)
-
         if context.get('lang') and context['lang'] != 'en_US':
             trans_obj = self.pool.get('ir.translation')
             tr_ids = trans_obj.search(cr, uid, [
