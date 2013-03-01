@@ -1,7 +1,7 @@
 -
-  Create Tender (T1)
+  Create Tender wit French version (T2)
 - 
-  !record {model: tender, id: t1}:
+  !record {model: tender, id: t2}:
     name: My Tender test
     creator: base.user_root
     requested_date: !eval time.strftime('%Y-%m-%d')
@@ -12,7 +12,7 @@
   Open the wizard
 -
   !python {model: tender}: |
-    wizard_values = self.wizard_import_tender_line(cr, uid, ref("t1"), context)
+    wizard_values = self.wizard_import_tender_line(cr, uid, ref("t2"), context)
     assert wizard_values.get('res_model', False) == 'wizard.import.tender.line', "Wizard should be wizard.import.tender.line"
     self.pool.get('wizard.import.tender.line').cancel(cr, uid, wizard_values['res_id'], context)
 -
@@ -21,15 +21,15 @@
   !python {model: wizard.import.tender.line}: |
     import addons, base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-    # we set the lang to English and take the file to import accordingly
-    lang = 'en_MF'
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'tender.xml')
+    # we set the lang to French and take the file to import accordingly
+    lang = 'fr_MF'
+    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'fr_tender.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     vals={'file': file64,
           'filename_template': 'template.xls',
           'filename': 'Lines_Not_Imported.xls',
-          'tender_id': ref('t1')}
+          'tender_id': ref('t2')}
     wizard_id = self.create(cr, uid, vals, context)
     logging.getLogger('tests').log(logging.TEST, 'We create the wizard import tender.xml.')
     # the yml_test is important to avoid going through the threading method
@@ -52,7 +52,7 @@
   Check tender lines imported
 -
   !python {model: tender}: |
-    tender = self.browse(cr, uid, ref('t1'), context)
+    tender = self.browse(cr, uid, ref('t2'), context)
     count_line_imported = len(tender.tender_line_ids)
     assert count_line_imported==15, ("The number of lines imported should be 15 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in tender.tender_line_ids if line.to_correct_ok])

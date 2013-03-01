@@ -75,8 +75,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">Commentaire</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">ADAPPRINSB2</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">(printer) SWITCH BOX passive, 2 outlets to 1 printer</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">ProdA</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">2.00</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Pièce</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">3.15</Data></Cell>
@@ -85,8 +85,8 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">test comment</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">ADAPSCRE17C</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">SCREEN, external, 17&#39;, CRT</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">ProdB</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">1.00</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">Pièce</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">27.00</Data></Cell>

@@ -55,7 +55,7 @@ def check_empty_line(**kwargs):
                 return True
         except TypeError as e:
             # Errors should never pass silently.
-            logging.getLogger('check empty line').error('Line %s. Error %s' % (line_num, e))
+            logging.getLogger('check empty line').info('Line %s. Error %s' % (line_num, e))
             pass
 
 

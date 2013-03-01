@@ -1,8 +1,8 @@
 -
-  Create Purchase Order (PO1)
+  Create Purchase Order (PO2)
 - 
-  !record {model: purchase.order, id: po1}:
-    name: My PO test
+  !record {model: purchase.order, id: po2}:
+    name: My PO test in French
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: order
@@ -15,10 +15,10 @@
     order_type: regular
     categ: other
 -
-  Import PO lines (the code for testing the import of the RfQ is the same)
+  Import PO lines in French (the code for testing the import of the RfQ is the same)
 -
   !python {model: purchase.order}: |
-    wizard_values = self.wizard_import_po_line(cr, uid, ref('po1'), context)
+    wizard_values = self.wizard_import_po_line(cr, uid, ref('po2'), context)
     assert wizard_values.get('res_model', False) == 'wizard.import.po.line', "Wizard should be wizard.import.po.line"
     self.pool.get('wizard.import.po.line').cancel(cr, uid, wizard_values['res_id'], context)
 -
@@ -27,14 +27,15 @@
   !python {model: wizard.import.po.line}: |
     import addons, base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-    lang = 'en_MF'
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'po.xml')
+    # we set the lang to French and take the file to import accordingly
+    lang = 'fr_MF'
+    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'fr_po.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     vals={'file': file64,
           'filename_template': 'template.xls',
           'filename': 'Lines_Not_Imported.xls',
-          'po_id': ref('po1')}
+          'po_id': ref('po2')}
     wizard_id = self.create(cr, uid, vals, context)
     read_wiz = self.read(cr, uid, wizard_id, ['file'], context)['file']
     assert read_wiz, ('The file was not written in wizard')
@@ -60,7 +61,7 @@
   Check po lines imported
 -
   !python {model: purchase.order}: |
-    po = self.browse(cr, uid, ref('po1'), context)
+    po = self.browse(cr, uid, ref('po2'), context)
     count_line_imported = len(po.order_line)
     assert count_line_imported==15, ("The number of lines imported should be 15 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in po.order_line if line.to_correct_ok])

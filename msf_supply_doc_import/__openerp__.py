@@ -52,9 +52,11 @@
         'test/data.yml',
         'test/import_so.yml',
         'test/import_ir.yml',
+        'test/fr_import_tender.yml',
         'test/import_tender.yml',
         'test/import_composition_kit.yml',
         'test/import_po.yml',
+        'test/fr_import_po.yml',
     ],
     "installable": True,
     "active": False

@@ -15,7 +15,8 @@
   Product A
 - 
   !record {model: product.product, id: product_A}:
-    name: ProdA
+    name: name of ProdA
+    default_code: ProdA
     cost_method: average
     procure_method: make_to_order
     seller_ids:
@@ -26,7 +27,8 @@
   Product B
 - 
   !record {model: product.product, id: product_B}:
-    name: ProdB
+    name: name of ProdB
+    default_code: ProdB
     cost_method: average
     procure_method: make_to_order
     seller_ids:
