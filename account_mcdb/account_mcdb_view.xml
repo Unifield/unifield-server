@@ -307,7 +307,7 @@
         </record>
 
     <!-- Actions that link each specific search view to a specific form view -->
-        <record model="ir.actions.act_window.view" id="action_account_mcdb_form">
+        <record model="ir.actions.act_window.view" id="action_account_mcdb_form2">
             <field name="sequence" eval="20"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="account_mcdb_form"/>
@@ -320,7 +320,7 @@
             <field name="act_window_id" ref="action_account_mcdb"/>
         </record>
 
-        <record model="ir.actions.act_window.view" id="action_account_mcdb_analytic_form">
+        <record model="ir.actions.act_window.view" id="action_account_mcdb_analytic_form2">
             <field name="sequence" eval="20"/>
             <field name="view_mode">form</field>
             <field name="view_id" ref="account_mcdb_analytic_form"/>
