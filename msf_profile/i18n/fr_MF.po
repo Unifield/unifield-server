@@ -28108,12 +28108,6 @@ msgstr "Traiter document"
 msgid "_Validate"
 msgstr "Valider"
 
-#. module: stock
-#: code:addons/stock/wizard/stock_partial_picking.py:111
-#, python-format
-msgid "_Cancel"
-msgstr "Annuler"
-
 #. modules: procurement, tender_flow, sd, purchase
 #: model:process.node,note:procurement.process_node_procure_in
 #: model:process.node,note:purchase.process_node_packinglist0
@@ -62942,6 +62936,7 @@ msgstr "Sorte de Node"
 #: view:stock.picking:0
 #: view:stock.split.into:0
 #: view:stock.analyze.view:0
+#: code:addons/stock/wizard/stock_partial_picking.py:111
 msgid "_Cancel"
 msgstr "Annuler"
 
