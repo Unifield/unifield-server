@@ -64,8 +64,31 @@
   Check the lines imported on the IR in French
 -
   !python {model: sale.order}: |
+    import logging
     ir = self.browse(cr, uid, ref('ir2'), context)
     count_line_imported = len(ir.order_line)
     assert count_line_imported==12, ("The number of lines imported should be 12 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in ir.order_line if line.to_correct_ok])
-    assert count_line_with_errors==10, ("The number of lines with errors should be 10 but it is %s" % count_line_with_errors)
+    assert count_line_with_errors==11, ("The number of lines with errors should be 11 but it is %s" % count_line_with_errors)
+    sol_obj = self.pool.get('sale.order.line')
+    ProdA_ids = sol_obj.search(cr, uid, [('order_id', '=', ir.id), ('default_code', '=', 'ProdA')], context=context)
+    read_ProdA = sol_obj.read(cr, uid, ProdA_ids, ['product_uom_qty', 'product_uom', 'functional_currency_id', 'comment'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the product ('ProdA') if it was fulfill.")
+    assert read_ProdA['product_uom_qty'] == 24, ("The quantity was defined in the xml file, it must be this one (24) but is is %s" % read_ProdA['product_uom_qty'])
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the product ('ProdA') if it was fulfill.")
+    uom_unit = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')[1]
+    assert read_ProdA['product_uom'][0] == uom_unit, ("The product_uom was defined in the xml file, it must be this one (PCE) but is is %s" % read_ProdA['product_uom'])
+    logging.getLogger('tests').log(logging.TEST, "Check the currency of the line if it was fulfill ('ProdA').")
+    curr_eur = self.pool.get('res.currency').search(cr, uid, [('name', '=', 'EUR')], context=context)[0]
+    assert read_ProdA['functional_currency_id'][0]==curr_eur, ("The currency was not correct, it should be EUR")
+    logging.getLogger('tests').log(logging.TEST, "Check the comment of the line if it was fulfill ('ProdA').")
+    assert read_ProdA['comment']=='Comment IR', ("The comment was not correct, it should be 'Comment IR'")
+    
+    ProdB_ids = sol_obj.search(cr, uid, [('order_id', '=', ir.id), ('default_code', '=', 'ProdB')], context=context)
+    read_ProdB = sol_obj.read(cr, uid, ProdB_ids, ['product_uom_qty', 'product_uom', 'functional_currency_id', 'comment'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, "Check the quantity of the line if it was empty ('ProdB').")
+    assert read_ProdB['product_uom_qty']==1, ("The quantity was empty, it should be 1 and it was %s. ('ProdB')" % read_ProdB['product_uom_qty'])
+    uom_km = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_km')[1]
+    assert read_ProdB['product_uom'][0] == uom_km, ("The UOM was not defined in the xml file, it should be the one of the product ProdB (km)")
+    logging.getLogger('tests').log(logging.TEST, "Check the currency of the line if it was empty ('ProdB').")
+    assert read_ProdB['functional_currency_id'][0]==ir.pricelist_id.currency_id.id, ("The currency was not correct, it should be the currency of the pricelist of the Field Order")

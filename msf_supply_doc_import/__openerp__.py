@@ -51,9 +51,9 @@
     "test": [
         'test/data.yml',
 # test for the import in French
-#        'test/fr_import_ir.yml',
+        'test/fr_import_ir.yml',
 #        'test/fr_import_po.yml',
-        'test/fr_import_so.yml',
+#        'test/fr_import_so.yml',
 #        'test/fr_import_tender.yml',
 # test for the import in English
 #        'test/import_ir.yml',
