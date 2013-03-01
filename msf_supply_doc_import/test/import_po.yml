@@ -15,12 +15,30 @@
     order_type: regular
     categ: other
 -
-  Import PO lines (the code for testing the import of the RfQ is the same)
+  Open the wizard of import of PO lines (the code for testing the import of the RfQ is the same)
 -
   !python {model: purchase.order}: |
+    import base64, logging
+    from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+    # we set the lang to English to test the translation of the template's header columns
+    lang = 'en_MF'
+    context.update({'yml_test': True, 'lang': lang})
     wizard_values = self.wizard_import_po_line(cr, uid, ref('po1'), context)
-    assert wizard_values.get('res_model', False) == 'wizard.import.po.line', "Wizard should be wizard.import.po.line"
-    self.pool.get('wizard.import.po.line').cancel(cr, uid, wizard_values['res_id'], context)
+    res_model = wizard_values['res_model']
+    assert res_model == 'wizard.import.po.line', "Wizard should be wizard.import.po.line"
+    logging.getLogger('tests').log(logging.TEST, 'We check the header of the template (translation)')
+    template = self.pool.get(res_model).read(cr, uid, wizard_values['res_id'], ['file'])['file']
+    fileobj = SpreadsheetXML(xmlstring=base64.decodestring(template))
+    rows = fileobj.getRows()
+    column_header = []
+    for first_row in rows:
+        for cell in range(len(first_row)):
+            cell_data = first_row.cells[cell].data
+            column_header.append(cell_data)
+        break
+    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment']
+    assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
+    self.pool.get(res_model).cancel(cr, uid, wizard_values['res_id'], context)
 -
   Import po lines in English
 -
