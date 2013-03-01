@@ -12,8 +12,26 @@
   Open the wizard in French
 -
   !python {model: tender}: |
+    import base64, logging
+    from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+    # we set the lang to English to test the translation of the template's header columns
+    lang = 'fr_MF'
+    context.update({'yml_test': True, 'lang': lang})
     wizard_values = self.wizard_import_tender_line(cr, uid, ref("t2"), context)
-    assert wizard_values.get('res_model', False) == 'wizard.import.tender.line', "Wizard should be wizard.import.tender.line"
+    res_model = wizard_values.get('res_model', False)
+    assert res_model == 'wizard.import.tender.line', "Wizard should be wizard.import.tender.line"
+    logging.getLogger('tests').log(logging.TEST, 'We check the header of the template (translation)')
+    template = self.pool.get(res_model).read(cr, uid, wizard_values['res_id'], ['file'])['file']
+    fileobj = SpreadsheetXML(xmlstring=base64.decodestring(template))
+    rows = fileobj.getRows()
+    column_header = []
+    for first_row in rows:
+        for cell in range(len(first_row)):
+            cell_data = first_row.cells[cell].data
+            column_header.append(cell_data)
+        break
+    expected_header = ['Code Produit', 'Description Produit', 'Quantité', 'UdM', 'Prix', 'Date de Livraison Souhaitée']
+    assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
     self.pool.get('wizard.import.tender.line').cancel(cr, uid, wizard_values['res_id'], context)
 -
   Import tender lines in French
