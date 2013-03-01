@@ -70,7 +70,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">ProdB</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">(computer) CABLE, SERIAL interface for two PC (fem/fem)</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">1.00</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Pièce</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">km</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">EUR</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>

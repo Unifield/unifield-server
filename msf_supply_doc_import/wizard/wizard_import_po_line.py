@@ -139,7 +139,7 @@ class wizard_import_po_line(osv.osv_memory):
                     p_value = {}
                     p_value = check_line.product_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],product_obj=product_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
-                                     'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+                                     'comment': p_value['comment'], 'error_list': p_value['error_list']})
     
                     # Cell 2: Quantity
                     qty_value = {}

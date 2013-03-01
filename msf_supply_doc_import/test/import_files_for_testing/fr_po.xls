@@ -88,7 +88,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">ProdB</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">1.00</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">Pièce</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">km</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">27.00</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">2012-08-12T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">EUR</Data></Cell>

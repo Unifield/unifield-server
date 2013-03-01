@@ -83,7 +83,7 @@ x:FullRows="1">
     <Cell ss:StyleID="s63"><Data ss:Type="String">ProdB</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">(printer) SWITCH BOX passive, 2 outlets to 1 printer</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">2</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">Pièce</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">km</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">3.15</Data></Cell>
     <Cell ss:StyleID="s64"/>
     <Cell ss:StyleID="s63"/>
