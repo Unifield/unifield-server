@@ -46,8 +46,8 @@
                                 <field name="state_hidden_sale_order"/>
                                 <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
                                 <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>
-                                <button name="ship_recreate" states="shipping_except" string="Recreate Packing" icon="gtk-ok"/>
-                                <button name="ship_corrected" states="shipping_except" string="Ignore Exception" icon="gtk-apply"/>
+                                <!--<button name="ship_recreate" states="shipping_except" string="Recreate Packing" icon="gtk-ok"/>-->
+                                <button name="ship_corrected" states="shipping_except" string="Manually corrected" icon="gtk-apply"/>
                                 <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" icon="gtk-cancel"/>
                                 <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" invisible="1" />
                                 <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
