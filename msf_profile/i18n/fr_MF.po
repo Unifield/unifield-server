@@ -7235,7 +7235,7 @@ msgstr "Si ce champ actif est configuré sur Faux, cela permet de cacher la nome
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_purchase_order_xls
 msgid "Purchase Order Excel Export"
-msgstr "Exporation Excel - Commande de Terrain"
+msgstr "Exporation Excel - Bon de Commande"
 
 #. module: base
 #: report:ir.module.reference:0
