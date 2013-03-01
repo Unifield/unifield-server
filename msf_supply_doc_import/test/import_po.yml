@@ -66,7 +66,7 @@
     wiz_read = self.read(cr, uid, wizard_id, ['state', 'percent_completed', 'data'])
     assert wiz_read['percent_completed'], ("Nothing was imported")
     logging.getLogger('tests').log(logging.TEST, 'The import is finished. Completed: %s' % (wiz_read['percent_completed']))
-    logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error. in English')
+    logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error in English')
     fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['data']))
     rows = fileobj.getRows()
     rows.next()
@@ -78,8 +78,15 @@
   Check po lines imported in English
 -
   !python {model: purchase.order}: |
+    import logging
     po = self.browse(cr, uid, ref('po1'), context)
     count_line_imported = len(po.order_line)
     assert count_line_imported==15, ("The number of lines imported should be 15 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in po.order_line if line.to_correct_ok])
     assert count_line_with_errors==13, ("The number of lines with errors should be 13 but it is %s" % count_line_with_errors)
+    pol_obj = self.pool.get('purchase.order.line')
+    ProdB_ids = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('default_code', '=', 'ProdB')], context=context)
+    read_ProdB = pol_obj.read(cr, uid, ProdB_ids, ['price_unit'], context)[0]
+    logging.getLogger('tests').log(logging.TEST, 'Check the price of the product if it was empty')
+    assert read_ProdB['price_unit'] == 187.0, ("The price was not defined in the xml file, it should be the one of the product ProdB (187.0) but is is %s" % read_ProdB['price_unit'])
+    

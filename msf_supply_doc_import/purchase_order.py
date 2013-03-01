@@ -325,7 +325,7 @@ class purchase_order_line(osv.osv):
         price_unit = to_write['price_unit']
         uom = to_write['product_uom']
         if product and qty and not price_unit_defined:
-            res = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
+            res = self.product_id_on_change(cr, uid, False, pricelist, product, qty, uom,
                                             partner_id, date_order, fiscal_position, date_planned=False,
                                             name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
                                             nomen_manda_0=False, comment=False, context=context)

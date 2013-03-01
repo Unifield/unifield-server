@@ -19,6 +19,8 @@
     default_code: ProdA
     cost_method: average
     procure_method: make_to_order
+    list_price: 152.60
+    standard_price: 152.60
     seller_ids:
       - sequence: 10
         min_qty: 0.00
@@ -31,6 +33,8 @@
     default_code: ProdB
     cost_method: average
     procure_method: make_to_order
+    list_price: 187.00
+    standard_price: 187.00
     seller_ids:
       - sequence: 10
         min_qty: 0.00
