@@ -27,7 +27,12 @@
   !python {model: wizard.import.po.line}: |
     import addons, base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'po.xml')
+    lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+    lang = lang_dict.get('context_lang')
+    if lang == 'fr_MF':
+        file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'fr_po.xls')
+    else:
+        file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'po.xml')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     vals={'file': file64,
@@ -35,14 +40,17 @@
           'filename': 'Lines_Not_Imported.xls',
           'po_id': ref('po1')}
     wizard_id = self.create(cr, uid, vals, context)
+    read_wiz = self.read(cr, uid, wizard_id, ['file'], context)['file']
+    assert read_wiz, ('The file was not written in wizard')
     logging.getLogger('tests').log(logging.TEST, 'We create the wizard import po.xml.')
     # the yml_test is important to avoid going through the threading method
-    context.update({'yml_test': True})
+    context.update({'yml_test': True, 'lang': lang})
     logging.getLogger('tests').log(logging.TEST, 'We import po.xml.')
     self.import_file(cr, uid, wizard_id, context)
     logging.getLogger('tests').log(logging.TEST, 'We refresh the view.')
     self.dummy(cr, uid, wizard_id, context)
     wiz_read = self.read(cr, uid, wizard_id, ['state', 'percent_completed', 'data'])
+    assert wiz_read['percent_completed'], ("Nothing was imported")
     logging.getLogger('tests').log(logging.TEST, 'The import is finished. Completed: %s' % (wiz_read['percent_completed']))
     logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error.')
     fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['data']))

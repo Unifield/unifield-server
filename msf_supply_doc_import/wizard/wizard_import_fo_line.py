@@ -132,7 +132,7 @@ class wizard_import_fo_line(osv.osv_memory):
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 try:
-                    if not check_line.check_empty_line(row=row, col_count=col_count):
+                    if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
                         line_num-=1

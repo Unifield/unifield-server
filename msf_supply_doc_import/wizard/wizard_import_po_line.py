@@ -128,7 +128,7 @@ class wizard_import_po_line(osv.osv_memory):
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 try:
-                    if not check_line.check_empty_line(row=row, col_count=col_count):
+                    if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
                         line_num-=1
@@ -209,13 +209,13 @@ class wizard_import_po_line(osv.osv_memory):
                 except UnicodeEncodeError as e:
                     message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    logging.getLogger('import purchase order').info('Error %s' % e)
+                    logging.getLogger('import purchase order').error('Error %s' % e)
                     cr.rollback()
                     continue
                 except Exception as e:
                     message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    logging.getLogger('import purchase order').info('Error %s' % e)
+                    logging.getLogger('import purchase order').error('Error %s' % e)
                     cr.rollback()
                     continue
                 finally:
@@ -240,7 +240,7 @@ Importation completed in %s!
 #        try:
         wizard_vals = {'message': final_message, 'state': 'done'}
         if line_with_error:
-            file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
+            file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index, context=context)
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)

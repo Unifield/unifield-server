@@ -48,13 +48,14 @@ def check_empty_line(**kwargs):
     """
     row = kwargs['row']
     col_count = kwargs['col_count']
+    line_num = kwargs['line_num']
     for cell in range(col_count):
         try:
-            if row.cells[cell].data:
+            if row.cells and row.cells[cell] and row.cells[cell].data is not None:
                 return True
         except TypeError as e:
             # Errors should never pass silently.
-            logging.getLogger('check empty line').info('Error %s' % e)
+            logging.getLogger('check empty line').error('Line %s. Error %s' % (line_num, e))
             pass
 
 

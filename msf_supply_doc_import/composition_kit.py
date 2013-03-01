@@ -107,7 +107,7 @@ class composition_kit(osv.osv):
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
 Module, Product Code*, Product Description, Quantity and Product UOM"""))
 
-            if not check_line.check_empty_line(row=row, col_count=col_count):
+            if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                 continue
 
             # Cell 0: Module
