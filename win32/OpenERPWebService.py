@@ -20,6 +20,7 @@
 ##############################################################################
 
 # Win32 python extensions modules
+import win32con
 import win32serviceutil
 import win32service
 import win32event
@@ -58,7 +59,7 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         servicemanager.LogInfoMsg("OpenERP Web stopped correctly")
         # And set my event.
         win32event.SetEvent(self.hWaitStop)
-
+        self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
     def StartOpenERP(self):
         # The server finds now its configuration automatically on Windows
@@ -68,9 +69,13 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         service_dir = os.path.dirname(sys.argv[0])
         server_dir = os.path.split(service_dir)[0]
         server_path = os.path.join(server_dir, 'openerp-web.exe')
+        result = win32api.SetConsoleCtrlHandler(self.handle, 1)
 
         self.openerp_process = subprocess.Popen([server_path], cwd=server_dir, creationflags=win32process.CREATE_NO_WINDOW)
 
+    def handle(self, event):
+        """Handle console control events (like Ctrl-C)."""
+        return 1
 
     def StartControl(self,ws):
         # this listens to the Service Manager's events
@@ -88,8 +93,6 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         self.openerp_process.wait()
         if not self.stopping:
             sys.exit("OpenERP Web check: server not running, check the logfile for more info")
-
-
 
 if __name__=='__main__':
     # Do with the service whatever option is passed in the command line
