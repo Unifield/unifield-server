@@ -2823,6 +2823,12 @@ msgstr "Caisse: "
 #: selection:international.transport.cost.report,order_state:0
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
+#: code:addons/sales_followup/sale_followup.py:374
+#: code:addons/sales_followup/sale_followup.py:388
+#: code:addons/sales_followup/sale_followup.py:420
+#: code:addons/sales_followup/sale_followup.py:452
+#: code:addons/sales_followup/sale_followup.py:480
+#, python-format
 msgid "Closed"
 msgstr "Clôturé"
 
@@ -4840,8 +4846,10 @@ msgstr "Pour une Requête interne avec 'Sur commande' comme méthode d'acquisiti
 "                    le fournisseur doit être de type soit 'Interne' ou 'Inter-Sections' ou 'Inter-missions'.\n"
 "                    "
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, sales_followup
 #: selection:shipment,state:0
+#: code:addons/sales_followup/sale_followup.py:482
+#, python-format
 msgid "Packed"
 msgstr "Emballé"
 
@@ -7434,6 +7442,12 @@ msgstr "Fichier du module importé avec succès !"
 #: view:purchase.order:0
 #: view:tender:0
 #: selection:tender,state:0
+#: code:addons/sales_followup/sale_followup.py:376
+#: code:addons/sales_followup/sale_followup.py:389
+#: code:addons/sales_followup/sale_followup.py:421
+#: code:addons/sales_followup/sale_followup.py:453
+#: code:addons/sales_followup/sale_followup.py:484
+#, python-format
 msgid "Cancelled"
 msgstr "Annulé"
 
@@ -7756,7 +7770,7 @@ msgstr "Devise ESC"
 msgid "Intermission Voucher Lines"
 msgstr "Lignes Bon Intermission "
 
-#. modules: msf_budget, account, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report
+#. modules: msf_budget, account, product_attributes, register_accounting, unifield_setup, object_query, account_period_closing_level, order_types, mission_stock, msf_accrual, procurement_report, sales_followup
 #: view:account.state.open:0
 #: view:wizard.confirm.closing.period:0
 #: selection:mission.stock.wizard,split_stock:0
@@ -7778,6 +7792,8 @@ msgstr "Lignes Bon Intermission "
 #: view:wizard.confirm.bank:0
 #: view:wizard.open.empty.cashbox:0
 #: selection:allocation.stock.setup,unallocated_ok:0
+#: code:addons/sales_followup/sale_followup.py:355
+#: code:addons/sales_followup/sale_followup.py:372
 #, python-format
 msgid "No"
 msgstr "Non"
@@ -30556,12 +30572,16 @@ msgstr "Enregistrer un Contrat"
 msgid "Note Type"
 msgstr "Type de Note"
 
-#. modules: procurement, sale, purchase, sourcing
+#. modules: procurement, sale, purchase, sourcing, sales_followup
 #: selection:procurement.order,state:0
 #: view:purchase.order:0
 #: selection:sale.order.line,state:0
 #: selection:sourcing.line,sale_order_line_state:0
 #: selection:sourcing.line,state:0
+#: code:addons/sales_followup/sale_followup.py:378
+#: code:addons/sales_followup/sale_followup.py:422
+#: code:addons/sales_followup/sale_followup.py:423
+#, python-format
 msgid "Exception"
 msgstr "Exception"
 
@@ -34903,7 +34923,7 @@ msgstr "Délai de Paiement (nom court)"
 msgid "Quantity to process"
 msgstr "Quantité à traiter"
 
-#. modules: out_step, msf_outgoing, stock, specific_rules, kit
+#. modules: out_step, msf_outgoing, stock, specific_rules, kit, sales_followup
 #: selection:kit.creation.to.consume,availability_to_consume:0
 #: selection:stock.move,hidden_state:0
 #: selection:substitute.item,availability_status_hidden_func_substitute_item:0
@@ -34919,6 +34939,9 @@ msgstr "Quantité à traiter"
 #: view:stock.picking:0
 #: selection:stock.picking,state:0
 #: view:stock.production.lot:0
+#: code:addons/sales_followup/sale_followup.py:451
+#: code:addons/sales_followup/sale_followup.py:479
+#, python-format
 msgid "Available"
 msgstr "Disponible"
 
@@ -36570,6 +36593,8 @@ msgstr "Dépendance du Module"
 #: selection:wizard.import.ir.line,state:0
 #: selection:wizard.import.po.line,state:0
 #: selection:wizard.import.tender.line,state:0
+#: code:addons/sales_followup/sale_followup.py:415
+#, python-format
 msgid "Draft"
 msgstr "Brouillon"
 
@@ -40038,6 +40063,8 @@ msgstr "Compte- Correspondance"
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
 #: view:sale.order:0
+#: code:addons/sales_followup/sale_followup.py:419
+#, python-format
 msgid "Confirmed"
 msgstr "Confirmé"
 
@@ -41809,7 +41836,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer de nomenclature récursive."
 msgid "for a PO, date of the first godd receipt."
 msgstr "pour un Bon de Commande, date de première réception de marchandises"
 
-#. modules: msf_order_date, purchase, purchase_allocation_report, procurement, purchase_override, kit, out_step, base, export_import_lang, stock
+#. modules: msf_order_date, purchase, purchase_allocation_report, procurement, purchase_override, kit, out_step, base, export_import_lang, stock, sales_followup
 #: view:res.request:0
 #: view:res.request:0
 #: selection:stock.move,hidden_state:0
@@ -41823,6 +41850,13 @@ msgstr "pour un Bon de Commande, date de première réception de marchandises"
 #: selection:report.stock.move,state:0
 #: selection:stock.move,state:0
 #: selection:stock.picking,state:0
+#: code:addons/sales_followup/sale_followup.py:361
+#: code:addons/sales_followup/sale_followup.py:386
+#: code:addons/sales_followup/sale_followup.py:449
+#: code:addons/sales_followup/sale_followup.py:450
+#: code:addons/sales_followup/sale_followup.py:477
+#: code:addons/sales_followup/sale_followup.py:478
+#, python-format
 msgid "Waiting"
 msgstr "En attente"
 
@@ -43298,6 +43332,9 @@ msgstr "Commande de Terrain – validée"
 #: selection:sourcing.line,sale_order_state:0
 #: selection:purchase.order.line,order_state:0
 #: selection:sync.client.child_entity,state:0
+#: code:addons/sales_followup/sale_followup.py:416
+#: code:addons/sales_followup/sale_followup.py:417
+#, python-format
 msgid "Validated"
 msgstr "Validé"
 
@@ -49477,7 +49514,7 @@ msgstr "Budget vs. Exportations réelles"
 msgid "Ana. Name"
 msgstr "Nom Analytique"
 
-#. modules: return_claim, reason_types_moves, order_types, procurement_request, msf_supply_doc_import
+#. modules: return_claim, reason_types_moves, order_types, procurement_request, msf_supply_doc_import, sales_followup
 #: view:stock.move:0
 #: view:sale.order:0
 #: view:stock.move:0
@@ -49491,6 +49528,8 @@ msgstr "Nom Analytique"
 #: selection:wizard.import.ir.line,state:0
 #: selection:wizard.import.po.line,state:0
 #: selection:wizard.import.tender.line,state:0
+#: code:addons/sales_followup/sale_followup.py:387
+#, python-format
 msgid "In Progress"
 msgstr "En Progrès"
 
@@ -55914,6 +55953,8 @@ msgstr "Autoriser le Lettrage"
 #: selection:purchase.order.line.allocation.report,state:0
 #: selection:purchase.order.line,order_state_purchase_order_line:0
 #: selection:purchase.order.line,po_state:0
+#: code:addons/sales_followup/sale_followup.py:418
+#, python-format
 msgid "Confirmed (waiting)"
 msgstr "Confirmé (attente)"
 
@@ -60265,7 +60306,7 @@ msgstr "Ce rapport permet d'imprimer ou de générer un document PDF de votre ba
 #: selection:sync.client.child_entity,state:0
 #: view:purchase.order:0
 msgid "Updated"
-msgstr "Mise à jour "
+msgstr "Mise à jour"
 
 #. module: stock
 #: view:stock.move:0
@@ -63089,11 +63130,13 @@ msgstr "Indonésie"
 msgid "By unchecking the active field, you may hide an INCOTERM without deleting it."
 msgstr "En décochant cette case, vous pouvez masquer un Incoterm sans le supprimer."
 
-#. modules: msf_outgoing, sale
+#. modules: msf_outgoing, sale, sales_followup
 #: view:shipment:0
 #: selection:shipment,state:0
 #: view:sale.order.line:0
 #: field:sale.report,shipped:0
+#: code:addons/sales_followup/sale_followup.py:483
+#, python-format
 msgid "Shipped"
 msgstr "Expédié"
 
@@ -66203,9 +66246,11 @@ msgstr "Ligne de suivi de commande"
 msgid "Amount currency"
 msgstr "Devise Montant"
 
-#. module: sale
+#. modules: sale, sales_followup
 #: field:sale.order,picked_rate:0
 #: view:sale.report:0
+#: code:addons/sales_followup/sale_followup.py:481
+#, python-format
 msgid "Picked"
 msgstr "Prélevé"
 
@@ -66429,3 +66474,93 @@ msgstr " (de l'entête)"
 #, python-format
 msgid "Global analytic distribution"
 msgstr "Allocation Analytique Globale"
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:385
+#: code:addons/sales_followup/sale_followup.py:414
+#: code:addons/sales_followup/sale_followup.py:448
+#: code:addons/sales_followup/sale_followup.py:476
+#, python-format
+msgid "Partial"
+msgstr "Partiel"
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:413
+#, python-format
+msgid "No order"
+msgstr "Aucune commande"
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:357
+#: code:addons/sales_followup/sale_followup.py:358
+#: code:addons/sales_followup/sale_followup.py:359
+#: code:addons/sales_followup/sale_followup.py:383
+#: code:addons/sales_followup/sale_followup.py:412
+#: code:addons/sales_followup/sale_followup.py:446
+#, python-format
+msgid "N/A"
+msgstr "N/A"
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:447
+#, python-format
+msgid "No shipment"
+msgstr "Aucune expédition"
+
+#. modules: sales_followup, purchase_followup
+#: constraint:purchase.order:0
+#: constraint:sale.order:0
+#: constraint:purchase.order:0
+#: constraint:sale.order:0
+msgid "Partner type and order type are incompatible! Please change either order type or partner."
+msgstr "Le type de partnenaire et le type de commande sont incompatibles. Veuillez changer l'un ou l'autre."
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:360
+#: code:addons/sales_followup/sale_followup.py:475
+#, python-format
+msgid "No deliveries"
+msgstr "Aucune livraison"
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:392
+#: code:addons/sales_followup/sale_followup.py:394
+#: code:addons/sales_followup/sale_followup.py:404
+#: code:addons/sales_followup/sale_followup.py:426
+#: code:addons/sales_followup/sale_followup.py:428
+#: code:addons/sales_followup/sale_followup.py:438
+#: code:addons/sales_followup/sale_followup.py:456
+#: code:addons/sales_followup/sale_followup.py:458
+#: code:addons/sales_followup/sale_followup.py:467
+#: code:addons/sales_followup/sale_followup.py:487
+#: code:addons/sales_followup/sale_followup.py:510
+#: code:addons/sales_followup/sale_followup.py:511
+#: code:addons/sales_followup/sale_followup.py:639
+#: code:addons/sales_followup/sale_followup.py:640
+#: code:addons/sales_followup/sale_followup.py:642
+#: code:addons/sales_followup/sale_followup.py:643
+#: code:addons/sales_followup/sale_followup.py:645
+#: code:addons/sales_followup/sale_followup.py:646
+#: code:addons/sales_followup/sale_followup.py:650
+#: code:addons/sales_followup/sale_followup.py:651
+#: code:addons/sales_followup/sale_followup.py:654
+#: code:addons/sales_followup/sale_followup.py:655
+#: code:addons/sales_followup/sale_followup.py:659
+#: code:addons/sales_followup/sale_followup.py:661
+#: code:addons/sales_followup/sale_followup.py:662
+#: code:addons/sales_followup/sale_followup.py:666
+#: code:addons/sales_followup/sale_followup.py:671
+#: code:addons/sales_followup/sale_followup.py:673
+#: code:addons/sales_followup/sale_followup.py:674
+#: code:addons/sales_followup/sale_followup.py:676
+#: code:addons/sales_followup/sale_followup.py:677
+#: code:addons/sales_followup/sale_followup.py:680
+#, python-format
+msgid "Error on state !"
+msgstr "Erreur sur le statut !"
+
+#. module: sales_followup
+#: code:addons/sales_followup/sale_followup.py:384
+#, python-format
+msgid "No tender"
+msgstr "Aucun appel d'offre"

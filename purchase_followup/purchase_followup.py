@@ -53,18 +53,7 @@ class purchase_order_followup(osv.osv_memory):
         return round((move_value/line_value)*100, 2)
     
     def _get_move_state(self, cr, uid, move_state, context=None):
-        move_obj = self.pool.get('stock.move')
-        sel = move_obj.fields_get(cr, uid, ['state'])
-        res = dict(sel['state']['selection']).get(move_state)
-        tr_ids = self.pool.get('ir.translation').search(cr, uid, [
-                                            ('type', '=', 'selection'), 
-                                            ('name', '=', 'stock.move,state'), 
-                                            ('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(cr, uid, tr_ids, 
-                                                        ['value'])[0]['value']
-        else:
-            return res
+        return self.pool.get('ir.model.fields').get_selection(cr, uid, 'stock.move', 'state', move_state, context)
         
     def update_view(self, cr, uid, ids, context=None):
         '''
