@@ -331,10 +331,7 @@ class product_nomenclature(osv.osv):
         # loop through children nomenclature of mandatory type
         shownum = num or context.get('withnum') == 1
         if position < 3:
-            if position == 1:
-                nomenids = nomenObj.search(cr, uid, [('category_id', '!=', False), ('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
-            else:
-                nomenids = nomenObj.search(cr, uid, [('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+            nomenids = nomenObj.search(cr, uid, [('active','in',['t','f']),('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
             if nomenids:
                 for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
                     # get the name and product number
