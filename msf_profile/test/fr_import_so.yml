@@ -52,7 +52,7 @@
     # we set the lang to French and take the file to import accordingly
     lang = 'fr_MF'
     # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'fr_so.xls')
+    file_path = addons.get_module_resource('msf_profile','test','import_files_for_testing', 'fr_so.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard in French.')

@@ -49,7 +49,7 @@
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
     # we set the lang to French and take the file to import accordingly
     lang = 'fr_MF'
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'fr_po.xls')
+    file_path = addons.get_module_resource('msf_profile','test','import_files_for_testing', 'fr_po.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     vals={'file': file64,
