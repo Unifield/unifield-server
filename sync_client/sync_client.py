@@ -339,6 +339,9 @@ class entity(osv.osv):
                 logger.replace(logger_index, "Update(s) sent: %d/%d" % (updates_count, max_updates))
             res = create_package()
 
+        if logger and updates_count:
+            logger.replace(logger_index, "Update(s) sent: %d" % updates_count)
+
         #state update_send => update_validate
         return updates_count
 
@@ -372,7 +375,7 @@ class entity(osv.osv):
         if entity.state == 'init': 
             self.set_last_sequence(cr, uid, context)
         
-        updates_count = self.retrieve_update(cr, uid, recover=recover, logger=logger, context=context)
+        self.retrieve_update(cr, uid, recover=recover, logger=logger, context=context)
         cr.commit()
 
         res = self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
@@ -417,7 +420,10 @@ class entity(osv.osv):
                     self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
                 raise Exception, res[1]
-        
+
+        if logger and updates_count:
+            logger.replace(logger_index, "Update(s) received: %d" % updates_count)
+
         self.write(cr, uid, entity.id, {'update_offset' : 0, 
                                         'max_update' : 0, 
                                         'update_last' : max_seq}, context=context) 
@@ -439,14 +445,11 @@ class entity(osv.osv):
             raise SkipStep
         
         if entity.state == 'init':
-            self.create_message(cr, uid, context)
+            self.create_message(cr, uid, context=context)
             cr.commit()
 
-        messages_count = self.send_message(cr, uid, context)
+        self.send_message(cr, uid, logger=logger, context=context)
         cr.commit()
-
-        if logger and messages_count:
-            logger.append("Message(s) sent: %d" % messages_count)
 
         return True
         
@@ -466,13 +469,15 @@ class entity(osv.osv):
             
         return messages_count
     
-    def send_message(self, cr, uid, context=None):
+    def send_message(self, cr, uid, logger=None, context=None):
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
         uuid = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         message_obj = self.pool.get('sync.client.message_to_send')
+        messages_max = message_obj.search(cr, uid, [('sent','=',False)], count=True, context=context)
 
         messages_count = 0
+        logger_index = None
         while True:
             packet = message_obj.get_message_packet(cr, uid, max_packet_size, context=context)
             if not packet:
@@ -482,6 +487,12 @@ class entity(osv.osv):
             if not res[0]:
                 raise Exception, res[1]
             message_obj.packet_sent(cr, uid, packet, context=context)
+            if logger and messages_count:
+                if logger_index is None: logger_index = logger.append()
+                logger.replace(logger_index, "Message(s) sent: %d/%d" % (messages_count, messages_max))
+
+        if logger and messages_count:
+            logger.replace(logger_index, "Message(s) sent: %d" % messages_count)
 
         return messages_count
         #message_push => init
