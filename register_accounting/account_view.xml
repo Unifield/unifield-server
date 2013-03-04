@@ -67,7 +67,7 @@
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True}" />
                                         <field name="analytic_account_id"
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -114,7 +114,7 @@
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]" 
-                                            context="{'curr': parent.currency}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True}" />
                                         <field name="display_analytic_button" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -207,7 +207,7 @@
                                         <field name="partner_type"  
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency}" 
+                                            context="{'curr': parent.currency, 'search_default_active': True}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -252,7 +252,7 @@
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency}" 
+                                            context="{'curr': parent.currency, 'search_default_active': True}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -363,7 +363,7 @@
                     <field name="name" string="Description"/>
                     <field name="ref"/>
                     <field name="account_id"/>
-                    <field name="partner_type"/>
+                    <field name="partner_type" context="{'search_default_active': True}"/>
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="register_id" invisible="1"/>
@@ -672,7 +672,7 @@
                                     <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency}"
+                                            context="{'curr': parent.currency, 'search_default_active': True}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -713,7 +713,7 @@
                                     <field name="partner_type"
                                         attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                         domain="[('filter_for_third_party', '=', account_id)]" 
-                                        context="{'curr': parent.currency}" 
+                                        context="{'curr': parent.currency, 'search_default_active': True}" 
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -852,7 +852,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//tree//field[@name='partner_id']" position="after">
-                        <field name="partner_type"/>
+                        <field name="partner_type" context="{'search_default_active': True}"/>
                     </xpath>
                     <xpath expr="/form//tree//field[@name='account_id']" position="replace">
                         <field name="account_id" on_change="onchange_account_id(account_id, partner_type)"/>

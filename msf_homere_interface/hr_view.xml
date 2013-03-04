@@ -18,7 +18,7 @@
                     <field colspan="6" name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="user_id" on_change="onchange_user(user_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="company_id" widget="selection" on_change="onchange_company(company_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
-                    <field name="active" attrs="{'readonly': [('employee_type', '=', 'local')]}"/>
+                    <field name="active" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                     <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
                     <newline/>
                     <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
@@ -98,6 +98,9 @@
         <field name="inherit_id" ref="hr.view_employee_tree"/>
         <field name="arch" type="xml">
             <data>
+                <xpath expr="/tree" position="attributes">
+                    <attribute name="colors">red:not active</attribute>
+                </xpath>
                 <field name="work_phone" position="replace"/>
                 <field name="work_email" position="replace"/>
                 <field name="department_id" position="replace"/>
@@ -111,6 +114,7 @@
                     <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="active" invisible="1"/>
                 </field>
             </data>
         </field>
@@ -124,7 +128,7 @@
         <field name="model">hr.employee</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Employees" editable="top">
+            <tree string="Employees" editable="top" colors="red:not active">
                 <field name="allow_edition" invisible="1"/>
                 <field name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
                 <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
