@@ -284,7 +284,9 @@ class account_move_reconcile(osv.osv):
                 name = ''
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
-                self.pool.get('account.move.line').write(cr, uid, t+p, {'reconcile_txt': name})
+                if p or t:
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    cr.execute(sql, (name, tuple(p+t)))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -307,7 +309,9 @@ class account_move_reconcile(osv.osv):
                 name = ''
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
-                self.pool.get('account.move.line').write(cr, uid, t+p, {'reconcile_txt': name})
+                if p or t:
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    cr.execute(sql, (name, tuple(p+t)))
         return res
 
 account_move_reconcile()
