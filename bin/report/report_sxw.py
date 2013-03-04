@@ -81,10 +81,32 @@ class _float_format(float, _format):
 
     def __str__(self):
         digits = 2
+        computation = False
         if hasattr(self,'_field') and getattr(self._field, 'digits', None):
             digits = self._field.digits[1]
+        
+        # custom fields - decimal_precision computation
+        if hasattr(self,'_field') and getattr(self._field, 'computation', None):
+            computation = self._field.computation
+            
         if hasattr(self, 'lang_obj'):
-            return self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
+            # dynamic number of digits if computation - do not interfer with number formatting according to locale
+            if computation:
+                v = ("%%.%df" % digits) % self.name
+                num, decimals = v.split(".", 1)
+                # fixed min decimal value
+                min_digits = 2
+                # remove trailing zeros
+                decimals = decimals.rstrip('0')
+                # if less than two digits, we add padding - possible improvement, add the padding size in the decimal precision object
+                if len(decimals) < min_digits:
+                    digits = min_digits
+                else:
+                    digits = len(decimals)
+            
+            result = self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
+            return result
+        
         return self.val
 
 class _int_format(int, _format):
@@ -144,6 +166,22 @@ class browse_record_list(list):
     def __str__(self):
         return "browse_record_list("+str(len(self))+")"
 
+def getSel(pool, cr, uid, o, field, context=None):
+    if context is None:
+        context = {}
+    sel = pool.get(o._name).fields_get(cr, uid, [field])
+    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
+    name = '%s,%s' % (o._name, field)
+    if context.get('lang'):
+        tr_ids = pool.get('ir.translation').search(cr, uid, [
+            ('type', '=', 'selection'), ('name', '=', name), ('src', '=', res), ('lang', '=', context['lang'])
+        ])
+        if tr_ids:
+            value = pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
+            if value:
+                return value
+    return res
+
 class rml_parse(object):
     def __init__(self, cr, uid, name, parents=rml_parents, tag=rml_tag, context=None):
         if not context:
@@ -166,6 +204,7 @@ class rml_parse(object):
             'setHtmlImage' : self.set_html_image,
             'strip_name' : self._strip_name,
             'time' : time,
+            'getSel': self.getSel,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -181,6 +220,12 @@ class rml_parse(object):
         self.default_lang = {}
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
+
+    def getSel(self, o, field):
+        """
+        Returns the fields.selection label
+        """
+        return getSel(self.pool, self.cr, self.uid, o, field, self.localcontext)
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
@@ -271,6 +316,13 @@ class rml_parse(object):
                 formatLang(value, dp='Account') -> digits=3
                 formatLang(value, digits=5, dp='Account') -> digits=5
         """
+        digits = 2
+        computation = False
+        # could be a clue for proper use of digit and computation directly from field object - I leave this code as a start for further dev later on
+        if hasattr(value,'_field'):
+            #print digits
+            pass
+            
         if digits is None:
             if dp:
                 digits = self.get_digits(dp=dp)

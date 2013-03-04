@@ -356,7 +356,7 @@ class expression(object):
                     if operator in ('like', 'ilike', 'not like', 'not ilike'):
                         right = '%%%s%%' % right
 
-                    operator = operator == '=like' and 'like' or operator
+                    operator = {'=like':'like','=ilike':'ilike'}.get(operator,operator)
 
                     query1 = '( SELECT res_id'          \
                              '    FROM ir_translation'  \

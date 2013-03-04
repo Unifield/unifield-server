@@ -26,6 +26,7 @@ import sys
 import netsvc
 import logging
 import release
+from base64 import b64decode, b64encode
 
 def check_ssl():
     try:
@@ -456,8 +457,13 @@ class configmanager(object):
             for (name,value) in p.items('options'):
                 if value=='True' or value=='true':
                     value = True
-                if value=='False' or value=='false':
+                elif value=='False' or value=='false':
                     value = False
+                elif 'pass' in name:
+                    try:
+                        value = b64decode(value)
+                    except:
+                        pass
                 self.options[name] = value
             #parse the other sections, as well
             for sec in p.sections():
@@ -487,6 +493,8 @@ class configmanager(object):
                 continue
             if opt in ('log_level', 'assert_exit_level'):
                 p.set('options', opt, loglevelnames.get(self.options[opt], self.options[opt]))
+            elif 'pass' in opt and isinstance(self.options[opt], (str, unicode)):
+                p.set('options', opt, b64encode(self.options[opt]))
             else:
                 p.set('options', opt, self.options[opt])
 
