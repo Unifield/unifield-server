@@ -61,10 +61,12 @@
                                                 <input type="radio" class="radio" name="_terp_you" value="True" checked="checked"/>
                                             </td>
                                             <td>${_("Only for you")}</td>
+                                            % if rpc.session.uid == 1:
                                             <td class="item">
                                                 <input type="radio" class="radio" name="_terp_you" value="False"/>
                                             </td>
                                             <td>${_("For all")}</td>
+                                            % endif
                                         </tr>
                                     </table>
                                 </fieldset>
