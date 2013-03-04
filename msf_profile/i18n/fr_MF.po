@@ -8797,11 +8797,12 @@ msgstr "Nombre de colonnes ne contenant pas de nom de groupe"
 msgid "Departments"
 msgstr "Départements"
 
-#. modules: mission_stock, supplier_catalogue, product
+#. modules: mission_stock, supplier_catalogue, product, reason_types_moves
 #: view:stock.mission.report.line:0
 #: view:product.product:0
 #: selection:product.template,type:0
 #: view:supplier.catalogue.line:0
+#: selection:stock.move,product_type:0
 msgid "Service with Reception"
 msgstr "Service avec Réception"
 
@@ -46134,8 +46135,9 @@ msgstr "Articles de remplacement"
 msgid "Given by Python Code"
 msgstr "Donné par le Code Python"
 
-#. module: product
+#. modules: product, reason_types_moves
 #: selection:product.template,type:0
+#: selection:stock.move,product_type:0
 msgid "Stockable Product"
 msgstr "Produit Stockable"
 
@@ -66564,3 +66566,108 @@ msgstr "Erreur sur le statut !"
 #, python-format
 msgid "No tender"
 msgstr "Aucun appel d'offre"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_internal_supply
+msgid "Internal Supply"
+msgstr "Approvisionnement interne"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_consumption
+msgid "Consumption"
+msgstr "Consommation"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_consumption_report
+msgid "Consumption Report"
+msgstr "Rapport de consommation"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_return_from_unit
+msgid "Return from unit"
+msgstr "Retour de UdC"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_external_supply
+msgid "External Supply"
+msgstr "Approvisionnement externe"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_deliver_partner
+msgid "Deliver Partner"
+msgstr "Livraison partenaire"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_internal_move
+msgid "Internal Move"
+msgstr "Mouvement interne"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_donation
+msgid "Donation (standard)"
+msgstr "Donation (normale)"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_loan
+msgid "Loan"
+msgstr "Prêt"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_donation_expiry
+msgid "Donation before expiry"
+msgstr "Donation avant expiration"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_in_kind_donation
+msgid "In-Kind Donation"
+msgstr "Donation en nature"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_loss
+msgid "Loss"
+msgstr "Perte"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_scrap
+msgid "Scrap"
+msgstr "Rebut"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_sample
+msgid "Sample"
+msgstr "Échantillon"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_expiry
+msgid "Expiry"
+msgstr "Expiration"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_damage
+msgid "Damage"
+msgstr "Endommagé"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_discrepancy
+msgid "Discrepancy"
+msgstr "Écart"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_other
+msgid "Other"
+msgstr "Autre"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_kit
+msgid "Kit"
+msgstr "Kit"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_goods_return
+msgid "Goods Return"
+msgstr "Retour de marchandises"
+
+#. module: reason_types_moves
+#: model:stock.reason.type,name:reason_types_moves.reason_type_goods_replacement
+msgid "Goods Replacement"
+msgstr "Remplacement de marchandises"
