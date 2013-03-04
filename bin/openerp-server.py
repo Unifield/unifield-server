@@ -250,6 +250,20 @@ def quit(restart=False):
     else:
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
+#----------------------------------------------------------
+# manage some platform specific behaviour
+#----------------------------------------------------------
+
+if sys.platform == 'win32':
+    import win32api
+    def mainthread_sleep(stime):
+        # use SleepEx so the process can recieve console control event
+        # (required to Windows service survive if the user logout)
+        win32api.SleepEx(stime*1000)
+else:
+    def mainthread_sleep(stime):
+        time.sleep(stime)
+
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')
     pidtext = "%d" % (os.getpid())
@@ -263,7 +277,7 @@ logger.info('OpenERP server is running, waiting for connections...')
 tools.restart_required = False
 
 while netsvc.quit_signals_received == 0 and not tools.restart_required:
-    time.sleep(5)
+    mainthread_sleep(5)
 
 quit(restart=tools.restart_required)
 

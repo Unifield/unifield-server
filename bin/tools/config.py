@@ -88,7 +88,7 @@ class configmanager(object):
             'timezone' : False, # to override the default TZ
             'test_file' : False,
             'test_report_directory' : False,
-            'test_disable' : False,
+            'test_disable' : True,
             'test_commit' : False,
             'static_http_enable': False,
             'static_http_document_root': None,
@@ -173,7 +173,7 @@ class configmanager(object):
         group.add_option("--test-file", dest="test_file", help="Launch a YML test file.")
         group.add_option("--test-report-directory", dest="test_report_directory", help="If set, will save sample of all reports in this directory.")
         group.add_option("--test-disable", action="store_true", dest="test_disable",
-                         default=False, help="Disable loading test files.")
+                         default=True, help="Disable loading test files.")
         group.add_option("--test-commit", action="store_true", dest="test_commit",
                          default=False, help="Commit database changes performed by tests.")
         parser.add_option_group(group)
