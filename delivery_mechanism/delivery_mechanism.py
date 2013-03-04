@@ -82,6 +82,14 @@ class stock_move(osv.osv):
         if picking_type and picking_type == 'incoming_shipment':
             input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
             defaults.update(location_dest_id=input_loc)
+            defaults.update(purchase_line_id=False)
+            defaults.update(sale_line_id=False)
+            defaults.update(invoice_line_id=False)
+            defaults.update(backmove_id=False)
+            defaults.update(backmove_packing_id=False)
+            defaults.update(kit_creation_id_stock_move=False)
+            defaults.update(to_consume_id_stock_move=False)
+            defaults.update(composition_list_id=False)
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
