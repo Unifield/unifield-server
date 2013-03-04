@@ -447,7 +447,7 @@ class sale_order_line(osv.osv):
                     product_id = vals.get('product_id')
                     uom_id = vals.get('product_uom')
                     res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context)
-                    if res and res['warning']:
+                    if res and res.get('warning', False):
                         message += res['warning']['message']
 
                 if message and not context.get('procurement_request', False):
