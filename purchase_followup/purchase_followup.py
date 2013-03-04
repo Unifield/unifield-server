@@ -83,6 +83,8 @@ class purchase_order_followup(osv.osv_memory):
     def start_order_followup(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        if not context.get('lang'):
+            context['lang'] = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])['context_lang']
         # openERP BUG ?
         ids = context.get('active_ids',[])
         split = True
