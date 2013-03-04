@@ -1389,6 +1389,13 @@ class stock_picking(osv.osv):
         '''
         return kwargs['state_list']
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        return True
+
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
         @param cr: the database cursor
@@ -1432,6 +1439,8 @@ class stock_picking(osv.osv):
             # conditional test for message log
             if self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,):
                 self.log(cr, uid, pick.id, message, context=context)
+            else:
+                self._hook_custom_log(cr, uid, ids, context=context, message=message, pick=pick,)
         return True
 
 stock_picking()
