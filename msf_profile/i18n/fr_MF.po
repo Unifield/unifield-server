@@ -61252,7 +61252,7 @@ msgstr "Stock futur"
 #: code:addons/msf_order_date/order_dates.py:1528
 #: code:addons/msf_outgoing/msf_outgoing.py:789
 #, python-format
-msgid "Shipment Date of the Sale Order '%s' has been updated to %s."
+msgid "Shipment Date of the Field Order '%s' has been updated to %s."
 msgstr "Date d'Expédition de la Commande Client '%s' a été mise à jour au %s."
 
 #. modules: base, sd
