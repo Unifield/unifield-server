@@ -126,6 +126,8 @@ class journal_items_corrections_lines(osv.osv_memory):
             'state': 'dispatch', # Be very careful, if this state is not applied when creating wizard => no lines displayed
             'date': wiz.date or strftime('%Y-%m-%d'),
             'account_id': this_line.account_id and this_line.account_id.id or False,
+            'document_date': wiz.move_line_id.document_date,
+            'posting_date': wiz.date or wiz.move_line_id.date,
         }
         # Create the wizard
         wiz_obj = self.pool.get('analytic.distribution.wizard')

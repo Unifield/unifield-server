@@ -226,6 +226,8 @@ class account_move_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': ml.account_id and ml.account_id.id or False,
+            'posting_date': ml.date,
+            'document_date': ml.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

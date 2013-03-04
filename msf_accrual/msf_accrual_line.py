@@ -284,6 +284,8 @@ class msf_accrual_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': accrual_line.expense_account_id and accrual_line.expense_account_id.id or False,
+            'posting_date': accrual_line.date,
+            'document_date': accrual_line.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

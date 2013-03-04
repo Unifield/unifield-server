@@ -13,13 +13,13 @@
             <field name="arch" type="xml">
                 <form string="Analytic Reallocation">
                     <group  colspan="6" col="6">
-                        <field name="destination_id"/>
-                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, funding_pool_id)"/>
-                        <field name="funding_pool_id"/>
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     </group>
                     <newline/>
-                    <field name="free1_id"/>
-                    <field name="free2_id"/>
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <group colspan="6" col="4">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
