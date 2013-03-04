@@ -1279,6 +1279,8 @@ class sale_order_line(osv.osv):
         product_id = vals.get('product_id')
         product_obj = self.pool.get('product.product')
         if product_id and qty:
+            if isinstance(qty, str):
+                qty = int(qty)
             vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
