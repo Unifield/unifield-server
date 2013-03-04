@@ -22,6 +22,7 @@
 from osv import osv, fields
 
 import time
+import logging
 
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
@@ -67,7 +68,9 @@ class stock_move(osv.osv):
     
     def copy_data(self, cr, uid, id, defaults=None, context=None):
         '''
-        if the line_number is not in the defaults, we set it to False
+        If the line_number is not in the defaults, we set it to False.
+        If we are on an Incoming Shipment: we reset the m2o fields that are not required for the stock_move
+        and we set the location_dest_id to INPUT.
         '''
         if defaults is None:
             defaults = {}
@@ -77,19 +80,22 @@ class stock_move(osv.osv):
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):
             defaults.update({'line_number': False})
-        # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
         picking_type = context.get('picking_type')
         if picking_type and picking_type == 'incoming_shipment':
+            list_of_fields = []
+            # the many2one reseted to False when we duplicate a stock_move are: address_id, move_dest_id, product_uos, price_currency_id, 
+            # sale_ref_id, product_packaging, location_output_id, backmove_packing_id, tracking_id, partner_id2, picking_id, currency_id, 
+            # composition_list_id, backorder_id, asset_id, initial_location, sale_line_id, purchase_line_id, to_consume_id_stock_move, pack_type, 
+            # dpo_id, purchase_ref_id, hidden_prodlot_id, prodlot_id, partner_id, kit_creation_id_stock_move, invoice_line_id, location_virtual_id, backmove_id
+            for field in (self._columns and self._columns.keys()):
+                if self._columns[field]._type == 'many2one' and not self._columns[field].required:
+                    list_of_fields.append(field)
+                    defaults.update({field: False})
+            if list_of_fields:
+                logging.getLogger('init').info('The many2one fields reset to False during the copy are: %s' % ', '.join(list_of_fields))
+            # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
             input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
             defaults.update(location_dest_id=input_loc)
-            defaults.update(purchase_line_id=False)
-            defaults.update(sale_line_id=False)
-            defaults.update(invoice_line_id=False)
-            defaults.update(backmove_id=False)
-            defaults.update(backmove_packing_id=False)
-            defaults.update(kit_creation_id_stock_move=False)
-            defaults.update(to_consume_id_stock_move=False)
-            defaults.update(composition_list_id=False)
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
     
     def unlink(self, cr, uid, ids, context=None):
