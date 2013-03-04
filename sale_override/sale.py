@@ -1273,7 +1273,13 @@ class sale_order_line(osv.osv):
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
-            
+        
+        # UF-1739: as we do not have product_uos_qty in PO (only in FO), we recompute here the product_uos_qty for the SYNCHRO
+        qty = vals.get('product_uom_qty')
+        product_id = vals.get('product_id')
+        product_obj = self.pool.get('product.product')
+        if product_id and qty:
+            vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
