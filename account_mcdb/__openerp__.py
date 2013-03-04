@@ -27,7 +27,7 @@
     "description" : "Ease data searching in Analytic Journal Items and Journal Items",
     "author" : "TeMPO Consulting, MSF",
     "category" : "Accounting",
-    "depends" : ["account", "register_accounting", "res_currency_tables", "analytic_distribution", "report_webkit"],
+    "depends" : ["account", "register_accounting", "res_currency_tables", "analytic_distribution", "report_webkit", "msf_instance"],
     "init_xml" : [],
     "update_xml" : [
         'wizard/output_currency_for_export_view.xml',
@@ -35,6 +35,7 @@
         'account_view.xml',
         'account_mcdb_export_view.xml',
         'account_mcdb_report.xml',
+        'account_mcdb_data.xml',
     ],
     "demo_xml" : [],
     "test": [],
