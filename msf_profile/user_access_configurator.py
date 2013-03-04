@@ -523,6 +523,9 @@ class user_access_configurator(osv.osv_memory):
                                              }
         # create one line for all objects no linked to admin
         no_linked_to_admin_ids = [x for x in model_ids if x not in two_lines_ids.keys()]
+        # we add the ir.values in the list "no_linked_to_admin_ids" because we want the user to be able to add "default" values (utp-457)
+        ir_values_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'ir.values')], context=context)[0]
+        no_linked_to_admin_ids.append(ir_values_id)
         model_obj.write(cr, uid, no_linked_to_admin_ids, {'access_ids' : [(0, 0, acl_one_line_read_no_group_values)]}, context=context)
         # first line, for admin group, all access
         acl_admin_values = {'name': 'admin',
