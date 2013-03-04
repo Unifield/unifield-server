@@ -186,6 +186,11 @@ def compute_uom_value(cr, uid, **kwargs):
                 uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                 if uom_ids:
                     uom_id = uom_ids[0]
+                    # check the uom category consistency
+                    if default_code:
+                        if product_obj.browse(cr, uid, [default_code])[0].uom_id.category_id.id != uom_obj.browse(cr, uid, [uom_id])[0].category_id.id:
+                            uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
+                            error_list.append(msg or _('The UOM imported was not in the same category than the UOM of the product so we took the UOM of the product instead.'))
             else:
                 msg = _('The UOM Name has to be a string.')
             if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
