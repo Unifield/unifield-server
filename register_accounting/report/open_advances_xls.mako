@@ -97,7 +97,22 @@
 <ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
 
 <Table ss:ExpandedColumnCount="17">
-<Column ss:Width="70.5" ss:Span="1"/><Column ss:Index="3" ss:Width="72.75"/><Column ss:Width="67.5"/><Column ss:Width="73.5"/><Column ss:Width="61.5"/><Column ss:Width="75.75"/><Column ss:Width="113.25"/><Column ss:Width="81"/><Column ss:Width="48.75"/><Column ss:Width="199.5"/><Column ss:AutoFitWidth="0" ss:Width="229.5"/><Column ss:Width="57.75"/><Column ss:Width="44.25"/><Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
+<Column ss:Width="61.5"/>
+<Column ss:Width="120"/>
+<Column ss:Width="93.75"/>
+<Column ss:Width="120.75"/>
+<Column ss:Width="73.5"/>
+<Column ss:Width="73.5"/>
+<Column ss:Width="75"/>
+<Column ss:Width="117"/>
+<Column ss:Width="63"/>
+<Column ss:Width="84"/>
+<Column ss:Width="66"/>
+<Column ss:Width="69.75"/>
+<Column ss:Width="83.25"/>
+<Column ss:Width="76.5"/>
+<Column ss:Width="79.5"/>
+<Column ss:Width="93.75"/>
 
 		<Row>
 		    <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('OPEN ADVANCES')}</Data></Cell>
@@ -128,8 +143,8 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Credit')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
     </Row>
-    % for line in o.line_ids:
-        % if line.first_move_line_id.state == 'valid' and line.account_id.type_for_register == 'advance' and not line.first_move_line_id.reconcile_id and not line.date > time.strftime('%Y-%m-%d'):
+    % for line in getLines(o):
+
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.journal_id and line.statement_id.journal_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.sequence_for_reference and line.sequence_for_reference or '')|x}</Data></Cell>
@@ -149,7 +164,6 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
     </Row>
 
-        % endif
     % endfor
 </Table>
 <x:WorksheetOptions/>

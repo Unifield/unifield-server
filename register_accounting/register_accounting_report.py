@@ -24,8 +24,3 @@
 
 from osv import osv
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
-
-
-
-SpreadsheetReport('report.open.advances.2','account.bank.statement','addons/register_accounting/report/open_advances_xls.mako')
-

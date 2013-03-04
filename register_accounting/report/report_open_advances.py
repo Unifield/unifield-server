@@ -22,8 +22,9 @@
 import time
 import csv
 import StringIO
-
+import pooler
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_open_advances(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -75,4 +76,29 @@ class report_open_advances(report_sxw.report_sxw):
         return (out, 'csv')
 
 report_open_advances('report.open.advances', 'account.bank.statement', False, parser=False)
+
+
+
+class report_open_advances2(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(report_open_advances2, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'getLines':self.getLines,
+        })
+        return
+
+    def getLines(self,obj):
+        ret = []
+        obj_line = pooler.get_pool(self.cr.dbname).get('account.bank.statement.line')
+        date = time.strftime('%Y-%m-%d')
+        domain = [('account_id.type_for_register', '=', 'advance'), ('state', '=', 'hard'), ('reconciled', '=', False), ('amount', '<=', 0.0), ('date', '<=', date)]
+        if obj.journal_id and obj.journal_id.currency:
+            domain.append(('statement_id.journal_id.currency', '=', obj.journal_id.currency.id))
+        ids = obj_line.search(self.cr, self.uid, domain)
+        for line in obj_line.browse(self.cr, self.uid,ids):
+            ret.append(line)
+        return ret
+
+SpreadsheetReport('report.open.advances.2','account.bank.statement','addons/register_accounting/report/open_advances_xls.mako', parser=report_open_advances2)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
