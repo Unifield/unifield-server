@@ -39,13 +39,13 @@ class purchase_order_line(osv.osv):
         '''
         update the name attribute if a product is selected
         '''
-        sol_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
         elif vals.get('comment'):
             vals.update(name=vals.get('comment'),)
-        # utp-518:we write the comment from the sale.order.line on the PO line through the procurement
+        # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
         po_procurement_id = vals.get('procurement_id', False)
         if po_procurement_id:
             sale_id = sol_obj.search(cr, uid, [('procurement_id', '=', po_procurement_id)], context=context)
