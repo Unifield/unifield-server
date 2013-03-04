@@ -203,9 +203,9 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             retour = False
             for line in po.order_line:
-                ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id)])
-                for sol in self.pool.get('sale.order.line').browse(cr, uid, ids_proc):
-                    if not sol.order_id.procurement_request:
+                if line.procurement_id.id:
+                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),('order_id.procurement_request','=',False)])
+                    if ids_proc:
                         retour = True
             res[po.id] = retour
         return res
@@ -286,7 +286,7 @@ class purchase_order(osv.osv):
         return retour
 
     _constraints = [
-        (_check_po_from_fo, 'aaaaaa', []),
+        (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
     ]
     
     def _check_service(self, cr, uid, ids, vals, context=None):

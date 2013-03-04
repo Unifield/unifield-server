@@ -71,7 +71,6 @@ class tender(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {'rfq_name_list': '',
                               }
-            
             rfq_names = []
             for rfq in obj.rfq_ids:
                 rfq_names.append(rfq.name)
@@ -80,7 +79,7 @@ class tender(osv.osv):
             result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
             
         return result
-    
+
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'),], string="State", readonly=True),
@@ -100,7 +99,7 @@ class tender(osv.osv):
                 'notes': fields.text('Notes'),
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
-                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product')
+                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
                 }
     
     _defaults = {'categ': 'other',
@@ -116,6 +115,22 @@ class tender(osv.osv):
     
     _order = 'name desc'
 
+    def _check_tender_from_fo(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        retour = True
+        for tender in self.browse(cr, uid, ids, context=context):
+            if not tender.sale_order_id:
+                return retour
+            for sup in tender.supplier_ids:
+                if sup.partner_type == 'internal':
+                    retour = False
+        return retour
+
+    _constraints = [
+        (_check_tender_from_fo, 'You cannot choose an internal supplier for this tender', []),
+    ]
+    
     def create(self, cr, uid, vals, context=None):
         '''
         Set the reference of the tender at this time
