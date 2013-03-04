@@ -204,7 +204,9 @@ class account_analytic_account(osv.osv):
                     res_temp = []
                     for instance_id in instance_ids:
                         cr.execute("select instance from msf_instance where id = %s and state = 'active'" % (instance_id))
-                        res_temp.append(cr.fetchone()[0])
+                        result = cr.fetchone()
+                        if result:
+                            res_temp.append(result[0])
                     res.append(res_temp)
                 else:
                     res.append(False)
