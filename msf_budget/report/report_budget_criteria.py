@@ -130,9 +130,21 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'isComm': self.isComm,
             'getBreak': self.getBreak,
             'getComm': self.getComm,
-
+            'getF1': self.getF1,
+            'getF2': self.getF2,
         })
         return
+
+    def getF2(self,line):
+        print line
+        if int(line[1]) == 0:
+            return ''
+        return '=(+RC[-2])/RC[-3]'
+
+    def getF1(self,line):
+        if int(line[1]) == 0:
+            return ''
+        return '=(RC[-3]+RC[-2])/RC[-4]'
 
     def getComm(self,):
         parameters = self.localcontext.get('data',{}).get('form',{})

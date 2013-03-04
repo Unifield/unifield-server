@@ -415,6 +415,14 @@
 <Style ss:ID="short_date3">
 <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="Short Date"/>
+
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+
 </Style>
 
 <Style ss:ID="s21b">
@@ -581,10 +589,10 @@
 	% endif
 	% if isComm():
 		<Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="=(RC[-4]-RC[-3]-RC[-2])/RC[-4]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
 	% else:
 		<Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="=(RC[-3]-RC[-2])/RC[-3]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
 	% endif
 
 % endif
@@ -606,10 +614,10 @@
 	% endif
 	% if isComm():
 		<Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="=(RC[-4]-RC[-3]-RC[-2])/RC[-4]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
 	% else:
 		<Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="=(RC[-3]-RC[-2])/RC[-3]"><Data ss:Type="Number" ></Data></Cell>
+		<Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
 	% endif
 % endif
 </Row>

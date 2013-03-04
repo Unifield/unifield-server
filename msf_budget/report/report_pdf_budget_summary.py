@@ -27,8 +27,15 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         super(report_pdf_budget_summary, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'process': self.process,
+            'checkCount': self.checkCount,
         })
         return
+
+    def checkCount(self, line):
+        if line[0] and line[0].split():
+            if int(line[0].split()[0]) in [6, 61, 62, 63, 64, 65, 66, 67, 68, 69]:
+                return True
+        return False
 
     def process(self, selected_lines):
         result = []

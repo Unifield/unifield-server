@@ -102,15 +102,20 @@
     <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" textColor="#4c4c4c"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
     <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" />
+
+    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT" />
+    <paraStyle name="P3bold" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT" />
+
     <paraStyle name="P3a" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
+    <paraStyle name="P3abold" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
+
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P8" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="11.0" leading="10" alignment="RIGHT" spaceBefore="2.0" spaceAfter="2.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="11.0" leading="10" alignment="CENTER" spaceBefore="2.0" spaceAfter="2.0"/>
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P13" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="6.0" spaceAfter="6.0"/>
@@ -221,48 +226,105 @@
 
       <tr>
           <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
-              <td>
-                <para style="P3a">[[ line[0] ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3a"> [[ line[0] ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[1] and formatLang(line[1], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3abold"> [[ line[0] ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[2] and formatLang(line[2], digits=2, grouping=True ) or '0.0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[3] and formatLang(line[3], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[4] and formatLang(line[4], digits=2, grouping=True ) or '0.0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[5] and formatLang(line[5], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[6] and formatLang(line[6], digits=2, grouping=True ) or '0.0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[7] and formatLang(line[7], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[8] and formatLang(line[8], digits=2, grouping=True ) or '0.0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[4] and formatLang(line[4], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[9] and formatLang(line[9], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[4] and formatLang(line[4], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[10] and formatLang(line[10], digits=2, grouping=True ) or '0.0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[5] and formatLang(line[5], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[11] and formatLang(line[11], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[5] and formatLang(line[5], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[12] and formatLang(line[12], digits=2, grouping=True ) or '0.0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[6] and formatLang(line[6], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[13] and formatLang(line[13], digits=2, grouping=True ) or '0.0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[6] and formatLang(line[6], digits=0, grouping=True ) or '0' ]]</para>
               </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[7] and formatLang(line[7], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[7] and formatLang(line[7], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[8] and formatLang(line[8], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[8] and formatLang(line[8], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[9] and formatLang(line[9], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[9] and formatLang(line[9], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[10] and formatLang(line[10], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[10] and formatLang(line[10], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[11] and formatLang(line[11], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[11] and formatLang(line[11], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[12] and formatLang(line[12], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[12] and formatLang(line[12], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3">[[ line[13] and formatLang(line[13], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3bold">[[ line[13] and formatLang(line[13], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
       </tr>
     </blockTable>
 

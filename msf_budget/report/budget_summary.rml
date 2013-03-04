@@ -98,14 +98,21 @@
     </initialize>
     <paraStyle name="P1" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" textColor="#4c4c4c"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
+    <paraStyle name="P2a" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER"/>
+
+    <paraStyle name="P3gauche" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT"/>
+    <paraStyle name="P3gaucheB" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT"/>
+
+    <paraStyle name="P3droite" fontName="Helvetica" fontSize="9.0" leading="11" alignment="RIGHT"/>
+    <paraStyle name="P3droiteB" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="RIGHT"/>
+
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="9.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P7" fontName="Helvetica-Bold" fontSize="10.0" leading="13" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P8" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P9" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
-    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="11.0" leading="10" alignment="RIGHT" spaceBefore="2.0" spaceAfter="2.0"/>
+    <paraStyle name="P10" fontName="Helvetica-Bold" fontSize="11.0" leading="10" alignment="CENTER" spaceBefore="2.0" spaceAfter="2.0"/>
 
     <paraStyle name="P11" fontName="Helvetica" fontSize="9.0" leading="11" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P12" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -176,38 +183,57 @@
           <para style="P2">Account</para>
         </td>
         <td>
-          <para style="P2">Budget Amount</para>
+          <para style="P2a">Budget Amount</para>
         </td>
         <td>
-          <para style="P2">Actual Amount</para>
+          <para style="P2a">Actual Amount</para>
         </td>
         <td>
-          <para style="P2">Balance</para>
+          <para style="P2a">Balance</para>
         </td>
         <td>
-          <para style="P2">Percentage</para>
+          <para style="P2a">Percentage</para>
         </td>
       </tr>
       <tr>
           <para style="P20">[[ repeatIn(process(o.budget_line_ids),'line') ]]</para>
-              <td>
-                <para style="P3">[[ line[0] ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3gauche">[[ line[0] ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3gaucheB">[[ line[0] ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3droite">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3droiteB">[[ line[1] and formatLang(line[1], digits=0, grouping=True ) or '0' ]]</para>
               </td>
-              <td>
-                <para style="P3">[[ line[4] and formatLang(line[4], digits=1, grouping=True ) or '0.0' ]] %</para>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3droite">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3droiteB">[[ line[2] and formatLang(line[2], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3droite">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3droiteB">[[ line[3] and formatLang(line[3], digits=0, grouping=True ) or '0' ]]</para>
+              </td>
+
+              <td>[[ checkCount(line) and removeParentNode('td') or ' ' ]]
+                <para style="P3droite">[[ line[4] and formatLang(line[4], digits=0, grouping=True ) or '0' ]] %</para>
+              </td>
+              <td>[[ checkCount(line) and ' ' or removeParentNode('td') ]]
+                <para style="P3droiteB">[[ line[4] and formatLang(line[4], digits=0, grouping=True ) or '0' ]] %</para>
               </td>
       </tr>
     </blockTable>
-
 
   </story>
 </document>

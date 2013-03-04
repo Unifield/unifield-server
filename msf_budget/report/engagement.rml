@@ -208,10 +208,10 @@
                   <para style="P2">Remaining Budget</para>
                 </td>
                 <td>
-                  <para style="P2">PO amount</para>
+                  <parawrap style="P2">PO amount</parawrap>
                 </td>
                 <td>
-                  <para style="P2">PO impact</para>
+                  <parawrap style="P2">PO impact</parawrap>
                 </td>
               </tr>
           </blockTable>

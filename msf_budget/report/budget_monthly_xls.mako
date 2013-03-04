@@ -32,6 +32,8 @@
 <NumberFormat/>
 <Protection/>
 </Style>
+
+
 <Style ss:ID="s22">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -40,6 +42,26 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 </Style>
+
+<Style ss:ID="s22nobold">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+</Style>
+
+<Style ss:ID="s22bold">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Font ss:Bold="1"/>
+</Style>
+
 <Style ss:ID="s23">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -49,6 +71,28 @@
 </Borders>
 <NumberFormat ss:Format="#,##0"/>
 </Style>
+
+<Style ss:ID="s23nobold">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<NumberFormat ss:Format="#,##0"/>
+</Style>
+
+<Style ss:ID="s23bold">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<NumberFormat ss:Format="#,##0"/>
+<Font ss:Bold="1"/>
+</Style>
+
 <Style ss:ID="s24">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -89,42 +133,42 @@
 
 <Row>
 <Cell ss:StyleID="s22">
-<Data ss:Type="String">Budget name:</Data>
+<Data ss:Type="String">${_('Budget name:')}</Data>
 </Cell>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.name or '' )|x}</Data></Cell>
 </Row>
 
 <Row>
 <Cell ss:StyleID="s22">
-<Data ss:Type="String">Budget code:</Data>
+<Data ss:Type="String">${_('Budget code:')}</Data>
 </Cell>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.code or '' )|x}</Data></Cell>
 </Row>
 
 <Row>
 <Cell ss:StyleID="s22">
-<Data ss:Type="String">Fiscal year:</Data>
+<Data ss:Type="String">${_('Fiscal year:')}</Data>
 </Cell>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.fiscalyear_id and o.fiscalyear_id.name or '' )|x}</Data></Cell>
 </Row>
 
 <Row>
 <Cell ss:StyleID="s22">
-<Data ss:Type="String">Cost center:</Data>
+<Data ss:Type="String">${_('Cost center:')}</Data>
 </Cell>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.cost_center_id and o.cost_center_id.name or '' )|x}</Data></Cell>
 </Row>
 
 <Row>
 <Cell ss:StyleID="s22">
-<Data ss:Type="String">Decision moment:</Data>
+<Data ss:Type="String">${_('Decision moment:')}</Data>
 </Cell>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.decision_moment_id and o.decision_moment_id.name or '' )|x}</Data></Cell>
 </Row>
 
 <Row>
 <Cell ss:StyleID="s22">
-<Data ss:Type="String">Version:</Data>
+<Data ss:Type="String">${_('Version:')}</Data>
 </Cell>
 <Cell ss:StyleID="s22" ><Data ss:Type="String">${( o.version or '' )|x}</Data></Cell>
 </Row>
@@ -149,23 +193,23 @@
 
 % for line in process(o.budget_line_ids):
 <Row>
-<Cell ss:StyleID="s22" ><Data ss:Type="String">${( line[0] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[4] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[5] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[6] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[7] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[8] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[9] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[10] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[11] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[12] )|x}</Data></Cell>
-<Cell ss:StyleID="s23" ><Data ss:Type="Number">${( line[13] )|x}</Data></Cell>
-<Cell ss:StyleID="s22" ><Data ss:Type="Number">${( line[14] )|x}</Data></Cell>
-</Row>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's22bold' or 's22nobold')|x}" ><Data ss:Type="String">${( line[0] )|x}</Data></Cell>
 
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="String">${( line[1] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[4] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[5] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[6] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[7] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[8] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[9] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[10] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[11] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[12] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[13] )|x}</Data></Cell>
+<Cell ss:StyleID="${"%s"%( checkCount(line) and 's23bold' or 's23nobold')|x}" ><Data ss:Type="Number">${( line[14] )|x}</Data></Cell>
+</Row>
 % endfor
 
 </Table>
