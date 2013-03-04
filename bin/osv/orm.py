@@ -686,7 +686,7 @@ class orm_template(object):
                     if isinstance(r, browse_record):
                         
                         # add support for reference fields
-                        if cols._type == 'reference':
+                        if cols and cols._type == 'reference':
                             row_id = r.id
                             model = r._name
                             xml_id = r._get_xml_ids(cr, uid, [row_id]).get(row_id, '')
