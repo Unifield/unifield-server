@@ -28593,6 +28593,7 @@ msgstr "Suivi"
 #: field:shipment,partner_id2:0
 #: field:shipment.wizard,partner_id:0
 #: selection:claim.product.line,claim_type_claim_product_line:0
+#: selection:add.event,claim_type:0
 #: view:return.claim:0
 #: selection:return.claim,type_return_claim:0
 #: view:sale.order:0
@@ -40212,6 +40213,7 @@ msgstr "Réf. Piquage"
 #: code:addons/purchase_override/purchase.py:187
 #: selection:purchase.order,categ:0
 #: selection:claim.product.line,claim_type_claim_product_line:0
+#: selection:add.event,claim_type:0
 #: view:return.claim:0
 #: selection:return.claim,category_return_claim:0
 #: selection:return.claim,type_return_claim:0
@@ -58583,6 +58585,7 @@ msgstr "Nouvelle base de données"
 #: field:purchase.order.followup,partner_id:0
 #: field:account.invoice,virtual_partner_id:0
 #: selection:claim.product.line,claim_type_claim_product_line:0
+#: selection:add.event,claim_type:0
 #: view:return.claim:0
 #: selection:return.claim,type_return_claim:0
 #: field:stock.partial.picking,partner_id_partial_picking:0
