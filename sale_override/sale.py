@@ -177,6 +177,18 @@ class sale_order(osv.osv):
                 
         return res
 
+    def _get_manually_corrected(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = False
+            for line in order.order_line:
+                if line.manually_corrected:
+                    res[order.id] = True
+                    break
+
+        return res
+
     _columns = {
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
@@ -222,6 +234,7 @@ class sale_order(osv.osv):
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
+        'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
     }
     
     _defaults = {
@@ -688,7 +701,7 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
-        if line.manually_corrected:
+        if line.order_id.manually_corrected:
             return False
         if line.order_id.procurement_request:
             if line.type == 'make_to_order':
