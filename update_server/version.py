@@ -76,10 +76,7 @@ class version(osv.osv):
             if rev['importance'] == 'required':
                 status = 'failed'
 
-        if len(revisions) == 1:
-            message = _("There is one revision available.")
-        else:
-            message = _("There are %d revisions available.") % len(revisions)
+        message = _("There is/are %d revision(s) available.") % len(revisions)
 
         return {'status' : status,
                 'message' : message,
