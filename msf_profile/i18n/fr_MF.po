@@ -16695,7 +16695,7 @@ msgstr "Corée du Nord"
 #. module: supplier_catalogue
 #: help:supplier.catalogue,file_to_import:0
 msgid "The file should be in XML Spreadsheet 2003 format. The columns should be in this order : Product Code*, Product Description, Product UoM*, Min Quantity*, Unit Price*, Rounding, Min Order Qty, Comment."
-msgstr "Le fichier devrait être au format Tableur XML 2003. Les colonnes devraient être dans l'ordre suivant : Code Produit*, Description du produit, UdeM du produit*, Quantité min*, Prix unitaire*, Arrondi, Qté commandée min, Commentaire."
+msgstr "Le fichier devrait être au format Spreadsheet XML 2003. Les colonnes devraient être dans l'ordre suivant : Code Produit*, Description du produit, UdeM du produit*, Quantité min*, Prix unitaire*, Arrondi, Qté commandée min, Commentaire."
 
 #. module: base
 #: view:ir.filters:0
@@ -20467,11 +20467,13 @@ msgstr "Fichier de l'icone web (survol)"
 msgid "Import / Import Translations"
 msgstr "Import / Import Translations"
 
-#. modules: product, stock, sd
+#. modules: product, stock, sd, msf_supply_doc_export, msf_supply_doc_import
 #: model:product.price.type,name:product.standard_price
 #: field:product.template,standard_price:0
 #: model:product.price.type,name:sd.product_standard_price
 #: view:stock.change.standard.price:0
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:61
+#: code:addons/msf_supply_doc_import/wizard/__init__.py:34
 msgid "Cost Price"
 msgstr "Prix Coûtant"
 
@@ -46009,7 +46011,7 @@ msgstr "Symbole"
 #: code:addons/sale_override/sale.py:441
 #, python-format
 msgid "The %s split %s has been created."
-msgstr "Le % fractionnement s%s a été créé."
+msgstr "Le %s fractionnement %s a été créé."
 
 #. module: consumption_calculation
 #: field:expiry.quantity.report,date_to:0
@@ -57814,7 +57816,7 @@ msgstr "Catégorie Parent"
 #. module: msf_supply_doc_export
 #: model:ir.module.module,shortdesc:msf_supply_doc_export.module_meta_information
 msgid "Export Files in Excel Format"
-msgstr "Exporter Fichier sour Format Excel "
+msgstr "Exporter Fichier sour Format Excel"
 
 #. module: base
 #: selection:ir.property,type:0
@@ -58477,8 +58479,9 @@ msgstr "Numéro d'Assurance Sociale (NAS)"
 msgid "%b - Abbreviated month name."
 msgstr "%b - Abréviation du nom du mois."
 
-#. module: account
+#. modules: account, msf_supply_doc_import
 #: view:account.subscription:0
+#: view:composition.kit:0
 msgid "Remove Lines"
 msgstr "Supprimer des lignes"
 
@@ -66378,3 +66381,184 @@ msgstr "Solde calculé dans la devise du registre"
 #, python-format
 msgid "Register Balance in functional currency"
 msgstr "Solde du registre en devise fonctionnelle"
+
+#. module: msf_supply_doc_import
+#: model:ir.model,name:msf_supply_doc_import.model_wizard_import_fo_line
+msgid "Import FO Lines from Excel sheet"
+msgstr "Importer des lignes de CdT à partir de feuilles Excel"
+
+#. module: msf_supply_doc_import
+#: view:composition.kit:0
+#: view:initial.stock.inventory:0
+#: view:product.list:0
+#: view:stock.cost.reevaluation:0
+msgid "Are you sure that you want to remove all lines?"
+msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes ?"
+
+#. module: msf_supply_doc_import
+#: view:purchase.order:0
+msgid "Are you sure that you want to remove all the lines of this Purchase order?"
+msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes de ce bon de commandes ?"
+
+#. module: msf_supply_doc_import
+#: view:sale.order:0
+msgid "Are you sure that you want to remove all the lines of this Field order?"
+msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes de cette commande de terrain ?"
+
+#. module: msf_supply_doc_import
+#: model:ir.model,name:msf_supply_doc_import.model_wizard_import_ir_line
+msgid "Import IR Lines from Excel sheet"
+msgstr "Importer des lignes de DI depuis Excel"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:228
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:215
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:227
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:181
+#, python-format
+msgid " \n"
+"Importation completed in %s!\n"
+"# of imported lines : %s on %s lines\n"
+"# of ignored lines: %s\n"
+"# of lines to correct: %s\n"
+"%s\n"
+"\n"
+"%s\n"
+""
+msgstr " \n"
+"Importation terminée en  %s!\n"
+"# de lignes importées: %s sur %s lignes\n"
+"# de lignes ignorées: %s\n"
+"# de lignes à corriger: %s\n"
+"%s\n"
+"\n"
+"%s\n"
+""
+
+#. module: msf_supply_doc_import
+#: field:composition.kit,hide_column_error_ok:0
+#: field:tender,hide_column_error_ok:0
+msgid "Show column errors"
+msgstr "Afficher la colonne des erreurs"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:227
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:214
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:226
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:180
+#, python-format
+msgid " second(s)"
+msgstr " seconde(s)"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:205
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:200
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:202
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:166
+#, python-format
+msgid "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
+msgstr "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
+
+#. module: msf_supply_doc_import
+#: field:wizard.import.fo.line,import_error_ok:0
+#: field:wizard.import.ir.line,import_error_ok:0
+#: field:wizard.import.po.line,import_error_ok:0
+#: field:wizard.import.tender.line,import_error_ok:0
+msgid "Error at import"
+msgstr "Erreur lors de l'import"
+
+#. module: msf_supply_doc_import
+#: help:composition.kit,file_to_import:0
+msgid "You can use the template of the export for the format that you need to use. \n"
+" \n"
+"                                        The file should be in XML Spreadsheet 2003 format. \n"
+" The columns should be in this order : \n"
+"                                        Module, Product Code*, Product Description, Quantity and Product UOM"
+msgstr "Vous pouvez utiliser le modèle généré depuis l'export. \n"
+" \n"
+"                                        Le fichier doit être dans le format XML Spreadsheet 2003. \n"
+" Les colonnes doivent être dans cet ordre: \n"
+"                                        Module, Code Produit*, Description produit, Quantité et UdM du produit"
+
+#. module: msf_supply_doc_export
+#: model:ir.actions.report.xml,name:msf_supply_doc_export.report_composition_kit_xls
+msgid "Composition Kit Excel Export"
+msgstr "Export Excel de la Composition Kit"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:279
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:265
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:279
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:235
+#, python-format
+msgid "Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.\n"
+"Otherwise, you can continue to use Unifield."
+msgstr "Import en cours, veuillez garder la fenêtre ouverte et appuyer sur le bouton 'Mise à jour' pour vérifier l'état d'achèvement de l'import.\n"
+"Sinon, vous pouvez utiliser UniField."
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:824
+#, python-format
+msgid "The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem. Invoices references : %s"
+msgstr "L'état des factures suivantes ne peut être mis à jour automatiquement. Veuillez les annuler manuellement ou discuter avec l'équipe de comptabilité pour résoudre le problème. Références des factures: %s"
+
+#. module: msf_supply_doc_import
+#: field:wizard.import.fo.line,data:0
+#: field:wizard.import.fo.line,filename:0
+#: field:wizard.import.ir.line,data:0
+#: field:wizard.import.ir.line,filename:0
+#: field:wizard.import.po.line,data:0
+#: field:wizard.import.po.line,filename:0
+#: field:wizard.import.tender.line,data:0
+#: field:wizard.import.tender.line,filename:0
+msgid "Lines with errors"
+msgstr "Lignes avec des erreurs"
+
+#. module: msf_supply_doc_import
+#: field:wizard.import.fo.line,percent_completed:0
+#: field:wizard.import.ir.line,percent_completed:0
+#: field:wizard.import.po.line,percent_completed:0
+#: field:wizard.import.tender.line,percent_completed:0
+msgid "% completed"
+msgstr "% terminé"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:225
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:212
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:224
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:178
+#, python-format
+msgid "Reported errors for ignored lines : \n"
+""
+msgstr "Erreurs pour les lignes ingorées: \n"
+""
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/composition_kit.py:58
+#, python-format
+msgid "Please fix the line with errors (red lines)"
+msgstr "Veuillez corriger les lignes avec des erreurs (lignes en rouge)"
+
+#. module: msf_supply_doc_import
+#: model:ir.model,name:msf_supply_doc_import.model_wizard_import_tender_line
+msgid "Import Tender Lines from Excel sheet"
+msgstr "Importer des lignes d'AO"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:134
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:134
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:121
+#, python-format
+msgid "Line %s: You should have exactly %s columns in this order: %s \n"
+""
+msgstr "Ligne %s: Vous devriez avoir exactement %s colonnes dans cet ordre: %s \n"
+""
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/purchase_order.py:182
+#: code:addons/msf_supply_doc_import/sale_order.py:274
+#, python-format
+msgid "You should have exactly 8 columns in this order:\n"
+"#Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. "
+msgstr "Vous devriez avoir exactement 8 colonnes dans cet ordre:\n"
+"#Produit*, Description Produit*, Quantité*, UdM du produit UoM*, Prix unitaire*, Date de livraison demandée*, Devises*, Commentaire. "

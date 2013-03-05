@@ -91,6 +91,7 @@ def product_value(cr, uid, **kwargs):
     proc_type = kwargs['to_write'].get('proc_type', False)
     # Tender does not have price_unit, it is False
     price_unit = kwargs['to_write'].get('price_unit', False)
+    cost_price = kwargs['to_write'].get('cost_price', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
@@ -111,6 +112,7 @@ def product_value(cr, uid, **kwargs):
                     default_code = p_ids[0]
                     proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
                     price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
+                    cost_price = product_obj.browse(cr, uid, [default_code])[0].standard_price
             else:
                 msg = 'The Product Code has to be a string.'
         if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]:
@@ -120,7 +122,7 @@ def product_value(cr, uid, **kwargs):
     except IndexError:
         comment += ' Product Code to be defined'
         error_list.append('The Product\'s Code has to be defined')
-    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit}
+    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit, 'cost_price': cost_price}
 
 
 def quantity_value(**kwargs):
@@ -192,8 +194,8 @@ def compute_uom_value(cr, uid, **kwargs):
             else:
                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
     # if the cell is empty
-    except IndexError:
-        error_list.append('The UOM Name was empty.')
+    except IndexError, e:
+        error_list.append('The UOM Name was empty. (Details: %s)' % e)
         if default_code:
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
         else:
@@ -208,6 +210,7 @@ def compute_price_value(**kwargs):
     row = kwargs['row']
     # the price_unit was updated in the product_value method if the product exists, else it was set to 1 by default.
     price_unit = kwargs['to_write']['price_unit']
+    cost_price = kwargs['to_write']['cost_price']
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
@@ -226,6 +229,7 @@ def compute_price_value(**kwargs):
         elif row.cells[cell_nb].type in ['int', 'float']:
             price_unit_defined = True
             price_unit = row.cells[cell_nb].data
+            cost_price = row.cells[cell_nb].data
         else:
             error_list.append('The Price Unit was not defined properly.')
     # if nothing is found at the line index (empty cell)
@@ -234,7 +238,7 @@ def compute_price_value(**kwargs):
             warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
         else:
             error_list.append('Neither Price nor Product found.')
-    return {'price_unit': price_unit, 'error_list': error_list, 'warning_list': warning_list, 'price_unit_defined': price_unit_defined}
+    return {'cost_price': cost_price, 'price_unit': price_unit, 'error_list': error_list, 'warning_list': warning_list, 'price_unit_defined': price_unit_defined}
 
 
 def compute_date_value(**kwargs):
