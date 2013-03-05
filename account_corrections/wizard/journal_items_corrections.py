@@ -63,7 +63,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         'period_id': fields.many2one('account.period', string="Period", readonly=True),
         'date': fields.date('Posting date', readonly=True),
         'partner_id': fields.many2one('res.partner', 'Partner'),
-        'register_id': fields.many2one("account.bank.statement", "Register"),
+        'transfer_journal_id': fields.many2one("account.journal", "Journal"),
         'employee_id': fields.many2one("hr.employee", "Employee"),
         'debit_currency': fields.float('Book. Debit', readonly=True),
         'credit_currency': fields.float('Book. Credit', readonly=True),
@@ -208,7 +208,7 @@ class journal_items_corrections(osv.osv_memory):
                 'currency_id': move_line.currency_id.id,
                 'partner_id': move_line.partner_id and move_line.partner_id.id or None,
                 'employee_id': move_line.employee_id and move_line.employee_id.id or None,
-                'register_id': move_line.register_id and move_line.register_id.id or None,
+                'transfer_journal_id': move_line.transfer_journal_id and move_line.transfer_journal_id.id or None,
 #                'partner_type_mandatory': move_line.partner_type_mandatory or None,
                 'analytic_distribution_id': move_line.analytic_distribution_id and move_line.analytic_distribution_id.id or None,
             }
@@ -219,7 +219,7 @@ class journal_items_corrections(osv.osv_memory):
         """
         Compare an account move line to a wizard journal items corrections lines regarding 3 fields:
          - account_id (1)
-         - partner_type (partner_id, employee_id or register_id) (2)
+         - partner_type (partner_id, employee_id or transfer_journal_id) (2)
          - analytic_distribution_id (4)
         Then return the sum.
         """
