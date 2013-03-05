@@ -106,7 +106,7 @@
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s30">
 <Borders>
@@ -129,7 +129,7 @@
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 <NumberFormat ss:Format="#,##0"/>
 </Style>
 <Style ss:ID="s33">
@@ -145,7 +145,7 @@
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 <NumberFormat ss:Format="#,##0"/>
 </Style>
 <Style ss:ID="s35">
@@ -163,7 +163,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s37">
 <Borders>
@@ -181,7 +181,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 <NumberFormat ss:Format="#,##0"/>
 </Style>
 <Style ss:ID="s39">
@@ -199,7 +199,7 @@
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 <NumberFormat ss:Format="#,##0"/>
 </Style>
 <Style ss:ID="s41">

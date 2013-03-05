@@ -44,8 +44,8 @@
 <Style ss:ID="s21a">
 <Borders>
 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Font  ss:Bold="1"/>
@@ -58,7 +58,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s23">
 <Borders>
@@ -76,7 +76,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 <NumberFormat ss:Format="#,##0"/>
 </Style>
 <Style ss:ID="s25">
@@ -89,10 +89,16 @@
 <NumberFormat ss:Format="Short Date"/>
 </Style>
 <Style ss:ID="s26">
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s27">
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 <NumberFormat ss:Format="Short Date"/>
 </Style>
 <Style ss:ID="s29">
@@ -129,7 +135,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s33">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -167,7 +173,7 @@
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s38">
 <Borders>
@@ -237,7 +243,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 <Style ss:ID="s47">
 <Borders>
@@ -284,7 +290,7 @@
 </Style>
 <Style ss:ID="s53">
 <Font ss:Color="#FF0000"/>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
 </Style>
 
 <Style ss:ID="short_date2">
@@ -292,11 +298,27 @@
 <NumberFormat ss:Format="Short Date"/>
 </Style>
 
+<Style ss:ID="short_date_head">
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
+<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="Short Date"/>
+</Style>
 
 <Style ss:ID="short_date_color">
 <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
 <NumberFormat ss:Format="Short Date"/>
-<Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+<Interior  ss:Pattern="Solid"/>
+<Borders>
+<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+</Borders>
 </Style>
 </Styles>
 
@@ -325,7 +347,7 @@
 <Cell ss:StyleID="s22">
 <Data ss:Type="String">${_('Report date:')}</Data>
 </Cell>
-<Cell ss:StyleID="short_date2">
+<Cell ss:StyleID="short_date_head">
 <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
 </Cell>
 </Row>
@@ -376,7 +398,7 @@
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Eligible from:')}</Data>
 </Cell>
-<Cell ss:StyleID="short_date2">
+<Cell ss:StyleID="short_date_head">
 <Data ss:Type="DateTime">${ o.eligibility_from_date or '' |n}T00:00:00.000</Data>
 </Cell>
 <Cell ss:StyleID="s26">

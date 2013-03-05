@@ -162,9 +162,15 @@
   </stylesheet>
   <story>
     <para style="P5">[[repeatIn(objects,'o')]]</para>
+    <para style="P6">
+      <font color="white"> </font>
+    </para>
     <para style="P10">Contract code/name: [[ o.code ]]/[[ o.name ]]</para>
     <para style="P10">Donor: [[ (o.donor_id and o.donor_id.name) or '' ]]</para>
     <para style="P5">
+      <font color="white"> </font>
+    </para>
+    <para style="P6">
       <font color="white"> </font>
     </para>
     <blockTable colWidths="266.0,269.0" style="Table2">
@@ -195,12 +201,18 @@
     <para style="P6">
       <font color="white"> </font>
     </para>
+    <para style="P6">
+      <font color="white"> </font>
+    </para>
     <para style="P7">Contract information:</para>
     <para style="P1">[[ o.donor_grant_reference and 'Donor grant reference: ' + o.donor_grant_reference or '' ]]</para>
     <para style="P1">[[ o.hq_grant_reference and 'HQ grant reference: ' + o.hq_grant_reference or '' ]]</para>
     <para style="P1">Grant amount: [[ o.grant_amount ]]</para>
     <para style="P1">[[ o.currency_table_id and 'Currency table: ' + o.currency_table_id.name or '' ]]</para>
     <para style="P1">Reporting currency: [[ o.reporting_currency.name ]]</para>
+    <para style="P6">
+      <font color="white"> </font>
+    </para>
     <para style="P6">
       <font color="white"> </font>
     </para>

@@ -159,11 +159,16 @@
   </stylesheet>
   <story>
     <para style="P5">[[repeatIn(objects,'o')]]</para>
+    <para style="P4">
+      <font color="white"> </font>
+    </para>
     <para style="P9">Funding pool code/name: [[ o.code ]]/[[ o.name ]]</para>
     <para style="P5">
       <font color="white"> </font>
     </para>
-
+    <para style="P4">
+      <font color="white"> </font>
+    </para>
     <para style="P6">Report edition date: [[ today() ]]</para>
     <blockTable colWidths="266.0,269.0" style="Table2">
       <tr>
@@ -190,6 +195,9 @@
       <font color="white"> </font>
     </para>
     <para style="P8">
+      <font color="white"> </font>
+    </para>
+    <para style="P4">
       <font color="white"> </font>
     </para>
     <para style="P6">Cost centers:</para>
