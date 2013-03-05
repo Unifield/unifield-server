@@ -42003,6 +42003,7 @@ msgstr "Référence de la Liste de Composition de kit doit être unique pour un 
 #: model:ir.ui.menu,name:purchase.menu_purchase_rfq
 #: model:ir.actions.act_window,name:tender_flow.act_relate_tender_rfq
 #: view:purchase.order:0
+#: code:addons/tender_flow/tender_flow.py:907
 msgid "Requests for Quotation"
 msgstr "Demandes de Devis"
 
@@ -43750,6 +43751,7 @@ msgstr "Marié"
 #: model:ir.model,name:transport_mgmt.model_purchase_order
 #: view:purchase.order:0
 #: field:wizard.import.po.line,po_id:0
+#: code:addons/tender_flow/tender_flow.py:905
 msgid "Purchase Order"
 msgstr "Bon de Commande"
 
