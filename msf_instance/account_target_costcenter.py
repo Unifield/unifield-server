@@ -24,26 +24,10 @@ from osv import fields, osv
 class account_target_costcenter(osv.osv):
     _name = 'account.target.costcenter'
     
-    def _get_target_set(self, cr, uid, ids, field_names=None, arg=None, context=None):
-        res = {}
-        if context is None:
-            context = {}
-            
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = False
-            if not line.is_target and line.cost_center_id and line.cost_center_id.id:
-                set_target_lines = self.search(cr, uid, [('cost_center_id', '=', line.cost_center_id.id),
-                                                         ('is_target', '=', 'True')], context=context)
-                if len(set_target_lines) > 0:
-                    res[line.id] = True
-                    
-        return res
-    
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
         'is_target': fields.boolean('Is target'),
-        'is_target_set': fields.function(_get_target_set, method=True, store=False, string="Is Target set?", type="boolean", readonly="True"),
         'parent_id': fields.many2one('account.target.costcenter', 'Parent'),
         'child_ids': fields.one2many('account.target.costcenter', 'parent_id', 'Children'),
     }
@@ -52,6 +36,19 @@ class account_target_costcenter(osv.osv):
         'is_target': False,
         'parent_id': False,
     }
+
+    def _check_target(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('cost_center_id', '=', line.cost_center_id.id),('is_target', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+    
+    _constraints = [
+        (_check_target, 'This cost centre is already defined as target in another proprietary instance.', ['is_target', 'cost_center_id', 'instance_id']),
+    ]
     
     def create(self, cr, uid, vals, context={}):
         res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)

@@ -24,6 +24,16 @@ from osv import fields, osv
 class msf_instance(osv.osv):
     _name = 'msf.instance'
     
+    def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        res = {}
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if user.company_id and user.company_id.instance_id:
+            for id in ids:
+                res[id] = user.company_id.instance_id.level
+        return res
+    
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
@@ -43,6 +53,7 @@ class msf_instance(osv.osv):
                                    ('inactive', 'Inactive')], 'State', required=True),
         'move_prefix': fields.char('Account move prefix', size=5, required=True),
         'reconcile_prefix': fields.char('Reconcilation prefix', size=2, required=True),
+        'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="selection", relation="msf.instance", readonly="True"),
     }
     
     _defaults = {
