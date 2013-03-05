@@ -82,7 +82,6 @@ class res_partner(osv.osv):
                         dom.append(('partner_type', '!=', 'internal'))
             else:
                 for tender in self.pool.get('tender').browse(cr, uid, arg[2]['ids'], context=context):  
-                    print tender
                     if tender.tender_from_fo:
                         dom.append(('partner_type', '!=', 'internal'))
         return dom
