@@ -2823,6 +2823,7 @@ msgstr "Caisse: "
 #: selection:international.transport.cost.report,order_state:0
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
+#: selection:stock.forecast.line,state:0
 #: code:addons/sales_followup/sale_followup.py:374
 #: code:addons/sales_followup/sale_followup.py:388
 #: code:addons/sales_followup/sale_followup.py:420
@@ -7442,6 +7443,7 @@ msgstr "Fichier du module importé avec succès !"
 #: view:purchase.order:0
 #: view:tender:0
 #: selection:tender,state:0
+#: selection:stock.forecast.line,state:0
 #: code:addons/sales_followup/sale_followup.py:376
 #: code:addons/sales_followup/sale_followup.py:389
 #: code:addons/sales_followup/sale_followup.py:421
@@ -14569,7 +14571,7 @@ msgstr "Vous devez d'abord compléter le champ du Centre de Coût avant de pouvo
 msgid "Delivery Costs"
 msgstr "Coûts de Livraison"
 
-#. modules: sales_followup, tender_flow, purchase_compare_rfq, documents_done, sale, procurement, sourcing, msf_supply_doc_import, delete_button, useability_dashboard_and_menu, sd
+#. modules: sales_followup, tender_flow, purchase_compare_rfq, documents_done, sale, procurement, sourcing, msf_supply_doc_import, delete_button, useability_dashboard_and_menu, sd, stock_forecast
 #: model:ir.model,name:delete_button.model_tender
 #: selection:documents.done.wizard,model:0
 #: model:ir.model,name:msf_supply_doc_import.model_tender
@@ -14597,6 +14599,7 @@ msgstr "Coûts de Livraison"
 #: field:tender.line,tender_id:0
 #: view:board.board:0
 #: field:wizard.import.tender.line,tender_id:0
+#: selection:stock.forecast.line,state:0
 msgid "Tender"
 msgstr "Appel d'offres"
 
@@ -15217,7 +15220,7 @@ msgstr "Chèque - Ligne"
 msgid "Phone"
 msgstr "Tél."
 
-#. modules: sales_followup, tender_flow, sale_override, stock_override, purchase_override, purchase_allocation_report, order_types, purchase_followup
+#. modules: sales_followup, tender_flow, sale_override, stock_override, purchase_override, purchase_allocation_report, order_types, purchase_followup, stock_forecast
 #: selection:stock.move,order_type:0
 #: selection:purchase.order.line.allocation.report,order_type:0
 #: selection:purchase.order.followup,order_type:0
@@ -15227,6 +15230,7 @@ msgstr "Tél."
 #: selection:purchase.order.line,order_type:0
 #: selection:report.stock.move,order_type:0
 #: selection:purchase.report,order_type:0
+#: selection:stock.forecast.line,order_type:0
 msgid "Standard donation"
 msgstr "Donation normale"
 
@@ -15423,7 +15427,7 @@ msgstr "Brouillon Piquage - brouillon"
 msgid "Lot weight"
 msgstr "Poids du lot"
 
-#. modules: purchase, account, sale_override, stock_override, purchase_override, sale, sales_followup, purchase_allocation_report, purchase_followup, tender_flow, order_types
+#. modules: purchase, account, sale_override, stock_override, purchase_override, sale, sales_followup, purchase_allocation_report, purchase_followup, tender_flow, order_types, stock_forecast
 #: selection:account.account,type:0
 #: selection:account.account.template,type:0
 #: selection:account.entries.report,type:0
@@ -15441,6 +15445,7 @@ msgstr "Poids du lot"
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
+#: selection:stock.forecast.line,order_type:0
 msgid "Regular"
 msgstr "Normal"
 
@@ -19372,13 +19377,14 @@ msgstr "Générer par le système"
 msgid "You can't create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory."
 msgstr "Vous ne pouvez pas créer un numéro de lot standard pour un produit dont le lot n'est pas obligatoire. Si le produit est périssable, le système créera automatiquement un numéro de lot interne à la réception / inventaire."
 
-#. modules: msf_order_date, sale_override, sourcing, sale
+#. modules: msf_order_date, sale_override, sourcing, sale, stock_forecast
 #: selection:sale.order.line,so_state_stored:0
 #: selection:sale.order,state:0
 #: selection:sale.report,state:0
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:sourcing.line,sale_order_state_search:0
 #: selection:sourcing.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
 msgid "Shipping Exception"
 msgstr "Expédition Exception"
 
@@ -19976,6 +19982,7 @@ msgstr "Mouvements pour ce lot de production"
 #: selection:sourcing.line,sale_order_state_search:0
 #: selection:purchase.order.line,order_state:0
 #: selection:sourcing.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
 msgid "Invoice Exception"
 msgstr "Exception Facture"
 
@@ -23123,6 +23130,9 @@ msgstr "Au (Client) :"
 #. module: stock_forecast
 #: model:ir.model,name:stock_forecast.model_stock_forecast
 #: model:ir.module.module,shortdesc:stock_forecast.module_meta_information
+#: code:addons/stock_forecast/wizard/stock_forecast.py:330
+#: code:addons/stock_forecast/wizard/stock_forecast.py:348
+#, python-format
 msgid "Stock Level Forecast"
 msgstr "Stock - Niveau Prévision"
 
@@ -30900,13 +30910,14 @@ msgstr "Réf #"
 msgid "Cannot locate parent code for template account!"
 msgstr "Impossible de trouver le code parent pour le modèle de compte !"
 
-#. modules: sales_followup, stock_override, purchase_override, purchase_allocation_report, order_types, purchase_followup
+#. modules: sales_followup, stock_override, purchase_override, purchase_allocation_report, order_types, purchase_followup, stock_forecast
 #: selection:stock.move,order_type:0
 #: selection:purchase.order.line.allocation.report,order_type:0
 #: selection:purchase.order.followup,order_type:0
 #: selection:purchase.order,order_type:0
 #: selection:purchase.order.line,order_type:0
 #: selection:report.stock.move,order_type:0
+#: selection:stock.forecast.line,order_type:0
 msgid "In Kind Donation"
 msgstr "Donation en Nature"
 
@@ -31377,6 +31388,7 @@ msgstr "Mes Commandes de Projet"
 #: selection:purchase.order.line,po_state:0
 #: selection:purchase.order.line,order_state:0
 #: view:purchase.order:0
+#: selection:stock.forecast.line,state:0
 msgid "Sent"
 msgstr "Envoyé"
 
@@ -32568,10 +32580,11 @@ msgstr "Rapport/Modèle"
 msgid "Proc - closed"
 msgstr "Approvisionnement- fermé"
 
-#. module: base
+#. modules: base, stock_forecast
 #: selection:ir.actions.act_window.view,view_mode:0
 #: selection:ir.ui.view,type:0
 #: selection:wizard.ir.model.menu.create.line,view_type:0
+#: view:stock.forecast:0
 msgid "Graph"
 msgstr "Graphe"
 
@@ -34712,8 +34725,9 @@ msgstr "Information sur le fournisseur du produit"
 msgid "Reset 'Not Available' Lines"
 msgstr "Réinitialiser les lignes 'Non disponibles'"
 
-#. module: procurement
+#. modules: procurement, stock_forecast
 #: selection:procurement.order,state:0
+#: selection:stock.forecast.line,state:0
 msgid "Converted"
 msgstr "Converti"
 
@@ -34925,7 +34939,7 @@ msgstr "Délai de Paiement (nom court)"
 msgid "Quantity to process"
 msgstr "Quantité à traiter"
 
-#. modules: out_step, msf_outgoing, stock, specific_rules, kit, sales_followup
+#. modules: out_step, msf_outgoing, stock, specific_rules, kit, sales_followup, stock_forecast
 #: selection:kit.creation.to.consume,availability_to_consume:0
 #: selection:stock.move,hidden_state:0
 #: selection:substitute.item,availability_status_hidden_func_substitute_item:0
@@ -34941,6 +34955,7 @@ msgstr "Quantité à traiter"
 #: view:stock.picking:0
 #: selection:stock.picking,state:0
 #: view:stock.production.lot:0
+#: selection:stock.forecast.line,state:0
 #: code:addons/sales_followup/sale_followup.py:451
 #: code:addons/sales_followup/sale_followup.py:479
 #, python-format
@@ -35092,13 +35107,14 @@ msgstr "Champs Inclus"
 msgid "Forecasts"
 msgstr "Prévisions"
 
-#. modules: msf_order_date, sale_override, sourcing, sale
+#. modules: msf_order_date, sale_override, sourcing, sale, stock_forecast
 #: selection:sale.order.line,so_state_stored:0
 #: selection:sale.order,state:0
 #: selection:sale.report,state:0
 #: selection:sale.order,state_hidden_sale_order:0
 #: selection:sourcing.line,sale_order_state_search:0
 #: selection:sourcing.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
 msgid "Waiting Schedule"
 msgstr "En attente"
 
@@ -36596,6 +36612,7 @@ msgstr "Dépendance du Module"
 #: selection:wizard.import.po.line,state:0
 #: selection:wizard.import.tender.line,state:0
 #: code:addons/sales_followup/sale_followup.py:415
+#: selection:stock.forecast.line,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -38171,7 +38188,7 @@ msgstr "PCM Lignes exportées"
 msgid "Line Type"
 msgstr "Type de ligne"
 
-#. modules: delivery_mechanism, msf_order_date, msf_outgoing, purchase, purchase_override, sale_override, sale, purchase_allocation_report, sourcing, stock
+#. modules: delivery_mechanism, msf_order_date, msf_outgoing, purchase, purchase_override, sale_override, sale, purchase_allocation_report, sourcing, stock, stock_forecast
 #: view:stock.move.memory.in:0
 #: view:stock.move.memory.out:0
 #: selection:purchase.order.line,po_state_stored:0
@@ -38188,6 +38205,7 @@ msgstr "Type de ligne"
 #: view:stock.move:0
 #: selection:stock.move.split.lines,action:0
 #: selection:sourcing.line,sale_order_state:0
+#: selection:stock.forecast.line,state:0
 msgid "Split"
 msgstr "Fractionner"
 
@@ -40065,6 +40083,7 @@ msgstr "Compte- Correspondance"
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
 #: view:sale.order:0
+#: selection:stock.forecast.line,state:0
 #: code:addons/sales_followup/sale_followup.py:419
 #, python-format
 msgid "Confirmed"
@@ -41678,6 +41697,7 @@ msgstr "Consommation mensuelle saisie manuellement"
 
 #. module: stock_forecast
 #: report:stock.forecast.report:0
+#: view:stock.forecast:0
 msgid "Stock Forecast"
 msgstr "Stock - Prévision"
 
@@ -41839,7 +41859,7 @@ msgstr "Erreur ! Vous ne pouvez pas créer de nomenclature récursive."
 msgid "for a PO, date of the first godd receipt."
 msgstr "pour un Bon de Commande, date de première réception de marchandises"
 
-#. modules: msf_order_date, purchase, purchase_allocation_report, procurement, purchase_override, kit, out_step, base, export_import_lang, stock, sales_followup
+#. modules: msf_order_date, purchase, purchase_allocation_report, procurement, purchase_override, kit, out_step, base, export_import_lang, stock, sales_followup, stock_forecast
 #: view:res.request:0
 #: view:res.request:0
 #: selection:stock.move,hidden_state:0
@@ -41853,6 +41873,7 @@ msgstr "pour un Bon de Commande, date de première réception de marchandises"
 #: selection:report.stock.move,state:0
 #: selection:stock.move,state:0
 #: selection:stock.picking,state:0
+#: selection:stock.forecast.line,state:0
 #: code:addons/sales_followup/sale_followup.py:361
 #: code:addons/sales_followup/sale_followup.py:386
 #: code:addons/sales_followup/sale_followup.py:449
@@ -42368,8 +42389,9 @@ msgstr "Décocher le champ \"actif\" si défini comme Faux, cela vous permettra 
 msgid "Applicable Type"
 msgstr "Type Applicable"
 
-#. module: msf_outgoing
+#. modules: msf_outgoing, stock_forecast
 #: field:ppl.customize.label,specific_information:0
+#: view:stock.forecast:0
 msgid "Specific Information"
 msgstr "Information Spécifique"
 
@@ -43337,6 +43359,7 @@ msgstr "Commande de Terrain – validée"
 #: selection:sync.client.child_entity,state:0
 #: code:addons/sales_followup/sale_followup.py:416
 #: code:addons/sales_followup/sale_followup.py:417
+#: selection:stock.forecast.line,state:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -43979,7 +44002,7 @@ msgstr "Valider la fréquence"
 msgid "Box"
 msgstr "Case"
 
-#. modules: sales_followup, tender_flow, purchase, stock_override, purchase_override, purchase_allocation_report, purchase_followup, order_types
+#. modules: sales_followup, tender_flow, purchase, stock_override, purchase_override, purchase_allocation_report, purchase_followup, order_types, stock_forecast
 #: selection:stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.order.line.allocation.report,order_type:0
@@ -43988,6 +44011,7 @@ msgstr "Case"
 #: selection:purchase.order.line,order_type:0
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
+#: selection:stock.forecast.line,order_type:0
 msgid "Purchase List"
 msgstr "Liste d'Achats"
 
@@ -45080,7 +45104,7 @@ msgstr "Utilisé dans le code pour sélectionner des prix spécifiques calculés
 msgid "Commitment Vouchers"
 msgstr "Bons d'Engagement"
 
-#. modules: sales_followup, stock_override, purchase_override, purchase_allocation_report, sourcing, order_types, purchase_followup
+#. modules: sales_followup, stock_override, purchase_override, purchase_allocation_report, sourcing, order_types, purchase_followup, stock_forecast
 #: selection:stock.move,order_type:0
 #: selection:purchase.order.line.allocation.report,order_type:0
 #: selection:purchase.order.followup,order_type:0
@@ -45091,6 +45115,7 @@ msgstr "Bons d'Engagement"
 #: selection:sale.order.line,po_cft:0
 #: selection:sourcing.line,po_cft:0
 #: selection:report.stock.move,order_type:0
+#: selection:stock.forecast.line,order_type:0
 msgid "Direct Purchase Order"
 msgstr "Bon de Commande Directe"
 
@@ -45807,7 +45832,7 @@ msgstr "Date de la source"
 msgid "Start All Synchronization Process"
 msgstr "Commencer le processus de Synchronisation"
 
-#. modules: product, purchase, account, order_types, stock_move_tracking
+#. modules: product, purchase, account, order_types, stock_move_tracking, stock_forecast
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
 #: view:account.analytic.balance:0
@@ -45819,6 +45844,7 @@ msgstr "Commencer le processus de Synchronisation"
 #: view:product.price_list:0
 #: view:purchase.order:0
 #: view:stock.move.tracking:0
+#: view:stock.forecast:0
 msgid "Print"
 msgstr "Imprimer"
 
@@ -46791,7 +46817,7 @@ msgstr "Champ Relation"
 msgid "Linked shipments"
 msgstr "Expéditions Connexes"
 
-#. modules: delivery_mechanism, msf_cross_docking, product, msf_outgoing, purchase, procurement_auto, stock_override, sale, procurement, order_line_number, reason_types_moves, sourcing, stock_batch_recall, tender_flow, specific_locations, procurement_cycle, threshold_value, stock, msf_order_date, procurement_report, sd
+#. modules: delivery_mechanism, msf_cross_docking, product, msf_outgoing, purchase, procurement_auto, stock_override, sale, procurement, order_line_number, reason_types_moves, sourcing, stock_batch_recall, tender_flow, specific_locations, procurement_cycle, threshold_value, stock, msf_order_date, procurement_report, sd, stock_forecast
 #: model:ir.model,name:delivery_mechanism.model_procurement_order
 #: model:ir.model,name:msf_cross_docking.model_procurement_order
 #: model:ir.model,name:msf_order_date.model_procurement_order
@@ -46819,6 +46845,7 @@ msgstr "Expéditions Connexes"
 #: model:ir.model,name:stock_override.model_procurement_order
 #: model:ir.model,name:tender_flow.model_procurement_order
 #: model:ir.model,name:threshold_value.model_procurement_order
+#: view:stock.forecast:0
 msgid "Procurement"
 msgstr "Approvisionnement"
 
@@ -47036,10 +47063,11 @@ msgstr "Lignes d'Ecritures Comptables"
 msgid "Thailand"
 msgstr "Thaïlande"
 
-#. module: tender_flow
+#. modules: tender_flow, stock_forecast
 #: view:tender:0
 #: selection:tender,state:0
 #: selection:tender.line,state:0
+#: selection:stock.forecast.line,state:0
 msgid "Comparison"
 msgstr "Comparaison"
 
@@ -52157,6 +52185,8 @@ msgstr "Produit: %s, Qté Consommée (%s) ne peut être supérieure à la Qté I
 #: selection:purchase.order.line,order_state_purchase_order_line:0
 #: selection:purchase.order.line,po_state:0
 #: selection:purchase.order.line,order_state:0
+#: selection:purchase.order.line,order_state:0
+#: selection:stock.forecast.line,state:0
 msgid "Receipt Exception"
 msgstr "Reception Exception"
 
@@ -55950,13 +55980,14 @@ msgstr "Créer des Ecritures Depuis un Modèle"
 msgid "Allow Reconciliation"
 msgstr "Autoriser le Lettrage"
 
-#. modules: msf_order_date, purchase, sales_followup, purchase_override, purchase_allocation_report
+#. modules: msf_order_date, purchase, sales_followup, purchase_override, purchase_allocation_report, stock_forecast
 #: selection:purchase.order.line,po_state_stored:0
 #: view:purchase.order:0
 #: selection:purchase.order,state:0
 #: selection:purchase.order.line.allocation.report,state:0
 #: selection:purchase.order.line,order_state_purchase_order_line:0
 #: selection:purchase.order.line,po_state:0
+#: selection:stock.forecast.line,state:0
 #: code:addons/sales_followup/sale_followup.py:418
 #, python-format
 msgid "Confirmed (waiting)"
@@ -58836,11 +58867,12 @@ msgstr "Configurer Vos Prix de Terrain"
 msgid "12th"
 msgstr "12e"
 
-#. modules: procurement, sync_client, stock_override, stock
+#. modules: procurement, sync_client, stock_override, stock, stock_forecast
 #: selection:procurement.order,state:0
 #: view:stock.move:0
 #: view:stock.move:0
 #: selection:sync.client.entity_manager,state:0
+#: selection:stock.forecast.line,state:0
 msgid "Ready"
 msgstr "Prêt"
 
@@ -60310,6 +60342,7 @@ msgstr "Ce rapport permet d'imprimer ou de générer un document PDF de votre ba
 #: selection:purchase.order.line,order_state:0
 #: selection:sync.client.child_entity,state:0
 #: view:purchase.order:0
+#: selection:stock.forecast.line,state:0
 msgid "Updated"
 msgstr "Mise à jour"
 
@@ -61370,7 +61403,7 @@ msgstr "Corrompu"
 msgid "WebDAV server for Document Management"
 msgstr "Serveur WebDAV pour la Gestion de Documents"
 
-#. modules: purchase, tender_flow, sale_override, stock_override, sale, purchase_override, sales_followup, purchase_allocation_report, purchase_followup, order_types
+#. modules: purchase, tender_flow, sale_override, stock_override, sale, purchase_override, sales_followup, purchase_allocation_report, purchase_followup, order_types, reason_types_moves, stock_forecast
 #: selection:stock.move,order_type:0
 #: view:purchase.order:0
 #: view:purchase.report:0
@@ -61385,8 +61418,11 @@ msgstr "Serveur WebDAV pour la Gestion de Documents"
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
+#: model:stock.reason.type,name:reason_types_moves.reason_type_loan
+#: selection:stock.forecast.line,order_type:0
 msgid "Loan"
 msgstr "Prêt"
+
 
 #. modules: msf_custom_settings, consumption_calculation
 #: model:ir.model,name:consumption_calculation.model_real_average_consumption
@@ -63802,7 +63838,7 @@ msgstr "Dépendances :"
 msgid "Your Reference"
 msgstr "Votre référence"
 
-#. modules: msf_order_date, purchase, purchase_allocation_report, sale, purchase_override, sales_followup, sale_override, sourcing
+#. modules: msf_order_date, purchase, purchase_allocation_report, sale, purchase_override, sales_followup, sale_override, sourcing, stock_forecast
 #: selection:purchase.order.line,po_state_stored:0
 #: selection:sale.order.line,so_state_stored:0
 #: view:purchase.order:0
@@ -63819,6 +63855,7 @@ msgstr "Votre référence"
 #: selection:sourcing.line,sale_order_line_state:0
 #: selection:sourcing.line,sale_order_state:0
 #: selection:sourcing.line,state:0
+#: selection:stock.forecast.line,state:0
 msgid "Sourced"
 msgstr "Sourcé"
 
@@ -66610,13 +66647,9 @@ msgstr "Mouvement interne"
 msgid "Donation (standard)"
 msgstr "Donation (normale)"
 
-#. module: reason_types_moves
-#: model:stock.reason.type,name:reason_types_moves.reason_type_loan
-msgid "Loan"
-msgstr "Prêt"
-
-#. module: reason_types_moves
+#. modules: reason_types_moves, stock_forecast
 #: model:stock.reason.type,name:reason_types_moves.reason_type_donation_expiry
+#: selection:stock.forecast.line,order_type:0
 msgid "Donation before expiry"
 msgstr "Donation avant expiration"
 
@@ -66674,3 +66707,13 @@ msgstr "Retour de marchandises"
 #: model:stock.reason.type,name:reason_types_moves.reason_type_goods_replacement
 msgid "Goods Replacement"
 msgstr "Remplacement de marchandises"
+
+#. module: stock_forecast
+#: view:stock.forecast:0
+msgid "Refresh Forecast"
+msgstr "Actualiser"
+
+#. module: stock_forecast
+#: view:stock.forecast:0
+msgid "Close Wizard"
+msgstr "Fermer la fenêtre"
