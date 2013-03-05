@@ -33,7 +33,8 @@
 
 
   <Style ss:ID="s21">
-   <Font x:Family="Swiss" ss:Italic="1"/>
+   <Alignment ss:Horizontal="Center"/>
+   <Font x:Family="Swiss" />
   </Style>
   <Style ss:ID="s23">
    <Font x:Family="Swiss" ss:Color="#00FF00" ss:Bold="1"/>
@@ -79,7 +80,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font x:Family="Swiss" ss:Bold="1"/>
-   <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+   <Interior ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s30">
    <Alignment ss:Vertical="Center"/>
@@ -130,7 +131,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+   <Interior  ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Fixed"/>
   </Style>
   <Style ss:ID="s36">
@@ -149,7 +150,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+   <Interior  ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Standard"/>
   </Style>
   <Style ss:ID="s38">
@@ -184,7 +185,7 @@
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Font x:Family="Swiss" ss:Bold="1"/>
-   <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+   <Interior ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Standard"/>
   </Style>
 
@@ -195,13 +196,13 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
-   <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+   <Interior  ss:Pattern="Solid"/>
    <NumberFormat ss:Format="Standard"/>
   </Style>
 
   <Style ss:ID="s51">
    <Font ss:Size="14"/>
-   <Interior ss:Color="#00FF00" ss:Pattern="Solid"/>
+   <Interior  ss:Pattern="Solid"/>
   </Style>
 
     <Style ss:ID="s25b">
