@@ -302,6 +302,11 @@ class product_attributes(osv.osv):
                        default_code="XXX",
                        # we set international_status to "temp" so that it won't be synchronized with this status
                        international_status='temp',
+                       # we do not duplicate the o2m objects
+                       asset_ids=False,
+                       prodlot_ids=False,
+                       attribute_ids=False,
+                       packaging=False,
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
