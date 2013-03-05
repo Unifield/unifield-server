@@ -6,12 +6,26 @@
             <field name="res_model">stock.picking</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree,form,calendar</field>
+            <field name="view_mode">tree,form</field>
             <!-- 'assigned' is for 'Available' -->
             <field name="domain">[('type','=','in'), ('state', '=', 'assigned')]</field>
-            <field name="context">{'contact_display': 'partner_address',"search_default_available":1}</field>
+            <field name="context">{'contact_display': 'partner_address','subtype': 'in','picking_type': 'incoming_shipment','search_default_available':1}</field>
             <field name="search_view_id" ref="stock.view_picking_in_search"/>
             <field name="help">The Incoming Shipments is the list of all orders you will receive from your supplier. An incoming shipment contains a list of products to be received according to the original purchase order. You can validate the shipment totally or partially.</field>
+        </record>
+
+        <record id="action_incoming_shipment_tree_view" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="action_picking_tree_available" />
+            <field name="sequence">1</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="stock.view_picking_in_tree" />
+        </record>
+
+        <record id="action_incoming_shipment_form_view" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="action_picking_tree_available" />
+            <field name="sequence">2</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock.view_picking_in_form" />
         </record>
 
         <record id="action_outgoing_product_board" model="ir.actions.act_window">
