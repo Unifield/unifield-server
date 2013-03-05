@@ -21,11 +21,16 @@
 
 from osv import osv
 from osv import fields
+
 import uuid
 import tools
+from tools.translate import _
 import pprint
 import logging
+from datetime import datetime, timedelta
+
 pp = pprint.PrettyPrinter(indent=4)
+MAX_ACTIVITY_DELAY = timedelta(minutes=5)
 
 def check_validated(f):
     def check(self, cr, uid, uuid, *args, **kargs):
@@ -97,6 +102,29 @@ class entity(osv.osv):
     _name = "sync.server.entity"
     _description = "Synchronization Instance"
 
+    def __init__(self, *args, **kwargs):
+        self._activity_pool = {}
+        return super(entity, self).__init__(*args, **kwargs)
+
+    def _get_activity(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for entity in self.browse(cr, uid, ids, context=context):
+            if entity.identifier in self._activity_pool:
+                activity, date = self._activity_pool[entity.identifier]
+                delay = datetime.now() - date
+                res[entity.id] = _('%s (stalling)') % activity \
+                                 if (delay > MAX_ACTIVITY_DELAY and '...' in activity) \
+                                 else activity
+            else:
+                res[entity.id] = _('Inactive')
+        return res
+
+    def set_activity(self, cr, uid, entity, activity, context={}):
+        now = datetime.now()
+        self._activity_pool[entity.identifier] = (activity, now)
+        no_update = dict(context, update=False)
+        self.write(cr, 1, [entity.id], {'last_activity' : now.strftime("%Y-%m-%d %H:%M:%S")}, context=no_update)
+
     _columns = {
         'name':fields.char('Instance Name', size=64, required=True, select=True),
         'identifier':fields.char('Identifier', size=64, readonly=True, select=True),
@@ -108,9 +136,12 @@ class entity(osv.osv):
         
         #just in case, since the many2one exist it has no cost in database
         'children_ids' : fields.one2many('sync.server.entity', 'parent_id', 'Children Instances'),
-        'update_token' : fields.char('Update security token', size=256)
+        'update_token' : fields.char('Update security token', size=256),
+
+        'activity' : fields.function(_get_activity, type='char', string="Activity", method=True),
+        'last_activity' : fields.datetime("Date of last activity", readonly=True),
     }
-    
+   
     def get_security_token(self):
         return uuid.uuid4().hex
     
@@ -312,6 +343,11 @@ class entity(osv.osv):
         return (True, res)
         
     @check_validated
+    def end_synchronization(self, cr, uid, entity, context=None):
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Inactive'))
+        return (True, "Instance %s has finished the synchronization" % entity.identifier)
+
+    @check_validated
     def validate(self, cr, uid, entity, uuid_list, context=None):
         for uuid in uuid_list:
             if not uuid:
@@ -440,6 +476,10 @@ class entity(osv.osv):
     
     _constraints = [
         (_check_recursion, 'Error! You cannot create cycle in entities structure.', ['parent_id']),
+    ]
+
+    _sql_constraints = [
+        ('identifier_unique', 'UNIQUE(identifier)', "Can't have multiple instances with the same identifier!"),
     ]
 entity()
 
