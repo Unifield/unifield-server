@@ -81,14 +81,15 @@ class res_partner(osv.osv):
                     if po.po_from_fo:
                         dom.append(('partner_type', '!=', 'internal'))
             else:
-                for tender in self.pool.get('tender').browse(cr, uid, arg[2]['ids'], context=context):
-                    if tender.sale_order_id:
+                for tender in self.pool.get('tender').browse(cr, uid, arg[2]['ids'], context=context):  
+                    print tender
+                    if tender.tender_from_fo:
                         dom.append(('partner_type', '!=', 'internal'))
         return dom
 
     _columns = {
         'check_partner_so': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On SO', fnct_search=_check_partner_type_so),
-        'partner_not_int': fields.function(_get_fake, method=True, type='boolean', string='Is PO from FO ?', fnct_search=_search_partner_not_int),
+        'partner_not_int': fields.function(_get_fake, method=True, type='boolean', string='Is PO/Tender from FO ?', fnct_search=_search_partner_not_int),
 
     }
 

@@ -80,6 +80,17 @@ class tender(osv.osv):
             
         return result
 
+    def _is_tender_from_fo(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for tender in self.browse(cr, uid, ids, context=context):
+            retour = False
+            ids_proc = self.pool.get('procurement.order').search(cr,uid,[('tender_id','=',tender.id)])
+            ids_sol = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','in',ids_proc),('order_id.procurement_request','=',False)])
+            if ids_sol:
+                retour = True
+            res[tender.id] = retour
+        return res
+
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'),], string="State", readonly=True),
@@ -100,6 +111,7 @@ class tender(osv.osv):
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
                 'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
+               'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
     
     _defaults = {'categ': 'other',
@@ -120,10 +132,10 @@ class tender(osv.osv):
             context = {}
         retour = True
         for tender in self.browse(cr, uid, ids, context=context):
-            if not tender.sale_order_id:
+            if not tender.tender_from_fo:
                 return retour
             for sup in tender.supplier_ids:
-                if sup.partner_type == 'internal':
+                if sup.partner_type == 'internal' :
                     retour = False
         return retour
 

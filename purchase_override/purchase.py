@@ -255,7 +255,6 @@ class purchase_order(osv.osv):
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
-
     }
     
     _defaults = {
@@ -277,12 +276,8 @@ class purchase_order(osv.osv):
             context = {}
         retour = True
         for po in self.browse(cr, uid, ids, context=context):
-            if po.partner_id.partner_type == 'internal':
-                for line in po.order_line:
-                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id)])
-                    for sol in self.pool.get('sale.order.line').browse(cr, uid, ids_proc):
-                        if not sol.order_id.procurement_request:
-                            retour = True
+            if po.partner_id.partner_type == 'internal' and po.po_from_fo:
+                retour = False
         return retour
 
     _constraints = [
