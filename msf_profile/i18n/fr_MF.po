@@ -53945,6 +53945,7 @@ msgstr "Vous n'êtes pas en mesure de changer un expatrié en personnal local"
 #. modules: specific_rules, sd
 #: model:ir.actions.server,name:sd.specific_rules_action_server_stock_by_location
 #: model:ir.actions.server,name:specific_rules.action_server_stock_by_location
+#: code:addons/specific_rules/specific_rules.py:1708
 msgid "Stock by Location"
 msgstr "Stock par Zone"
 
