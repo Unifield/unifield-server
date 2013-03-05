@@ -114,6 +114,7 @@ class purchase_order_sync(osv.osv):
                 if orig_line:
                     line = line_obj.browse(cr, uid, orig_line[0], context=context)
                     if line.procurement_id:
+                        line_obj.write(cr, uid, [order_line.id], {'procurement_id': line.procurement_id.id})
                         proc_ids.append(line.procurement_id.id)
                     if line.order_id:
                         order_ids.append(line.order_id.id)
