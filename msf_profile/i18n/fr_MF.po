@@ -31045,9 +31045,10 @@ msgstr "\n"
 "     * Liste annuelle des clients soumis à la TVA: Prépare un fichier XML pour la déclaration de TVA de l'entreprise principale de l'utilisateur actuellement connecté.Basé sur l'exercice\n"
 "                            Chemin d'accès: Gestion financière / Rapports / Déclarations Légales / Déclarations Belgique / Liste annuelle des clients soumis à la TVA"
 
-#. modules: object_query, base
+#. modules: object_query, base, stock_forecast
 #: field:ir.exports.line,export_id:0
 #: field:object.query,export_id:0
+#: view:stock.forecast:0
 msgid "Export"
 msgstr "Exporter"
 
@@ -66718,4 +66719,4 @@ msgstr "Actualiser"
 #. module: stock_forecast
 #: view:stock.forecast:0
 msgid "Close Wizard"
-msgstr "Fermer la fenêtre"
+msgstr "Fermer assistant"
