@@ -53,7 +53,7 @@ class msf_instance(osv.osv):
                                    ('inactive', 'Inactive')], 'State', required=True),
         'move_prefix': fields.char('Account move prefix', size=5, required=True),
         'reconcile_prefix': fields.char('Reconcilation prefix', size=2, required=True),
-        'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="selection", relation="msf.instance", readonly="True"),
+        'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="char", readonly="True"),
     }
     
     _defaults = {
