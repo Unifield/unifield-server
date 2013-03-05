@@ -66714,7 +66714,7 @@ msgstr "Remplacement de marchandises"
 #. module: stock_forecast
 #: view:stock.forecast:0
 msgid "Refresh Forecast"
-msgstr "Actualiser"
+msgstr "Rafraîchir prévisions"
 
 #. module: stock_forecast
 #: view:stock.forecast:0
