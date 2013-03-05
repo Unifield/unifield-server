@@ -19,13 +19,8 @@
 #
 ##############################################################################
 
-from datetime import datetime
-
 from osv import osv
 from osv import fields
-import logging
-import tools
-from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -122,7 +117,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             # Product code
             product_code = row.cells[0].data
             if not product_code:
-                default_code = False
                 to_correct_ok = True
                 import_to_correct = True
                 error_list.append('No Product Code.')

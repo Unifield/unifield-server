@@ -22,6 +22,7 @@
 import datetime
 
 from report import report_sxw
+from tools.translate import _
 import pooler
 import locale
 import csv
@@ -35,7 +36,7 @@ class report_liquidity_position(report_sxw.report_sxw):
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
         # Create the header
-        data = [['Journal Code', 'Journal Name', 'Calculated Balance in register currency', 'Register Balance in register currency', 'Register Currency', 'Calculated Balance in functional currency', 'Register Balance in functional currency', 'Functional Currency']]
+        data = [map(lambda x: x.encode('utf-8'), [_('Journal Code'), _('Journal Name'), _('Calculated Balance in register currency'), _('Register Balance in register currency'), _('Register Currency'), _('Calculated Balance in functional currency'), _('Register Balance in functional currency'), _('Functional Currency')])]
 
         # retrieve ids of latest, non-cheque, non-draft registers
         sql_register_ids = """
@@ -81,8 +82,8 @@ class report_liquidity_position(report_sxw.report_sxw):
             total_converted_real_end_balance += int(round(converted_real_end_balance))
             
             
-            register_values = [[register.journal_id.code,
-                                register.journal_id.name,
+            register_values = [[register.journal_id.code and register.journal_id.code.encode('utf-8') or '',
+                                register.journal_id.name and register.journal_id.name.encode('utf-8') or '',
                                 int(round(register.msf_calculated_balance)),
                                 int(round(real_end_balance)),
                                 register.journal_id.currency.name,

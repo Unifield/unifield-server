@@ -31,10 +31,40 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     _name = 'account.move.line'
 
+    def check_imported_invoice(self, cr, uid, ids, context=None):
+        """
+        Check that for these IDS, no one is used in imported invoice.
+        For imported invoice, the trick comes from the fact that do_import_invoices_reconciliation hard post the moves before reconciling them.
+        """
+        if not context:
+            context = {}
+        # Create a SQL request that permit to fetch quickly statement lines that have an imported invoice
+        sql = """SELECT st_line_id
+        FROM imported_invoice
+        WHERE move_line_id in %s
+        AND st_line_id IN (SELECT st.id 
+            FROM account_bank_statement_line st 
+            LEFT JOIN account_bank_statement_line_move_rel rel ON rel.move_id = st.id 
+            LEFT JOIN account_move m ON m.id = rel.statement_id 
+            WHERE m.state = 'draft')
+        GROUP BY st_line_id;
+        """
+        cr.execute(sql, (tuple(ids),))
+        sql_res = cr.fetchall()
+        if sql_res:
+            res = [x and x[0] for x in sql_res]
+            # Search register lines
+            msg = []
+            for absl in self.pool.get('account.bank.statement.line').browse(cr, uid, res):
+                msg += [_("%s (in %s)") % (absl.name, absl.statement_id and absl.statement_id.name or '',)]
+            raise osv.except_osv(_('Warning'), _('Reconciliation of lines that come from a "Pending payment" wizard should be done via registers. Lines: %s') % (' - '.join(msg),))
+        return True
+
     def reconcile_partial(self, cr, uid, ids, type='auto', context=None):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
+        self.check_imported_invoice(cr, uid, ids, context)
         # @@@override@account.account_move_line.py
         move_rec_obj = self.pool.get('account.move.reconcile')
         merges = []
@@ -81,6 +111,7 @@ class account_move_line(osv.osv):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
+        self.check_imported_invoice(cr, uid, ids, context)
         # @@@override@account.account_move_line.py
         account_obj = self.pool.get('account.account')
         move_obj = self.pool.get('account.move')

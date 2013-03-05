@@ -777,6 +777,8 @@ class purchase_order(osv.osv):
         '''
         Set the reference at this step
         '''
+        if context is None:
+            context = {}
         if context.get('rfq_ok', False) and not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
         elif not vals.get('name', False):
@@ -809,10 +811,21 @@ class purchase_order(osv.osv):
         HOOK from purchase>purchase.py for COPY function. Modification of default copy values
         define which name value will be used
         '''
+        # default values from copy function
+        default = kwargs.get('default', False)
+        # flag defining if the new object will be a rfq
+        is_rfq = False
+        # calling super function
         result = super(purchase_order, self)._hook_copy_name(cr, uid, ids, context=context, *args, **kwargs)
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.rfq_ok:
-                result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
+        if default.get('rfq_ok', False):
+            is_rfq = True
+        elif 'rfq_ok' not in default:
+            for obj in self.browse(cr, uid, ids, context=context):
+                # if rfq_ok is specified as default value for new object, we base our decision on this value
+                if obj.rfq_ok:
+                    is_rfq = True
+        if is_rfq:
+            result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
