@@ -73,7 +73,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 value_list[cc_line.analytic_id.id][expense_account_id] = expense_line
             else:
                 value_list[cc_line.analytic_id.id][expense_account_id] = [sum(pair) for pair in zip(value_list[cc_line.analytic_id.id][expense_account_id], expense_line)]
-            value_list2[cc_line.analytic_id.id][expense_account_id] = cc_line.destination_id.name
+            value_list2[cc_line.analytic_id.id][expense_account_id] = cc_line.destination_id.code
         return
     
     def check_distribution(self, purchase_order):

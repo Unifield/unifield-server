@@ -107,6 +107,9 @@
     <paraStyle name="P1" fontName="Helvetica" fontSize="8.0" leading="11" alignment="CENTER" textColor="#4c4c4c"/>
     <paraStyle name="P2" fontName="Helvetica-Bold" fontSize="8.0" leading="11" alignment="CENTER"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="11" alignment="CENTER"/>
+    <paraStyle name="P3a" fontName="Helvetica" fontSize="8.0" leading="11" alignment="LEFT"/>
+
+
     <paraStyle name="P4" fontName="Helvetica-Bold" fontSize="8.0" leading="11" spaceBefore="0.0" spaceAfter="6.0"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="P6" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>
@@ -192,7 +195,7 @@
     <blockTable style="Table9">
       <tr>
         <td>
-          <blockTable colWidths="115.0,115.0,60.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
+          <blockTable colWidths="115.0,115.0,40.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
               <tr>
                 <td>
                   <para style="P2">Cost Centre</para>
@@ -201,7 +204,7 @@
                   <para style="P2">Account</para>
                 </td>
                 <td>
-                  <para style="P2">Destination</para>
+                  <para style="P2">Dest.</para>
                 </td>
                 <td>
                   <para style="P2">Budget amount</para>
@@ -220,14 +223,14 @@
                 </td>
               </tr>
           </blockTable>
-          <blockTable colWidths="115.0,115.0,60.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
+          <blockTable colWidths="115.0,115.0,40.0,52.0,52.0,52.0,52.0,52.0" style="Table11">
             <tr>
               <para style="P20">[[ repeatIn(get_report_lines(o),'line', 'blockTable') ]]</para>
               <td>
                 <para style="P3">[[ line[0] ]]</para>
               </td>
               <td>
-                <para style="P3">[[ line[1] ]]</para>
+                <para style="P3a">[[ line[1] ]]</para>
               </td>
 
               <td>
