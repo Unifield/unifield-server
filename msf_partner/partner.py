@@ -225,6 +225,8 @@ class res_partner(osv.osv):
         # some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         #objects
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
@@ -234,22 +236,62 @@ class res_partner(osv.osv):
         com_vouch_obj = self.pool.get('account.commitment')# for commitment voucher
         ship_obj = self.pool.get('shipment')
 
-        # ids list
-        purchase_ids = purchase_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-        sale_ids = sale_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
-        invoice_ids = account_invoice_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])])
-        pick_ids = pick_obj.search(cr, uid, ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])])
+        # ids list (the domain are the same as the one used for the action window of the menus)
+        purchase_ids = purchase_obj.search(cr, uid, [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])], context=context.update({'purchase_order': True}))
+        rfq_ids = purchase_obj.search(cr, uid, [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])], context=context.update({'request_for_quotation': True}))
+        sale_ids = sale_obj.search(cr, uid, [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])], context=context)
+        intermission_vouch_in_ids = account_invoice_obj.search(cr, uid, [('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                                         ], context = context.update({'type':'in_invoice', 'journal_type': 'intermission'}))
+        nb_intermission_vouch_in_ids = len(intermission_vouch_in_ids)
+        intermission_vouch_out_ids = account_invoice_obj.search(cr, uid, [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                                         ], context = context.update({'type':'out_invoice', 'journal_type': 'intermission'}))
+        nb_intermission_vouch_out_ids = len(intermission_vouch_out_ids)
+        donation_ids = account_invoice_obj.search(cr, uid, [('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                           ], context = context.update({'type':'in_invoice', 'journal_type': 'inkind'}))
+        supp_invoice_ids = account_invoice_obj.search(cr, uid, [('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                               ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
+        nb_supp_invoice_ids = len(supp_invoice_ids)
+        cust_refunds_ids = account_invoice_obj.search(cr, uid, [('type','=','out_refund'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                               ], context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
+        nb_cust_refunds_ids = len(cust_refunds_ids)
+        debit_note_ids = account_invoice_obj.search(cr, uid, [('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                              ], context = context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}))
+        nb_debit_note_ids = len(debit_note_ids)
+        stock_transfer_vouch_ids = account_invoice_obj.search(cr, uid, [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft', 'open'])
+                                                                        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale'}))
+        incoming_ship_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('subtype', '=', 'standard'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+                                                      ], context = context.update({'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1}))
+        out_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+                                            ], context = context.update({'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}))
+        pick_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'pick'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+                                             ], context = context.update({'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1}))
+        ppl_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'ppl'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+                                            ], context=context.update({'contact_display': 'partner_address', 'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1}))
         tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
-        com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')])
-        ship_ids = ship_obj.search(cr, uid,  ['|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0]), ('state', 'not in', ['done', 'delivered'])])
+        com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')], context=context)
+        ship_ids = ship_obj.search(cr, uid,  [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])], context=context)
         
-        return ', '.join([po['name'] for po in purchase_obj.read(cr, uid, purchase_ids)]
-                         +[so['name'] for so in sale_obj.read(cr, uid, sale_ids)]
-                         +[inv['number'] or inv['name'] for inv in account_invoice_obj.read(cr, uid, invoice_ids)]
-                         +[pick['name'] for pick in pick_obj.read(cr, uid, pick_ids)]
-                         +[tend['name'] for tend in tender_obj.read(cr, uid, tender_ids)]
-                         +[com_vouch['name'] for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids)]
-                         +[ship['name'] for ship in ship_obj.read(cr, uid, ship_ids)]
+        return ', '.join([po['name']+_(' (Purchase)') for po in purchase_obj.read(cr, uid, purchase_ids, ['name'], context) if po['name']]
+                         +[rfq['name']+_(' (RfQ)') for rfq in purchase_obj.read(cr, uid, rfq_ids, ['name'], context) if rfq['name']]
+                         +[so['name']+_(' (Field Order)') for so in sale_obj.read(cr, uid, sale_ids, ['name'], context) if so['name']]
+                         +([int_vouch_in['number']+_(' (Intermission Voucher IN)') for int_vouch_in in account_invoice_obj.read(cr, uid, intermission_vouch_in_ids, ['number'], context) if int_vouch_in['number']]\
+                         or intermission_vouch_in_ids and [str(nb_intermission_vouch_in_ids)+_(' (Number of Intermission Voucher IN)')])
+                         +([int_vouch_out['number']+_(' (Intermission Voucher OUT)') for int_vouch_out in account_invoice_obj.read(cr, uid, intermission_vouch_out_ids, ['number'], context) if int_vouch_out['number']]\
+                         or intermission_vouch_out_ids and [str(nb_intermission_vouch_out_ids)+_(' (Number of Intermission Voucher OUT)')])
+                         +[donation['name']+_(' (Donation)') for donation in account_invoice_obj.read(cr, uid, donation_ids, ['name'], context) if donation['name']]
+                         +([supp_invoice['number']+_(' (Supplier Invoice)') for supp_invoice in account_invoice_obj.read(cr, uid, supp_invoice_ids, ['number'], context) if supp_invoice['number']]\
+                         or supp_invoice_ids and [str(nb_supp_invoice_ids)+_(' (Number of Supplier Invoice)')])
+                         +([cust_refunds['number']+_(' (Customer Refunds)') for cust_refunds in account_invoice_obj.read(cr, uid, cust_refunds_ids, ['number'], context) if cust_refunds['number']]\
+                         or cust_refunds_ids and [str(nb_cust_refunds_ids)+_(' (Number of Customer Refunds)')])
+                         +[debit_note['number']+_(' (Debit Note)') for debit_note in account_invoice_obj.read(cr, uid, debit_note_ids, ['number'], context) if debit_note['number']]
+                         +[st_transf_vouch['number']+_(' (Stock Transfer Voucher)') for st_transf_vouch in account_invoice_obj.read(cr, uid, stock_transfer_vouch_ids, ['number',], context) if st_transf_vouch['number']]
+                         +[inc_ship['name']+_(' (Incoming Shipment)') for inc_ship in pick_obj.read(cr, uid, incoming_ship_ids, ['name'], context) if inc_ship['name']]
+                         +[out['name']+_(' (OUT)') for out in pick_obj.read(cr, uid, out_ids, ['name'], context) if out['name']]
+                         +[pick['name']+_(' (PICK)') for pick in pick_obj.read(cr, uid, pick_ids, ['name'], context) if pick['name']]
+                         +[ppl['name']+_(' (PPL)') for ppl in pick_obj.read(cr, uid, ppl_ids, ['name'], context) if ppl['name']]
+                         +[tend['name']+_(' (Tender)') for tend in tender_obj.read(cr, uid, tender_ids, ['name'], context) if tend['name']]
+                         +[com_vouch['name']+_(' (Commitment Voucher)') for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids, ['name'], context) if com_vouch['name']]
+                         +[ship['name']+_(' (Shipment)') for ship in ship_obj.read(cr, uid, ship_ids, ['name'], context) if ship['name']]
                          )
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -316,6 +358,8 @@ class res_partner(osv.osv):
             # some verifications
             if isinstance(ids, (int, long)):
                 ids = [ids]
+            if context is None:
+                context = {}
             
             objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
             if objects_linked_to_partner:
