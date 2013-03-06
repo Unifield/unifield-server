@@ -94,7 +94,7 @@
 
 </Styles>
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +' (id'+str(o.id)+')' or 'Sheet1')|x}">
 
 <Table ss:ExpandedColumnCount="17">
 <Column ss:Width="61.5"/>

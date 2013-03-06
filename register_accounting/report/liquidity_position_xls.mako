@@ -278,7 +278,7 @@
 
 <Worksheet ss:Name="Liquidity position">
 <Table >
-<Column ss:AutoFitWidth="0" ss:Width="70.5"/>
+<Column ss:AutoFitWidth="0" ss:Width="110.5"/>
 <Column ss:AutoFitWidth="0" ss:Width="102.75" ss:Span="1"/>
 <Column  ss:AutoFitWidth="0" ss:Width="103.5" ss:Span="1"/>
 <Column  ss:AutoFitWidth="0" ss:Width="75.75"/>

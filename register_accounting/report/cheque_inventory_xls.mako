@@ -99,7 +99,7 @@
 
 </Styles>
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +' (id'+str(o.id)+')' or 'Sheet1')|x}">
 
 <Table ss:ExpandedColumnCount="17">
 <Column ss:Width="70.5" ss:Span="1"/><Column ss:Index="3" ss:Width="72.75"/><Column ss:Width="67.5"/><Column ss:Width="73.5"/><Column ss:Width="61.5"/><Column ss:Width="75.75"/><Column ss:Width="113.25"/><Column ss:Width="81"/><Column ss:Width="48.75"/><Column ss:Width="199.5"/><Column ss:AutoFitWidth="0" ss:Width="229.5"/><Column ss:Width="57.75"/><Column ss:Width="44.25"/><Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>

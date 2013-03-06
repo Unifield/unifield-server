@@ -77,8 +77,6 @@ class report_open_advances(report_sxw.report_sxw):
 
 report_open_advances('report.open.advances', 'account.bank.statement', False, parser=False)
 
-
-
 class report_open_advances2(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_open_advances2, self).__init__(cr, uid, name, context=context)
