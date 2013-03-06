@@ -33,7 +33,7 @@ import simplejson
 import time
 from openobject.i18n import format
 
-
+product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
 def datas_read(ids, model, flds, context=None):
     ctx = dict((context or {}), **rpc.session.context)
     return rpc.RPCProxy(model).export_data(ids, flds, ctx)
@@ -149,6 +149,9 @@ class ImpEx(SecuredController):
                 if import_compat=='1' and '/' in kw.get('fields')[i] and kw.get('fields')[i].split('/')[-1] not in ('id', '.id'):
                     continue
                 default.append([kw['fields'][i], params.fields2[i]])
+
+        if params.model == 'product.product':
+            default = [x for x in default if x[0] not in product_remove_fields]
         default = simplejson.dumps(default)
         return dict(existing_exports=existing_exports, model=params.model, ids=params.ids, ctx=ctx,
                     search_domain=params.search_domain, source=params.source,
@@ -388,14 +391,19 @@ class ImpEx(SecuredController):
             fields = fields.replace('/.id','.id')
             flds = [fields]
 
-        # UF-1257 Only use Code, Description and UoM for export due to timeout error from products with some fields:
-        # - qty_available
-        # - virtual_available
-        # - fmc
-        # - amc
         if params.model == 'product.product':
-            flds = ['default_code', 'name', 'uom_id']
-            params.fields2 = ['Code', 'Description', 'UoM']
+            tmp_flds = flds
+            flds = []
+            fields_header = []
+            for f in tmp_flds:
+                header = ""
+                if params.fields2 and len(params.fields2):
+                    header = params.fields2.pop(0)
+                if f not in product_remove_fields:
+                    flds.append(f)
+                    fields_header.append(header)
+
+            params.fields2 = fields_header
 
         ctx = dict((params.context or {}), **rpc.session.context)
         ctx['import_comp'] = bool(int(import_compat))
@@ -469,8 +477,7 @@ class ImpEx(SecuredController):
             fields_order = fields.keys()
             fields_order.sort(lambda x,y: str_comp(fields[x].get('string', ''), fields[y].get('string', '')))
             for field in fields_order:
-                if (fields[field].get('type','') not in ('reference',))\
-                            and (not fields[field].get('readonly')\
+                if (not fields[field].get('readonly')\
                             or not dict(fields[field].get('states', {}).get(
                             'draft', [('readonly', True)])).get('readonly',True)):
 

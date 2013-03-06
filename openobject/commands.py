@@ -18,9 +18,12 @@ class ConfigurationError(Exception):
     pass
 
 DISTRIBUTION_CONFIG = os.path.join('doc', 'openerp-web.cfg')
+FROZEN_DISTRIBUTION_CONFIG = os.path.join('conf', 'openerp-web.cfg')
 def get_config_file():
     if hasattr(sys, 'frozen'):
-        configfile = os.path.join(openobject.paths.root(), DISTRIBUTION_CONFIG)
+        configfile = os.path.join(openobject.paths.root(), FROZEN_DISTRIBUTION_CONFIG)
+        if not os.path.exists(configfile):
+            configfile = os.path.join(openobject.paths.root(), DISTRIBUTION_CONFIG)
     else:
         setupdir = os.path.dirname(os.path.dirname(__file__))
         isdevdir = os.path.isfile(os.path.join(setupdir, 'setup.py'))
@@ -28,20 +31,6 @@ def get_config_file():
         if isdevdir or not os.path.exists(configfile):
             configfile = os.path.join(setupdir, DISTRIBUTION_CONFIG)
     return configfile
-
-def configure_babel():
-    """ If we are in a py2exe bundle, rather than babel being installed in
-    a site-packages directory in an unzipped form with all its meta- and
-    package- data it is split between the code files within py2exe's archive
-    file and the metadata being stored at the toplevel of the py2exe
-    distribution.
-    """
-    if not hasattr(sys, 'frozen'): return
-
-    # the locale-specific data files are in babel/localedata/*.dat, babel
-    # finds these data files via the babel.localedata._dirname filesystem
-    # path.
-    babel.localedata._dirname = openobject.paths.root('babel', 'localedata')
 
 def start():
 
@@ -85,7 +74,22 @@ def start():
     if options.openerp_protocol in ['http', 'https', 'socket']:
         cherrypy.config['openerp.server.protocol'] = options.openerp_protocol
 
-    configure_babel()
+    if sys.platform == 'win32':
+        from cherrypy.process.win32 import ConsoleCtrlHandler
+        class ConsoleCtrlHandlerWeb(ConsoleCtrlHandler):
+            def handle(self, event):
+                """Handle console control events (like Ctrl-C)."""
+                # 'First to return True stops the calls'
+                return 1
+        cherrypy.engine.console_control_handler = ConsoleCtrlHandlerWeb(cherrypy.engine)
+
+    if hasattr(cherrypy.engine, "signal_handler"):
+        cherrypy.engine.signal_handler.subscribe()
+    if hasattr(cherrypy.engine, "console_control_handler"):
+        cherrypy.engine.console_control_handler.subscribe()
 
     cherrypy.engine.start()
     cherrypy.engine.block()
+
+def stop():
+    cherrypy.engine.exit()

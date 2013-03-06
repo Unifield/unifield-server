@@ -1,8 +1,10 @@
 import os
 import re
 import sys
+import glob
 
 from setuptools import setup
+from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
 
 execfile(os.path.join("openobject", "release.py"))
 
@@ -12,6 +14,26 @@ if 'bdist_rpm' in sys.argv:
 try:
     import py2exe
     from py2exe_utils import opts
+    opts['options'].setdefault('py2exe',{})
+    opts['options']['py2exe'].setdefault('includes',[])
+    opts['options']['py2exe']['includes'].extend([
+        'win32api',
+        'win32con',
+        'win32event',
+        'win32service',
+        'win32serviceutil',
+    ])
+    opts['options']['py2exe'].update(
+            skip_archive=1,
+            compressed=0,
+            bundle_files=3,
+            optimize=0,
+            collected_libs_dir='libs',
+            collected_libs_data_relocate='babel,pytz',
+    )
+    opts.setdefault('data_files', []).extend(fixup_data_pytz_zoneinfo())
+    opts.update(cmdclass={'py2exe': custom_py2exe},)
+
     version_dash_incompatible = True
 except ImportError:
     opts = {}
@@ -33,6 +55,13 @@ def find_data_files(source, patterns=FILE_PATTERNS):
                 (base, cur_files))
 
     return out
+
+if os.name == 'nt':
+    sys.path.append("C:\Microsoft.VC90.CRT")
+    opts.setdefault('data_files',[]).extend([
+        ("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')),
+        (os.path.join('service', "Microsoft.VC90.CRT"), glob.glob('C:\Microsoft.VC90.CRT\*.*')),
+    ])
 
 setup(
     name=name,

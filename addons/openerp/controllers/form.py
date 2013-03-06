@@ -30,6 +30,8 @@ import openobject
 import openobject.paths
 import simplejson
 
+FIELDS_INTERNAL_NAME = '__openerp__real_fiels'
+
 def make_domain(name, value, kind='char'):
     """A helper function to generate domain for the given name, value pair.
     Will be used for search window...
@@ -147,7 +149,11 @@ def get_validation_schema(self):
         if k not in kw:
             vals.pop(k)
 
+    if 'fields' in vals:
+        vals[FIELDS_INTERNAL_NAME] = vals.pop('fields')
     form.validator = openobject.validators.Schema(**vals)
+    if FIELDS_INTERNAL_NAME in vals:
+        form.validator.fields['fields'] = form.validator.fields.pop(FIELDS_INTERNAL_NAME)
     return form
 
 def default_error_handler(self, tg_errors=None, **kw):

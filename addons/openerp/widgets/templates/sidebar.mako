@@ -107,9 +107,11 @@
     </div>
     <ul class="clean-a">
         % if view_type == 'tree':
+          % if model != 'product.product':
         <li>
             <a href="javascript: void(0)" onclick="new ListView('_terp_list').importData()">${_("Import")}</a>
         </li>
+          % endif
         <li>
             <a href="javascript: void(0)" onclick="new ListView('_terp_list').exportData()">${_("Export")}</a>
         </li>
