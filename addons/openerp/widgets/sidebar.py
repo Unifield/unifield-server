@@ -49,7 +49,10 @@ class Sidebar(TinyWidget):
         self.relates = toolbar.get('relate', [])
         self.attachments = []
         self.sub_menu = None
-                    
+
+        for relate in self.relates:
+            relate['context'] = self.context
+
         action = 'client_action_multi'
         if self.view_type == 'form':
             action = 'tree_but_action'
