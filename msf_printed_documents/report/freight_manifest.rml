@@ -218,7 +218,7 @@
                     <para style="TextInformation">Transport :</para>
                 </td>
                 <td>
-                    <para style="TextInformation2">[[ getSel(objects[0]) ]]</para>
+                    <para style="TextInformation2">[[ getSel(objects[0], 'transport_type') ]]</para>
                 </td>
                 <td> 
                    <para style="TextInformation"></para>
