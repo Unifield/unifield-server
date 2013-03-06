@@ -2087,7 +2087,7 @@ msgstr "ir.exports"
 #: code:addons/return_claim/return_claim.py:144
 #, python-format
 msgid "Previous event (%s) does not allow further event."
-msgstr "L'Evénement précédent (% s) ne permet pas d'autres événements."
+msgstr "L'Evénement précédent (%s) ne permet pas d'autres événements."
 
 #. modules: msf_outgoing, sd
 #: model:process.node,name:msf_outgoing.process_node_draft_pick_draft
@@ -23013,7 +23013,7 @@ msgstr "Getting Things Done (faire avancer les choses) - Module Gestion du Temps
 #: code:addons/stock_schedule/schedule.py:409
 #, python-format
 msgid "%s %s - Every %s month(s)"
-msgstr "% % - Chaque %s mois"
+msgstr "%s %s - Chaque %s mois"
 
 #. module: account_period_closing_level
 #: view:account.period:0
@@ -23861,7 +23861,7 @@ msgstr "Magasin"
 #: code:addons/stock_schedule/schedule.py:445
 #, python-format
 msgid " - Every %s year(s)"
-msgstr " - Chaque % année"
+msgstr " - Chaque %s année"
 
 #. modules: purchase, board, sale
 #: view:res.log.report:0
@@ -32816,7 +32816,7 @@ msgstr "La Destination %s n'est pas connexe au compte %s!"
 #: code:addons/stock/wizard/stock_splitinto.py:53
 #, python-format
 msgid "Total quantity after split exceeds the quantity to split for this product: \"%s\" (id: %d)"
-msgstr "Quantité totale après fractionnement dépasse la quantité à diviser pour ce produit: \"% s\" (id:% d)"
+msgstr "Quantité totale après fractionnement dépasse la quantité à diviser pour ce produit: \"%s\" (id:% d)"
 
 #. modules: base, sd
 #: model:res.country,name:base.tc
@@ -38487,7 +38487,7 @@ msgstr "Appliquer pour Supprimer"
 #: code:addons/base/ir/ir_model.py:343
 #, python-format
 msgid "Cannot rename column to %s, because that column already exists!"
-msgstr "Impossible de renommer la colonne % s, cette colonne existe déjà !"
+msgstr "Impossible de renommer la colonne %s, cette colonne existe déjà !"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:580
@@ -39811,7 +39811,7 @@ msgstr "Ecritures de Paie ont déjà été validées pour %s dans cette période
 #: code:addons/stock_schedule/schedule.py:428
 #, python-format
 msgid " - Every %s month(s)"
-msgstr " - Chaque % mois"
+msgstr " - Chaque %s mois"
 
 #. module: survey
 #: model:ir.module.module,shortdesc:survey.module_meta_information
@@ -47694,7 +47694,7 @@ msgstr "Nom de la Personne de Contact  de l'Adresse de Destination "
 #: code:addons/purchase/purchase.py:730
 #, python-format
 msgid "The selected supplier has a minimal quantity set to %s, you cannot purchase less."
-msgstr "Le fournisseur sélectionné a une quantité minimale réglée sur % s, vous ne pouvez pas acheter moins."
+msgstr "Le fournisseur sélectionné a une quantité minimale réglée sur %s, vous ne pouvez pas acheter moins."
 
 #. modules: msf_outgoing, sd
 #: model:process.node,note:msf_outgoing.process_node_pick_assigned
