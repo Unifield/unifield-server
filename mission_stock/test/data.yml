@@ -69,7 +69,7 @@
     name: Project 1
     target_cost_center_ids:
       - cost_center_id: analytic_account_kenya
-      - is_target: True
+        is_target: True
     state: active
     move_prefix: TEST
     reconcile_prefix: T1

@@ -235,7 +235,7 @@
     level: section
     target_cost_center_ids:
       - cost_center_id: analytic_account_OC1
-      - is_target: True
+        is_target: True
     move_prefix: TEST
     reconcile_prefix: T1
 -
