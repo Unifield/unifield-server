@@ -2087,7 +2087,7 @@ msgstr "ir.exports"
 #: code:addons/return_claim/return_claim.py:144
 #, python-format
 msgid "Previous event (%s) does not allow further event."
-msgstr "L'Evénement précédent (% s) ne permet pas d'autres événements."
+msgstr "L'Evénement précédent (%s) ne permet pas d'autres événements"
 
 #. modules: msf_outgoing, sd
 #: model:process.node,name:msf_outgoing.process_node_draft_pick_draft
@@ -11662,7 +11662,7 @@ msgid "\n"
 "        Add the capability for a product to be a service with reception in %UOM\n"
 "        "
 msgstr "\n"
-"        Ajouter la capacité d'un produit à être un service de réception dans UdM%"
+"        Ajouter la capacité d'un produit à être un service de réception dans %UdM"
 
 #. module: consumption_calculation
 #: view:real.average.consumption:0
@@ -16179,7 +16179,7 @@ msgstr "Sélectionner si vous voulez suivre les ouvertures/fermetures de tout en
 #. module: base
 #: view:ir.sequence:0
 msgid "Day of the week (0:Monday): %(weekday)s"
-msgstr "Jour de la semaine (0:Lundi): %(jour de la semaine)s"
+msgstr "Jour de la semaine (0:Lundi): %(weekday)s"
 
 #. modules: base, sd
 #: model:res.country,name:base.ck
@@ -19056,7 +19056,7 @@ msgstr "Le nouveau Prélèvement interne  %s a été créé."
 #. module: base
 #: view:ir.sequence:0
 msgid "Day: %(day)s"
-msgstr "Jour: %(jour)s"
+msgstr "Jour: %(day)s"
 
 #. module: tender_flow
 #: code:addons/tender_flow/tender_flow.py:157
@@ -23052,7 +23052,7 @@ msgstr "Getting Things Done (faire avancer les choses) - Module Gestion du Temps
 #: code:addons/stock_schedule/schedule.py:409
 #, python-format
 msgid "%s %s - Every %s month(s)"
-msgstr "% % - Chaque %s mois"
+msgstr "%s %s - Chaque %s mois"
 
 #. module: account_period_closing_level
 #: view:account.period:0
@@ -23903,7 +23903,7 @@ msgstr "Magasin"
 #: code:addons/stock_schedule/schedule.py:445
 #, python-format
 msgid " - Every %s year(s)"
-msgstr " - Chaque % année"
+msgstr " - Chaque %s année(s)"
 
 #. modules: purchase, board, sale
 #: view:res.log.report:0
@@ -27350,7 +27350,7 @@ msgstr "Listes Produits"
 #. module: base
 #: view:ir.sequence:0
 msgid "Day of the year: %(doy)s"
-msgstr "Jour de l'année: %(jour)s"
+msgstr "Jour de l'année: %(doy)s"
 
 #. module: msf_budget
 #: report:msf.pdf.engagement:0
@@ -28700,7 +28700,7 @@ msgstr "Veuillez indiquer la raison"
 #. module: base
 #: view:ir.sequence:0
 msgid "Month: %(month)s"
-msgstr "Mois: %(mois)s"
+msgstr "Mois: %(month)s"
 
 #. module: msf_outgoing
 #: view:stock.move.memory.shipment.create:0
@@ -32470,7 +32470,7 @@ msgstr "Compte Bancaire"
 #: code:addons/sync_client/ir_model_data.py:560
 #, python-format
 msgid "%(method)s doesn't implement field of type %(type)s, please contact system administrator to upgrade."
-msgstr "La %(méthode)s ne met pas en œuvre le champ de type %(type)s, veuillez contacter l'administrateur du système pour obtenir une mise à jour."
+msgstr "La %(method)s ne met pas en œuvre le champ de type %(type)s, veuillez contacter l'administrateur du système pour obtenir une mise à jour."
 
 #. module: product_margin
 #: model:ir.module.module,shortdesc:product_margin.module_meta_information
@@ -32868,7 +32868,7 @@ msgstr "La Destination %s n'est pas connexe au compte %s!"
 #: code:addons/stock/wizard/stock_splitinto.py:53
 #, python-format
 msgid "Total quantity after split exceeds the quantity to split for this product: \"%s\" (id: %d)"
-msgstr "Quantité totale après fractionnement dépasse la quantité à diviser pour ce produit: \"% s\" (id:% d)"
+msgstr "Quantité totale après fractionnement dépasse la quantité à diviser pour ce produit: \"%s\" (id: %d)"
 
 #. modules: base, sd
 #: model:res.country,name:base.tc
@@ -35067,7 +35067,7 @@ msgstr "Total Toutes Taxes Comprises"
 #: code:addons/account/installer.py:585
 #, python-format
 msgid "It seems that there is no company selected or %s already has an accounting configuration. If you want to set the accounting configuration for any company other than the main one, please make sure that you belong to the group Usability/Extended View"
-msgstr "Il semble qu'il n'y ait pas de société sélectionnée ou% qu'elle ait déjà une comptabilité configurée. Si vous désirez une configuration comptable d'une toute autre compagnie que la compagnie principale, assurez-vous svp que vous appartenez au groupe Ergonomie / Vue Elargie. "
+msgstr "Il semble qu'il n'y ait pas de société sélectionnée ou que %s ait déjà une comptabilité configurée. Si vous désirez une configuration comptable d'une toute autre compagnie que la compagnie principale, assurez-vous svp que vous appartenez au groupe Ergonomie / Vue Elargie. "
 
 #. module: product_asset
 #: selection:product.asset.event,event_type:0
@@ -38554,7 +38554,7 @@ msgstr "Appliquer pour Supprimer"
 #: code:addons/base/ir/ir_model.py:343
 #, python-format
 msgid "Cannot rename column to %s, because that column already exists!"
-msgstr "Impossible de renommer la colonne % s, cette colonne existe déjà !"
+msgstr "Impossible de renommer la colonne %s, cette colonne existe déjà !"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:580
@@ -39878,7 +39878,7 @@ msgstr "Ecritures de Paie ont déjà été validées pour %s dans cette période
 #: code:addons/stock_schedule/schedule.py:428
 #, python-format
 msgid " - Every %s month(s)"
-msgstr " - Chaque % mois"
+msgstr " - Chaque %s mois"
 
 #. module: survey
 #: model:ir.module.module,shortdesc:survey.module_meta_information
@@ -47792,7 +47792,7 @@ msgstr "Nom de la Personne de Contact  de l'Adresse de Destination "
 #: code:addons/purchase/purchase.py:730
 #, python-format
 msgid "The selected supplier has a minimal quantity set to %s, you cannot purchase less."
-msgstr "Le fournisseur sélectionné a une quantité minimale réglée sur % s, vous ne pouvez pas acheter moins."
+msgstr "Le fournisseur sélectionné a une quantité minimale réglée sur %s, vous ne pouvez pas acheter moins."
 
 #. modules: msf_outgoing, sd
 #: model:process.node,note:msf_outgoing.process_node_pick_assigned
@@ -53566,7 +53566,7 @@ msgstr "Journal de bord- Lectures"
 msgid "--\n"
 "%(name)s %(email)s\n"
 ""
-msgstr "%(nom)s %(email)s"
+msgstr "%(name)s %(email)s"
 
 #. module: base
 #: selection:ir.translation,type:0
@@ -56549,7 +56549,7 @@ msgstr "Impossible de supprimer ce document, parce qu'il est utilisé comme prop
 #: code:addons/stock/wizard/stock_partial_picking.py:174
 #, python-format
 msgid "Can not process quantity %d for Product %s !"
-msgstr "Impossible de traiter quantité % d pour produit % s !"
+msgstr "Impossible de traiter quantité %d pour produit %s !"
 
 #. module: account
 #: help:account.subscription,period_nbr:0
@@ -60062,7 +60062,7 @@ msgstr "Facture Pro Forma n'est disponible que pour les Objets d'Expédition (pa
 #. module: base
 #: view:ir.sequence:0
 msgid "Current Year with Century: %(year)s"
-msgstr "Année en cours avec le Siècle : %(année)s"
+msgstr "Année en cours avec le Siècle : %(year)s"
 
 #. module: hr
 #: field:hr.employee,work_phone:0
@@ -60464,8 +60464,8 @@ msgid "You can specify year, month and date in the name of the model using the f
 "\n"
 "e.g. My model on %(date)s"
 msgstr "Vous pouvez indiquer l'année, le mois et la date dans le nom du modèle en utilisant les étiquettes suivantes :\n"
-"%(année)s : Pour Indiquer l'Année \n"
-"%(mois)s : Pour Indiquer le Mois \n"
+"%(year)s : Pour Indiquer l'Année \n"
+"%(month)s : Pour Indiquer le Mois \n"
 "%(date)s : Date Actuelle\n"
 "\n"
 "par exemple : Mon modèle du %(date)s"
@@ -64405,7 +64405,7 @@ msgstr "Budget - Montant"
 #: code:addons/stock/product.py:148
 #, python-format
 msgid "There is no stock output account defined for this product: \"%s\" (id: %d)"
-msgstr "Il n'y a pas de compte de charge de stock défini pour ce produit : \"%s\" (id: %id)"
+msgstr "Il n'y a pas de compte de charge de stock défini pour ce produit : \"%s\" (id: %d)"
 
 #. module: point_of_sale
 #: model:ir.module.module,description:point_of_sale.module_meta_information
