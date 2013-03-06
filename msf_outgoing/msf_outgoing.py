@@ -1434,10 +1434,7 @@ class stock_picking(osv.osv):
         # reset all the m2o fields that are not required for the incoming_shipment
         picking_type = context.get('picking_type')
         if picking_type and picking_type == 'incoming_shipment':
-            for field in (self._columns and self._columns.keys()):
-                if self._columns[field]._type == 'many2one' and not self._columns[field].required:
-                    default.update({field: False})
-        
+            default.update(purchase_id=False)
         context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         

@@ -83,14 +83,8 @@ class stock_move(osv.osv):
         picking_type = context.get('picking_type')
         if picking_type and picking_type == 'incoming_shipment':
             list_of_fields = []
-            # the many2one reseted to False when we duplicate a stock_move are: address_id, move_dest_id, product_uos, price_currency_id, 
-            # sale_ref_id, product_packaging, location_output_id, backmove_packing_id, tracking_id, partner_id2, picking_id, currency_id, 
-            # composition_list_id, backorder_id, asset_id, initial_location, sale_line_id, purchase_line_id, to_consume_id_stock_move, pack_type, 
-            # dpo_id, purchase_ref_id, hidden_prodlot_id, prodlot_id, partner_id, kit_creation_id_stock_move, invoice_line_id, location_virtual_id, backmove_id
-            for field in (self._columns and self._columns.keys()):
-                if self._columns[field]._type == 'many2one' and not self._columns[field].required:
-                    list_of_fields.append(field)
-                    defaults.update({field: False})
+            # UF-1797: when we duplicate a doc we delete the link with the poline
+            defaults.update(purchase_line_id=False)
             if list_of_fields:
                 logging.getLogger('init').info('The many2one fields reset to False during the copy are: %s' % ', '.join(list_of_fields))
             # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
