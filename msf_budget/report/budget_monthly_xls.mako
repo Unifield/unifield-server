@@ -101,6 +101,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Font x:Family="Swiss" ss:Bold="1"/>
+
 </Style>
 <Style ss:ID="s28">
 <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
@@ -125,7 +126,7 @@
 </Styles>
 
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +' (id'+str(o.id)+')' or 'Sheet1')|x}">
 
 <Table ss:ExpandedColumnCount="15" ss:ExpandedRowCount="319" x:FullColumns="1" x:FullRows="1">
 <Column ss:Width="160.75"/>
