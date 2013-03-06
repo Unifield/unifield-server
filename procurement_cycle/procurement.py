@@ -82,7 +82,7 @@ class stock_warehouse_order_cycle(osv.osv):
         res = {}
         for proc in self.browse(cr, uid, ids):
             if proc.frequence_id:
-                res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id])[0][1]
+                res[proc.id] = self.pool.get('stock.frequence').name_get(cr, uid, [proc.frequence_id.id], context=context)[0][1]
             
         return res
     

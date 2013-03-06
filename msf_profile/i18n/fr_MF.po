@@ -23861,7 +23861,7 @@ msgstr "Magasin"
 #: code:addons/stock_schedule/schedule.py:445
 #, python-format
 msgid " - Every %s year(s)"
-msgstr " - Chaque %s année"
+msgstr " - Chaque %s année(s)"
 
 #. modules: purchase, board, sale
 #: view:res.log.report:0
