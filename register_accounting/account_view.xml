@@ -369,10 +369,10 @@
                     <field name="register_id" invisible="1"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
-                    <field name="currency_id"/>
-                    <field name="functional_in"/>
-                    <field name="functional_out"/>
-                    <field name="functional_currency_id"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="functional_in" invisible="1"/>
+                    <field name="functional_out" invisible="1"/>
+                    <field name="functional_currency_id" invisible="1"/>
                     <field name="state"/>
                     <field name="statement_id" string="Register Name"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
@@ -400,10 +400,10 @@
                     <field name="register_id" readonly="1"/>
                     <field name="amount_in" readonly="1"/>
                     <field name="amount_out" readonly="1"/>
-                    <field name="currency_id" readonly="1"/>
-                    <field name="functional_in" readonly="1"/>
-                    <field name="functional_out" readonly="1"/>
-                    <field name="functional_currency_id" readonly="1"/>
+                    <field name="currency_id" readonly="1" invisible="1"/>
+                    <field name="functional_in" readonly="1" invisible="1"/>
+                    <field name="functional_out" readonly="1" invisible="1"/>
+                    <field name="functional_currency_id" readonly="1" invisible="1"/>
                     <field name="state" readonly="1"/>
                     <field name="statement_id" readonly="1"/>
                     <field name="direct_invoice" invisible="1" readonly="1"/>
