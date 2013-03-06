@@ -55,18 +55,20 @@
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Currency</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_uom_qty or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.cost_price or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.functional_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>

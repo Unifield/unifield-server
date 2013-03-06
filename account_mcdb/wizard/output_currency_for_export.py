@@ -84,22 +84,30 @@ class output_currency_for_export(osv.osv_memory):
         else:
             context['from_domain'] = True
             datas = {'context': context}
+        # Update context with wizard currency or default currency
         context.update({'output_currency_id': currency_id})
+        if wiz.currency_id:
+            # seems that there is a bug on context, so using datas permit to transmit info
+            datas.update({'output_currency_id': currency_id})
         # Update report name if come from analytic
         report_name = 'account.move.line'
         if model == 'account.analytic.line':
             report_name = 'account.analytic.line'
+        elif model == 'account.bank.statement.line':
+            report_name = 'account.bank.statement.line'
 
         if choice == 'csv':
             report_name += '_csv'
         elif choice == 'xls':
             report_name += '_xls'
 
+        context.update({'display_fp': display_fp})
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
             'datas': datas,
-            'context': {'display_fp': display_fp},
+            'context': context,
         }
 
 output_currency_for_export()

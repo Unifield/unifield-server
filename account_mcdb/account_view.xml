@@ -48,7 +48,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Line" min_rows="100" editable="bottom" hide_delete_button="1">
+                <tree string="Analytic Line" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     <field name="instance_id"/>
@@ -105,8 +105,8 @@
                     </group>
                     <newline/>
                     <group col="10" colspan="4">
-                        <field name="instance_id"/>
-                        <field name="journal_id" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
+                        <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                        <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False}"/>
                         <field name="journal_type"/>
                         <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
                     </group>
@@ -129,7 +129,7 @@
                         <separator orientation="vertical"/>
                         <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
                         <separator orientation="vertical"/>
-                        <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                        <filter string="Register Name" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                     </group>

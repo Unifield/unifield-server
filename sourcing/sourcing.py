@@ -301,6 +301,13 @@ class sourcing_line(osv.osv):
         '''
         Check if the line have good values
         '''
+        if not context:
+            context = {}
+        if context.get('no_check_line', False):
+            return True
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
             if line.type == 'make_to_order' and line.po_cft not in ['cft'] and not line.product_id and \
                line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
@@ -315,10 +322,6 @@ class sourcing_line(osv.osv):
                     raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
 
         return True
-
-    _constraints = [
-        (_check_line_conditions, 'An error occurs on the data of the line', ['type', 'cft', 'product_id', 'supplier']),
-    ]
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -411,7 +414,9 @@ class sourcing_line(osv.osv):
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
         
-        return super(sourcing_line, self).write(cr, uid, ids, values, context=context)
+        res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
+        self._check_line_conditions(cr, uid, ids, context)
+        return res
     
     def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, context=None):
         '''
@@ -488,8 +493,9 @@ class sourcing_line(osv.osv):
         '''
         create method from sourcing_line
         '''
-        result = super(sourcing_line, self).create(cr, uid, vals, context)
-        return result
+        res = super(sourcing_line, self).create(cr, uid, vals, context)
+        self._check_line_conditions(cr, uid, res, context)
+        return res
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -596,6 +602,8 @@ class sale_order(osv.osv):
             ids = [ids]
    
         context['fromOrder'] = True
+        context['no_check_line'] = True
+        
         values = {}
         if 'priority' in vals:
             values.update({'priority': vals['priority']})
@@ -1262,7 +1270,30 @@ class purchase_order(osv.osv):
         override for debugging purpose
         '''
         return super(purchase_order, self).create(cr, uid, vals, context)
-        
+
+    def _check_order_type_and_partner(self, cr, uid, ids, context=None):
+        """
+        Check order type and partner type compatibilities.
+        """
+        compats = {
+            'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
+            'donation_st':   ['internal', 'intermission', 'section'],
+            'loan':          ['internal', 'intermission', 'section', 'external'],
+            'donation_exp':  ['internal', 'intermission', 'section'],
+            'in_kind':       ['external', 'esc'],
+            'direct':        ['external', 'esc'],
+            'purchase_list': ['external'],
+        }
+        # Browse PO
+        for po in self.browse(cr, uid, ids):
+            if po.order_type not in compats or po.partner_id.partner_type not in compats[po.order_type]:
+                return False
+        return True
+
+    _constraints = [
+        (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+    ]
+
 purchase_order()
 
 class product_template(osv.osv):
@@ -1487,12 +1518,27 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
                 partner_id = arg[2]['partner_id']
                 order_type = arg[2]['order_type']
-                if order_type in ['direct', 'in_kind', 'purchase_list']:
-                    newargs.append(('partner_type', 'in', ['esc', 'external']))
-                elif partner_id and partner_id != local_market:
-                    partner = partner_obj.browse(cr, uid, partner_id)
-                    if partner.partner_type not in ('external', 'esc') and order_type == 'direct':
-                        newargs.append(('partner_type', 'in', ['esc', 'external']))
+                # Added by UF-1660 to filter partners
+                # do nothing on partner_type for loan
+                p_list = []
+                if order_type == 'loan':
+                    p_list = ['internal', 'intermission', 'section', 'external']
+                elif order_type in ['direct', 'in_kind']:
+                    p_list = ['esc', 'external']
+                elif order_type in ['donation_st', 'donation_exp']:
+                    p_list = ['internal', 'intermission', 'section']
+                elif order_type in ['purchase_list']:
+                    p_list = ['external']
+                # show all supplier for non taken cases
+                else:
+                    pass
+                if p_list:
+                    newargs.append(('partner_type', 'in', p_list))
+                # Useless code because if we enter in direct case, we do not enter in this one
+#                elif partner_id and partner_id != local_market:
+#                    partner = partner_obj.browse(cr, uid, partner_id)
+#                    if partner.partner_type not in ('external', 'esc') and order_type == 'direct':
+#                        newargs.append(('partner_type', 'in', ['esc', 'external']))
             else:
                 newargs.append(args)
         return newargs

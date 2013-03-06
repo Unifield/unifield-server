@@ -383,6 +383,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'account_id': ml.account_id.id,
                 'source_date': ml.date,
                 'reversal': True,
+                'reference': ml.move_id and ml.move_id.name or '',
+                'ref': ml.move_id and ml.move_id.name or '',
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Inform old line that it have been corrected
@@ -509,6 +511,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     'reversal_line_id': ml.id,
                     'source_date': ml.source_date or ml.date,
                     'reversal': True,
+                    'reference': ml.move_id and ml.move_id.name or '',
+                    'ref': ml.move_id and ml.move_id.name or '',
                 })
                 # Add distribution if new one
                 if new_distrib_id:
@@ -642,9 +646,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'name': name,
                 'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
-                'source_date': ml.date,
+                'source_date': ml.source_date or ml.date,
                 'reversal': True,
                 'document_date': ml.document_date,
+                'reference': ml.move_id and ml.move_id.name or '',
+                'ref': ml.move_id and ml.move_id.name or '',
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
@@ -655,9 +661,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
                 'ref': ml.ref,
-                'source_date': ml.date,
+                'source_date': ml.source_date or ml.date,
                 'have_an_historic': True,
                 'document_date': ml.document_date,
+                'reference': ml.move_id and ml.move_id.name or '',
+                'ref': ml.move_id and ml.move_id.name or '',
             }
             if distrib_id:
                 cor_vals['analytic_distribution_id'] = distrib_id

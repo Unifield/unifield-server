@@ -87,6 +87,8 @@ class purchase_order(osv.osv):
             'purchase_id': purchase.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -440,6 +442,8 @@ class purchase_order_line(osv.osv):
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

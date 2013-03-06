@@ -17,6 +17,9 @@
                     <xpath expr="/form/group/field[@name='shipped']" position="attributes">
                         <attribute name="invisible">1</attribute>
                     </xpath>
+                    <xpath expr="/form/group/field[@name='order_type']" position="attributes">
+                        <attribute name="on_change">onchange_order_type(order_type, partner_id)</attribute>
+                    </xpath>
                     <xpath expr="/form/notebook/page/group[2]" position="replace" >
                     </xpath>
                     <xpath expr="/form/notebook/page[@string='Sales Order']/group[2]" position="replace" >
@@ -27,16 +30,12 @@
                                 <field name="amount_untaxed" sum="Untaxed amount"/>
                                 <field name="amount_tax"/>
                                 <field name="amount_total"/>
+                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                                 <newline/>
                                 <field name="functional_currency_id" readonly="1"/>
                                 <field name="functional_amount_untaxed"/>
                                 <field name="functional_amount_tax"/>
                                 <field name="functional_amount_total"/>
-                                <newline/>
-                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
-                                <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
-                                    <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice" type="action" icon="gtk-execute" states="draft,manual" />
-                                </group>
                             </group>
                             <group col="14" colspan="4">
                                 <field name="state" invisible="True"/>

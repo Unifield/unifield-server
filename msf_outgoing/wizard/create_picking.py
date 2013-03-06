@@ -207,10 +207,10 @@ class create_picking(osv.osv_memory):
 
         if step in ['create', 'validate', 'returnproducts']:
             _moves_arch_lst += """
-                <button name="select_all" string="Copy all"
+                <button name="select_all" string="%s"
                     colspan="1" type="object"  icon="gtk-jump-to" />
-                <button name="deselect_all" string="Clear all"
-                    colspan="1" type="object" icon="gtk-undo" />"""
+                <button name="deselect_all" string="%s"
+                    colspan="1" type="object" icon="gtk-undo" />""" % (_('Copy all'), _('Clear all'))
 
         _moves_arch_lst += """
                 <field name="date" invisible="1"/>
@@ -230,17 +230,17 @@ class create_picking(osv.osv_memory):
         # refactoring is needed here !
         if picking_subtype == 'picking':
             if step == 'create':
-                button = ('do_create_picking', 'Create Picking')
+                button = ('do_create_picking', _('Create Picking'))
             elif step == 'validate':
-                button = ('do_validate_picking', 'Validate Picking')
+                button = ('do_validate_picking', _('Validate Picking'))
         # ppl, two wizard steps
         elif picking_subtype == 'ppl':
             if step == 'ppl1':
-                button = ('do_ppl1', 'Next')
+                button = ('do_ppl1', _('Next'))
             if step == 'ppl2':
-                button = ('do_ppl2', 'Validate PPL')
+                button = ('do_ppl2', _('Validate PPL'))
             if step == 'returnproducts':
-                button = ('do_return_products', 'Return')
+                button = ('do_return_products', _('Return'))
                     
         else:
             button = ('undefined', 'Undefined')
@@ -476,6 +476,7 @@ class create_picking(osv.osv_memory):
         wrong_lot_type = False
         # validate the data
         for picking_data in data.values():
+            prodlot_integrity = {}
             for move_data in picking_data.values():
                 for list_data in move_data:
                     # product id must exist
@@ -483,6 +484,8 @@ class create_picking(osv.osv_memory):
                     prod = prod_obj.browse(cr, uid, prod_id, context=context)
                     # a production lot is defined, corresponding checks
                     if list_data['prodlot_id']:
+                        if list_data['location_id']:
+                            context.update({'location_id': list_data['location_id']})
                         lot = lot_obj.browse(cr, uid, list_data['prodlot_id'], context=context)
                         # a prod lot is defined, the product must be either perishable or batch_management
                         if not (prod.perishable or prod.batch_management):
@@ -497,6 +500,23 @@ class create_picking(osv.osv_memory):
                         if prod.batch_management and lot.type != 'standard':
                             wrong_lot_type = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'wrong_lot_type_need_standard',}, context=context)
+
+                        if list_data['location_id']:
+                            loc_id = list_data['location_id']
+                            # Add a check on prodlot quantity
+                            if lot.id not in prodlot_integrity:
+                                prodlot_integrity.update({lot.id: {}})
+                            if loc_id not in prodlot_integrity[lot.id]:
+                                prodlot_integrity[lot.id].update({loc_id: 0.00})
+                            prodlot_integrity[lot.id][loc_id] += list_data['product_qty']
+
+                            if lot.stock_available < list_data['product_qty']:
+                                uom = self.pool.get('product.uom').browse(cr, uid, list_data['product_uom']).name
+                                raise osv.except_osv(_('Processing Error'), \
+                                _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                                %(list_data['product_qty'], uom, prod.name,\
+                                 lot.name, lot.stock_available))
+                                 
                     # only mandatory at validation stage
                     elif validate:
                         # no production lot defined, corresponding checks
@@ -508,6 +528,17 @@ class create_picking(osv.osv_memory):
                         elif prod.perishable:
                             missing_lot = True
                             memory_move_obj.write(cr, uid, [list_data['memory_move_id']], {'integrity_status': 'missing_date',}, context=context)
+
+                # Check prodlot qty integrity
+                for prodlot in prodlot_integrity:
+                    for location in prodlot_integrity[prodlot]:
+                        tmp_prodlot = lot_obj.browse(cr, uid, prodlot, context={'location_id': location})
+                        prodlot_qty = tmp_prodlot.stock_available
+                        if prodlot_qty < prodlot_integrity[prodlot][location]:
+                            raise osv.except_osv(_('Processing Error'), \
+                            _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                            %(prodlot_integrity[prodlot][location], tmp_prodlot.product_id.name, tmp_prodlot.name,\
+                            prodlot_qty))
         
         # if error, return False
         if missing_lot or lot_not_needed or wrong_lot_type:
@@ -546,6 +577,7 @@ class create_picking(osv.osv_memory):
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0
             # for each picking
             partial_datas[pick.id] = {}
             # out moves for delivery
@@ -554,16 +586,20 @@ class create_picking(osv.osv_memory):
             for move in memory_moves_list:
                 # !!! only take into account if the quantity is greater than 0 !!!
                 if move.quantity:
+                    total_qty += move.quantity
                     partial_datas[pick.id].setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                                                    'product_id': move.product_id.id,
                                                                                    'product_qty': move.quantity,
                                                                                    'product_uom': move.product_uom.id,
                                                                                    'prodlot_id': move.prodlot_id.id,
+                                                                                   'location_id': move.location_id.id,
                                                                                    'asset_id': move.asset_id.id,
                                                                                    'composition_list_id': move.composition_list_id.id,
                                                                                    })
                     # override : add hook call
                     partial_datas = self.do_create_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
+            if not total_qty and not context.get('yml_test'):
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities
@@ -638,23 +674,27 @@ class create_picking(osv.osv_memory):
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0.00
             # for each picking
             partial_datas[pick.id] = {}
             # out moves for delivery
             memory_moves_list = partial.product_moves_picking
             # organize data according to move id
             for move in memory_moves_list:
-                
+                total_qty += move.quantity
                 partial_datas[pick.id].setdefault(move.move_id.id, []).append({'memory_move_id': move.id,
                                                                                'product_id': move.product_id.id,
                                                                                'product_qty': move.quantity,
                                                                                'product_uom': move.product_uom.id,
                                                                                'prodlot_id': move.prodlot_id.id,
+                                                                               'location_id': move.location_id.id,
                                                                                'asset_id': move.asset_id.id,
                                                                                'composition_list_id': move.composition_list_id.id,
                                                                                })
                 # override : add hook call
                 partial_datas = self.do_validate_picking_first_hook(cr, uid, context, move=move, partial_datas=partial_datas)
+            if not total_qty:
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - quantities

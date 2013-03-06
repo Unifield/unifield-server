@@ -4,7 +4,7 @@
   !record {model: res.currency.rate, id: new_rate1}:
     currency_id: base.CHF
     rate: 1
-    name: !eval (DateTime.now()+DateTime.RelativeDateTime(day=1)).strftime('%Y-%m-%d')
+    name: !eval DateTime.now().strftime('%Y-%m-%d')
 -
   I create a supplier invoice in CHF for the supplier wood0
 -
@@ -120,7 +120,7 @@
   !python {model: wizard.import.invoice}: |
     self.action_confirm(cr, uid, [ref('wizard_import_invoice_0')])
 -
-  I check that a line exists in cash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 - 36 = 96).
+  I check that a line exists in cash_register_0. That it's temp posted. And that the amount is those of previous invoices (60 + 36 = 96).
 -
   !python {model: account.bank.statement.line}: |
     search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_10y'))])

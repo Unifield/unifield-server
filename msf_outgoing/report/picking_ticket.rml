@@ -302,7 +302,7 @@
                 <para style="P7">Qty to Pick: [[ uom['qty_to_pick_sm'] ]]</para>
               </td>
               <td>
-                <para style="terp_default_Right_9">SO Qty: [[ uom['qty_to_pick_so'] ]]</para>
+                <para style="terp_default_Right_9">FO Qty: [[ uom['qty_to_pick_so'] ]]</para>
               </td>
             </tr>
           </blockTable>

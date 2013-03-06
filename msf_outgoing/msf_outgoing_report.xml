@@ -45,6 +45,7 @@
                 rml="addons/msf_outgoing/report/packing_list.rml"
                 string="Packing List" />
                 
+        <!--
         <report auto="False" 
                 id="report_cargo_manifest" 
                 model="shipment" 
@@ -52,6 +53,7 @@
                 header="False"
                 rml="addons/msf_outgoing/report/cargo_manifest.rml"
                 string="Cargo Manifest" />
+        -->
         
         <!-- stock picking -->
         <!-- <report auto="False" 

@@ -98,7 +98,7 @@ class msf_accrual_line(osv.osv):
             if not cr.rowcount:
                 currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
-                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!" % (currency_name, formatted_date)))
+                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -119,7 +119,7 @@ class msf_accrual_line(osv.osv):
             if not cr.rowcount:
                 currency_name = self.pool.get('res.currency').browse(cr, uid, vals['currency_id'], context=context).name
                 formatted_date = datetime.datetime.strptime(vals['date'], '%Y-%m-%d').strftime('%d/%b/%Y')
-                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!" % (currency_name, formatted_date)))
+                raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
     
     def button_cancel(self, cr, uid, ids, context=None):
@@ -133,7 +133,7 @@ class msf_accrual_line(osv.osv):
         for accrual_line in self.browse(cr, uid, ids, context=context):
             # check for periods, distribution, etc.
             if accrual_line.state != 'posted':
-                raise osv.except_osv(_('Warning !'), _("The line '%s' is already posted!" % accrual_line.description))
+                raise osv.except_osv(_('Warning !'), _("The line '%s' is already posted!") % accrual_line.description)
             else:
                 move_date = accrual_line.period_id.date_stop
                 reversal_move_date = (datetime.datetime.strptime(move_date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
@@ -284,6 +284,8 @@ class msf_accrual_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': accrual_line.expense_account_id and accrual_line.expense_account_id.id or False,
+            'posting_date': accrual_line.date,
+            'document_date': accrual_line.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

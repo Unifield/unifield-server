@@ -106,7 +106,7 @@ class project_addresses(osv.osv_memory):
         if not context:
             context = {}
 
-        res = super(project_addresses, self).execute(cr, uid, ids, context=context)
+        res = super(project_addresses, self).execute(cr, 1, ids, context=context)
         
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
@@ -173,7 +173,7 @@ class project_addresses(osv.osv_memory):
                 address_obj.unlink(cr, uid, bill_address[0], context=context)
         
         if company.instance_id:
-            self.pool.get('res.company').write(cr, uid, [company.id], {'name': company.instance_id.instance}, context=context)
+            self.pool.get('res.company').write(cr, 1, [company.id], {'name': company.instance_id.instance}, context=context)
 
             c = context.copy()
             c.update({'from_config': True})

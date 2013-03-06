@@ -25,6 +25,7 @@
     "version": "1.0",
     "depends": [
                 "base",
+                "product_attributes",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",

@@ -187,12 +187,14 @@ class account_move_line(osv.osv):
         'down_payment_amount': fields.float(string='Down Payment used amount', readonly=True),
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
+        'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
     }
 
     _defaults = {
         'partner_txt': lambda *a: '',
         'down_payment_amount': lambda *a: 0.0,
         'is_transfer_with_change': lambda *a: False,
+        'cheque_number': lambda *a: '',
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -289,6 +291,9 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        # If partner_type have been set to False (UF-1789)
+        if 'partner_type' in vals and not vals.get('partner_type'):
+            vals.update({'partner_txt': False})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -304,6 +309,9 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        # If partner_type have been set to False (UF-1789)
+        if 'partner_type' in vals and not vals.get('partner_type'):
+            vals.update({'partner_txt': False})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()

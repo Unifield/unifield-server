@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from time import strftime
 
 class sale_order(osv.osv):
     _name = 'sale.order'
@@ -56,6 +57,8 @@ class sale_order(osv.osv):
             'sale_order_id': so.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -340,6 +343,8 @@ class sale_order_line(osv.osv):
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

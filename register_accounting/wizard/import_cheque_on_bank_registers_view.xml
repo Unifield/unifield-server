@@ -61,11 +61,12 @@
             <field name="priority" eval="17" />
             <field name="arch" type="xml">
                 <tree string="Account Entry Lines" noteditable="1" editable="top">
+                    <field name="cheque_number"/>
                     <field name="invoice"/>
                     <field name="name"/>
                     <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
-                    <field name="partner_id"/>
+                    <field name="partner_txt"/>
                     <field name="date"/>
                     <field name="date_maturity"/>
                     <field name="amount_to_pay"/>
@@ -99,10 +100,11 @@
                     <field name="imported_lines_ids" colspan="4" nolabel="1" 
                         attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
                         <tree editable="bottom" hide_new_button="1">
+                            <field name="cheque_number"/>
                             <field name="ref"/>
                             <field name="supplier_ref"/>
                             <field name="account_id"/>
-                            <field name="partner_id"/>
+                            <field name="partner_txt"/>
                             <field name="document_date"/>
                             <field name="date"/>
                             <field name="date_maturity"/>

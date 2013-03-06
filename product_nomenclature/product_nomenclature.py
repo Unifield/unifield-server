@@ -43,15 +43,21 @@ class product_nomenclature(osv.osv):
             return []
         if context is None:
             context = {}
+        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            context['lang'] = lang_dict.get('context_lang')
+            
         fields = ['name', 'parent_id']
         if context.get('withnum') == 1:
             fields.append('number_of_products')
         reads = self.read(cr, uid, ids, fields, context=context)
+        
         res = []
         for record in reads:
             name = record['name']
             if not context.get('nolevel') and record['parent_id']:
-                name = record['parent_id'][1] + ' / ' + name
+                name = record['parent_id'][1] + ' | ' + name
             if context.get('withnum') == 1:
                 name = "%s (%s)" % (name, record['number_of_products'])
             res.append((record['id'], name))
@@ -203,7 +209,7 @@ class product_nomenclature(osv.osv):
             raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
 
         parent_ids = None
-        for path in args[0][2].split('/'):
+        for path in args[0][2].split('|'):
             dom = [('name', '=ilike', path.strip())]
             if parent_ids is None:
                 dom.append(('parent_id', '=', False))
@@ -256,7 +262,7 @@ class product_nomenclature(osv.osv):
     _description = "Product Nomenclature"
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
-        'name': fields.char('Name', size=64, required=True, select=True),
+        'name': fields.char('Name', size=64, required=True, select=True, translate=1),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
@@ -500,6 +506,10 @@ class product_product(osv.osv):
         '''
         if context is None:
             context = {}
+        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            context['lang'] = lang_dict.get('context_lang')
 
         mandaName = 'nomen_manda_%s'
         optName = 'nomen_sub_%s'
