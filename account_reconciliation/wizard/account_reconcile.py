@@ -111,7 +111,8 @@ class account_move_line_reconcile(osv.osv_memory):
                     if first_line.is_transfer_with_change and second_line.is_transfer_with_change:
                         if first_line.journal_id.currency == second_line.transfer_journal_id.currency and first_line.transfer_journal_id.currency == second_line.journal_id.currency:
                             transfer_with_change = True
-                        else:
+                        # UTP-526: Do not raise this error if line comes from the same register and have same amount
+                        elif not (first_line.statement_id.id == second_line.statement_id.id and first_line.debit == second_line.credit and first_line.credit == second_line.debit):
                             raise osv.except_osv(_('Warning'), _("Cannot reconcile entries : Cross check between transfer currencies fails."))
         if transfer_with_change:
             # For transfer with change, we need to do a total reconciliation!
