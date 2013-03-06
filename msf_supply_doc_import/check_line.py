@@ -221,7 +221,7 @@ def compute_price_value(**kwargs):
     row = kwargs['row']
     # the price_unit was updated in the product_value method if the product exists, else it was set to 1 by default.
     price_unit = kwargs['to_write']['price_unit']
-    cost_price = kwargs['to_write']['cost_price']
+    cost_price = kwargs['to_write'].get('cost_price')
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative

@@ -37,7 +37,7 @@
             cell_data = first_row.cells[cell].data
             column_header.append(cell_data)
         break
-    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Currency', 'Comment']
+    expected_header = ['Product Code', 'Product Description', 'Quantity', 'Cost Price', 'UoM', 'Currency', 'Comment']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
     assert wiz_values['context'].get('active_id') == ref("ir1"), ("The reference to the IR doesn't exist")
     self.pool.get(res_model).cancel(cr, uid, wiz_values['res_id'], context)
