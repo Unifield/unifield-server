@@ -263,7 +263,7 @@ class res_partner(osv.osv):
                                                       ], context = context.update({'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1}))
         out_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
                                             ], context = context.update({'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}))
-        pick_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'pick'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        pick_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'picking'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
                                              ], context = context.update({'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1}))
         ppl_ids = pick_obj.search(cr, uid, [('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'ppl'), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
                                             ], context=context.update({'contact_display': 'partner_address', 'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1}))
