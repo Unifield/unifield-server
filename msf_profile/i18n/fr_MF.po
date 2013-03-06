@@ -560,7 +560,7 @@ msgstr "Le montant maximum devrait être : %s. Le montant de la ligne du Registr
 #: code:addons/purchase/purchase.py:406
 #, python-format
 msgid "There is no purchase journal defined for this company: \"%s\" (id:%d)"
-msgstr "Il n'y a pas de journal d'achats défini pour cette société: \"%s\" (id. : %id)"
+msgstr "Il n'y a pas de journal d'achats défini pour cette société: \"%s\" (id.: %d)"
 
 #. module: account
 #: model:ir.actions.act_window,name:account.action_account_tax_template_form
@@ -5816,7 +5816,7 @@ msgstr "Montant Initial de l'Avance ne correspond pas au montant que vous avez j
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:172
 #, python-format
 msgid "More than one currency '%s' found."
-msgstr "        ; vdir = webdav ; the directory that webdav will be served at"
+msgstr "Plusieurs devises '%s' trouvés."
 
 #. module: report_webkit
 #: view:ir.header_webkit:0
@@ -11982,7 +11982,7 @@ msgstr "Fin de Vie (alternative disponible)"
 #: code:addons/purchase_override/purchase.py:1341
 #, python-format
 msgid "You cannot 'Close' a Request for Quotation attached to a tender. Please make the tender %s to 'Closed' before !"
-msgstr "Vous ne pouvez pas 'Fermer' une Demande de Devis si elle est jointe à un Appel d'Offres. Veuillez d'abord passer l'Appel d'Offres sous statut 'Fermé' !"
+msgstr "Vous ne pouvez pas 'Fermer' une Demande de Devis si elle est jointe à un Appel d'Offres. Veuillez d'abord passer l'Appel d'Offres %s sous statut 'Fermé' !"
 
 #. module: account
 #: field:account.fiscalyear.close,report_name:0
@@ -17190,7 +17190,9 @@ msgstr "Nom du Contact"
 msgid "No employee found for this code: %s (%s).\n"
 "DEBIT: %s.\n"
 "CREDIT: %s."
-msgstr "          ; since the messages are routed to the python logging, with"
+msgstr "Aucun employé ne correspond au code: %s (%s).\n"
+"DEBIT: %s.\n"
+"CREDIT: %s."
 
 #. modules: stock_override, stock
 #: model:ir.model,name:stock.model_report_stock_move
@@ -22119,7 +22121,7 @@ msgstr "Ajouter une Zone et aller au prochain assistant"
 #: code:addons/return_claim/return_claim.py:152
 #, python-format
 msgid "Claim Type (%s) does not allow events."
-msgstr "Type de Réclamation ne permet pas les événements."
+msgstr "Type de Réclamation (%s) ne permet pas les événements."
 
 #. module: consumption_calculation
 #: model:ir.ui.menu,name:consumption_calculation.warehouse_consumption_menu
@@ -25909,7 +25911,7 @@ msgstr "Retro-Plannification Projet"
 #: constraint:initial.stock.inventory.line:0
 #: constraint:initial.stock.inventory.line:0
 msgid "You cannot have two lines with the same product and different average cost."
-msgstr "Vous ne pouvez pas avoir deux lignes pour le produit %s avec un coût moyen différent."
+msgstr "Vous ne pouvez pas avoir deux lignes pour le produit avec un coût moyen différent."
 
 #. module: sale
 #: field:sale.order.line,product_uom_qty:0
@@ -30396,7 +30398,7 @@ msgstr "Montant Total à Payer à ce Fournisseur."
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:170
 #, python-format
 msgid "No '%s' currency or non-active currency."
-msgstr "          ; on \"http://localhost:8069/webdav/"
+msgstr "Aucune devise '%s'."
 
 #. module: procurement
 #: selection:mrp.property,composition:0
