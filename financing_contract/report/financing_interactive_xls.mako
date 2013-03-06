@@ -377,12 +377,15 @@
 </Cell>
 </Row>
 <Row>
+
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Grant amount:')}</Data>
 </Cell>
+
 <Cell ss:StyleID="s21a">
-<Data ss:Type="Number">${( o.grant_amount or '')|x}</Data>
+<Data ss:Type="String">${( o.grant_amount or '' )|x}</Data>
 </Cell>
+
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
