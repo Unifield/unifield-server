@@ -644,7 +644,7 @@ class orm_template(object):
                         elif f[i] in self._inherit_fields:
                             r = check_type(self._inherit_fields[f[i]][2]._type)
                         data[fpos] = r or False
-                        break
+                        #break
                     if isinstance(r, (browse_record_list, list)):
                         first = True
                         fields2 = map(lambda x: (x[:i+1]==f[:i+1] and x[i+1:]) \
@@ -662,10 +662,16 @@ class orm_template(object):
                             lines2 = self.__export_row(cr, uid, row2, fields2,
                                     context)
                             if first:
+                                # Make a check to see if there is data in at least one column
+                                # because before this test, only the first line is exported
+                                # if there is no data in the first column
+                                no_data = True
                                 for fpos2 in range(len(fields)):
                                     if lines2 and lines2[0][fpos2]:
+                                        no_data = False
                                         data[fpos2] = lines2[0][fpos2]
-                                if not data[fpos]:
+                                    
+                                if no_data:
                                     dt = ''
                                     for rr in r:
                                         name_relation = self.pool.get(rr._table_name)._rec_name
