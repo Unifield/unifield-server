@@ -94,19 +94,19 @@
     <Cell ss:StyleID="s62"><Data ss:Type="String">Comment</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell ss:StyleID="s63"><Data ss:Type="String">ADAPPRINSB2</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ProdA</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">(printer) SWITCH BOX passive, 2 outlets to 1 printer</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="Number">2</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
-   </Row>
-   <Row ss:AutoFitHeight="0">
-    <Cell ss:StyleID="s63"/>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">SCREEN, external, 17', CRT</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="Number">24</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">Comment IR</Data></Cell>
+   </Row>
+   <Row ss:AutoFitHeight="0">
+    <Cell ss:StyleID="s63"><Data ss:Type="String">ProdB</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">SCREEN, external, 17', CRT</Data></Cell>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
+    <Cell ss:StyleID="s63"/>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">

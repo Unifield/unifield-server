@@ -3740,6 +3740,8 @@ msgstr "Comptes Fournisseurs"
 #. modules: supplier_catalogue, msf_supply_doc_import
 #: code:addons/msf_supply_doc_import/initial_stock_inventory.py:285
 #: code:addons/supplier_catalogue/supplier_catalogue.py:459
+#: code:addons/msf_supply_doc_import/check_line.py:75
+#: code:addons/msf_supply_doc_import/check_line.py:78
 #, python-format
 msgid "The import of lines had errors, please correct the red lines below"
 msgstr "L'importation de lignes comporte des erreurs, veuillez corriger les lignes rouges ci-dessous"
@@ -14999,6 +15001,7 @@ msgstr "A7  11  74 x 105 mm"
 #: field:purchase.order.followup,delivery_requested_date:0
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:25
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:30
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:163
 #, python-format
 msgid "Delivery requested date"
 msgstr "Date de livraison demandée"
@@ -17321,6 +17324,7 @@ msgstr "Paramètres de création d'un Bon de Commande"
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:29
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:34
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:39
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:140
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -19183,10 +19187,13 @@ msgstr "Analyse de Lignes d'Ecritures"
 msgid "7.  %H:%M:%S      ==> 18:25:20"
 msgstr "7.  %H:%M:%S ==> 18:25:20"
 
-#. modules: purchase, specific_rules, consumption_calculation
+#. modules: purchase, specific_rules, consumption_calculation, msf_supply_doc_import
 #: code:addons/purchase/purchase.py:801
 #: code:addons/specific_rules/specific_rules.py:318
 #: code:addons/consumption_calculation/consumption_calculation.py:553
+#: code:addons/msf_supply_doc_import/composition_kit.py:195
+#: code:addons/msf_supply_doc_import/sale_order.py:492
+#: code:addons/msf_supply_doc_import/tender.py:261
 #, python-format
 msgid "Wrong Product UOM !"
 msgstr "UdM Produit incorrecte !"
@@ -25382,6 +25389,7 @@ msgstr "2.  %a ,%A ==> Ven, Vendredi"
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:29
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:34
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:39
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:146
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -26465,6 +26473,7 @@ msgstr "Utilisateurs"
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:24
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:29
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:40
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:157
 #, python-format
 msgid "Price"
 msgstr "Prix"
@@ -28182,6 +28191,7 @@ msgstr "Etape suivante de configuration"
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:25
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:30
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:35
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:174
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -63321,6 +63331,7 @@ msgstr "g"
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:25
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:30
 #: code:addons/msf_supply_doc_import/wizard/__init__.py:35
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:168
 #, python-format
 msgid "Currency"
 msgstr "Devises"
@@ -66387,11 +66398,13 @@ msgstr "Solde du registre en devise fonctionnelle"
 msgid "Import FO Lines from Excel sheet"
 msgstr "Importer des lignes de CdT à partir de feuilles Excel"
 
-#. module: msf_supply_doc_import
+#. modules: msf_supply_doc_import, consumption_calculation
 #: view:composition.kit:0
 #: view:initial.stock.inventory:0
 #: view:product.list:0
 #: view:stock.cost.reevaluation:0
+#: view:monthly.review.consumption:0
+#: view:real.average.consumption:0
 msgid "Are you sure that you want to remove all lines?"
 msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes ?"
 
@@ -66562,3 +66575,196 @@ msgid "You should have exactly 8 columns in this order:\n"
 "#Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. "
 msgstr "Vous devriez avoir exactement 8 colonnes dans cet ordre:\n"
 "#Produit*, Description Produit*, Quantité*, UdM du produit UoM*, Prix unitaire*, Date de livraison demandée*, Devises*, Commentaire. "
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:237
+#, python-format
+msgid "The Price and Product were not found."
+msgstr "Le prix et le produit n'ont pas été trouvé."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:170
+#, python-format
+msgid "No error !"
+msgstr "Aucune erreur !"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/sale_order.py:421
+#, python-format
+msgid " Please define the nomenclature levels."
+msgstr " Veuillez définir les niveaux de nomenclature."
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/composition_kit.py:150
+#, python-format
+msgid "# lines imported: %s. %s"
+msgstr "# lignes importées: %s. %s"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:96
+#, python-format
+msgid "You should have exactly 7 columns in this order:\n"
+"Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Consumed Quantity, Remark"
+msgstr "Vous devriez avoir exactement 7 colonnes dans cet ordre:\n"
+"Code Produit*, Description du produit*, UdM du Produit, Numéro de Lot, Date d'Expiration, Quantité consommée, Remarque"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:158
+#, python-format
+msgid "The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default."
+msgstr "La quantité n'était pas un nombre et doit être supérieure à 0, par défaut elle est mise à 1."
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:127
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:129
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:114
+#, python-format
+msgid "Line %s in the Excel file: You should have exactly %s columns in this order: %s \n"
+""
+msgstr "Ligne %s du fichier: vous devriez avoir exactement %s colonnes dans cet ordre: %s \n"
+""
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:594
+#: code:addons/consumption_calculation/consumption_calculation.py:626
+#, python-format
+msgid "The Qty Consumed cant't be greater than the Indicative Stock"
+msgstr "La quantité consommée ne peut être supérieure à la quantité en stock."
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:209
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:215
+#, python-format
+msgid "Line %s in the Excel file, uncaught error: %s"
+msgstr "Ligne %s du fichier, erreur: %s"
+
+#. module: consumption_calculation
+#: view:real.consumption.change.location:0
+msgid "Are you sure you want to change the consumer location ? It will change the indicative stock, so please check the report lines before validating"
+msgstr "Êtes-vous certain de vouloir changer la zone de consommation ? Ceci va changer les valeurs du stock indicatif, merci de vérifier les lignes du rapport avant validation"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:205
+#, python-format
+msgid "The Location has to be a string."
+msgstr "La zone doit être une chaîne de caractères."
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:198
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:195
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:194
+#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:159
+#, python-format
+msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
+msgstr "La ligne %s du fichier a été ajoutée au fichier des erreurs, il y a des données en dehors des %s colonnes définies. Détails: %s"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:235
+#, python-format
+msgid " Importation completed in %s!\n"
+"# of imported lines : %s\n"
+"# of lines to correct: %s\n"
+"# of ignored lines: %s\n"
+"%s\n"
+""
+msgstr " Importation terminée en %s!\n"
+"# de lignes importées : %s\n"
+"# de lignes à corriger: %s\n"
+"# de lignes ignorées: %s\n"
+"%s\n"
+""
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:525
+#, python-format
+msgid "Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"
+msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure à la qté indicative du stock (%s)"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:209
+#, python-format
+msgid "The UOM Name was empty. (Details: %s)"
+msgstr "Le nom de l'UdM était vide. (Détails: %s)"
+
+#. module: consumption_calculation
+#: view:real.average.consumption:0
+#: view:real.consumption.change.location:0
+msgid "Change location"
+msgstr "Changer la zone"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:140
+#, python-format
+msgid "Line %s of the imported file: Batch Number %s not found. \n"
+""
+msgstr "Ligne %s du fichier: le numéro de lot %s n'a pas été trouvé.\n"
+""
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:110
+#, python-format
+msgid "You should have exactly 5 columns in this order:\n"
+"Product Code*, Product Description*, AMC, FMC, Valid Until"
+msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
+"Code Produit*, Description du Produit*, CCM, PCM, Valide jusqu'au"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:249
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:352
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:384
+#, python-format
+msgid "Batch is missing.\n"
+""
+msgstr "Numéro de lot manquant.\n"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:165
+#, python-format
+msgid "Line %s of the imported file  : the expiry date does not match with any batch number of the product\n"
+""
+msgstr "Ligne %s du fichier: la date d'expiration ne correspond à aucun numéro de lot du produit\n"
+""
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:136
+#, python-format
+msgid "Line %s of the imported file: Batch Number required\n"
+""
+msgstr "Ligne %s du fichier: Numéro de lot obligatoire\n"
+""
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:202
+#, python-format
+msgid "The UOM Name was empty."
+msgstr "Le nom de l'UdM était vide."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/consumption_calculation.py:497
+#, python-format
+msgid "You must assign a Batch Number to process it."
+msgstr "Vous devez assigner un numéro de lot pour le traiter."
+
+#. module: consumption_calculation
+#: view:real.consumption.change.location:0
+msgid "New location"
+msgstr "Nouvelle zone"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:145
+#, python-format
+msgid "No Product Description"
+msgstr "Aucune description du produit"
+
+#. module: consumption_calculation
+#: model:ir.actions.report.xml,name:consumption_calculation.report_monthly_consumption_xls
+msgid "Monthly Consumption Excel Export"
+msgstr "Export Excel des consommation mensuelle"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:122
+#, python-format
+msgid "Line %s of the imported file: the Consumed Quantity should be a number and not %s \n"
+". Details: %s"
+msgstr "Ligne %s du fichier: la quantité consommée doit être un nombre et pas un %s \n"
+"Détails: %s"

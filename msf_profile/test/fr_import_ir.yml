@@ -1,8 +1,8 @@
 -
-  Create an Internal Request 1 (IR1) in English
+  Create an Internal Request 2 for testing the import in French (IR2)
 -
-  !record {model: sale.order, id: ir1}:
-    name: My IR test
+  !record {model: sale.order, id: ir2}:
+    name: My IR test in French
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
     invoice_quantity: order
@@ -16,15 +16,15 @@
     shop_id: sale.shop
     procurement_request: True
 -
-  Open the import wizard for the IR in English
+  Open the import wizard for the IR in French
 -
   !python {model: sale.order}: |
     import base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
     # we set the lang to English to test the translation of the template's header columns
-    lang = 'en_MF'
+    lang = 'fr_MF'
     context.update({'yml_test': True, 'lang': lang})
-    wiz_values = self.wizard_import_ir_line(cr, uid, ref('ir1'), context)
+    wiz_values = self.wizard_import_ir_line(cr, uid, ref('ir2'), context)
     res_model = wiz_values['res_model']
     assert res_model == 'wizard.import.ir.line', ("The wizard model should be 'wizard.import.ir.line' and it is %s" % res_model)
     logging.getLogger('tests').log(logging.TEST, 'We check the header of the template (translation)')
@@ -37,35 +37,35 @@
             cell_data = first_row.cells[cell].data
             column_header.append(cell_data)
         break
-    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Currency', 'Comment']
+    expected_header = ['Code Produit', 'Description Produit', 'Quantité', 'UdM', 'Devises', 'Commentaire']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
-    assert wiz_values['context'].get('active_id') == ref("ir1"), ("The reference to the IR doesn't exist")
+    assert wiz_values['context'].get('active_id') == ref("ir2"), ("The reference to the IR doesn't exist")
     self.pool.get(res_model).cancel(cr, uid, wiz_values['res_id'], context)
 -
-  Import the file through the wizard for the IR in English
+  Import the file through the wizard for the IR in French
 -
   !python {model: wizard.import.ir.line}: |
     import addons, base64, logging
-    wiz_ids = self.search(cr, uid, [('fo_id', '=', ref('ir1'))])
+    wiz_ids = self.search(cr, uid, [('fo_id', '=', ref('ir2'))])
     assert len(wiz_ids) == 1, ("There should be one wizard open at a time")
-    # we set the lang to English and take the file to import accordingly
-    lang = 'en_MF'
+    # we set the lang to French and take the file to import accordingly
+    lang = 'fr_MF'
     # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'ir.xml')
+    file_path = addons.get_module_resource('msf_profile','test','import_files_for_testing', 'fr_ir.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
-    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard in English.')
+    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard in French.')
     self.write(cr, uid, wiz_ids, {'file': file64}, context)
     context.update({'yml_test': True, 'lang': lang})
-    logging.getLogger('tests').log(logging.TEST, 'We import the file.')
+    logging.getLogger('tests').log(logging.TEST, 'We import the file in French.')
     self.import_file(cr, uid, wiz_ids, context)
     self.close_import(cr, uid, wiz_ids, context)
 -
-  Check the lines imported on the IR in English
+  Check the lines imported on the IR in French
 -
   !python {model: sale.order}: |
     import logging
-    ir = self.browse(cr, uid, ref('ir1'), context)
+    ir = self.browse(cr, uid, ref('ir2'), context)
     count_line_imported = len(ir.order_line)
     assert count_line_imported==12, ("The number of lines imported should be 12 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in ir.order_line if line.to_correct_ok])
