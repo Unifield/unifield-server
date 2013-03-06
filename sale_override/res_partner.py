@@ -79,11 +79,11 @@ class res_partner(osv.osv):
             if arg[2]['type'] == 'po':
                 for po in self.pool.get('purchase.order').browse(cr, uid, arg[2]['ids'], context=context):
                     if po.po_from_fo:
-                        dom.append(('partner_type', '!=', 'internal'))
+                        dom.append(('partner_type', 'not in', ['internal','section','intermission']))
             else:
                 for tender in self.pool.get('tender').browse(cr, uid, arg[2]['ids'], context=context):  
                     if tender.tender_from_fo:
-                        dom.append(('partner_type', '!=', 'internal'))
+                        dom.append(('partner_type', 'not in', ['internal','section','intermission']))
         return dom
 
     _columns = {
