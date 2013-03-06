@@ -166,22 +166,6 @@ class browse_record_list(list):
     def __str__(self):
         return "browse_record_list("+str(len(self))+")"
 
-def getSel(pool, cr, uid, o, field, context=None):
-    if context is None:
-        context = {}
-    sel = pool.get(o._name).fields_get(cr, uid, [field])
-    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-    name = '%s,%s' % (o._name, field)
-    if context.get('lang'):
-        tr_ids = pool.get('ir.translation').search(cr, uid, [
-            ('type', '=', 'selection'), ('name', '=', name), ('src', '=', res), ('lang', '=', context['lang'])
-        ])
-        if tr_ids:
-            value = pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
-            if value:
-                return value
-    return res
-
 class rml_parse(object):
     def __init__(self, cr, uid, name, parents=rml_parents, tag=rml_tag, context=None):
         if not context:
@@ -225,7 +209,7 @@ class rml_parse(object):
         """
         Returns the fields.selection label
         """
-        return getSel(self.pool, self.cr, self.uid, o, field, self.localcontext)
+        return self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, o, field, self.localcontext)
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs

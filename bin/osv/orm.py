@@ -1187,18 +1187,18 @@ class orm_template(object):
                 if hasattr(field_col, 'selection'):
                     if isinstance(field_col.selection, (tuple, list)):
                         sel = field_col.selection
-                        # translate each selection option
-                        sel2 = []
-                        for (key, val) in sel:
-                            val2 = None
-                            if val:
-                                val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                            sel2.append((key, val2 or val))
-                        sel = sel2
-                        res[f]['selection'] = sel
                     else:
                         # call the 'dynamic selection' function
-                        res[f]['selection'] = field_col.selection(self, cr, user, context)
+                        sel = field_col.selection(self, cr, user, context)
+                    # translate each selection option
+                    sel2 = []
+                    for (key, val) in sel:
+                        val2 = None
+                        if val:
+                            val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
+                        sel2.append((key, val2 or val))
+                    sel = sel2
+                    res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
                     res[f]['domain'] = field_col._domain
