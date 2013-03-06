@@ -29,24 +29,7 @@ class move_tracking(report_sxw.rml_parse):
         super(move_tracking, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_type': self._get_type,
         })
-    
-    def get_selection(self, o, field):
-        """
-        Returns the fields.selection label
-        """
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
-    
-    def _get_type(self, move, type):
-        return self.get_selection(move, 'type')
 
 report_sxw.report_sxw('report.tracking.move.report','stock.move','addons/stock_move_tracking/report/move_tracking.rml',parser=move_tracking, header='internal landscape')
 

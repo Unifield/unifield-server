@@ -267,13 +267,13 @@
             <para style="P3">[[ line.doc ]]</para>
           </td>
           <td>
-            <para style="P3">[[ get_selection(line, 'order_type') ]]</para>
+            <para style="P3">[[ getSel(line, 'order_type') ]]</para>
           </td>
           <td>
             <para style="P3">[[ line.reference and line.reference.name_get()[0][1] or "" ]]</para>
           </td>
           <td>
-            <para style="P3">[[ get_selection(line, 'state') ]]</para>
+            <para style="P3">[[ getSel(line, 'state') ]]</para>
           </td>
           <td>
             <para style="P4">[[ line.qty ]]</para>
