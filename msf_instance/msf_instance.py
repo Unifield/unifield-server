@@ -46,7 +46,7 @@ class msf_instance(osv.osv):
         'child_ids': fields.one2many('msf.instance', 'parent_id', 'Children'),
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
-        'top_budget_cost_center_id': fields.many2one('account.analytic.account', 'Top consolidated cost center'),
+        'top_cost_center_id': fields.many2one('account.analytic.account', 'Main cost centre for this location', required=True),
         'target_cost_center_ids': fields.one2many('account.target.costcenter', 'instance_id', 'Target Cost Centers'),
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
@@ -81,7 +81,23 @@ class msf_instance(osv.osv):
         }
 
     def create(self, cr, uid, vals, context=None):
-        return osv.osv.create(self, cr, uid, vals, context=context)
+        # Check if lines are imported from coordo; if now, create those
+        res_id = osv.osv.create(self, cr, uid, vals, context=context)
+        if 'parent_id' in vals and 'level' in vals and vals['level'] == 'project':
+            parent_instance = self.browse(cr, uid, vals['parent_id'], context=context)
+            instance = self.browse(cr, uid, res_id, context=context)
+            if len(parent_instance.target_cost_center_ids) != len(instance.target_cost_center_ids):
+                # delete existing cost center lines
+                old_target_line_ids = [x.id for x in instance.target_cost_center_ids]
+                self.unlink(cr, uid, old_target_line_ids, context=context)
+                # copy existing lines for project
+                for line_to_copy in parent_instance.target_cost_center_ids:
+                    self.pool.get('account.target.costcenter').create(cr, uid, {'instance_id': instance.id,
+                                                                                'cost_center_id': line_to_copy.cost_center_id.id,
+                                                                                'is_target': False,
+                                                                                'parent_id': line_to_copy.id}, context=context)
+        return res_id
+        
 
     def _check_name_code_unicity(self, cr, uid, ids, context=None):
         if not context:

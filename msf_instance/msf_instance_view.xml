@@ -20,9 +20,9 @@
 		                    <field name="note"/>
 		                    <field name="move_prefix"/>
 		                    <field name="reconcile_prefix"/>
+                            <field name="top_cost_center_id" domain="[('category', '=', 'OC')]"/>
                         </page>
                         <page string="Cost Centers">
-                            <field name="top_budget_cost_center_id" domain="[('category', '=', 'OC'), ('type', '=', 'view')]"/>
 		                    <button name="button_cost_center_wizard" string="Add Cost Centers" type="object" icon="terp-document-new" attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"/>
 		                    <group colspan="4">
 			                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list">
