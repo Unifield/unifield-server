@@ -490,10 +490,10 @@
 </Cell>
 
 <Cell ss:StyleID="s31">
-<Data ss:Type="Number">${( line[2] or '')|x}</Data>
+<Data ss:Type="Number">${( line[2] or 0.00)|x}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
-<Data ss:Type="Number">${( line[3] or '')|x}</Data>
+<Data ss:Type="Number">${( line[3] or 0.00)|x}</Data>
 </Cell>
 <Cell ss:StyleID="s32" ss:Formula="=+RC[-2]-RC[-1]">
 <Data ss:Type="Number"></Data>
@@ -509,10 +509,10 @@
 
 % if checkType(o,line):
 	<Cell ss:StyleID="s31">
-	<Data ss:Type="Number">${( line[5] or '')|x}</Data>
+	<Data ss:Type="Number">${( line[5] or 0.00)|x}</Data>
 	</Cell>
 	<Cell ss:StyleID="s31">
-	<Data ss:Type="Number">${( line[6] or '')|x}</Data>
+	<Data ss:Type="Number">${( line[6] or 0.00)|x}</Data>
 	</Cell>
 	<Cell ss:StyleID="s34" ss:Formula="=+RC[-2]-RC[-1]">
 	<Data ss:Type="Number"></Data>
