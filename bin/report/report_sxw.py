@@ -189,6 +189,7 @@ class rml_parse(object):
             'strip_name' : self._strip_name,
             'time' : time,
             'getSel': self.getSel,
+            'getSelValue': self.getSelValue,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -205,11 +206,15 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
+
     def getSel(self, o, field):
         """
         Returns the fields.selection label
         """
         return self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, o, field, self.localcontext)
+
+    def getSelValue(self, obj_name, field, value):
+        return self.pool.get('ir.model.fields').get_selection(self.cr, self.uid, obj_name, field, value, self.localcontext)
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
@@ -300,7 +305,7 @@ class rml_parse(object):
                 formatLang(value, dp='Account') -> digits=3
                 formatLang(value, digits=5, dp='Account') -> digits=5
         """
-        digits = 2
+        #digits = 2
         computation = False
         # could be a clue for proper use of digit and computation directly from field object - I leave this code as a start for further dev later on
         if hasattr(value,'_field'):
