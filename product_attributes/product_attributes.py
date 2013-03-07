@@ -41,11 +41,11 @@ class product_status(osv.osv):
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True),
-        'external_ok': fields.boolean(string='External partners orders'),
-        'esc_ok': fields.boolean(string='ESC partners orders'),
-        'internal_ok': fields.boolean(string='Internal partners orders'),
-        'consumption_ok': fields.boolean(string='Consumption'),
-        'storage_ok': fields.boolean(string='Storage'),
+        'no_external': fields.boolean(string='External partners orders'),
+        'no_esc': fields.boolean(string='ESC partners orders'),
+        'no_internal': fields.boolean(string='Internal partners orders'),
+        'no_consumption': fields.boolean(string='Consumption'),
+        'no_storage': fields.boolean(string='Storage'),
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -65,11 +65,11 @@ class product_international_status(osv.osv):
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True),
-        'external_ok': fields.boolean(string='External partners orders'),
-        'esc_ok': fields.boolean(string='ESC partners orders'),
-        'internal_ok': fields.boolean(string='Internal partners orders'),
-        'consumption_ok': fields.boolean(string='Consumption'),
-        'storage_ok': fields.boolean(string='Storage'),
+        'no_external': fields.boolean(string='External partners orders'),
+        'no_esc': fields.boolean(string='ESC partners orders'),
+        'no_internal': fields.boolean(string='Internal partners orders'),
+        'no_consumption': fields.boolean(string='Consumption'),
+        'no_storage': fields.boolean(string='Storage'),
     }
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
@@ -256,11 +256,11 @@ class product_attributes(osv.osv):
         res = {}
 
         for product in self.browse(cr, uid, ids, context=context):
-            res[product.id] = {'external_ok': product.state.external_ok or product.international_status.external_ok or False,
-                               'esc_ok': product.state.esc_ok or product.international_status.esc_ok or False,
-                               'internal_ok': product.state.internal_ok or product.international_status.internal_ok or False,
-                               'consumption_ok': product.state.consumption_ok or product.international_status.consumption_ok or False,
-                               'storage_ok': product.state.storage_ok or product.international_status.storage_ok or False}
+            res[product.id] = {'no_external': product.state.no_external or product.international_status.no_external or False,
+                               'no_esc': product.state.no_esc or product.international_status.no_esc or False,
+                               'no_internal': product.state.no_internal or product.international_status.no_internal or False,
+                               'no_consumption': product.state.no_consumption or product.international_status.no_consumption or False,
+                               'no_storage': product.state.no_storage or product.international_status.no_storage or False}
 
         return res
 
@@ -339,26 +339,26 @@ class product_attributes(osv.osv):
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.boolean(string='Controlled substance'),
-        'external_ok': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
+        'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
                                        store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
-                                              'product.status': (_get_product_status, ['external_ok'], 10),
-                                              'product.international.status': (_get_international_status, ['external_ok'], 10),}),
-        'esc_ok': fields.function(_get_restriction, method=True, type='boolean', string='ESC partners orders', readonly=True, multi='restriction',
+                                              'product.status': (_get_product_status, ['no_external'], 10),
+                                              'product.international.status': (_get_international_status, ['no_external'], 10),}),
+        'no_esc': fields.function(_get_restriction, method=True, type='boolean', string='ESC partners orders', readonly=True, multi='restriction',
                                   store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
-                                         'product.status': (_get_product_status, ['esc_ok'], 10),
-                                         'product.international.status': (_get_international_status, ['esc_ok'], 10),}),
-        'internal_ok': fields.function(_get_restriction, method=True, type='boolean', string='Internal partners orders', readonly=True, multi='restriction',
+                                         'product.status': (_get_product_status, ['no_esc'], 10),
+                                         'product.international.status': (_get_international_status, ['no_esc'], 10),}),
+        'no_internal': fields.function(_get_restriction, method=True, type='boolean', string='Internal partners orders', readonly=True, multi='restriction',
                                        store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
-                                              'product.status': (_get_product_status, ['internal_ok'], 10),
-                                              'product.international.status': (_get_international_status, ['internal_ok'], 10),}),
-        'consumption_ok': fields.function(_get_restriction, method=True, type='boolean', string='Comsumption', readonly=True, multi='restriction',
+                                              'product.status': (_get_product_status, ['no_internal'], 10),
+                                              'product.international.status': (_get_international_status, ['no_internal'], 10),}),
+        'no_consumption': fields.function(_get_restriction, method=True, type='boolean', string='Comsumption', readonly=True, multi='restriction',
                                           store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
-                                                 'product.status': (_get_product_status, ['consumption_ok'], 10),
-                                                 'product.international.status': (_get_international_status, ['consumption_ok'], 10),}),
-        'storage_ok': fields.function(_get_restriction, method=True, type='boolean', string='Storage', readonly=True, multi='restriction',
+                                                 'product.status': (_get_product_status, ['no_consumption'], 10),
+                                                 'product.international.status': (_get_international_status, ['no_consumption'], 10),}),
+        'no_storage': fields.function(_get_restriction, method=True, type='boolean', string='Storage', readonly=True, multi='restriction',
                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
-                                             'product.status': (_get_product_status, ['storage_ok'], 10),
-                                             'product.international.status': (_get_international_status, ['storage_ok'], 10),}),
+                                             'product.status': (_get_product_status, ['no_storage'], 10),
+                                             'product.international.status': (_get_international_status, ['no_storage'], 10),}),
     }
     
     def default_get(self, cr, uid, fields, context=None):
