@@ -350,18 +350,20 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Origin
-        cell_nb = header_index['Origin']
-        origin = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        to_write.update({'origin': origin})
+        cell_nb = header_index.get('Origin', False)
+        origin = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if origin:
+            to_write.update({'origin': origin})
 
         # Notes
-        cell_nb = header_index['Notes']
-        notes = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        to_write.update({'notes': notes})
+        cell_nb = header_index.get('Notes')
+        notes = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if notes:
+            to_write.update({'notes': notes})
 
         # Quantity
-        cell_nb = header_index['Quantity*']
-        cell_data=row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Quantity*', False)
+        cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             try:
                 product_qty = float(cell_data)
@@ -371,8 +373,8 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
     
         # Product Code
-        cell_nb = header_index['Product Code*']
-        product_code = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Product Code*', False)
+        product_code = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if product_code:
             p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
             if not p_ids:
@@ -383,8 +385,8 @@ The columns should be in this values:
                 to_write.update({'product_id': default_code})
 
         # UOM
-        cell_nb = header_index['UoM*']
-        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('UoM*', False)
+        cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)], context=context)
             if product_uom:
@@ -394,8 +396,8 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Price
-        cell_nb = header_index['Price*']
-        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Price*', False)
+        cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             try:
                 price_unit = float(cell_data)
@@ -405,8 +407,8 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Delivery Confirmed Date
-        cell_nb = header_index['Delivery Confirmed Date*']
-        confirmed_delivery_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Delivery Confirmed Date*', False)
+        confirmed_delivery_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
             if row.cells[cell_nb].type == 'datetime':
                 to_write.update({'confirmed_delivery_date': confirmed_delivery_date.strftime('%d-%m-%Y')})
@@ -419,9 +421,10 @@ The columns should be in this values:
                     to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         #  Comment
-        cell_nb = header_index['Comment']
-        comment = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        to_write.update({'comment': comment})
+        cell_nb = header_index.get('Comment', False)
+        comment = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if comment:
+            to_write.update({'comment': comment})
         return to_write
 
     def get_file_values(self, cr, uid, ids, rows, header_index, error_list, line_num, context=None):
