@@ -33,7 +33,7 @@ class base_language_import(osv.osv_memory):
 
     _columns = {
         'name': fields.char('Language Name',size=64 , required=True),
-        'code': fields.char('Code (eg:en__US)',size=5 , required=True),
+        'code': fields.char('Code (eg:en_US)',size=5 , required=True),
         'data': fields.binary('File', required=True),
     }
 
@@ -56,7 +56,7 @@ class base_language_import(osv.osv_memory):
         fileformat = first_line.endswith("type,name,res_id,src,value") and 'csv' or 'po'
         fileobj.seek(0)
 
-        tools.trans_load_data(cr, fileobj, fileformat, import_data.code, lang_name=import_data.name)
+        tools.trans_load_data(cr, fileobj, fileformat, import_data.code, lang_name=import_data.name, context={'overwrite': 1})
         tools.trans_update_res_ids(cr)
         fileobj.close()
         return {}

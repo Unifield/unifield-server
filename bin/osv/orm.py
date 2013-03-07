@@ -684,8 +684,21 @@ class orm_template(object):
                     i += 1
                 if i == len(f):
                     if isinstance(r, browse_record):
-                        r = self.pool.get(r._table_name).name_get(cr, uid, [r.id], context=context)
-                        r = r and r[0] and r[0][1] or ''
+                        
+                        # add support for reference fields
+                        if cols._type == 'reference':
+                            row_id = r.id
+                            model = r._name
+                            xml_id = r._get_xml_ids(cr, uid, [row_id]).get(row_id, '')
+                            module = ''
+                            if xml_id:
+                                module, xml_id = xml_id[0].split('.',1)
+                            r = module and model and xml_id and (module, model, xml_id) or ''
+                            
+                        else:
+                            r = self.pool.get(r._table_name).name_get(cr, uid, [r.id], context=context)
+                            r = r and r[0] and r[0][1] or ''
+                            
                     data[fpos] = tools.ustr(r or '')
         return [data] + lines
 
@@ -887,6 +900,20 @@ class orm_template(object):
                                 _("key '%s' not found in selection field '%s'") % \
                                         (line[i], field[len(prefix)]))
                         warning += [_("Key/value '%s' not found in selection field '%s'") % (line[i], field[len(prefix)])]
+                elif fields_def[field[len(prefix)]]['type'] == 'reference':
+                    # support importing of reference fields
+                    field_value = eval(line[i])
+                    if isinstance(field_value, tuple):
+                        (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
+                        ir_model_data_obj = self.pool.get('ir.model.data')
+                        try:
+                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
+                            ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
+                        except:
+                            ref_db_id = None
+                        res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
+                    else:
+                        res = 0
                 else:
                     res = line[i]
 
@@ -1160,18 +1187,18 @@ class orm_template(object):
                 if hasattr(field_col, 'selection'):
                     if isinstance(field_col.selection, (tuple, list)):
                         sel = field_col.selection
-                        # translate each selection option
-                        sel2 = []
-                        for (key, val) in sel:
-                            val2 = None
-                            if val:
-                                val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                            sel2.append((key, val2 or val))
-                        sel = sel2
-                        res[f]['selection'] = sel
                     else:
                         # call the 'dynamic selection' function
-                        res[f]['selection'] = field_col.selection(self, cr, user, context)
+                        sel = field_col.selection(self, cr, user, context)
+                    # translate each selection option
+                    sel2 = []
+                    for (key, val) in sel:
+                        val2 = None
+                        if val:
+                            val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
+                        sel2.append((key, val2 or val))
+                    sel = sel2
+                    res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
                     res[f]['domain'] = field_col._domain

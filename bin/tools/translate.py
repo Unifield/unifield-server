@@ -161,18 +161,21 @@ class GettextAlias(object):
         if db_name:
             return pooler.get_db_only(db_name)
 
-    def _get_cr(self, frame):
+    def _get_cr(self, frame, allow_create=True):
         is_new_cr = False
         cr = frame.f_locals.get('cr', frame.f_locals.get('cursor'))
         if not cr:
             s = frame.f_locals.get('self', {})
             cr = getattr(s, 'cr', None)
-        if not cr:
+        if not cr and allow_create:
             db = self._get_db()
             if db:
                 cr = db.cursor()
                 is_new_cr = True
         return cr, is_new_cr
+
+    def _get_uid(self, frame):
+        return frame.f_locals.get('uid') or frame.f_locals.get('user')
 
     def _get_lang(self, frame):
         lang = None
@@ -193,6 +196,17 @@ class GettextAlias(object):
             c = getattr(s, 'localcontext', None)
             if c:
                 lang = c.get('lang')
+        if not lang:
+            # Last resort: attempt to guess the language of the user
+            # Pitfall: some operations are performed in sudo mode, and we
+            #          don't know the originial uid, so the language may
+            #          be wrong when the admin language differs.
+            pool = getattr(s, 'pool', None)
+            (cr, dummy) = self._get_cr(frame, allow_create=False)
+            uid = self._get_uid(frame)
+            if pool and cr and uid:
+                lang = pool.get('res.users').context_get(cr, uid)['lang']
+
         return lang
 
     def __call__(self, source):
@@ -424,13 +438,13 @@ def trans_export(lang, modules, buffer, format, cr):
             # we now group the translations by source. That means one translation per source.
             grouped_rows = {}
             for module, type, name, res_id, src, trad in rows:
-                row = grouped_rows.setdefault(src, {})
+                row = grouped_rows.setdefault((src, trad), {})
                 row.setdefault('modules', set()).add(module)
                 if ('translation' not in row) or (not row['translation']):
                     row['translation'] = trad
                 row.setdefault('tnrs', []).append((type, name, res_id))
 
-            for src, row in grouped_rows.items():
+            for (src, trad), row in grouped_rows.items():
                 writer.write(row['modules'], row['tnrs'], src, row['translation'])
 
         elif format == 'tgz':
@@ -482,8 +496,11 @@ def trans_parse_xsl(de):
         res.extend(trans_parse_xsl(n))
     return res
 
-def trans_parse_rml(de):
+def trans_parse_rml(de, withtranslate=True):
     res = []
+    trans_re = re.compile(r'[^a-zA-Z0-9_]translate\([\s]*("|\')(.+?)\1[\s]*?\)', re.DOTALL)
+    join_dquotes = re.compile(r'([^\\])"[\s\\]*"', re.DOTALL)
+    join_quotes = re.compile(r'([^\\])\'[\s\\]*\'', re.DOTALL)
     for n in de:
         for m in n:
             if isinstance(m, SKIPPED_ELEMENT_TYPES) or not m.text:
@@ -492,7 +509,17 @@ def trans_parse_rml(de):
             for s in string_list:
                 if s:
                     res.append(s.encode("utf8"))
-        res.extend(trans_parse_rml(n))
+            if withtranslate:
+                ite = trans_re.finditer(m.text)
+                for i in ite:
+                    if i.group(1) == "'":
+                        s = join_quotes.sub(r'\1', i.group(2))
+                    elif i.group(1) == '"':
+                        s = join_dquotes.sub(r'\1', i.group(2))
+                    if s:
+                        s = s.decode('string_escape')
+                        res.append(s.encode("utf8"))
+        res.extend(trans_parse_rml(n, False))
     return res
 
 def trans_parse_view(de):
@@ -660,9 +687,15 @@ def trans_generate(lang, modules, cr):
                     if not model_data_ids:
                         push_translation(module, 'model', name, 0, encode(obj_value[field_name]))
 
-            if hasattr(field_def, 'selection') and isinstance(field_def.selection, (list, tuple)):
-                for dummy, val in field_def.selection:
-                    push_translation(module, 'selection', name, 0, encode(val))
+            if hasattr(field_def, 'selection'):
+                sel = False
+                if callable(field_def.selection):
+                    sel = field_def.selection(objmodel, cr, uid, None)
+                else:
+                    sel = field_def.selection
+                if isinstance(sel, (list, tuple)):
+                    for dummy, val in sel:
+                        push_translation(module, 'selection', name, 0, encode(val))
 
         elif model=='ir.actions.report.xml':
             name = encode(obj.report_name)
@@ -779,6 +812,8 @@ def trans_generate(lang, modules, cr):
                 src_file.close()
             if module in installed_modules:
                 frelativepath = str("addons" + frelativepath)
+            if os.path.sep != '/':
+                frelativepath = '/'.join(frelativepath.split(os.path.sep))
             ite = re_dquotes.finditer(code_string)
             code_offset = 0
             code_line = 1

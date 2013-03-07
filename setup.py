@@ -36,6 +36,7 @@ from pprint import pprint as pp
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
+from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
 
 has_py2exe = False
 py2exe_keywords = {}
@@ -48,17 +49,22 @@ if os.name == 'nt':
         }]
     py2exe_keywords['options'] = {
         "py2exe": {
-            "compressed": 1,
-            "optimize": 2,
+            "compressed": 0,
+            "optimize": 0,
+            "skip_archive": 1,
+            "bundle_files": 3,
+            "collected_libs_dir": "libs",
+            "collected_libs_data_relocate": "pytz",
+            "package_build_extra_dirs": join(os.path.abspath(os.path.dirname(__file__)), "bin"),
             "dist_dir": 'dist',
             "packages": [
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
-                "lxml.objectify", "decimal", "xml", "xml", "xml.dom", "xml.xpath",
+                "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
                 "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
                 "pydot", "asyncore","asynchat", "reportlab", "vobject",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
-                "uuid", "commands",
+                "uuid", "commands", "mx.DateTime",
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
@@ -144,6 +150,9 @@ def data_files():
         #for root, _, names in os.walk('pixmaps'):
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'),]))
+        files.append(("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')))
+        files.append((join('service','Microsoft.VC90.CRT'), glob.glob('C:\Microsoft.VC90.CRT\*.*')))
+        files.extend(fixup_data_pytz_zoneinfo())
     else:
         man_directory = join('share', 'man')
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))
@@ -216,6 +225,7 @@ setup(name             = name,
       data_files       = data_files(),
       cmdclass         = {
           'install' : openerp_server_install,
+          'py2exe': custom_py2exe,
       },
       scripts          = ['openerp-server'],
       packages = [
@@ -247,31 +257,3 @@ setup(name             = name,
       **py2exe_keywords
 )
 
-if has_py2exe:
-    # Sometime between pytz-2008a and pytz-2008i common_timezones started to
-    # include only names of zones with a corresponding data file in zoneinfo.
-    # pytz installs the zoneinfo directory tree in the same directory
-    # as the pytz/__init__.py file. These data files are loaded using
-    # pkg_resources.resource_stream. py2exe does not copy this to library.zip so
-    # resource_stream can't find the files and common_timezones is empty when
-    # read in the py2exe executable.
-    # This manually copies zoneinfo into the zip. See also
-    # http://code.google.com/p/googletransitdatafeed/issues/detail?id=121
-    import pytz
-    import zipfile
-    # Make sure the layout of pytz hasn't changed
-    assert (pytz.__file__.endswith('__init__.pyc') or
-            pytz.__file__.endswith('__init__.py')), pytz.__file__
-    zoneinfo_dir = os.path.join(os.path.dirname(pytz.__file__), 'zoneinfo')
-    # '..\\Lib\\pytz\\__init__.py' -> '..\\Lib'
-    disk_basedir = os.path.dirname(os.path.dirname(pytz.__file__))
-    zipfile_path = os.path.join(py2exe_keywords['options']['py2exe']['dist_dir'], 'library.zip')
-    z = zipfile.ZipFile(zipfile_path, 'a')
-
-    for absdir, directories, filenames in os.walk(zoneinfo_dir):
-        assert absdir.startswith(disk_basedir), (absdir, disk_basedir)
-        zip_dir = absdir[len(disk_basedir):]
-        for f in filenames:
-            z.write(os.path.join(absdir, f), os.path.join(zip_dir, f))
-
-    z.close()

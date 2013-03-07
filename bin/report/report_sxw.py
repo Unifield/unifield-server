@@ -188,6 +188,7 @@ class rml_parse(object):
             'setHtmlImage' : self.set_html_image,
             'strip_name' : self._strip_name,
             'time' : time,
+            'getSel': self.getSel,
             # more context members are setup in setCompany() below:
             #  - company_id
             #  - logo
@@ -203,6 +204,12 @@ class rml_parse(object):
         self.default_lang = {}
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
+
+    def getSel(self, o, field):
+        """
+        Returns the fields.selection label
+        """
+        return self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, o, field, self.localcontext)
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
