@@ -328,7 +328,9 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             elif order_ids[0] == po_browse.id:
                 to_write.update({'order_id': order_ids[0]})
-        
+        # if the order_id was not fulfilled! we deduce it from the wizard (thanks to po_browse)
+        else:
+            to_write.update({'order_id': po_browse.id})
         # Line
         cell_nb = header_index['Line*']
         cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -377,7 +379,7 @@ The columns should be in this values:
         cell_nb = header_index['UoM*']
         cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
-            product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)])
+            product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)], context=context)
             if product_uom:
                 to_write.update({'product_uom': product_uom[0]})
             else:
@@ -529,7 +531,7 @@ The columns should be in this values:
             list_line_number = cr.fetchall()
             for line_number in list_line_number:
                 line_number = line_number[0]
-                same_file_line_nb = import_obj.search(cr, uid, [('line_ignored_ok', '=', False), ('line_number', '=', line_number), ('order_id', '=', po_id)])
+                same_file_line_nb = import_obj.search(cr, uid, [('line_ignored_ok', '=', False), ('line_number', '=', line_number), ('order_id', '=', po_id)], context=context)
                 same_pol_line_nb = pol_obj.search(cr, uid, [('line_number', '=', line_number), ('order_id', '=', po_id)])
                 count_same_file_line_nb = len(same_file_line_nb)
                 count_same_pol_line_nb = len(same_pol_line_nb)
