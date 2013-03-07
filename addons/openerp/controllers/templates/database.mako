@@ -24,11 +24,17 @@
 
             jQuery(document).ready(function () {
                 jQuery(document.body).append($error_tbl);
-                $error_tbl.dialog({
+                var error_dialog_options = {
                     modal: true,
                     resizable: false,
                     title: '<div class="error_message_header">${error.get("title", "Warning")}</div>'
-                });
+                };
+                % if error.get('redirect_to'):
+                    error_dialog_options['close'] = function( event, ui ) {
+                        $(location).attr('href','${error['redirect_to']}');
+                    };
+                % endif
+                $error_tbl.dialog(error_dialog_options);
             })
         </script>
     % endif
@@ -63,11 +69,23 @@
             </table>
         </div>
         <hr style="margin: 0 0 !important; background-color: #5A5858;">
-        % if form.name == 'create':
-            <div>${form.display(value=dict(password = "admin"))}</div>
-        % else:
-            <div>${form.display()}</div>
-        % endif
+        <div>${form.display()}</div>
+
+	%if form.name == 'restore':
+        <script type="text/javascript">
+            jQuery('#filename').change(function() {
+                var choosen_filename = jQuery(this).val();
+                var matches = /^(.*)-[0-9]{8}-[0-9]{6}.dump$/.exec(choosen_filename);
+                if (!matches) {
+                    // show jquery alert
+                    alert('${_('The choosen file in not a valid database file')}');
+                } else {
+                    jQuery('#dbname').val(matches[1]);
+                }
+            });
+        </script>
+	%endif
+
     </div>
 <%include file="footer.mako"/>    
 </%def>
