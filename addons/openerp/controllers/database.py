@@ -275,14 +275,14 @@ class Database(BaseController):
             matches = re.search('^(.*)-[0-9]{8}-[0-9]{6}(?:-(.*))?.dump$', submitted_filename)
             if matches:
                 dbname = matches.group(1)
-                if matches.group(2):
-                    server_version = get_server_version()
-                    if server_version and server_version != matches.group(2):
-                        self.msg = {
-                            'message': _('The restore version (%s) and the server version (%s) differ') % (matches.group(2), server_version),
-                            'title': _('Error')
-                        }
-                        return self.restore()
+                #if matches.group(2):
+                #    server_version = get_server_version()
+                #    if server_version and server_version != matches.group(2):
+                #        self.msg = {
+                #            'message': _('The restore version (%s) and the server version (%s) differ') % (matches.group(2), server_version),
+                #            'title': _('Error')
+                #        }
+                #        return self.restore()
             else:
                 self.msg = {'message': _('The choosen file in not a valid database file'),
                             'title': _('Error')}
