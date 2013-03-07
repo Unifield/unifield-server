@@ -583,7 +583,12 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Status" editable="top" >
-	            <field name="name" />
+                    <field name="name" />
+                    <field name="external_ok" />
+                    <field name="esc_ok" />
+                    <field name="internal_ok" />
+                    <field name="consumption_ok" />
+                    <field name="storage_ok" />
                 </tree>
             </field>
         </record>
@@ -616,7 +621,12 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Product Creators" editable="top" >
-	            <field name="name" />
+                    <field name="name" />
+                    <field name="external_ok" />
+                    <field name="esc_ok" />
+                    <field name="internal_ok" />
+                    <field name="consumption_ok" />
+                    <field name="storage_ok" />
                 </tree>
             </field>
         </record>

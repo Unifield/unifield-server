@@ -252,10 +252,22 @@ class product_attributes(osv.osv):
             
         return [('id', 'in', ids)] 
 
+    def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = {'external_ok': product.state.external_ok or product.international_status.external_ok or False,
+                               'esc_ok': product.state.esc_ok or product.international_status.esc_ok or False,
+                               'internal_ok': product.state.internal_ok or product.international_status.internal_ok or False,
+                               'consumption_ok': product.state.consumption_ok or product.international_status.consumption_ok or False,
+                               'storage_ok': product.state.storage_ok or product.international_status.storage_ok or False}
+
+        return res
+
     def _get_product_status(self, cr, uid, ids, context=None):
         return self.pool.get('product.product').search(cr, uid, [('state', 'in', ids)], context=context)
 
-    def _get_product_status(self, cr, uid, ids, context=None):
+    def _get_international_status(self, cr, uid, ids, context=None):
         return self.pool.get('product.product').search(cr, uid, [('international_status', 'in', ids)], context=context)
     
     _columns = {
