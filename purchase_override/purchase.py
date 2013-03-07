@@ -197,7 +197,19 @@ class purchase_order(osv.osv):
             # better: if order.order_line: res[order.id] = False
                 
         return res
-    
+
+    def _is_po_from_ir(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            retour = False
+            for line in po.order_line:
+                if line.procurement_id:
+                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),])
+                    if ids_proc:
+                        retour = True
+            res[po.id] = retour
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -242,6 +254,8 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
+        'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
+
     }
     
     _defaults = {
@@ -257,7 +271,7 @@ class purchase_order(osv.osv):
         'active': True,
         'name': lambda *a: False,
     }
-    
+
     def _check_service(self, cr, uid, ids, vals, context=None):
         '''
         Avoid the saving of a PO with non service products on Service PO
