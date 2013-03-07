@@ -38,7 +38,7 @@ class wizard_import_fmc(osv.osv_memory):
     }
     
     _defaults = {
-        'message': lambda *a : """
+        'message': lambda *a : _("""
         IMPORTANT : The first line will be ignored by the system.
         
         The file should be in Excel xml 2003 format.
@@ -47,7 +47,7 @@ class wizard_import_fmc(osv.osv_memory):
           * Product Description
           * FMC
           * Valid until (DD-MMM-YYYY)
-        """
+        """)
     }
     
     def default_get(self, cr, uid, fields, context=None):

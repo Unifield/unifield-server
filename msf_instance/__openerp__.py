@@ -24,7 +24,7 @@
     "author" : "MSF, TeMPO Consulting",
     "developer": "Matthieu Dietrich",
     "category" : "Generic Modules/Projects & Services",
-    "depends" : ["account_msf", "res_currency_functional", "account_mcdb"],
+    "depends" : ["account_msf", "res_currency_functional"],
     "description": """Module for defining proprietary instances, their informations
     """,
     "init_xml" : [],

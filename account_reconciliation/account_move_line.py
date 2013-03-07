@@ -121,7 +121,7 @@ class account_move_line(osv.osv):
         lines = self.browse(cr, uid, ids, context=context)
         unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
         credit = debit = func_debit = func_credit = currency = 0.0
-        account_id = partner_id = employee_id = register_id = functional_currency_id = False
+        account_id = partner_id = employee_id = functional_currency_id = False
         currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
         if context is None:
             context = {}
@@ -144,7 +144,6 @@ class account_move_line(osv.osv):
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
             employee_id = (line['employee_id'] and line['employee_id']['id']) or False
-            register_id = (line['register_id'] and line['register_id']['id']) or False
         func_balance = func_debit - func_credit
 
         # Ifdate_p in context => take this date

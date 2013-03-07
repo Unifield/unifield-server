@@ -33,10 +33,6 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
         if st_line.employee_id:
             res[st_line.id] = {'third_parties': 'hr.employee,%s' % st_line.employee_id.id}
             res[st_line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')], 'selection': 'hr.employee,%s' % st_line.employee_id.id}
-        elif st_line.register_id:
-            res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
-            res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 
-                'selection': 'account.bank.statement,%s' % st_line.register_id.id}
         elif st_line.transfer_journal_id:
             res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')], 
@@ -72,8 +68,6 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
         obj = False
         if element == 'hr.employee':
             obj = 'employee_id'
-        elif element == 'account.bank.statement':
-            obj = 'register_id'
         elif element == 'res.partner':
             obj = 'partner_id'
         elif element == 'account.journal':
@@ -87,7 +81,7 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             cr.execute(sql)
     # Delete values for Third Parties if no value given
     elif name == 'partner_type' and not value:
-        cr.execute("UPDATE %s SET employee_id = Null, register_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
+        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
     return True
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):
@@ -95,7 +89,6 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
     Get third parties name from vals that could contain:
      - partner_type: displayed as "object,id"
      - partner_id: the id of res.partner
-     - register_id: the id of account.bank.statement
      - employee_id: the id of hr.employee
     """
     # Prepare some values
@@ -110,6 +103,8 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
         if len(a) and len(a) > 1:
             b = self.pool.get(a[0]).browse(cr, uid, [int(a[1])], context=context)
             res = b and b[0] and b[0].name or ''
+            if a[0] == "account.journal":
+                res = b and b[0] and b[0].code or ''
             return res
     if 'partner_id' in vals and vals.get('partner_id', False):
         partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')], context=context)
@@ -117,9 +112,6 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
     if 'employee_id' in vals and vals.get('employee_id', False):
         employee = self.pool.get('hr.employee').browse(cr, uid, [vals.get('employee_id')], context=context)
         res = employee and employee[0] and employee[0].name or ''
-    if 'register_id' in vals and vals.get('register_id', False):
-        register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
-        res = register and register[0] and register[0].name or ''
     if 'transfer_journal_id' in vals and vals.get('transfer_journal_id', False):
         journal = self.pool.get('account.journal').browse(cr, uid, [vals['transfer_journal_id']], context=context)
         res = journal and journal[0] and journal[0].code or ''

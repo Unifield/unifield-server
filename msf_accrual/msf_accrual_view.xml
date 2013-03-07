@@ -19,7 +19,7 @@
                             <field name="third_party_type"/>
                             <field name="partner_id" nolabel="1" 
                                 attrs="{'required': [('third_party_type', '=', 'res.partner')], 'invisible': [('third_party_type', '!=', 'res.partner')]}"/>
-                            <field name="employee_id" nolabel="1" 
+                            <field name="employee_id" nolabel="1" context="{'search_default_active': True}"
                                 attrs="{'required': [('third_party_type', '=', 'hr.employee')], 'invisible': [('third_party_type', '!=', 'hr.employee')]}"/>
                             <newline/>
                             <field name="expense_account_id" colspan="2"/>

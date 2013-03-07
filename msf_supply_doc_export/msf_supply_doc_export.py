@@ -219,32 +219,20 @@ class ir_values(osv.osv):
         
         Internal_Requests = trans_obj.tr_view(cr, 'Internal Requests', context)
         Field_Orders = trans_obj.tr_view(cr, 'Sales Orders', context)
-        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
+        if key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
             new_act = []
-            #field_orders_view = data_obj.get_object_reference(cr, uid, 'procurement_request', 'action_procurement_request')[1]
             for v in values:
-                if v[2]['report_name'] == 'internal.request_xls' and context['_terp_view_name'] == Internal_Requests \
-                or v[2]['report_name'] == 'msf.sale.order' and context['_terp_view_name'] == Field_Orders \
-                or v[2]['report_name'] == 'sale.order_xls' and context['_terp_view_name'] == Field_Orders :
-                    new_act.append(v)
+                if context.get('procurement_request', False):
+                    if v[2]['report_name'] == 'internal.request_xls' \
+                    or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+                        new_act.append(v)
+                else:
+                    if v[2]['report_name'] == 'msf.sale.order' \
+                    or v[2]['report_name'] == 'sale.order_xls' \
+                    or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+                        new_act.append(v)
                 values = new_act
-        
-        # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
-        elif context.get('_terp_view_name') and context['_terp_view_name'] == Internal_Requests and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[1] == 'action_open_wizard_import':
-                    new_act.append(v)
-            values = new_act
-        
-        # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
-        elif context.get('_terp_view_name') and context['_terp_view_name'] == Field_Orders and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[1] == 'Order Follow Up':
-                    new_act.append(v)
-            values = new_act
-            
+                
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
