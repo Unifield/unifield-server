@@ -153,7 +153,8 @@ class wizard_interactive_report(osv.osv_memory):
             for i in range(max_parent_hierarchy + 1):
                 if i != temp_line[0]:
                     # add space
-                    final_line.append('')
+                    #final_line.append('')
+                    1+1
                 else:
                     # add code
                     final_line.append(temp_line[1])

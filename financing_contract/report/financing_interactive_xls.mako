@@ -323,7 +323,7 @@
 </Styles>
 
 % for o in objects:
-<Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<Worksheet ss:Name="${"%s"%(o.code.replace('/', '_') or 'Sheet1')|x}">
 <Table >
 <Column ss:AutoFitWidth="0" ss:Width="93.75"/>
 <Column ss:AutoFitWidth="0" ss:Width="87"/>
@@ -428,10 +428,18 @@
 </Cell>
 </Row>
 
+
+
 <Row>
 </Row>
 <Row>
+<Cell>
+<Data ss:Type="String">${( getLines(o) and '' or '')|x}</Data>
+</Cell>
 </Row>
+
+
+
 
 <Row ss:AutoFitHeight="0" ss:Height="27.75" ss:StyleID="s25">
 <Cell ss:StyleID="s26">
@@ -441,7 +449,7 @@
 <Data ss:Type="String">${_('Name')}</Data>
 </Cell>
 
-% if checkType(o):
+% if checkType2():
 	<Cell ss:StyleID="s27">
 	<Data ss:Type="String">${_('Earmarked - Budget')}</Data>
 	</Cell>
@@ -490,7 +498,7 @@
 <Cell ss:StyleID="s32" ss:Formula="=+RC[-2]-RC[-1]">
 <Data ss:Type="Number"></Data>
 </Cell>
-% if checkType(o):
+% if checkType(o,line):
 	<Cell ss:StyleID="s33">
 % else:
 	<Cell ss:StyleID="s35">
@@ -499,7 +507,7 @@
 <Data ss:Type="String">${( line[4] or '')|x}</Data>
 </Cell>
 
-% if checkType(o):
+% if checkType(o,line):
 	<Cell ss:StyleID="s31">
 	<Data ss:Type="Number">${( line[5] or '')|x}</Data>
 	</Cell>
@@ -532,7 +540,7 @@
 <Cell ss:StyleID="s45" ss:Formula="=+RC[-2]-RC[-1]">
 <Data ss:Type="Number"></Data>
 </Cell>
-% if checkType(o):
+% if checkType(o,line):
 	<Cell ss:StyleID="s46">
 % else:
 	<Cell ss:StyleID="s48">
@@ -540,7 +548,7 @@
 <Data ss:Type="String">${( getTot(2) or '')|x}</Data>
 </Cell>
 
-% if checkType(o):
+% if checkType(o,line):
 	<Cell ss:StyleID="s44">
 	<Data ss:Type="Number">${( getTot(3) or '')|x}</Data>
 	</Cell>
