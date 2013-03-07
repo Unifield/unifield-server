@@ -57,6 +57,25 @@ class tender(osv.osv):
 #                                                """ % MAX_LINES_NB),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the tender contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('tender.line').search(cr, uid, [('product_id.active', '=', False),
+                                                                       ('tender_id', 'in', ids),
+                                                                       ('tender_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot validate this tender because it contains a line with an inactive product", ['tender_line_ids', 'state'])
+    ]
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
@@ -207,11 +226,35 @@ class tender_line(osv.osv):
     '''
     _inherit = 'tender.line'
     _description = 'Tender Line'
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.to_correct_ok:
+                res[line.id].upadte({'inactive_error': line.text_error})
+            if line.tender_id and line.tender_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': _('The product in line is inactive !')}
+                
+        return res    
+    
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'text_error': fields.text('Errors'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
-
+    
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
+    
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
         if context is None:

@@ -50,6 +50,24 @@ class real_average_consumption(osv.osv):
             
         return res
 
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the real consumption report contains a line with an inactive product
+        '''
+        inactive_lines = self.pool.get('real.average.consumption.line').search(cr, uid, [
+            ('product_id.active', '=', False),
+            ('rac_id', 'in', ids),
+            ('rac_id.created_ok', '=', True)
+        ], context=context)
+
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
+
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -137,6 +155,10 @@ class real_average_consumption(osv.osv):
 
     _sql_constraints = [
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
+    ]
+
+    _constraints = [
+        (_check_active_product, "You cannot confirm this real consumption report because it contains a line with an inactive product", ['line_ids', 'created_ok']),
     ]
 
     def change_cons_location_id(self, cr, uid, ids, context=None):
@@ -551,6 +573,22 @@ class real_average_consumption_line(osv.osv):
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
 
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.product_id and not line.product_id.active:
+                res[line.id] = {
+                    'inactive_product': True,
+                    'inactive_error': _('The product in line is inactive !')
+                }
+
+        return res
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True, 
@@ -571,6 +609,13 @@ class real_average_consumption_line(osv.osv):
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        }
+
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
     }
 
 # uf-1344 => need to pass the context so we use create and write instead

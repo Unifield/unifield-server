@@ -12714,7 +12714,7 @@ msgstr "EUR"
 #: code:addons/account/account.py:1179
 #, python-format
 msgid "You cannot validate a non-balanced entry ! All lines should have a “Valid” state to validate the entry."
-msgstr "Vous ne pouvez valider une entrée non équilibrée! Toutes les lignes doivent être en mode \"valable\" pour permettre la validation de l'entrée"
+msgstr "Vous ne pouvez pas valider une entrée non équilibrée! Toutes les lignes doivent être en mode \"valable\" pour permettre la validation de l'entrée"
 
 #. modules: sales_followup, product, stock, stock_move_tracking, sd
 #: field:product.product,incoming_qty:0
@@ -67113,3 +67113,237 @@ msgstr "Rafraîchir prévisions"
 #: view:stock.forecast:0
 msgid "Close Wizard"
 msgstr "Fermer assistant"
+
+#. modules: msf_outgoing, stock_override
+#: code:addons/msf_outgoing/wizard/create_picking.py:539
+#: code:addons/stock_override/wizard/stock_partial_picking.py:188
+#, python-format
+msgid "Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !"
+msgstr "La quantié %d pour %s est plus grande que la quantité disponible du lot %s (%d) !"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:180
+#, python-format
+msgid "Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s"
+msgstr "La date indiquée est inférieure à la date du document. Veuillez mettre une date supérieure ou égale à %s"
+
+#. modules: msf_supply_doc_import, register_accounting, stock_override, consumption_calculation, kit
+#: field:real.average.consumption.line,inactive_product:0
+#: field:composition.item,inactive_product:0
+#: field:initial.stock.inventory.line,inactive_product:0
+#: field:purchase.order.line,inactive_product:0
+#: field:sale.order.line,inactive_product:0
+#: field:stock.inventory.line,inactive_product:0
+#: field:tender.line,inactive_product:0
+#: field:wizard.account.invoice.line,inactive_product:0
+#: field:stock.move,inactive_product:0
+#: field:stock.picking,inactive_product:0
+msgid "Product is inactive"
+msgstr "Le produit est inactif"
+
+#. module: kit
+#: code:addons/kit/kit.py:840
+#, python-format
+msgid "The product of the kit composition is inactive. Please change the product."
+msgstr "Le produit de la composition de kit est inactif. Veuillez changer le produit."
+
+#. module: procurement_request
+#: view:sale.order:0
+#: field:sale.order,ir_total_amount:0
+msgid "Indicative Total Value"
+msgstr "Valeur totale"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:64
+#: code:addons/kit/kit.py:832
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:41
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:121
+#: code:addons/msf_supply_doc_import/purchase_order.py:83
+#: code:addons/msf_supply_doc_import/sale_order.py:94
+#: code:addons/msf_supply_doc_import/tender.py:70
+#: code:addons/stock_override/stock.py:218
+#, python-format
+msgid "A product has"
+msgstr "Un produit a"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:322
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:455
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:488
+#, python-format
+msgid "Location is missing.\n"
+""
+msgstr "La Zone est manquante.\n"
+""
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:587
+#: code:addons/kit/kit.py:1078
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:71
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:422
+#: code:addons/msf_supply_doc_import/purchase_order.py:188
+#: code:addons/msf_supply_doc_import/sale_order.py:467
+#: code:addons/msf_supply_doc_import/tender.py:242
+#: code:addons/stock_override/stock.py:775
+#, python-format
+msgid "The product in line is inactive !"
+msgstr "Le produit sur la ligne est incatif !"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/purchase_order.py:85
+#: code:addons/msf_supply_doc_import/sale_order.py:96
+#, python-format
+msgid "%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous valider le document vous devez supprimer/corriger la ligne contenant les produits inactifs (ligne en rouge %s)"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:336
+#, python-format
+msgid "The product [%s] %s is already inactive."
+msgstr "Le produit [%s] %s est déjà inactif."
+
+#. module: register_accounting
+#: constraint:hr.employee:0
+msgid "Another employee has the same unique code."
+msgstr "Ce code est utilisé pour un autre employé."
+
+
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:66
+#: code:addons/kit/kit.py:834
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:43
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:123
+#: code:addons/stock_override/stock.py:220
+#, python-format
+msgid "those inactive products"
+msgstr "ces produits inactifs"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/tender.py:72
+#, python-format
+msgid "%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous voulez générer une demande de devis vous devez supprimer/corriger les lignes contenant ces produits inactifs (lignes en rouge %s)"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:245
+#, python-format
+msgid "The Price Unit was not defined properly."
+msgstr "Le prix unitaire n'a pas été défini correctement."
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:199
+#, python-format
+msgid "The UOM Name was not valid."
+msgstr "Le nom de l'UdM était invalide."
+
+#. modules: account_msf, register_accounting, msf_supply_doc_import, tender_flow, procurement_request
+#: constraint:purchase.order:0
+msgid "You cannot validate this purchase order because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider ce bon de commande, car il contient une ligne avec des produits inactifs."
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:64
+#: code:addons/kit/kit.py:832
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:41
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:121
+#: code:addons/msf_supply_doc_import/purchase_order.py:83
+#: code:addons/msf_supply_doc_import/sale_order.py:94
+#: code:addons/msf_supply_doc_import/tender.py:70
+#: code:addons/stock_override/stock.py:218
+#, python-format
+msgid "Some products have"
+msgstr "Certains produits ont"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:66
+#: code:addons/kit/kit.py:834
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:43
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:123
+#: code:addons/stock_override/stock.py:220
+#, python-format
+msgid "this inactive product"
+msgstr "ce produit inactif"
+
+#. modules: sale_override, msf_outgoing, msf_supply_doc_import, procurement_request
+#: constraint:sale.order:0
+msgid "You cannot validate this sale order because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider cette commande client car elle contient des lignes avec un produit inactif"
+
+#. modules: tender_flow, msf_supply_doc_import
+#: constraint:tender:0
+msgid "You cannot validate this tender because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider cet appel d'offre car il contient une ligne avec un produit inactif"
+
+
+#. module: product_attributes
+#: view:product.deactivation.error:0
+msgid "You cannot inactivate this product due to below reasons :"
+msgstr "Vous ne pouvez pas désactiver ce produit pour les raisons suivantes:"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:291
+#, python-format
+msgid "The product [%s] %s is already active."
+msgstr "Le produit [%s] %s est déjà actif."
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:67
+#: code:addons/kit/kit.py:835
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:44
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:124
+#: code:addons/stock_override/stock.py:221
+#, python-format
+msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:65
+#: code:addons/kit/kit.py:833
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:42
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:122
+#: code:addons/msf_supply_doc_import/purchase_order.py:84
+#: code:addons/msf_supply_doc_import/sale_order.py:95
+#: code:addons/msf_supply_doc_import/tender.py:71
+#: code:addons/stock_override/stock.py:219
+#, python-format
+msgid "line"
+msgstr "ligne"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:65
+#: code:addons/kit/kit.py:833
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:42
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:122
+#: code:addons/msf_supply_doc_import/purchase_order.py:84
+#: code:addons/msf_supply_doc_import/sale_order.py:95
+#: code:addons/msf_supply_doc_import/tender.py:71
+#: code:addons/stock_override/stock.py:219
+#, python-format
+msgid "lines"
+msgstr "lignes"
+
+#. modules: account_msf, register_accounting, analytic_distribution
+#: constraint:account.invoice:0
+#: constraint:wizard.account.invoice:0
+msgid "You cannot validate this invoice because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider cette facture car elle contient des lignes avec un produit inactif"
+
+#. modules: account_msf, msf_outgoing, consumption_calculation, stock_override, kit
+#: constraint:stock.picking:0
+msgid "You cannot validate this document because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider ce document car il contient des lignes avec un produit inactif"
+
+
+#. module: msf_supply_doc_import
+#: constraint:initial.stock.inventory:0
+#: constraint:stock.inventory:0
+msgid "You cannot confirm this stock inventory because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas confirmer cet inventaire car il contient des lignes avec un produit inactif"
+
+#. modules: msf_supply_doc_import, kit
+#: constraint:composition.kit:0
+msgid "You cannot confirm this kit because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas confirmer ce kit car il contient des lignes avec un produit inactif"
+
+
