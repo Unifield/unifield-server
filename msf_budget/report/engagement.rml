@@ -195,7 +195,7 @@
       <font color="white"> </font>
     </para>
     <para style="P5">
-      <font color="red">[[ (check_distribution(o) and ' ') or 'WARNING: analytic distribution for this PO is not complete!' ]]</font>
+      <font color="red">[[ check_distribution(o) and ' ' or 'WARNING: analytic distribution for this PO is not complete!' ]]</font>
     </para>
     <para style="P5">
       <font color="white"> </font>
