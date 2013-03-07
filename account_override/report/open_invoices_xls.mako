@@ -37,7 +37,7 @@
    <Font x:Family="Swiss" />
   </Style>
   <Style ss:ID="s23">
-   <Font x:Family="Swiss" ss:Color="#00FF00" ss:Bold="1"/>
+   <Font x:Family="Swiss" ss:Color="#FFFFFF" ss:Bold="1"/>
    <Interior ss:Color="#FF0000" ss:Pattern="Solid"/>
   </Style>
   <Style ss:ID="s24">
