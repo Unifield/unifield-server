@@ -201,8 +201,8 @@ The columns should be in this values:
         incoterm_obj = self.pool.get('stock.incoterms')
         to_write_po = {'error_list': [],}
         # Delivery Confirmed Date (PO)*
-        cell_nb = header_index['Delivery Confirmed Date (PO)*']
-        delivery_confirmed_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Delivery Confirmed Date (PO)*', False)
+        delivery_confirmed_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
             if row.cells[cell_nb].type == 'datetime':
                 to_write_po.update({'delivery_confirmed_date':  delivery_confirmed_date.strftime('%d-%m-%Y')})
@@ -215,13 +215,14 @@ The columns should be in this values:
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             
         # Supplier Reference
-        cell_nb = header_index['Supplier Reference']
-        partner_ref = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-        to_write_po.update({'partner_ref': partner_ref})
+        cell_nb = header_index.get('Supplier Reference', False)
+        partner_ref = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        if partner_ref:
+            to_write_po.update({'partner_ref': partner_ref})
         
         # Est. Transport Lead Time
-        cell_nb = header_index['Est. Transport Lead Time']
-        cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Est. Transport Lead Time', False)
+        cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             try:
                 est_transport_lead_time = float(cell_data)
@@ -231,8 +232,8 @@ The columns should be in this values:
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Transport Mode
-        cell_nb = header_index['Transport Mode']
-        transport_type = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Transport Mode', False)
+        transport_type = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if transport_type:
             transport_type_value = [y for (x,y) in TRANSPORT_TYPE]
             transport_type_key = [x for (x,y) in TRANSPORT_TYPE]
@@ -248,8 +249,8 @@ The columns should be in this values:
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Destination Partner and Destination Address go together
-        cell_nb = header_index['Destination Partner']
-        dest_partner_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Destination Partner', False)
+        dest_partner_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if dest_partner_name:
             dest_partner_ids = partner_obj.search(cr, uid, [('name', '=', dest_partner_name)])
             if dest_partner_ids:
@@ -261,8 +262,8 @@ The columns should be in this values:
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Invoicing Address
-        cell_nb = header_index['Invoicing Address']
-        invoice_address_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Invoicing Address', False)
+        invoice_address_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if invoice_address_name:
             invoice_address_ids = partner_address_obj.search(cr, uid, [('name', '=', invoice_address_name)])
             if invoice_address_ids:
@@ -273,8 +274,8 @@ The columns should be in this values:
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
         
         # Arrival Date in the country
-        cell_nb = header_index['Arrival Date in the country']
-        arrival_date = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Arrival Date in the country', False)
+        arrival_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
             if row.cells[cell_nb].type == 'datetime':
                 to_write_po.update({'arrival_date':  arrival_date.strftime('%d-%m-%Y')})
@@ -287,8 +288,8 @@ The columns should be in this values:
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             
         # Incoterm
-        cell_nb = header_index['Incoterm']
-        incoterm_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Incoterm', False)
+        incoterm_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if incoterm_name:
             incoterm_ids = incoterm_obj.search(cr, uid, [('name', '=', incoterm_name)])
             if incoterm_ids:
@@ -299,8 +300,8 @@ The columns should be in this values:
                 to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
 
         # Notes (PO)
-        cell_nb = header_index['Notes (PO)']
-        notes_po = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Notes (PO)', False)
+        notes_po = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         to_write_po.update({'notes': notes_po})
         
         return to_write_po
