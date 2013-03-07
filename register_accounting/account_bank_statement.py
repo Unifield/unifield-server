@@ -59,6 +59,7 @@ class res_partner(osv.osv):
             ret[id] = False
         return ret
 
+    # This method have been abandonned since UTP-510 because of prepaid accounts (type receivable) that doesn't show any partners.
     def _search_filter_third(self, cr, uid, obj, name, args, context):
         if not context:
             context = {}
@@ -73,7 +74,7 @@ class res_partner(osv.osv):
         return []
 
     _columns = {
-        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=True), # search is now fake because of UTP-510
     }
 res_partner()
 
