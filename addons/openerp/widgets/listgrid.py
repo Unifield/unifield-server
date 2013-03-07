@@ -718,7 +718,7 @@ class Button(TinyInputWidget):
         self.context = attrs.get('context', {})
 
         self.help = self.help or self.string
-        self.confirm = attrs.get('confirm') or ''
+        self.confirm = (attrs.get('confirm') or '').replace("'","\\'").replace('"','\\"')
         self.readonly = False
 
         self.width = attrs.get('width', 16)
