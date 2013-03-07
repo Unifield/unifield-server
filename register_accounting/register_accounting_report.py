@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,16 +19,8 @@
 #
 ##############################################################################
 
-import time
+# !!! each time you create a new report the "name" in the xml file should be on the form "report.sale.order_xls" but WITHOUT "report" at the beginning)
+# so in that case, only name="sale.order_xls" in the xml
 
-from report import report_sxw
-
-class bank_reconciliation(report_sxw.rml_parse):
-    def __init__(self, cr, uid, name, context=None):
-        super(bank_reconciliation, self).__init__(cr, uid, name, context=context)
-        self.localcontext.update({
-        })
-
-report_sxw.report_sxw('report.bank.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/bank_reconciliation.rml', parser=bank_reconciliation)
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+from osv import osv
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport

@@ -9,7 +9,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Invoice Lines">
-                    <label string="Did you reconcile your bank register with your paper bank statement?" colspan="4" align="0.0"/>
+                    <label string="Did you reconcile your bank statement with your paper bank statement?" colspan="4" align="0.0"/>
                     <group col="4" colspan="4">
                         <label string="" colspan="2"/>
                         <button string='No' special='cancel' icon='gtk-cancel'/>

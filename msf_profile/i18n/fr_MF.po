@@ -6748,7 +6748,7 @@ msgstr "Le code du compte doit être unique par société et instance!"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "Bank register balance"
+msgid "Bank statement balance"
 msgstr "Solde Registre de Banque"
 
 #. module: procurement
@@ -7318,7 +7318,7 @@ msgstr "Modèles périodiques"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
-msgid "Bank register balance:"
+msgid "Bank statement balance:"
 msgstr "Solde Registre de Banque: "
 
 #. module: sourcing
@@ -26668,7 +26668,7 @@ msgstr "De cette vue, ayez une analyse des différentes écritures analytiques d
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
-msgid "Search Bank Registers"
+msgid "Search Bank Statements"
 msgstr "Rechercher des Registres de Banque"
 
 #. module: stock_override
@@ -27382,7 +27382,7 @@ msgstr "Type de Ressource"
 
 #. module: register_accounting
 #: model:ir.model,name:register_accounting.model_wizard_import_cheque
-msgid "Import cheque register from a bank register"
+msgid "Import cheque register from a bank statement"
 msgstr "Importer le registre de chèques à partir du registre de Banque"
 
 #. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
@@ -33520,7 +33520,7 @@ msgstr "sync.check_common"
 
 #. module: register_accounting
 #: help:account.bank.statement.line,from_import_cheque_id:0
-msgid "This move line has been taken for create an Import Cheque in a bank register."
+msgid "This move line has been taken for create an Import Cheque in a bank statement."
 msgstr "Cette ligne de mouvement a été prise pour créer une importation de chèque dans un registre de banque."
 
 #. module: resource
@@ -33880,7 +33880,7 @@ msgstr "Kit et liste théorique complète"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_confirm_bank.py:42
 #, python-format
-msgid "No register selected. Please do a bank confirmation from a bank register!"
+msgid "No register selected. Please do a bank confirmation from a bank statement!"
 msgstr "Pas de registre sélectionné. Veuillez faire une confirmation bancaire à partir d'un registre de banque!"
 
 #. modules: account, msf_instance
@@ -35240,7 +35240,7 @@ msgstr "Jours"
 
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.act_account_journal_2_account_bank_statement
-msgid "Bank registers"
+msgid "Bank statements"
 msgstr "Registres de Banque"
 
 #. module: account_msf
@@ -39953,7 +39953,7 @@ msgstr "4"
 
 #. module: account
 #: help:account.bank.statement,balance_end_real:0
-msgid "Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank register is equal to that amount."
+msgid "Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."
 msgstr "Veuillez saisir manuellement le solde de fin de mois, d'après le relevé bancaire (imprimé) reçu. Avant de confirmer les fermetures de solde et de registre, vous devez vous assurer que le solde calculé du registre de banque est égal à ce montant."
 
 #. module: base
@@ -46394,7 +46394,7 @@ msgstr "Règles non compatibles avec les objets osv_memory !"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_bank_statement_tree
-msgid "A bank register is a summary of all financial transactions occurring over a given period of time on a deposit account, \n"
+msgid "A bank statement is a summary of all financial transactions occurring over a given period of time on a deposit account, \n"
 "                a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is \n"
 "                to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form.\n"
 "            "
@@ -47587,7 +47587,7 @@ msgstr "\n"
 #. module: register_accounting
 #: view:account.bank.statement:0
 #: selection:wizard.register.creation.lines,register_type:0
-msgid "Bank Register"
+msgid "Bank Statement"
 msgstr "Registre de Banque"
 
 #. modules: msf_budget, account_payment, sale_override, procurement_auto, purchase_override, sale, purchase_allocation_report, sourcing, purchase_followup, procurement_cycle, stock
@@ -49983,7 +49983,7 @@ msgstr "Comptes Clients "
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:454
 #, python-format
-msgid "Bank register balance is not equal to Calculated balance."
+msgid "Bank statement balance is not equal to Calculated balance."
 msgstr "Le Solde du Registre de Banque n'est pas égal au Solde Calculé "
 
 #. module: board
@@ -52802,7 +52802,7 @@ msgstr "Colis - Poids (kg)"
 
 #. module: register_accounting
 #: view:wizard.confirm.bank:0
-msgid "Did you reconcile your bank register with your paper bank statement?"
+msgid "Did you reconcile your bank statement with your paper bank statement?"
 msgstr "Avez-vous lettré votre registre bancaire avec vos relevés bancaires (version papier)?"
 
 #. module: account_hq_entries
@@ -57493,7 +57493,7 @@ msgstr "Ne créez pas de mvmnt de stock pour cette ligne"
 #: model:ir.actions.act_window,name:account.action_bank_statement_tree
 #: model:ir.ui.menu,name:account.menu_bank_statement_tree
 #: model:ir.actions.act_window,name:register_accounting.action_bank_statement_periodic_tree
-msgid "Bank Registers"
+msgid "Bank Statements"
 msgstr "Registres de Banque"
 
 #. module: base
