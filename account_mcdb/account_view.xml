@@ -95,10 +95,14 @@
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
                         <field name="move_id" select="1"/>
+                        <field name="ref" select="1" string="Reference"/>
+                        <newline/>
                         <field name="document_date"/>
                         <field name="date" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
+                        <field name="name" select="1"/>
+                        <newline/>
                         <field name="partner_id" select='1' string="3RD Party Partner"/>
                         <field name="employee_id" select='1' string="3RD Party Employee"/>
                         <field name="transfer_journal_id" select='1' string="3RD Party Journal"/>
@@ -112,8 +116,6 @@
                     </group>
                     <newline/>
                     <group expand="0" string="Extended Filters...">
-                        <field name="ref" select="1" string="Reference"/>
-                        <field name="name" select="1"/>
                         <field name="narration" select="1"/>
                         <field name="balance" string="Debit/Credit" select='1'/>
                     </group>

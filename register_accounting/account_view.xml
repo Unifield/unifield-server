@@ -867,7 +867,8 @@
             <field name="inherit_id" ref="account.view_account_move_line_filter" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="//field[@name='partner_id']" position="replace">
+                    <xpath expr="//field[@name='name']" position="after">
+                        <newline/>
                         <field name="partner_id" select="1" string="3RD Party Partner"/>
                         <field name="employee_id" select="1" string="3RD Party Employee"/>
                         <field name="transfer_journal_id" select="1" string="3RD Party Journal"/>

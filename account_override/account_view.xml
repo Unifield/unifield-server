@@ -199,6 +199,7 @@
                         <field name="journal_type"/>
                     </xpath>
                     <xpath expr="//field[@name='date']" position="replace">
+                        <newline/>
                         <field name="document_date" select="1"/>
                         <field name="date" select="1"/>
                     </xpath>
@@ -217,14 +218,27 @@
                 <data>
                     <xpath expr="//filter[@string='Unbalanced']" position="replace">
                         <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
+                      </xpath>
+                    <xpath expr="//field[@name='ref']" position="replace">
+                    </xpath>
+                    <xpath expr="//field[@name='name']" position="replace">
                     </xpath>
                     <xpath expr="//field[@name='move_id']" position="replace">
                         <field name="move_id" select="1"/>
+                        <field name="ref" select="1"/>
                     </xpath>
                     <xpath expr="//field[@name='date']" position="replace">
+                        <newline/>
                         <field name="document_date" select="1"/>
                         <field name="date" select="1"/>
                         <newline/>
+                    </xpath>
+                    <xpath expr="//field[@name='partner_id']" position="replace">
+                        <field name="name" select="1"/>
+                    </xpath>
+                    <xpath expr="//field[@name='journal_id']" position="replace">
+                        <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
+                        <field name="journal_type"/>
                     </xpath>
                 </data>
             </field>
