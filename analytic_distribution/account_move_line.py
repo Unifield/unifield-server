@@ -86,12 +86,14 @@ class account_move_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
+        get_sel = self.pool.get('ir.model.fields').get_browse_selection
         for ml in self.browse(cr, uid, ids):
             res[ml.id] = ''
             from_header = ''
             if ml.have_analytic_distribution_from_header:
-                from_header = ' (from header)'
-            res[ml.id] = ml.analytic_distribution_state.capitalize() + from_header
+                from_header = _(' (from header)')
+            d_state = get_sel(cr, uid, ml, 'analytic_distribution_state', context)
+            res[ml.id] = "%s%s" % (d_state, from_header)
             if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code != 'expense':
                 res[ml.id] = ''
         return res
@@ -226,6 +228,8 @@ class account_move_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': ml.account_id and ml.account_id.id or False,
+            'posting_date': ml.date,
+            'document_date': ml.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -239,7 +243,7 @@ class account_move_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

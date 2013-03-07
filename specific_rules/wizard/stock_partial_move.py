@@ -86,15 +86,25 @@ class stock_partial_move_memory_out(osv.osv_memory):
             
         return result
     
-    def change_lot(self, cr, uid, id, prodlot_id, context=None):
+    def change_lot(self, cr, uid, id, prodlot_id, qty=0.00, location_id=False, context=None):
         '''
         prod lot changes, update the expiry date
         '''
+        if not context:
+            context = {}
+
         prodlot_obj = self.pool.get('stock.production.lot')
-        result = {'value':{}}
+        result = {'value':{}, 'warning': {}}
         
         if prodlot_id:
-            result['value'].update(expiry_date=prodlot_obj.browse(cr, uid, prodlot_id, context).life_date)
+            c = context.copy()
+            if location_id:
+                c.update({'location_id': location_id})
+            lot = prodlot_obj.browse(cr, uid, prodlot_id, c)
+            result['value'].update(expiry_date=lot.life_date)
+            if qty and lot.stock_available < qty:
+                result['warning'].update({'title': _('Quantity error'),
+                                          'message': _('The quantity to process is larger than the available quantity in Batch %s') % lot.name})
         else:
             result['value'].update(expiry_date=False)
         

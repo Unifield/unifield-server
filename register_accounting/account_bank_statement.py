@@ -787,7 +787,6 @@ class account_bank_statement_line(osv.osv):
         return result
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
@@ -796,8 +795,7 @@ class account_bank_statement_line(osv.osv):
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
             ('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
-            ('account.bank.statement', 'Register')], multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
@@ -812,8 +810,7 @@ class account_bank_statement_line(osv.osv):
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
-            ('account.bank.statement', 'Register')], help="To use for python code when registering", multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', 
             string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
@@ -900,9 +897,8 @@ class account_bank_statement_line(osv.osv):
             'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id, register_id and partner_type support
+            # Add employee_id, transfer_journal_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
-            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
@@ -951,9 +947,8 @@ class account_bank_statement_line(osv.osv):
             'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id and register_id support
+            # Add employee_id and transfer_journal_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
-            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
