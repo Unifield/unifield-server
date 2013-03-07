@@ -45,8 +45,9 @@ class product_nomenclature(osv.osv):
             context = {}
         # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
         lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
-        if lang_dict.get('context_lang'):
-            context['lang'] = lang_dict.get('context_lang')
+        if not context.get('yml_test', False):
+            if lang_dict.get('context_lang'):
+                context['lang'] = lang_dict.get('context_lang')
             
         fields = ['name', 'parent_id']
         if context.get('withnum') == 1:

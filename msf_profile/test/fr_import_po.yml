@@ -1,8 +1,8 @@
 -
-  Create Purchase Order (PO1) in English
+  Create Purchase Order (PO2) in French
 - 
-  !record {model: purchase.order, id: po1}:
-    name: My PO test
+  !record {model: purchase.order, id: po2}:
+    name: My PO test in French
     company_id: base.main_company
     date_order: '2011-04-01'
     delivery_requested_date: '2011-04-13'
@@ -16,15 +16,15 @@
     order_type: regular
     categ: other
 -
-  Open the wizard of import of PO lines (the code for testing the import of the RfQ is the same)
+  Open the wizard of import of PO lines in French (the code for testing the import of the RfQ is the same)
 -
   !python {model: purchase.order}: |
     import base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
     # we set the lang to English to test the translation of the template's header columns
-    lang = 'en_MF'
+    lang = 'fr_MF'
     context.update({'yml_test': True, 'lang': lang})
-    wizard_values = self.wizard_import_po_line(cr, uid, ref('po1'), context)
+    wizard_values = self.wizard_import_po_line(cr, uid, ref('po2'), context)
     res_model = wizard_values['res_model']
     assert res_model == 'wizard.import.po.line', "Wizard should be wizard.import.po.line"
     logging.getLogger('tests').log(logging.TEST, 'We check the header of the template (translation)')
@@ -37,27 +37,29 @@
             cell_data = first_row.cells[cell].data
             column_header.append(cell_data)
         break
-    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment']
+    expected_header = ['Code Produit', 'Description Produit', 'Quantité', 'UdM', 'Prix', u'Date de livraison demandée', 'Devises', 'Commentaire']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
+    self.pool.get('wizard.import.po.line').cancel(cr, uid, wizard_values['res_id'], context)
     self.pool.get(res_model).cancel(cr, uid, wizard_values['res_id'], context)
 -
-  Import po lines in English
+  Import po lines in French
 -
   !python {model: wizard.import.po.line}: |
     import addons, base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-    lang = 'en_MF'
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'po.xml')
+    # we set the lang to French and take the file to import accordingly
+    lang = 'fr_MF'
+    file_path = addons.get_module_resource('msf_profile','test','import_files_for_testing', 'fr_po.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     vals={'file': file64,
           'filename_template': 'template.xls',
           'filename': 'Lines_Not_Imported.xls',
-          'po_id': ref('po1')}
+          'po_id': ref('po2')}
     wizard_id = self.create(cr, uid, vals, context)
     read_wiz = self.read(cr, uid, wizard_id, ['file'], context)['file']
     assert read_wiz, ('The file was not written in wizard')
-    logging.getLogger('tests').log(logging.TEST, 'We create the wizard import po.xml. in English')
+    logging.getLogger('tests').log(logging.TEST, 'We create the wizard import po.xml in French.')
     # the yml_test is important to avoid going through the threading method
     context.update({'yml_test': True, 'lang': lang})
     logging.getLogger('tests').log(logging.TEST, 'We import po.xml.')
@@ -67,7 +69,7 @@
     wiz_read = self.read(cr, uid, wizard_id, ['state', 'percent_completed', 'data'])
     assert wiz_read['percent_completed'], ("Nothing was imported")
     logging.getLogger('tests').log(logging.TEST, 'The import is finished. Completed: %s' % (wiz_read['percent_completed']))
-    logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error in English')
+    logging.getLogger('tests').log(logging.TEST, 'Check the file of the lines with error in French.')
     fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['data']))
     rows = fileobj.getRows()
     rows.next()
@@ -76,11 +78,11 @@
         count_row += 1
     assert count_row==2, ("The file should contain 2 lines but the number of lines is %s" % count_row)
 -
-  Check po lines imported in English
+  Check po lines imported in French
 -
   !python {model: purchase.order}: |
     import logging
-    po = self.browse(cr, uid, ref('po1'), context)
+    po = self.browse(cr, uid, ref('po2'), context)
     count_line_imported = len(po.order_line)
     assert count_line_imported==15, ("The number of lines imported should be 15 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in po.order_line if line.to_correct_ok])
@@ -89,7 +91,7 @@
     ProdA_ids = pol_obj.search(cr, uid, [('order_id', '=', po.id), ('default_code', '=', 'ProdA')], context=context)
     read_ProdA = pol_obj.read(cr, uid, ProdA_ids, ['price_unit', 'product_uom', 'type', 'date_planned', 'product_qty', 'functional_currency_id', 'comment'], context)[0]
     logging.getLogger('tests').log(logging.TEST, "Check the price of the product ('ProdA') if it was fulfill.")
-    assert read_ProdA['price_unit'] == 111, ("The price was defined in the xml file, it must be this one (111) but is is %s" % read_ProdA['price_unit'])
+    assert read_ProdA['price_unit'] == 3.15, ("The price was defined in the xml file, it must be this one (3.15) but is is %s" % read_ProdA['price_unit'])
     logging.getLogger('tests').log(logging.TEST, 'Check the UOM of the product if it was fulfill and right.')
     uom_unit = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product', 'product_uom_unit')[1]
     assert read_ProdA['product_uom'][0] == uom_unit, ("The UOM was not defined in the xml file, it should be this one (PCE)")

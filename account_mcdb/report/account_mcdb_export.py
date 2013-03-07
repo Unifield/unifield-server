@@ -28,7 +28,6 @@ from base64 import encodestring
 from time import strftime
 import csv
 from tempfile import TemporaryFile
-from report.report_sxw import getSel
 
 class account_line_csv_export(osv.osv_memory):
     _name = 'account.line.csv.export'
@@ -47,6 +46,8 @@ class account_line_csv_export(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
+        field_sel = self.pool.get('ir.model.fields').get_browse_selection
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not writer:
@@ -118,7 +119,7 @@ class account_line_csv_export(osv.osv_memory):
             #reconcile_total_partial_id
             csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
             #state
-            csv_line.append(getSel(self.pool, cr, uid, ml, 'state', context).encode('utf-8'))
+            csv_line.append(field_sel(cr, uid, ml, 'state', context).encode('utf-8'))
             # Write line
             writer.writerow(csv_line)
             
@@ -292,7 +293,7 @@ class account_line_csv_export(osv.osv_memory):
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
             #state
-            csv_line.append(getSel(self.pool, cr, uid, absl, 'state', context).encode('utf-8'))
+            csv_line.append(field_sel(cr, uid, absl, 'state', context).encode('utf-8'))
             #statement
             csv_line.append(absl.statement_id and absl.statement_id.name and absl.statement_id.name.encode('utf-8') or '')
             # Write line

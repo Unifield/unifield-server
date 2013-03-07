@@ -366,7 +366,7 @@
                     <field name="partner_type" context="{'search_default_active': True}"/>
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
-                    <field name="register_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
                     <field name="currency_id"/>
@@ -397,7 +397,7 @@
                     <field name="account_id" readonly="1"/>
                     <field name="partner_id" readonly="1"/>
                     <field name="employee_id" readonly="1"/>
-                    <field name="register_id" readonly="1"/>
+                    <field name="transfer_journal_id" readonly="1"/>
                     <field name="amount_in" readonly="1"/>
                     <field name="amount_out" readonly="1"/>
                     <field name="currency_id" readonly="1"/>
@@ -441,7 +441,7 @@
                     <group expand="0" string="Group By..." colspan="12" col="10">
                         <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                         <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
-                        <filter string="3rd party Register" icon="terp-dolar" domain="[]" context="{'group_by': 'register_id'}"/>
+                        <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
                         <separator orientation="vertical"/>
                         <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
                         <separator orientation="vertical"/>

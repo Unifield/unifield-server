@@ -1,8 +1,9 @@
 -
-  Create a Sale Order 1 (SO1) in English
+  Create a Sale Order 2 (SO2) in French
 -
-  !record {model: sale.order, id: so1}:
-    name: My FO test
+  !record {model: sale.order, id: so2}:
+    name: My FO test in French
+    company_id: base.main_company
     company_id: base.main_company
     date_order: '2011-04-01'
     delivery_requested_date: '2011-04-13'
@@ -16,15 +17,15 @@
     pricelist_id: product.list0
     shop_id: sale.shop
 -
-  Open the import wizard for the SO in English
+  Open the import wizard for the SO in French
 -
   !python {model: sale.order}: |
     import base64, logging
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-    # we set the lang to English to test the translation of the template's header columns
-    lang = 'en_MF'
+    # we set the lang to French to test the translation of the template's header columns
+    lang = 'fr_MF'
     context.update({'yml_test': True, 'lang': lang})
-    wiz_values = self.wizard_import_fo_line(cr, uid, ref('so1'), context)
+    wiz_values = self.wizard_import_fo_line(cr, uid, ref('so2'), context)
     res_model = wiz_values['res_model']
     assert res_model == 'wizard.import.fo.line', ("The wizard model should be 'wizard.import.fo.line' and it is %s" % res_model)
     logging.getLogger('tests').log(logging.TEST, 'We check the header of the template (translation)')
@@ -37,35 +38,35 @@
             cell_data = first_row.cells[cell].data
             column_header.append(cell_data)
         break
-    expected_header = ['Product Code', 'Product Description', 'Quantity', 'UoM', 'Price', 'Delivery requested date', 'Currency', 'Comment']
+    expected_header = ['Code Produit', 'Description Produit', 'Quantité', 'UdM', 'Prix', 'Date de livraison demandée', 'Devises', 'Commentaire']
     assert column_header==expected_header, ("Wrong header, it should be %s and it is %s" % (expected_header, column_header))
-    assert wiz_values['context'].get('active_id') == ref("so1"), ("The reference to the fo doesn't exist")
+    assert wiz_values['context'].get('active_id') == ref("so2"), ("The reference to the fo doesn't exist")
     self.pool.get(res_model).cancel(cr, uid, wiz_values['res_id'], context)
 -
   Import the file through the wizard for the SO
 -
   !python {model: wizard.import.fo.line}: |
     import addons, base64, logging
-    wiz_ids = self.search(cr, uid, [('fo_id', '=', ref('so1'))])
-    assert len(wiz_ids) == 1, ("There should be one wizard open at a time")
+    wiz_ids = self.search(cr, uid, [('fo_id', '=', ref('so2'))])
+    assert len(wiz_ids) == 1, ("There should be one wizard open at a time and there are %s" % len(wiz_ids))
     # we set the lang to French and take the file to import accordingly
-    lang = 'en_MF'
+    lang = 'fr_MF'
     # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'so.xml')
+    file_path = addons.get_module_resource('msf_profile','test','import_files_for_testing', 'fr_so.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
-    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard in English.')
+    logging.getLogger('tests').log(logging.TEST, 'We write the file to import in the wizard in French.')
     self.write(cr, uid, wiz_ids, {'file': file64}, context)
     context.update({'yml_test': True, 'lang': lang})
     logging.getLogger('tests').log(logging.TEST, 'We import the file.')
     self.import_file(cr, uid, wiz_ids, context)
     self.close_import(cr, uid, wiz_ids, context)
 -
-  Check the lines imported on the fo in English
+  Check the lines imported on the fo in French
 -
   !python {model: sale.order}: |
     import logging
-    fo = self.browse(cr, uid, ref('so1'), context)
+    fo = self.browse(cr, uid, ref('so2'), context)
     count_line_imported = len(fo.order_line)
     assert count_line_imported==16, ("The number of lines imported should be 16 but it is %s" % count_line_imported)
     count_line_with_errors = len([line for line in fo.order_line if line.to_correct_ok])
