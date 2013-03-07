@@ -20,6 +20,8 @@
   <ProtectStructure>False</ProtectStructure>
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
+
+
 <Styles>
     <Style ss:ID="header">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -31,6 +33,7 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
@@ -40,6 +43,17 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+
+	<Style ss:ID="lineN">
+		<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+		<Borders>
+			<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+			<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+			<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+			<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+		</Borders>
+		<NumberFormat ss:Format="Standard"/>
+	</Style>
 
     <Style ss:ID="title">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -94,9 +108,9 @@
 
 </Styles>
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +' (id'+str(o.id)+')' or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
 
-<Table ss:ExpandedColumnCount="17">
+<Table >
 <Column ss:Width="61.5"/>
 <Column ss:Width="120"/>
 <Column ss:Width="93.75"/>
@@ -156,11 +170,15 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.account_id.code and line.account_id.name and line.account_id.code + ' ' + line.account_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.first_move_line_id and line.first_move_line_id.partner_txt or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.credit_currency or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit_currency or '')|x}</Data></Cell>
+
+
+        <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.credit_currency or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit_currency or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id and line.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.credit or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit or '')|x}</Data></Cell>
+
+        <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.credit or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.first_move_line_id and line.first_move_line_id.debit or 0.00)|x}</Data></Cell>
+
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
     </Row>
 
