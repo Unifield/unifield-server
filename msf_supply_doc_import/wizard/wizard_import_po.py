@@ -316,8 +316,8 @@ The columns should be in this values:
         }
 
         # Order Reference*
-        cell_nb = header_index['Order Reference*']
-        order_name = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
+        cell_nb = header_index.get('Order Reference*', False)
+        order_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if order_name:
             order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
             if not order_ids:
