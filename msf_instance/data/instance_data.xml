@@ -9,6 +9,7 @@
             <field name="state">draft</field>
             <field name="move_prefix">SO120</field>
             <field name="reconcile_prefix">A1</field>
+            <field name="top_cost_center_id">analytic_distribution.analytic_account_project</field>
         </record>
 
         <record model="res.company" id="base.main_company">
