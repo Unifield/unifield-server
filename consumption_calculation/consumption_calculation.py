@@ -510,7 +510,8 @@ class real_average_consumption_line(osv.osv):
                         raise osv.except_osv(_('Error'), 
                             _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or _('No expiry date set')))
                     elif context.get('import_in_progress'):
-                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)") % (context.get('line_num', False), strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
+                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)"
+                                               ) % (context.get('line_num', False), expiry_date and strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
                         context.update({'error_message': error_message})
                 else:
                     prodlot_id = prod_ids[0]
