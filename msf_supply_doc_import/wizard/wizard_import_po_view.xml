@@ -27,6 +27,8 @@
 	                    attrs="{'invisible':[('state', '!=', 'in_progress')]}"/>
 	                    <button name="close_import" string="Close window" icon="gtk-cancel" type="object" 
 	                    attrs="{'invisible':[('state', '!=', 'done')]}"/>
+                        <button name="open_po" string="Go to the PO" icon="gtk-ok" type="object" 
+                        attrs="{'invisible':[('state', '!=', 'done')]}"/>
                     </group>
                     <newline/>
                     <field name="state" colspan="1"/>

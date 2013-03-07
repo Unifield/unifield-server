@@ -754,6 +754,24 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % po_name})
         return False
 
+    def open_po(self, cr, uid, ids, context=None):
+        '''
+        Open the PO in a new window, just to check it after an import
+        '''
+        if isinstance(ids, (int, long)):
+            ids=[ids]
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order',
+                'view_type': 'form',
+                'view_mode': 'form, tree',
+                'target': 'new',
+                'res_id': po_id,
+                'context': context,
+                }
+
+
     def cancel(self, cr, uid, ids, context=None):
         '''
         Return to the initial view. I don't use the special cancel because when I open the wizard with target: crush, and I click on cancel (the special),
