@@ -67,6 +67,7 @@
     instance: Proj. instance
     #parent_id: msf_instance.instance_section
     name: Project 1
+    top_cost_center_id: analytic_account_kenya
     target_cost_center_ids:
       - cost_center_id: analytic_account_kenya
         is_target: True
