@@ -251,6 +251,12 @@ class product_attributes(osv.osv):
                 return []
             
         return [('id', 'in', ids)] 
+
+    def _get_product_status(self, cr, uid, ids, context=None):
+        return self.pool.get('product.product').search(cr, uid, [('state', 'in', ids)], context=context)
+
+    def _get_product_status(self, cr, uid, ids, context=None):
+        return self.pool.get('product.product').search(cr, uid, [('international_status', 'in', ids)], context=context)
     
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -321,6 +327,26 @@ class product_attributes(osv.osv):
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.boolean(string='Controlled substance'),
+        'external_ok': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
+                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                              'product.status': (_get_product_status, ['external_ok'], 10),
+                                              'product.international.status': (_get_international_status, ['external_ok'], 10),}),
+        'esc_ok': fields.function(_get_restriction, method=True, type='boolean', string='ESC partners orders', readonly=True, multi='restriction',
+                                  store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                         'product.status': (_get_product_status, ['esc_ok'], 10),
+                                         'product.international.status': (_get_international_status, ['esc_ok'], 10),}),
+        'internal_ok': fields.function(_get_restriction, method=True, type='boolean', string='Internal partners orders', readonly=True, multi='restriction',
+                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                              'product.status': (_get_product_status, ['internal_ok'], 10),
+                                              'product.international.status': (_get_international_status, ['internal_ok'], 10),}),
+        'consumption_ok': fields.function(_get_restriction, method=True, type='boolean', string='Comsumption', readonly=True, multi='restriction',
+                                          store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                                 'product.status': (_get_product_status, ['consumption_ok'], 10),
+                                                 'product.international.status': (_get_international_status, ['consumption_ok'], 10),}),
+        'storage_ok': fields.function(_get_restriction, method=True, type='boolean', string='Storage', readonly=True, multi='restriction',
+                                      store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
+                                             'product.status': (_get_product_status, ['storage_ok'], 10),
+                                             'product.international.status': (_get_international_status, ['storage_ok'], 10),}),
     }
     
     def default_get(self, cr, uid, fields, context=None):
