@@ -502,8 +502,8 @@ class real_average_consumption_line(osv.osv):
 
             if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
-                                                    ('type', '=', 'internal'),
-                                                    ('product_id', '=', obj.product_id.id)])
+                                                                                  ('type', '=', 'internal'),
+                                                                                  ('product_id', '=', obj.product_id.id)], context=context)
                 expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
