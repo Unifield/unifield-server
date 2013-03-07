@@ -41,7 +41,13 @@ class product_status(osv.osv):
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True),
+        'external_ok': fields.boolean(string='External partners orders'),
+        'esc_ok': fields.boolean(string='ESC partners orders'),
+        'internal_ok': fields.boolean(string='Internal partners orders'),
+        'consumption_ok': fields.boolean(string='Consumption'),
+        'storage_ok': fields.boolean(string='Storage'),
     }
+
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -59,6 +65,11 @@ class product_international_status(osv.osv):
     _columns = {
         'code': fields.char('Code', size=256),
         'name': fields.char('Name', size=256, required=True),
+        'external_ok': fields.boolean(string='External partners orders'),
+        'esc_ok': fields.boolean(string='ESC partners orders'),
+        'internal_ok': fields.boolean(string='Internal partners orders'),
+        'consumption_ok': fields.boolean(string='Consumption'),
+        'storage_ok': fields.boolean(string='Storage'),
     }
     def unlink(self, cr, uid, ids, context=None):
         if context is None:
