@@ -16,6 +16,13 @@
                     <xpath expr="/form//field[@name='name']" position="replace">
                         <field name="name" required="1" />
                     </xpath>
+                    <!-- UF-1846: we hide the product_uos_qty and product_uos that were displayed after the user right installation -->
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos_qty']" position="attributes">
+                         <attribute name="invisible">1</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos']" position="attributes">
+                         <attribute name="invisible">1</attribute>
+                    </xpath>
 
                     <!-- uf-1499
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">

@@ -107,7 +107,7 @@ class composition_kit(osv.osv):
                 raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
 Module, Product Code*, Product Description, Quantity and Product UOM"""))
 
-            if not check_line.check_empty_line(row=row, col_count=col_count):
+            if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                 continue
 
             # Cell 0: Module
@@ -134,7 +134,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
                          'item_qty': to_write['qty'],
                          'item_module': module,
                          'item_kit_id': item_kit_id,
-                         'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+                         'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                          'text_error': '\n'.join(to_write['error_list'])}
 
             context['import_in_progress'] = True
@@ -144,10 +144,10 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
-                error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+                error += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
 
         if complete_lines or error:
-            self.log(cr, uid, obj.id, _("# lines imported: %s. %s" % (complete_lines, error or '')), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("# lines imported: %s. %s") % (complete_lines, error or ''), context={'view_id': view_id, })
         return True
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -192,8 +192,8 @@ class composition_item(osv.osv):
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': 'Wrong Product UOM !',
-                           'message': "You have to select a product UOM in the same category than the UOM of the product"}
+                warning = {'title': _('Wrong Product UOM !'),
+                           'message': _("You have to select a product UOM in the same category than the UOM of the product")}
         return {'warning': warning}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -208,10 +208,10 @@ class composition_item(osv.osv):
             message = ''
             if vals.get('item_uom_id'):
                 if vals.get('item_uom_id') == tbd_uom:
-                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+                    message += _('You have to define a valid UOM, i.e. not "To be defined".')
             if vals.get('item_product_id'):
                 if vals.get('item_product_id') == tbd_product:
-                    message += 'You have to define a valid product, i.e. not "To be define".'
+                    message += _('You have to define a valid product, i.e. not "To be defined".')
             if vals.get('item_uom_id') and vals.get('item_product_id'):
                 product_id = vals.get('item_product_id')
                 product_uom = vals.get('item_uom_id')

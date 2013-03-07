@@ -29,7 +29,6 @@ class rfq(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'to_time': self.str_to_time,
-            'selection': self._get_selection,
             'enumerate': enumerate,
         })
         
@@ -43,18 +42,6 @@ class rfq(report_sxw.rml_parse):
         
         return ''
             
-                    
-    def _get_selection(self, o, field):
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
-        return res
-        
 report_sxw.report_sxw('report.msf.purchase.quotation','purchase.order','addons/purchase_override/report/rfq.rml',parser=rfq, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

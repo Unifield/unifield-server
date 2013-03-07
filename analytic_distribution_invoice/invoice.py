@@ -228,8 +228,8 @@ class account_invoice_line(osv.osv):
                 continue
             from_header = ''
             if invl.have_analytic_distribution_from_header:
-                from_header = ' (from header)'
-            res[invl.id] = invl.analytic_distribution_state.capitalize() + from_header
+                from_header = _(' (from header)')
+            res[invl.id] = '%s%s' % (self.pool.get('ir.model.fields').get_browse_selection(cr, uid, invl, 'analytic_distribution_state', context), from_header)
         return res
 
     _columns = {

@@ -121,7 +121,7 @@ class stock_reason_type(osv.osv):
         return dict(res)
 
     _columns = {
-        'name': fields.char(size=128, string='Name', required=True),
+        'name': fields.char(size=128, string='Name', required=True, translate=1),
         'code': fields.integer(string='Code', required=True),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name'),
         'parent_id': fields.many2one('stock.reason.type', string='Parent reason'),

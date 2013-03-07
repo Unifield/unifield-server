@@ -72,6 +72,7 @@
   Process the incoming shipment
 -
   !python {model: stock.picking}: |
+    context.update({'yml_test': True})
     po_id = context['po_id_claim']
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)

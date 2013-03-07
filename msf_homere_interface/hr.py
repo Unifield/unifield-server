@@ -260,5 +260,19 @@ class hr_employee(osv.osv):
                 vals.update({'funding_pool_id': False})
         return {'value': vals}
 
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        if not args:
+            args=[]
+        if context is None:
+            context={}
+        # UTP-441: only see active employee execept if args also contains a search on 'active' field
+        disrupt = False
+        if context.get('disrupt_inactive', False) and context.get('disrupt_inactive') == True:
+            disrupt = True
+        if not disrupt:
+            if not ('active', '=', False) or not ('active', '=', True) in args:
+                args += [('active', '=', True)]
+        return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
+
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

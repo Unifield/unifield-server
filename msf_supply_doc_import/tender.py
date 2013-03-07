@@ -23,12 +23,15 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
+from msf_supply_doc_import import GENERIC_MESSAGE
 # import below commented in utp-1344: becomes useless as the import is done in wizard
 #from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 #import check_line
 #from msf_supply_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_supply_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
+from msf_supply_doc_import import GENERIC_MESSAGE
+from msf_supply_doc_import.wizard import TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
 
 
 class tender(osv.osv):
@@ -167,12 +170,15 @@ class tender(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = columns_header_for_tender_line_import
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_tender_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
-                                                                            'filename_template': 'template.xls',
-                                                                            'filename': 'Lines_Not_Imported.xls',
-                                                                            'tender_id': ids[0]}, context)
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': file,
+                                                                                'filename_template': 'template.xls',
+                                                                                'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_tender_line_import]), ),
+                                                                                'filename': 'Lines_Not_Imported.xls',
+                                                                                'tender_id': ids[0],
+                                                                                'state': 'draft',}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.tender.line',
                 'res_id': export_id,
@@ -225,9 +231,9 @@ class tender_line(osv.osv):
             uom = uom_obj.browse(cr, uid, uom_id, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
                 # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += """The product UOM must be in the same category than the UOM of the product.
+                text_error += _("""The product UOM must be in the same category than the UOM of the product.
 The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """ % (product.uom_id.category_id.name, uom.category_id.name)
+                """) % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
@@ -236,7 +242,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             return to_write.update({'product_uom': product_uom})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
             # this is inspired by the on_change in purchase>purchase.py: product_uom_change
-            text_error += "\n The UoM was not defined so we set the price unit to 0.0."
+            text_error += _("\n The UoM was not defined so we set the price unit to 0.0.")
             return to_write.update({'text_error': text_error,
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
@@ -252,8 +258,8 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': 'Wrong Product UOM !',
-                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product"}
+                warning = {'title': _('Wrong Product UOM !'),
+                           'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
         return {'warning': warning}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -268,10 +274,10 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             message = ''
             if vals.get('product_uom'):
                 if vals.get('product_uom') == tbd_uom:
-                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+                    message += _('You have to define a valid UOM, i.e. not "To be define".')
             if vals.get('product_id'):
                 if vals.get('product_id') == tbd_product:
-                    message += 'You have to define a valid product, i.e. not "To be define".'
+                    message += _('You have to define a valid product, i.e. not "To be define".')
             if vals.get('product_uom') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('product_uom')

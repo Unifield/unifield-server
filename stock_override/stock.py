@@ -668,51 +668,10 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        loc_obj = self.pool.get('stock.location')
-        prodlot_obj = self.pool.get('stock.production.lot')
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
                 if move.product_id.perishable: # perishable for perishable or batch management
-                    if move.state == 'assigned': # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
-                        needed_qty = move.product_qty
-                        res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
-                        if 'fefo' in res: 
-                            values = {'name': move.name,
-                                      'picking_id': pick.id,
-                                      'product_uom': move.product_uom.id,
-                                      'product_id': move.product_id.id,
-                                      'date_expected': move.date_expected,
-                                      'date': move.date,
-                                      'state': 'assigned',
-                                      'location_dest_id': move.location_dest_id.id,
-                                      'reason_type_id': move.reason_type_id.id,
-                                      }
-                            for loc in res['fefo']:
-                                # we ignore the batch that are outdated
-                                expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                                if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
-                                    # as long all needed are not fulfilled
-                                    if needed_qty:
-                                        # if the batch already exists and qty is enough, it is available (assigned)
-                                        if needed_qty <= loc['qty']:
-                                            if move.prodlot_id.id == loc['prodlot_id']:
-                                                move_obj.write(cr, uid, move.id, {'state': 'assigned'}, context)
-                                            else:
-                                                move_obj.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
-                                                                            'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
-                                                needed_qty = 0.0
-                                        elif needed_qty:
-                                            # we take all available
-                                            selected_qty = loc['qty']
-                                            needed_qty -= selected_qty
-                                            dict_for_create = {}
-                                            dict_for_create = values.copy()
-                                            dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
-                                            move_obj.create(cr, uid, dict_for_create, context)
-                                            move_obj.write(cr, uid, move.id, {'product_qty': needed_qty})
-                    elif move.state == 'confirmed':
-                        # we remove the prodlot_id in case that the move is not available
-                        move_obj.write(cr, uid, move.id, {'prodlot_id': False}, context)
+                    move_obj.fefo_update(cr, uid, move.id, context) # FEFO
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
 stock_picking()
@@ -884,6 +843,68 @@ class stock_move(osv.osv):
         default.update({'already_confirmed':False})
         
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
+    
+    def fefo_update(self, cr, uid, ids, context=None):
+        """
+        Update batch, Expiry Date, Location according to FEFO logic
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        loc_obj = self.pool.get('stock.location')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        for move in self.browse(cr, uid, ids, context):
+            # FEFO logic
+            if move.state == 'assigned': # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
+                needed_qty = move.product_qty
+                res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+                if 'fefo' in res:
+                    # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
+                    values = {'name': move.name,
+                              'picking_id': move.picking_id.id,
+                              'product_uom': move.product_uom.id,
+                              'product_id': move.product_id.id,
+                              'date_expected': move.date_expected,
+                              'date': move.date,
+                              'state': 'assigned',
+                              'location_dest_id': move.location_dest_id.id,
+                              'reason_type_id': move.reason_type_id.id,
+                              }
+                    for loc in res['fefo']:
+                        # if source == destination, the state becomes 'done', so we don't do fefo logic in that case
+                        if not move.location_dest_id.id == loc['location_id']:
+                            # we ignore the batch that are outdated
+                            expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                            if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                                # as long all needed are not fulfilled
+                                if needed_qty:
+                                    # if the batch already exists and qty is enough, it is available (assigned)
+                                    if needed_qty <= loc['qty']:
+                                        if move.prodlot_id.id == loc['prodlot_id']:
+                                            self.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                        else:
+                                            self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
+                                                                        'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                            needed_qty = 0.0
+                                    elif needed_qty:
+                                        # we take all available
+                                        selected_qty = loc['qty']
+                                        needed_qty -= selected_qty
+                                        dict_for_create = {}
+                                        dict_for_create = values.copy()
+                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                        self.create(cr, uid, dict_for_create, context)
+                                        self.write(cr, uid, move.id, {'product_qty': needed_qty})
+                    # if the batch is outdated, we remove it
+                    if not context.get('yml_test', False):
+                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
+                            self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+            elif move.state == 'confirmed':
+                # we remove the prodlot_id in case that the move is not available
+                self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+        return True
     
     def action_confirm(self, cr, uid, ids, context=None):
         '''

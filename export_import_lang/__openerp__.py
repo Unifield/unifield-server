@@ -30,7 +30,7 @@
     "init_xml": [
     ],
     "depends" : [
-        "spreadsheet_xml",
+        "spreadsheet_xml", "base",
     ],
     "update_xml": [
         "view.xml",

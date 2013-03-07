@@ -325,6 +325,8 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': 'manual'})
                 else:
                     vals.update({'invoice_method': 'picking'})
+            # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
+            vals = self._get_location_id(cr, uid, vals,  warehouse_id=vals.get('warehouse_id', order.warehouse_id.id), context=context)
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -1321,6 +1323,25 @@ stock moves which are already processed : '''
         return picking_id
         # @@@end
 
+    def _get_location_id(self, cr, uid, vals, warehouse_id=False, context=None):
+        """
+        Get the location_id according to the cross_docking_ok option
+        Return vals
+        """
+        if 'cross_docking_ok' not in vals:
+            return vals
+
+        if not warehouse_id:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
+
+        if not vals.get('cross_docking_ok', False):
+            vals.update({'location_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_input_id.id})
+        elif vals.get('cross_docking_ok', False):
+            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+
+        return vals
+
+
     def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
@@ -1346,7 +1367,9 @@ stock moves which are already processed : '''
             
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
-            
+        # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
+        vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
+        
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
         self._check_service(cr, uid, [res], vals, context=context)
     
