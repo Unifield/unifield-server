@@ -184,6 +184,12 @@ The columns should be in this values:
                 vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s') 
                                                    % (k, ', \n'.join(columns_for_po_integration))}
                 return self.write(cr, uid, ids, vals, context), False
+        list_of_required_values = ['Line*', 'Product Code*']
+        for required_value in list_of_required_values:
+            if required_value not in header_index.keys():
+                vals = {'message': _('The following columns are required for the import (case sensitive): %s.\n Please add the missing one.'
+                                     ) % (', '.join(list_of_required_values))}
+                return self.write(cr, uid, ids, vals, context), False
         return True, True
 
     def get_po_header_row_values(self, cr, uid, ids, row, po_browse, header_index, context=None):
