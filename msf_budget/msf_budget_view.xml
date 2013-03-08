@@ -64,6 +64,7 @@
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="name"/>
                             <field name="budget_amount" real_sum="Budget Amount"/>
+                            <field name="comm_amount" real_sum="Comm. Amount"/>
                             <field name="actual_amount" real_sum="Actual Amount"/>
                             <field name="balance" real_sum="Balance"/>
                             <field name="percentage"/>
@@ -73,6 +74,7 @@
                             <group colspan="4">
                                 <field name="name" colspan="2" readonly="1"/>
 	                            <field name="budget_amount" colspan="1" readonly="1"/>
+	                            <field name="comm_amount" colspan="1" readonly="1"/>
 	                            <field name="actual_amount" colspan="1" readonly="1"/>
 	                            <field name="balance" colspan="1" readonly="1"/>
 	                            <field name="percentage" colspan="1" readonly="1"/>
@@ -118,7 +120,7 @@
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>
-                        <button name="button_create_budget" string="Create report" type="object" icon="gtk-ok"/>
+                        <button name="button_create_budget_2" string="Create report" type="object" icon="gtk-ok"/>
                     </group>
                 </form>
             </field>
