@@ -302,7 +302,7 @@ class account_move_line(osv.osv):
                     if context.get('from_write', False):
                         return {'analytic_distribution_id': distrib_id,}
                     # Write analytic distribution on the move line
-                    self.pool.get('account.move.line').write(cr, uid, [l.id], {'analytic_distribution_id': distrib_id})
+                    self.pool.get('account.move.line').write(cr, uid, [l.id], {'analytic_distribution_id': distrib_id}, check=False, update_check=False)
                 else:
                     return False
         return True
@@ -339,8 +339,6 @@ class account_move_line(osv.osv):
                 res.append(tmp_res)
             return res
         res = super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
-        # Check employee analytic distribution
-        self._check_employee_analytic_distribution(cr, uid, ids)
         return res
 
     def copy(self, cr, uid, id, default=None, context=None):
