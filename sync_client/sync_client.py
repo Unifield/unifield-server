@@ -55,7 +55,8 @@ class BackgroundProcess(Thread):
         # Check if we are not already syncing
         entity.is_syncing(raise_on_syncing=True)
         # Check if connection is up
-        pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
+        if not pool.get('sync.client.sync_server_connection').is_connected:
+            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
         # Check for update
         if hasattr(entity, 'upgrade'):
             up_to_date = entity.upgrade(cr, uid, context=context)
@@ -198,10 +199,8 @@ class entity(osv.osv):
                         kwargs['logger'] = logger = self.pool.get('sync.monitor').get_logger(cr, uid, context=context)
 
                         # Check if connection is up
-                        con = self.pool.get('sync.client.sync_server_connection')
-                        con.connect(cr, uid, context=context)
-                        cr.commit()
-                        # connect() raise an except_osv if something goes wrong
+                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
