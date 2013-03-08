@@ -68,13 +68,14 @@ class real_average_consumption(osv.osv):
             return False
         return True
 
-
     def unlink(self, cr, uid, ids, context=None):
         '''
         Display a message to the user if the report has been confirmed
         and stock moves has been generated
         '''
         for report in self.browse(cr, uid, ids, context=context):
+            if report.state == 'done':
+                raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
                     raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
@@ -143,14 +144,16 @@ class real_average_consumption(osv.osv):
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
+        'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
     }
-    
+
     _defaults = {
         'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
+        'state': lambda *a: 'draft',
     }
 
     _sql_constraints = [
@@ -204,6 +207,39 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
+    def draft_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state':'draft'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+    def cancel_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+
     def process_moves(self, cr, uid, ids, context=None):
         '''
         Creates all stock moves according to the report lines
@@ -263,11 +299,11 @@ class real_average_consumption(osv.osv):
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
-                                                       'reason_type_id': reason_type_id})
+                                                        'reason_type_id': reason_type_id})
                     move_ids.append(move_id)
                     line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
-            self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
+            self.write(cr, uid, [rac.id], {'picking_id': picking_id, 'state': 'done'}, context=context)
 
             # Confirm the picking
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
