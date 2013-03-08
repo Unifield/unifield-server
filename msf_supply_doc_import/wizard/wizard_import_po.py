@@ -252,7 +252,7 @@ The columns should be in this values:
         cell_nb = header_index.get('Destination Partner', False)
         dest_partner_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if dest_partner_name:
-            dest_partner_ids = partner_obj.search(cr, uid, [('name', '=', dest_partner_name)])
+            dest_partner_ids = partner_obj.search(cr, uid, [('name', '=', dest_partner_name)], context=context)
             if dest_partner_ids:
                 dest_partner_id = dest_partner_ids[0]
                 dest_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
@@ -265,7 +265,7 @@ The columns should be in this values:
         cell_nb = header_index.get('Invoicing Address', False)
         invoice_address_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if invoice_address_name:
-            invoice_address_ids = partner_address_obj.search(cr, uid, [('name', '=', invoice_address_name)])
+            invoice_address_ids = partner_address_obj.search(cr, uid, [('name', '=', invoice_address_name)], context=context)
             if invoice_address_ids:
                 invoice_address_id = invoice_address_ids[0]
                 to_write_po.update({'invoice_address_id': invoice_address_id})
@@ -291,7 +291,7 @@ The columns should be in this values:
         cell_nb = header_index.get('Incoterm', False)
         incoterm_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if incoterm_name:
-            incoterm_ids = incoterm_obj.search(cr, uid, [('name', '=', incoterm_name)])
+            incoterm_ids = incoterm_obj.search(cr, uid, [('name', '=', incoterm_name)], context=context)
             if incoterm_ids:
                 incoterm_id = incoterm_ids[0]
                 to_write_po.update({'incoterm_id': incoterm_id})
@@ -326,7 +326,7 @@ The columns should be in this values:
         cell_nb = header_index.get('Order Reference*', False)
         order_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if order_name:
-            order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)])
+            order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)], context=context)
             if not order_ids:
                 to_write['error_list'].append(_('The Purchase Order %s was not found in the DataBase.') % order_name)
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
@@ -376,7 +376,7 @@ The columns should be in this values:
         cell_nb = header_index.get('Product Code*', False)
         product_code = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if product_code:
-            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+            p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
             if not p_ids:
                 to_write['error_list'].append(_("The Product\'s Code %s is not found in the database.") % product_code)
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
@@ -542,7 +542,7 @@ The columns should be in this values:
             for line_number in list_line_number:
                 line_number = line_number[0]
                 same_file_line_nb = import_obj.search(cr, uid, [('line_ignored_ok', '=', False), ('line_number', '=', line_number), ('order_id', '=', po_id)], context=context)
-                same_pol_line_nb = pol_obj.search(cr, uid, [('line_number', '=', line_number), ('order_id', '=', po_id)])
+                same_pol_line_nb = pol_obj.search(cr, uid, [('line_number', '=', line_number), ('order_id', '=', po_id)], context=context)
                 count_same_file_line_nb = len(same_file_line_nb)
                 count_same_pol_line_nb = len(same_pol_line_nb)
                 # we deal with 3 cases
@@ -550,7 +550,7 @@ The columns should be in this values:
                     # 1st CASE
                     if count_same_file_line_nb == count_same_pol_line_nb:
                         # 'We update all the lines.'
-                        for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
+                        for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb, context)):
                             vals = file_line
                             file_line_number = vals['file_line_number']
                             # We take only the not Null Value
@@ -571,7 +571,7 @@ The columns should be in this values:
                         file_line_proceed = []
                         for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
                             # is a product similar between the file line and obj line?
-                            overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)])
+                            overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)], context=context)
                             if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                                 import_values = import_obj.read(cr, uid, overlapping_lines)[0]
                                 file_line_number = import_values['file_line_number']
@@ -580,16 +580,16 @@ The columns should be in this values:
                                 for k, v in import_values.iteritems():
                                     if v:
                                         filtered_vals.update({k: v})
-                                pol_obj.write(cr, uid, pol_line.id, filtered_vals)
+                                pol_obj.write(cr, uid, pol_line.id, filtered_vals, context)
                                 notif_list.append(_("Line %s of the Excel file updated the line %s with the product %s in common.")
                                                   % (file_line_number+1, pol_line.line_number, pol_line.product_id.default_code))
                                 file_line_proceed.append(overlapping_lines[0])
                                 complete_lines += 1
                                 processed_lines += 1
                                 percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
-                        for line in import_obj.read(cr, uid, same_file_line_nb):
+                        for line in import_obj.read(cr, uid, same_file_line_nb, context):
                             if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
                                 error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
@@ -600,13 +600,13 @@ The columns should be in this values:
                                 ignore_lines += 1
                                 processed_lines += 1
                                 percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                     # 3rd CASE
                     elif count_same_file_line_nb > count_same_pol_line_nb:
                         if count_same_pol_line_nb == 1:
                             #"We split the only line with this line number"
                             product_qty = 0.0
-                            file_line_read = import_obj.read(cr, uid, same_file_line_nb)
+                            file_line_read = import_obj.read(cr, uid, same_file_line_nb, context)
                             for file_line in file_line_read:
                                 product_qty += file_line['product_qty']
                             import_values = file_line_read[0]
@@ -617,11 +617,11 @@ The columns should be in this values:
                             for k, v in import_values.iteritems():
                                 if v:
                                     filtered_vals.update({k: v})
-                            pol_obj.write(cr, uid, same_pol_line_nb, filtered_vals)
+                            pol_obj.write(cr, uid, same_pol_line_nb, filtered_vals, context)
                             complete_lines += 1
                             processed_lines += 1
                             percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                            self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                            self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                             for file_line in import_obj.browse(cr, uid, same_file_line_nb[1:len(same_file_line_nb)]):
                                 wizard_values = pol_obj.open_split_wizard(cr, uid, same_pol_line_nb, context)
                                 wiz_context = wizard_values.get('context')
@@ -631,16 +631,16 @@ The columns should be in this values:
                                 lines.append(str(file_line.file_line_number))
                                 po_line_ids = pol_obj.search(cr, uid, [('product_qty', '=', file_line.product_qty),
                                                                        ('line_number', '=', line_number),
-                                                                       ('order_id', '=', po_id)])
+                                                                       ('order_id', '=', po_id)], context=context)
                                 new_po_line = po_line_ids[-1]
                                 pol_obj.write(cr, uid, [new_po_line], {'product_qty': file_line.product_qty,
                                                                         'product_uom': file_line.product_uom.id,
                                                                         'product_id': file_line.product_id.id,
-                                                                        'confirmed_delivery_date': file_line.confirmed_delivery_date})
+                                                                        'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
                                 complete_lines += 1
                                 processed_lines += 1
                                 percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                                self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                                self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                             lines = ','.join(lines)
                             error_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
                         elif count_same_pol_line_nb > 1:
@@ -648,7 +648,7 @@ The columns should be in this values:
                             file_line_proceed = []
                             for pol_line in pol_obj.browse(cr, uid, same_pol_line_nb, context):
                                 # is a product similar between the file line and obj line?
-                                overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)])
+                                overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)], context=context)
                                 if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                                     import_values = import_obj.read(cr, uid, overlapping_lines)[0]
                                     file_line_number = import_values['file_line_number']
@@ -657,16 +657,16 @@ The columns should be in this values:
                                     for k, v in import_values.iteritems():
                                         if v:
                                             filtered_vals.update({k: v})
-                                    pol_obj.write(cr, uid, pol_line.id, filtered_vals)
+                                    pol_obj.write(cr, uid, pol_line.id, filtered_vals, context=context)
                                     notif_list.append(_("Line %s of the Excel file updated the line %s with the product %s in common.")
                                                       % (file_line_number+1, pol_line.line_number, pol_line.product_id.default_code))
                                     file_line_proceed.append(overlapping_lines[0])
                                     complete_lines += 1
                                     processed_lines += 1
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                                    self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
                             # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
-                            for line in import_obj.read(cr, uid, same_file_line_nb):
+                            for line in import_obj.read(cr, uid, same_file_line_nb, context=context):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
                                     error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
@@ -677,7 +677,7 @@ The columns should be in this values:
                                     ignore_lines += 1
                                     processed_lines += 1
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
+                                    self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
                     # we commit after each iteration to avoid lock on ir.sequence
                     cr.commit()
             error_log += '\n'.join(error_list)
@@ -705,10 +705,10 @@ The columns should be in this values:
 #            self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
         finally:
             #we delete all the lines of the temporary obj
-            import_obj_ids = import_obj.search(cr, uid, [])
-            import_obj.unlink(cr, uid, import_obj_ids)
-            import_po_obj_ids = import_po_obj.search(cr, uid, [])
-            import_po_obj.unlink(cr, uid, import_po_obj_ids)
+            import_obj_ids = import_obj.search(cr, uid, [], context=context)
+            import_obj.unlink(cr, uid, import_obj_ids, context=context)
+            import_po_obj_ids = import_po_obj.search(cr, uid, [], context=context)
+            import_po_obj.unlink(cr, uid, import_po_obj_ids, context=context)
             # we reset the PO to its original state ('confirmed')
             po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
             cr.commit()
@@ -719,10 +719,10 @@ The columns should be in this values:
         Launch a thread for importing lines.
         """
         po_obj = self.pool.get('purchase.order')
-        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file'], context=context):
             po_id = wiz_read['po_id']
             if not wiz_read['file']:
-                return self.write(cr, uid, ids, {'message': _("Nothing to import")})
+                return self.write(cr, uid, ids, {'message': _("Nothing to import")}, context=context)
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
                 # iterator on rows
@@ -739,7 +739,7 @@ The columns should be in this values:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
-                return self.write(cr, uid, ids, {'message': message})
+                return self.write(cr, uid, ids, {'message': message}, context=context)
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
             po_obj.write(cr, uid, po_id, {'state': 'done'}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
@@ -757,11 +757,11 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
         if isinstance(ids, (int, long)):
             ids = [ids]
         purchase_obj = self.pool.get('purchase.order')
-        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file'], context=context):
             po_id = wiz_read['po_id']
-            po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
+            po_name = purchase_obj.read(cr, uid, po_id, ['name'], context=context)['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % po_name})
+                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % po_name}, context=context)
         return False
 
     def open_po(self, cr, uid, ids, context=None):
@@ -770,7 +770,7 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+        for wiz_obj in self.read(cr, uid, ids, ['po_id'], context=context):
             po_id = wiz_obj['po_id']
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
@@ -789,7 +789,7 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+        for wiz_obj in self.read(cr, uid, ids, ['po_id'], context=context):
             po_id = wiz_obj['po_id']
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
@@ -806,7 +806,7 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+        for wiz_obj in self.read(cr, uid, ids, ['po_id'], context=context):
             po_id = wiz_obj['po_id']
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
