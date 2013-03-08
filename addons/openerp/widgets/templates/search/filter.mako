@@ -35,6 +35,6 @@
         group_by_ctx="${group_context}"
         title="${help}" filter_context="${filter_context}"
         filter_name="${filter_name}"
-        ${'filter_status=%s' % (filter_status) if filter_status is not None else '' }
+        ${'filter_status=%d' % (filter_status) if filter_status is not None else '' }
         ${'checked' if def_checked else ''}/>
 </div>
