@@ -669,7 +669,8 @@
                             </group>
                         </page>
                         <page string="Additional Info">
-                            <field name="type" readonly="1" />
+                            <field name="fake_type" readonly="1" />
+                            <field name="type" invisible="1" />
                             <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                             <field name="company_id" widget="selection" invisible="1"/>
                         </page>

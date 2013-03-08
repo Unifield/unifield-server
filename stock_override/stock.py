@@ -187,11 +187,13 @@ class stock_picking(osv.osv):
         'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
                                                       store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
                                                               'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
+        'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
                  'from_wkf': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
+                 'fake_type': 'in',
                  }
     
     def create(self, cr, uid, vals, context=None):
