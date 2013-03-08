@@ -19,7 +19,8 @@
 #
 ##############################################################################
 
-# if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
+# if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, check also NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
+# in PO_COLUMNS_HEADER_FOR_INTEGRATION, you have all the importable columns possible
 PO_COLUMNS_HEADER_FOR_INTEGRATION=[
 ('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'date'),
 ('Delivery Confirmed Date*', 'date'), ('Order Reference*', 'string'), ('Delivery Confirmed Date (PO)*', 'date'),
@@ -28,6 +29,13 @@ PO_COLUMNS_HEADER_FOR_INTEGRATION=[
 ('Incoterm', 'string'), ('Notes (PO)', 'string')]
 
 PO_COLUMNS_FOR_INTEGRATION = [x for (x, y) in PO_COLUMNS_HEADER_FOR_INTEGRATION]
+
+# if you update a file in NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
+# in NEW_COLUMNS_HEADER, you choose which columns you want to actually import (it is filtered on what you want if you compare with PO_COLUMNS_HEADER_FOR_INTEGRATION)
+NEW_COLUMNS_HEADER = [
+('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'date'),
+('Delivery Confirmed Date*', 'date'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
+
 
 import wizard_import_po
 import stock_partial_picking
