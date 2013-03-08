@@ -120,15 +120,18 @@ class tender(osv.osv):
         '''
         Check if there is no restrictive products in lines
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for tender in self.browse(cr, uid, ids, context=context):
-            if tender.state != 'done':
+            if tender.state not in ('draft', 'done', 'cancel'):
                 for line in tender.tender_line_ids:
-                    if self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=['external'], context=context):
+                    if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=['external'], context=context):
                         return False
 
         return True
 
-    _constraints = [(_check_restriction_line, "A line of this tender contains a product which have a status restricting to source it by a tender", ['tender_line_ids']),]
+#    _constraints = [(_check_restriction_line, "A line of this tender contains a product which have a status restricting to source it by a tender", ['tender_line_ids']),]
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -136,7 +139,24 @@ class tender(osv.osv):
         '''
         if not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
-        return super(tender, self).create(cr, uid, vals, context=context)
+
+        res = super(tender, self).create(cr, uid, vals, context=context)
+
+        # Add restrictions check
+        self._check_restriction_line(cr, uid, res, context=context)
+        
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Add a restriction check
+        '''
+        res = super(tender, self).write(cr, uid, ids, vals, context=context)
+
+        # Add restriction check
+        self._check_restriction_line(cr, uid, ids, context=context)
+
+        return res
     
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
@@ -523,7 +543,9 @@ class tender_line(osv.osv):
 
             product = prod_obj.browse(cr, uid, product_id, context=context)
             result['value']['product_uom'] = product.uom_po_id.id
-            
+            result['value']['text_error'] = False
+            result['value']['to_correct_ok'] = False
+
         return result
     
     def _get_total_price(self, cr, uid, ids, field_name, arg, context=None):
@@ -586,14 +608,37 @@ class tender_line(osv.osv):
         '''
         Check if there is no restrictive products in lines
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for line in self.browse(cr, uid, ids, context=context):
-            if line.tender_id.state != 'done':
+            if line.tender_id and line.tender_id.state != 'done':
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=['external'], context=context):
                     return False
 
         return True
 
-    _constraints = [(_check_restriction_line, "The line contains a product which have a status restricting to source it by a tender", ['product_id']),]
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Add a constraint on product
+        '''
+        res = super(tender_line, self).create(cr, uid, vals, context=context)
+        # Add restriction check
+        self._check_restriction_line(cr, uid, res, context=context)
+        
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Add a constraint on product
+        '''
+        res = super(tender_line, self).write(cr, uid, ids, vals, context=context)
+        # Add restriction check
+        self._check_restriction_line(cr, uid, ids, context=context)
+
+        return res
+
+#    _constraints = [(_check_restriction_line, "The line contains a product which have a status restricting to source it by a tender", ['product_id']),]
     
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),

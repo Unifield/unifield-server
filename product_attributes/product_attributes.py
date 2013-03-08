@@ -389,6 +389,9 @@ class product_attributes(osv.osv):
 
         if not isinstance(constraints, list):
             constraints = [constraints]
+
+        if not context:
+            context = {}
         
         error = False
         error_msg = ''
@@ -428,6 +431,10 @@ class product_attributes(osv.osv):
                                                                                                       st_type,
                                                                                                       st_name, 
                                                                                                       msg)
+
+        if context.get('noraise'):
+            error = False
+
         return error, error_msg
 
     def _get_restriction_error(self, cr, uid, ids, constraints=[], context=None):

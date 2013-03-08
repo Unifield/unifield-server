@@ -109,6 +109,11 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 p_value = product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
                 to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
 
+                if p_value['default_code']:
+                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], constraints=['external'], context=context)
+                    if error:
+                        to_write.update({'error_list': error_msg})
+
                 # Cell 2: Quantity
                 qty_value = {}
                 qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
@@ -132,6 +137,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
         # write tender line on tender
         context['import_in_progress'] = True
+        context.update({'noraise': True})
         self.write(cr, uid, ids, vals, context=context)
         nb_lines_error = self.pool.get('tender.line').search_count(cr, uid, [('to_correct_ok', '=', True),
                                                                              ('tender_id', '=', ids[0])], context=context)
