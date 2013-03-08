@@ -139,6 +139,7 @@ def data_files():
     '''Build list of data files to be installed'''
     files = []
     if os.name == 'nt':
+        files.append(('.', [join('bin', 'unifield-version.txt')]))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))

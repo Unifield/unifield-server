@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import updater
+
 pool_dic = {}
 
 def get_db_and_pool(db_name, force_demo=False, status=None, update_module=False, pooljobs=True):
@@ -45,6 +47,9 @@ def get_db_and_pool(db_name, force_demo=False, status=None, update_module=False,
         try:
             pool.init_set(cr, False)
             pool.get('ir.actions.report.xml').register_all(cr)
+            if not updater.do_upgrade(cr, pool):
+                pool_dic.pop(db_name)
+                raise Exception("updater.py told us that OpenERP version doesn't match database version!")
             cr.commit()
         finally:
             cr.close()
