@@ -18,6 +18,43 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+"""
+Rules regarding the PO import for the vertical integration
+
+Rule 0:
+If the line number of the line of a file does not exist in the line of the PO:
+we ignore it and write it in the file with the lines not imported.
+
+Rule 1:
+If a cell is empty:
+we keep the eventually existing field value of the object (PO or PO line) and we do not erase the value of the field.
+
+Rule 2:
+If a cell is not empty and satisfy the standard checks (product exist...)
+The values are taken as they are and no update mechanism is triggered afterwards (i.e. the price unit mechanism).
+
+Rule 3:
+if the number of PO lines with the same line number is equal to the number of lines with the same line number in the file,
+We update all the lines with this line number.
+
+Rule 4:
+if the number of PO lines with the same line number is lower than the number of lines with the same line number in the file, and if the number of PO lines is equal to 1:
+We split the only line with this line number.
+Else, we search in the file if there are lines with the same product as a line of the PO:
+in that case, we update the PO line.
+Else (if the number of PO lines is greater than 1 and we don't find a link with the product):
+We ignore the file lines with this line number because we can't know which PO lines to upate or not.
+
+Rule 5:
+if the number of PO lines with the same line number is greater than the number of lines with the same line number in the file, if the product is the same:
+we update the corresponding line
+Else:
+we ignore the file lines with this line number because we can't know which lines to upate or not.
+
+Rule 6:
+the user can't update the PO in the same time that an import is processing. For preventing him from updating the PO, we set it to "Closed" (it implies that all fields are readonly, but temporary, just in the time of the import) and we reset it to "Validated" at the end of the import.
+"""
+
 import threading
 import pooler
 from osv import osv, fields
@@ -486,7 +523,7 @@ The columns should be in this values:
                     else:
                         to_write_po.update({'file_line_number': file_line_number})
                         po_import_id = import_po_obj.create(cr, uid, to_write_po, context)
-                        vals_po = import_po_obj.read(cr, uid, po_import_id)
+                        vals_po = import_po_obj.read(cr, uid, po_import_id) # we take the whole dict of values because we don't specify the list of values
                         # We take only the not Null Value
                         filtered_vals = {}
                         for k, v in vals_po.iteritems():
@@ -550,7 +587,7 @@ The columns should be in this values:
                     # 1st CASE
                     if count_same_file_line_nb == count_same_pol_line_nb:
                         # 'We update all the lines.'
-                        for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
+                        for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):# with the read we take the whole dict of values because we don't specify the list of values
                             vals = file_line
                             file_line_number = vals.get('file_line_number', False)
                             # We take only the not Null Value
@@ -573,7 +610,7 @@ The columns should be in this values:
                             # is a product similar between the file line and obj line?
                             overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)], context=context)
                             if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
-                                import_values = import_obj.read(cr, uid, overlapping_lines)[0]
+                                import_values = import_obj.read(cr, uid, overlapping_lines)[0] # we take the whole dict of values because we don't specify the list of values
                                 file_line_number = import_values.get('file_line_number', False)
                                 # We take only the not Null Value
                                 filtered_vals = {}
@@ -606,7 +643,7 @@ The columns should be in this values:
                         if count_same_pol_line_nb == 1:
                             #"We split the only line with this line number"
                             product_qty = 0.0
-                            file_line_read = import_obj.read(cr, uid, same_file_line_nb)
+                            file_line_read = import_obj.read(cr, uid, same_file_line_nb) # we take the whole dict of values because we don't specify the list of values
                             for file_line in file_line_read:
                                 product_qty += file_line.get('product_qty', False)
                             import_values = file_line_read[0]
@@ -652,7 +689,7 @@ The columns should be in this values:
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
                                     break
                             lines = ','.join(lines)
-                            notif_log.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
+                            notif_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
                         elif count_same_pol_line_nb > 1:
                             # if the product is the same: we update the corresponding line
                             file_line_proceed = []
@@ -660,7 +697,7 @@ The columns should be in this values:
                                 # is a product similar between the file line and obj line?
                                 overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)], context=context)
                                 if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
-                                    import_values = import_obj.read(cr, uid, overlapping_lines)[0]
+                                    import_values = import_obj.read(cr, uid, overlapping_lines)[0] # we take the whole dict of values because we don't specify the list of values
                                     file_line_number = import_values.get('file_line_number', False)
                                     # We take only the not Null Value
                                     filtered_vals = {}
