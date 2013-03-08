@@ -197,7 +197,19 @@ class purchase_order(osv.osv):
             # better: if order.order_line: res[order.id] = False
                 
         return res
-    
+
+    def _is_po_from_ir(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            retour = False
+            for line in po.order_line:
+                if line.procurement_id:
+                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),])
+                    if ids_proc:
+                        retour = True
+            res[po.id] = retour
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -242,6 +254,8 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
+        'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
+
     }
     
     _defaults = {
@@ -257,7 +271,7 @@ class purchase_order(osv.osv):
         'active': True,
         'name': lambda *a: False,
     }
-    
+
     def _check_service(self, cr, uid, ids, vals, context=None):
         '''
         Avoid the saving of a PO with non service products on Service PO
@@ -986,6 +1000,7 @@ stock moves which are already processed : '''
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+
         # from listed po, list corresponding so
         all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
         # if we have sol_ids, we are treating a po which is make_to_order from sale order
@@ -1000,6 +1015,7 @@ stock moves which are already processed : '''
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
+                                                                 ('procurement_id.state', '!=', 'cancel'),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:
@@ -1384,7 +1400,44 @@ stock moves which are already processed : '''
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        wf_service = netsvc.LocalService("workflow")
+
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if line.procurement_id and line.procurement_id.move_id:
+                    self.pool.get('stock.move').write(cr, uid, line.procurement_id.move_id.id, {'state': 'cancel'}, context=context)
+                    if line.procurement_id.move_id.picking_id:
+                        wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
+        
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+
+    def wkf_confirm_cancel(self, cr, uid, ids, context=None):
+        """
+        Continue the workflow if all other POs are confirmed
+        """
+        wf_service = netsvc.LocalService("workflow")
+        so_obj = self.pool.get('sale.order')
+        
+        # corresponding sale order
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        # from so, list corresponding po first level
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+        # from listed po, list corresponding so
+        all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
+        # from all so, list all corresponding po second level
+        all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
+        
+        # we trigger all the corresponding sale order -> test_lines is called on these so
+        for so_id in all_so_ids:
+            wf_service.trg_write(uid, 'sale.order', so_id, cr)
+        
+        # we trigger pos of all sale orders -> all_po_confirm is called on these po
+        for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+
+        return True
+        
 
     def action_done(self, cr, uid, ids, context=None):
         """
