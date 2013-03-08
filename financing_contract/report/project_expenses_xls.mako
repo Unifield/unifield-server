@@ -323,7 +323,7 @@
 </Styles>
 
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%( o.code.split('/')[-1] +' (id'+str(o.id)+')' or 'Sheet1')|x}">
+<Worksheet ss:Name="${"%s"%( o.code and o.code.replace('/', '_') +'_'+str(o.id) or 'Sheet1')|x}">
 
 <Table ss:ExpandedColumnCount="15" ss:ExpandedRowCount="29" x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="0" ss:Width="102.75"/>
