@@ -121,7 +121,7 @@
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 <Style ss:ID="s32">
 <Borders>
@@ -130,7 +130,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Interior  ss:Pattern="Solid"/>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 <Style ss:ID="s33">
 <Borders>
@@ -146,7 +146,7 @@
 <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Interior  ss:Pattern="Solid"/>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 <Style ss:ID="s35">
 <Borders>
@@ -172,7 +172,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 <Style ss:ID="s38">
 <Borders>
@@ -182,7 +182,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Interior  ss:Pattern="Solid"/>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 <Style ss:ID="s39">
 <Borders>
@@ -200,7 +200,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
 <Interior  ss:Pattern="Solid"/>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 <Style ss:ID="s41">
 <Borders>
@@ -236,7 +236,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 <Font  ss:Bold="1"/>
 </Style>
 <Style ss:ID="s45">
@@ -247,7 +247,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Interior ss:Pattern="Solid"/>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 <Font  ss:Bold="1"/>
 </Style>
 <Style ss:ID="s46">
@@ -267,7 +267,7 @@
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
 </Borders>
 <Interior ss:Pattern="Solid"/>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 <Font  ss:Bold="1"/>
 </Style>
 <Style ss:ID="s48">
@@ -307,7 +307,7 @@
 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
 </Borders>
-<NumberFormat ss:Format="#,##0"/>
+<NumberFormat ss:Format="Standard"/>
 </Style>
 
 <Style ss:ID="s21b">
@@ -428,8 +428,6 @@
 </Cell>
 </Row>
 
-
-
 <Row>
 </Row>
 <Row>
@@ -437,9 +435,6 @@
 <Data ss:Type="String">${( getLines(o) and '' or '')|x}</Data>
 </Cell>
 </Row>
-
-
-
 
 <Row ss:AutoFitHeight="0" ss:Height="27.75" ss:StyleID="s25">
 <Cell ss:StyleID="s26">
@@ -524,8 +519,6 @@
 </Row>
 % endfor
 
-
-
 <Row ss:AutoFitHeight="0" ss:Height="13.5">
 <Cell ss:StyleID="s42"/>
 <Cell ss:StyleID="s43">
@@ -563,16 +556,11 @@
 	</Cell>
 % endif
 
-
 </Row>
-
-
 <Row >
 </Row>
 <Row >
 </Row>
-
-
 <Row>
 <Cell>
 
@@ -621,7 +609,6 @@
 <Data ss:Type="String">${( o.state and getSel(o, 'state') or '')|x}</Data>
 </Cell>
 </Row>
-
 
 
 </Table>

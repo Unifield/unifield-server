@@ -70,10 +70,10 @@ class report_interactive(report_sxw.rml_parse):
         for x in csv_data[1:]:
             if contract.reporting_type == 'project' or len(x) < 7:
                 code = x[0] and x[0] or ''
-                temp = [code] + [x[1]] + [int(x[2])] + [int(x[3])] + [x[4]] 
+                temp = [code] + [x[1]] + [x[2]] + [x[3]] + [x[4]] 
             else:
                 code = x[0] and x[0] or x[1] and x[1] or x[2] and x[2]
-                temp = [code] + [x[1]] + [int(x[2])] + [int(x[3])] + [x[4]] + [int(x[5])] + [int(x[6])]  + [x[7]]
+                temp = [code] + [x[1]] + [x[2]] + [x[3]] + [x[4]] + [x[5]] + [x[6]]  + [x[7]]
             lines += [temp]
         self.lines = lines
         return lines
