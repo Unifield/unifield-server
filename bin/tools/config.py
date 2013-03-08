@@ -63,6 +63,7 @@ class configmanager(object):
             'overwrite_existing_translations': False,
             'load_language': None,
             'language': None,
+            'nopo': None,
             'pg_path': None,
             'admin_passwd': 'admin',
             'csv_internal_sep': ',',
@@ -89,6 +90,7 @@ class configmanager(object):
             'test_file' : False,
             'test_report_directory' : False,
             'test_disable' : False,
+            'test_module' : False,
             'test_commit' : False,
             'static_http_enable': False,
             'static_http_document_root': None,
@@ -174,6 +176,8 @@ class configmanager(object):
         group.add_option("--test-report-directory", dest="test_report_directory", help="If set, will save sample of all reports in this directory.")
         group.add_option("--test-disable", action="store_true", dest="test_disable",
                          default=False, help="Disable loading test files.")
+        group.add_option("--test-module", dest="test_module",
+                         default=False, help="module to test")
         group.add_option("--test-commit", action="store_true", dest="test_commit",
                          default=False, help="Commit database changes performed by tests.")
         parser.add_option_group(group)
@@ -218,6 +222,8 @@ class configmanager(object):
             "Option '-l' is mandatory in case of importation"
             )
 
+        group.add_option("--nopo", dest="nopo", action="store_true",
+                         default=False, help="Do not reload po files")
         group.add_option('--load-language', dest="load_language",
                          help="specifies the languages for the translations you want to be loaded")
         group.add_option('-l', "--language", dest="language",
@@ -315,11 +321,11 @@ class configmanager(object):
                 self.options[arg] = getattr(opt, arg)
 
         keys = [
-            'language', 'translate_out', 'translate_in', 'overwrite_existing_translations',
+            'language', 'nopo', 'translate_out', 'translate_in', 'overwrite_existing_translations',
             'debug_mode', 'smtp_ssl', 'load_language',
             'stop_after_init', 'logrotate', 'without_demo', 'netrpc', 'xmlrpc', 'syslog',
             'list_db', 'xmlrpcs',
-            'test_file', 'test_disable', 'test_commit', 'test_report_directory',
+            'test_file', 'test_disable', 'test_commit', 'test_module', 'test_report_directory',
             'osv_memory_count_limit', 'osv_memory_age_limit',
         ]
 

@@ -679,7 +679,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
 
     def load_test(cr, module_name, id_map, mode):
         cr.commit()
-        if not tools.config.options['test_disable']:
+        if not tools.config.options['test_disable'] and (not tools.config.options['test_module'] or module_name in tools.config.options['test_module'].split(',')):
             try:
                 _load_data(cr, module_name, id_map, mode, 'test')
             except Exception, e:
@@ -785,9 +785,10 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                 # Set new modules and dependencies
                 modobj.write(cr, 1, [mid], {'state': 'installed', 'latest_version': ver})
                 cr.commit()
-                # Update translations for all installed languages
-                modobj.update_translations(cr, 1, [mid], None)
-                cr.commit()
+                if not tools.config.options['nopo']:
+                    # Update translations for all installed languages
+                    modobj.update_translations(cr, 1, [mid], None)
+                    cr.commit()
 
             package.state = 'installed'
             # execute the selected functions
@@ -796,7 +797,8 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
             for kind in ('init', 'demo', 'update'):
                 if hasattr(package, kind):
                     delattr(package, kind)
-
+        elif (hasattr(package, 'demo') or package.dbdemo) and tools.config.options['test_module'] and m in tools.config.options['test_module'].split(','):
+            load_test(cr, m, idref, mode)
         statusi += 1
 
     cr.commit()
