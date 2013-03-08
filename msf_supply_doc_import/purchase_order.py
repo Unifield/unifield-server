@@ -31,7 +31,8 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from check_line import *
 from msf_supply_doc_import import MAX_LINES_NB
-from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION
+from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
+from msf_supply_doc_import import check_line
 
 
 class purchase_order(osv.osv):
@@ -108,10 +109,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         context.update({'active_id': ids[0]})
-        columns_header = [
-('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'date'),
-('Delivery Confirmed Date*', 'date'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
-
+        columns_header = NEW_COLUMNS_HEADER
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
                                                                         'filename_template': 'template.xls',
@@ -133,9 +131,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         po = self.browse(cr, uid, ids[0], context=context)
-        header_columns = [
-('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'date'),
-('Delivery Confirmed Date*', 'date'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
+        header_columns = NEW_COLUMNS_HEADER
         #header_columns = [(column, 'string') for column in columns_for_po_integration]
         header_index = {}
         [header_index.update({value: index})for (index, value) in enumerate(columns_for_po_integration)]
@@ -143,18 +139,18 @@ class purchase_order(osv.osv):
         for line in po.order_line:
             new_list = []
             new_list.insert(header_index['Line*'], line.line_number)
-            new_list.insert(header_index['Product Code*'], line.product_id.default_code)
-            new_list.insert(header_index['Product Description'], line.product_id.name)
+            new_list.insert(header_index['Product Code*'], line.product_id.default_code and check_line.get_xml(line.product_id.default_code))
+            new_list.insert(header_index['Product Description'], line.product_id.name and check_line.get_xml(line.product_id.name))
             new_list.insert(header_index['Quantity*'], line.product_qty)
-            new_list.insert(header_index['UoM*'], line.product_uom.name)
+            new_list.insert(header_index['UoM*'], line.product_uom.name and check_line.get_xml(line.product_uom.name))
             new_list.insert(header_index['Price*'], line.price_unit)
             new_list.insert(header_index['Delivery Request Date'], line.date_planned and strptime(line.date_planned,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
             new_list.insert(header_index['Delivery Confirmed Date*'], line.confirmed_delivery_date and strptime(line.confirmed_delivery_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
             #new_list.insert(header_index['Order Reference*'], po.name)
             #new_list.insert(header_index['Delivery Confirmed Date (PO)*'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
-            new_list.insert(header_index['Origin'], line.origin)
-            new_list.insert(header_index['Comment'], line.comment)
-            new_list.insert(header_index['Notes'], line.notes)
+            new_list.insert(header_index['Origin'], line.origin and check_line.get_xml(line.origin))
+            new_list.insert(header_index['Comment'], line.comment and check_line.get_xml(line.comment))
+            new_list.insert(header_index['Notes'], line.notes and check_line.get_xml(line.notes))
             new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')
             #new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
             #new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or po.dest_address_id.city or '')
@@ -162,11 +158,12 @@ class purchase_order(osv.osv):
             #new_list.insert(header_index['Est. Transport Lead Time'], po.est_transport_lead_time or '')
             #new_list.insert(header_index['Transport Mode'], po.transport_type or '')
             #new_list.insert(header_index['Arrival Date in the country'], po.arrival_date and strptime(po.arrival_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '')
-            new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name or '')
+            new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name and check_line.get_xml(po.incoterm_id.name) or '')
             #new_list.insert(header_index['Notes (PO)'], po.notes)
             list_of_lines.append(new_list)
         if any([f_line for f_line in list_of_lines if len(f_line) != len(header_columns)]):
-            raise osv.except_osv(_('Error'), _('The number of columns in the header should be equal to the number of columns you want to export.'))
+            raise osv.except_osv(_('Error'), _("""The number of columns in the header should be equal to the number of columns you want to export, please check
+            that what you have in the NEW_COLUMNS_HEADER (global variable defined in the __init__.py of the wizard) is the same as what you have in the lines of the list list_of_lines."""))
         instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
         file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
         
