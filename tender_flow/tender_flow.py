@@ -116,6 +116,20 @@ class tender(osv.osv):
     
     _order = 'name desc'
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is no restrictive products in lines
+        '''
+        for tender in self.browse(cr, uid, ids, context=context):
+            if tender.state != 'done':
+                for line in tender.tender_line_ids:
+                    if self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraint=['external'], context=context):
+                        return False
+
+        return True
+
+    _constraints = [(_check_restriction_line, "A line of this tender contains a product which have a status restricting to source it by a tender", ['tender_line_ids']),]
+
     def create(self, cr, uid, vals, context=None):
         '''
         Set the reference of the tender at this time
@@ -561,6 +575,19 @@ class tender_line(osv.osv):
     _defaults = {'qty': lambda *a: 1.0,
                  'state': lambda *a: 'draft',
                  }
+    
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is no restrictive products in lines
+        '''
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.tender_id.state != 'done':
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, context=context):
+                    return False
+
+        return True
+
+    _constraints = [(_check_restriction_line, "The line contains a product which have a status restricting to source it by a tender", ['product_id']),]
     
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),

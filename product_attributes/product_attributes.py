@@ -380,6 +380,57 @@ class product_attributes(osv.osv):
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
 
+    def _get_restriction_error(self, cr, uid, ids, constraints=[], context=None):
+        '''
+        Builds and returns an error message according to the constraints
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not isinstance(constraints, list):
+            constraints = [constraints]
+
+        for product in self.browse(cr, uid, ids, context=context):
+            error = False
+            msg = ''
+            st_cond = True
+
+            if product.no_external and 'external' in constraints:
+                error = True
+                msg = _('be purchased externally')
+                st_cond = product.state.no_external
+            elif product.no_esc and 'esc' in constraints:
+                error = True
+                msg = _('be purchased at ESC')
+                st_cond = product.state.no_esc
+            elif product.no_internal and 'internal' in constraints:
+                error = True
+                msg = _('be purchased internally')
+                st_cond = product.state.no_internal
+            elif product.no_consumption and 'consumption' in constraints:
+                error = True
+                msg = _('be consumed internally')
+                st_cond = product.state.no_consumption
+            elif product.no_storage and 'storage' in constraints':
+                error = True
+                msg = _('be stored anymore')
+                st_cond = product.state.no_storage
+
+            if error:
+                # Build the error message
+                st_type = st_cond and _('status') or _('product creator')
+                st_name = st_cond and product.state.name or product.international_status.name
+
+                raise osv.except_osv(_('Error'),
+                                     _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') % (product.default_code,
+                                                                                                               product.name,
+                                                                                                               st_type,
+                                                                                                               st_name, 
+                                                                                                               msg))
+                return False
+
+        return True
+
     def onchange_heat(self, cr, uid, ids, heat, context=None):
         heat_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
         if not heat or heat == heat_id:
