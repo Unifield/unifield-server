@@ -25,6 +25,22 @@ This module is dedicated to help checking lines of Excel file at importation.
 from msf_supply_doc_import import MAX_LINES_NB
 
 
+def get_xml(value):
+    new_value = []
+    for v in list(value):
+        if v == '&':
+            v='&amp;'
+        elif v == '<':
+            v = '&lt;'
+        elif v == '>':
+            v = 'glt;'
+        elif v == '\'':
+            v = '&apos;'
+        elif v == '\"':
+            v = '&quot;'
+        new_value.append(v)
+    return ''.join(new_value)
+
 def check_nb_of_lines(**kwargs):
     """
     Compute number of lines in the xml file to import.
