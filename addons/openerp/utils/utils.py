@@ -25,6 +25,7 @@ import re
 from openerp import validators
 import formencode
 import openobject
+from openerp.utils import rpc
 
 crummy_pseudoliteral_matcher = re.compile('^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
 
@@ -320,7 +321,6 @@ class TinyForm(object):
                         if not isinstance(o2m_ids, list):
                             o2m_ids = [o2m_ids]
 
-                        from openerp.utils import rpc
                         Relation = rpc.RPCProxy(attrs['relation'])
                         relation_objects = Relation.read(o2m_ids, [], rpc.session.context)
                         relation_fields = Relation.fields_get(False, rpc.session.context)
@@ -369,6 +369,14 @@ class TinyForm(object):
     def to_python(self, safe=False):
         return self._convert(True, safe=safe)
 
+
+def get_server_version(remove_timestamp=True):
+    version = rpc.session.execute_db('server_version')
+    if version and remove_timestamp:
+        ver_match = re.match('(.*)-\d{8}-\d{6}$', version)
+        if ver_match:
+            version = ver_match.group(1)
+    return version
 
 
 if __name__ == "__main__":

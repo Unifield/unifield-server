@@ -31,7 +31,7 @@ import openobject
 import openobject.errors
 
 from openerp import validators
-from openerp.utils import rpc
+from openerp.utils import rpc, get_server_version
 
 def get_lang_list():
     langs = [('en_US', 'English (US)')]
@@ -245,9 +245,13 @@ class Database(BaseController):
         self.msg = {}
         try:
             res = rpc.session.execute_db('dump', password, dbname)
+            filename = [dbname, time.strftime('%Y%m%d-%H%M%S')]
+            version = get_server_version()
+            if version:
+                filename.append(version)
             if res:
                 cherrypy.response.headers['Content-Type'] = "application/data"
-                cherrypy.response.headers['Content-Disposition'] = 'filename="' + dbname + '-' + time.strftime('%Y%m%d-%H%M%S')+ '.dump"'
+                cherrypy.response.headers['Content-Disposition'] = 'filename="%s.dump"' % '-'.join(filename)
                 return base64.decodestring(res)
         except Exception:
             self.msg = {'message' : _("Could not create backup.")}
@@ -268,9 +272,17 @@ class Database(BaseController):
         self.msg = {}
         if getattr(filename, 'filename', ''):
             submitted_filename = filename.filename
-            matches = re.search('^(.*)-[0-9]{8}-[0-9]{6}.dump$', submitted_filename)
+            matches = re.search('^(.*)-[0-9]{8}-[0-9]{6}(?:-(.*))?.dump$', submitted_filename)
             if matches:
                 dbname = matches.group(1)
+                #if matches.group(2):
+                #    server_version = get_server_version()
+                #    if server_version and server_version != matches.group(2):
+                #        self.msg = {
+                #            'message': _('The restore version (%s) and the server version (%s) differ') % (matches.group(2), server_version),
+                #            'title': _('Error')
+                #        }
+                #        return self.restore()
             else:
                 self.msg = {'message': _('The choosen file in not a valid database file'),
                             'title': _('Error')}
