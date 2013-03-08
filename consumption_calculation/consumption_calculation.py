@@ -522,17 +522,18 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00 and not context.get('noraise'):
+            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
-                                                    ('type', '=', 'internal'),
-                                                    ('product_id', '=', obj.product_id.id)])
+                                                                                  ('type', '=', 'internal'),
+                                                                                  ('product_id', '=', obj.product_id.id)], context=context)
                 expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'), 
                             _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or _('No expiry date set')))
                     elif context.get('import_in_progress'):
-                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)") % (context.get('line_num', False), strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
+                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)"
+                                               ) % (context.get('line_num', False), expiry_date and strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
                         context.update({'error_message': error_message})
                 else:
                     prodlot_id = prod_ids[0]
