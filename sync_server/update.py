@@ -207,17 +207,19 @@ class update(osv.osv):
             @param session_id : string : the synchronization session_id given at the beginning of the session by get_model_sync.
             @param context : context
 
-            @return : True or raise an error
+            @return : tuple(a, b)
+                a : boolean : is True is if the call is succesfull, False otherwise
+                b : int : sequence number given
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
 
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
-        sequence = self._get_next_sequence(cr, uid, context=context)
+        sequence = None
+        if update_ids:
+            sequence = self._get_next_sequence(cr, uid, context=context)
+            self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
+        return (True, sequence)
 
-        self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
-
-        return (True, "Push session validated")
-        
     def _get_next_sequence(self, cr, uid, context=None):
         """
             Get a unique sequence number for the next sequence id

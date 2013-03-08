@@ -556,7 +556,7 @@ class sync_manager(osv.osv):
             @param session_id : string : the synchronization session_id given at the beginning of the session by get_model_sync.
             @return tuple : (a, b) 
                 a : boolean : is True is if the call is succesfull, False otherwise
-                b : string : an infromative message
+                b : int : sequence number given
         """
         return self.pool.get("sync.server.update").confirm_updates(cr, 1, entity, session_id, context=context)
 
