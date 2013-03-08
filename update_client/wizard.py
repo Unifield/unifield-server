@@ -1,27 +1,12 @@
+from __future__ import with_statement
 import sys
 import os
 from osv import osv, fields
+from tools.translate import _
 import tools
 from tools import config
-from StringIO import StringIO
-from base64 import b64decode
-from hashlib import md5
 import logging
-from version import lock_file, update_directory
-
-if sys.version_info >= (2, 6, 6):
-    from zipfile import ZipFile, ZipInfo
-else:
-    from zipfile266 import ZipFile, ZipInfo
-
-## Unix-like find
-def find(path):
-    files = os.listdir(path)
-    for name in iter(files):
-        abspath = path+os.path.sep+name
-        if os.path.isdir( abspath ) and not os.path.islink( abspath ):
-            files.extend( map(lambda x:name+os.path.sep+x, os.listdir(abspath)) )
-    return files
+from updater import *
 
 class upgrade(osv.osv_memory):
     _name = 'sync_client.upgrade'
@@ -31,7 +16,7 @@ class upgrade(osv.osv_memory):
 
     def restart(self, cr, uid, ids, context=None):
         os.chdir( config['root_path'] )
-        tools.restart_required = True
+        restart_server()
         return {'type': 'ir.actions.act_window_close'}
 
     def download(self, cr, uid, ids, context=None):
@@ -40,18 +25,18 @@ class upgrade(osv.osv_memory):
         revisions = self.pool.get('sync_client.version')
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
         if not next_revisions:
-            raise osv.except_osv("Error!", "Nothing to do.")
+            raise osv.except_osv(_("Error!"), _("Nothing to do."))
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         uuid = self.pool.get('sync.client.entity').get_uuid(cr, uid)
-        text = "These patches have been downloaded and are ready to install:\n\n" if len(next_revisions) > 1 \
-               else "This patch has been downloaded and is ready to install:\n\n"
+        text = _("This/These patche(s) have been downloaded and are ready to install:")
+        text += "\n\n"
         for rev in revisions.browse(cr, uid, next_revisions, context=context):
-            text += " - [%s] %s (%s)\n   Comment: %s (sum is %s)\n\n" \
-                    % (rev.importance, rev.name, rev.date, rev.comment, rev.sum)
+            text += (" - [%(importance)s] %(name)s (%(date)s)\n   " % rev) + \
+                    (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
             if not rev.patch:
                 patch = proxy.get_zip( uuid, rev.sum )
                 if not patch[0]:
-                    raise osv.except_osv("Error!", "Can't retrieve the patch %s (%s)!" % (rev.name, rev.sum))
+                    raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!" % rev))
                 revisions.write(cr, uid, rev.id, {'patch':patch[1]})
                 cr.commit()
         return self.write(cr, uid, ids, {
@@ -64,100 +49,58 @@ class upgrade(osv.osv_memory):
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         if next_state != 'need-install':
-            message = "Cannot install now.\n\n"
-            message += self._generate(cr, uid, context=context)
             return self.write(cr, uid, ids, {
-                'message' : message,
+                'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
                 'state' : next_state,
             }, context=context)
-        revisions = self.pool.get('sync_client.version')
-        next_revisions = revisions._get_next_revisions(cr, uid, context=context)
-        ## Make an update temporary path
-        path = update_directory
-        if not os.path.exists(path):
-            os.mkdir(path)
-        else:
-            for f in reversed(find(path)):
-                target = os.path.join(path, f)
-                if os.path.isfile(target) or os.path.islink(target):
-                    self._logger.debug("rm `%s'" % target)
-                    os.unlink( target )
-                elif os.path.isdir(target):
-                    self._logger.debug("rmdir `%s'" % target)
-                    os.rmdir( target )
-        if not (os.path.isdir(path) and os.access(path, os.W_OK)):
-            return self.write(cr, uid, ids, {
-                'message' : "The path `%s' is not a dir or is not writable!" % path,
-            }, context=context)
-        ## Proceed all patches
-        new_revisions = list()
-        for rev in revisions.browse(cr, uid, next_revisions, context=context):
-            ## Check if the file match the expected sum
-            patch = b64decode( rev.patch )
-            local_sum = md5(patch).hexdigest()
-            if local_sum != rev.sum:
-                return self.write(cr, uid, ids, {
-                    'message' : "The file you downloaded seems to be corrupt.\nLocal sum: %s\nDistant sum: %s\n\nPlease download it again." % (local_sum, rev.sum),
-                    'state' : 'need-download',
-                }, context=context)
-            ## Extract the Zip
-            f = StringIO(patch)
-            try:
-                zip = ZipFile(f, 'r')
-                zip.extractall(path)
-            finally:
-                f.close()
-            ## Store to list of updates
-            new_revisions.append( rev.name )
-            ## Fix the flag of the pending revisions
-            revisions.write(cr, uid, rev.id, {'state':'need-restart'}, context=context)
-        ## Make a lock file to make OpenERP able to detect an update
-        f = open(lock_file, "w")
-        f.write(str({
-            'conf' : config.rcfile,
-            'dbname' : cr.dbname,
-            'revisions' : new_revisions,
-            'db_user' : config['db_user'] or None, ## Note that False values are not acceptable for psycopg
-            'db_host' : config['db_host'] or None,
-            'db_port' : config['db_port'] or None,
-            'db_password' : config['db_password'] or None,
-            'exec_path' : os.getcwd(),
-        }))
-        f.close()
+        next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
+        ## Prepare
+        (status, message, values) = do_prepare(cr, next_revisions)
+        wiz_value = {'message':_(message)}
+        if status in ('corrupt','missing'):
+            wiz_value['state'] = 'need-download'
+        elif status == 'success':
+            wiz_value['state'] = 'need-restart'
+            wiz_value['message'] = self._generate(cr, uid, context=context),
         ## Refresh the window
-        self.write(cr, uid, ids, {
-            'message' : self._generate(cr, uid, context=context),
-            'state' : 'need-restart',
-        }, context=context)
+        if values: wiz_value['message'] = wiz_value['message'] % values
+        res = self.write(cr, uid, ids, wiz_value, context=context)
+        if status != 'success':
+            return res
         ## Restart automatically
-        cr.commit()
-        return self.restart(cr, uid, ids, context=context)
+        self.restart(cr, uid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
     def _generate(self, cr, uid, context=None):
         """Make the wizard caption"""
         if self.pool.get('sync.client.entity').is_syncing():
-            return "Blocked during synchro.\n\nPlease try again later."
+            return _("Blocked during synchro.\n\nPlease try again later.")
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
-            return "OpenERP needs to be restart to complete the installation."
+            return _("OpenERP needs to be restarted to complete the installation.")
         text = ""
         currev = revisions._get_last_revision(cr, uid, context=context)
         if currev:
-            text += "The current revision is %s (%s at %s) and has been applied at %s.\n" % (currev.name, currev.sum, currev.date, currev.applied)
+            if all([currev.name, currev.date]):
+                text += _("The current revision is %s (%s at %s) and has been applied at %s.") % (currev.name, currev.sum, currev.date, currev.applied)
+            else:
+                text += _("The server last sum is %s and has been applied on that database at %s.") % (currev.sum, currev.applied)
         else:
-            text += "No revision has been applied yet.\n"
+            text += _("No revision has been applied yet.")
+        text += "\n"
         next_revisions = revisions._get_next_revisions(cr, uid, context=context)
         if next_revisions:
             text += "\n"
             if len(next_revisions) == 1:
-                text += "There is 1 revision available.\n"
+                text += _("There is one revision available.")
             else:
-                text += "There are %s revisions available.\n" % len(next_revisions)
+                text += _("There are %d revisions available.") % len(next_revisions)
+            text += "\n"
             for rev in revisions.browse(cr, uid, next_revisions):
-                text += " - [%s] %s (%s)\n   Comment: %s (sum is %s)\n\n" \
-                        % (rev.importance, rev.name, rev.date, rev.comment, rev.sum)
+                text += (" - [%(importance)s] %(name)s (%(date)s)\n   " % rev) + \
+                        (_("Comment: %(comment)s (sum is %(sum)s)") % rev) + "\n\n"
         else:
-            text += "\nYour OpenERP version is up-to-date.\n"
+            text += "\n"+_("Your OpenERP version is up-to-date.")+"\n"
         return text
 
     def _get_state(self, cr, uid, context=None):
