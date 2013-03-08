@@ -1936,4 +1936,12 @@ class ir_values(osv.osv):
         return values
 
 ir_values()
+
+class account_cashbox_line(osv.osv):
+    _name = 'account.cashbox.line'
+    _inherit = 'account.cashbox.line'
+
+    _order = 'pieces'
+
+account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
