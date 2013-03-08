@@ -48,11 +48,18 @@ class MonitorLogger(object):
         self.info['error'] = "\n".join(self.messages)
         self.monitor.write(self.cr, self.uid, [self.row_id], self.info, context=self.context)
 
-    def append(self, message, step=None):
-        if step is not None and not step == 'status':
-            message = "%s: %s" % (self.monitor._columns[step].string, message)
-        else:
-            self.messages.append(message)
+    @staticmethod
+    def __format_message(message, step):
+        return "%s: %s" % (self.monitor._columns[step].string, message) \
+               if step is not None and not step == 'status' \
+               else message
+
+    def append(self, message='', step=None):
+        self.messages.append(self.__format_message(message, step))
+        return len(self.messages) - 1
+
+    def replace(self, index, message, step=None):
+        self.messages[index] = self.__format_message(message, step)
 
     def switch(self, step, status):
         if status == 'failed':
