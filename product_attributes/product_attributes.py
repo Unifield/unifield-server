@@ -25,6 +25,8 @@ from tools.translate import _
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
+    _rec_name = 'section'
+
     _columns = {
         'code': fields.char('Code', size=4),
         'section': fields.char('Section', size=32),
@@ -34,6 +36,8 @@ product_section_code()
 
 class product_supply_source(osv.osv):
     _name = "product.supply.source"
+    _rec_name = 'source'
+
     _columns = {
         'source': fields.char('Supply source', size=32),
     }
