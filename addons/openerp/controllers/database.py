@@ -50,7 +50,8 @@ def get_db_list():
 class DBForm(openobject.widgets.Form):
     strip_name = True
 
-    def post_init(self, *args, **kw):
+    def __init__(self, *args, **kw):
+        super(DBForm, self).__init__(*args, **kw)
         if self.validator is openobject.validators.DefaultValidator:
             self.validator = openobject.validators.Schema()
         for f in self.fields:
@@ -100,7 +101,7 @@ class FormRestore(DBForm):
     submit_text = _('Restore')
     fields = [openobject.widgets.FileField(name="filename", label=_('File:')),
               openobject.widgets.PasswordField(name='password', label=_('Super admin password:'), validator=formencode.validators.NotEmpty()),
-              openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), readonly=1, attrs={'disabled': 'disabled'})]
+              openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), readonly=1, attrs={'readonly': ''})]
 
 class FormPassword(DBForm):
     name = "password"
