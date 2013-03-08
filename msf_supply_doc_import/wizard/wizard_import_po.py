@@ -486,7 +486,7 @@ The columns should be in this values:
                     else:
                         to_write_po.update({'file_line_number': file_line_number})
                         po_import_id = import_po_obj.create(cr, uid, to_write_po, context)
-                        vals_po = import_po_obj.read(cr, uid, po_import_id, context)
+                        vals_po = import_po_obj.read(cr, uid, po_import_id)
                         # We take only the not Null Value
                         filtered_vals = {}
                         for k, v in vals_po.iteritems():
@@ -550,7 +550,7 @@ The columns should be in this values:
                     # 1st CASE
                     if count_same_file_line_nb == count_same_pol_line_nb:
                         # 'We update all the lines.'
-                        for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb, context)):
+                        for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb)):
                             vals = file_line
                             file_line_number = vals.get('file_line_number', False)
                             # We take only the not Null Value
@@ -589,7 +589,7 @@ The columns should be in this values:
                                 percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                                 self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
-                        for line in import_obj.read(cr, uid, same_file_line_nb, context):
+                        for line in import_obj.read(cr, uid, same_file_line_nb):
                             if not line.get('line_ignored_ok', False) and line.get('id', False) not in file_line_proceed:
                                 error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
@@ -606,7 +606,7 @@ The columns should be in this values:
                         if count_same_pol_line_nb == 1:
                             #"We split the only line with this line number"
                             product_qty = 0.0
-                            file_line_read = import_obj.read(cr, uid, same_file_line_nb, context)
+                            file_line_read = import_obj.read(cr, uid, same_file_line_nb)
                             for file_line in file_line_read:
                                 product_qty += file_line.get('product_qty', False)
                             import_values = file_line_read[0]
@@ -676,7 +676,7 @@ The columns should be in this values:
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
                             # we ignore the file lines that doesn't correspond to any PO line for this product and this line_number
-                            for line in import_obj.read(cr, uid, same_file_line_nb, context=context):
+                            for line in import_obj.read(cr, uid, same_file_line_nb):
                                 if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
                                     error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
@@ -729,7 +729,7 @@ The columns should be in this values:
         Launch a thread for importing lines.
         """
         po_obj = self.pool.get('purchase.order')
-        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file'], context=context):
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
             po_id = wiz_read['po_id']
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")}, context=context)
@@ -767,7 +767,7 @@ Otherwise, you can continue to use Unifield.""") % self.pool.get('purchase.order
         if isinstance(ids, (int, long)):
             ids = [ids]
         purchase_obj = self.pool.get('purchase.order')
-        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file'], context=context):
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
             po_id = wiz_read['po_id']
             po_name = purchase_obj.read(cr, uid, po_id, ['name'], context=context)['name']
             if wiz_read['state'] != 'done':
