@@ -19,49 +19,37 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-from datetime import datetime
-import tools
-import time
-import pprint
-from sync_client.ir_model_data import link_with_ir_model
-
-pp = pprint.PrettyPrinter(indent=4)
-
-from tools.safe_eval import safe_eval as eval
+from osv import osv, fields
 
 class sync_manager(osv.osv_memory):
     _name = 'sync.client.sync_manager'
-    
+
     _rec_name = 'state'
-    
+
     def _get_state(self, cr, uid, context=None):
         return self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).state
-    
+
     _columns = {
         'state' : fields.selection([('init','Init'),
                                     ('msg_push','Sending Message'),
-                                    ('update_send','Sending Data'), 
-                                    ('update_validate','Validating Data'), 
+                                    ('update_send','Sending Data'),
+                                    ('update_validate','Validating Data'),
                                     ('update_pull','Receiving Data'),
                                     ('corrupted', 'Corrupted')], 'State', required=True, readonly=True),
     }
-    
+
     _defaults = {
                  'state' : _get_state,
     }
-    
+
     def sync(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').sync(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
-        
+
     def sync_threaded(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').sync_threaded(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
-        
+
     def pull_data(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').pull_update(cr, uid, recover=False, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -69,16 +57,15 @@ class sync_manager(osv.osv_memory):
     def pull_all_data(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').pull_update(cr, uid, recover=True, context=context)
         return {'type': 'ir.actions.act_window_close'}
-        
+
     def push_data(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').push_update(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
-        
+
     def push_message(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').push_message(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
-        
     def pull_message(self, cr, uid, ids, context=None):
         self.pool.get('sync.client.entity').pull_message(cr, uid, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -88,11 +75,7 @@ class sync_manager(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
     def recover_data_and_messages(self, cr, uid, ids, context=None):
-        """
-        Call both pull_all_data and recover_message functions - used in manual sync wizard
-        """
-        self.pull_all_data(cr, uid, ids, context=context)
-        self.recover_message(cr, uid, ids, context=context)
+        self.pool.get('sync.client.entity').sync_threaded(cr, uid, recover=True, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 sync_manager()

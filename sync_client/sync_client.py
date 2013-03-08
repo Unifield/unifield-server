@@ -42,19 +42,31 @@ import functools
 class SkipStep(StandardError):
     pass
 
-class BackgroundSynchronisation(Thread):
+class BackgroundProcess(Thread):
 
-    def __init__(self, dbname, uid, context):
-        super(BackgroundSynchronisation, self).__init__()
-        self.dbname = dbname
-        self.uid = uid
+    def __init__(self, cr, uid, method, context=None):
+        super(BackgroundProcess, self).__init__()
         self.context = context
+        self.uid = uid
+        self.db, pool = pooler.get_db_and_pool(cr.dbname)
+        entity = pool.get('sync.client.entity')
+        # Lookup method to call
+        self.call_method = getattr(entity, method)
+        # Check if we are not already syncing
+        entity.is_syncing(raise_on_syncing=True)
+        # Check if connection is up
+        pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
+        # Check for update
+        if hasattr(entity, 'upgrade'):
+            up_to_date = entity.upgrade(cr, uid, context=context)
+            if not up_to_date[0]:
+                cr.commit()
+                raise osv.except_osv(_('Error!'), _(up_to_date[1]))
 
     def run(self):
-        db, pool = pooler.get_db_and_pool(self.dbname)
-        cr = db.cursor()
+        cr = self.db.cursor()
         try:
-            pool.get('sync.client.entity').sync(cr, self.uid, self.context)
+            self.call_method(cr, self.uid, self.context)
             cr.commit()
         except:
             pass
@@ -549,20 +561,19 @@ class entity(osv.osv):
     """
         SYNC process : usefull for scheduling 
     """
-    def sync_threaded(self, cr, uid, context=None):
-        # Check if connection is up
-        self.pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
-        # Check if we are not already syncing
-        self.is_syncing(raise_on_syncing=True)
-        # Check for update (if connection is up)
-        if hasattr(self, 'upgrade'):
-            up_to_date = self.upgrade(cr, uid, context=context)
-            if not up_to_date[0]:
-                cr.commit()
-                raise osv.except_osv(_('Error!'), _(up_to_date[1]))
-        context = context or {}
-        t = BackgroundSynchronisation(cr.dbname, uid, context)
-        t.start()
+    def sync_threaded(self, cr, uid, recover=False, context=None):
+        BackgroundProcess(cr, uid,
+            ('sync_recover' if recover else 'sync'),
+            context).start()
+        return True
+
+    @sync_process()
+    def sync_recover(self, cr, uid, context=None):
+        """
+        Call both pull_all_data and recover_message functions - used in manual sync wizard
+        """
+        self.pull_update(cr, uid, recover=True, context=context)
+        self.pull_message(cr, uid, recover=True, context=context)
         return True
 
     @sync_process()
@@ -572,7 +583,7 @@ class entity(osv.osv):
         self.push_update(cr, uid, context=context)
         self.push_message(cr, uid, context=context)
         return True
-        
+
     def get_upgrade_status(self, cr, uid, context=None):
         return ""
 
