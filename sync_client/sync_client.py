@@ -49,19 +49,31 @@ class BackgroundProcess(Thread):
         self.context = context
         self.uid = uid
         self.db, pool = pooler.get_db_and_pool(cr.dbname)
-        entity = pool.get('sync.client.entity')
-        # Lookup method to call
-        self.call_method = getattr(entity, method)
-        # Check if we are not already syncing
-        entity.is_syncing(raise_on_syncing=True)
-        # Check if connection is up
-        pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
-        # Check for update
-        if hasattr(entity, 'upgrade'):
-            up_to_date = entity.upgrade(cr, uid, context=context)
-            if not up_to_date[0]:
-                cr.commit()
-                raise osv.except_osv(_('Error!'), _(up_to_date[1]))
+        try:
+            entity = pool.get('sync.client.entity')
+            # Lookup method to call
+            self.call_method = getattr(entity, method)
+            # Check if we are not already syncing
+            entity.is_syncing(raise_on_syncing=True)
+            # Check if connection is up
+            if not pool.get('sync.client.sync_server_connection').is_connected:
+                raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+            # Check for update
+            if hasattr(entity, 'upgrade'):
+                up_to_date = entity.upgrade(cr, uid, context=context)
+                if not up_to_date[0]:
+                    cr.commit()
+                    raise osv.except_osv(_('Error!'), _(up_to_date[1]))
+        except BaseException, e:
+            logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
+            logger.switch('status', 'failed')
+            if isinstance(e, osv.except_osv):
+                logger.append(e.value)
+                raise
+            else:
+                error = "%s: %s" % (e.__class__.__name__, tools.ustr(e))
+                logger.append(error)
+                raise osv.except_osv(_('Error!'), error)
 
     def run(self):
         cr = self.db.cursor()
@@ -198,10 +210,8 @@ class entity(osv.osv):
                         kwargs['logger'] = logger = self.pool.get('sync.monitor').get_logger(cr, uid, context=context)
 
                         # Check if connection is up
-                        con = self.pool.get('sync.client.sync_server_connection')
-                        con.connect(cr, uid, context=context)
-                        cr.commit()
-                        # connect() raise an except_osv if something goes wrong
+                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
