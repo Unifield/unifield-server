@@ -21,6 +21,7 @@
                             <newline/>
                             <field name="date" select="1" on_change="onchange_date(date)"/>
                             <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
+                            <field name="currency" readonly="1"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
@@ -32,7 +33,6 @@
                             </group>
                             <field name="balance_end" readonly="1"/>
                             <field name="balance_gap"/>
-                            <field name="currency" invisible="1"/>
                             <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                             <field name="closing_balance_frozen" invisible="1"/>
@@ -169,7 +169,7 @@
                             
                             <field name="user_id" select="1" readonly="1"/>
                             <field name="period_id" select="1" domain="[('state', '=', 'draft')]"/>
-                            <field name="currency" invisible="1"/>
+                            <field name="currency" readonly="1"/>
                             <field name="virtual_id" invisible="1" readonly="1"/>
                         </group>
                         <group col="2" colspan="4">
@@ -369,10 +369,10 @@
                     <field name="transfer_journal_id" invisible="1"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
-                    <field name="currency_id"/>
-                    <field name="functional_in"/>
-                    <field name="functional_out"/>
-                    <field name="functional_currency_id"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="functional_in" invisible="1"/>
+                    <field name="functional_out" invisible="1"/>
+                    <field name="functional_currency_id" invisible="1"/>
                     <field name="state"/>
                     <field name="statement_id" string="Register Name"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
@@ -400,10 +400,10 @@
                     <field name="transfer_journal_id" readonly="1"/>
                     <field name="amount_in" readonly="1"/>
                     <field name="amount_out" readonly="1"/>
-                    <field name="currency_id" readonly="1"/>
-                    <field name="functional_in" readonly="1"/>
-                    <field name="functional_out" readonly="1"/>
-                    <field name="functional_currency_id" readonly="1"/>
+                    <field name="currency_id" readonly="1" invisible="1"/>
+                    <field name="functional_in" readonly="1" invisible="1"/>
+                    <field name="functional_out" readonly="1" invisible="1"/>
+                    <field name="functional_currency_id" readonly="1" invisible="1"/>
                     <field name="state" readonly="1"/>
                     <field name="statement_id" readonly="1"/>
                     <field name="direct_invoice" invisible="1" readonly="1"/>
@@ -491,6 +491,7 @@
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
+                    <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="balance_start"/>
                     <field name="balance_end" />
@@ -513,6 +514,7 @@
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
+                    <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="balance_start"/>
                     <field name="msf_calculated_balance"/>
@@ -637,7 +639,7 @@
                         <newline/>
                         <field name="date" select="1" on_change="onchange_date(date)"/>
                         <field name="period_id" readonly="1" domain="[('state', '=', 'draft')]"/>
-                        <field name="currency" invisible="1"/>
+                        <field name="currency" readonly="1"/>
                         <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
                         <field name="virtual_id" invisible="1" readonly="1"/>
                     </group>
@@ -757,6 +759,7 @@
                     <field name="name"/>
                     <field name="date"/>
                     <field name="period_id"/>
+                    <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="balance_end" />
                     <field name="state"/>
