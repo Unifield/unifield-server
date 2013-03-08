@@ -512,6 +512,16 @@ The columns should be in this values:
         percent_completed = 0
         for row in rows:
             file_line_number += 1
+            if len(row) < len(header_index.keys()):
+                import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
+                error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template, please make sure the line is within the template. \n'
+                               ) % (file_line_number+1,)
+                line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=False, context=context))
+                ignore_lines += 1
+                processed_lines += 1
+                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
+                continue
             try:
                 # take values of po (first line only)
                 if first_row:
