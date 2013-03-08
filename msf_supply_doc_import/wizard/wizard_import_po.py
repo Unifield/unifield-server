@@ -479,14 +479,14 @@ The columns should be in this values:
                 # take values of po (first line only)
                 if first_row:
                     to_write_po = self.get_po_header_row_values(cr, uid, ids, row, po_browse, header_index, context)
-                    if to_write_po['error_list']:
+                    if to_write_po.get('error_list', False):
                         import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
-                        error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write_po['error_list']))
-                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po['error_list'], line_num=False, context=context))
+                        error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write_po.get('error_list', False)))
+                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po.get('error_list', False), line_num=False, context=context))
                     else:
                         to_write_po.update({'file_line_number': file_line_number})
-                        po_import_id = import_po_obj.create(cr, uid, to_write_po)
-                        vals_po = import_po_obj.read(cr, uid, po_import_id)
+                        po_import_id = import_po_obj.create(cr, uid, to_write_po, context)
+                        vals_po = import_po_obj.read(cr, uid, po_import_id, context)
                         # We take only the not Null Value
                         filtered_vals = {}
                         for k, v in vals_po.iteritems():
@@ -499,28 +499,28 @@ The columns should be in this values:
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
                 # we check consistency on the model of on_change functions to call for updating values
                 to_write_check = pol_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
-                if to_write['error_list'] or to_write_check['text_error'].strip():
-                    import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
-                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write['error_list']) or to_write_check['text_error'])
-                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
+                if to_write.get('error_list', False) or to_write_check.get('text_error', '').strip():
+                    import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False}, context)
+                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write.get('error_list', False)) or to_write_check.get('text_error', False))
+                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write.get('error_list', False), line_num=False, context=context))
                     ignore_lines += 1
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                 else:
                     line_number = to_write['line_number']
                     # We ignore the lines with a line number that does not correspond to any line number of the PO line
-                    if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)]):
-                        import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
+                    if not pol_obj.search(cr, uid, [('order_id', '=', po_id), ('line_number', '=', line_number)], context=context):
+                        import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False}, context)
                         error_log += _('Line %s in the Excel file was added to the file of the lines with errors: the line number %s does not exist for %s \n') % (file_line_number+1, line_number, po_browse.name)
-                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write['error_list'], line_num=False, context=context))
+                        line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write.get('error_list', False), line_num=False, context=context))
                         ignore_lines += 1
                         processed_lines += 1
                         percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                     else:
                         to_write.update({'file_line_number': file_line_number})
-                        import_obj.create(cr, uid, to_write)
+                        import_obj.create(cr, uid, to_write, context)
             except osv.except_osv as osv_error:
-                import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False})
+                import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False}, context)
                 osv_value = osv_error.value
                 osv_name = osv_error.name
                 error_log += _("Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n") % (file_line_number+1, osv_name, osv_value)
@@ -552,7 +552,7 @@ The columns should be in this values:
                         # 'We update all the lines.'
                         for pol_line, file_line in zip(pol_obj.browse(cr, uid, same_pol_line_nb, context), import_obj.read(cr, uid, same_file_line_nb, context)):
                             vals = file_line
-                            file_line_number = vals['file_line_number']
+                            file_line_number = vals.get('file_line_number', False)
                             # We take only the not Null Value
                             filtered_vals = {}
                             for k, v in vals.iteritems():
@@ -574,7 +574,7 @@ The columns should be in this values:
                             overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)], context=context)
                             if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                                 import_values = import_obj.read(cr, uid, overlapping_lines)[0]
-                                file_line_number = import_values['file_line_number']
+                                file_line_number = import_values.get('file_line_number', False)
                                 # We take only the not Null Value
                                 filtered_vals = {}
                                 for k, v in import_values.iteritems():
@@ -590,11 +590,11 @@ The columns should be in this values:
                                 self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                         #we ignore the file lines with this line number because we can't know which lines to update or not.
                         for line in import_obj.read(cr, uid, same_file_line_nb, context):
-                            if not line['line_ignored_ok'] and line['id'] not in file_line_proceed:
+                            if not line.get('line_ignored_ok', False) and line.get('id', False) not in file_line_proceed:
                                 error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
                                                                                         count_same_pol_line_nb, line_number,
-                                                                                        file_values[line['file_line_number']][header_index['Product Code*']])
+                                                                                        file_values[line.get('file_line_number', False)] and file_values[line.get('file_line_number', False)][header_index['Product Code*']])
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
@@ -608,9 +608,9 @@ The columns should be in this values:
                             product_qty = 0.0
                             file_line_read = import_obj.read(cr, uid, same_file_line_nb, context)
                             for file_line in file_line_read:
-                                product_qty += file_line['product_qty']
+                                product_qty += file_line.get('product_qty', False)
                             import_values = file_line_read[0]
-                            lines = [str(import_values['file_line_number'])]
+                            lines = [str(import_values.get('file_line_number', False))]
                             import_values.update({'product_qty': product_qty})
                             # We take only the not Null Value
                             filtered_vals = {}
@@ -627,22 +627,32 @@ The columns should be in this values:
                                 wiz_context = wizard_values.get('context')
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
                                                                                 {'new_line_qty': file_line.product_qty}, context=wiz_context)
-                                self.pool.get(wizard_values['res_model']).split_line(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                                lines.append(str(file_line.file_line_number))
-                                po_line_ids = pol_obj.search(cr, uid, [('product_qty', '=', file_line.product_qty),
-                                                                       ('line_number', '=', line_number),
-                                                                       ('order_id', '=', po_id)], context=context)
-                                new_po_line = po_line_ids[-1]
-                                pol_obj.write(cr, uid, [new_po_line], {'product_qty': file_line.product_qty,
-                                                                        'product_uom': file_line.product_uom.id,
-                                                                        'product_id': file_line.product_id.id,
-                                                                        'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
-                                complete_lines += 1
-                                processed_lines += 1
-                                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                                self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
+                                try:
+                                    self.pool.get(wizard_values['res_model']).split_line(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                                    lines.append(str(file_line.file_line_number))
+                                    po_line_ids = pol_obj.search(cr, uid, [('product_qty', '=', file_line.product_qty),
+                                                                           ('line_number', '=', line_number),
+                                                                           ('order_id', '=', po_id)], context=context)
+                                    new_po_line = po_line_ids[-1]
+                                    pol_obj.write(cr, uid, [new_po_line], {'product_qty': file_line.product_qty,
+                                                                            'product_uom': file_line.product_uom.id,
+                                                                            'product_id': file_line.product_id.id,
+                                                                            'confirmed_delivery_date': file_line.confirmed_delivery_date}, context)
+                                    complete_lines += 1
+                                    processed_lines += 1
+                                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                    self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
+                                except osv.except_osv as osv_error:
+                                    error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : %s") % (line_number, osv_error.value))
+                                    data = file_values[line_number].items()
+                                    line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
+                                    ignore_lines += 1
+                                    processed_lines += 1
+                                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                                    self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
+                                    break
                             lines = ','.join(lines)
-                            error_list.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
+                            notif_log.append(_("Lines %s of the Excel file produced a split for the line %s.") % (lines, line_number))
                         elif count_same_pol_line_nb > 1:
                             # if the product is the same: we update the corresponding line
                             file_line_proceed = []
@@ -651,7 +661,7 @@ The columns should be in this values:
                                 overlapping_lines = import_obj.search(cr, uid, [('id', 'in', same_file_line_nb), ('product_id', '=', pol_line.product_id.id)], context=context)
                                 if overlapping_lines and len(overlapping_lines) == 1 and overlapping_lines[0] not in file_line_proceed:
                                     import_values = import_obj.read(cr, uid, overlapping_lines)[0]
-                                    file_line_number = import_values['file_line_number']
+                                    file_line_number = import_values.get('file_line_number', False)
                                     # We take only the not Null Value
                                     filtered_vals = {}
                                     for k, v in import_values.iteritems():
@@ -672,7 +682,7 @@ The columns should be in this values:
                                                                                         line['file_line_number']+1,
                                                                                         count_same_pol_line_nb, line_number,
                                                                                         file_values[line['file_line_number']][header_index['Product Code*']])
-                                    data = file_values[line['file_line_number']].items()
+                                    data = file_values[line.get('file_line_number', False)].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
                                     processed_lines += 1
