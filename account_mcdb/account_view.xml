@@ -94,12 +94,12 @@
                             domain="[('reconcile_id','=',False), ('account_id.reconcile','=',True)]" help="Unreconciled Journal Items"
                             name="unreconciled"/>
                         <separator orientation="vertical"/>
-                        <field name="move_id" select="1"/>
-                        <field name="ref" select="1" string="Reference"/>
                         <newline/>
                         <field name="document_date"/>
                         <field name="date" select='1'/>
                         <newline/>
+                        <field name="move_id" select="1"/>
+                        <field name="ref" select="1" string="Reference"/>
                         <field name="account_id" select='1'/>
                         <field name="name" select="1"/>
                         <newline/>
