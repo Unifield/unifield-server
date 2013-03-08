@@ -199,11 +199,13 @@ class stock_picking(osv.osv):
                                                       store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
                                                               'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
+        'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
                  'from_wkf': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
+                 'fake_type': 'in',
                  }
 
     def _check_active_product(self, cr, uid, ids, context=None):
