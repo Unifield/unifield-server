@@ -380,7 +380,7 @@ class product_attributes(osv.osv):
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
 
-    def _get_restriction_error(self, cr, uid, ids, constraints=[], context=None):
+    def _test_restriction_error(self, cr, uid, ids, constraints=[], context=None):
         '''
         Builds and returns an error message according to the constraints
         '''
@@ -389,9 +389,11 @@ class product_attributes(osv.osv):
 
         if not isinstance(constraints, list):
             constraints = [constraints]
+        
+        error = False
+        error_msg = ''
 
         for product in self.browse(cr, uid, ids, context=context):
-            error = False
             msg = ''
             st_cond = True
 
@@ -411,7 +413,7 @@ class product_attributes(osv.osv):
                 error = True
                 msg = _('be consumed internally')
                 st_cond = product.state.no_consumption
-            elif product.no_storage and 'storage' in constraints':
+            elif product.no_storage and 'storage' in constraints:
                 error = True
                 msg = _('be stored anymore')
                 st_cond = product.state.no_storage
@@ -421,15 +423,39 @@ class product_attributes(osv.osv):
                 st_type = st_cond and _('status') or _('product creator')
                 st_name = st_cond and product.state.name or product.international_status.name
 
-                raise osv.except_osv(_('Error'),
-                                     _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') % (product.default_code,
-                                                                                                               product.name,
-                                                                                                               st_type,
-                                                                                                               st_name, 
-                                                                                                               msg))
-                return False
+                error_msg = _('The product [%s] %s gets the %s \'%s\' and consequently can\'t %s') % (product.default_code,
+                                                                                                      product.name,
+                                                                                                      st_type,
+                                                                                                      st_name, 
+                                                                                                      msg)
+        return error, error_msg
+
+    def _get_restriction_error(self, cr, uid, ids, constraints=[], context=None):
+        '''
+        Raise an error if the product is not compatible with the order
+        '''
+        res, error_msg = self._test_restriction_error(cr, uid, ids, constraints=constraints, context=context)
+        if res:
+            raise osv.except_osv(_('Error'), error_msg)
+            return False
 
         return True
+
+    def _on_change_restriction_error(self, cr, uid, ids, field_name, values={}, constraints=[], context=None):
+        '''
+        Update the message on on_change of product
+        '''
+        res, error_msg = self._test_restriction_error(cr, uid, ids, constraints=constraints, context=context)
+
+        result = values.copy()
+
+        if res:
+            result.setdefault('value', {})[field_name] = False
+            result.setdefault('warning', {})['title'] = _('Warning')
+            result.setdefault('warning', {})['message'] = error_msg
+
+        return result, res
+
 
     def onchange_heat(self, cr, uid, ids, heat, context=None):
         heat_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]

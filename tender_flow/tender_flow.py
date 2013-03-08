@@ -123,7 +123,7 @@ class tender(osv.osv):
         for tender in self.browse(cr, uid, ids, context=context):
             if tender.state != 'done':
                 for line in tender.tender_line_ids:
-                    if self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraint=['external'], context=context):
+                    if self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=['external'], context=context):
                         return False
 
         return True
@@ -516,7 +516,13 @@ class tender_line(osv.osv):
         prod_obj = self.pool.get('product.product')
         result = {'value': {}}
         if product_id:
-            result['value']['product_uom'] = prod_obj.browse(cr, uid, product_id, context=context).uom_po_id.id
+            # Test the compatibility of the product with a tender
+            result, test = prod_obj._on_change_restriction_error(cr, uid, product_id, 'product_id', values=result, constraints=['external'], context=context)
+            if test:
+                return result
+
+            product = prod_obj.browse(cr, uid, product_id, context=context)
+            result['value']['product_uom'] = product.uom_po_id.id
             
         return result
     
@@ -582,7 +588,7 @@ class tender_line(osv.osv):
         '''
         for line in self.browse(cr, uid, ids, context=context):
             if line.tender_id.state != 'done':
-                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, context=context):
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=['external'], context=context):
                     return False
 
         return True
