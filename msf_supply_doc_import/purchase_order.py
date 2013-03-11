@@ -380,7 +380,7 @@ class purchase_order_line(osv.osv):
                 uom = to_write.get('product_uom')
                 if product and qty and not price_unit_defined:
                     try:
-                        res = self.product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
+                        res = self.product_id_on_change(cr, uid, False, pricelist, product, qty, uom,
                                                         partner_id, date_order, fiscal_position, date_planned=False,
                                                         name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
                                                         nomen_manda_0=False, comment=False, context=context)
@@ -397,7 +397,7 @@ class purchase_order_line(osv.osv):
                             text_error += '%s. %s\n' % (osv_value, osv_name)
                     to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
                 if uom:
-                    self.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+                    self.check_data_for_uom(cr, uid, False, to_write=to_write, context=context)
                 else:
                     if not context.get('po_integration'):
                         uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
