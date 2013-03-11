@@ -31,7 +31,7 @@ super_fields_view_get = orm.orm.fields_view_get
 
 def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
     """
-    Dynamically change button groups_with_duplicates based on button access rules
+    Dynamically change button groups based on button access rules
     """
 
     context = context or {}
