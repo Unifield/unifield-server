@@ -210,6 +210,18 @@ class purchase_order(osv.osv):
             res[po.id] = retour
         return res
 
+    def _is_po_from_fo(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            retour = False
+            for line in po.order_line:
+                if line.procurement_id:
+                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),('order_id.procurement_request','=',False)])
+                    if ids_proc:
+                        retour = True
+            res[po.id] = retour
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -255,7 +267,7 @@ class purchase_order(osv.osv):
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
         'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
-
+        'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
     }
     
     _defaults = {
@@ -271,6 +283,19 @@ class purchase_order(osv.osv):
         'active': True,
         'name': lambda *a: False,
     }
+
+    def _check_po_from_fo(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        retour = True
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.partner_id.partner_type == 'internal' and po.po_from_fo:
+                retour = False
+        return retour
+
+    _constraints = [
+        (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
+    ]
 
     def _check_service(self, cr, uid, ids, vals, context=None):
         '''
