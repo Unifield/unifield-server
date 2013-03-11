@@ -241,8 +241,14 @@ The columns should be in this values:
         cell_nb = header_index.get('Delivery Confirmed Date (PO)*', False)
         delivery_confirmed_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
-            if row.cells[cell_nb].type == 'datetime':
-                to_write_po.update({'delivery_confirmed_date':  delivery_confirmed_date.strftime('%d-%m-%Y')})
+            if row.cells[cell_nb].type in ('date', 'datetime'):
+                delivery_confirmed_date = delivery_confirmed_date.strftime('%d-%m-%Y')
+                if delivery_confirmed_date != '30-12-1899':
+                    to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
+                else:
+                    #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
+                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)*" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
+                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
                 try:
                     delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
@@ -314,8 +320,14 @@ The columns should be in this values:
         cell_nb = header_index.get('Arrival Date in the country', False)
         arrival_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
-            if row.cells[cell_nb].type == 'datetime':
-                to_write_po.update({'arrival_date':  arrival_date.strftime('%d-%m-%Y')})
+            if row.cells[cell_nb].type in ('date', 'datetime'):
+                arrival_date = arrival_date.strftime('%d-%m-%Y')
+                if arrival_date != '30-12-1899':
+                    to_write_po.update({'arrival_date': arrival_date})
+                else:
+                    #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
+                    to_write_po['error_list'].append(_('"Arrival Date in the country" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
+                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
                 try:
                     arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
@@ -447,8 +459,14 @@ The columns should be in this values:
         cell_nb = header_index.get('Delivery Confirmed Date*', False)
         confirmed_delivery_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
-            if row.cells[cell_nb].type == 'datetime':
-                to_write.update({'confirmed_delivery_date': confirmed_delivery_date.strftime('%d-%m-%Y')})
+            if row.cells[cell_nb].type in ('date', 'datetime'):
+                confirmed_delivery_date = confirmed_delivery_date.strftime('%d-%m-%Y')
+                if confirmed_delivery_date != '30-12-1899':
+                    to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
+                else:
+                    #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
+                    to_write['error_list'].append(_('"The Delivery Confirmed Date" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
+                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             else:
                 try:
                     confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
