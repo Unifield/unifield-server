@@ -22,10 +22,10 @@
 # if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, check also NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
 # in PO_COLUMNS_HEADER_FOR_INTEGRATION, you have all the importable columns possible
 PO_COLUMNS_HEADER_FOR_INTEGRATION=[
-('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'date'),
-('Delivery Confirmed Date*', 'date'), ('Order Reference*', 'string'), ('Delivery Confirmed Date (PO)*', 'date'),
+('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'string'),
+('Delivery Confirmed Date*', 'string'), ('Order Reference*', 'string'), ('Delivery Confirmed Date (PO)*', 'string'),
 ('Comment', 'string'), ('Supplier Reference', 'string'), ('Origin', 'string'), ('Notes', 'string'), ('Est. Transport Lead Time', 'number'), ('Transport Mode', 'string'), 
-('Destination Partner', 'string'), ('Destination Address', 'string'), ('Invoicing Address', 'string'), ('Arrival Date in the country', 'date'),
+('Destination Partner', 'string'), ('Destination Address', 'string'), ('Invoicing Address', 'string'), ('Arrival Date in the country', 'string'),
 ('Incoterm', 'string'), ('Notes (PO)', 'string')]
 
 PO_COLUMNS_FOR_INTEGRATION = [x for (x, y) in PO_COLUMNS_HEADER_FOR_INTEGRATION]
@@ -36,6 +36,7 @@ NEW_COLUMNS_HEADER = [
 ('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'string'),
 ('Delivery Confirmed Date*', 'string'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
 
+#Important NOTE: I didn't set the fields of type date with the attribute 'date' (2nd part of the tuple) because for Excel, when a date is empty, the field becomes '1899-30-12' as default. So I set 'string' instead for the fields date.
 
 import wizard_import_po
 import stock_partial_picking
