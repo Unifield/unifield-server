@@ -206,7 +206,7 @@ Section OpenERP_Server SectionOpenERP_Server
 
     nsExec::Exec '"$INSTDIR\openerp-server.exe" --stop-after-init --logfile "$INSTDIR\openerp-server.log" -s'
     nsExec::Exec '"$INSTDIR\service\OpenERPServerService.exe" -auto -install'
-    nsExec::Exec 'reg add HKLM\SYSTEM\CurrentControlSet\services\openerp-server-6.0 /v Environment /t REG_MULTI_SZ /d LANG=en_US\0TZ=UTC /f'
+    nsExec::Exec 'reg add HKLM\SYSTEM\CurrentControlSet\services\openerp-server-6.0 /v Environment /t REG_MULTI_SZ /d LANG=en_US /f'
 SectionEnd
 
 Section -RestartServer
