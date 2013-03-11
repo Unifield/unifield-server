@@ -232,6 +232,11 @@ class stock_partial_picking(osv.osv_memory):
         
         line_numbers = []
 
+        # reset the osv_memory before each import
+        import_obj_ids = import_obj.search(cr, uid, [('wizard_id', '=', obj.id)], context=context)
+        if import_obj_ids:
+            import_obj.unlink(cr, uid, import_obj_ids, context)
+
         for row in rows:
             # default values
             file_line_num += 1
