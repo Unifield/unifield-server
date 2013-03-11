@@ -264,5 +264,21 @@ class account_move_line(osv.osv):
                 ml_copied_ids.append(ml.id)
         return ml_copied_ids
 
+    def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=80):
+        """
+        In search view permit to search regarding Entry Sequence from journal entry (move_id.name field).
+        This comes from UF-1719.
+        """
+        if args is None:
+            args = []
+        if context is None:
+            context = {}
+        ids = []
+        if name:
+            ids = self.search(cr, user, ['|', ('name', 'ilike', name), ('move_id.name', 'ilike', name)]+ args, limit=limit)
+        if not ids:
+            ids = self.search(cr, user, [('name', operator, name)]+ args, limit=limit)
+        return self.name_get(cr, user, ids, context=context)
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
