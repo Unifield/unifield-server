@@ -326,10 +326,19 @@ stock_warehouse_orderpoint()
 class product_uom(osv.osv):
     _name = 'product.uom'
     _inherit = 'product.uom'
-    
-    def _get_uom_by_product(self, cr, uid, ids, field_name, args, context=None):
-        return {}
-    
+
+    def _get_false(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
+
     def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
         dom = []
         
@@ -345,9 +354,6 @@ class product_uom(osv.osv):
                     dom.append(('category_id', '=', product.uom_id.category_id.id))
                 
         return dom
-
-    def _get_uom_by_parent(self, cr, uid, ids, field_name, args, context=None):
-        return {}
 
     def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
         dom = []
@@ -366,9 +372,9 @@ class product_uom(osv.osv):
         return dom
 
     _columns = {
-        'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
+        'uom_by_product': fields.function(_get_false, fnct_search=_search_uom_by_product, string='UoM by Product', 
                                           help='Field used to filter the UoM for a specific product'),
-        'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent', 
+        'uom_by_parent': fields.function(_get_false, fnct_search=_search_uom_by_parent, string='UoM by Parent', 
                                           help='Field used to filter the UoM for a specific product'),
     }
     
