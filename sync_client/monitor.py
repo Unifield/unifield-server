@@ -48,8 +48,7 @@ class MonitorLogger(object):
         self.info['error'] = "\n".join(self.messages)
         self.monitor.write(self.cr, self.uid, [self.row_id], self.info, context=self.context)
 
-    @staticmethod
-    def __format_message(message, step):
+    def __format_message(self, message, step):
         return "%s: %s" % (self.monitor._columns[step].string, message) \
                if step is not None and not step == 'status' \
                else message
