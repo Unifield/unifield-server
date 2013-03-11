@@ -99,10 +99,10 @@ class import_cell_data(osv.osv_memory):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data:
             if row.cells[cell_nb].type == 'datetime':
-                return cell_data.strftime('%d-%m-%Y')
+                return cell_data.strftime('%Y-%m-%d')
             else:
                 try:
-                    expired_date = DateTime.strptime(cell_data,'%d-%m-%Y')
+                    expired_date = DateTime.strptime(cell_data,'%Y-%m-%d')
                     return str(expired_date)
                 except ValueError, e:
                     return False
