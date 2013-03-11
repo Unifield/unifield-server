@@ -357,8 +357,6 @@ class purchase_order_line(osv.osv):
         context = kwargs['context']
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         to_write = kwargs['to_write']
         order_id = to_write.get('order_id', False)
@@ -409,8 +407,6 @@ class purchase_order_line(osv.osv):
         context = kwargs['context']
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         # we take the values that we are going to write in PO line in "to_write"
         to_write = kwargs['to_write']
