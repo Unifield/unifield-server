@@ -6748,7 +6748,7 @@ msgstr "Le code du compte doit être unique par société et instance!"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "Bank register balance"
+msgid "Bank statement balance"
 msgstr "Solde Registre de Banque"
 
 #. module: procurement
@@ -7318,7 +7318,7 @@ msgstr "Modèles périodiques"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
-msgid "Bank register balance:"
+msgid "Bank statement balance:"
 msgstr "Solde Registre de Banque: "
 
 #. module: sourcing
@@ -12714,7 +12714,7 @@ msgstr "EUR"
 #: code:addons/account/account.py:1179
 #, python-format
 msgid "You cannot validate a non-balanced entry ! All lines should have a “Valid” state to validate the entry."
-msgstr "Vous ne pouvez valider une entrée non équilibrée! Toutes les lignes doivent être en mode \"valable\" pour permettre la validation de l'entrée"
+msgstr "Vous ne pouvez pas valider une entrée non équilibrée! Toutes les lignes doivent être en mode \"valable\" pour permettre la validation de l'entrée"
 
 #. modules: sales_followup, product, stock, stock_move_tracking, sd
 #: field:product.product,incoming_qty:0
@@ -26668,7 +26668,7 @@ msgstr "De cette vue, ayez une analyse des différentes écritures analytiques d
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: view:account.bank.statement:0
-msgid "Search Bank Registers"
+msgid "Search Bank Statements"
 msgstr "Rechercher des Registres de Banque"
 
 #. module: stock_override
@@ -27382,7 +27382,7 @@ msgstr "Type de Ressource"
 
 #. module: register_accounting
 #: model:ir.model,name:register_accounting.model_wizard_import_cheque
-msgid "Import cheque register from a bank register"
+msgid "Import cheque register from a bank statement"
 msgstr "Importer le registre de chèques à partir du registre de Banque"
 
 #. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
@@ -33520,7 +33520,7 @@ msgstr "sync.check_common"
 
 #. module: register_accounting
 #: help:account.bank.statement.line,from_import_cheque_id:0
-msgid "This move line has been taken for create an Import Cheque in a bank register."
+msgid "This move line has been taken for create an Import Cheque in a bank statement."
 msgstr "Cette ligne de mouvement a été prise pour créer une importation de chèque dans un registre de banque."
 
 #. module: resource
@@ -33880,7 +33880,7 @@ msgstr "Kit et liste théorique complète"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_confirm_bank.py:42
 #, python-format
-msgid "No register selected. Please do a bank confirmation from a bank register!"
+msgid "No register selected. Please do a bank confirmation from a bank statement!"
 msgstr "Pas de registre sélectionné. Veuillez faire une confirmation bancaire à partir d'un registre de banque!"
 
 #. modules: account, msf_instance
@@ -35240,7 +35240,7 @@ msgstr "Jours"
 
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.act_account_journal_2_account_bank_statement
-msgid "Bank registers"
+msgid "Bank statements"
 msgstr "Registres de Banque"
 
 #. module: account_msf
@@ -39953,7 +39953,7 @@ msgstr "4"
 
 #. module: account
 #: help:account.bank.statement,balance_end_real:0
-msgid "Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank register is equal to that amount."
+msgid "Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."
 msgstr "Veuillez saisir manuellement le solde de fin de mois, d'après le relevé bancaire (imprimé) reçu. Avant de confirmer les fermetures de solde et de registre, vous devez vous assurer que le solde calculé du registre de banque est égal à ce montant."
 
 #. module: base
@@ -46394,7 +46394,7 @@ msgstr "Règles non compatibles avec les objets osv_memory !"
 
 #. module: account
 #: model:ir.actions.act_window,help:account.action_bank_statement_tree
-msgid "A bank register is a summary of all financial transactions occurring over a given period of time on a deposit account, \n"
+msgid "A bank statement is a summary of all financial transactions occurring over a given period of time on a deposit account, \n"
 "                a credit card or any other type of financial account. The starting balance will be proposed automatically and the closing balance is \n"
 "                to be found on your statement. When you are in the Payment column of a line, you can press F1 to open the reconciliation form.\n"
 "            "
@@ -47587,7 +47587,7 @@ msgstr "\n"
 #. module: register_accounting
 #: view:account.bank.statement:0
 #: selection:wizard.register.creation.lines,register_type:0
-msgid "Bank Register"
+msgid "Bank Statement"
 msgstr "Registre de Banque"
 
 #. modules: msf_budget, account_payment, sale_override, procurement_auto, purchase_override, sale, purchase_allocation_report, sourcing, purchase_followup, procurement_cycle, stock
@@ -49983,7 +49983,7 @@ msgstr "Comptes Clients "
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:454
 #, python-format
-msgid "Bank register balance is not equal to Calculated balance."
+msgid "Bank statement balance is not equal to Calculated balance."
 msgstr "Le Solde du Registre de Banque n'est pas égal au Solde Calculé "
 
 #. module: board
@@ -52802,7 +52802,7 @@ msgstr "Colis - Poids (kg)"
 
 #. module: register_accounting
 #: view:wizard.confirm.bank:0
-msgid "Did you reconcile your bank register with your paper bank statement?"
+msgid "Did you reconcile your bank statement with your paper bank statement?"
 msgstr "Avez-vous lettré votre registre bancaire avec vos relevés bancaires (version papier)?"
 
 #. module: account_hq_entries
@@ -57493,7 +57493,7 @@ msgstr "Ne créez pas de mvmnt de stock pour cette ligne"
 #: model:ir.actions.act_window,name:account.action_bank_statement_tree
 #: model:ir.ui.menu,name:account.menu_bank_statement_tree
 #: model:ir.actions.act_window,name:register_accounting.action_bank_statement_periodic_tree
-msgid "Bank Registers"
+msgid "Bank Statements"
 msgstr "Registres de Banque"
 
 #. module: base
@@ -67113,3 +67113,237 @@ msgstr "Rafraîchir prévisions"
 #: view:stock.forecast:0
 msgid "Close Wizard"
 msgstr "Fermer assistant"
+
+#. modules: msf_outgoing, stock_override
+#: code:addons/msf_outgoing/wizard/create_picking.py:539
+#: code:addons/stock_override/wizard/stock_partial_picking.py:188
+#, python-format
+msgid "Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !"
+msgstr "La quantié %d pour %s est plus grande que la quantité disponible du lot %s (%d) !"
+
+#. module: analytic_distribution
+#: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:180
+#, python-format
+msgid "Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s"
+msgstr "La date indiquée est inférieure à la date du document. Veuillez mettre une date supérieure ou égale à %s"
+
+#. modules: msf_supply_doc_import, register_accounting, stock_override, consumption_calculation, kit
+#: field:real.average.consumption.line,inactive_product:0
+#: field:composition.item,inactive_product:0
+#: field:initial.stock.inventory.line,inactive_product:0
+#: field:purchase.order.line,inactive_product:0
+#: field:sale.order.line,inactive_product:0
+#: field:stock.inventory.line,inactive_product:0
+#: field:tender.line,inactive_product:0
+#: field:wizard.account.invoice.line,inactive_product:0
+#: field:stock.move,inactive_product:0
+#: field:stock.picking,inactive_product:0
+msgid "Product is inactive"
+msgstr "Le produit est inactif"
+
+#. module: kit
+#: code:addons/kit/kit.py:840
+#, python-format
+msgid "The product of the kit composition is inactive. Please change the product."
+msgstr "Le produit de la composition de kit est inactif. Veuillez changer le produit."
+
+#. module: procurement_request
+#: view:sale.order:0
+#: field:sale.order,ir_total_amount:0
+msgid "Indicative Total Value"
+msgstr "Valeur totale"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:64
+#: code:addons/kit/kit.py:832
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:41
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:121
+#: code:addons/msf_supply_doc_import/purchase_order.py:83
+#: code:addons/msf_supply_doc_import/sale_order.py:94
+#: code:addons/msf_supply_doc_import/tender.py:70
+#: code:addons/stock_override/stock.py:218
+#, python-format
+msgid "A product has"
+msgstr "Un produit a"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:322
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:455
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:488
+#, python-format
+msgid "Location is missing.\n"
+""
+msgstr "La Zone est manquante.\n"
+""
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:587
+#: code:addons/kit/kit.py:1078
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:71
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:422
+#: code:addons/msf_supply_doc_import/purchase_order.py:188
+#: code:addons/msf_supply_doc_import/sale_order.py:467
+#: code:addons/msf_supply_doc_import/tender.py:242
+#: code:addons/stock_override/stock.py:775
+#, python-format
+msgid "The product in line is inactive !"
+msgstr "Le produit sur la ligne est incatif !"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/purchase_order.py:85
+#: code:addons/msf_supply_doc_import/sale_order.py:96
+#, python-format
+msgid "%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous valider le document vous devez supprimer/corriger la ligne contenant les produits inactifs (ligne en rouge %s)"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:336
+#, python-format
+msgid "The product [%s] %s is already inactive."
+msgstr "Le produit [%s] %s est déjà inactif."
+
+#. module: register_accounting
+#: constraint:hr.employee:0
+msgid "Another employee has the same unique code."
+msgstr "Ce code est utilisé pour un autre employé."
+
+
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:66
+#: code:addons/kit/kit.py:834
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:43
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:123
+#: code:addons/stock_override/stock.py:220
+#, python-format
+msgid "those inactive products"
+msgstr "ces produits inactifs"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/tender.py:72
+#, python-format
+msgid "%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous voulez générer une demande de devis vous devez supprimer/corriger les lignes contenant ces produits inactifs (lignes en rouge %s)"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:245
+#, python-format
+msgid "The Price Unit was not defined properly."
+msgstr "Le prix unitaire n'a pas été défini correctement."
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/check_line.py:199
+#, python-format
+msgid "The UOM Name was not valid."
+msgstr "Le nom de l'UdM était invalide."
+
+#. modules: account_msf, register_accounting, msf_supply_doc_import, tender_flow, procurement_request
+#: constraint:purchase.order:0
+msgid "You cannot validate this purchase order because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider ce bon de commande, car il contient une ligne avec des produits inactifs."
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:64
+#: code:addons/kit/kit.py:832
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:41
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:121
+#: code:addons/msf_supply_doc_import/purchase_order.py:83
+#: code:addons/msf_supply_doc_import/sale_order.py:94
+#: code:addons/msf_supply_doc_import/tender.py:70
+#: code:addons/stock_override/stock.py:218
+#, python-format
+msgid "Some products have"
+msgstr "Certains produits ont"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:66
+#: code:addons/kit/kit.py:834
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:43
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:123
+#: code:addons/stock_override/stock.py:220
+#, python-format
+msgid "this inactive product"
+msgstr "ce produit inactif"
+
+#. modules: sale_override, msf_outgoing, msf_supply_doc_import, procurement_request
+#: constraint:sale.order:0
+msgid "You cannot validate this sale order because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider cette commande client car elle contient des lignes avec un produit inactif"
+
+#. modules: tender_flow, msf_supply_doc_import
+#: constraint:tender:0
+msgid "You cannot validate this tender because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider cet appel d'offre car il contient une ligne avec un produit inactif"
+
+
+#. module: product_attributes
+#: view:product.deactivation.error:0
+msgid "You cannot inactivate this product due to below reasons :"
+msgstr "Vous ne pouvez pas désactiver ce produit pour les raisons suivantes:"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:291
+#, python-format
+msgid "The product [%s] %s is already active."
+msgstr "Le produit [%s] %s est déjà actif."
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:67
+#: code:addons/kit/kit.py:835
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:44
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:124
+#: code:addons/stock_override/stock.py:221
+#, python-format
+msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
+msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:65
+#: code:addons/kit/kit.py:833
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:42
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:122
+#: code:addons/msf_supply_doc_import/purchase_order.py:84
+#: code:addons/msf_supply_doc_import/sale_order.py:95
+#: code:addons/msf_supply_doc_import/tender.py:71
+#: code:addons/stock_override/stock.py:219
+#, python-format
+msgid "line"
+msgstr "ligne"
+
+#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#: code:addons/consumption_calculation/consumption_calculation.py:65
+#: code:addons/kit/kit.py:833
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:42
+#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:122
+#: code:addons/msf_supply_doc_import/purchase_order.py:84
+#: code:addons/msf_supply_doc_import/sale_order.py:95
+#: code:addons/msf_supply_doc_import/tender.py:71
+#: code:addons/stock_override/stock.py:219
+#, python-format
+msgid "lines"
+msgstr "lignes"
+
+#. modules: account_msf, register_accounting, analytic_distribution
+#: constraint:account.invoice:0
+#: constraint:wizard.account.invoice:0
+msgid "You cannot validate this invoice because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider cette facture car elle contient des lignes avec un produit inactif"
+
+#. modules: account_msf, msf_outgoing, consumption_calculation, stock_override, kit
+#: constraint:stock.picking:0
+msgid "You cannot validate this document because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas valider ce document car il contient des lignes avec un produit inactif"
+
+
+#. module: msf_supply_doc_import
+#: constraint:initial.stock.inventory:0
+#: constraint:stock.inventory:0
+msgid "You cannot confirm this stock inventory because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas confirmer cet inventaire car il contient des lignes avec un produit inactif"
+
+#. modules: msf_supply_doc_import, kit
+#: constraint:composition.kit:0
+msgid "You cannot confirm this kit because it contains a line with an inactive product"
+msgstr "Vous ne pouvez pas confirmer ce kit car il contient des lignes avec un produit inactif"
+
+

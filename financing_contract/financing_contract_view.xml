@@ -334,8 +334,10 @@
                          <field name="line_type"/>
                         <field name="allocated_budget" digits="(24,0)" widget="float"/>
                         <field name="allocated_real" digits="(24,0)" widget="float"/>
+                        <field name="allocated_balance" digits="(24,0)" widget="float"/>
                         <field name="project_budget" digits="(24,0)" widget="float"/>
                         <field name="project_real" digits="(24,0)" widget="float"/>
+                        <field name="project_balance" digits="(24,0)" widget="float"/>
                         <field name="parent_id" invisible="1"/>
                     </tree>
                 </field>
@@ -385,7 +387,7 @@
                         <separator colspan="4"/>
                         <group colspan="4" col="6">
                             <button special="cancel" string="Cancel" icon="gtk-cancel"/>
-                            <button name="button_create_budget" string="Create report" type="object" icon="gtk-ok"/>
+                            <button name="button_create_budget_2" string="Create report" type="object" icon="gtk-ok"/>
                         </group>
                     </form>
                 </field>

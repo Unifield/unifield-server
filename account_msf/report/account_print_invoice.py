@@ -27,6 +27,6 @@ report_sxw.report_sxw(
     'report.account.invoice2',
     'account.invoice',
     'addons/account_msf/report/account_print_invoice.rml',
-    parser=api.account_invoice
+    parser=api.account_invoice, header=False
 )
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -71,8 +71,24 @@ class res_partner(osv.osv):
                 newargs.append(args)
         return newargs
 
+    def _search_partner_not_int(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        for arg in args:
+            if not isinstance(arg[2], dict) or not arg[2].get('ids') or not arg[2].get('ids')[0]:
+                return dom
+            if arg[2]['type'] == 'po':
+                for po in self.pool.get('purchase.order').browse(cr, uid, arg[2]['ids'], context=context):
+                    if po.po_from_fo:
+                        dom.append(('partner_type', 'not in', ['internal','section','intermission']))
+            else:
+                for tender in self.pool.get('tender').browse(cr, uid, arg[2]['ids'], context=context):
+                    if tender.tender_from_fo:
+                        dom.append(('partner_type', 'not in', ['internal','section','intermission']))
+        return dom
+
     _columns = {
         'check_partner_so': fields.function(_get_fake, method=True, type='boolean', string='Check Partner Type On SO', fnct_search=_check_partner_type_so),
+        'partner_not_int': fields.function(_get_fake, method=True, type='boolean', string='Is PO/Tender from FO ?', fnct_search=_search_partner_not_int),
     }
 
 res_partner()

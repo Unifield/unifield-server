@@ -29,7 +29,7 @@ class res_currency_table(osv.osv):
     _columns = {
         'name': fields.char('Currency table name', size=64, required=True),
         'code': fields.char('Currency table code', size=16, required=True),
-        'currency_ids': fields.one2many('res.currency', 'currency_table_id', 'Currencies'),
+        'currency_ids': fields.one2many('res.currency', 'currency_table_id', 'Currencies', domain=[('active','in',['t','f'])]),
         'state': fields.selection([('draft','Draft'),
                                    ('valid','Valid'),
                                    ('closed', 'Closed')], 'State', required=True),

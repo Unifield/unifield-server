@@ -28,7 +28,6 @@ class bank_reconciliation(report_sxw.rml_parse):
         super(bank_reconciliation, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
         })
-        return
 
 report_sxw.report_sxw('report.bank.reconciliation', 'account.bank.statement', 'addons/register_accounting/report/bank_reconciliation.rml', parser=bank_reconciliation)
 

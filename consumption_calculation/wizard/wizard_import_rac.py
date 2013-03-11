@@ -118,8 +118,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if row.cells[5] and row.cells[5].data:
                     try:
                         consumed_qty = float(row.cells[5].data)
-                    except ValueError as e:
-                        error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n. Details: %s") % (line_num, row.cells[5].data, e)
+                    except ValueError:
+                        error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n.") % (line_num, row.cells[5].data,)
     
                 # Cell 0: Product Code
                 expiry_date = False
@@ -128,48 +128,49 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 if p_value['default_code']:
                     product_id = p_value['default_code']
                     to_write.update({'product_id': product_id})
-                    # Cell 3: Batch Number
-                    prod = product_obj.browse(cr, uid, product_id)
-                    if prod.batch_management:
-                        batch_mandatory = True
-                        if prod.batch_management and not row[3]:
-                            error += _("Line %s of the imported file: Batch Number required\n") % (line_num, prod.default_code)
-                        if row[3]:
-                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[3])], context=context)
-                            if not lot and consumed_qty:
-                                error +=  _("Line %s of the imported file: Batch Number %s not found. \n") % (line_num, row[3])
-                            elif lot:
-                                batch = lot[0]
+                    prod = product_obj.browse(cr, uid, [product_id], context)[0]
+                    # Expiry Date
                     if prod.perishable:
                         date_mandatory = True
-                        if not row[4] or str(row[4]) == str(None):
-                            error += _("Line %s of the imported file  : expiry date required\n") % (line_num, )
+                        if not row[4] or row[4] is None:
+                            error += _("Line %s of the imported file: expiry date required\n") % (line_num, )
                         elif row[4] and row[4].data:
                             if row[4].type in ('datetime', 'date'):
                                 expiry_date = row[4].data
-                            else:
+                            elif row[4].type == 'str':
                                 try:
-                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%m/%Y'))
+                                    expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[4].data, '%d/%m/%Y'))
                                 except ValueError:
                                     try:
-                                        expiry_date = time.strftime('%d/%b/%Y', time.strptime(str(row[4]), '%d/%b/%Y'))
+                                        expiry_date = time.strftime('%d/%b/%Y', time.strptime(row[4].data, '%d/%b/%Y'))
                                     except ValueError as e:
-                                        error += _("""Line %s of the imported file: expiry date %s has a wrong format (day/month/year). Details: %s' \n
-                                        """) % (line_num, row[4], e)
+                                        error += _("""Line %s of the imported file: expiry date %s has a wrong format (day/month/year).'\n"""
+                                                   ) % (line_num, row[4],)
+                    # Cell 3: Batch Number
+                    if prod.batch_management:
+                        batch_mandatory = True
+                        if prod.batch_management and not row[3]:
+                            error += _("Line %s of the imported file: Batch Number required.\n") % (line_num,)
+                        if row[3]:
+                            lot = prodlot_obj.search(cr, uid, [('name', '=', row[3]), ('product_id', '=', prod.id)], context=context)
+                            if not lot and consumed_qty:
+                                error +=  _("Line %s of the imported file: Batch Number [%s] not found.\n") % (line_num, row[3])
+                            elif lot:
+                                batch = lot[0]
                         if expiry_date and product_id:
                             if not batch:
                                 batch_list = prodlot_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)], context=context)
                                 if batch_list:
                                     batch = batch_list[0]
                                 else:
-                                    error += _("Line %s of the imported file  : the expiry date does not match with any batch number of the product\n") % (line_num,)
+                                    error += _("Line %s of the imported file: the Expiry Date does not match with any batch number of the product.\n") % (line_num,)
                             else:
                                 # if the expiry date and batch exist, the expiry date indicated here and the one on the batch should be the same
                                 if not prodlot_obj.search(cr, uid, [('id', '=', batch), ('product_id', '=', product_id), ('life_date', '=', expiry_date)], context=context):
                                     batch_read = prodlot_obj.read(cr, uid, batch, ['life_date', 'name'], context)
                                     expiry_date = batch_read['life_date']
-                                    error += _("""Line %s of the imported file: expiry date has been changed to %s which is the system BN date (was wrong in the file)
-                                    """) % (line_num, batch_read['life_date'] and time.strftime('%d/%b/%Y', time.strptime(batch_read['life_date'], '%Y-%m-%d')))
+                                    error += _("""Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"""
+                                               ) % (line_num, batch_read['life_date'] and time.strftime('%d/%b/%Y', time.strptime(batch_read['life_date'], '%Y-%m-%d')))
                                     just_info_ok = True
                 else:
                     product_id = False
@@ -177,12 +178,13 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
     
                 # Cell 2: UOM
                 uom_value = {}
+                # The consistency between the product and the uom used the product_id value contained in the write dictionary.
                 uom_value = check_line.compute_uom_value(cr, uid, cell_nb=2, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                 if uom_value['uom_id']:
                     uom_id = uom_value['uom_id']
                 else:
                     uom_id = False
-                    error += _('Line %s of the imported file: UoM %s not found ! Details: %s') % (line_num, row[2], uom_value['error_list'])
+                    error += _('Line %s of the imported file: UoM [%s] not found ! Details: %s') % (line_num, row[2], uom_value['error_list'])
     
                 # Cell 6: Remark
                 if row.cells[6] and row.cells[6].data:
@@ -203,9 +205,9 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'text_error': error,
                              'just_info_ok': just_info_ok,}
 
-                if line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
-                    error_log += _("""The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique.
-""") % (line_num, product_obj.read(cr, uid, product_id, ['default_code'])['default_code'], not batch and 'Not specified' or prodlot_obj.read(cr, uid, batch, ['name'])['name'])
+                if product_id and batch and line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
+                    error_log += _("""The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."""
+                                   ) % (line_num, product_obj.read(cr, uid, product_id, ['default_code'], context)['default_code'], not batch and 'Not specified' or prodlot_obj.read(cr, uid, batch, ['name'], context)['name'])
                     ignore_lines += 1
                     continue
                 context.update({'line_num': line_num})
@@ -232,7 +234,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
         if error_log: error_log = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
-        vals = {'message': _(''' Importation completed in %s!
+        vals = {'message': _(''' Importation completed in %s second(s)!
 # of imported lines : %s
 # of lines to correct: %s
 # of ignored lines: %s
@@ -250,6 +252,7 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                     'target': 'new',
                     'res_id': ids[0],
                     'view_id': [view_id],
+                    'context': context,
                     }
         except Exception, e:
             raise osv.except_osv(_('Error !'), _('%s !') % e)

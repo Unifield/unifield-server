@@ -28,7 +28,6 @@ class cash_inventory(report_sxw.rml_parse):
         super(cash_inventory, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
         })
-        return
 
 report_sxw.report_sxw('report.cash.inventory', 'account.bank.statement', 'addons/register_accounting/report/cash_inventory.rml', parser=cash_inventory)
 

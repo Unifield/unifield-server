@@ -160,7 +160,11 @@
                 </xpath>
                 <xpath expr="/search/group[3]/filter[@string='Product']" position="replace">
                 </xpath>
-                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='after'>
+                <xpath expr="/search/group[3]/filter[@string='Account']" position="replace">
+                    <filter string="CC" context="{'group_by':'cost_center_id'}" icon="terp-folder-green"/>
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='replace'>
+                    <filter string='G/L account' context="{'group_by':'general_account_id'}" icon="terp-folder-green"/>
                     <separator orientation="vertical"/>
                     <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                 </xpath>

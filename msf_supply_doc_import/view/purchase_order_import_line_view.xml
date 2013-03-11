@@ -13,8 +13,12 @@
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='currency_id']" position="after">
                     <field name="to_correct_ok" invisible="1"/>
                 </xpath>
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree//field[@name='default_name']" position="after">
+                	<field name="inactive_product" invisible="1" />
+                    <!-- <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" /> -->
+                </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
