@@ -41,7 +41,6 @@ class purchase_order_line(osv.osv):
         '''
         if not context:
             context = {}
-        res = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
@@ -51,7 +50,7 @@ class purchase_order_line(osv.osv):
             # we check that the product uom and the uom are in the same category
             self._check_product_uom(cr, uid, ids, context)
 
-        return res
+        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
