@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -16,20 +16,29 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 ##############################################################################
-
 {
-    "name" : "Webkit Report Engine",
-    "description" : """This module override the module webkit_report in order to have proper MSF data
-    and not camptocamp data (such as the logo).
-                    """,
-    "version" : "0.1",
-    "depends" : ["report_webkit"],
-    "author" : "TeMPO Consulting, MSF",
-    "category": "Reports/Webkit for Unifield",
-    #"data": ["data.xml",
-    #],
-    "installable" : True,
-    "active" : False,
+    "name" : "Button Access Rights for MSF",
+    "version": "1.0",
+    "author" : "OpenERP",
+    "developer": "Max Mumford",
+    "category" : "Generic Modules/Others",
+    "depends" : [],
+    "description": """Provides functionality to define access rights  
+    for buttons in views based and the actions and workflows they trigger
+    """,
+    "update_xml": [
+        'views/view_config_view.xml',
+        'views/button_access_rule_view.xml',
+        'views/ir_ui_view_view.xml',
+        'menu/button_access_rules.xml',
+        'menu/view_config.xml',
+        'data/groups.xml',
+        'security/ir.model.access.csv',
+    ],
+    'installable': True,
+    'active': True,
+#    'certificate': 'certificate',
 }
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
