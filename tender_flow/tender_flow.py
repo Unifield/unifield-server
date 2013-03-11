@@ -131,8 +131,6 @@ class tender(osv.osv):
 
         return True
 
-#    _constraints = [(_check_restriction_line, "A line of this tender contains a product which have a status restricting to source it by a tender", ['tender_line_ids']),]
-
     def create(self, cr, uid, vals, context=None):
         '''
         Set the reference of the tender at this time
@@ -638,8 +636,6 @@ class tender_line(osv.osv):
 
         return res
 
-#    _constraints = [(_check_restriction_line, "The line contains a product which have a status restricting to source it by a tender", ['product_id']),]
-    
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]

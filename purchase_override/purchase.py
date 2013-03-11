@@ -274,7 +274,23 @@ class purchase_order(osv.osv):
                     raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
                     return False
                 
-        return True                    
+        return True
+
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check restriction on products
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('purchase.order.line')
+        res = True
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+
+        return res
+
 
     def default_get(self, cr, uid, fields, context=None):
         '''
@@ -319,6 +335,9 @@ class purchase_order(osv.osv):
                 vals.update({'invoice_method': 'order'})
             else:
                 vals.update({'invoice_method': 'picking'})
+
+        # Check restrictions on lines
+        self._check_restriction_line(cr, uid, ids, context=context)
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -1331,6 +1350,8 @@ stock moves which are already processed : '''
             
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
         self._check_service(cr, uid, [res], vals, context=context)
+        # Check constraints on lines
+        self._check_restriction_line(cr, uid, res, context=context)
     
         return res
 
@@ -1506,7 +1527,7 @@ class purchase_order_line(osv.osv):
     _inherit = 'purchase.order.line'
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
                 }
-    
+
 purchase_order_line()
 
 
@@ -1538,7 +1559,7 @@ class purchase_order_merged_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
         'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
-
+    
     def create(self, cr, uid, vals, context=None):
         '''
         Set the line number to 0
@@ -1563,7 +1584,9 @@ class purchase_order_merged_line(osv.osv):
                     self.pool.get('purchase.order.line').write(cr, uid, [po_line.id], {'price_unit': vals['price_unit'],
                                                                                        'old_price_unit': vals['price_unit']}, context=new_context)
 
-        return super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(purchase_order_merged_line, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
     def _update(self, cr, uid, id, po_line_id, product_qty, price=0.00, context=None, no_update=False):
         '''
@@ -1725,6 +1748,27 @@ class purchase_order_line(osv.osv):
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
         return vals
+    
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is restriction on lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            constraints = []
+            if line.order_id and line.order_id.state != 'done':
+                if line.order_id.partner_id and context.get('partner_type', line.order_id.partner_id.partner_type) == 'external':
+                    constraints.append('external')
+
+            if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=constraints, context=context):
+                return False
+
+        return True
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -1765,6 +1809,9 @@ class purchase_order_line(osv.osv):
         if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
             name = self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id'), context=context).name
             super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
+
+        # Check constraints on lines
+        self._check_restriction_line(cr, uid, po_line_id, context=context)
 
         return po_line_id
     
@@ -1837,7 +1884,12 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
-        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        # Add restriction check
+        self._check_restriction_line(cr, uid, ids, context=context)
+
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         '''

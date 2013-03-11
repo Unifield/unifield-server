@@ -247,6 +247,21 @@ class sale_order(osv.osv):
 
         return True
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check restriction on products
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('sale.order.line')
+        res = True
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+
+        return res
+
     def onchange_categ(self, cr, uid, ids, categ, context=None):
         '''
         Check if the list of products is valid for this new category
@@ -307,6 +322,8 @@ class sale_order(osv.osv):
 
         res = super(sale_order, self).create(cr, uid, vals, context)
         self._check_service(cr, uid, [res], vals, context=context)
+        # Check restrictions on line
+        self._check_restriction_line(cr, uid, res, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -325,7 +342,12 @@ class sale_order(osv.osv):
 
         self._check_service(cr, uid, ids, vals, context=context)
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+        # Check restrictions on lines
+        self._check_restriction_line(cr, uid, ids, context=context)
+
+        return res
 
     
     def change_currency(self, cr, uid, ids, context=None):
@@ -1063,6 +1085,27 @@ class sale_order_line(osv.osv):
         ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is restriction on lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            constraints = []
+            if line.order_id and line.order_id.state != 'done':
+                if line.order_id.partner_id and context.get('partner_type', line.order_id.partner_id.partner_type) == 'external':
+                    constraints.append('external')
+
+            if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=constraints, context=context):
+                return False
+
+        return True
+
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
         Open the wizard to split the line
@@ -1241,6 +1284,9 @@ class sale_order_line(osv.osv):
             if vals.get('order_id', False):
                 name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
+
+        # Check constraints on lines
+        self._check_restriction_line(cr, uid, so_line_ids, context=context)
             
         return so_line_ids
 
@@ -1252,7 +1298,11 @@ class sale_order_line(osv.osv):
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
-        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+        res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+        # Check constraints on lines
+        self._check_restriction_line(cr, uid, ids, context=context)
+
+        return res
 
 sale_order_line()
 
