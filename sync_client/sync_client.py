@@ -87,7 +87,7 @@ class BackgroundProcess(Thread):
 
 already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
 
-class entity(osv.osv):
+class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
     _name = "sync.client.entity"
     _description = "Synchronization Instance"
@@ -95,7 +95,7 @@ class entity(osv.osv):
     _logger = logging.getLogger('sync.client')
 
     def _auto_init(self,cr,context=None):
-        res = super(entity,self)._auto_init(cr,context=context)
+        res = super(Entity, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
         return res
@@ -177,7 +177,7 @@ class entity(osv.osv):
 
     def __init__(self, *args, **kwargs):
         self.sync_lock = RLock()
-        super(entity, self).__init__(*args, **kwargs)
+        super(Entity, self).__init__(*args, **kwargs)
 
     def sync_process(step='status'):
         is_step = not (step == 'status')
@@ -233,6 +233,7 @@ class entity(osv.osv):
 
                     # is the synchronization finished?
                     if make_log:
+                        entity = self.get_entity(cr, uid, context=context)
                         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                         proxy.end_synchronization(entity.identifier, context)
                 except SkipStep:
@@ -635,10 +636,10 @@ class entity(osv.osv):
 
         return "Connected"
    
-entity()
+Entity()
 
 
-class sync_server_connection(osv.osv):
+class Connection(osv.osv):
     """
         This class handle connection with the server of synchronization
         Keep the username, uid on the synchronization 
@@ -650,7 +651,7 @@ class sync_server_connection(osv.osv):
     """     
 
     def _auto_init(self,cr,context=None):
-        res = super(sync_server_connection,self)._auto_init(cr,context=context)
+        res = super(Connection, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], context=context):
             self.create(cr, 1, {}, context=context)
         return res
@@ -674,7 +675,7 @@ class sync_server_connection(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         self._uid = False
-        return super(sync_server_connection, self).unlink(cr, uid, ids, context=context)
+        return super(Connection, self).unlink(cr, uid, ids, context=context)
 
     _name = "sync.client.sync_server_connection"
     _description = "Connection to sync server information and tools"
@@ -771,13 +772,12 @@ class sync_server_connection(osv.osv):
     def write(self, *args, **kwargs):
         # reset connection flag when data changed
         self._uid = False
-        return super(sync_server_connection, self).write(*args, **kwargs)
+        return super(Connection, self).write(*args, **kwargs)
 
     _sql_constraints = [
         ('active', 'UNIQUE(active)', 'The connection parameter is unique; you cannot create a new one') 
     ]
 
-sync_server_connection()
+Connection()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
