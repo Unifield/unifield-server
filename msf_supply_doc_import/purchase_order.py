@@ -169,8 +169,8 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
                 error = False
-                if obj.partner_id and obj.partner_id.partner_type == 'external':
-                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], constraints=['external'], context=context)
+                if obj.partner_id:
+                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], args={'partner_id': obj.partner_id.id}, context=context)
                 if error:
                     p_value['error_list'].append(error_msg)
                     to_write.update({'error_list': p_value['error_list']})

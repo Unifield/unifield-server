@@ -287,7 +287,8 @@ class purchase_order(osv.osv):
         res = True
 
         for order in self.browse(cr, uid, ids, context=context):
-            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+            if order.state not in ('draft', 'done', 'cancel'):
+                res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
 
         return res
 
@@ -1742,9 +1743,11 @@ class purchase_order_line(osv.osv):
                 change_price_ok = line.change_price_ok
                 c = context.copy()
                 c.update({'change_price_ok': change_price_ok})
+                noraise_ctx = context.copy()
+                noraise_ctx.update({'noraise': True})
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
-                self.write(cr, uid, [line.id], {'merged_id': False}, context=context)
+                self.write(cr, uid, [line.id], {'merged_id': False}, context=noraise_ctx)
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line.id, -line.product_qty, line.price_unit, context=c)
 
         return vals
@@ -1762,11 +1765,8 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             constraints = []
             if line.order_id and line.order_id.state != 'done':
-                if line.order_id.partner_id and context.get('partner_type', line.order_id.partner_id.partner_type) == 'external':
-                    constraints.append('external')
-
-            if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, constraints=constraints, context=context):
-                return False
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, args={'partner_id': line.order_id.partner_id.id}, context=context):
+                    return False
 
         return True
 
@@ -2030,6 +2030,7 @@ class purchase_order_line(osv.osv):
         all_qty = qty
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
+        product_obj = self.pool.get('product.product')
 
         # If the user modify a line, remove the old quantity for the total quantity
         if ids:
@@ -2065,6 +2066,12 @@ class purchase_order_line(osv.osv):
             currency_id = self.pool.get('product.pricelist').browse(cr, uid, pricelist).currency_id.id
         else:
             currency_id = func_curr_id
+
+        if product and partner_id:
+            # Test the compatibility of the product with a tender
+            res, test = product_obj._on_change_restriction_error(cr, uid, product, 'product_id', values=res, args={'partner_id': partner_id}, context=context)
+            if test:
+                return res
         
         # Update the old price value        
         res['value'].update({'product_qty': qty})
