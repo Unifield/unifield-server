@@ -694,7 +694,7 @@ The columns should be in this values:
                                                                                 {'new_line_qty': file_line.product_qty}, context=wiz_context)
                                 try:
                                     self.pool.get(wizard_values['res_model']).split_line(cr, uid, [wizard_values['res_id']], context=wiz_context)
-                                    lines.append(str(file_line.file_line_number))
+                                    lines.append(str(file_line.file_line_number+1))
                                     po_line_ids = pol_obj.search(cr, uid, [('product_qty', '=', file_line.product_qty),
                                                                            ('line_number', '=', line_number),
                                                                            ('order_id', '=', po_id)], context=context)
@@ -708,8 +708,8 @@ The columns should be in this values:
                                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
                                 except osv.except_osv as osv_error:
-                                    error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : %s") % (line_number, osv_error.value))
-                                    data = file_values[line_number].items()
+                                    error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : %s") % (file_line.file_line_number+1, osv_error.value))
+                                    data = file_values[file_line.file_line_number].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
                                     processed_lines += 1
