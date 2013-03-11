@@ -258,7 +258,8 @@ class sale_order(osv.osv):
         res = True
 
         for order in self.browse(cr, uid, ids, context=context):
-            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+            if order.state not in ('draft', 'done', 'cancel'):
+                res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
 
         return res
 

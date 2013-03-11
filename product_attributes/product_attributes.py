@@ -442,6 +442,7 @@ class product_attributes(osv.osv):
         Raise an error if the product is not compatible with the order
         '''
         res, error_msg = self._test_restriction_error(cr, uid, ids, constraints=constraints, context=context)
+
         if res:
             raise osv.except_osv(_('Error'), error_msg)
             return False

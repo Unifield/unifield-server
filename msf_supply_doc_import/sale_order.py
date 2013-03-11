@@ -271,6 +271,14 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
                                  'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
 
+                error = False
+                if obj.partner_id and obj.partner_id.partner_type == 'external':
+                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], constraints=['external'], context=context)
+                if error:
+                    p_value['error_list'].append(error_msg)
+                    p_value['comment'] = error_msg
+                    to_write.update({'error_list': p_value['error_list']})
+
                 # Cell 2: Quantity
                 qty_value = {}
                 qty_value = quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
@@ -319,6 +327,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
         # write order line on PO
         context['import_in_progress'] = True
+        context.update({'noraise': True})
         self.write(cr, uid, ids, vals, context=context)
         msg_to_return = get_log_message(to_write=to_write, obj=obj)
         if msg_to_return:
