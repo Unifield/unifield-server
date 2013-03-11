@@ -348,6 +348,9 @@
             <field name="priority">61</field>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="string">Stock Transfer Voucher</attribute>
+                    </xpath>
                     <field name="fiscal_position" position="replace"/>
                     <field name="payment_term" position="replace"/>
                     <field name="tax_line" position="replace"/>
