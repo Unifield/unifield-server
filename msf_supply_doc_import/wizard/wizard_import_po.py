@@ -563,7 +563,7 @@ The columns should be in this values:
                 # take values of po line
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
                 # we check consistency on the model of on_change functions to call for updating values
-                to_write_check = pol_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
+                to_write_check = pol_obj.check_line_consistency(cr, uid, False, to_write=to_write, context=context)
                 if to_write.get('error_list', False) or to_write_check.get('text_error', '').strip():
                     import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False}, context)
                     error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write.get('error_list', False)) or to_write_check.get('text_error', False))
