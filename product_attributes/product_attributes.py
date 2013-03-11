@@ -393,8 +393,9 @@ class product_attributes(osv.osv):
         error = False
         error_msg = ''
         constraints = []
+        sale_obj = args.get('obj_type') == 'sale.order'
 
-        # Compute the constraint if a partner is passed through args
+        # Compute the constraint if a partner is passed in args
         if args.get('partner_id'):
             partner_type = self.pool.get('res.partner').browse(cr, uid, args.get('partner_id'), context=context).partner_type
             if partner_type == 'external':
@@ -404,6 +405,7 @@ class product_attributes(osv.osv):
             elif partner_type in ('internal', 'intermission', 'section'):
                 constraints.append('internal')
 
+        # Compute constraints if constraints is passed in args
         if args.get('constraints'):
             if isinstance(args.get('constraints'), list):
                 constraints.extend(args.get('constraints'))
@@ -416,15 +418,15 @@ class product_attributes(osv.osv):
 
             if product.no_external and 'external' in constraints:
                 error = True
-                msg = _('be purchased externally')
+                msg = _('be %s externally' % (sale_obj and _('shipped') or _('purchased')))
                 st_cond = product.state.no_external
             elif product.no_esc and 'esc' in constraints:
                 error = True
-                msg = _('be purchased at ESC')
+                msg = _('be %s ESC' % (sale_obj and _('shipped to') or _('purchased at')))
                 st_cond = product.state.no_esc
             elif product.no_internal and 'internal' in constraints:
                 error = True
-                msg = _('be purchased internally')
+                msg = _('be supplied/exchanged internally')
                 st_cond = product.state.no_internal
             elif product.no_consumption and 'consumption' in constraints:
                 error = True
