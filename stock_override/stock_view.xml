@@ -322,11 +322,11 @@
                                 colspan="4"
                                 nolabel="1"
                                 widget="one2many_list"
-                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date}"
+                                default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'date_expected': min_date, 'reason_type_id': reason_type_id}"
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped == True; red: inactive_product == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id"/>
                                     <field name="composition_list_id"/>
@@ -337,7 +337,9 @@
                                     <field name="asset_id"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
-                                    <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>
+
+                                    <!--<button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" states="draft,waiting,confirmed,assigned"/>-->
+
                                     <field name="tracking_id"/>
                                     <field name="location_id"/>
                                     <field name="location_dest_id"/>
@@ -353,6 +355,8 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
+                                    <field name="inactive_product" invisible="1" />
+                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                 </tree>
 
                                 <form string="Stock Moves">
@@ -533,13 +537,14 @@
                                 on_change="onchange_move()"
                                 >
                                 <tree
-                                    colors="grey:scrapped==True"
+                                    colors="grey:scrapped==True; red: inactive_product == True"
                                     string="Stock Moves"
                                     hide_new_button="context.get('from_wkf')"
                                     hide_delete_button="context.get('from_wkf')"
                                     >
                                     <field name="line_number"/>
                                     <field name="product_id"/>
+                                    <field name="inactive_product" invisible="1" />
                                     <field name="product_qty"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="scrapped" invisible="1"/>
@@ -559,6 +564,7 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
+                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                 </tree>
                                 <form string="Stock Moves">
                                     <group colspan="2" col="4">
@@ -670,7 +676,8 @@
                             </group>
                         </page>
                         <page string="Additional Info">
-                            <field name="type" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
+                            <field name="fake_type" readonly="1" />
+                            <field name="type" invisible="1" />
                             <field name="attach_cert" readonly="1" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                             <field name="company_id" widget="selection" invisible="1"/>
                         </page>
@@ -802,7 +809,7 @@
                                 context="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped==True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped==True; red: inactive_product == True" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id"/>
                                     <field name="composition_list_id"/>
@@ -813,7 +820,11 @@
                                     <field name="scrapped" invisible="1"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
-                                    <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/>
+
+
+                                    <!-- <button name="%(stock.track_line)d" string="Split in production lots" type="action" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}" states="draft,assigned,confirmed"/> -->
+
+
                                     <field name="tracking_id" />
                                     <field name="location_id"/>
                                     <field name="date" string="Actual Shipped Date"/>
@@ -828,6 +839,8 @@
                                     <field name="ssl_check" invisible="True"/>
                                     <field name="dg_check"/>
                                     <field name="np_check"/>
+                                    <field name="inactive_product" invisible="1" />
+                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
                                 </tree>
                                 <form string="Stock Moves">
@@ -915,7 +928,7 @@
                                 <field name="subtype" invisible="True"/>
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
-                                <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
+                                <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '=', 'done'), ('delivered', '=', True)]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
@@ -1023,7 +1036,7 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="prodlot_id" />
                                     <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
-                                     <button name="%(stock.track_line)d" string="Split in production lots" type="action"
+                                     <button name="%(stock.track_line)d" string="Split in production" type="action"
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}"
                                         states="draft,done,cancel"

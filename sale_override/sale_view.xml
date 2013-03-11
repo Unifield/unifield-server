@@ -16,6 +16,13 @@
                     <xpath expr="/form//field[@name='name']" position="replace">
                         <field name="name" required="1" />
                     </xpath>
+                    <!-- UF-1846: we hide the product_uos_qty and product_uos that were displayed after the user right installation -->
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos_qty']" position="attributes">
+                         <attribute name="invisible">1</attribute>
+                    </xpath>
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos']" position="attributes">
+                         <attribute name="invisible">1</attribute>
+                    </xpath>
 
                     <!-- uf-1499
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
@@ -48,7 +55,7 @@
 
                     <xpath expr="/form//field[@name='partner_id']" position="replace">
                         <field name="company_id2" invisible="1" />
-                        <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_customer':1}" required="1" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/>
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_customer':1}" required="1" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/>
                     </xpath>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
@@ -62,12 +69,9 @@
                     <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='order_policy']" position="replace">
                         <field name="order_policy" on_change="shipping_policy_change(order_policy)"/>
                     </xpath>
-                    <button name="%(sale.action_view_sale_advance_payment_inv)d" position="replace">
-                        <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
-                            <button name="%(sale.action_view_sale_advance_payment_inv)d" string="Advance Invoice"
-                                  type="action" icon="gtk-execute" states="draft,manual" />
-                        </group>
-                    </button>
+                    <xpath expr="/form/notebook/page[@string='Other Information']/group/field[@name='invoice_quantity']" position="replace">
+                        <field name="invoice_quantity" readonly="1" />
+                    </xpath>
                     <button name="manual_invoice" position="replace">
                         <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
                             <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>   
@@ -154,6 +158,10 @@
                         <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
                         <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
                         <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
+                    </xpath>
+                    <xpath expr="/search//filter[@string='Sales']" position="replace">
+                        <filter icon="terp-check" string="Confirmed" domain="[('state','in',('manual','progress'))]"/>
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state_hidden_sale_order','=','done')]"/>
                     </xpath>
 
                     <xpath expr="/search//filter[@string='To Invoice']" position="after">

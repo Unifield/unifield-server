@@ -379,33 +379,5 @@
             </field>
         </record>
 
-    <!-- Redefine MCDB -->
-        <record id="account_mcdb_form_instance_inherit" model="ir.ui.view">
-            <field name="name">account.mcdb.form.instance.inherit</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">form</field>
-            <field name="priority" eval="18"/>
-            <field name='inherit_id' ref='account_mcdb.account_mcdb_form' />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='journal_ids']/tree/field[@name='code']" position="before">
-                    <field name="instance_id"/>
-                </xpath>
-            </field>
-        </record>
-
-        <record id="account_mcdb_analytic_form_instance_inherit" model="ir.ui.view">
-            <field name="name">account.mcdb.analytic.form.instance.inherit</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">form</field>
-            <field name="priority" eval="18"/>
-            <field name='inherit_id' ref='account_mcdb.account_mcdb_analytic_form' />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='analytic_journal_ids']/tree/field[@name='code']" position="before">
-                    <field name="instance_id"/>
-                </xpath>
-            </field>
-        </record>
-account_mcdb_analytic_form
-
     </data>
 </openerp>

@@ -152,6 +152,10 @@ class stock_forecast(osv.osv_memory):
         create forecast wizard object and execute do_forecast method before
         displaying it
         '''
+        if context is None:
+            context = {}
+        if not context.get('lang'):
+            context['lang'] = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'], context=context)['context_lang']
         wizard_id = self.create(cr, uid, {}, context=context)
         # call do forecast on the created wizard
         self.do_forecast(cr, uid, [wizard_id], context=context)
@@ -309,31 +313,7 @@ class stock_forecast(osv.osv_memory):
         
         return export_obj.export_to_csv(cr, uid, ids, context=dict(context, stock_forecast_id=ids))
         
-        return {
-                'name': 'Stock Level Forecast',
-                'res_model': 'stock.forecast.export',
-                'type': 'ir.actions.act_window',
-                'view_type': 'form',
-                'state': 'code',
-                'code': 'action = obj.export_to_csv(context=context)',
-                'view_mode': 'form',
-                'view_id': False,
-                'target': 'new',
-                }
-        
-        return {
-                'name': 'Stock Level Forecast',
-                'view_mode': 'form',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': 'stock.forecast',
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[]',
-                'context': context,
-                }
-    
+
     def reset_fields(self, cr, uid, ids, context=None):
         '''
         reset all fields and table
@@ -347,7 +327,7 @@ class stock_forecast(osv.osv_memory):
         line_obj.unlink(cr, uid, line_ids, context=context)
         
         return {
-                'name': 'Stock Level Forecast',
+                'name': _('Stock Level Forecast'),
                 'view_mode': 'form',
                 'view_id': False,
                 'view_type': 'form',
@@ -365,7 +345,7 @@ class stock_forecast(osv.osv_memory):
         void
         '''
         return {
-                'name': 'Stock Level Forecast',
+                'name': _('Stock Level Forecast'),
                 'view_mode': 'graph,tree',
                 'view_id': False,
                 'view_type': 'form',
@@ -565,19 +545,6 @@ class stock_forecast(osv.osv_memory):
                 line_obj.create(cr, uid, line, context=context)
             
             return True # popup policy
-            return {
-                    'name': 'Stock Level Forecast',
-                    'view_mode': 'form',
-                    'view_id': False,
-                    'view_type': 'form',
-                    'res_model': 'stock.forecast',
-                    'res_id': ids[0],
-                    'type': 'ir.actions.act_window',
-                    'nodestroy': True,
-                    'target': 'new',
-                    'domain': '[]',
-                    'context': context,
-                    }
     
     def default_get(self, cr, uid, fields, context=None):
         """ For now no special initial values to load at wizard opening
@@ -662,60 +629,6 @@ class stock_forecast(osv.osv_memory):
         uom changed
         '''
         return self.onchange(cr, uid, ids, product_id, product_family_id, warehouse_id, product_uom_id, context)
-    
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        '''
-        generates the xml view
-        '''
-        # call super
-        result = super(stock_forecast, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        
-        _moves_arch_lst = """
-                        <form string="Stock Forecast">
-                            <group col="4" colspan="4">
-                                <field name="product_id" colspan="4" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
-                                <!-- <field name="product_family_id" on_change="onchange_nomen(product_id, product_family_id, warehouse_id, product_uom_id)" /> -->
-                                <field name="product_family_info_id" />
-                                <field name="warehouse_id" on_change="onchange_warehouse(product_id, product_family_id, warehouse_id, product_uom_id)" />
-                                <field name="product_uom_id" attrs="{'readonly':[('product_id', '=', False),],}" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
-                                <field name="qty" />
-                            </group>
-                            <group col="2" colspan="2">
-                                <separator string='Procurement' />
-                                <field name="procurement_method" />
-                                <field name="supply_method" />
-                            </group>
-                            <group col="2" colspan="2">
-                                <separator string='Specific Information' />
-                                <field name="keep_cool" />
-                                <field name="short_shelf_life" />
-                                <field name="dangerous_goods" />
-                                <field name="justification_code_id" />
-                            </group>
-                            <newline />
-                            <field name="stock_forecast_lines" colspan="4" nolabel="1" mode="tree,form" readonly="1"></field>
-                            <group col="6" colspan="2">
-                                <button name="do_print" string="Print" type="object" icon="gtk-print" />
-                                <button name="do_export" string="Export" type="object" icon="gtk-save" />
-                                <button name="do_graph" string="Graph" type="object" icon="terp-account" />
-                            </group>
-                            <group col="6" colspan="2">
-                                <group col="6" colspan="2"></group>
-                                <!-- <button name="reset_fields" string="Reset" type="object" icon="gtk-clear" /> -->
-                                <button name="do_forecast" string="Refresh Forecast" type="object" icon="gtk-apply" />
-                                <button icon="gtk-cancel" special="cancel" string="Close Wizard"/>
-                            </group>
-                        </form>
-                        """
-        _moves_fields = result['fields']
-
-        _moves_fields.update({
-                            'stock_forecast_lines': {'relation': 'stock.forecast.line', 'type' : 'one2many', 'string' : 'Forecasts'}, 
-                            })
-        
-        result['arch'] = _moves_arch_lst
-        result['fields'] = _moves_fields
-        return result
 
 stock_forecast()
 

@@ -58,7 +58,45 @@
 		    </field>
 		</record>
 
-        
-    
+        <record model="ir.ui.view" id="view_stock_forecast_from">
+            <field name="name">stock.forecast.form</field>
+            <field name="model">stock.forecast</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock Forecast">
+                    <group col="4" colspan="4">
+                        <field name="product_id" colspan="4" on_change="onchange_product(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                        <field name="product_family_info_id" />
+                        <field name="warehouse_id" on_change="onchange_warehouse(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                        <field name="product_uom_id" attrs="{'readonly':[('product_id', '=', False)]}" on_change="onchange_uom(product_id, product_family_id, warehouse_id, product_uom_id)" />
+                        <field name="qty" />
+                    </group>
+                    <group col="2" colspan="2">
+                        <separator string="Procurement" />
+                        <field name="procurement_method" />
+                        <field name="supply_method" />
+                    </group>
+                    <group col="2" colspan="2">
+                        <separator string="Specific Information" />
+                        <field name="keep_cool" />
+                        <field name="short_shelf_life" />
+                        <field name="dangerous_goods" />
+                        <field name="justification_code_id" />
+                    </group>
+                    <newline />
+                    <field name="stock_forecast_lines" colspan="4" nolabel="1" mode="tree,form" readonly="1"></field>
+                    <group col="6" colspan="2">
+                        <button name="do_print" string="Print" type="object" icon="gtk-print" />
+                        <button name="do_export" string="Export" type="object" icon="gtk-save" />
+                        <button name="do_graph" string="Graph" type="object" icon="terp-account" />
+                    </group>
+                    <group col="6" colspan="2">
+                        <group col="6" colspan="2"></group>
+                        <button name="do_forecast" string="Refresh Forecast" type="object" icon="gtk-apply" />
+                        <button icon="gtk-cancel" special="cancel" string="Close Wizard"/>
+                    </group>
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>

@@ -41,6 +41,7 @@ class purchase_order_line(osv.osv):
         '''
         if not context:
             context = {}
+        sol_obj = self.pool.get('sale.order.line')
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
@@ -56,6 +57,13 @@ class purchase_order_line(osv.osv):
                     raise osv.except_osv(_('Error'),
                                          _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
+        # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
+        po_procurement_id = vals.get('procurement_id', False)
+        if po_procurement_id:
+            sale_id = sol_obj.search(cr, uid, [('procurement_id', '=', po_procurement_id)], context=context)
+            if sale_id:
+                comment_so = sol_obj.read(cr, uid, sale_id, ['comment'], context=context)[0]['comment']
+                vals.update(comment=comment_so)
         return super(purchase_order_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):

@@ -636,7 +636,7 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
             else:
-                self.action_move(cr, uid, [pick.id])
+                self.action_move(cr, uid, [pick.id], context)
                 wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
             
             # update the out version

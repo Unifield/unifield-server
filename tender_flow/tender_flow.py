@@ -777,6 +777,8 @@ class purchase_order(osv.osv):
         '''
         Set the reference at this step
         '''
+        if context is None:
+            context = {}
         if context.get('rfq_ok', False) and not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
         elif not vals.get('name', False):
@@ -861,14 +863,16 @@ class purchase_order(osv.osv):
 
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'purchase.order',
-                'view_mode': 'form,tree,graph,calendar',
-                'view_type': 'form',
-                'target': 'crush',
-                'context': {'rfq_ok': True, 'search_default_draft_rfq': 1,},
-                'domain': [('rfq_ok', '=', True)],
-                'res_id': rfq.id}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order',
+            'view_mode': 'form,tree,graph,calendar',
+            'view_type': 'form',
+            'target': 'crush',
+            'context': {'rfq_ok': True, 'search_default_draft_rfq': 1},
+            'domain': [('rfq_ok', '=', True)],
+            'res_id': rfq.id,
+        }
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -897,9 +901,9 @@ class purchase_order(osv.osv):
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
                 form = etree.fromstring(result['arch'])
-                fields = form.xpath('//form[@string="Purchase Order"]')
+                fields = form.xpath('//form[@string="%s"]' % _('Purchase Order'))
                 for field in fields:
-                    field.set('string', "Requests for Quotation")
+                    field.set('string', _("Requests for Quotation"))
                 result['arch'] = etree.tostring(form)
         
         return result

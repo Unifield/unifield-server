@@ -19,13 +19,8 @@
 #
 ##############################################################################
 
-from datetime import datetime
-
 from osv import osv
 from osv import fields
-import logging
-import tools
-from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -46,7 +41,6 @@ class stock_cost_reevaluation(osv.osv):
 
         product_obj = self.pool.get('product.product')
         obj_data = self.pool.get('ir.model.data')
-        import_to_correct = False
 
         vals = {}
         vals['reevaluation_line_ids'] = []
@@ -90,7 +84,7 @@ Product Code*, Product Description*, Product Cost*"""))
                     if product_code in product_cache:
                         product_id = product_cache.get(product_code)
                     if not product_id:
-                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
+                        product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
                         if product_ids:
                             product_id = product_ids[0]
                             product_cache.update({product_code: product_id})
@@ -102,7 +96,7 @@ Product Code*, Product Description*, Product Cost*"""))
             if product_name:
                 try:
                     product_name = product_name.strip()
-                    product_ids = product_obj.search(cr, uid, [('name', '=', product_name)])
+                    product_ids = product_obj.search(cr, uid, [('name', '=', product_name)], context=context)
                     if product_ids:
                         product_id = product_ids[0]
                 except Exception:

@@ -4217,7 +4217,7 @@
     <Cell><Data ss:Type="String">account</Data></Cell>
     <Cell><Data ss:Type="String">menu_bank_statement_tree</Data></Cell>
     <Cell><Data ss:Type="String">++</Data></Cell>
-    <Cell><Data ss:Type="String">Bank Registers</Data></Cell>
+    <Cell><Data ss:Type="String">Bank Statements</Data></Cell>
     <Cell><Data ss:Type="String">NO</Data></Cell>
     <Cell><Data ss:Type="String">YES</Data></Cell>
     <Cell><Data ss:Type="String">YES</Data></Cell>

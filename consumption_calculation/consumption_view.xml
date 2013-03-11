@@ -8,52 +8,60 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Real consumption reporting">
-                    <separator colspan="4" string="General information" />
-                    <field name="name" readonly="1" />
-                    <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="cons_location_id" attrs="{'readonly': [('created_ok', '=', True)]}" context="{'no3buttons': True}"/>
-                    <group colspan="2" col="2">
-                        <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
-                        <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
-                    </group>
-                    <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <button name="export_rac" colspan="2" string="Export lines" icon="terp-mail-forward" type="object" />
-                    <separator colspan="4" string="Period of consumption" />
-                    <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}"/>
-                    <separator colspan="4" string="Product filters" />
-                    <field name="sublist_id" attrs="{'readonly': ['|',('created_ok', '=', True), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="4" col="6">
+                        <field name="id" invisible="1" />
+                        <separator colspan="6" string="General information" />
+                       <field name="name" readonly="1" colspan="3" />
+                        <field name="creation_date" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="2"/>
+                        <field name="cons_location_id" attrs="{'readonly': ['|', ('id', '!=', 0), ('created_ok', '=', True)]}" context="{'no3buttons': True}" colspan="2"/>
+                        <button name="change_cons_location_id" string="Change location" icon="gtk-preferences" type="object" attrs="{'readonly': ['|', ('id', '=', 0), ('created_ok', '=', True)]}" />
+                        <group colspan="3" col="2">
+                            <field name="picking_id" attrs="{'invisible': [('created_ok', '=', False)]}" />
+                            <button name="import_rac" colspan="2" string="Import a file" icon="gtk-leave-fullscreen" type="object" attrs="{'invisible': [('created_ok', '=', True)]}"/>
+                        </group>
+                        <field name="activity_id" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
+                        <separator colspan="6" string="Period of consumption" />
+                        <field name="period_from" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <field name="period_to" attrs="{'readonly': [('created_ok', '=', True)]}" colspan="3"/>
+                        <separator colspan="6" string="Product filters" />
+                        <field name="sublist_id" attrs="{'readonly': ['|',('created_ok', '=', True), ('nomen_manda_0', '!=', False)]}" colspan="3" />
 
-                    <group colspan="2" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
-                        <field name="nomen_manda_0"
-                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
-                            widget="selection"
-                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_1"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_2"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                        <field name="nomen_manda_3"
-                            domain="[('id','=', 0)]"
-                            widget="selection"
-                            get_selection="get_nomen"
-                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
-                        />
-                    </group>
+                        <group colspan="3" col="4" attrs="{'readonly': [('sublist_id', '!=', False)]}">
+                            <field name="nomen_manda_0"
+                                domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                                widget="selection"
+                                on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                            <field name="nomen_manda_1"
+                                domain="[('id','=', 0)]"
+                                widget="selection"
+                                get_selection="get_nomen"
+                                on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                            <field name="nomen_manda_2"
+                                domain="[('id','=', 0)]"
+                                widget="selection"
+                                get_selection="get_nomen"
+                                on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                            <field name="nomen_manda_3"
+                                domain="[('id','=', 0)]"
+                                widget="selection"
+                                get_selection="get_nomen"
+                                on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                            />
+                        </group>
 
-                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <button colspan="6" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                    </group>
                     <separator colspan="4" string="Products" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}">
-                        <tree string="Products" editable="top" colors="red:(batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date) or consumed_qty>product_qty;blue: not prodlot_id and consumed_qty>product_qty">
+                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object" 
+                    confirm="Are you sure that you want to remove all lines?" invisible="1"/>
+                    <field name="hide_column_error_ok" invisible="1" />
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}"
+                    context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
+                        <tree string="Products" editable="top" colors="red: consumed_qty>0 and to_correct_ok or (consumed_qty>0 and batch_mandatory and not prodlot_id) or (consumed_qty>0 and date_mandatory and not expiry_date) or consumed_qty>0 and consumed_qty>product_qty or inactive_product;blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False}"
                                 domain="[('list_ids', '=', parent.sublist_id)]" />
@@ -69,20 +77,31 @@
                                 on_change="change_expiry(expiry_date, product_id, parent.cons_location_id, uom_id, remark)"
                                 attrs="{'required': [('date_mandatory', '=', True), ('batch_mandatory', '=', False)], 'readonly': ['|', ('batch_mandatory', '=', True), ('date_mandatory', '=', False)]}"/>
                             <field name="consumed_qty" on_change="change_qty(consumed_qty, product_id, prodlot_id, parent.cons_location_id, uom_id)"/>
+                            <field name="move_id" invisible="1" />
+                            <button string="Duplicate line" icon="terp-stock_effects-object-colorize" name="copy" type="object" attrs="{'invisible': [('move_id', '!=', False)]}" />
                             <field name="remark" invisible="1" />
                             <field name="batch_mandatory" invisible="0" string="B.Num" readonly="1" />
                             <field name="date_mandatory" invisible="0" string="Exp" readonly="1" />
+                            <field name="to_correct_ok" invisible="1"/>
+                            <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" />
+                            <field name="inactive_product" invisible="1" />
+                            <field name="inactive_error" readonly="1" />
                         </tree>
                     </field>
                     <field name="created_ok" invisible="1" />
                     <group colspan="4" col="6">
-                        <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('created_ok', '=', True)]}" />
-                        <button name="save_and_process" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('created_ok', '=', True)]}" />
+                        <button name="button_update_stock" string="Update Indicative Stock" icon="gtk-refresh" colspan="2" type="object" attrs="{'invisible': [('state','!=','draft')]}" />
+			<button name="cancel_button" string="Cancel" icon="gtk-cancel" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="process_moves" string="Save &amp; Process" icon="gtk-execute" type="object" colspan="2" attrs="{'invisible': [('state','!=','draft')]}" />
+			<button name="draft_button" string="Draft" icon="gtk-apply" type="object" colspan="2" attrs="{'invisible': [('state', '!=', 'cancel')]}" />
+                    </group>
+                    <group colspan="4" >
+		 	<field name="state" />
                     </group>
                 </form>
             </field>
         </record>
-        
+      
         <record id="real_average_consumption_confirmation_view" model="ir.ui.view">
             <field name="name">real.average.consumption.confirmation.view</field>
             <field name="model">real.average.consumption</field>
@@ -109,6 +128,7 @@
                     <field name="period_to" />
                     <field name="nb_lines" />
                     <field name="created_ok" />
+		 	<field name="state" />
                     <field name="sublist_id" invisible="1" />
                     <field name="nomen_manda_0" invisible="1" />
                     <field name="nomen_manda_1" invisible="1" />
@@ -125,7 +145,7 @@
             <field name="arch" type="xml">
                 <search string="Real consumption reports">
                     <group col="10" colspan="4">
-                        <filter icon="terp-check" string="Moves created" domain="[('created_ok','=',True)]"/>
+                        <filter icon="terp-check" string="Closed" domain="[('created_ok','=',True)]"/>
                         <separator orientation="vertical"/>
                         <field name="cons_location_id"/>
                         <field name="activity_id"/>
@@ -178,8 +198,7 @@
             id="new_consumption_reports_menu"
             action="action_new_real_consumption_report"
             parent="warehouse_consumption_menu" /> -->
-            
-            
+
         <record id="monthly_review_consumption_form_view" model="ir.ui.view">
             <field name="name">monthly.review.consumption.form.view</field>
             <field name="model">monthly.review.consumption</field>
@@ -188,8 +207,10 @@
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
                     <field name="period_from" on_change="period_change(period_from, period_to)" />
+                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import) -->
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
                     <field name="period_to" on_change="period_change(period_from, period_to)" />
+                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import) -->
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
                     <field name="cons_location_id" />
                     <newline />
@@ -221,8 +242,12 @@
                     </group>
                     <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" />
                     <separator colspan="4" string="Products" />
-                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list">
-                        <tree string="Products" editable="top"> 
+                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" type="object"
+                    confirm="Are you sure that you want to remove all lines?" invisible="1"/>
+                    <field name="hide_column_error_ok" invisible="1" />
+                    <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list"
+                    context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
+                        <tree string="Products" editable="top" colors="red: to_correct_ok==True"> 
                             <field name="name" on_change="product_onchange(name, parent.id, parent.period_from, parent.period_to)" 
                             	domain="[('list_ids', '=', parent.sublist_id)]" />
                             <field name="amc" />
@@ -234,6 +259,8 @@
 			    <field name="last_reviewed2" invisible="1" />
                             <!--<button name="valid_line" type="object" string="Valid line" icon="gtk-execute" attrs="{'invisible': [('valid_ok', '=', True)]}" />-->
                             <button name="display_graph" type="object" string="Display graph" icon="terp-purchase" />
+                            <field name="to_correct_ok" invisible="1"/>
+                            <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" />
                         </tree>
                     </field>
                     <button colspan="4" icon="gtk-execute" string="Valid all lines" type="object" name="valid_multiple_lines" />
@@ -345,5 +372,50 @@
                 </search>
             </field>
         </record>
+
+    <!-- REAL AVERAGE CONSUMPTION -->
+        <report
+            id="report_real_consumption_xls"
+            string="Real Consumption Excel Export"
+            model="real.average.consumption"
+            name="real.consumption.xls"
+            file="consumption_calculation/report/report_real_consumption_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+    <!-- MONTHLY REVIEW CONSUMPTION -->
+        <report
+            id="report_monthly_consumption_xls"
+            string="Monthly Consumption Excel Export"
+            model="monthly.review.consumption"
+            name="monthly.consumption.xls"
+            file="consumption_calculation/report/report_monthly_consumption_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <record id="view_real_consumption_change_location" model="ir.ui.view">
+            <field name="name">real.consumption.change.location.form.view</field>
+            <field name="model">real.consumption.change.location</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change location">
+                    <separator colspan="4" string="New location" />
+                    <label colspan="4" string="Are you sure you want to change the consumer location ? It will change the indicative stock, so please check the report lines before validating" />
+                    <label colspan="4" string=" "/>
+                    <field name="location_id" required="1" domain="[('usage', '=', 'internal')]" />
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="2"> </label>
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="change_location" string="Change location" type="object" icon="gtk-preferences" />
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

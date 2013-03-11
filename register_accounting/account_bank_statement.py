@@ -59,6 +59,7 @@ class res_partner(osv.osv):
             ret[id] = False
         return ret
 
+    # This method have been abandonned since UTP-510 because of prepaid accounts (type receivable) that doesn't show any partners.
     def _search_filter_third(self, cr, uid, obj, name, args, context):
         if not context:
             context = {}
@@ -73,7 +74,7 @@ class res_partner(osv.osv):
         return []
 
     _columns = {
-        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=True), # search is now fake because of UTP-510
     }
 res_partner()
 
@@ -159,7 +160,7 @@ class account_bank_statement(osv.osv):
 
     def _balance_gap_compute(self, cr, uid, ids, name, attr, context=None):
         """
-        Calculate Gap between bank register balance (balance_end_real) and calculated balance (balance_end)
+        Calculate Gap between bank statement balance (balance_end_real) and calculated balance (balance_end)
         """
         res = {}
         for statement in self.browse(cr, uid, ids):
@@ -172,7 +173,7 @@ class account_bank_statement(osv.osv):
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
-            help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank register is equal to that amount."),
+            help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
@@ -245,7 +246,7 @@ class account_bank_statement(osv.osv):
 
     def button_confirm_bank(self, cr, uid, ids, context=None):
         """
-        Confirm Bank Register
+        Confirm Bank Statement
         """
         # First verify that all lines are in hard state
         for register in self.browse(cr, uid, ids, context=context):
@@ -428,7 +429,7 @@ class account_bank_statement(osv.osv):
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
-            # For bank register, give balance_end
+            # For bank statement, give balance_end
             elif reg.journal_id.type == 'bank':
                 # Verify that another bank statement exists
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
@@ -440,7 +441,7 @@ class account_bank_statement(osv.osv):
 
     def button_confirm_closing_bank_balance(self, cr, uid, ids, context=None):
         """
-        Verify bank register balance before closing it.
+        Verify bank statement balance before closing it.
         """
         if not context:
             context = {}
@@ -451,7 +452,7 @@ class account_bank_statement(osv.osv):
             # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.
             # Because of fields values with 2 digits, we compare the two fields difference with 0.001 (10**-3)
             if (abs(round(reg.balance_end_real, 2) - round(reg.balance_end, 2))) > 10**-3:
-                raise osv.except_osv(_('Warning'), _('Bank register balance is not equal to Calculated balance.'))
+                raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
         return self.button_confirm_closing_balance(cr, uid, ids, context=context)
 
     def button_open_advances(self, cr, uid, ids, context=None):
@@ -787,7 +788,6 @@ class account_bank_statement_line(osv.osv):
         return result
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
@@ -796,8 +796,7 @@ class account_bank_statement_line(osv.osv):
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
             ('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
-            ('account.bank.statement', 'Register')], multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
@@ -812,15 +811,14 @@ class account_bank_statement_line(osv.osv):
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
-            ('account.bank.statement', 'Register')], help="To use for python code when registering", multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', 
             string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
         'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?", 
             type='boolean', store=False),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", 
-            help="This move line has been taken for create an Import Cheque in a bank register."),
+            help="This move line has been taken for create an Import Cheque in a bank statement."),
         'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?", 
             type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
@@ -900,9 +898,8 @@ class account_bank_statement_line(osv.osv):
             'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id, register_id and partner_type support
+            # Add employee_id, transfer_journal_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
-            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
@@ -951,9 +948,8 @@ class account_bank_statement_line(osv.osv):
             'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id and register_id support
+            # Add employee_id and transfer_journal_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
-            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
