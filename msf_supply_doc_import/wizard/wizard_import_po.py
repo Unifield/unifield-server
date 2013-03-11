@@ -675,7 +675,7 @@ The columns should be in this values:
                             for file_line in file_line_read:
                                 product_qty += file_line.get('product_qty', False)
                             import_values = file_line_read[0]
-                            lines = [str(import_values.get('file_line_number', False))]
+                            lines = [str(import_values.get('file_line_number', False)+1)]
                             import_values.update({'product_qty': product_qty})
                             # We take only the not Null Value
                             filtered_vals = {}
