@@ -397,6 +397,8 @@ The columns should be in this values:
             except ValueError, e:
                 to_write['error_list'].append(_('The Line %s has a wrong value. Details: %s.') % (cell_data, e))
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+        else:
+            to_write.update({'line_number': False})
 
         # Origin
         cell_nb = header_index.get('Origin', False)
@@ -432,6 +434,8 @@ The columns should be in this values:
             else:
                 default_code = p_ids[0]
                 to_write.update({'product_id': default_code})
+        else:
+            to_write.update({'product_id': False})
 
         # UOM
         cell_nb = header_index.get('UoM*', False)
@@ -534,7 +538,7 @@ The columns should be in this values:
             file_line_number += 1
             if len(row) < len(header_index.keys()):
                 import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
-                error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template. Then, none of the lines are updated. \n Please make sure the line is within the template. \n'
+                error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template. Then, none of the lines are updated. \n Please make sure that all the lines are within the template. \n'
                                ) % (file_line_number+1,)
                 line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=False, context=context))
                 ignore_lines += 1
@@ -575,10 +579,20 @@ The columns should be in this values:
                 if empty_list and len(empty_list)==len(line_values):
                     processed_lines += 1
                     percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
-                    self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 # take values of po line
                 to_write = self.get_po_row_values(cr, uid, ids, row, po_browse, header_index, context)
+                # if not line_number nor product_id, we ignore the line
+                if not to_write.get('line_number', False) or not to_write.get('product_id', False):
+                    import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False}, context)
+                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it needs to have at least the "Line number" and the "Product" as identifier. Then, none of the lines are updated. \n Please make sure that all the lines got at least a "Product" and a "Line Number".\n'
+                                   ) % (file_line_number+1,)
+                    line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=False, context=context))
+                    ignore_lines += 1
+                    processed_lines += 1
+                    percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                    wrong_format = True
+                    continue
                 # we check consistency on the model of on_change functions to call for updating values
                 to_write_check = pol_obj.check_line_consistency(cr, uid, False, to_write=to_write, context=context)
                 if to_write.get('error_list', False) or to_write_check.get('text_error', '').strip():
@@ -779,6 +793,9 @@ The columns should be in this values:
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
                     # we commit after each iteration to avoid lock on ir.sequence
                     cr.commit()
+        # None of the lines are updated but we write that the import is completed to 100% to notify the user that it is finished
+        elif wrong_format:
+            self.write(cr, uid, ids, {'percent_completed':100.0}, context=context)
         error_log += '\n'.join(error_list)
         notif_log += '\n'.join(notif_list)
         if error_log:
