@@ -7,11 +7,13 @@ Created on 9 juil. 2012
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 import tools
 #import pprint
 import sync_server
 #pp = pprint.PrettyPrinter(indent=4)
 import logging
+from updater import *
 
 
 class version(osv.osv):
@@ -48,7 +50,7 @@ class version(osv.osv):
 
     def _compare_with_last_rev(self, cr, uid, entity, rev_sum, context=None):
         # Search the client's revision when exists
-        if rev_sum:
+        if rev_sum and rev_sum != base_version:
             rev_client = self.search(cr, uid, [('sum', '=', rev_sum), ('state', '=', 'confirmed')], limit=1, context=context)
             if not rev_client:
                 return {'status' : 'failed',
@@ -74,8 +76,10 @@ class version(osv.osv):
             if rev['importance'] == 'required':
                 status = 'failed'
 
+        message = _("There is/are %d revision(s) available.") % len(revisions)
+
         return {'status' : status,
-                'message' : "There is %s update(s) available" % len(revisions),
+                'message' : message,
                 'revisions' : revisions}
         
     def _get_zip(self, cr, uid, sum, context=None):

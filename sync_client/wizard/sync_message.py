@@ -109,13 +109,8 @@ class message_to_send(osv.osv):
         call = rule.remote_call
         identifiers = self._generate_message_uuid(cr, uid, obj, obj_ids, rule.server_id, context=context)
         for i, id in enumerate(obj_ids):
-            update_destinations = []
-            if not issubclass(type(dest[i]), (list, tuple)):
-                update_destinations = [dest[i]]
-            else:
-                update_destinations = dest[i]
-            for update_destination in update_destinations:
-                self.create_message(cr, uid, identifiers[id], call, args[id], update_destination, context)
+            self.create_message(cr, uid, identifiers[id], call, args[id], dest[i], context)
+        return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         res = {}
@@ -134,9 +129,10 @@ class message_to_send(osv.osv):
                 'destination_name': destination_name,
                 'sent' : False,
         }
-        res = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
-        if not res:
-            self.create(cr, uid, data, context=context)
+        ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
+        if not ids:
+            ids = [self.create(cr, uid, data, context=context)]
+        return ids[0]
         #else:
             #sync_log(self, "Message %s already exist" % identifier)
 
@@ -146,19 +142,17 @@ class message_to_send(osv.osv):
         Sending Part
     """
     def get_message_packet(self, cr, uid, max_size, context=None):
-        ids = self.search(cr, uid, [('sent', '=', False)], context=context)
-        if not ids:
-            return False
-
         packet = []
-        for data in self.browse(cr, uid, ids, context=context):
-            res = {
-                'id' : data.identifier,
-                'call' : data.remote_call,
-                'dest' : data.destination_name,
-                'args' : data.arguments,
-            }
-            packet.append(res)
+
+        for message in self.browse(cr, uid, self.search(cr, uid, [('sent', '=', False)],
+                                   limit=max_size, context=context), context=context):
+            packet.append({
+                'id' : message.identifier,
+                'call' : message.remote_call,
+                'dest' : message.destination_name,
+                'args' : message.arguments,
+            })
+            
         return packet
 
 

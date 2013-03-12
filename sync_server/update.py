@@ -24,6 +24,7 @@ from __future__ import with_statement
 from osv import orm, osv
 from osv import fields
 import tools
+from tools.translate import _
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 import logging
@@ -63,8 +64,56 @@ class SavePullerCache(object):
                 except KeyError:
                     todo[update_id] = set([entity_id])
         for id, entity_ids in todo.items():
-            puller_ids = [(4, x) for x in entity_ids]
+            puller_ids = [(0, 0, {'entity_id':x}) for x in entity_ids]
             self.__model__.write(cr, uid, [id], {'puller_ids': puller_ids}, context)
+
+class puller_ids_rel(osv.osv):
+    _name = "sync.server.puller_logs"
+    _table = 'sync_server_entity_rel'
+
+    _logger = logging.getLogger('sync.server')
+
+    _columns = {
+        'update_id' : fields.many2one('sync.server.update',
+            required=True, string="Update"),
+        'entity_id' : fields.many2one('sync.server.entity',
+            required=True, string="Instance"),
+        'create_date' : fields.datetime('Pull Date'),
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        try:
+            del vals['create_date']
+        except KeyError:
+            pass
+        super(puller_ids_rel, self).create(cr, uid, vals, context=context)
+
+    def init(self, cr):
+        cr.execute("""\
+SELECT column_name 
+  FROM information_schema.columns 
+  WHERE table_name=%s AND column_name='id';""", [self._table])
+        if not cr.fetchone():
+            self._logger.info("Migrate old relational table %s to OpenERP model" % self._table)
+            cr.execute("""\
+-- Fix bad column name of old table
+ALTER TABLE %(table)s RENAME COLUMN "update_id" TO "real_entity_id";
+ALTER TABLE %(table)s RENAME COLUMN "entity_id" TO "update_id";
+ALTER TABLE %(table)s RENAME COLUMN "real_entity_id" TO "entity_id";
+-- Drop constraint to permit storing multiple pull for a same update
+ALTER TABLE %(table)s DROP CONSTRAINT %(table)s_entity_id_key;
+-- Create column id
+ALTER TABLE "public"."%(table)s" ADD COLUMN "id" INTEGER;
+CREATE SEQUENCE "public"."%(table)s_id_seq";
+UPDATE %(table)s SET id = nextval('"public"."%(table)s_id_seq"');
+ALTER TABLE "public"."%(table)s"
+  ALTER COLUMN "id" SET DEFAULT nextval('"public"."%(table)s_id_seq"');
+ALTER TABLE "public"."%(table)s"
+  ALTER COLUMN "id" SET NOT NULL;
+ALTER TABLE "public"."%(table)s" ADD UNIQUE ("id");
+ALTER TABLE "public"."%(table)s" DROP CONSTRAINT "%(table)s_id_key" RESTRICT;
+ALTER TABLE "public"."%(table)s" ADD PRIMARY KEY ("id");""" % {'table':self._table})
+
 
 class update(osv.osv):
     """
@@ -88,7 +137,7 @@ class update(osv.osv):
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
-        'puller_ids': fields.many2many('sync.server.entity', 'sync_server_entity_rel', 'entity_id', 'update_id', string="Pulled by")
+        'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
     }
 
     _order = 'sequence, create_date desc'
@@ -114,6 +163,8 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pushing updates...'))
+
         data = {
             'source': entity.id,
             'model': packet['model'],
@@ -156,13 +207,19 @@ class update(osv.osv):
             @param session_id : string : the synchronization session_id given at the beginning of the session by get_model_sync.
             @param context : context
 
-            @return : True or raise an error
+            @return : tuple(a, b)
+                a : boolean : is True is if the call is succesfull, False otherwise
+                b : int : sequence number given
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm updates...'))
+
         update_ids = self.search(cr, uid, [('session_id', '=', session_id), ('source', '=', entity.id)], context=context)
-        sequence = self._get_next_sequence(cr, uid, context=context)
-        self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
-        return (True, "Push session validated")
-        
+        sequence = None
+        if update_ids:
+            sequence = self._get_next_sequence(cr, uid, context=context)
+            self.write(cr, 1, update_ids, {'sequence' : sequence}, context=context)
+        return (True, sequence)
+
     def _get_next_sequence(self, cr, uid, context=None):
         """
             Get a unique sequence number for the next sequence id
@@ -260,10 +317,12 @@ class update(osv.osv):
                      - None when no update need to be sent
                      - A dict that format a packet for the client
         """
+        self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
+
         rules = self.pool.get('sync_server.sync_rule')._compute_rules_to_receive(cr, uid, entity, context)
         if not rules:
             return None
-        
+
         base_query = ("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE sync_server_update.rule_id in ("""+"%s,"*(len(rules)-1)+"%s"+""") AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""") % (tuple(rules) + (last_seq, max_seq))
 
         ## Recover add own client updates to the list
@@ -281,7 +340,7 @@ class update(osv.osv):
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
             if not ids and update_master is None:
-                return None
+                break
             for update in self.get_update_to_send(cr, uid, entity, ids, recover, context):
                 if update_master is None:
                     update_master = update
@@ -345,6 +404,7 @@ class update(osv.osv):
     _order = 'sequence asc, id asc'
     
 update()
+puller_ids_rel()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

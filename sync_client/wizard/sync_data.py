@@ -36,6 +36,8 @@ from sync_common.common import sync_log
 
 from tools.safe_eval import safe_eval as eval
 
+MAX_IMPORT = 500
+
 def eval_poc_domain(obj, cr, uid, domain, context=None):
     if not context:
         context = {}
@@ -134,8 +136,7 @@ class update_to_send(osv.osv):
 
     _logger = logging.getLogger('sync.client')
 
-    def create_update(self, cr, uid, rule_id, session_id, context=None):
-        context = dict(context or {})
+    def create_update(self, cr, uid, rule_id, session_id, context={}):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         obj = self.pool.get(rule.model.model)
         
@@ -154,34 +155,31 @@ class update_to_send(osv.osv):
             eval_poc_domain(obj, cr, uid, domain, context=context),
             included_fields, context=context)
         if not ids_to_compute:
-            return
-        context['sync_context'] = True
-        fields_ref = obj.fields_get(cr, uid, [], context=context)
+            return 0
+
+        sync_context = dict(context, sync_context=True)
+        fields_ref = obj.fields_get(cr, uid, [], context=sync_context)
         fields_ref['id'] = dict()
         ustr_included_fields = tools.ustr(included_fields)
-        owners = obj.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, context)
-        datas = obj.export_data(cr, uid, ids_to_compute, included_fields, context=context)['datas']
-        xml_ids = [link_with_ir_model(obj, cr, uid, id, context=context) for id in ids_to_compute]
-        versions = obj.version(cr, uid, ids_to_compute, context=context)
+        owners = obj.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, sync_context)
+        datas = obj.export_data(cr, uid, ids_to_compute, included_fields, context=sync_context)['datas']
+        xml_ids = [link_with_ir_model(obj, cr, uid, id, context=sync_context) for id in ids_to_compute]
+        versions = obj.version(cr, uid, ids_to_compute, context=sync_context)
         clean_included_fields = self._clean_included_fields(cr, uid, included_fields)
         for (i, row) in enumerate(datas):
-            update_owners = []
-            if not issubclass(type(owners[i]), (list, tuple)):
-                update_owners = [owners[i]]
-            else:
-                update_owners = owners[i]
-            for update_owner in update_owners:
-                self.create(cr, uid, {
-                    'session_id' : session_id,
-                    'values' : tools.ustr(row),
-                    'model' : rule.model.id,
-                    'version' : versions[i] + 1,
-                    'rule_id' : rule.id,
-                    'xml_id' : xml_ids[i],
-                    'fields' : ustr_included_fields,
-                    'owner' : update_owner,
-                }, context=context)
-                self._logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
+            self.create(cr, uid, {
+                'session_id' : session_id,
+                'values' : tools.ustr(row),
+                'model' : rule.model.id,
+                'version' : versions[i] + 1,
+                'rule_id' : rule.id,
+                'xml_id' : xml_ids[i],
+                'fields' : ustr_included_fields,
+                'owner' : owners[i],
+            }, context=sync_context)
+            self._logger.debug("Create update %s, id : %s, for rule %s" % (rule.model.model, id, rule.id))
+
+        return len(datas)
 
     def create_package(self, cr, uid, session_id, packet_size, context=None):
         ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, context=context)
@@ -337,6 +335,7 @@ class update_received(osv.osv):
 
             def success(update_ids, versions):
                 self.write(cr, uid, update_ids, {
+                    'editable' : False,
                     'run' : True,
                     'log' : '',
                 }, context=context)
@@ -344,6 +343,7 @@ class update_received(osv.osv):
                     self.write(cr, uid, [update_id], {
                         'log' : log,
                     }, context=context)
+                logs.clear()
                 for xml_id, version in versions.items():
                     self.pool.get('ir.model.data').sync(cr, uid, xml_id, version=version, context=context)
 
@@ -438,11 +438,24 @@ class update_received(osv.osv):
 
             return message
 
+        # Commit any changes made til now coz we gonna make a lot of commits
+        cr.commit()
+        imported = []
+
         error_message = ""
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
-            error_message += group_update_execution(updates)
+            while updates:
+                to_import, updates = updates[:MAX_IMPORT], updates[MAX_IMPORT:]
+                error_message += group_update_execution(to_import)
+                imported += to_import
+                if len(imported) >= MAX_IMPORT:
+                    cr.commit()
+                    imported[:] = []
         
+        # Make sure the transaction is clean 
+        if imported:
+            cr.commit()
         return error_message
 
     def _check_fields(self, cr, uid, model, fields, context=None):
