@@ -528,17 +528,19 @@ The columns should be in this values:
         total_line_num = len([row for row in fileobj.getRows()])
         first_row = True
         percent_completed = 0
+        wrong_format = False
         for row in rows:
             file_line_number += 1
             if len(row) < len(header_index.keys()):
                 import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
-                error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template, please make sure the line is within the template. \n'
+                error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template. Then, none of the line are updated. \n Please make sure the line is within the template. \n'
                                ) % (file_line_number+1,)
                 line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=False, context=context))
                 ignore_lines += 1
                 processed_lines += 1
                 percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                 self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
+                wrong_format = True
                 continue
             try:
                 # take values of po (first line only)
@@ -595,7 +597,8 @@ The columns should be in this values:
                 percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
             finally:
                 self.write(cr, uid, ids, {'percent_completed':percent_completed})
-        try:
+        # we check that all the lines are taken into a table (borders around)
+        if not wrong_format:
             # start importing lines
             sql_line_number = """
             select distinct line_number
@@ -761,39 +764,35 @@ The columns should be in this values:
                                     self.write(cr, uid, ids, {'percent_completed':percent_completed}, context=context)
                     # we commit after each iteration to avoid lock on ir.sequence
                     cr.commit()
-            error_log += '\n'.join(error_list)
-            notif_log += '\n'.join(notif_list)
-            if error_log:
-                error_log = _(" ---------------------------------\n Errors report : \n") + error_log
-            if notif_log:
-                notif_log = _("--------------------------------- \n Modifications report: \n") + notif_log
-            end_time = time.time()
-            total_time = str(round(end_time-start_time)) + ' second(s)'
-            message = ''' Importation completed in %s!
+        error_log += '\n'.join(error_list)
+        notif_log += '\n'.join(notif_list)
+        if error_log:
+            error_log = _(" ---------------------------------\n Errors report : \n") + error_log
+        if notif_log:
+            notif_log = _("--------------------------------- \n Modifications report: \n") + notif_log
+        end_time = time.time()
+        total_time = str(round(end_time-start_time)) + ' second(s)'
+        message = ''' Importation completed in %s!
 # of imported lines : %s
 # of ignored lines: %s
 %s
 
 %s
     ''' % (total_time ,complete_lines, ignore_lines, error_log, notif_log)
-            wizard_vals = {'message': message, 'state': 'done'}
-            if line_with_error:
-                file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
-                wizard_vals.update(file_to_export)
-            self.write(cr, uid, ids, wizard_vals, context=context)
-#        except Exception, e:
-#            error_exception = ('There is an error in the code, please notify the technical team: %s' % e)
-#            self.write(cr, uid, ids, {'message': error_exception, 'state': 'done'}, context=context)
-        finally:
-            #we delete all the lines of the temporary obj
-            import_obj_ids = import_obj.search(cr, uid, [], context=context)
-            import_obj.unlink(cr, uid, import_obj_ids, context=context)
-            import_po_obj_ids = import_po_obj.search(cr, uid, [], context=context)
-            import_po_obj.unlink(cr, uid, import_po_obj_ids, context=context)
-            # we reset the PO to its original state ('confirmed')
-            po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
-            cr.commit()
-            cr.close()
+        wizard_vals = {'message': message, 'state': 'done'}
+        if line_with_error:
+            file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
+            wizard_vals.update(file_to_export)
+        self.write(cr, uid, ids, wizard_vals, context=context)
+        #we delete all the lines of the temporary obj
+        import_obj_ids = import_obj.search(cr, uid, [], context=context)
+        import_obj.unlink(cr, uid, import_obj_ids, context=context)
+        import_po_obj_ids = import_po_obj.search(cr, uid, [], context=context)
+        import_po_obj.unlink(cr, uid, import_po_obj_ids, context=context)
+        # we reset the PO to its original state ('confirmed')
+        po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
+        cr.commit()
+        cr.close()
 
     def import_file(self, cr, uid, ids, context=None):
         """
