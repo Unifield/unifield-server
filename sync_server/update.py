@@ -69,6 +69,7 @@ class SavePullerCache(object):
 
 class puller_ids_rel(osv.osv):
     _name = "sync.server.puller_logs"
+    _rec_name = "entity_id"
     _table = 'sync_server_entity_rel'
 
     _logger = logging.getLogger('sync.server')
