@@ -105,7 +105,9 @@
             % endif
         </Cell>
     % if line.item_exp is not None:
-        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.item_exp|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="short_date">
+            <Data ss:Type="DateTime">${("%s.000"%line.item_exp.replace(' ','T'))|n}</Data>
+        </Cell>
     % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     % endif
