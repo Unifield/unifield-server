@@ -104,11 +104,13 @@
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
+        <Cell ss:StyleID="line" >
             % if line.item_exp:
                 <Data ss:Type="String">${(line.item_exp or '')|x}</Data>
             % else:
                 <Data ss:Type="String"></Data>
             % endif
+        </Cell>
     </Row>
     % endfor
 </Table>
