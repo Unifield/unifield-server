@@ -644,7 +644,7 @@ class orm_template(object):
                         elif f[i] in self._inherit_fields:
                             r = check_type(self._inherit_fields[f[i]][2]._type)
                         data[fpos] = r or False
-                        #break
+                        break
                     if isinstance(r, (browse_record_list, list)):
                         first = True
                         fields2 = map(lambda x: (x[:i+1]==f[:i+1] and x[i+1:]) \
