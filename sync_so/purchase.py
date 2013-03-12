@@ -99,7 +99,7 @@ class purchase_order_sync(osv.osv):
             orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', line[2].get('original_purchase_line_id'))])
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
-                line[2].update({'move_dest_id': orig_line.move_dest_id.id})
+                line[2].update({'move_dest_id': orig_line.move_dest_id and orig_line.move_dest_id.id or False})
         
         res_id = self.create(cr, uid, default , context=context)
         so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
