@@ -66,7 +66,7 @@ class MonitorLogger(object):
         self.info[step] = status
         if step == 'status':
             self.info['end'] = fields.datetime.now()
-            self.monitor.final_status = (self.info['status'], self.info['end'])
+            self.monitor.last_status = (status, self.info['end'])
 
     def close(self):
         self.switch('status', self.final_status)
