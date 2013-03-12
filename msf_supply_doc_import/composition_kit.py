@@ -142,8 +142,8 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Asset, Batch 
 
             # Cell 7: Expiry Date
             expiry_date_value = {}
-            expiry_date_value = check_line.compute_expiry_date_value(cell_nb=7, row=row, to_write=to_write, context=context)
-            to_write.update({'expiry_date': expiry_date_value['expiry_date'], 'error_list': expiry_date_value['error_list']})
+            expiry_date_value = cell_data_obj.get_expired_date(cr, uid, ids, row, 7, to_write['error_list'], line_num, context)
+            to_write.update({'expiry_date': expiry_date_value})
 
             line_data = {'item_kit_id': item_kit_id,
                          'item_module': module,
