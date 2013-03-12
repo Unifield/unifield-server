@@ -194,6 +194,12 @@ class view_sc(osv.osv):
         if not cr.fetchone():
             cr.execute('CREATE INDEX ir_ui_view_sc_user_id_resource ON ir_ui_view_sc (user_id, resource)')
 
+    def create(self, cr, user, vals, context=None):
+        custom_view_ids = self.search(cr, user, [('res_id','=',vals['res_id']), ('resource','=',vals['resource']), ('user_id','=',vals['user_id'])])
+        if custom_view_ids:
+            self.unlink(cr, user, custom_view_ids)
+        return super(view_sc, self).create(cr, user, vals, context)
+    
     def get_sc(self, cr, uid, user_id, model='ir.ui.menu', context=None):
         ids = self.search(cr, uid, [('user_id','=',user_id),('resource','=',model)], context=context)
         results = self.read(cr, uid, ids, ['res_id'], context=context)
@@ -209,10 +215,6 @@ class view_sc(osv.osv):
         'resource': lambda *a: 'ir.ui.menu',
         'user_id': lambda obj, cr, uid, context: uid,
     }
-    _sql_constraints = [
-        ('shortcut_unique', 'unique(res_id, resource, user_id)', 'Shortcut for this menu already exists!'),
-    ]
-
 view_sc()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
