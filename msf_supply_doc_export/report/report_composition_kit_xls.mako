@@ -104,13 +104,11 @@
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
-    % if line.item_exp != False:
-        <Cell ss:StyleID="short_date">
-            <Data ss:Type="DateTime">${("%s.000"%line.item_exp.replace(' ','T'))|n}</Data>
-        </Cell>
-    % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-    % endif
+            % if line.item_exp:
+                <Data ss:Type="String">${(line.item_exp or '')|x}</Data>
+            % else:
+                <Data ss:Type="String"></Data>
+            % endif
     </Row>
     % endfor
 </Table>
