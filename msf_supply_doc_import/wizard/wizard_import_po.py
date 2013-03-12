@@ -585,7 +585,7 @@ The columns should be in this values:
                 # if not line_number nor product_id, we ignore the line
                 if not to_write.get('line_number', False) or not to_write.get('product_id', False):
                     import_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True, 'line_number': False, 'order_id': False, 'product_id': False}, context)
-                    error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it needs to have at least the "Line number" and the "Product" as identifier. Then, none of the lines are updated. \n Please make sure that all the lines got at least a "Product" and a "Line Number".\n'
+                    error_log += _('Import blocked by the Line %s in the Excel file that was added to the file of the lines with errors because it needs to have at least the "Line number" and the "Product" as identifier. \n Please make sure that all the lines got at least a "Product" and a "Line Number".\n'
                                    ) % (file_line_number+1,)
                     line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=False, context=context))
                     ignore_lines += 1
@@ -795,6 +795,7 @@ The columns should be in this values:
                     cr.commit()
         # None of the lines are updated but we write that the import is completed to 100% to notify the user that it is finished
         elif wrong_format:
+            ignore_lines = total_line_num-1
             self.write(cr, uid, ids, {'percent_completed':100.0}, context=context)
         error_log += '\n'.join(error_list)
         notif_log += '\n'.join(notif_list)
