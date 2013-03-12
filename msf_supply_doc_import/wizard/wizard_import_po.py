@@ -672,9 +672,15 @@ The columns should be in this values:
                             #"We split the only line with this line number"
                             product_qty = 0.0
                             file_line_read = import_obj.read(cr, uid, same_file_line_nb) # we take the whole dict of values because we don't specify the list of values
-                            for file_line in file_line_read:
+                            i = 0
+                            read_pol_product_id = pol_obj.read(cr, uid, same_pol_line_nb, ['product_id'])[0]['product_id'][0]
+                            for indice, file_line in enumerate(file_line_read):
                                 product_qty += file_line.get('product_qty', False)
-                            import_values = file_line_read[0]
+                                if file_line.get('product_id', False) == read_pol_product_id:
+                                    i = indice
+                            # we take the values that correspond to the last indice of the line that has a product in common with the po line to split, else we take the first
+                            import_values = file_line_read[i]
+                            del same_file_line_nb[i]
                             lines = [str(import_values.get('file_line_number', False)+1)]
                             import_values.update({'product_qty': product_qty})
                             # We take only the not Null Value
@@ -687,7 +693,7 @@ The columns should be in this values:
                             processed_lines += 1
                             percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
                             self.write(cr, uid, ids, {'percent_completed':percent_completed}, context)
-                            for file_line in import_obj.browse(cr, uid, same_file_line_nb[1:len(same_file_line_nb)]):
+                            for file_line in import_obj.browse(cr, uid, same_file_line_nb):
                                 wizard_values = pol_obj.open_split_wizard(cr, uid, same_pol_line_nb, context)
                                 wiz_context = wizard_values.get('context')
                                 self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']],
