@@ -1,7 +1,12 @@
 id,active,applies_to_type,direction,domain,included_fields,type_id,model_id,owner_field,name,status,forced_values,sequence_number
-cost_center,TRUE,TRUE,Down,"[('category' , 'in' , ['OC', 'FREE1', 'FREE2', 'DEST'])]","['category', 'code', 'date', 'date_start', 'description', 'for_fx_gain_loss', 'name', 'type']",OC,account.analytic.account,,Cost Center (CC & Free 1 & 2 & Destination),Valid,,1
-proprietary_instance,TRUE,TRUE,Bidirectional,[],"['code', 'cost_center_id/id', 'instance', 'level', 'mission', 'move_prefix', 'name', 'note', 'reconcile_prefix', 'state']",OC,msf.instance,,Proprietary Instance,Valid,,2
-proprietary_instance_tree,TRUE,TRUE,Bidirectional,"[('parent_id','!=','')]",['parent_id/id'],OC,msf.instance,,Proprietary Instance Tree,Valid,,3
+analytic_account,TRUE,TRUE,Down,"[('category' , 'in' , ['FREE1', 'FREE2', 'DEST'])]","['category', 'code', 'date', 'date_start', 'description', 'for_fx_gain_loss', 'name', 'type']",OC,account.analytic.account,,Analytic Accounts (Free 1 & 2 & Destination),Valid,,1
+cost_center_hq,TRUE,TRUE,Down,"[('category' , '=' , 'OC'), ('parent_id', '=', '')]","['category', 'code', 'date', 'date_start', 'description', 'for_fx_gain_loss', 'name', 'type']",OC,account.analytic.account,,Cost Center (HQ),Valid,,2
+cost_center,TRUE,TRUE,Bidirectional-Private,"[('category' , '=' , 'OC'), ('parent_id', '!=', '')]","['category', 'code', 'date', 'date_start', 'description', 'for_fx_gain_loss', 'name', 'type']",OC,account.analytic.account,category,Cost Center,Valid,,3
+cc_tree,TRUE,TRUE,Bidirectional-Private,"[('category' , '=' , 'OC'), ('parent_id', '!=', '')]","['category', 'parent_id/id']",OC,account.analytic.account,category,CC Tree,Valid,,4
+proprietary_instance,TRUE,TRUE,Bidirectional,[],"['code', 'instance', 'level', 'mission', 'move_prefix', 'name', 'note', 'reconcile_prefix', 'state', 'top_cost_center_id/id']",OC,msf.instance,,Proprietary Instance,Valid,,5
+proprietary_instance_tree,TRUE,TRUE,Bidirectional,"[('parent_id','!=','')]",['parent_id/id'],OC,msf.instance,,Proprietary Instance Tree,Valid,,6
+account_target_costcenter,TRUE,TRUE,Bidirectional-Private,"[('instance_id.state','=','active')]","['cost_center_id/id', 'instance_id/id', 'is_target']",OC,account.target.costcenter,instance_id,Instance Cost Centers,Valid,,7
+account_target_costcenter_tree,TRUE,TRUE,Bidirectional-Private,"[('instance_id.state','=','active'), ('parent_id','!=','')]","['instance_id/id', 'parent_id/id']",OC,account.target.costcenter,instance_id,Instance Cost Centers Tree,Valid,,8
 fiscal_year,TRUE,TRUE,Down,[],"['code', 'date_start', 'date_stop', 'name']",OC,account.fiscalyear,,Fiscal Year,Valid,,10
 periods,TRUE,TRUE,Down,[],"['code', 'date_start', 'date_stop', 'fiscalyear_id/id', 'name', 'number', 'special']",OC,account.period,,Periods,Valid,{'state': 'Draft'},11
 currency_table_header,TRUE,TRUE,Down,"[('state','=','valid')]","['code', 'name']",OC,res.currency.table,,Currency Table Header,Valid,,20
@@ -18,7 +23,7 @@ analytical_journal_coordo,TRUE,TRUE,Down,"[('instance_id.level', '=', 'coordo')]
 analytical_journal,TRUE,TRUE,Bidirectional-Private,[],"['active', 'code', 'name', 'type','instance_id/id']",OC,account.analytic.journal,instance_id,Analytical Journal,Valid,,40
 link_accounts_destination,TRUE,TRUE,Down,[],"['account_id/id', 'destination_id/id']",OC,account.destination.link,,Link accounts Destination,Valid,,42
 funding_pool,TRUE,TRUE,Bidirectional,"[('category' , '=' , 'FUNDING')]","['category', 'code', 'cost_center_ids/id', 'date', 'date_start', 'description', 'name', 'tuple_destination_account_ids/id', 'type']",OC,account.analytic.account,,Funding Pool,Valid,,43
-cc_fp_tree,TRUE,TRUE,Down,"[('parent_id', '!=', '')]",['parent_id/id'],OC,account.analytic.account,,CC & FP Tree,Valid,,44
+fp_tree,TRUE,TRUE,Down,"[('category', '!=', 'OC'),('parent_id', '!=', '')]",['parent_id/id'],OC,account.analytic.account,,FP Tree,Valid,,44
 analytic_distribution,TRUE,TRUE,Bidirectional,[],['name'],OC,analytic.distribution,,Analytic Distribution,Valid,,45
 cost_center_distribution_line,TRUE,TRUE,Bidirectional,[],"['amount', 'analytic_id/id', 'currency_id/id', 'date', 'destination_id/id', 'distribution_id/id', 'name', 'percentage', 'source_date']",OC,cost.center.distribution.line,,Cost Center Distribution Line,Valid,,46
 fp_distribution_line,TRUE,TRUE,Bidirectional,[],"['amount', 'analytic_id/id', 'cost_center_id/id', 'currency_id/id', 'date', 'destination_id/id', 'distribution_id/id', 'name', 'percentage', 'source_date']",OC,funding.pool.distribution.line,,FP Distribution Line,Valid,,47
