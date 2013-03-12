@@ -105,7 +105,27 @@ class import_cell_data(osv.osv_memory):
                     expired_date = DateTime.strptime(cell_data,'%Y-%m-%d')
                     return str(expired_date)
                 except ValueError, e:
-                    return False
+                    try:
+                        expired_date = DateTime.strptime(cell_data,'%Y/%m/%d')
+                        return str(expired_date)
+                    except ValueError, e:
+                        try:
+                            expired_date = DateTime.strptime(cell_data,'%d-%m-%Y')
+                            return str(expired_date)
+                        except ValueError, e:
+                            try:
+                                expired_date = DateTime.strptime(cell_data,'%d/%m/%Y')
+                                return str(expired_date)
+                            except ValueError, e:
+                                try:
+                                    expired_date = DateTime.strptime(cell_data,'%d-%b-%Y')
+                                    return str(expired_date)
+                                except ValueError, e:
+                                    try:
+                                        expired_date = DateTime.strptime(cell_data,'%d/%b/%Y')
+                                        return str(expired_date)
+                                    except ValueError, e:
+                                        return False
         return False
 
     def get_line_values(self, cr, uid, ids, row):
