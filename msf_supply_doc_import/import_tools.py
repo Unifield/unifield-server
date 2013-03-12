@@ -34,7 +34,7 @@ class import_cell_data(osv.osv_memory):
             line_content = row.cells
         except ValueError, e:
             line_content = row.cells
-        if line_content and row.cells[cell_nb] and row.cells[cell_nb].data:
+        if line_content and len(line_content)-1>=cell_nb and row.cells[cell_nb] and row.cells[cell_nb].data:
             cell_data = row.cells[cell_nb].data
         return cell_data
 
