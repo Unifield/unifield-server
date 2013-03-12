@@ -46,7 +46,7 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner', '=', sale_order_id ),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]" string="aaaaaaaaaaaaaaaaaaaa">
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner', '=', sale_order_id ),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]">
                                 <tree string="Suppliers">
                                     <field name="name" />
                                     <field name="partner_type" />

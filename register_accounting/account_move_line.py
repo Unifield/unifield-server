@@ -258,7 +258,7 @@ class account_move_line(osv.osv):
 
         # Prepare some values
         acc_obj = self.pool.get('account.account')
-        third_type = [('res.partner', 'Partner')]
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')] # UF-1022 By default should display Partner and employee
         third_required = False
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required

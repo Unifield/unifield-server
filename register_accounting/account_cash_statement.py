@@ -334,6 +334,7 @@ account_cash_statement()
 class account_cashbox_line(osv.osv):
 
     _inherit = "account.cashbox.line"
+    _order = "pieces"
 
     def create(self, cr, uid, vals, context=None):
         """
