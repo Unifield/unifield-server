@@ -150,7 +150,7 @@ That means Not price, Neither Delivery requested date. """))
                 
                 error = False
                 if obj.partner_id:
-                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], args={'partner_id': obj.partner_id.id, 'obj_type': 'sale.order'}, context=context)
+                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], vals={'partner_id': obj.partner_id.id, 'obj_type': 'sale.order'}, context=context)
                 if error:
                     p_value['error_list'].append(error_msg)
                     to_write.update({'error_list': p_value['error_list']})
@@ -273,7 +273,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
 
                 error = False
                 if obj.partner_id:
-                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], args={'partner_id': obj.partner_id.id, 'obj_type': 'sale.order'}, context=context)
+                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], vals={'partner_id': obj.partner_id.id, 'obj_type': 'sale.order'}, context=context)
                 if error:
                     p_value['error_list'].append(error_msg)
                     p_value['comment'] = error_msg

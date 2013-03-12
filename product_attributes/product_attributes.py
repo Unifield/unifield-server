@@ -252,7 +252,7 @@ class product_attributes(osv.osv):
             
         return [('id', 'in', ids)] 
 
-    def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
+    def _get_restriction(self, cr, uid, ids, field_name, vals, context=None):
         res = {}
 
         for product in self.browse(cr, uid, ids, context=context):
@@ -380,7 +380,7 @@ class product_attributes(osv.osv):
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
 
-    def _test_restriction_error(self, cr, uid, ids, args={}, context=None):
+    def _test_restriction_error(self, cr, uid, ids, vals={}, context=None):
         '''
         Builds and returns an error message according to the constraints
         '''
@@ -393,11 +393,11 @@ class product_attributes(osv.osv):
         error = False
         error_msg = ''
         constraints = []
-        sale_obj = args.get('obj_type') == 'sale.order'
+        sale_obj = vals.get('obj_type') == 'sale.order'
 
-        # Compute the constraint if a partner is passed in args
-        if args.get('partner_id'):
-            partner_type = self.pool.get('res.partner').browse(cr, uid, args.get('partner_id'), context=context).partner_type
+        # Compute the constraint if a partner is passed in vals 
+        if vals.get('partner_id'):
+            partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id'), context=context).partner_type
             if partner_type == 'external':
                 constraints.append('external')
             elif partner_type == 'esc':
@@ -405,12 +405,12 @@ class product_attributes(osv.osv):
             elif partner_type in ('internal', 'intermission', 'section'):
                 constraints.append('internal')
 
-        # Compute constraints if constraints is passed in args
-        if args.get('constraints'):
-            if isinstance(args.get('constraints'), list):
-                constraints.extend(args.get('constraints'))
-            elif isinstance(args.get('constraints'), str):
-                constraints.append(args.get('constraints'))
+        # Compute constraints if constraints is passed in vals
+        if vals.get('constraints'):
+            if isinstance(vals.get('constraints'), list):
+                constraints.extend(vals.get('constraints'))
+            elif isinstance(vals.get('constraints'), str):
+                constraints.append(vals.get('constraints'))
 
         for product in self.browse(cr, uid, ids, context=context):
             msg = ''
@@ -453,11 +453,11 @@ class product_attributes(osv.osv):
 
         return error, error_msg
 
-    def _get_restriction_error(self, cr, uid, ids, args={}, context=None):
+    def _get_restriction_error(self, cr, uid, ids, vals={}, context=None):
         '''
         Raise an error if the product is not compatible with the order
         '''
-        res, error_msg = self._test_restriction_error(cr, uid, ids, args=args, context=context)
+        res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
 
         if res:
             raise osv.except_osv(_('Error'), error_msg)
@@ -465,11 +465,16 @@ class product_attributes(osv.osv):
 
         return True
 
-    def _on_change_restriction_error(self, cr, uid, ids, field_name, values={}, args={}, context=None):
+    def _on_change_restriction_error(self, cr, uid, ids, *args, **kwargs):
         '''
         Update the message on on_change of product
         '''
-        res, error_msg = self._test_restriction_error(cr, uid, ids, args=args, context=context)
+        field_name = kwargs.get('field_name')
+        values = kwargs.get('values')
+        vals = kwargs.get('vals')
+        context = kwargs.get('context')
+
+        res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
 
         result = values.copy()
 

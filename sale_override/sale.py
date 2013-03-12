@@ -1099,7 +1099,7 @@ class sale_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             constraints = []
             if line.order_id and line.order_id.state != 'done':
-                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, args={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
                     return False
 
         return True
@@ -1207,7 +1207,7 @@ class sale_order_line(osv.osv):
             lang, update_tax, date_order, packaging, fiscal_position, flag)
         if product and partner_id:
             # Test the compatibility of the product with a tender
-            res, test = product_obj._on_change_restriction_error(cr, uid, product, 'product_id', values=res, args={'partner_id': partner_id, 'obj_type': 'sale.order'})
+            res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
             if test:
                 return res
 

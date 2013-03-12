@@ -110,7 +110,7 @@ Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Deliv
                 to_write.update({'product_id': p_value['default_code'], 'error_list': p_value['error_list']})
 
                 if p_value['default_code']:
-                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], args={'constraints': ['external']}, context=context)
+                    error, error_msg = product_obj._test_restriction_error(cr, uid, p_value['default_code'], vals={'constraints': ['external']}, context=context)
                     if error:
                         p_value['error_list'].append(error_msg)
                         to_write.update({'error_list': p_value['error_list']})
