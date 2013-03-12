@@ -104,11 +104,11 @@
                 <Data ss:Type="String"></Data>
             % endif
         </Cell>
-        % if line.item_exp :
-            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.item_exp|n}T00:00:00.000</Data></Cell>
-        % else:
-            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        % endif
+    % if line.item_exp is not None:
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.item_exp|n}T00:00:00.000</Data></Cell>
+    % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+    % endif
     </Row>
     % endfor
 </Table>
