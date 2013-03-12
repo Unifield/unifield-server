@@ -64,7 +64,7 @@ class MonitorLogger(object):
         if status in ('failed', 'aborted'):
             self.final_status = status
         self.info[step] = status
-        if step == 'status':
+        if step == 'status' and status != 'in-progress':
             self.info['end'] = fields.datetime.now()
             self.monitor.last_status = (status, self.info['end'])
 
