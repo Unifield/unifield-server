@@ -88,7 +88,7 @@ class output_currency_for_export(osv.osv_memory):
         context.update({'output_currency_id': currency_id})
         if wiz.currency_id:
             # seems that there is a bug on context, so using datas permit to transmit info
-            datas.update({'output_currency_id': currency_id})
+            datas.update({'output_currency_id': currency_id, 'context': context})
         # Update report name if come from analytic
         report_name = 'account.move.line'
         if model == 'account.analytic.line':
