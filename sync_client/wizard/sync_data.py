@@ -422,7 +422,7 @@ class update_received(osv.osv):
                             res = secure_import_data(obj, fields, values[:value_index])
                             assert res[0] == value_index, res[2]
                         except Exception, import_error:
-                            raise Exception(message+import_error)
+                            raise Exception(message+import_error.message)
                         success( update_ids[:value_index], \
                                  dict(versions[:value_index]) )
                         values = values[value_index:]
