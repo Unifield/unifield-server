@@ -61,14 +61,14 @@
 <Column ss:AutoFitWidth="1" ss:Width="90" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Module</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UOM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Asset</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Batch Number</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Module')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UOM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Asset')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch Number')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
     </Row>
     ## we loop over the products line
     % for line in o.composition_item_ids:
@@ -105,10 +105,10 @@
             % endif
         </Cell>
         <Cell ss:StyleID="line" >
-            % if not line.item_exp :
-                <Data ss:Type="String"></Data>
-            % else:
+            % if line.item_exp :
                 <Data ss:Type="DateTime">${line.item_exp|n}T00:00:00.000</Data>
+            % else:
+                <Data ss:Type="String"></Data>
             % endif
         </Cell>
     </Row>
