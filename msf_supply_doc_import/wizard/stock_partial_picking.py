@@ -243,6 +243,13 @@ class stock_partial_picking(osv.osv_memory):
 
             # get values from row
             line_values = cell_data.get_line_values(cr, uid, ids, row)
+            # ignore empty line
+            if not line_values:
+                continue
+            # do not take empty line
+            empty_list = [line for line in line_values if line==False]
+            if empty_list and len(empty_list)==len(line_values):
+                continue
             # Check length of the row
             if len(row) < 7:
                 error_list.append(_("""Line %s of the Excel file was added to the file of the lines with errors. You should have exactly 7 columns in this order:
