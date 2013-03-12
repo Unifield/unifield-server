@@ -33,7 +33,7 @@ def _join_dictionary(dict, key_prefix, value_prefix, seperator):
 
 class view_config_install(osv.osv_memory):
     _name = 'msf_button_access_rights.view_config_wizard_install'
-    _inherit = 'res.config' 
+    _inherit = 'res.config'
     
     def execute(self, cr, uid, ids, context=None):
         """
@@ -74,10 +74,13 @@ view_config_install()
         
 class view_config_install_results(osv.osv_memory):
     _name = 'msf_button_access_rights.view_config_wizard_install_results'
+    _inherit = 'res.config'
     _columns = {
         'successes': fields.text('Successes', readonly=True),
         'total': fields.text('Total', readonly=True),
         'errors': fields.text('Errors', readonly=True),
     }
-        
+
+    def execute(self, cr, uid, ids, context=None):
+        pass
 view_config_install_results()

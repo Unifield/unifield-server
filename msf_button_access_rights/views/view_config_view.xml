@@ -22,5 +22,21 @@
 			</field>
 		</record>
 
+    <record id="view_config_wizard_install_view_results_form" model="ir.ui.view">
+        <field name="name">Generate Button Access Rules (result)</field>
+        <field name="model">msf_button_access_rights.view_config_wizard_install_results</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Generate Button Access Rules Result">
+                <field name="successes" colspan="4"/>
+                <field name="total" colspan="4"/>
+                <field name="errors" colspan="4"/>
+                <group colspan="4">
+                    <button name="action_next" icon="gtk-go-forward" type="object" string="Next" colspan="1"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
     </data>
 </openerp>
