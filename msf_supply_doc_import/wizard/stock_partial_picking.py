@@ -245,10 +245,15 @@ class stock_partial_picking(osv.osv_memory):
             line_values = cell_data.get_line_values(cr, uid, ids, row)
             # ignore empty line
             if not line_values:
+                processed_lines += 1
+                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                self.write(cr, uid, ids, {'percent_completed':percent_completed})
                 continue
-            # do not take empty line
             empty_list = [line for line in line_values if line==False]
             if empty_list and len(empty_list)==len(line_values):
+                processed_lines += 1
+                percent_completed = float(processed_lines)/float(total_line_num-1)*100.0
+                self.write(cr, uid, ids, {'percent_completed':percent_completed})
                 continue
             # Check length of the row
             if len(row) < 7:
