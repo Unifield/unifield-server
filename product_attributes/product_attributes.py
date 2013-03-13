@@ -252,7 +252,7 @@ class product_attributes(osv.osv):
             
         return [('id', 'in', ids)] 
 
-    def _get_restriction(self, cr, uid, ids, field_name, vals, context=None):
+    def _get_restriction(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
         for product in self.browse(cr, uid, ids, context=context):
@@ -269,6 +269,36 @@ class product_attributes(osv.osv):
 
     def _get_international_status(self, cr, uid, ids, context=None):
         return self.pool.get('product.product').search(cr, uid, [('international_status', 'in', ids)], context=context)
+    
+    def _get_dummy(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for id in ids:
+            res[id] = False
+        return res
+    
+    # This method is here because the following domain didn't work on field order/purchase order lines
+    # [('no_internal', '=', parent.partner_type != 'internal'), ('no_external', '=', parent.partner_type != 'external'),('no_esc', '=', parent.partner_type != 'esc'),
+    def _src_available_for_restriction(self, cr, uid, obj, name, args, context=None):
+        '''
+        Search available products for the partner given in args
+        '''
+        if not context:
+            context = {}
+            
+        for arg in args:
+            if arg[0] == 'available_for_restriction' and arg[1] == '=' and arg[2]:
+                if arg[2] == 'external':
+                    return [('no_external', '=', False)]
+                elif arg[2] == 'esc':
+                    return [('no_esc', '=', False)]
+                elif arg[2] in ('internal', 'intermission', 'section'):
+                    return [('no_internal', '=', False)]
+                elif arg[2] == 'consumption':
+                    return [('no_consumption', '=', False)]
+                elif arg[2] == 'storage':
+                    return [('no_storage', '=', False)]
+        
+        return []
     
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -359,6 +389,8 @@ class product_attributes(osv.osv):
                                       store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
                                              'product.status': (_get_product_status, ['no_storage'], 10),
                                              'product.international.status': (_get_international_status, ['no_storage'], 10),}),
+        'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, methode=True, type='boolean',
+                                                 store=False, string='Available for the partner', readonly=True),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -416,7 +448,11 @@ class product_attributes(osv.osv):
             msg = ''
             st_cond = True
 
-            if product.no_external and 'external' in constraints:
+            if product.no_external and product.no_esc and product.no_internal and 'picking' in constraints:
+                error = True
+                msg = _('any exchanged')
+                st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
+            elif product.no_external and 'external' in constraints:
                 error = True
                 msg = _('be %s externally' % (sale_obj and _('shipped') or _('purchased')))
                 st_cond = product.state.no_external

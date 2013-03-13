@@ -1097,8 +1097,7 @@ class sale_order_line(osv.osv):
             context = {}
 
         for line in self.browse(cr, uid, ids, context=context):
-            constraints = []
-            if line.order_id and line.order_id.state != 'done':
+            if line.order_id and line.order_id.partner_id and line.order_id.state != 'done':
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
                     return False
 
@@ -1205,11 +1204,12 @@ class sale_order_line(osv.osv):
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
-        if product and partner_id:
-            # Test the compatibility of the product with a tender
-            res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
-            if test:
-                return res
+        if product:
+            if partner_id:
+                # Test the compatibility of the product with the partner of the order
+                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
+                if test:
+                    return res
 
             type = product_obj.read(cr, uid, [product], 'procure_method')[0]['procure_method']
             if 'value' in res:
