@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	
+		<!-- Button Access Rule List -->
+		<record id="button_access_rule_list" model="ir.actions.act_window">
+	        <field name="name">Button Access Rules</field>
+	        <field name="res_model">msf_button_access_rights.button_access_rule</field>
+	        <field name="view_mode">tree,form</field>
+	        <field name="view_id" ref="button_access_rule_list_view"/>
+    	</record>
+    	
+    	<menuitem name="Button Access Rules" id="msf_button_access_rules" parent="base.menu_security" action="button_access_rule_list" sequence="16" />
+
+	</data>
+</openerp>

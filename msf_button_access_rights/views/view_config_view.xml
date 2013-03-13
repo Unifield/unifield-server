@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- ir.ui.view.config wizard form -->
+        <record id="view_config_wizard_install_view_form" model="ir.ui.view">
+		    <field name="name">Generate Button Access Rules</field>
+		    <field name="model">msf_button_access_rights.view_config_wizard_install</field>
+		    <field name="type">form</field>
+		    <field name="inherit_id" ref="base.res_config_view_base"/>
+		    <field name="arch" type="xml">
+		    	<data>
+					<separator string="title" position="attributes">
+	                    <attribute name="string">Generate Button Access Rules for Existing Views</attribute>
+                	</separator>
+				    <group string="res_config_contents" position="replace">
+				        <label colspan="4" string="Click Next below to start generating Button Access Rules for the views that are already in your database. This process can take a long time. You can open this wizard at a more convenient time form the Configuration Wizards section of the Administration module."/>
+				        <newline />
+				        <label colspan="4" string="Note: You only need to do this once! Each time a view is created or editted, Button Access Rules will automatically be created or updated." />
+				    </group>
+			    </data>
+			</field>
+		</record>
+
+    </data>
+</openerp>
