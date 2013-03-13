@@ -190,7 +190,7 @@ class real_composition_kit_xls(WebKitParser):
         ids = getIds(self, cr, uid, ids, context)
         a = super(real_composition_kit_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
-real_composition_kit_xls('report.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_composition_kit_xls.mako')
+real_composition_kit_xls('report.real.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako')
 
 class ir_values(osv.osv):
     """
