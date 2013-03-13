@@ -16,7 +16,7 @@
     rule_values = {
       'name':'msf_field_access_rights field_access_rules users test',
       'model_id':user_model.id,
-      'instance_level':'project',
+      'instance_level':'hq',
       'filter':False,
       'domain_text':False,
       'group_ids':False,
