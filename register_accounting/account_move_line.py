@@ -222,7 +222,7 @@ class account_move_line(osv.osv):
                 search = etree.fromstring(result['arch'])
                 tags = search.xpath('/search')
                 for tag in tags:
-                    tag.set('string', "Account Entry Lines")
+                    tag.set('string', _("Account Entry Lines"))
                 result['arch'] = etree.tostring(search)
         return result
 
