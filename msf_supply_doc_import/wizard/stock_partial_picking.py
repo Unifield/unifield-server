@@ -649,6 +649,7 @@ Reported errors :
                 'view_mode': 'form',
                 'target': 'new',
                 'res_id': ids[0],
+                'context':context,
                 }
 
     def import_file(self, cr, uid, ids, context=None):
@@ -675,7 +676,18 @@ Reported errors :
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, fileobj, context))
         thread.start()
         # the windows must be updated to display the message
-        return self.pool.get('wizard').open_wizard(cr, uid, ids, type='update', context=context)
+        return {
+            'name': 'Products to Process',
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'stock.partial.picking',
+            'res_id': ids[0],
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context}
 
     def dummy(self, cr, uid, ids, context=None):
         """
