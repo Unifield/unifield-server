@@ -1343,7 +1343,7 @@ class ir_values(osv.osv):
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
             new_values = []
             for v in values:
-                if context.get('composition_type')=='real' and v[2]['report_name'] == 'composition.kit.xls':
+                if context.get('composition_type')=='real' and v[2]['report_name'] == 'report.real.composition.kit.xls':
                     new_values.append(v)
  
         return new_values
