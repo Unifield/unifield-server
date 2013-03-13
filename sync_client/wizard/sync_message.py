@@ -109,7 +109,13 @@ class message_to_send(osv.osv):
         call = rule.remote_call
         identifiers = self._generate_message_uuid(cr, uid, obj, obj_ids, rule.server_id, context=context)
         for i, id in enumerate(obj_ids):
-            self.create_message(cr, uid, identifiers[id], call, args[id], dest[i], context)
+            update_destinations = []
+            if not issubclass(type(dest[i]), (list, tuple)):
+                update_destinations = [dest[i]]
+            else:
+                update_destinations = dest[i]
+            for update_destination in update_destinations:
+                self.create_message(cr, uid, identifiers[id], call, args[id], update_destination, context)
         return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
