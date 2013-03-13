@@ -40,6 +40,8 @@
         'wizard/wizard_import_tender_line.xml',
         'wizard/wizard_imprort_ir_line.xml',
         'view/composition_kit_import_line_view.xml',
+        'view/composition_kit_import_view.xml',
+        'wizard/wizard_import_po_view.xml',
         'data/msf_supply_doc_import_data.xml',
         'data/inactive_categ.xml',
         'workflow/purchase_workflow.xml',
