@@ -103,14 +103,14 @@ x:FullRows="1">
 </Cell>
 % if data and data.get('context') and data.get('context').get('display_fp'):
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.destination_id and o.destination_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.destination_id and o.destination_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.cost_center_id and o.cost_center_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.cost_center_id and o.cost_center_id.code or '')|x}</Data>
 </Cell>
 % endif
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.account_id and o.account_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.account_id and o.account_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.partner_txt or '')|x}</Data>
