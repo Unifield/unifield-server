@@ -87,8 +87,24 @@ class account_move_line_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         super(account_move_line_report_xls, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
+    def reconcile_name(self, r_id=None):
+        """
+        """
+        nothing = None
+        if not r_id:
+            return nothing
+        res = self.pool.get('account.move.reconcile').name_get(self.cr, self.uid, [r_id])
+        if res and res[0] and res[0][1]:
+            return res[0][1]
+        return nothing
+
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
+        # Prepare some values for reconciliation names
+        self.cr = cr
+        self.uid = uid
+        # Get reconciliation method
+        context['reconcile_name'] = self.reconcile_name
         a = super(account_move_line_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
