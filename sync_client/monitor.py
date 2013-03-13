@@ -38,7 +38,7 @@ class MonitorLogger(object):
             'data_push' : 'null',
             'msg_push' : 'null',
         }
-        self.success = True
+        self.final_status = 'ok'
         self.messages = []
         self.row_id = self.monitor.create(self.cr, self.uid, self.info, context=self.context)
 
@@ -61,15 +61,15 @@ class MonitorLogger(object):
         self.messages[index] = self.__format_message(message, step)
 
     def switch(self, step, status):
-        if status == 'failed':
-            self.success = False
+        if status in ('failed', 'aborted'):
+            self.final_status = status
         self.info[step] = status
-        if step == 'status':
+        if step == 'status' and status != 'in-progress':
             self.info['end'] = fields.datetime.now()
-            self.monitor.last_status = (self.info['status'], self.info['end'])
+            self.monitor.last_status = (status, self.info['end'])
 
     def close(self):
-        self.switch('status', 'ok' if self.success else 'failed')
+        self.switch('status', self.final_status)
         self.write()
         self.cr.close()
         del self.cr
@@ -87,6 +87,7 @@ class sync_monitor(osv.osv):
         'null' : '/',
         'in-progress' : 'In Progress...',
         'failed' : 'Failed',
+        'aborted' : 'Aborted',
     }
 
     def __init__(self, pool, cr):

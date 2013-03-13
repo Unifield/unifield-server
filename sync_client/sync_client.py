@@ -30,11 +30,12 @@ import uuid
 import tools
 import sys
 import traceback
+from psycopg2 import OperationalError
 
 import logging
 from sync_common.common import sync_log
 
-from threading import Thread, RLock
+from threading import Thread, RLock, Lock
 import pooler
 
 import functools
@@ -176,8 +177,17 @@ class Entity(osv.osv):
         return self.get_entity(cr, uid, context=context).identifier
 
     def __init__(self, *args, **kwargs):
-        self.sync_lock = RLock()
+        self.renew_lock = Lock()
+        self._renew_sync_lock()
         super(Entity, self).__init__(*args, **kwargs)
+
+    def _renew_sync_lock(self):
+        if not self.renew_lock.acquire(False):
+            raise StandardError("Can't acquire renew lock!")
+        try:
+            self.sync_lock = RLock()
+        finally:
+            self.renew_lock.release()
 
     def sync_process(step='status'):
         is_step = not (step == 'status')
@@ -188,10 +198,12 @@ class Entity(osv.osv):
             def wrapper(self, cr, uid, context=None, *args, **kwargs):
 
                 # First, check if we can acquire the lock or return False
-                if not self.sync_lock.acquire(blocking=False):
+                sync_lock = self.sync_lock
+                if not sync_lock.acquire(blocking=False):
                     raise already_syncing_error
 
                 # Lock is acquired, so don't put any code outside the try...catch!!
+                self.sync_cursor = cr
                 res = False
                 try:
                     # more information to the logger
@@ -250,12 +262,26 @@ class Entity(osv.osv):
                         add_information(logger)
                     raise
                 except BaseException, e:
+                    # Handle aborting of synchronization
+                    if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
+                        logger.switch(step, 'aborted')
+                        if make_log:
+                            error = "Synchronization aborted"
+                            logger.append(error, 'status')
+                            # force re-open of the cursor before raising
+                            cr.__getattr__ = lambda self, name: getattr(self, name)
+                            cr.__init__(cr._pool, cr.dbname)
+                            del cr.__getattr__
+                            raise osv.except_osv(_('Error!'), error)
+                        else:
+                            raise
                     logger.switch(step, 'failed')
                     error = "%s: %s" % (e.__class__.__name__, tools.ustr(e))
                     if is_step:
                         self._logger.exception('Error in sync_process at step %s' % step)
                         logger.append(error, step)
                     if make_log:
+                        self._logger.exception('Error in sync_process at step %s' % step)
                         add_information(logger)
                         raise osv.except_osv(_('Error!'), error)
                     raise
@@ -266,8 +292,7 @@ class Entity(osv.osv):
                 finally:
                     logger.write()
                     # gotcha!
-                    self.sync_lock.release()
-
+                    sync_lock.release()
                 return res
 
             return wrapper
@@ -762,6 +787,13 @@ class Connection(osv.osv):
         return rpc.Object(cnx, model)
 
     def disconnect(self, cr, uid, context=None):
+        entity = self.pool.get('sync.client.entity')
+        if entity.is_syncing():
+            try:
+                entity._renew_sync_lock()
+            except StandardError:
+                return False
+            entity.sync_cursor.close()
         self._uid = False
         return True
         
