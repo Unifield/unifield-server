@@ -32,6 +32,8 @@ import subprocess
 import os
 import thread
 
+EXIT_UPDATE_REQUIRE_RESTART = 1
+
 class OpenERPServerService(win32serviceutil.ServiceFramework):
     # required info
     _svc_name_ = "openerp-server-6.0"
@@ -46,8 +48,6 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         # a reference to the server's process
         self.terpprocess = None
-        # info if the service terminates correctly or if the server crashed
-        self.stopping = False
 
 
     def SvcStop(self):
@@ -73,23 +73,35 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
     def StartControl(self,ws):
         # this listens to the Service Manager's events
         win32event.WaitForSingleObject(ws, win32event.INFINITE)
-        self.stopping = True
 
     def SvcDoRun(self):
-        # Start OpenERP Server itself
-        self.StartTERP()
         # start the loop waiting for the Service Manager's stop signal
         thread.start_new_thread(self.StartControl, (self.hWaitStop,))
-        # Log a info message that the server is running
-        servicemanager.LogInfoMsg("OpenERP Server up and running")
-        # verification if the server is really running, else quit with an error
-        self.terpprocess.wait()
-        if not self.stopping:
-            sys.exit("OpenERP Server check: server not running, check the logfile for more info")
+        while True:
+            # Start OpenERP Server itself
+            self.StartTERP()
+            # Log a info message that the server is running
+            servicemanager.LogInfoMsg("OpenERP Server up and running")
+            # wait until child process is terminated
+            # if exit status is:
+            # - special 'restart'
+            #       simply loop to restart the process and finish update
+            # - other exit stauts:
+            #       server crashed? exit with an error message
+            exit_status = self.terpprocess.wait()
+            if exit_status == EXIT_UPDATE_REQUIRE_RESTART:
+                servicemanager.LogInfoMsg("OpenERP has been updated, restarting...")
+                continue  # restart openerp process
+            if exit_status == 0:
+                break  # normal exit
+            sys.exit(exit_status)
 
-
+def ctrlHandler(ctrlType):
+    return True
 
 if __name__=='__main__':
+    # handle console control (used to survive to logout)
+    win32api.SetConsoleCtrlHandler(ctrlHandler, True)
     # Do with the service whatever option is passed in the command line
     win32serviceutil.HandleCommandLine(OpenERPServerService)
 

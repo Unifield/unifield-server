@@ -662,10 +662,16 @@ class orm_template(object):
                             lines2 = self.__export_row(cr, uid, row2, fields2,
                                     context)
                             if first:
+                                # Make a check to see if there is data in at least one column
+                                # because before this test, only the first line is exported
+                                # if there is no data in the first column
+                                no_data = True
                                 for fpos2 in range(len(fields)):
                                     if lines2 and lines2[0][fpos2]:
+                                        no_data = False
                                         data[fpos2] = lines2[0][fpos2]
-                                if not data[fpos]:
+                                    
+                                if no_data:
                                     dt = ''
                                     for rr in r:
                                         name_relation = self.pool.get(rr._table_name)._rec_name
@@ -686,7 +692,7 @@ class orm_template(object):
                     if isinstance(r, browse_record):
                         
                         # add support for reference fields
-                        if cols._type == 'reference':
+                        if cols and cols._type == 'reference':
                             row_id = r.id
                             model = r._name
                             xml_id = r._get_xml_ids(cr, uid, [row_id]).get(row_id, '')
@@ -1187,18 +1193,18 @@ class orm_template(object):
                 if hasattr(field_col, 'selection'):
                     if isinstance(field_col.selection, (tuple, list)):
                         sel = field_col.selection
-                        # translate each selection option
-                        sel2 = []
-                        for (key, val) in sel:
-                            val2 = None
-                            if val:
-                                val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                            sel2.append((key, val2 or val))
-                        sel = sel2
-                        res[f]['selection'] = sel
                     else:
                         # call the 'dynamic selection' function
-                        res[f]['selection'] = field_col.selection(self, cr, user, context)
+                        sel = field_col.selection(self, cr, user, context)
+                    # translate each selection option
+                    sel2 = []
+                    for (key, val) in sel:
+                        val2 = None
+                        if val:
+                            val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
+                        sel2.append((key, val2 or val))
+                    sel = sel2
+                    res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
                     res[f]['domain'] = field_col._domain

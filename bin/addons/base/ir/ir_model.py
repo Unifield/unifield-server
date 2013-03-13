@@ -397,7 +397,37 @@ class ir_model_fields(osv.osv):
                 obj._auto_init(cr, ctx)
         return res
 
+    def get_browse_selection(self, cr, uid, obj, field, context=None):
+        value = getattr(obj, field)
+        return self.get_selection(cr, uid, obj._name, field, value, context)
+
+    def get_selection(self, cr, uid, obj_name, field, value, context=None):
+        if context is None:
+            context = {}
+
+        pool_obj = self.pool.get(obj_name)
+        sel = {}
+
+        if field in pool_obj._columns and hasattr(pool_obj._columns[field], 'selection'):
+            sel = dict(pool_obj._columns[field].selection)
+        elif field in pool_obj._inherit_fields and hasattr(pool_obj._inherit_fields[field][2], 'selection'):
+            sel = dict(pool_obj._inherit_fields[field][2].selection)
+        if callable(sel):
+            sel = sel(pool_obj, cr, uid, context)
+        sel_value = sel.get(value, value)
+        if context.get('lang') and context['lang'] != 'en_US':
+            trans_obj = self.pool.get('ir.translation')
+            tr_ids = trans_obj.search(cr, uid, [
+                ('type', '=', 'selection'), ('name', '=', '%s,%s' % (obj_name, field)), ('src', '=', sel_value), ('lang', '=', context['lang'])
+            ])
+            if tr_ids:
+                value = trans_obj.read(cr, uid, tr_ids, ['value'])[0]['value']
+                if value:
+                    return value
+        return sel_value
+
 ir_model_fields()
+
 
 class ir_model_access(osv.osv):
     _name = 'ir.model.access'
@@ -649,6 +679,20 @@ class ir_model_data(osv.osv):
         except:
             id = False
         return id
+
+    def clear_caches(self, cr):
+        """ Clears all orm caches on the object's methods
+
+        :returns: itself
+        """
+        self._get_id.clear_cache(cr.dbname)
+        self.get_object_reference.clear_cache(cr.dbname)
+        return self
+
+    def unlink(self, cr, uid, ids, context=None):
+        """ Regular unlink method, but make sure to clear the caches. """
+        self.clear_caches(cr)
+        return super(ir_model_data,self).unlink(cr, uid, ids, context=context)
 
     def _update(self,cr, uid, model, module, values, xml_id=False, store=True, noupdate=False, mode='init', res_id=False, context=None):
         model_obj = self.pool.get(model)

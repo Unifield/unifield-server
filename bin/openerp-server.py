@@ -30,8 +30,8 @@ GNU Public Licence.
 (c) 2003-TODAY, Fabien Pinckaers - OpenERP s.a.
 """
 
-from updater import do_update
-do_update()
+import updater
+updater.do_update()
 
 #----------------------------------------------------------
 # python imports
@@ -65,6 +65,7 @@ logger = logging.getLogger('server')
 # import the tools module so that the commandline parameters are parsed
 #-----------------------------------------------------------------------
 import tools
+updater.update_path()
 logger.info("OpenERP version - %s", release.version)
 for name, value in [('addons_path', tools.config['addons_path']),
                     ('database hostname', tools.config['db_host'] or 'localhost'),
@@ -219,6 +220,8 @@ if os.name == 'posix':
     signal.signal(signal.SIGQUIT, dumpstacks)
 
 def quit(restart=False):
+    if restart:
+        time.sleep(updater.restart_delay)
     netsvc.Agent.quit()
     netsvc.Server.quitAll()
     if tools.config['pidfile']:
@@ -247,8 +250,24 @@ def quit(restart=False):
                         logger.info(str(thread.getName()) + ' could not be terminated')
     if not restart:
         sys.exit(0)
+    elif os.name == 'nt':
+        sys.exit(1) # require service restart
     else:
         os.execv(sys.executable, [sys.executable] + sys.argv)
+
+#----------------------------------------------------------
+# manage some platform specific behaviour
+#----------------------------------------------------------
+
+if sys.platform == 'win32':
+    import win32api
+    def mainthread_sleep(stime):
+        # use SleepEx so the process can recieve console control event
+        # (required to Windows service survive if the user logout)
+        win32api.SleepEx(stime*1000)
+else:
+    def mainthread_sleep(stime):
+        time.sleep(stime)
 
 if tools.config['pidfile']:
     fd = open(tools.config['pidfile'], 'w')
@@ -260,11 +279,9 @@ netsvc.Server.startAll()
 
 logger.info('OpenERP server is running, waiting for connections...')
 
-tools.restart_required = False
+while netsvc.quit_signals_received == 0 and not updater.restart_required:
+    mainthread_sleep(5)
 
-while netsvc.quit_signals_received == 0 and not tools.restart_required:
-    time.sleep(5)
-
-quit(restart=tools.restart_required)
+quit(restart=updater.restart_required)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

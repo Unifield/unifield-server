@@ -32,6 +32,7 @@ import addons
 import ir
 import netsvc
 import pooler
+import updater
 import release
 import sql_db
 import tools
@@ -191,7 +192,7 @@ class db(netsvc.ExportService):
 
         self._set_pg_psw_env_var()
 
-        cmd = [tools.misc.find_pg_tool('pg_dump'), '--format=c', '--no-owner']
+        cmd = ['pg_dump', '--format=c', '--no-owner']
         if tools.config['db_user']:
             cmd.append('--username=' + tools.config['db_user'])
         if tools.config['db_host']:
@@ -227,7 +228,7 @@ class db(netsvc.ExportService):
 
         self._create_empty_database(db_name)
 
-        cmd = [tools.misc.find_pg_tool('pg_restore'), '--no-owner', '--no-acl']
+        cmd = ['pg_restore', '--no-owner', '--no-acl']
         if tools.config['db_user']:
             cmd.append('--username=' + tools.config['db_user'])
         if tools.config['db_host']:
@@ -242,13 +243,14 @@ class db(netsvc.ExportService):
             tmpfile = (os.environ['TMP'] or 'C:\\') + os.tmpnam()
             file(tmpfile, 'wb').write(buf)
             args2=list(args2)
-            args2.append(' ' + tmpfile)
+            args2.append(tmpfile)
             args2=tuple(args2)
-        stdin, stdout = tools.exec_pg_command_pipe(*args2)
-        if not os.name == "nt":
+            res = tools.exec_pg_command(*args2)
+        else:
+            stdin, stdout = tools.exec_pg_command_pipe(*args2)
             stdin.write(base64.decodestring(data))
-        stdin.close()
-        res = stdout.close()
+            stdin.close()
+            res = stdout.close()
         if res:
             raise Exception, "Couldn't restore database"
         logger.notifyChannel("web-services", netsvc.LOG_INFO,
