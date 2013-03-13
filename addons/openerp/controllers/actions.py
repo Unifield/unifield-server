@@ -206,8 +206,15 @@ def act_window(action, data):
         data['search_view'] = str(rpc.session.execute(
                 'object', 'execute', data['res_model'], 'fields_view_get',
                 data['search_view_id'], 'search', data['context']))
+    # store action limit within request and set it as None for action
+    # so that view specific can differenciate between defaults (i.e this
+    # act_window limit) and user's choosen value
     if data.get('limit'):
-        data['limit'] = 20
+        # TODO: we're conservative here - so we set limit to 20,
+        #       but we should really use act_window's limit (i.e data['limit'])
+        #       once we're sure there is *no* performance impact.
+        cherrypy.request.action_limit = 20
+    data['limit'] = None
     
     if action.get('target') and action['target'] == 'popup' and action.get('res_model') and isinstance(action.get('context'), dict):
         search_view_id = rpc.RPCProxy('ir.ui.view').search([('type','=', 'search'), ('model','=',action['res_model'])], 0, 0, 0, rpc.session.context)
