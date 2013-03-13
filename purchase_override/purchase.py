@@ -337,10 +337,12 @@ class purchase_order(osv.osv):
             else:
                 vals.update({'invoice_method': 'picking'})
 
+        res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+
         # Check restrictions on lines
         self._check_restriction_line(cr, uid, ids, context=context)
-
-        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+        
+        return res
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         '''
