@@ -120,7 +120,9 @@ def create(self, cr, uid, vals, context=None):
                                     vals[line.field.name] = new_value
 
                     # Then update the record
-                    self.write(cr, 1, create_result, vals, context=context.update({'sync_data':False}))
+                    new_context = copy.deepcopy(context)
+                    new_context.update({'sync_data':False})
+                    self.write(cr, 1, create_result, vals, context=new_context)
 
                 return create_result
             else:
