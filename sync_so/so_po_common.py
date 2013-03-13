@@ -328,7 +328,10 @@ class so_po_common(osv.osv_memory):
             sync_order_line_db_id = False
             if 'sync_order_line_db_id' in line_dict:
                 sync_order_line_db_id = line.sync_order_line_db_id
-                values['sync_order_line_db_id'] = sync_order_line_db_id 
+                values['sync_order_line_db_id'] = sync_order_line_db_id
+                
+            if 'source_sync_line_id' in line_dict:
+                values['original_purchase_line_id'] = line_dict['source_sync_line_id']
             
             if (po_id or so_id) and not sync_order_line_db_id: # this updates the PO or SO -> the sync_order_line_db_id must exist
                 raise Exception, "The field sync_order_line_db_id is missing - please check the relevant message rule!"
