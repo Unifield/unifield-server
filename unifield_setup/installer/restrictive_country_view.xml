@@ -40,6 +40,7 @@
       <field name="name">Restrictive Countries Configuration</field>
       <field name="type">ir.actions.act_window</field>
       <field name="res_model">restrictive.country.setup</field>
+      <field name="res_id">self.create(cr, uid)</field>
       <field name="view_id" ref="view_restrictive_countries_setup"/>
       <field name="view_type">form</field>
       <field name="view_mode">form</field>
