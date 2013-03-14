@@ -39,13 +39,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="17" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
+<Table ss:ExpandedColumnCount="18" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
 x:FullRows="1">
-% for x in range(0,17):
+% for x in range(0,18):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Out. Amount'), _('Out. Currency'), _('Reconcile'), _('State')]:
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Output Debit'), _('Output Credit'), _('Out. Currency'), _('Reconcile'), _('State')]:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
@@ -103,7 +103,10 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="Number">${o.output_amount or '0.0'}</Data>
+        <Data ss:Type="Number">${o.output_amount_debit or '0.0'}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="Number">${o.output_amount_credit or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.output_currency and o.output_currency.name or '')|x}</Data>
@@ -117,7 +120,7 @@ x:FullRows="1">
 </Row>
 % endfor
 </Table>
-<AutoFilter x:Range="R1C1:R1C17" xmlns="urn:schemas-microsoft-com:office:excel">
+<AutoFilter x:Range="R1C1:R1C18" xmlns="urn:schemas-microsoft-com:office:excel">
 </AutoFilter>
 </Worksheet>
 </Workbook>
