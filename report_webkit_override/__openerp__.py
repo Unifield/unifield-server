@@ -28,8 +28,8 @@
     "depends" : ["report_webkit"],
     "author" : "TeMPO Consulting, MSF",
     "category": "Reports/Webkit for Unifield",
-    "data": ["data.xml",
-    ],
+    #"data": ["data.xml",
+    #],
     "installable" : True,
     "active" : False,
 }

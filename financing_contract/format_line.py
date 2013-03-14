@@ -239,8 +239,8 @@ class financing_contract_format_line(osv.osv):
                         real_sum = -real_sum
                         res[line.id] = real_sum
         return res
-    
-    
+
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=16, required=True),
@@ -259,10 +259,13 @@ class financing_contract_format_line(osv.osv):
         'allocated_real_value': fields.float('Real allocated amount (value)'),
         'project_real_value': fields.float('Real project amount (value)'),
         'overhead_percentage': fields.float('Overhead percentage'),
+
         'allocated_budget': fields.function(_get_budget_amount, method=True, store=False, string="Funded - Budget", type="float", readonly=True),
         'project_budget': fields.function(_get_budget_amount, method=True, store=False, string="Total project - Budget", type="float", readonly=True),
+
         'allocated_real': fields.function(_get_actual_amount, method=True, store=False, string="Funded - Actuals", type="float", readonly=True),
         'project_real': fields.function(_get_actual_amount, method=True, store=False, string="Total project - Actuals", type="float", readonly=True),
+
     }
     
     _defaults = {

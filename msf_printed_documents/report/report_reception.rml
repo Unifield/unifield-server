@@ -311,7 +311,7 @@
                     <para style="TextInformation"></para>
                 </td>
                 <td>
-                    <para style="TextInformation">Transport mode : [[  getTransportMode(objects[0]) ]]</para>
+                    <para style="TextInformation">Transport mode : [[  getSel(objects[0].purchase_id, 'transport_type') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ getPartnerName(objects[0]) ]]</para>
@@ -326,13 +326,13 @@
 
             <tr>
                 <td>
-                    <para style="TextInformation">Category : [[ getCateg(objects[0]) ]]</para>
+                    <para style="TextInformation">Category : [[ getSel(objects[0].purchase_id, 'categ') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
                 </td>
                 <td>
-                    <para style="TextInformation">Priority : [[  getPrio(objects[0]) ]]</para>
+                    <para style="TextInformation">Priority : [[  getSel(objects[0].purchase_id, 'priority') ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ getPartnerAddress(objects[0]) ]]</para>

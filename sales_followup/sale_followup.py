@@ -38,17 +38,11 @@ class sale_order_followup(osv.osv_memory):
     _name = 'sale.order.followup'
     _description = 'Sales Order Followup'
     
-    def get_selection(self, cr, uid, o, field):
+    def get_selection(self, cr, uid, o, field, context=None):
         """
         """
-        sel = self.pool.get(o._name).fields_get(cr, uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
+        return self.pool.get('ir.model.fields').get_browse_selection(cr, uid, o, field, context)
+
     
     def _get_order_state(self, cr, uid, ids, field_name, args, context=None):
         if not context:
@@ -60,7 +54,7 @@ class sale_order_followup(osv.osv_memory):
             res[follow.id] = None
             
             if follow.order_id:
-                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state_hidden_sale_order')
+                res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state_hidden_sale_order', context)
             
         return res
     
@@ -358,13 +352,13 @@ class sale_order_line_followup(osv.osv_memory):
             context = {}
         
         for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {'sourced_ok': 'No',
+            res[line.id] = {'sourced_ok': _('No'),
 #                            'quotation_status': 'No quotation',
-                            'tender_status': 'N/A',
-                            'purchase_status': 'N/A',
-                            'incoming_status': 'N/A',
-                            'outgoing_status': 'No deliveries',
-                            'product_available': 'Waiting',
+                            'tender_status': _('N/A'),
+                            'purchase_status': _('N/A'),
+                            'incoming_status': _('N/A'),
+                            'outgoing_status': _('No deliveries'),
+                            'product_available': _('Waiting'),
                             'outgoing_nb': 0,
                             'available_qty': 0.00}
 
@@ -375,29 +369,29 @@ class sale_order_line_followup(osv.osv_memory):
 
             # Define if the line is sourced or not according to the state on the SO line
             if line.line_id.state == 'draft':
-                res[line.id]['sourced_ok'] = 'No'
+                res[line.id]['sourced_ok'] = _('No')
             if line.line_id.state in ('confirmed', 'done'):
-                res[line.id]['sourced_ok'] = 'Closed'
+                res[line.id]['sourced_ok'] = _('Closed')
             if line.line_id.state == 'cancel':
-                res[line.id]['sourced_ok'] = 'Cancelled'
+                res[line.id]['sourced_ok'] = _('Cancelled')
             if line.line_id.state == 'exception':
-                res[line.id]['sourced_ok'] = 'Exception'
+                res[line.id]['sourced_ok'] = _('Exception')
             
             ####################################################
             # Get information about the state of call for tender
             ####################################################
-            tender_status = {'n_a': 'N/A',
-                             'no_tender': 'No tender',
-                             'partial': 'Partial',
-                             'draft': 'Waiting',
-                             'comparison': 'In Progress',
-                             'done': 'Closed',
-                             'cancel': 'Cancelled'}
+            tender_status = {'n_a': _('N/A'),
+                             'no_tender': _('No tender'),
+                             'partial': _('Partial'),
+                             'draft': _('Waiting'),
+                             'comparison': _('In Progress'),
+                             'done': _('Closed'),
+                             'cancel': _('Cancelled')}
 
             if line.line_id.type == 'make_to_stock' or line.line_id.po_cft in ('po', 'dpo'):
-                res[line.id]['tender_status'] = tender_status.get('n_a', 'Error on state !')
+                res[line.id]['tender_status'] = tender_status.get('n_a', _('Error on state !'))
             elif line.line_id.po_cft == 'cft' and not line.tender_ids:
-                res[line.id]['tender_status'] = tender_status.get('no_tender', 'Error on state !')
+                res[line.id]['tender_status'] = tender_status.get('no_tender', _('Error on state !'))
             else:
                 # Check if all generated tenders are in the same state
                 tender_state = False
@@ -407,7 +401,7 @@ class sale_order_line_followup(osv.osv_memory):
                     if tender_state != tender.state:
                         tender_state = 'partial'
 
-                res[line.id]['tender_status'] = tender_status.get(tender_state, 'Error on state !')
+                res[line.id]['tender_status'] = tender_status.get(tender_state, _('Error on state !'))
 
             # Add number of documents in brackets
             res[line.id]['tender_status'] = '%s (%s)' % (res[line.id]['tender_status'], len(line.tender_ids))
@@ -415,23 +409,23 @@ class sale_order_line_followup(osv.osv_memory):
             ####################################################
             # Get information about the state of purchase orders
             ####################################################
-            purchase_status = {'n_a': 'N/A',
-                               'no_order': 'No order',
-                               'partial': 'Partial',
-                               'draft': 'Draft',
-                               'confirmed': 'Validated',
-                               'wait': 'Validated',
-                               'confirmed_wait': 'Confirmed (waiting)',
-                               'approved': 'Confirmed',
-                               'done': 'Closed',
-                               'cancel': 'Cancelled',
-                               'except_picking': 'Exception',
-                               'except_invoice': 'Exception',}
+            purchase_status = {'n_a': _('N/A'),
+                               'no_order': _('No order'),
+                               'partial': _('Partial'),
+                               'draft': _('Draft'),
+                               'confirmed': _('Validated'),
+                               'wait': _('Validated'),
+                               'confirmed_wait': _('Confirmed (waiting)'),
+                               'approved': _('Confirmed'),
+                               'done': _('Closed'),
+                               'cancel': _('Cancelled'),
+                               'except_picking': _('Exception'),
+                               'except_invoice': _('Exception'),}
 
             if line.line_id.type == 'make_to_stock':
-                res[line.id]['purchase_status'] = purchase_status.get('n_a', 'Error on state !')
+                res[line.id]['purchase_status'] = purchase_status.get('n_a', _('Error on state !'))
             elif not line.purchase_ids:
-                res[line.id]['purchase_status'] = purchase_status.get('no_order', 'Error on state !')
+                res[line.id]['purchase_status'] = purchase_status.get('no_order', _('Error on state !'))
             else:
                 # Check if all generated PO are in the same state
                 purchase_state = False
@@ -441,7 +435,7 @@ class sale_order_line_followup(osv.osv_memory):
                     if purchase_state != order.state:
                         purchase_state = 'partial'
 
-                res[line.id]['purchase_status'] = purchase_status.get(purchase_state, 'Error on state !')
+                res[line.id]['purchase_status'] = purchase_status.get(purchase_state, _('Error on state !'))
 
             # Add number of documents in brackets
             res[line.id]['purchase_status'] = '%s (%s)' % (res[line.id]['purchase_status'], len(line.purchase_ids))
@@ -449,19 +443,19 @@ class sale_order_line_followup(osv.osv_memory):
             ###########################################################
             # Get information about the state of all incoming shipments
             ###########################################################
-            incoming_status = {'n_a': 'N/A',
-                               'no_incoming': 'No shipment',
-                               'partial': 'Partial',
-                               'draft': 'Waiting',
-                               'confirmed': 'Waiting',
-                               'assigned': 'Available',
-                               'done': 'Closed',
-                               'cancel': 'Cancelled'}
+            incoming_status = {'n_a': _('N/A'),
+                               'no_incoming': _('No shipment'),
+                               'partial': _('Partial'),
+                               'draft': _('Waiting'),
+                               'confirmed': _('Waiting'),
+                               'assigned': _('Available'),
+                               'done': _('Closed'),
+                               'cancel': _('Cancelled')}
 
             if line.line_id.type == 'make_to_stock':
-                res[line.id]['incoming_status'] = incoming_status.get('n_a', 'Error on state !')
+                res[line.id]['incoming_status'] = incoming_status.get('n_a', _('Error on state !'))
             elif not line.incoming_ids:
-                res[line.id]['incoming_status'] = incoming_status.get('no_incoming', 'Error on state !')
+                res[line.id]['incoming_status'] = incoming_status.get('no_incoming', _('Error on state !'))
             else:
                 shipment_state = False
                 for shipment in line.incoming_ids:
@@ -470,7 +464,7 @@ class sale_order_line_followup(osv.osv_memory):
                     if shipment_state != shipment.state:
                         shipment_state = 'partial'
 
-                res[line.id]['incoming_status'] = incoming_status.get(shipment_state, 'Error on state !')
+                res[line.id]['incoming_status'] = incoming_status.get(shipment_state, _('Error on state !'))
 
             # Add number of documents in brackets
             res[line.id]['incoming_status'] = '%s (%s)' % (res[line.id]['incoming_status'], len(line.incoming_ids))
@@ -478,19 +472,19 @@ class sale_order_line_followup(osv.osv_memory):
             #######################################################################
             # Get information about the step and the state of all outgoing delivery
             #######################################################################
-            out_status = {'no_out': 'No deliveries',
-                          'partial': 'Partial',
-                          'draft': 'Waiting',
-                          'confirmed': 'Waiting',
-                          'assigned': 'Available',
-                          'done': 'Closed',
-                          'picked': 'Picked',
-                          'packed': 'Packed',
-                          'shipped': 'Shipped',
-                          'cancel': 'Cancelled',}
+            out_status = {'no_out': _('No deliveries'),
+                          'partial': _('Partial'),
+                          'draft': _('Waiting'),
+                          'confirmed': _('Waiting'),
+                          'assigned': _('Available'),
+                          'done': _('Closed'),
+                          'picked': _('Picked'),
+                          'packed': _('Packed'),
+                          'shipped': _('Shipped'),
+                          'cancel': _('Cancelled'),}
 
             if not line.outgoing_ids:
-                res[line.id]['outgoing_status'] = out_status.get('no_out', 'Error on state !')
+                res[line.id]['outgoing_status'] = out_status.get('no_out', _('Error on state !'))
                 res[line.id]['outgoing_nb'] = '0'
             else:
                 # Get the first stock.picking
@@ -513,8 +507,8 @@ class sale_order_line_followup(osv.osv_memory):
                         if out.state != out_state:
                             out_state = 'partial'
 
-                    res[line.id]['outgoing_status'] = out_status.get(out_state, 'Error on state !')
-                    res[line.id]['product_available'] = out_status.get(out_state, 'Error on state !')
+                    res[line.id]['outgoing_status'] = out_status.get(out_state, _('Error on state !'))
+                    res[line.id]['product_available'] = out_status.get(out_state, _('Error on state !'))
                 else:
                     # Full mode
                     # Begin from the first out moves
@@ -642,48 +636,48 @@ class sale_order_line_followup(osv.osv_memory):
 
                     # If all products should be processed from the main picking ticket or if the main picking ticket is done
                     if total_line == line.line_id.product_uom_qty:
-                        res[line.id]['product_available'] = out_status.get(out_step['general']['state'], 'Error on state !')
-                        res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], 'Error on state !')
+                        res[line.id]['product_available'] = out_status.get(out_step['general']['state'], _('Error on state !'))
+                        res[line.id]['outgoing_status'] = out_status.get(out_step['general']['state'], _('Error on state !'))
                     elif total_line < line.line_id.product_uom_qty and out_step['general']['state']:
-                        res[line.id]['product_available'] = out_status.get('partial', 'Error on state !')
-                        res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                        res[line.id]['product_available'] = out_status.get('partial', _('Error on state !'))
+                        res[line.id]['outgoing_status'] = out_status.get('partial', _('Error on state !'))
                     elif out_step['customer']['state'] == 'done' and all_done:
-                        res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
-                        res[line.id]['outgoing_status'] = out_status.get('done', 'Error on state !')
+                        res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
+                        res[line.id]['outgoing_status'] = out_status.get('done', _('Error on state !'))
                     else:
                         # If not all products are sent to the supplier
                         if out_step['customer']['state'] and out_step['customer']['state'] == 'partial':
-                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                            res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('partial', _('Error on state !'))
+                            res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
                         # If all products are waiting to send to customer
                         elif out_step['customer']['state'] and out_step['customer']['state'] == 'assigned':
-                            res[line.id]['outgoing_status'] = out_status.get('shipped', 'Error on state !')
-                            res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('shipped', _('Error on state !'))
+                            res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
                         
                         # If all products are not in distribution
                         if out_step['distrib']['state'] and out_step['distrib']['state'] == 'partial':
-                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('partial', _('Error on state !'))
                         elif out_step['distrib']['state'] and out_step['distrib']['state'] == 'assigned':
-                            res[line.id]['outgoing_status'] = out_status.get('packed', 'Error on state !')
-                            res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('packed', _('Error on state !'))
+                            res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
                             
                         # If all products are not in dispatch zone
                         if out_step['dispatch']['state'] == 'partial':
-                            res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('partial', _('Error on state !'))
                         
                         # If all products are not picked
                         if out_step['picking']['state'] == 'partial' or out_step['packing']['state'] == 'partial':
                             res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
-                            res[line.id]['product_available'] = out_status.get(out_step['picking']['state'], 'Error on state !')
+                            res[line.id]['product_available'] = out_status.get(out_step['picking']['state'], _('Error on state !'))
                         elif out_step['picking']['state'] == 'assigned':
-                            res[line.id]['outgoing_status'] = out_status.get('assigned', 'Error on state !')
-                            res[line.id]['product_available'] = out_status.get('assigned', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('assigned', _('Error on state !'))
+                            res[line.id]['product_available'] = out_status.get('assigned', _('Error on state !'))
                         elif out_step['picking']['state'] == 'done' and out_step['packing']['state'] == 'assigned':
-                            res[line.id]['outgoing_status'] = out_status.get('picked', 'Error on state !')
-                            res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+                            res[line.id]['outgoing_status'] = out_status.get('picked', _('Error on state !'))
+                            res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
 
                         if out_step['picking']['state'] == 'done':
-                            res[line.id]['product_available'] = out_status.get('done', 'Error on state !')
+                            res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
                         
                     # Set the number of the outgoing deliveries
                     res[line.id]['outgoing_nb'] = '%s' %nb_out

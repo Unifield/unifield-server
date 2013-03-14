@@ -37,8 +37,6 @@ class report_reception(report_sxw.rml_parse):
             'getNbItem': self.getNbItem,
             'check': self.check,
             'getTotItems': self.getTotItems,
-            'getTransportMode': self.getTransportMode,
-            'getPrio': self.getPrio,
             'getConfirmedDeliveryDate': self.getConfirmedDeliveryDate,
             'getWarehouse': self.getWarehouse,
             'getPartnerName': self.getPartnerName,
@@ -47,14 +45,12 @@ class report_reception(report_sxw.rml_parse):
             'getPartnerPhone': self.getPartnerPhone,
             'getERD': self.getERD,
             'getPOref': self.getPOref,
-            'getCateg': self.getCateg,
             'getDetail': self.getDetail,
             'getProject': self.getProject,
             'getQtyPO': self.getQtyPO,
             'getQtyIS': self.getQtyIS,
             'getWarning': self.getWarning,
             'getOriginRef': self.getOriginRef,
-            'get_selection': self.get_selection,
         })
 
     def getOriginRef(self,o):
@@ -98,10 +94,6 @@ class report_reception(report_sxw.rml_parse):
     def getDetail(self,o):
         return o and o.purchase_id and o.purchase_id.details or False
 
-    def getCateg(self,o):
-        sta = self.get_selection(o.purchase_id, 'categ')
-        return sta
-
     def getPOref(self,o):
         return o and o.purchase_id and o.purchase_id.name or False
 
@@ -124,14 +116,6 @@ class report_reception(report_sxw.rml_parse):
 
     def getWarehouse(self,o):
         return o.warehouse_id and o.warehouse_id.name or False
-
-    def getTransportMode(self,o):
-        sta = self.get_selection(o.purchase_id, 'transport_type')
-        return sta
-
-    def getPrio(self,o):
-        sta = self.get_selection(o.purchase_id, 'priority')
-        return sta
 
     def getConfirmedDeliveryDate(self,o):
         if o.purchase_id:
@@ -168,16 +152,6 @@ class report_reception(report_sxw.rml_parse):
 
     def get_lines(self, o):
         return o.move_lines
-
-    def get_selection(self, o, field):
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
 
 report_sxw.report_sxw('report.msf.report_reception_in', 'stock.picking', 'addons/msf_printed_documents/report/report_reception.rml', parser=report_reception, header=False)
 

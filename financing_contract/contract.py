@@ -138,19 +138,12 @@ class financing_contract_contract(osv.osv):
         analytic_domain = []
         account_domain = format_line_obj._create_account_destination_domain(account_destination_ids)
         date_domain = eval(general_domain['date_domain'])
-        if reporting_type == 'allocated':
-            analytic_domain = [date_domain[0],
-                               date_domain[1],
-                               ('is_reallocated', '=', False),
-                               ('is_reversal', '=', False),
-                               eval(general_domain['funding_pool_domain'])]
-        else: 
-            analytic_domain = [date_domain[0],
-                               date_domain[1],
-                               ('is_reallocated', '=', False),
-                               ('is_reversal', '=', False),
-                               eval(general_domain['funding_pool_domain']),
-                               eval(general_domain['cost_center_domain'])]
+        analytic_domain = [date_domain[0],
+                           date_domain[1],
+                           ('is_reallocated', '=', False),
+                           ('is_reversal', '=', False),
+                           eval(general_domain['funding_pool_domain']),
+                           eval(general_domain['cost_center_domain'])]
         analytic_domain += account_domain
             
         return analytic_domain
@@ -287,6 +280,10 @@ class financing_contract_contract(osv.osv):
                 'project_budget': round(browse_format_line.project_budget),
                 'allocated_real': round(browse_format_line.allocated_real),
                 'project_real': round(browse_format_line.project_real),
+
+                'project_balance': round(browse_format_line.project_budget) -  round(browse_format_line.project_real),
+                'allocated_balance': round(browse_format_line.allocated_budget) - round(browse_format_line.allocated_real),
+
                 'analytic_domain': analytic_domain,
                 'parent_id': parent_report_line_id}
         reporting_line_id = reporting_line_obj.create(cr,
@@ -325,6 +322,8 @@ class financing_contract_contract(osv.osv):
         project_budget = 0
         allocated_real = 0
         project_real = 0
+        project_balance = 0
+        allocated_balance = 0
         
         # create "real" lines
         for line in contract.actual_line_ids:
@@ -337,10 +336,18 @@ class financing_contract_contract(osv.osv):
         
         # Refresh contract line with general infos
         analytic_domain = self.get_contract_domain(cr, uid, contract, context=context)
+
+        allocated_balance  = allocated_budget - allocated_real
+        project_balance= project_budget - project_real
+
         contract_values = {'allocated_budget': allocated_budget,
                            'project_budget': project_budget,
                            'allocated_real': allocated_real,
                            'project_real': project_real,
+
+                            'allocated_balance': allocated_balance,
+                            'project_balance': project_balance,
+
                            'analytic_domain': analytic_domain}
         reporting_line_obj.write(cr, uid, [contract_line_id], vals=contract_values, context=context)
         

@@ -86,12 +86,14 @@ class account_move_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
+        get_sel = self.pool.get('ir.model.fields').get_browse_selection
         for ml in self.browse(cr, uid, ids):
             res[ml.id] = ''
             from_header = ''
             if ml.have_analytic_distribution_from_header:
-                from_header = ' (from header)'
-            res[ml.id] = ml.analytic_distribution_state.capitalize() + from_header
+                from_header = _(' (from header)')
+            d_state = get_sel(cr, uid, ml, 'analytic_distribution_state', context)
+            res[ml.id] = "%s%s" % (d_state, from_header)
             if ml.account_id and ml.account_id.user_type and ml.account_id.user_type.code != 'expense':
                 res[ml.id] = ''
         return res
@@ -241,7 +243,7 @@ class account_move_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -250,6 +252,68 @@ class account_move_line(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
+
+    def _check_employee_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Check that analytic distribution could be retrieved from given employee.
+        If not employee, return True.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for l in self.browse(cr, uid, ids):
+            # Next line if this one comes from a non-manual move (journal entry)
+            if l.move_id.status != 'manu':
+                continue
+            # Do not continue if no employee or no cost center (could not be invented)
+            if not l.employee_id or not l.employee_id.cost_center_id:
+                continue
+            if l.account_id and l.account_id.user_type.code == 'expense':
+                vals = {'cost_center_id': l.employee_id.cost_center_id.id}
+                if l.employee_id.destination_id:
+                    if l.employee_id.destination_id.id in [x and x.id for x in l.account_id.destination_ids]:
+                        vals.update({'destination_id': l.employee_id.destination_id.id})
+                    else:
+                        vals.update({'destination_id': l.account_id.default_destination_id.id})
+                if l.employee_id.funding_pool_id:
+                    vals.update({'analytic_id': l.employee_id.funding_pool_id.id})
+                    if vals.get('cost_center_id') not in l.employee_id.funding_pool_id.cost_center_ids:
+                        # Fetch default funding pool: MSF Private Fund
+                        try:
+                            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                        except ValueError:
+                            msf_fp_id = 0
+                        vals.update({'analytic_id': msf_fp_id})
+                # Create analytic distribution
+                if 'cost_center_id' in vals and 'analytic_id' in vals and 'destination_id' in vals:
+                    distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'name': 'check_employee_analytic_distribution'})
+                    vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id})
+                    # Create funding pool lines
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, vals)
+                    # Then cost center lines
+                    vals.update({'analytic_id': vals.get('cost_center_id'),})
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals)
+                    # finally free1 and free2
+                    if l.employee_id.free1_id:
+                        self.pool.get('free.1.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free1_id.id})
+                    if l.employee_id.free2_id:
+                        self.pool.get('free.2.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free2_id.id})
+                    if context.get('from_write', False):
+                        return {'analytic_distribution_id': distrib_id,}
+                    # Write analytic distribution on the move line
+                    self.pool.get('account.move.line').write(cr, uid, [l.id], {'analytic_distribution_id': distrib_id}, check=False, update_check=False)
+                else:
+                    return False
+        return True
+
+    def create(self, cr, uid, vals, context=None, check=True):
+        """
+        Check analytic distribution for employee (if given)
+        """
+        res = super(account_move_line, self).create(cr, uid, vals, context, check)
+        self._check_employee_analytic_distribution(cr, uid, res, context)
+        return res
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
@@ -268,10 +332,14 @@ class account_move_line(osv.osv):
                 # Add account_id because of an error with account_activable module for checking date
                 if not 'account_id' in vals and 'date' in vals:
                     vals.update({'account_id': ml.account_id and ml.account_id.id or False})
+                check = self._check_employee_analytic_distribution(cr, uid, [ml.id], context={'from_write': True})
+                if check and isinstance(check, dict):
+                    vals.update(check)
                 tmp_res = super(account_move_line, self).write(cr, uid, [ml.id], vals, context, False, False)
                 res.append(tmp_res)
             return res
-        return super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
+        res = super(account_move_line, self).write(cr, uid, ids, vals, context, check, update_check)
+        return res
 
     def copy(self, cr, uid, id, default=None, context=None):
         """

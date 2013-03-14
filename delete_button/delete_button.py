@@ -177,3 +177,19 @@ class composition_kit(osv.osv):
         return self.unlink(cr, uid, ids, context)
     
 composition_kit()
+
+class real_average_consumption(osv.osv):
+    _name = 'real.average.consumption'
+    _inherit = 'real.average.consumption'
+
+    def delete_button(self, cr, uid, ids, context=None):
+        """
+        This method is called on the button of type object in tree view.
+        The aim is to be able to display the delete button only in draft state, which is not possible with the standard delete button.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.unlink(cr, uid, ids, context)
+
+real_average_consumption()
+

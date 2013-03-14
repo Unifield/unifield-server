@@ -27,6 +27,28 @@ class account_invoice(osv.osv):
     _name = 'account.invoice'
     _inherit = 'account.invoice'
 
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the Purchase order contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('account.invoice.line').search(cr, uid, [
+            ('product_id.active', '=', False),
+            ('invoice_id', 'in', ids),
+            ('invoice_id.state', 'not in', ['draft', 'cancel', 'done'])
+        ], context=context)
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot validate this invoice because it contains a line with an inactive product", ['invoice_line', 'state'])
+    ]
+
     def _check_analytic_distribution_state(self, cr, uid, ids, context=None):
         """
         Check if analytic distribution is valid
@@ -228,8 +250,24 @@ class account_invoice_line(osv.osv):
                 continue
             from_header = ''
             if invl.have_analytic_distribution_from_header:
-                from_header = ' (from header)'
-            res[invl.id] = invl.analytic_distribution_state.capitalize() + from_header
+                from_header = _(' (from header)')
+            res[invl.id] = '%s%s' % (self.pool.get('ir.model.fields').get_browse_selection(cr, uid, invl, 'analytic_distribution_state', context), from_header)
+        return res
+
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.invoice_id and line.invoice_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {
+                    'inactive_product': True,
+                    'inactive_error': _('The product in line is inactive !')
+                }
+                
         return res
 
     _columns = {
@@ -243,6 +281,8 @@ class account_invoice_line(osv.osv):
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, 
             string="Distribution", 
             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
     
     _defaults = {
@@ -250,6 +290,8 @@ class account_invoice_line(osv.osv):
         'have_analytic_distribution_from_header': lambda *a: True,
         'is_allocatable': lambda *a: True,
         'analytic_distribution_state_recap': lambda *a: '',
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
     }
 
     def create(self, cr, uid, vals, context=None):

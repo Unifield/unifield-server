@@ -155,11 +155,10 @@ class account_move_line(osv.osv):
         return r_move.keys()
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
         'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
@@ -251,7 +250,7 @@ class account_move_line(osv.osv):
 
         # Prepare some values
         acc_obj = self.pool.get('account.account')
-        third_type = [('res.partner', 'Partner')]
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')] # UF-1022 By default should display Partner and employee
         third_required = False
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required
@@ -282,7 +281,7 @@ class account_move_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None, check=True):
         """
-        Add partner_txt to vals regarding partner_id, employee_id and register_id
+        Add partner_txt to vals regarding partner_id, employee_id and transfer_journal_id
         """
         # Some verifications
         if not context:

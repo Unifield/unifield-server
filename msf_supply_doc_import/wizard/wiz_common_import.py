@@ -22,6 +22,7 @@
 from osv import osv
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import base64
+from tools.translate import _
 
 
 class wiz_common_import(osv.osv_memory):
@@ -76,10 +77,12 @@ class wiz_common_import(osv.osv_memory):
         """
         Check that the columns in the header will be taken into account.
         """
+        translated_headers = [_(f) for f in real_columns]
         for k,v in header_index.items():
-            if k not in real_columns:
+            if k not in translated_headers:
                 vals = {'state': 'draft',
-                        'message': 'The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s' % (k, ','.join(real_columns))}
+                        'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s'
+                                     ) % (k, ','.join(translated_headers))}
                 return False, vals
         return True, True
 
