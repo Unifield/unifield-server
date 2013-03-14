@@ -533,8 +533,8 @@ class sale_order_line(osv.osv):
             if uom_id:
                 uom = uom_obj.browse(cr, uid, uom_id, context=context)
                 if product.uom_id.category_id.id != uom.category_id.id:
-                    warning = {'title': 'Wrong Product UOM !',
-                               'message': "You have to select a product UOM in the same category than the purchase UOM of the product", }
+                    warning = {'title': _('Wrong Product UOM !'),
+                               'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
                     res.update({'warning': warning})
         return res
 
