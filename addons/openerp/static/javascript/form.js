@@ -188,7 +188,7 @@ function error_display(msg) {
                         jQuery("<td>", {'colspan': 2, align: 'right'}).append(
                             jQuery("<a>", {'class': 'button-a', 'href': 'javascript: void(0)'})
                             //.click(function(){jQuery.fancybox.close();})
-                            .clic.(function(){window.top.jQuery.fancybox.close();})
+                            .click(function(){window.top.jQuery.fancybox.close();})
                             .text('OK')
                         )
                 ));
