@@ -55,7 +55,6 @@ class stock_partial_picking(osv.osv_memory):
          @param context: A standard dictionary
          @return: A dictionary which of fields with values.
         """
-
         if context is None:
             context = {}
         res = {}
@@ -68,7 +67,6 @@ class stock_partial_picking(osv.osv_memory):
         if context.get('active_ids', []):
             if 'dest_type' in fields:
                 for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
-
                     if not pick.backorder_id:
                         if pick.purchase_id.cross_docking_ok:
                             res.update({'dest_type': 'to_cross_docking'})
