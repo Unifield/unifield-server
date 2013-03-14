@@ -214,7 +214,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('from_web_menu', False) or context.get('sync_data', False):
+        if context.get('from_web_menu', False) or context.get('sync_update_execution', False):
             # by default, from synchro, we just need to update period_id and journal_id
             fields = ['journal_id', 'period_id']
             # from web menu, we also update document_date and date
