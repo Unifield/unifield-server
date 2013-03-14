@@ -23,17 +23,18 @@ from osv import osv
 from osv import fields
 import logging
 import tools
+from mx.DateTime import *
 from os import path
 from tools.translate import _
 import base64
-# import below commented in utp-1344: becomes useless as the import is done in wizard
-#from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-#import check_line
-#from msf_supply_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_supply_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
 from msf_supply_doc_import import GENERIC_MESSAGE
+from check_line import *
+from msf_supply_doc_import import MAX_LINES_NB
+from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
+from msf_supply_doc_import import check_line
 
 
 class purchase_order(osv.osv):
@@ -101,6 +102,84 @@ class purchase_order(osv.osv):
         purchase_line_obj = self.pool.get('purchase.order.line')
         pol_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', ids[0])])
         return purchase_line_obj.unlink(cr, uid, pol_ids, context)
+
+    def wizard_import_file(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        if context is None:
+            context = {}
+        context.update({'active_id': ids[0]})
+        columns_header = NEW_COLUMNS_HEADER
+        default_template = SpreadsheetCreator('Template of import', columns_header, [])
+        export_id = self.pool.get('wizard.import.po').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
+                                                                        'filename_template': 'template.xls',
+                                                                        'filename': 'Lines_Not_Imported.xls',
+                                                                        'po_id': ids[0]}, context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.po',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
+
+    def export_po_integration(self, cr, uid, ids, context=None):
+        '''
+        Creates an XML file and launches the wizard to save it
+        '''
+        if context is None:
+            context = {}
+        po = self.browse(cr, uid, ids[0], context=context)
+        header_columns = NEW_COLUMNS_HEADER
+        #header_columns = [(column, 'string') for column in columns_for_po_integration]
+        header_index = {}
+        [header_index.update({value: index})for (index, value) in enumerate(columns_for_po_integration)]
+        list_of_lines = []
+        for line in po.order_line:
+            new_list = []
+            new_list.insert(header_index['Line*'], line.line_number)
+            new_list.insert(header_index['Product Code*'], line.product_id.default_code and check_line.get_xml(line.product_id.default_code))
+            new_list.insert(header_index['Product Description'], line.product_id.name and check_line.get_xml(line.product_id.name))
+            new_list.insert(header_index['Quantity*'], line.product_qty)
+            new_list.insert(header_index['UoM*'], line.product_uom.name and check_line.get_xml(line.product_uom.name))
+            new_list.insert(header_index['Price*'], line.price_unit)
+            new_list.insert(header_index['Delivery Request Date'], line.date_planned and strptime(line.date_planned,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
+            new_list.insert(header_index['Delivery Confirmed Date*'], line.confirmed_delivery_date and strptime(line.confirmed_delivery_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
+            #new_list.insert(header_index['Order Reference*'], po.name)
+            #new_list.insert(header_index['Delivery Confirmed Date (PO)*'], po.delivery_confirmed_date and strptime(po.delivery_confirmed_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
+            new_list.insert(header_index['Origin'], line.origin and check_line.get_xml(line.origin))
+            new_list.insert(header_index['Comment'], line.comment and check_line.get_xml(line.comment))
+            new_list.insert(header_index['Notes'], line.notes and check_line.get_xml(line.notes))
+            new_list.insert(header_index['Supplier Reference'], po.partner_ref or '')
+            #new_list.insert(header_index['Destination Partner'], po.dest_partner_id and po.dest_partner_id.name or '')
+            #new_list.insert(header_index['Destination Address'], po.dest_address_id and po.dest_address_id.name or po.dest_address_id.city or '')
+            #new_list.insert(header_index['Invoicing Address'], po.invoice_address_id and po.invoice_address_id.name or '')
+            #new_list.insert(header_index['Est. Transport Lead Time'], po.est_transport_lead_time or '')
+            #new_list.insert(header_index['Transport Mode'], po.transport_type or '')
+            #new_list.insert(header_index['Arrival Date in the country'], po.arrival_date and strptime(po.arrival_date,'%Y-%m-%d').strftime('%Y-%m-%d') or '')
+            new_list.insert(header_index['Incoterm'], po.incoterm_id and po.incoterm_id.name and check_line.get_xml(po.incoterm_id.name) or '')
+            #new_list.insert(header_index['Notes (PO)'], po.notes)
+            list_of_lines.append(new_list)
+        if any([f_line for f_line in list_of_lines if len(f_line) != len(header_columns)]):
+            raise osv.except_osv(_('Error'), _("""The number of columns in the header should be equal to the number of columns you want to export, please check
+            that what you have in the NEW_COLUMNS_HEADER (global variable defined in the __init__.py of the wizard) is the same as what you have in the lines of the list list_of_lines."""))
+        instanciate_class = SpreadsheetCreator('PO', header_columns, list_of_lines)
+        file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
+        
+        export_id = self.pool.get('wizard.export.po').create(cr, uid, {'po_id': ids[0], 
+                                                                        'file': file, 
+                                                                        'filename': 'po_%s.xls' % (po.name.replace(' ', '_')), 
+                                                                        'message': 'The PO has been exported. Please click on Save As button to download the file'})
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.export.po',
+                'res_id': export_id,
+                'view_mode': 'form',
+                'view_type': 'form',
+                'target': 'new',
+                }
 
     def wizard_import_po_line(self, cr, uid, ids, context=None):
         '''
@@ -210,49 +289,56 @@ class purchase_order_line(osv.osv):
         context = kwargs['context']
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         to_write = kwargs['to_write']
-        order_id = to_write['order_id']
-        text_error = to_write['text_error']
-        price_unit_defined = to_write['price_unit_defined']
-        po_obj = self.pool.get('purchase.order')
-        po = po_obj.browse(cr, uid, order_id, context=context)
-        # on_change functions to call for updating values
-        pricelist = po.pricelist_id.id or False
-        partner_id = po.partner_id.id or False
-        date_order = po.date_order or False
-        fiscal_position = po.fiscal_position or False
-        state = po.state or False
-        product = to_write['product_id']
-        qty = to_write['product_qty']
-        price_unit = to_write['price_unit']
-        uom = to_write['product_uom']
-        if product and qty and not price_unit_defined:
-            res = self.product_id_on_change(cr, uid, False, pricelist, product, qty, uom,
-                                            partner_id, date_order, fiscal_position, date_planned=False,
-                                            name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
-                                            nomen_manda_0=False, comment=False, context=context)
-            price_unit = res.get('value', {}).get('price_unit', False)
-            uom = res.get('value', {}).get('product_uom', False)
-            warning_msg = res.get('warning', {}).get('message', '')
-            text_error += '\n %s' % warning_msg
-            text_error += _('We use the price mechanism to compute the Price Unit.')
-            to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
-        if uom:
-            self.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-        else:
-            uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            text_error += _('\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.')
-            to_write.update({'product_uom': uom, 'text_error': text_error})
+        order_id = to_write.get('order_id', False)
+        if order_id:
+            text_error = to_write['text_error']
+            price_unit_defined = to_write['price_unit_defined']
+            po_obj = self.pool.get('purchase.order')
+            po = po_obj.browse(cr, uid, order_id, context=context)
+            # on_change functions to call for updating values
+            pricelist = po.pricelist_id.id or False
+            partner_id = po.partner_id.id or False
+            date_order = po.date_order or False
+            fiscal_position = po.fiscal_position or False
+            state = po.state or False
+            product = to_write.get('product_id', False)
+            if product:
+                qty = to_write.get('product_qty')
+                price_unit = to_write.get('price_unit')
+                uom = to_write.get('product_uom')
+                if product and qty and not price_unit_defined:
+                    try:
+                        res = self.product_id_on_change(cr, uid, False, pricelist, product, qty, uom,
+                                                    partner_id, date_order, fiscal_position, date_planned=False,
+                                                    name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
+                                                    nomen_manda_0=False, comment=False, context=context)
+                        if not context.get('po_integration'):
+                            price_unit = res.get('value', {}).get('price_unit', False)
+                            text_error += _('We use the price mechanism to compute the Price Unit.')
+                        uom = res.get('value', {}).get('product_uom', False)
+                        warning_msg = res.get('warning', {}).get('message', '')
+                        text_error += '\n %s' % warning_msg
+                    except osv.except_osv as osv_error:
+                        if not context.get('po_integration'):
+                            osv_value = osv_error.value
+                            osv_name = osv_error.name
+                            text_error += '%s. %s\n' % (osv_value, osv_name)
+                    to_write.update({'price_unit': price_unit, 'product_uom': uom, 'text_error': text_error})
+                if uom:
+                    self.check_data_for_uom(cr, uid, False, to_write=to_write, context=context)
+                else:
+                    if not context.get('po_integration'):
+                        uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+                        text_error += _('\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.')
+                        to_write.update({'product_uom': uom, 'text_error': text_error})
+        return to_write
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         context = kwargs['context']
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         # we take the values that we are going to write in PO line in "to_write"
         to_write = kwargs['to_write']

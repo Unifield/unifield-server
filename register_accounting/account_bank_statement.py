@@ -1000,6 +1000,72 @@ class account_bank_statement_line(osv.osv):
             res.update({'amount': amount})
         return res
 
+    def _update_employee_analytic_distribution(self, cr, uid, values):
+        """
+        Update analytic distribution if some expat staff is in values
+        """
+        # Prepare some values
+        res = values.copy()
+        # Fetch default funding pool: MSF Private Fund
+        try:
+            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_fp_id = 0
+        # Check that an employee is given in employee_id or third_parties
+        if values.get('employee_id', False) or values.get('partner_type', False):
+            # Fetch account (should be mandatory)
+            account = self.pool.get('account.account').browse(cr, uid, values.get('account_id'))
+            is_expense = False
+            if account.user_type and account.user_type.code == 'expense':
+                is_expense = True
+            if values.get('employee_id'):
+                emp_id = values.get('employee_id')
+            else:
+                data = values.get('partner_type')
+                if not ',' in data:
+                    raise osv.except_osv(_('Error'), _('Wrong 3rd parties format!'))
+                third = data.split(',')
+                # Do not do anything if partner is another object that employee
+                if third and third[0] and third[0] != "hr.employee":
+                    return res
+                emp_id = third and third[1] or False
+            employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
+            if is_expense and employee.cost_center_id:
+                # Create a distribution
+                destination_id = (employee.destination_id and employee.destination_id.id) or (account.default_destination_id and account.default_destination_id.id) or False
+                cc_id = employee.cost_center_id and employee.cost_center_id.id or False
+                fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
+                f1_id = employee.free1_id and employee.free1_id.id or False
+                f2_id = employee.free2_id and employee.free2_id.id or False
+                if not fp_id:
+                    fp_id = msf_fp_id
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                statement_id = values.get('statement_id', False)
+                st = self.pool.get('account.bank.statement').browse(cr, uid, statement_id)
+                currency_id = st.journal_id and st.journal_id.currency and st.journal_id.currency.id or False
+                if distrib_id:
+                    common_vals = {
+                        'distribution_id': distrib_id,
+                        'currency_id': currency_id,
+                        'percentage': 100.0,
+                        'date': values.get('date', False),
+                        'source_date': values.get('date', False),
+                        'destination_id': destination_id,
+                    }
+                    common_vals.update({'analytic_id': cc_id,})
+                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id,})
+                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    del common_vals['cost_center_id']
+                    if f1_id:
+                        common_vals.update({'analytic_id': f1_id,})
+                        self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
+                    if f2_id:
+                        common_vals.update({'analytic_id': f2_id})
+                        self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+                res.update({'analytic_distribution_id': distrib_id})
+        return res
+
     def _verify_dates(self, cr, uid, ids, context=None):
         """
         Verify that the given parameter contains date. Then validate date with regarding register period.
@@ -1398,6 +1464,12 @@ class account_bank_statement_line(osv.osv):
         """
         # First update amount
         values = self._update_amount(values=values)
+        # Then update expat analytic distribution
+        distrib_id = False
+        if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
+            distrib_id = values.get('analytic_distribution_id')
+        if not distrib_id:
+            values = self._update_employee_analytic_distribution(cr, uid, values=values)
         # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
@@ -1431,6 +1503,18 @@ class account_bank_statement_line(osv.osv):
                 self._update_move_from_st_line(cr, uid, id, values, context=context)
             if saveddate:
                 values['date'] = saveddate
+        # Then update analytic distribution
+        if 'employee_id' or 'partner_type' in values:
+            res = []
+            for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id']):
+                if not 'account_id' in values:
+                    values.update({'account_id': line.get('account_id')[0]})
+                if not 'statement_id' in values:
+                    values.update({'statement_id': line.get('statement_id')[0]})
+                values = self._update_employee_analytic_distribution(cr, uid, values)
+                tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
+                res.append(tmp)
+            return res
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Amount verification regarding Down payments
@@ -1545,6 +1629,12 @@ class account_bank_statement_line(osv.osv):
                 if absl.account_id.user_type.code in ['expense']:
                     self.update_analytic_lines(cr, uid, absl.id)
                 # some verifications
+                if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
+                    vals = self._update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
+                    if 'analytic_distribution_id' in vals:
+                        self.write(cr, uid, [absl.id], {'analytic_distribution_id': vals.get('analytic_distribution_id'),})
+                    else:
+                        raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 if absl.is_transfer_with_change:
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))

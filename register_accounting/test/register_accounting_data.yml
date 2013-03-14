@@ -462,7 +462,7 @@
           field: reconcile_id
           sequence: 20
 -
-  I create an analytic Cash Journal.
+  I create an analytic journal for Cash
 -
   !record {model: account.analytic.journal, id: analytic_journal_cash_0}:
     code: acsh
@@ -476,6 +476,7 @@
     company_id: base.main_company
     name: Cash Journal (test)
     type: cash
+    currency: base.EUR
     view_id: account_journal_view0
     default_debit_account_id: account_account_cash0
     default_credit_account_id: account_account_cash0

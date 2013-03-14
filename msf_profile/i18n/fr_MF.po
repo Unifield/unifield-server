@@ -49580,7 +49580,7 @@ msgstr "Nom Analytique"
 #: code:addons/sales_followup/sale_followup.py:387
 #, python-format
 msgid "In Progress"
-msgstr "En Progrès"
+msgstr "En Cours"
 
 #. module: base
 #: selection:workflow.activity,join_mode:0

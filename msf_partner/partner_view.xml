@@ -188,6 +188,9 @@
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form//field[@name='active']" position="attributes">
+                        <attribute name="on_change">on_change_active(active)</attribute>
+                    </xpath>
                     <xpath expr="/form/notebook/page[@string='General']" position="replace">
                         <page string="General">
                             <field colspan="4" mode="form,tree" name="address" nolabel="1" select="1" height="260">

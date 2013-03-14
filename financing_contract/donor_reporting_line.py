@@ -31,10 +31,16 @@ class financing_contract_donor_reporting_line(osv.osv_memory):
                                        ('actual','Actual'),
                                        ('consumption','Consumption'),
                                        ('overhead','Overhead')], 'Line type', required=True),
+
         'allocated_budget': fields.integer("Funded - Budget"),
         'project_budget': fields.integer("Total project - Budget"),
+
         'allocated_real': fields.integer("Funded - Actuals"),
         'project_real': fields.integer("Total project - Actuals"),
+
+        'allocated_balance': fields.integer("Funded - Balance"),
+        'project_balance': fields.integer("Total project - Balance"),
+
         'analytic_domain': fields.char('Analytic domain', size=256),
         'parent_id': fields.many2one('financing.contract.donor.reporting.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.donor.reporting.line', 'parent_id', 'Child lines'),
