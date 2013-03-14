@@ -347,25 +347,6 @@ class supplier_catalogue(osv.osv):
                 'import_error_ok': True}
         return vals
 
-    def get_line_values(self, cr, uid, ids, row, cell_nb, error_list, context=None):
-        list_of_values = []
-        for cell_nb in range(len(row)):
-            cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-            list_of_values.append(cell_data)
-        return list_of_values
-
-    def get_file_values(self, cr, uid, ids, rows, error_list, context=None):
-        """
-        Catch the file values on the form [{values of the 1st line}, {values of the 2nd line}...]
-        """
-        file_values = []
-        for row in rows:
-            line_values = {}
-            for cell in enumerate(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, context=context)):
-                line_values.update({cell[0]: cell[1]})
-            file_values.append(line_values)
-        return file_values
-
     def catalogue_import_lines(self, cr, uid, ids, context=None):
         '''
         Import the catalogue lines
@@ -380,6 +361,7 @@ class supplier_catalogue(osv.osv):
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
+        wiz_common_import = self.pool.get('wiz.common.import')
 
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.file_to_import:
@@ -388,7 +370,7 @@ class supplier_catalogue(osv.osv):
             fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
             rows,reader = fileobj.getRows(), fileobj.getRows() # because we got 2 iterations
             # take all the lines of the file in a list of dict
-            file_values = self.get_file_values(cr, uid, ids, rows, error_list, context=context)
+            file_values = wiz_common_import.get_file_values(cr, uid, ids, rows, False, error_list, False, context)
 
             reader.next()
             line_num = 1
@@ -404,6 +386,8 @@ class supplier_catalogue(osv.osv):
                 try:
                     product_code = row.cells[0].data
                 except TypeError:
+                    product_code = row.cells[0].data
+                except ValueError:
                     product_code = row.cells[0].data
                 if not product_code or row.cells[0].type != 'str':
                     default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
@@ -554,7 +538,7 @@ class supplier_catalogue(osv.osv):
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s : %s')% (plural, message))
         return True
-    
+
 supplier_catalogue()
 
 
