@@ -45,7 +45,7 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Output Debit'), _('Output Credit'), _('Out. Currency'), _('Reconcile'), _('State')]:
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Output Debit'), _('Output Credit'), _('Output Currency'), _('Reconcile'), _('State')]:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
