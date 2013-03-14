@@ -169,9 +169,9 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Analytic Account')]
         head += [_('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency')]
         if not currency_id:
-            head += [_('Func. Debit'), _('Func. Credit'), _('Func. Currency')]
+            head += [_('Func. Amount'), _('Func. Currency')]
         else:
-            head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
+            head += [_('Output Amount'), _('Output Currency')]
         head+= [_('Reversal Origin')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
@@ -207,42 +207,18 @@ class account_line_csv_export(osv.osv_memory):
             #third party
             csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
             #amount_currency
-            if not al.amount_currency:
-                csv_line.append(0.0)
-                csv_line.append(0.0)
-            elif al.amount_currency > 0.0:
-                csv_line.append(abs(al.amount_currency))
-                csv_line.append(0.0)
-            else:
-                csv_line.append(0.0)
-                csv_line.append(abs(al.amount_currency))
+            csv_line.append(al.amount_currency or 0.0)
             #currency_id
             csv_line.append(al.currency_id and al.currency_id.name and al.currency_id.name.encode('utf-8') or '')
             if not currency_id:
-                #functional debit/credit
-                if not al.amount:
-                    csv_line.append(0.0)
-                    csv_line.append(0.0)
-                elif al.amount_currency > 0.0:
-                    csv_line.append(abs(al.amount))
-                    csv_line.append(0.0)
-                else:
-                    csv_line.append(0.0)
-                    csv_line.append(abs(al.amount))
+                #functional amount
+                csv_line.append(al.amount or 0.0)
                 #company currency
                 csv_line.append(company_currency.encode('utf-8') or '')
             else:
                 #output debit/credit
                 amount = currency_obj.compute(cr, uid, al.currency_id.id, currency_id, al.amount_currency, round=True, context=context)
-                if not amount:
-                    csv_line.append(0.0)
-                    csv_line.append(0.0)
-                elif amount > 0.0:
-                    csv_line.append(abs(amount))
-                    csv_line.append(0.0)
-                else:
-                    csv_line.append(0.0)
-                    csv_line.append(abs(amount))
+                csv_line.append(amount or 0.0)
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
             csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
