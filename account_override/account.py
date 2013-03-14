@@ -25,10 +25,48 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+import datetime
 
 class account_account(osv.osv):
     _name = "account.account"
     _inherit = "account.account"
+
+    def _get_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        If date out of date_start/date of given account, then account is inactive.
+        The comparison could be done via a date given in context.
+        '''
+        res = {}
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for a in self.browse(cr, uid, ids):
+            res[a.id] = True
+            if a.activation_date > cmp_date:
+                res[a.id] = False
+            if a.inactivation_date and a.inactivation_date <= cmp_date:
+                res[a.id] = False
+        return res
+
+    def _search_filter_active(self, cr, uid, ids, name, args, context=None):
+        """
+        Add the search on active/inactive account
+        """
+        arg = []
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for x in args:
+            if x[0] == 'filter_active' and x[2] == True:
+                arg.append(('activation_date', '<=', cmp_date))
+                arg.append('|')
+                arg.append(('inactivation_date', '>', cmp_date))
+                arg.append(('inactivation_date', '=', False))
+            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append(('activation_date', '>', cmp_date))
+                arg.append(('inactivation_date', '<=', cmp_date))
+        return arg
 
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
@@ -38,6 +76,7 @@ class account_account(osv.osv):
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
             when he add a new register line.
             """),
+        'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
     }
 
     _defaults = {

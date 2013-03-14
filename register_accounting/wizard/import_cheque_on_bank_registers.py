@@ -57,10 +57,10 @@ wizard_import_cheque_lines()
 
 class wizard_import_cheque(osv.osv_memory):
     """
-    Wizard to select some cheque register lines in order to import them into a bank register.
+    Wizard to select some cheque register lines in order to import them into a bank statement.
     """
     _name = 'wizard.import.cheque'
-    _description = 'Import cheque register from a bank register'
+    _description = 'Import cheque register from a bank statement'
     _columns = {
         'line_ids': fields.many2many('account.move.line', 'imported_cheque', 'wizard_id', 'move_line_id', string="Imported Cheques"),
         'imported_lines_ids': fields.one2many('wizard.import.cheque.lines', 'wizard_id', string=''),
@@ -133,7 +133,7 @@ class wizard_import_cheque(osv.osv_memory):
 
     def action_confirm(self, cr, uid, ids, context=None):
         """
-        Import some cheque statement lines into the bank register and temp post them.
+        Import some cheque statement lines into the bank statement and temp post them.
         """
         # Some verifications
         if not ids:

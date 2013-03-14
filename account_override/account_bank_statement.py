@@ -36,4 +36,14 @@ class account_bank_statement(osv.osv):
     }
 
 account_bank_statement()
+
+class account_bank_statement_line(osv.osv):
+    _name = 'account.bank.statement.line'
+    _inherit = 'account.bank.statement.line'
+
+    _columns = {
+        'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
+    }
+
+account_bank_statement_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

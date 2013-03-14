@@ -786,7 +786,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
                 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -1358,6 +1358,26 @@ class stock_picking(osv.osv):
         
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
+        pick_obj = self.pool.get('stock.picking')
+        pick = kwargs['pick']
+        message = kwargs['message']
+        if pick.type and pick.subtype:
+            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
+            return self.pool.get('res.log').create(cr, uid,
+                                                   {'name': message,
+                                                    'res_model': pick_obj._name,
+                                                    'secondary': False,
+                                                    'res_id': pick.id,
+                                                    'domain': domain,
+                                                    }, context=context)
+        return result
+
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook from stock>stock.py>stock_picking>log_picking
@@ -1366,6 +1386,9 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
+            return False
+        # if false the log will be defined by the method _hook_custom_log (which include a domain)
+        if pick.type and pick.subtype:
             return False
 
         return result

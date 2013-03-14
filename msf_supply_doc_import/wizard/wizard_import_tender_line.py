@@ -55,26 +55,19 @@ class wizard_import_tender_line(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
                                   string="State", required=True, readonly=True),
     }
-    
-    _defaults = {
-        'message': lambda *a : """
-        IMPORTANT : The first line will be ignored by the system.
-        The file should be in XML 2003 format.
-
-The columns should be in this values:
-%s
-""" % (', \n'.join(columns_for_tender_line_import), ),
-        'state': lambda *a: 'draft',
-    }
 
     def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
         '''
-        cr = pooler.get_db(dbname).cursor()
-        
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('yml_test', False):
+            cr = pooler.get_db(dbname).cursor()
+        else:
+            cr = dbname
         context.update({'import_in_progress': True})
         start_time = time.time()
         wiz_common_import = self.pool.get('wiz.common.import')
@@ -118,7 +111,7 @@ The columns should be in this values:
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_tender_line_import))
+                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join([_(f) for f in columns_for_tender_line_import]))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
@@ -126,7 +119,7 @@ The columns should be in this values:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 try:
-                    if not check_line.check_empty_line(row=row, col_count=col_count):
+                    if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
                         line_num-=1
@@ -149,7 +142,7 @@ The columns should be in this values:
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
     
                     to_write.update({
-                        'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
+                        'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                         'text_error': '\n'.join(to_write['error_list']),
                         'tender_id': tender_id,
                     })
@@ -163,15 +156,17 @@ The columns should be in this values:
                     complete_lines += 1
                         
                 except IndexError, e:
-                    error_log += _("The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
+                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
                     continue
                 finally:
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
-                    cr.commit()
+                    if not context.get('yml_test', False):
+                        cr.commit()
         
         error_log += '\n'.join(error_list)
         if error_log:
@@ -195,8 +190,9 @@ Importation completed in %s!
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)
         tender_obj.write(cr, uid, tender_id, {'state': 'draft'}, context)
-        cr.commit()
-        cr.close()
+        if not context.get('yml_test', False):
+            cr.commit()
+            cr.close()
 
 
     def import_file(self, cr, uid, ids, context=None):
@@ -210,7 +206,7 @@ Importation completed in %s!
         for wiz_read in self.read(cr, uid, ids, ['tender_id', 'file']):
             tender_id = wiz_read['tender_id']
             if not wiz_read['file']:
-                return self.write(cr, uid, ids, {'message': "Nothing to import"})
+                return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
                 # iterator on rows
@@ -230,8 +226,11 @@ Importation completed in %s!
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
             tender_obj.write(cr, uid, tender_id, {'state': 'done'}, context)
-        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-        thread.start()
+        if not context.get('yml_test', False):
+            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+            thread.start()
+        else:
+            self._import(cr, uid, ids, context)
         msg_to_return = _("""Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.
 Otherwise, you can continue to use Unifield.""")
         return self.write(cr, uid, ids, {'message': msg_to_return, 'state': 'in_progress'}, context=context)
@@ -247,7 +246,7 @@ Otherwise, you can continue to use Unifield.""")
             tender_id = wiz_read['tender_id']
             po_name = tender_obj.read(cr, uid, tender_id, ['name'])['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': ' Import in progress... \n Please wait that the import is finished before editing %s.' % po_name})
+                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (po_name, )})
         return False
 
     def cancel(self, cr, uid, ids, context=None):

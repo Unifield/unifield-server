@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <report id="budget_criteria"
+        <report id="budget_criteria_2"
         string="Budget vs. Actuals"
         model="msf.budget"
-        name="msf.budget.criteria"
-        report_type="txt"
+        name="budget.criteria.2"
+        file="msf_budget/report/budget_criteria_xls.mako"
+        report_type="webkit"
+        header="False"
         auto="False"
         menu="False"/>
-        
-        <report id="csv_budget_monthly"
-        string="Monthly Budget (CSV)"
+
+        <report id="xls_budget_monthly"
+        string="Monthly Budget (XLS)"
         model="msf.budget"
-        name="msf.csv.budget.monthly"
-        report_type="txt"
+        name="xls.budget.monthly"
+        file="msf_budget/report/budget_monthly_xls.mako"
+        report_type="webkit"
+        header="False"
         auto="False"
         menu="True"/>
         
@@ -58,6 +62,7 @@
         report_type="txt"
         auto="False"
         menu="False"/>
+
     </data>
 </openerp>
 

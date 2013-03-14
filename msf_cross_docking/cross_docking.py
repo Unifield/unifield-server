@@ -566,7 +566,8 @@ class stock_move(osv.osv):
             self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
-
+            #FEFO
+            self.fefo_update(cr, uid, ids, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
@@ -614,6 +615,9 @@ class stock_move(osv.osv):
             self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
+            
+            #FEFO
+            self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)

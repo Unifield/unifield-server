@@ -32,6 +32,9 @@ import base64
 #from msf_supply_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_supply_doc_import.wizard import FO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_fo_line_import, IR_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_ir_line_import
+from msf_supply_doc_import.wizard import FO_LINE_COLUMNS_FOR_IMPORT as columns_for_fo_line_import
+from msf_supply_doc_import import GENERIC_MESSAGE
+from msf_supply_doc_import.wizard import IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
 
 
 class sale_order(osv.osv):
@@ -64,6 +67,39 @@ class sale_order(osv.osv):
 #                                                else you have to split the lines in several files and import each one by one.
 #                                                """ % MAX_LINES_NB),
 #    }
+
+    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
+        res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = False
+            if any([item for item in obj.order_line  if item.to_correct_ok]):
+                res[obj.id] = True
+        return res
+
+    _columns = {
+        'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
+    }
+    
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the Purchase order contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('sale.order.line').search(cr, uid, [('product_id.active', '=', False),
+                                                                           ('order_id', 'in', ids),
+                                                                           ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context={'procurement_request': True})
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')          
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+        (_check_active_product, "You cannot validate this sale order because it contains a line with an inactive product", ['order_line', 'state'])
+    ]
 
     def button_remove_lines(self, cr, uid, ids, context=None):
         '''
@@ -329,13 +365,18 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = columns_header_for_ir_line_import
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_ir_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
-                                                                            'fo_id': ids[0]}, context)
+                                                                            'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_ir_line_import]), ),
+                                                                            'fo_id': ids[0],
+                                                                            'state': 'draft',}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.ir.line',
                 'res_id': export_id,
@@ -351,13 +392,18 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = columns_header_for_fo_line_import
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_fo_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
-        export_id = self.pool.get('wizard.import.fo.line').create(cr, uid, {'file': base64.encodestring(default_template.get_xml(default_filters=['decode.utf8'])),
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = self.pool.get('wizard.import.fo.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
-                                                                            'fo_id': ids[0]}, context)
+                                                                            'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_fo_line_import]), ),
+                                                                            'fo_id': ids[0],
+                                                                            'state': 'draft',}, context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.fo.line',
                 'res_id': export_id,
@@ -391,7 +437,7 @@ class sale_order(osv.osv):
                             message += str(line_num)
                             if len(message.split(',')) > 1:
                                 plural = 's'
-                            message += " Please define the nomenclature levels."
+                            message += _(" Please define the nomenclature levels.")
         if message:
             raise osv.except_osv(_('Warning !'), _('You need to correct the following line%s: %s') % (plural, message))
         return True
@@ -405,12 +451,36 @@ class sale_order_line(osv.osv):
     '''
     _inherit = 'sale.order.line'
     _description = 'Sale Order Line'
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if not line.procurement_request and line.comment:
+                res[line.id].update({'inactive_error': line.comment})
+            if line.order_id and line.order_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': _('The product in line is inactive !')}
+                
+        return res
+    
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
         'show_msg_ok': fields.boolean('Info on importation of lines'),
         'text_error': fields.text('Errors when trying to import file'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
     }
-
+    
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
+    }
+    
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):
         """
         We check consistency between product and uom
@@ -433,9 +503,9 @@ class sale_order_line(osv.osv):
             uom = uom_obj.browse(cr, uid, uom_id, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
                 # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += """\n You have to select a product UOM in the same category than the UOM of the product.
+                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
                 The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """ % (product.uom_id.category_id.name, uom.category_id.name)
+                """) % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
@@ -444,7 +514,7 @@ class sale_order_line(osv.osv):
             return to_write.update({'product_uom': product_uom})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
             # this is inspired by the on_change in purchase>purchase.py: product_uom_change
-            text_error += "\n The UoM was not defined so we set the price unit to 0.0."
+            text_error += _("\n The UoM was not defined so we set the price unit to 0.0.")
             return to_write.update({'text_error': text_error,
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
@@ -462,8 +532,8 @@ class sale_order_line(osv.osv):
             uom = uom_obj.browse(cr, uid, uom_id, context=context)
 
             if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': 'Wrong Product UOM !',
-                           'message': "You have to select a product UOM in the same category than the purchase UOM of the product", }
+                warning = {'title': _('Wrong Product UOM !'),
+                           'message': _("You have to select a product UOM in the same category than the purchase UOM of the product"), }
                 res.update({'warning': warning})
                 domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
                 res['domain'] = domain
@@ -482,16 +552,16 @@ class sale_order_line(osv.osv):
 
             if vals.get('product_uom') or vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
                 if vals.get('product_uom') and vals.get('product_uom') == tbd_uom:
-                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+                    message += _('You have to define a valid UOM, i.e. not "To be defined".')
                 if vals.get('nomen_manda_0') and vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid,
                                                                                                             'msf_supply_doc_import', 'nomen_tbd0')[1]:
-                    message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                    message += _('You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_1') and vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid,
                                                                                                             'msf_supply_doc_import', 'nomen_tbd1')[1]:
-                    message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                    message += _('You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_2') and vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid,
                                                                                                             'msf_supply_doc_import', 'nomen_tbd2')[1]:
-                    message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
+                    message += _('You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be defined".')
 
                 if vals.get('product_uom') and vals.get('product_id'):
                     product_id = vals.get('product_id')
