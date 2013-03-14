@@ -93,7 +93,7 @@ class List(TinyWidget):
         self.pageable = kw.get('pageable', True)
         self.view_mode = kw.get('view_mode', [])
         self.offset = kw.get('offset', 0)
-        self.limit = kw.get('limit', 0)
+        self.limit = None
         self.count = kw.get('count', 0)
         self.link = kw.get('nolinks')
         self.m2m = kw.get('m2m', 0)
@@ -145,10 +145,18 @@ class List(TinyWidget):
                 if elem not in self.domain:
                     search_param.append(elem)
 
-        try:
-            self.limit = int(attrs.get('limit'))
-        except:
-            pass
+        # -- Limits --
+        # 1. use action limit or default global listview limit: 20
+        # 2. apply tree view limit if defined in attrs: <tree limit='..'>...</tree>
+        # 3. apply user limit if changed
+        self.limit = getattr(cherrypy.request, 'action_limit', 20)
+        if attrs.get('limit'):
+            try:
+                self.limit = int(attrs.get('limit'))
+            except Exception:
+                pass
+        if kw.get('limit') is not None:
+            self.limit = int(kw.get('limit'))
 
         self.colors = {}
         for color_spec in attrs.get('colors', '').split(';'):
