@@ -430,7 +430,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             if values and values != '()':
                 values = values[1:-1].split(',')
                 if len(values) and relation_model_pool:
-                    relation_model_object = relation_model_pool.read(cr, uid, int(values[0]), [relation_model_pool._rec_name])
+                    # int() failed if value '167L'
+                    relation_model_object = relation_model_pool.read(cr, uid, long(values[0]), [relation_model_pool._rec_name])
                     res = relation_model_object[relation_model_pool._rec_name]
             return res
 
@@ -708,8 +709,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
             resource = resource_pool.read(cr, uid, res_id, [parent_field.name, name_get_field or 'name'])
             res_id2 = resource[parent_field.name][0]
         else:
-            resource = resource_pool.read(cr, uid, res_id, ['id'])
-            res_id2 = resource['id']
+            res_id2 = res_id
         
         vals = {
                 "name": '%s' %model.name,
@@ -727,48 +727,26 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                          'fct_object_id': model.id,
                          'fct_res_id': res_id})
 
-        if 'id' in resource:
-            del resource['id']
-
         # We create only one line on creation (not one line by field)
         create_log_line(self, cr, uid, model, [vals])
-        # We take the list of fields that will be updated
-        res_ids = []
-        res = True
-        if args:
-            if isinstance(args[2], (long, int)):
-                res_ids = [args[2]]
-            else:
-                res_ids = list(args[2])
-            fields = []
-            if len(args)>3 and type(args[3]) == dict:
-                fields.extend(list(set(args[3]) & set(fields_to_trace)))
 
         # Get new values
-        if res_ids:
-            fields_to_trace.append('id')
-            for resource in resource_pool.read(cr, uid, [res_id], fields_to_trace):
-                if parent_field_id and len(args)>3 and not args[3].get(parent_field.name, resource[parent_field.name]):
-                    continue
-                res_id = resource['id']
-                if parent_field_id and resource.get(parent_field.name):
-                    res_id2 = resource.get(parent_field.name)[0]
-                else:
-                    res_id2 = res_id
-                if 'id' in resource:
-                    del resource['id']
+        if res_id and fields_to_trace:
+            resource = resource_pool.read(cr, uid, res_id, fields_to_trace)
+            if 'id' in resource:
+                del resource['id']
 
-        # now we create one line for each field tracked
-        lines = []
-        for field in resource.keys():
-            line = vals.copy()
-            line.update({
-                  'name': field,
-                  'new_value': resource[field],
-                  })
-            lines.append(line)
+            # now we create one line for each field tracked
+            lines = []
+            for field in resource.keys():
+                line = vals.copy()
+                line.update({
+                      'name': field,
+                      'new_value': resource[field],
+                      })
+                lines.append(line)
 
-        create_log_line(self, cr, uid, model, lines)
+            create_log_line(self, cr, uid, model, lines)
 
         return res_id
 
@@ -840,60 +818,61 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
     else: 
         res_ids = []
         res = True
+        fields = []
         if args:
             if isinstance(args[2], (long, int)):
                 res_ids = [args[2]]
             else:
                 res_ids = list(args[2])
-            fields = []
             if len(args)>3 and type(args[3]) == dict:
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
                 
-            fields = fields_to_trace
-                
         model_id = model.id
-        if parent_field_id:
-            parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
-            model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
-            # If the parent object is not a valid object
-            if not model_id:
-                return res
-            else:
-                model_id = model_id[0]
-                
-            if parent_field.name not in fields:
-                fields.append(parent_field.name)
-            
-        fields.extend(_get_domain_fields(self, domain))
-        # Remove double entries
-        fields = list(set(fields))
-        if name_get_field not in fields:
-            fields.append(name_get_field)
 
-        # Get old values
-        if res_ids:
-            for resource in resource_pool.read(cr, uid, res_ids, fields):
-                if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
-                    continue
-                if domain and not _check_domain(self, cr, uid, resource, domain, model):
-                    res_ids.pop(res_ids.index(resource['id']))
-                    continue
-                
-                resource_id = resource['id']
-                if 'id' in resource:
-                    del resource['id']
+        # if no change on traced fields, variable fields is empty: so nothing to do.
+        if fields:
+            if parent_field_id:
+                parent_field = pool.get('ir.model.fields').browse(cr, uid, parent_field_id)
+                model_id = model_pool.search(cr, uid, [('model', '=', parent_field.relation)])
+                # If the parent object is not a valid object
+                if not model_id:
+                    return res
+                else:
+                    model_id = model_id[0]
                     
-                old_value = resource.copy()
+                if parent_field.name not in fields:
+                    fields.append(parent_field.name)
+                
+            fields.extend(_get_domain_fields(self, domain))
+            # Remove double entries
+            fields = list(set(fields))
+            if name_get_field not in fields:
+                fields.append(name_get_field)
+
+            # Get old values
+            if res_ids:
+                for resource in resource_pool.read(cr, uid, res_ids, fields):
+                    if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
+                        continue
+                    if domain and not _check_domain(self, cr, uid, resource, domain, model):
+                        res_ids.pop(res_ids.index(resource['id']))
+                        continue
+                    
+                    resource_id = resource['id']
+                    if 'id' in resource:
+                        del resource['id']
+                        
+                    old_value = resource.copy()
 #                for field in resource.keys():
 #                    old_value = resource.copy()
-                
-                old_values[resource_id] = {'value': old_value}
+                    
+                    old_values[resource_id] = {'value': old_value}
 
         # Run the method on object
         res = fct_src(self, *args, **kwargs)
 
         # Get new values
-        if res_ids:
+        if fields and res_ids:
             for resource in resource_pool.read(cr, uid, res_ids, fields):
                 if parent_field_id and not args[3].get(parent_field.name, resource[parent_field.name]):
                     continue

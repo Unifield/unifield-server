@@ -248,6 +248,10 @@ class account_invoice(osv.osv):
             for po in inv.purchase_ids:
                 if po.commitment_ids:
                     to_process.append(inv.id)
+                    # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
+                    if po.state == 'done' and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
+                        self.pool.get('purchase.order')._finish_commitment(cr, uid, [po.id], context=context)
+                
         # Process invoices
         res = self.update_commitments(cr, uid, to_process, context=context)
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context=context)

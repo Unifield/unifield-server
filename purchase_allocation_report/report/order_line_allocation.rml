@@ -100,10 +100,10 @@
                 <parawrap style="Information">[[ o.order_id.name ]]</parawrap>
             </td>
             <td>
-                <para style="Information">[[ get_selection(o, 'order_type') ]]</para>
+                <para style="Information">[[ getSel(o, 'order_type') ]]</para>
             </td>
             <td>
-                <para style="Information">[[ get_selection(o, 'order_category') ]]</para>
+                <para style="Information">[[ getSel(o, 'order_category') ]]</para>
             </td>
             <td>
                 <para style="Information">[[ o.line_number ]]</para>

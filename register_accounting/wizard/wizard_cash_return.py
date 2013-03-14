@@ -126,7 +126,7 @@ class wizard_advance_line(osv.osv_memory):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

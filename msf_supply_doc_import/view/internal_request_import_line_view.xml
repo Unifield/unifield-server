@@ -16,9 +16,11 @@
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
+                    <field name="inactive_product" invisible="1" />
+                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" />
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree/field[@name='product_id']" position="before" >
                     <field name="line_number" readonly="1"/>

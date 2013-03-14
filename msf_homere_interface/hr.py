@@ -80,7 +80,7 @@ class hr_employee(osv.osv):
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination",),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
     }
@@ -235,7 +235,7 @@ class hr_employee(osv.osv):
             fp_id = 0
         fp_fields = form.xpath('/'  + view_type + '//field[@name="funding_pool_id"]')
         for field in fp_fields:
-            field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+            field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
         view['arch'] = etree.tostring(form)
         return view
 

@@ -205,7 +205,7 @@ class account_commitment(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -577,7 +577,7 @@ class account_commitment_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

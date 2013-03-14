@@ -152,8 +152,7 @@ class wizard_interactive_report(osv.osv_memory):
             final_line = []
             for i in range(max_parent_hierarchy + 1):
                 if i != temp_line[0]:
-                    # add space
-                    final_line.append('')
+                    pass
                 else:
                     # add code
                     final_line.append(temp_line[1])
@@ -167,6 +166,8 @@ class wizard_interactive_report(osv.osv_memory):
                 final_line += temp_line[6:9]
             analytic_data.append(final_line)
             
+        if context.get('mako',False):
+            return analytic_data
         data = header_data + [[]] + analytic_data + [[]] + footer_data
         return data
     
