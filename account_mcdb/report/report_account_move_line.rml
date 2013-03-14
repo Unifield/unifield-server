@@ -118,7 +118,7 @@
           <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.move_id and o.move_id.name or '' ]]</para>
+          <parawrap style="P3">[[ o.move_id and o.move_id.name or '' ]]</parawrap>
         </td>
         <td>
           <para style="P3">[[ o.name or '' ]]</para>
