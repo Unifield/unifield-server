@@ -37,7 +37,6 @@ def _get_instance_level(self, cr, uid):
                 instance_level = 'hq'
             return instance_level.lower()
         else:
-            logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
             return False
     else:
         return False
