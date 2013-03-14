@@ -40,7 +40,6 @@ def _get_instance_level(self, cr, uid):
             logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
             return False
     else:
-        logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
         return False
 
 def _record_matches_domain(self, cr, record_id, domain):
