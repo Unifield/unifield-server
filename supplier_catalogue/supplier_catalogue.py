@@ -503,7 +503,7 @@ class supplier_catalogue(osv.osv):
 
                 vals['line_ids'].append((0, 0, to_write))
             # in case of lines ignored, we notify the user and create a file with the lines ignored
-            vals.update({'text_error': 'Lines ignored: %s \n ----------------------\n' % (ignore_lines,) +
+            vals.update({'text_error': _('Lines ignored: %s \n ----------------------\n') % (ignore_lines,) +
                          '\n'.join(error_list), 'data': False, 'import_error_ok': False})
             if line_with_error:
                 file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
