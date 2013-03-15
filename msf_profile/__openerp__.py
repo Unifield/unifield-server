@@ -113,6 +113,7 @@
         "report_webkit_override",
         "export_import_lang",
         "msf_button_access_rights",
+        "msf_field_access_rights",
     ],
     "update_xml": [
         "report.xml",
