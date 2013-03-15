@@ -35,6 +35,9 @@ class view_config_install(osv.osv_memory):
     _name = 'msf_button_access_rights.view_config_wizard_install'
     _inherit = 'res.config'
     
+    def action_next(self, cr, uid, ids, context=None):
+        return self.execute(cr, uid, ids, context)
+
     def execute(self, cr, uid, ids, context=None):
         """
         Perform a write (With no updated values) on each view in the database to trigger the Button Access Rule create / update process. Keep a log of all errors and return a new wizard showing the results.
