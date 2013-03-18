@@ -344,6 +344,50 @@ class account_analytic_line(osv.osv):
 
 account_analytic_line()
 
+class funding_pool_distribution_line(osv.osv):
+    _inherit = 'funding.pool.distribution.line'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if not dest_field == 'cost_center_id':
+            return super(funding_pool_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+        
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        res = []
+        for line_id in ids:
+            line_data = self.browse(cr, uid, line_id, context=context)
+            if line_data.cost_center_id:
+                res.append(self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                res.append(current_instance.parent_id.instance)
+            else:
+                res.append(False)
+        return res
+    
+funding_pool_distribution_line()
+
+class cost_center_distribution_line(osv.osv):
+    _inherit = 'cost.center.distribution.line'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if not dest_field == 'analytic_id':
+            return super(cost_center_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+        
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        res = []
+        for line_id in ids:
+            line_data = self.browse(cr, uid, line_id, context=context)
+            if line_data.analytic_id:
+                res.append(self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.analytic_id.id, context))
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                res.append(current_instance.parent_id.instance)
+            else:
+                res.append(False)
+        return res
+    
+cost_center_distribution_line()
+
 class product_product(osv.osv):
     _inherit = 'product.product'
 
