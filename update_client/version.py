@@ -57,7 +57,8 @@ class version(osv.osv):
                               {'state':'installed','applied':now})
             # Set last revision (assure last update has the last applied date)
             time.sleep(1)
-            self.write(cr, 1, [versions_id[server_version[-1]]], {'applied':fields.datetime.now()})
+            if len(server_version) > 1:
+                self.write(cr, 1, [versions_id[server_version[-1]]], {'applied':fields.datetime.now()})
         except BaseException, e:
             self._logger.exception("version init failure!")
 
