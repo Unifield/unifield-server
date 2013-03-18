@@ -28,6 +28,7 @@ import inspect
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from decimal import Decimal, ROUND_UP
 
 import netsvc
 
@@ -501,3 +502,17 @@ class ir_translation(osv.osv):
 
 
 ir_translation()
+
+
+class product_uom(osv.osv):
+    _inherit = 'product.uom'
+
+    def _compute_round_up_qty(self, cr, uid, uom_id, qty, context=None):
+        '''
+        Round up the qty according to the UoM
+        '''
+        uom = self.browse(cr, uid, uom_id, context=context)
+        rounding_value = Decimal(str(uom.rounding).rstrip('0'))
+        return float(Decimal(str(qty)).quantize(rounding_value, rounding=ROUND_UP))
+
+product_uom()
