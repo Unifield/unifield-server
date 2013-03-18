@@ -1,0 +1,155 @@
+--- report_account_bank_statement_line.rml.base	2013-03-18 16:08:41.755898279 +0100
++++ report_account_bank_statement_line.rml	2013-03-18 16:26:11.331856770 +0100
+@@ -21,113 +21,10 @@
+     <blockTableStyle id="Tableau3">
+       <blockAlignment value="LEFT"/>
+       <blockValign value="TOP"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,0" stop="0,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="0,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,0" stop="1,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" stop="1,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,0" stop="2,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="2,0" stop="2,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="3,0" stop="3,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="3,0" stop="3,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="4,0" stop="4,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="4,0" stop="4,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="5,0" stop="5,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="5,0" stop="5,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="5,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="6,0" stop="6,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="6,0" stop="6,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="6,-1" stop="6,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="7,0" stop="7,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="7,0" stop="7,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="7,-1" stop="7,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="8,0" stop="8,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="8,0" stop="8,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="8,-1" stop="8,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="9,0" stop="9,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="9,0" stop="9,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="9,-1" stop="9,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="10,0" stop="10,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="10,0" stop="10,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="10,-1" stop="10,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="11,0" stop="11,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="11,0" stop="11,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="11,-1" stop="11,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="12,0" stop="12,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="12,0" stop="12,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="12,-1" stop="12,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="13,0" stop="13,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="13,0" stop="13,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="13,-1" stop="13,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="14,0" stop="14,-1"/>
+-      <lineStyle kind="LINEAFTER" colorName="#000000" start="14,0" stop="14,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="14,0" stop="14,0"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="14,-1" stop="14,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,1" stop="0,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="0,1" stop="0,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="0,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="1,1" stop="1,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="1,1" stop="1,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="1,-1" stop="1,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="2,1" stop="2,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="2,1" stop="2,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="2,-1" stop="2,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="3,1" stop="3,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="3,1" stop="3,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="3,-1" stop="3,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="4,1" stop="4,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="4,1" stop="4,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="4,-1" stop="4,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="5,1" stop="5,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="5,1" stop="5,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="5,-1" stop="5,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="6,1" stop="6,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="6,1" stop="6,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="6,-1" stop="6,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="7,1" stop="7,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="7,1" stop="7,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="7,-1" stop="7,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="8,1" stop="8,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="8,1" stop="8,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="8,-1" stop="8,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="9,1" stop="9,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="9,1" stop="9,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="9,-1" stop="9,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="10,1" stop="10,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="10,1" stop="10,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="10,-1" stop="10,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="11,1" stop="11,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="11,1" stop="11,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="11,-1" stop="11,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="12,1" stop="12,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="12,1" stop="12,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="12,-1" stop="12,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="13,1" stop="13,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="13,1" stop="13,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="13,-1" stop="13,-1"/>
+-      <lineStyle kind="LINEBEFORE" colorName="#000000" start="14,1" stop="14,-1"/>
+-      <lineStyle kind="LINEAFTER" colorName="#000000" start="14,1" stop="14,-1"/>
+-      <lineStyle kind="LINEABOVE" colorName="#000000" start="14,1" stop="14,1"/>
+-      <lineStyle kind="LINEBELOW" colorName="#000000" start="14,-1" stop="14,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="0,0" stop="0,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="1,0" stop="1,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="2,0" stop="2,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="3,0" stop="3,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="4,0" stop="4,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="5,0" stop="5,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="6,0" stop="6,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="7,0" stop="7,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="8,0" stop="8,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="9,0" stop="9,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="10,0" stop="10,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="11,0" stop="11,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="12,0" stop="12,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="13,0" stop="13,-1"/>
+-      <blockBackground colorName="#e6e6e6" start="14,0" stop="14,-1"/>
++      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
++      <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="14,-1"/>
++      <lineStyle kind="INNERGRID" colorName="gray" start="0,1" stop="14,-1" thickness="0.5"/>
++      <blockBackground colorName="#e6e6e6" start="0,0" stop="-1,0"/>
+     </blockTableStyle>
+     <initialize>
+       <paraStyle name="all" alignment="justify"/>
+@@ -157,7 +54,7 @@
+     <para style="P2">
+       <font color="white"> </font>
+     </para>
+-    <blockTable colWidths="55.0,49.0,97.0,217.0,79.0,167.0,107.0,66.0,55.0,45.0,42.0,42.0,44.0,37.0,59.0" style="Tableau3">
++    <blockTable style="Tableau3">
+       <tr>
+         <td>
+           <para style="P3">Document Date</para>
+@@ -214,13 +111,13 @@
+           <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+         </td>
+         <td>
+-          <para style="P3">[[ o.sequence_for_reference or '' ]]</para>
++          <parawrap style="P3">[[ o.sequence_for_reference or '' ]]</parawrap>
+         </td>
+         <td>
+-          <para style="P3">[[ o.name or '' ]]</para>
++          <parawrap style="P3">[[ o.name or '' ]]</parawrap>
+         </td>
+         <td>
+-          <para style="P3">[[ o.ref or '' ]]</para>
++          <parawrap style="P3">[[ o.ref or '' ]]</parawrap>
+         </td>
+         <td>
+           <para style="P3">[[ o.account_id and o.account_id.code or '' ]] [[ o.account_id and o.account_id.name or '']]</para>
+@@ -250,7 +147,7 @@
+           <para style="P3">[[getSel(o, 'state')]]</para>
+         </td>
+         <td>
+-          <para style="P3">[[ o.statement_id and o.statement_id.name or '' ]]</para>
++          <parawrap style="P3">[[ o.statement_id and o.statement_id.name or '' ]]</parawrap>
+         </td>
+       </tr>
+     </blockTable>

@@ -239,6 +239,7 @@ class account_line_csv_export(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
+        field_sel = self.pool.get('ir.model.fields').get_browse_selection
         if currency_id:
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
