@@ -44,8 +44,8 @@
     "depends": [
         'msf_instance',
     ],
+    'active': False,
     'installable': True,
-    'active': True,
 #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
