@@ -164,12 +164,14 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
                         return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
                 
                     # for action type object, the signature is always the same
-                    if rule.type == 'object' and 'context' not in kw:
-                        args, kw['context'] = args[:-1], args[-1]
-                        assert isinstance(kw['context'], dict), "Oops! The last argument of call type=object method=%s on object=%s should be a dict! Please contact the developper team." % (method, obj)
+                    if 'context' in kw:
+                        context = kw['context']
+                    else:
+                        context = args[-1]
+                        assert isinstance(context, dict), "Oops! The last argument of call type=object method=%s on object=%s should be a dict! Please contact the developper team." % (method, obj)
 
                     # continue action as admin user
-                    kw['context']['real_user'] = uid
+                    context['real_user'] = uid
                     return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
                     
                 else:
