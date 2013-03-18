@@ -1487,12 +1487,6 @@ class ir_values(osv.osv):
             for v in values:
                 if key == 'action' and v[1] in picking_accepted_values[key2]:
                     new_values.append(v)
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if context.get('composition_type')=='real' and v[2]['report_name'] == 'real.composition.kit.xls':
-                    new_values.append(v)
- 
         return new_values
 
 ir_values()
