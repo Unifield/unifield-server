@@ -1130,6 +1130,10 @@ class account_move_line(osv.osv):
         else:
             return True
 
+    def _hook_call_update_check(self, cr, uid, ids, vals, context):
+        if ('account_id' in vals) or ('journal_id' in vals) or ('period_id' in vals) or ('move_id' in vals) or ('debit' in vals) or ('credit' in vals) or ('date' in vals):
+            self._update_check(cr, uid, ids, context)
+
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         if context is None:
             context={}
@@ -1142,8 +1146,7 @@ class account_move_line(osv.osv):
         if ('account_id' in vals) and not account_obj.read(cr, uid, vals['account_id'], ['active'])['active']:
             raise osv.except_osv(_('Bad account!'), _('You can not use an inactive account!'))
         if update_check:
-            if ('account_id' in vals) or ('journal_id' in vals) or ('period_id' in vals) or ('move_id' in vals) or ('debit' in vals) or ('credit' in vals) or ('date' in vals):
-                self._update_check(cr, uid, ids, context)
+            self._hook_call_update_check(cr, uid, ids, vals, context)
 
         todo_date = None
         if vals.get('date', False):
