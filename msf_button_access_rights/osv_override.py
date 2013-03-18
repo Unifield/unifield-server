@@ -163,9 +163,14 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
                     if rule.type == 'action':
                         return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
                 
+                    # for action type object, the signature is always the same
+                    if rule.type == 'object' and 'context' not in kw:
+                        args, kw['context'] = args[:-1], args[-1]
+                        assert isinstance(kw['context'], dict), "Oops! The last argument of call type=object method=%s on object=%s should be a dict! Please contact the developper team." % (method, obj)
+
                     # continue action as admin user
-                    if rule.type != 'action':
-                        return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
+                    kw['context']['real_user'] = uid
+                    return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
                     
                 else:
                     # throw access denied
@@ -228,3 +233,7 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
             return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
     
 osv.object_proxy.exec_workflow_cr = exec_workflow_cr
+
+
+super_create = orm.orm_memory.create
+orm.orm_memory.create = lambda self, cr, user, vals, context=None: super_create(self, cr, context.get('real_user', user), vals, context=context)
