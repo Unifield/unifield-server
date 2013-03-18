@@ -236,4 +236,4 @@ osv.object_proxy.exec_workflow_cr = exec_workflow_cr
 
 
 super_create = orm.orm_memory.create
-orm.orm_memory.create = lambda self, cr, user, vals, context=None: super_create(self, cr, context.get('real_user', user), vals, context=context)
+orm.orm_memory.create = lambda self, cr, user, vals, context=None: super_create(self, cr, (context or {}).get('real_user', user), vals, context=context)
