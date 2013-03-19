@@ -21,7 +21,7 @@
 
 import threading
 import pooler
-from osv import fields, osv
+from osv import fields, osv, orm
 from tools.translate import _
 # import xml file
 import base64
@@ -157,9 +157,14 @@ class stock_partial_picking(osv.osv_memory):
             if prodlot_ids:
                 prodlot_id = prodlot_ids[0]
             elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)], context=context) and prodlot_name and expired_date:
-                prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
-                info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
-                    % (file_line_num, prodlot_name, expired_date, product.default_code))
+                try:
+                    prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
+                    info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+                        % (file_line_num, prodlot_name, expired_date, product.default_code))
+                except orm.except_orm as orm_error:
+                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors, %s" % (file_line_num, orm_error[1]))
+                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                    return False, prodlot_id
             elif not prodlot_name:
                 return True, prodlot_id
             else:
