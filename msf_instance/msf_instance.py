@@ -34,6 +34,25 @@ class msf_instance(osv.osv):
                 res[id] = user.company_id.instance_id.level
         return res
     
+    def _get_top_cost_center(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        res = {}
+        for instance in self.browse(cr, uid, ids, context=context):
+            if instance.target_cost_center_ids:
+                for target in instance.target_cost_center_ids:
+                    if target.is_top_cost_center:
+                        res[instance.id] = target.cost_center_id.id
+                        break
+            elif instance.level == 'section':
+                parent_cost_centers = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), ('parent_id', '=', '')], context=context)
+                if len(parent_cost_centers) > 0:
+                    res[instance.id] = parent_cost_centers[0]
+        return res
+    
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
@@ -46,7 +65,6 @@ class msf_instance(osv.osv):
         'child_ids': fields.one2many('msf.instance', 'parent_id', 'Children'),
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
-        'top_cost_center_id': fields.many2one('account.analytic.account', 'Main cost centre for this location', required=True),
         'target_cost_center_ids': fields.one2many('account.target.costcenter', 'instance_id', 'Target Cost Centers'),
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
@@ -54,6 +72,7 @@ class msf_instance(osv.osv):
         'move_prefix': fields.char('Account move prefix', size=5, required=True),
         'reconcile_prefix': fields.char('Reconcilation prefix', size=5, required=True),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="char", readonly="True"),
+        'top_cost_center_id': fields.function(_get_top_cost_center, method=True, store=False, string="Main cost centre for this location", type="many2one", relation="account.analytic.account", readonly="True"),
     }
     
     _defaults = {
