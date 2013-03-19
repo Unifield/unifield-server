@@ -185,7 +185,6 @@ class Form(SecuredController):
         cherrypy.session['params'] = params
 
         params.offset = params.offset or 0
-        params.limit = params.limit or 50
         params.count = params.count or 0
         params.view_type = params.view_type or params.view_mode[0]
 

@@ -75,7 +75,7 @@
         <script type="text/javascript">
             jQuery('#filename').change(function() {
                 var choosen_filename = jQuery(this).val();
-                var matches = /^(.*)-[0-9]{8}-[0-9]{6}.dump$/.exec(choosen_filename);
+                var matches = /^(.*)-[0-9]{8}-[0-9]{6}(-.*)?.dump$/.exec(choosen_filename);
                 if (!matches) {
                     // show jquery alert
                     alert('${_('The choosen file in not a valid database file')}');

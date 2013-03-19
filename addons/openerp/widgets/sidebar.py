@@ -49,7 +49,19 @@ class Sidebar(TinyWidget):
         self.relates = toolbar.get('relate', [])
         self.attachments = []
         self.sub_menu = None
-                    
+
+
+        # add context to relate action to get the lang
+        if self.context:
+            newctx = self.context.copy()
+            # remove the active_id of ir.ui.view
+            to_remove = ['active_id', 'active_ids']
+            for to_del in to_remove:
+                if to_del in newctx:
+                    del newctx[to_del]
+            for relate in self.relates:
+                relate['context'] = newctx
+
         action = 'client_action_multi'
         if self.view_type == 'form':
             action = 'tree_but_action'

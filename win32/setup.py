@@ -19,16 +19,27 @@
 #
 ##############################################################################
 
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from distutils.core import setup
+from setup_py2exe_custom import custom_py2exe
 import py2exe
 
 
 setup(service=["OpenERPWebService"],
+      cmdclass={'py2exe': custom_py2exe},
       options={"py2exe":{"excludes":["Tkconstants","Tkinter","tcl",
                                      "_imagingtk","PIL._imagingtk",
                                      "ImageTk", "PIL.ImageTk",
                                      "FixTk"],
-                         "compressed": 1}}
+                         "ascii": True,  # do not need encodings
+                         "collected_libs_dir": "libs",
+                         "skip_archive": 1,
+                         "bundle_files": 3, 
+                         "optimize": 0,
+                         "compressed": 0}}
       )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
