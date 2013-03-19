@@ -272,6 +272,73 @@ class purchase_order(osv.osv):
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
+    def analytic_distribution_checks(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution by using intermission cost center for PO with a partner type set to 'intermission'.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        # Prepare some values
+        try: 
+            intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
+            'analytic_account_project_intermission')[1]
+        except ValueError:
+            intermission_cc = None
+        if not intermission_cc:
+            raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
+        ana_obj = self.pool.get('analytic.distribution')
+        # Check partner
+        for p in self.browse(cr, uid, ids):
+            # Prepare some values
+            p_distrib_id = p.analytic_distribution_id and p.analytic_distribution_id.id or False
+            # Intermission case
+            if p.partner_id and p.partner_id.partner_type == 'intermission':
+                for pl in p.order_line:
+                    # Fetch analytic distribution from purchase order line, if none, take those from purchase.
+                    distrib_id = pl.analytic_distribution_id and pl.analytic_distribution_id.id or p_distrib_id or False
+                    # Create a new one
+                    if not distrib_id:
+                        account_id = pl.account_4_distribution and pl.account_4_distribution.id or False
+                        # Search default destination_id
+                        destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
+                        distrib_id = ana_obj.create(cr, uid, {'purchase_line_ids': [(4,pl.id)], 
+                            'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': p.currency_id.id})]})
+                        self.pool.get('purchase.order.line').write(cr, uid, [pl.id], {'analytic_distribution_id': distrib_id})
+                        pl = self.pool.get('purchase.order.line').browse(cr, uid, pl.id) # avoid problem of browsing this line
+                    # Or update CC lines
+                    else:
+                        # Change CC lines
+                        for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
+                            self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+        return True
+
+    def wkf_confirm_order(self, cr, uid, ids, context=None):
+        """
+        Give intermission cost center if partner is intermission type.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.analytic_distribution_checks(cr, uid, ids)
+        # Default behaviour
+        return super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context)
+
+    def wkf_approve_order(self, cr, uid, ids, context=None):
+        """
+        Give intermission cost center if partner is intermission type.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self.analytic_distribution_checks(cr, uid, ids)
+        # Default behaviour
+        return super(purchase_order, self).wkf_approve_order(cr, uid, ids, context=context)
+
 purchase_order()
 
 class purchase_order_line(osv.osv):
