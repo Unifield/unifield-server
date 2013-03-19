@@ -519,14 +519,14 @@ class sale_order_line(osv.osv):
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
+    def onchange_uom(self, cr, uid, ids, product_id, uom_id, product_qty=0.00, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
         res = {}
+        uom_obj = self.pool.get('product.uom')
         if uom_id and product_id:
             product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
 
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, uom_id, context=context)
@@ -537,6 +537,11 @@ class sale_order_line(osv.osv):
                 res.update({'warning': warning})
                 domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
                 res['domain'] = domain
+
+        # Round-up the quantity
+        if uom_id and product_qty:
+            res.setdefault('value', {}).setdefault('product_uom_qty', uom_obj._compute_round_up_qty(cr, uid, uom_id, product_qty, context=context))
+
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
