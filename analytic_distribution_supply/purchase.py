@@ -303,14 +303,14 @@ class purchase_order(osv.osv):
                         # Search default destination_id
                         destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
                         distrib_id = ana_obj.create(cr, uid, {'purchase_line_ids': [(4,pl.id)], 
-                            'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': p.currency_id.id})]})
+                            'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc, 'percentage':'100', 'currency_id': p.currency_id.id})]})
                         self.pool.get('purchase.order.line').write(cr, uid, [pl.id], {'analytic_distribution_id': distrib_id})
                         pl = self.pool.get('purchase.order.line').browse(cr, uid, pl.id) # avoid problem of browsing this line
                     # Or update CC lines
                     else:
                         # Change CC lines
                         for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
-                            self.pool.get('cost.center.distribution.line').write(cr, uid, [cc_line.id], {'analytic_id': intermission_cc[1]})
+                            self.pool.get('cost.center.distribution.line').write(cr, uid, [cc_line.id], {'analytic_id': intermission_cc})
         return True
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
