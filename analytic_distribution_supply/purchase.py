@@ -87,6 +87,8 @@ class purchase_order(osv.osv):
             'purchase_id': purchase.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -100,7 +102,7 @@ class purchase_order(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -343,8 +345,10 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
+        get_sel = self.pool.get('ir.model.fields').get_selection
         for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
-            res[pol['id']] = "%s%s"%(pol['analytic_distribution_state'].capitalize(), pol['have_analytic_distribution_from_header'] and " (from header)" or "")
+            d_state = get_sel(cr, uid, self._name, 'analytic_distribution_state', pol['analytic_distribution_state'], context)
+            res[pol['id']] = "%s%s"%(d_state, pol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
         return res
 
     def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
@@ -440,6 +444,8 @@ class purchase_order_line(osv.osv):
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -453,7 +459,7 @@ class purchase_order_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

@@ -22,7 +22,6 @@
                     <field name="move_state" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
-                    <field name="register_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
@@ -48,7 +47,7 @@
             <field name="model">account.analytic.line</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Analytic Line" min_rows="100" editable="bottom" hide_delete_button="1">
+                <tree string="Analytic Line" min_rows="100" editable="bottom" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="is_reallocated" invisible="1"/>
                     <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2"/>
                     <field name="instance_id"/>
@@ -158,7 +157,11 @@
                 </xpath>
                 <xpath expr="/search/group[3]/filter[@string='Product']" position="replace">
                 </xpath>
-                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='after'>
+                <xpath expr="/search/group[3]/filter[@string='Account']" position="replace">
+                    <filter string="CC" context="{'group_by':'cost_center_id'}" icon="terp-folder-green"/>
+                </xpath>
+                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='replace'>
+                    <filter string='G/L account' context="{'group_by':'general_account_id'}" icon="terp-folder-green"/>
                     <separator orientation="vertical"/>
                     <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
                 </xpath>

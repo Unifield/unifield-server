@@ -163,6 +163,17 @@ class stock_picking(osv.osv):
                 result[obj.id].update({'partner_type_stock_picking': obj.partner_id2.partner_type})
             
         return result
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = False
+            for line in pick.move_lines:
+                if line.inactive_product:
+                    res[pick.id] = True
+                    break
+        
+        return res
 
     _columns = {
         'state': fields.selection([
@@ -187,12 +198,35 @@ class stock_picking(osv.osv):
         'partner_type_stock_picking': fields.function(_vals_get_stock_ov, method=True, type='selection', selection=PARTNER_TYPE, string='Partner Type', multi='get_vals_stock_ov', readonly=True, select=True,
                                                       store= {'stock.picking': (lambda self, cr, uid, ids, c=None: ids, ['partner_id2'], 10),
                                                               'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
+        'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
                  'from_wkf': lambda *a: False,
                  'update_version_from_in_stock_picking': 0,
+                 'fake_type': 'in',
                  }
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the stock picking contains a line with an inactive products
+        '''
+        inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
+                                                                      ('picking_id', 'in', ids),
+                                                                      ('picking_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
+    
+    _constraints = [
+            (_check_active_product, "You cannot validate this document because it contains a line with an inactive product", ['order_line', 'state'])
+    ]
     
     def create(self, cr, uid, vals, context=None):
         '''
@@ -668,51 +702,10 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        loc_obj = self.pool.get('stock.location')
-        prodlot_obj = self.pool.get('stock.production.lot')
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
                 if move.product_id.perishable: # perishable for perishable or batch management
-                    if move.state == 'assigned': # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
-                        needed_qty = move.product_qty
-                        res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
-                        if 'fefo' in res: 
-                            values = {'name': move.name,
-                                      'picking_id': pick.id,
-                                      'product_uom': move.product_uom.id,
-                                      'product_id': move.product_id.id,
-                                      'date_expected': move.date_expected,
-                                      'date': move.date,
-                                      'state': 'assigned',
-                                      'location_dest_id': move.location_dest_id.id,
-                                      'reason_type_id': move.reason_type_id.id,
-                                      }
-                            for loc in res['fefo']:
-                                # we ignore the batch that are outdated
-                                expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                                if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
-                                    # as long all needed are not fulfilled
-                                    if needed_qty:
-                                        # if the batch already exists and qty is enough, it is available (assigned)
-                                        if needed_qty <= loc['qty']:
-                                            if move.prodlot_id.id == loc['prodlot_id']:
-                                                move_obj.write(cr, uid, move.id, {'state': 'assigned'}, context)
-                                            else:
-                                                move_obj.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
-                                                                            'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
-                                                needed_qty = 0.0
-                                        elif needed_qty:
-                                            # we take all available
-                                            selected_qty = loc['qty']
-                                            needed_qty -= selected_qty
-                                            dict_for_create = {}
-                                            dict_for_create = values.copy()
-                                            dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
-                                            move_obj.create(cr, uid, dict_for_create, context)
-                                            move_obj.write(cr, uid, move.id, {'product_qty': needed_qty})
-                    elif move.state == 'confirmed':
-                        # we remove the prodlot_id in case that the move is not available
-                        move_obj.write(cr, uid, move.id, {'prodlot_id': False}, context)
+                    move_obj.fefo_update(cr, uid, move.id, context) # FEFO
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
 stock_picking()
@@ -770,6 +763,20 @@ class stock_move(osv.osv):
                 return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
     
         return False
+    
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
+                                'inactive_error': _('The product in line is inactive !')}
+                
+        return res  
 
     _columns = {
         'price_unit': fields.float('Unit Price', digits_compute=dp.get_precision('Picking Price Computation'), help="Technical field used to record the product cost set by the user during a picking confirmation (when average price costing method is used)"),
@@ -784,13 +791,17 @@ class stock_move(osv.osv):
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
     }
     
     _defaults = {
         'location_dest_id': _default_location_destination,
         'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
     }
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         Update the partner or the address according to the other
@@ -884,6 +895,68 @@ class stock_move(osv.osv):
         default.update({'already_confirmed':False})
         
         return super(stock_move, self).copy(cr, uid, id, default, context=context)
+    
+    def fefo_update(self, cr, uid, ids, context=None):
+        """
+        Update batch, Expiry Date, Location according to FEFO logic
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        loc_obj = self.pool.get('stock.location')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        for move in self.browse(cr, uid, ids, context):
+            # FEFO logic
+            if move.state == 'assigned': # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
+                needed_qty = move.product_qty
+                res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+                if 'fefo' in res:
+                    # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
+                    values = {'name': move.name,
+                              'picking_id': move.picking_id.id,
+                              'product_uom': move.product_uom.id,
+                              'product_id': move.product_id.id,
+                              'date_expected': move.date_expected,
+                              'date': move.date,
+                              'state': 'assigned',
+                              'location_dest_id': move.location_dest_id.id,
+                              'reason_type_id': move.reason_type_id.id,
+                              }
+                    for loc in res['fefo']:
+                        # if source == destination, the state becomes 'done', so we don't do fefo logic in that case
+                        if not move.location_dest_id.id == loc['location_id']:
+                            # we ignore the batch that are outdated
+                            expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                            if datetime.strptime(expired_date, "%Y-%m-%d") >= datetime.today():
+                                # as long all needed are not fulfilled
+                                if needed_qty:
+                                    # if the batch already exists and qty is enough, it is available (assigned)
+                                    if needed_qty <= loc['qty']:
+                                        if move.prodlot_id.id == loc['prodlot_id']:
+                                            self.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                        else:
+                                            self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
+                                                                        'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                            needed_qty = 0.0
+                                    elif needed_qty:
+                                        # we take all available
+                                        selected_qty = loc['qty']
+                                        needed_qty -= selected_qty
+                                        dict_for_create = {}
+                                        dict_for_create = values.copy()
+                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                        self.create(cr, uid, dict_for_create, context)
+                                        self.write(cr, uid, move.id, {'product_qty': needed_qty})
+                    # if the batch is outdated, we remove it
+                    if not context.get('yml_test', False):
+                        if move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= datetime.today():
+                            self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+            elif move.state == 'confirmed':
+                # we remove the prodlot_id in case that the move is not available
+                self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+        return True
     
     def action_confirm(self, cr, uid, ids, context=None):
         '''
@@ -1413,6 +1486,11 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in picking_accepted_values[key2]:
+                    new_values.append(v)
+        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
+            new_values = []
+            for v in values:
+                if context.get('composition_type')=='real' and v[2]['report_name'] == 'real.composition.kit.xls':
                     new_values.append(v)
  
         return new_values

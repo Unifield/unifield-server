@@ -193,6 +193,7 @@ class return_claim(osv.osv):
         '''
         # objects
         event_obj = self.pool.get('claim.event')
+        field_trans = self.pool.get('ir.model.fields').get_selection
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # allow flag
@@ -213,7 +214,7 @@ class return_claim(osv.osv):
                 if not previous_id:
                     # depend on the claim type
                     available_list = self.get_claim_type_rules().get(claim_type[0])
-                    list = [(x, y[1]) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
+                    list = [(x, field_trans(cr, uid, 'claim.event', 'type_claim_event', y[1], context)) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
                     allow = True # list cannot be empty, because other we would not be here!
                 else:
                     # we are interested in the last value of returned list -> -1
@@ -236,7 +237,7 @@ class return_claim(osv.osv):
                         available_list = available_list and available_list.get(last_event_type_key, False) or False
                         if available_list:
                             allow = True
-                            list = [(x, y[1]) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
+                            list = [(x, field_trans(cr, uid, 'claim.event', 'type_claim_event', y[1], context)) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
             # update result
             result[obj.id] = {'allow': allow,
                               'last_type': last_event_type,

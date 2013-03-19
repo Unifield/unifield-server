@@ -629,7 +629,7 @@
             <field name="rounding">0.01</field>
             <field name="accuracy">4</field>
             <field name="active" eval="False"/>
-            <field name="currency_name">MYANMA KYAT</field>
+            <field name="currency_name">MYANMA KYAT2</field>
         </record>
         <record id="base.MMK" model="res.currency">
             <field name="name">MMK</field>

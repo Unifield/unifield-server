@@ -23,7 +23,25 @@
 This module is dedicated to help checking lines of Excel file at importation.
 """
 from msf_supply_doc_import import MAX_LINES_NB
+from tools.translate import _
+import logging
 
+
+def get_xml(value):
+    new_value = []
+    for v in list(value):
+        if v == '&':
+            v='&amp;'
+        elif v == '<':
+            v = '&lt;'
+        elif v == '>':
+            v = 'glt;'
+        elif v == '\'':
+            v = '&apos;'
+        elif v == '\"':
+            v = '&quot;'
+        new_value.append(v)
+    return ''.join(new_value)
 
 def check_nb_of_lines(**kwargs):
     """
@@ -46,12 +64,17 @@ def check_empty_line(**kwargs):
     """
     row = kwargs['row']
     col_count = kwargs['col_count']
+    line_num = kwargs['line_num']
     for cell in range(col_count):
         try:
+            if row.cells and row.cells[cell] and row.cells[cell].data is not None:
+                return True
+        except TypeError as e:
+            # Errors should never pass silently.
+            logging.getLogger('check empty line').info('Line %s. Error %s' % (line_num, e))
+        except ValueError:
             if row.cells[cell].data:
                 return True
-        except TypeError:
-            pass
 
 
 def get_log_message(**kwargs):
@@ -67,14 +90,41 @@ def get_log_message(**kwargs):
     msg_to_return = False
     # nb_lines_error => is just for tender
     if tender and nb_lines_error:
-        msg_to_return = "The import of lines had errors, please correct the red lines below"
+        msg_to_return = _("The import of lines had errors, please correct the red lines below")
     # is for all but tender
     elif not tender and [x for x in obj.order_line if x.to_correct_ok]:
-        msg_to_return = "The import of lines had errors, please correct the red lines below"
+        msg_to_return = _("The import of lines had errors, please correct the red lines below")
     # is for all but tender
     elif not to_write:
-        msg_to_return = "The file doesn\'t contain valid line."
+        msg_to_return = _("The file doesn't contain valid line.")
     return msg_to_return
+
+
+def compute_asset_value(cr, uid, **kwargs):
+    """
+    Retrieves asset_id from Excel file
+    """
+    row = kwargs['row']
+    asset_obj = kwargs['asset_obj']
+    error_list = kwargs['to_write']['error_list']
+    product_id = kwargs['to_write'].get('product_id', False)
+    cell_nb = kwargs['cell_nb']
+    asset_id = None
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            asset_name = row.cells[cell_nb].data.strip()
+            if asset_name and product_id:
+                asset_ids = asset_obj.search(cr, uid, [('name', '=', asset_name), ('product_id', '=', product_id)])
+                if asset_ids:
+                    asset_id = asset_ids[0]
+                else:
+                    error_list.append('The Asset "%s" does not exist for this product.' % asset_name)
+        else:
+            msg = 'The Asset Name has to be a string.'
+        if not asset_id:
+            error_list.append(msg or 'The Asset was not valid.')
+    return {'asset_id': asset_id, 'error_list': error_list}
 
 
 def product_value(cr, uid, **kwargs):
@@ -83,6 +133,7 @@ def product_value(cr, uid, **kwargs):
     Return product_code, comment, msg.
     """
     msg = ''
+    context = kwargs['context']
     row = kwargs['row']
     product_obj = kwargs['product_obj']
     # Tender does not have comment, it is an empty string
@@ -91,36 +142,36 @@ def product_value(cr, uid, **kwargs):
     proc_type = kwargs['to_write'].get('proc_type', False)
     # Tender does not have price_unit, it is False
     price_unit = kwargs['to_write'].get('price_unit', False)
+    cost_price = kwargs['to_write'].get('cost_price', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
     obj_data = kwargs['obj_data']
-    cell_nb = kwargs.get('cell_nb', False)
-    if not cell_nb:
-        cell_nb = 0
+    cell_nb = kwargs.get('cell_nb', 0)
     try:
         if row.cells[cell_nb] and row.cells[cell_nb].data:
             product_code = row.cells[cell_nb].data
             if product_code and row.cells[cell_nb].type == 'str':
                 product_code = product_code.strip()
-                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
+                p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
                 if not p_ids:
-                    comment += ' Code: %s' % (product_code)
-                    msg = 'Product code doesn\'t exist in the DB.'
+                    comment += _(' Code: %s') % (product_code)
+                    msg = _('Product code doesn\'t exist in the DB.')
                 else:
                     default_code = p_ids[0]
                     proc_type = product_obj.browse(cr, uid, [default_code])[0].procure_method
                     price_unit = product_obj.browse(cr, uid, [default_code])[0].list_price
+                    cost_price = product_obj.browse(cr, uid, [default_code])[0].standard_price
             else:
-                msg = 'The Product Code has to be a string.'
+                msg = _('The Product Code has to be a string.')
         if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]:
-            comment += ' Product Code to be defined'
-            error_list.append(msg or 'The Product\'s Code has to be defined')
+            comment += _(' Product Code to be defined')
+            error_list.append(msg or _('The Product\'s Code has to be defined'))
     # if the cell is empty
     except IndexError:
-        comment += ' Product Code to be defined'
-        error_list.append('The Product\'s Code has to be defined')
-    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit}
+        comment += _(' Product Code to be defined')
+        error_list.append(_('The Product\'s Code has to be defined'))
+    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit, 'cost_price': cost_price}
 
 
 def quantity_value(**kwargs):
@@ -135,6 +186,7 @@ def quantity_value(**kwargs):
     else:
         product_qty = kwargs['to_write']['product_qty']
     error_list = kwargs['to_write']['error_list']
+    cell_nb = kwargs.get('cell_nb', 2)
     # with warning_list: the line does not appear in red, it is just informative
     warning_list = kwargs['to_write']['warning_list']
     cell_nb = kwargs.get('cell_nb', False)
@@ -142,15 +194,15 @@ def quantity_value(**kwargs):
         cell_nb = 2
     try:
         if not row.cells[cell_nb]:
-            warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
+            warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
         else:
             if row.cells[cell_nb].type in ['int', 'float']:
                 product_qty = row.cells[cell_nb].data
             else:
-                error_list.append('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.')
+                error_list.append(_('The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default.'))
     # if the cell is empty
     except IndexError:
-        warning_list.append('The Product Quantity was not set. It is set to 1 by default.')
+        warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
     return {'product_qty': product_qty, 'error_list': error_list, 'warning_list': warning_list}
 
 
@@ -158,6 +210,7 @@ def compute_uom_value(cr, uid, **kwargs):
     """
     Retrieves product UOM from Excel file
     """
+    context = kwargs['context']
     row = kwargs['row']
     uom_obj = kwargs['uom_obj']
     product_obj = kwargs['product_obj']
@@ -166,34 +219,35 @@ def compute_uom_value(cr, uid, **kwargs):
     uom_id = kwargs['to_write'].get('uom_id', False)
     # The tender line may have a default UOM if it is not found
     obj_data = kwargs['obj_data']
-    # some object have not there uom at the 3rd column, so we pass them the relevant cell number (i.e. 2 for real consumption report)
-    cell_nb = kwargs.get('cell_nb', False)
-    if not cell_nb:
-        cell_nb = 3
+    cell_nb = kwargs.get('cell_nb', 3)
     msg = ''
     cell_nb = kwargs.get('cell_nb', 3)
     try:
-        # when row.cells[3] is "SpreadsheetCell: None" it is not really None (it is why it is transformed in string)
-        if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb] and row.cells[cell_nb].data is not None:
             if row.cells[cell_nb].type == 'str':
                 uom_name = row.cells[cell_nb].data.strip()
-                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)])
+                uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                 if uom_ids:
                     uom_id = uom_ids[0]
+                    # check the uom category consistency
+                    if default_code:
+                        if product_obj.browse(cr, uid, [default_code])[0].uom_id.category_id.id != uom_obj.browse(cr, uid, [uom_id])[0].category_id.id:
+                            uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
+                            error_list.append(msg or _('The UOM imported was not in the same category than the UOM of the product so we took the UOM of the product instead.'))
             else:
-                msg = 'The UOM Name has to be a string.'
+                msg = _('The UOM Name has to be a string.')
             if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
-                error_list.append(msg or 'The UOM Name was not valid.')
+                error_list.append(msg or _('The UOM Name was not valid.'))
                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
         else:
-            error_list.append(msg or 'The UOM Name was empty.')
+            error_list.append(msg or _('The UOM Name was empty.'))
             if default_code:
                 uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
             else:
                 uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
     # if the cell is empty
-    except IndexError:
-        error_list.append('The UOM Name was empty.')
+    except IndexError, e:
+        error_list.append(_('The UOM Name was empty. (Details: %s)') % e)
         if default_code:
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
         else:
@@ -208,6 +262,7 @@ def compute_price_value(**kwargs):
     row = kwargs['row']
     # the price_unit was updated in the product_value method if the product exists, else it was set to 1 by default.
     price_unit = kwargs['to_write']['price_unit']
+    cost_price = kwargs['to_write'].get('cost_price')
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
     # with warning_list: the line does not appear in red, it is just informative
@@ -218,23 +273,24 @@ def compute_price_value(**kwargs):
     try:
         if not row.cells[cell_nb] or not row.cells[cell_nb].data:
             if default_code:
-                warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
+                warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
             else:
-                error_list.append('The Price and Product not found.')
+                error_list.append(_('The Price and Product were not found.'))
         elif row.cells[cell_nb].type not in ['int', 'float'] and not default_code:
-            error_list.append('The Price Unit was not a number and no product was found.')
+            error_list.append(_('The Price Unit was not a number and no product was found.'))
         elif row.cells[cell_nb].type in ['int', 'float']:
             price_unit_defined = True
             price_unit = row.cells[cell_nb].data
+            cost_price = row.cells[cell_nb].data
         else:
-            error_list.append('The Price Unit was not defined properly.')
+            error_list.append(_('The Price Unit was not defined properly.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         if default_code:
-            warning_list.append('The Price Unit was not set, we have taken the default "%s" of the product.' % price)
+            warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
         else:
-            error_list.append('Neither Price nor Product found.')
-    return {'price_unit': price_unit, 'error_list': error_list, 'warning_list': warning_list, 'price_unit_defined': price_unit_defined}
+            error_list.append(_('Neither Price nor Product found.'))
+    return {'cost_price': cost_price, 'price_unit': price_unit, 'error_list': error_list, 'warning_list': warning_list, 'price_unit_defined': price_unit_defined}
 
 
 def compute_date_value(**kwargs):
@@ -251,17 +307,36 @@ def compute_date_value(**kwargs):
         if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
             date_planned = row.cells[cell_nb].data
         else:
-            warning_list.append('The date format was not correct. The date from the header has been taken.')
+            warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
-        warning_list.append('The date format was not correct. The date from the header has been taken.')
+        warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
+
+
+def compute_expiry_date_value(**kwargs):
+    """
+    Retrieves Date from Excel file or take the one from the parent
+    """
+    row = kwargs['row']
+    cell_nb = kwargs['cell_nb']
+    error_list = kwargs['to_write']['error_list']
+    expiry_date = None
+    try:
+        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime' and row.cells[cell_nb].data:
+            expiry_date = row.cells[cell_nb].data
+        else:
+            error_list.append('The date format was not correct.')
+    except IndexError:
+        pass
+    return {'expiry_date': expiry_date, 'error_list': error_list}
 
 
 def compute_currency_value(cr, uid, **kwargs):
     """
     Retrieves Currency from Excel file or take the one from the parent
     """
+    context = kwargs['context']
     row = kwargs['row']
     functional_currency_id = kwargs['to_write']['functional_currency_id']
     warning_list = kwargs['to_write']['warning_list']
@@ -278,32 +353,32 @@ def compute_currency_value(cr, uid, **kwargs):
             if curr:
                 if row.cells[cell_nb].type == 'str':
                     curr_name = curr.strip().upper()
-                    currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)])
+                    currency_ids = currency_obj.search(cr, uid, [('name', '=', curr_name)], context=context)
                     if currency_ids and browse_sale:
                         if currency_ids[0] == browse_sale.pricelist_id.currency_id.id:
                             fc_id = currency_ids[0]
                         else:
                             imported_curr_name = currency_obj.browse(cr, uid, currency_ids)[0].name
                             default_curr_name = browse_sale.pricelist_id.currency_id.name
-                            msg = "The imported currency '%s' was not consistent and has been replaced by the \
-                                currency '%s' of the order, please check the price." % (imported_curr_name, default_curr_name)
+                            msg = _("The imported currency '%s' was not consistent and has been replaced by the \
+                                currency '%s' of the order, please check the price.") % (imported_curr_name, default_curr_name)
                     elif currency_ids and browse_purchase:
                         if currency_ids[0] == browse_purchase.pricelist_id.currency_id.id:
                             fc_id = currency_ids[0]
                         else:
                             imported_curr_name = currency_obj.browse(cr, uid, currency_ids)[0].name
                             default_curr_name = browse_purchase.pricelist_id.currency_id.name
-                            msg = "The imported currency '%s' was not consistent and has been replaced by the \
-                                currency '%s' of the order, please check the price." % (imported_curr_name, default_curr_name)
+                            msg = _("The imported currency '%s' was not consistent and has been replaced by the \
+                                currency '%s' of the order, please check the price.") % (imported_curr_name, default_curr_name)
                 else:
-                    msg = 'The Currency Name was not valid, it has to be a string.'
+                    msg = _('The Currency Name was not valid, it has to be a string.')
         if fc_id:
             functional_currency_id = fc_id
         else:
-            warning_list.append(msg or 'The Currency Name was not found.')
+            warning_list.append(msg or _('The Currency Name was not found.'))
     # if the cell is empty
     except IndexError:
-        warning_list.append('The Currency Name was not found.')
+        warning_list.append(_('The Currency Name was not found.'))
     return {'functional_currency_id': functional_currency_id, 'warning_list': warning_list}
 
 
@@ -318,12 +393,12 @@ def comment_value(**kwargs):
     cell_nb = kwargs['cell_nb']
     try:
         if not row.cells[cell_nb]:
-            warning_list.append("No comment was defined")
+            warning_list.append(_("No comment was defined"))
         else:
             if comment and row.cells[cell_nb].data:
                 comment += ', %s' % row.cells[cell_nb].data
             elif row.cells[cell_nb].data:
                 comment = row.cells[cell_nb].data
     except IndexError:
-        warning_list.append("No comment was defined")
+        warning_list.append(_("No comment was defined"))
     return {'comment': comment, 'warning_list': warning_list}

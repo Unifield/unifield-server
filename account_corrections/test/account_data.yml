@@ -1,4 +1,19 @@
 -
+  Create a product category
+-
+  !record {model: product.category, id: product_cat1}:
+    name: Categ1
+-
+  Create the product P11
+-
+  !record {model: product.product, id: product11}:
+    categ_id: product_cat1
+    name: P11
+    supply_method: buy
+    type: product
+    uom_id: product.product_uom_unit
+    uom_po_id: product.product_uom_unit
+-
   I create an analytic Correction Journal
 -
   !record {model: account.analytic.journal, id: analytic_journal_correction}:
@@ -144,7 +159,7 @@
         'account_id': ref('account_account_expense0'),
         'name': 'Product PC1',
         'price_unit': 50.0,
-        'product_id': ref('product.product_product_pc1'),
+        'product_id': ref('product11'),
         'quantity': 5.0,
         'uos_id': ref('product.product_uom_unit'),
         'invoice_id': ref('account_corrections.invoice_account_correction_1'),

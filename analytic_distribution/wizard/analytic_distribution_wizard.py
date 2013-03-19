@@ -559,6 +559,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line"),
         'amount': fields.function(_get_amount, method=True, string="Total amount", type="float", readonly=True),
         'from_direct_inv': fields.many2one('account.bank.statement.line', string="Register Line For Direct Invoice"),
+        'posting_date': fields.date('Posting date', readonly=True),
+        'document_date': fields.date('Document date', readonly=True),
     }
 
     _defaults = {
@@ -742,19 +744,19 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Process funding pool lines to retrieve cost centers and their total percentage
         cc_data = {}
         for line in wizard.fp_line_ids:
-            if not cc_data.get(line.cost_center_id.id, False):
-                cc_data[line.cost_center_id.id] = 0.0
-            cc_data[line.cost_center_id.id] += line.percentage
+            if not cc_data.get((line.cost_center_id.id, line.destination_id.id), False):
+                cc_data[(line.cost_center_id.id, line.destination_id.id)] = 0.0
+            cc_data[(line.cost_center_id.id, line.destination_id.id)] += line.percentage
         # Do update of cost center lines
         update_lines = [] # lines that have been updated
         cc_obj = self.pool.get('analytic.distribution.wizard.lines')
         for el in cc_data:
             res = False
-            search_ids = cc_obj.search(cr, uid, [('analytic_id', '=', el), ('wizard_id', '=', wizard.id)], context=context)
+            search_ids = cc_obj.search(cr, uid, [('analytic_id', '=', el[0]), ('wizard_id', '=', wizard.id), ('destination_id', '=', el[1])], context=context)
             # Create a new entry if no one for this cost center
             if not search_ids:
                 res = cc_obj.create(cr, uid, {'wizard_id': wizard.id, 'percentage': cc_data[el], 'type': 'cost.center',
-                    'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el,}, context=context)
+                    'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
             # else change current cost center
             else:
                 res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el]}, context=context)
@@ -879,6 +881,40 @@ class analytic_distribution_wizard(osv.osv_memory):
                 line_obj.unlink(cr, uid, obj_id, context=context)
         return True
 
+    def _check_analytic_account_validity(self, cr, uid, ids, context=None):
+        """
+        Check analytic account validity regarding posting/document date.
+        Note: The date in the context will determine 
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for w in self.browse(cr, uid, ids):
+            # UF-1678
+            # For Cost center and destination analytic accounts, check is done on POSTING date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
+            if w.distribution_id and w.posting_date:
+                # First we check cost center distribution line with CC (analytic_id) and destination (destination_id)
+                for cline in self.pool.get('cost.center.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.cost_center_lines], {'date': w.posting_date}):
+                    if not cline.analytic_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Cost center account %s is not active at this date: %s') % (cline.analytic_id.code or '', w.posting_date))
+                    if not cline.destination_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (cline.destination_id.code or '', w.posting_date))
+                # Then we check funding pool distribution line with CC (cost_center_id) and destination (destination_id)
+                for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
+                    if not fpline.cost_center_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Cost center %s is not active at this date: %s') % (fpline.cost_center_id.code or '', w.posting_date))
+                    if not fpline.destination_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Destination %s is not active at this date: %s') % (fpline.destination_id.code or '', w.posting_date))
+            # UF-1678
+            # For funding pool analytic account, check is done on DOCUMENT date. It HAVE TO BE in context to be well processed (filter_active is a function that need a context)
+            if w.distribution_id and w.document_date:
+                # We only check funding pool distribution line on which there is funding pool analytic account
+                for fpline in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x.id for x in w.distribution_id.funding_pool_lines], {'date': w.posting_date}):
+                    if not fpline.analytic_id.filter_active:
+                        raise osv.except_osv(_('Error'), _('Funding Pool %s is not active at this date: %s') % (fpline.analytic_id.code or '', w.document_date))
+        return True
+
     def button_confirm(self, cr, uid, ids, context=None):
         """
         Calculate total of lines and verify that it's equal to total_amount
@@ -889,8 +925,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Then update cost center lines
-            #if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
-            #    raise osv.except_osv(_('Error'), _('Cost center update failure.'))
+            if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
+                raise osv.except_osv(_('Error'), _('Cost center update failure.'))
             # First do some verifications before writing elements
             self.wizard_verifications(cr, uid, wiz.id, context=context)
             # And do distribution creation if necessary
@@ -923,6 +959,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                     account_id = wiz.account_id and wiz.account_id.id or False
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, distrib_id, account_id)
                     break
+        # Check dates for all analytic account type
+        self._check_analytic_account_validity(cr, uid, ids)
         # Return on direct invoice if we come from this one
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):

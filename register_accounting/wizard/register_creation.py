@@ -51,7 +51,7 @@ class register_creation_lines(osv.osv_memory):
         'period_id': fields.many2one('account.period', string='Period', required=True, readonly=True),
         'currency_id': fields.many2one("res.currency", string="Currency", required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', string="Journal", required=True, readonly=True),
-        'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Register'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
+        'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Statement'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement", 
             required=False, readonly=True, string="Previous register", store=False),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),

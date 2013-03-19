@@ -50,6 +50,23 @@ class real_average_consumption(osv.osv):
             
         return res
 
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the real consumption report contains a line with an inactive product
+        '''
+        inactive_lines = self.pool.get('real.average.consumption.line').search(cr, uid, [
+            ('product_id.active', '=', False),
+            ('rac_id', 'in', ids),
+            ('rac_id.created_ok', '=', True)
+        ], context=context)
+
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -57,6 +74,8 @@ class real_average_consumption(osv.osv):
         and stock moves has been generated
         '''
         for report in self.browse(cr, uid, ids, context=context):
+            if report.state == 'done':
+                raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
                     raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
@@ -125,18 +144,24 @@ class real_average_consumption(osv.osv):
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
+        'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
     }
-    
+
     _defaults = {
         'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
+        'state': lambda *a: 'draft',
     }
 
     _sql_constraints = [
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
+    ]
+
+    _constraints = [
+        (_check_active_product, "You cannot confirm this real consumption report because it contains a line with an inactive product", ['line_ids', 'created_ok']),
     ]
 
     def change_cons_location_id(self, cr, uid, ids, context=None):
@@ -182,6 +207,39 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
+    def draft_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state':'draft'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+    def cancel_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+
     def process_moves(self, cr, uid, ids, context=None):
         '''
         Creates all stock moves according to the report lines
@@ -241,11 +299,11 @@ class real_average_consumption(osv.osv):
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
-                                                       'reason_type_id': reason_type_id})
+                                                        'reason_type_id': reason_type_id})
                     move_ids.append(move_id)
                     line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
-            self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
+            self.write(cr, uid, [rac.id], {'picking_id': picking_id, 'state': 'done'}, context=context)
 
             # Confirm the picking
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
@@ -500,17 +558,18 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00 and not context.get('noraise'):
+            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
-                                                    ('type', '=', 'internal'),
-                                                    ('product_id', '=', obj.product_id.id)])
+                                                                                  ('type', '=', 'internal'),
+                                                                                  ('product_id', '=', obj.product_id.id)], context=context)
                 expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'), 
                             _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or _('No expiry date set')))
                     elif context.get('import_in_progress'):
-                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)") % (context.get('line_num', False), strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
+                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)"
+                                               ) % (context.get('line_num', False), expiry_date and strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
                         context.update({'error_message': error_message})
                 else:
                     prodlot_id = prod_ids[0]
@@ -551,6 +610,22 @@ class real_average_consumption_line(osv.osv):
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
 
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.product_id and not line.product_id.active:
+                res[line.id] = {
+                    'inactive_product': True,
+                    'inactive_error': _('The product in line is inactive !')
+                }
+
+        return res
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'ref': fields.related('product_id', 'default_code', type='char', size=64, readonly=True, 
@@ -571,6 +646,13 @@ class real_average_consumption_line(osv.osv):
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        }
+
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
     }
 
 # uf-1344 => need to pass the context so we use create and write instead

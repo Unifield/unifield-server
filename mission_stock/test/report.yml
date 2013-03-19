@@ -1,5 +1,5 @@
 -
-  In order to test the local instance repot, we need
+  In order to test the local instance report, we need
   to update the local mission stock report
 -
   !python {model: stock.mission.report}: |

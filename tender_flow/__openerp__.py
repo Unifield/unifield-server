@@ -35,6 +35,11 @@
     Add sourcing specification
     """,
     'test': ['test/tender_flow.yml',
+             'test/deactivate_product_rfq_draft.yml',
+             'test/deactivate_product_sent_rfq.yml',
+             'test/deactivate_product_send_rfq.yml',
+             'test/deactivate_product_tender_draft.yml',
+             'test/deactivate_product_tender_gen_rfq.yml',
              ],
     'update_xml': [
         'security/ir.model.access.csv',

@@ -23,6 +23,7 @@
 
 from osv import osv
 from tools.translate import _
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=None):
     """
@@ -33,10 +34,6 @@ def _get_third_parties(self, cr, uid, ids, field_name=None, arg=None, context=No
         if st_line.employee_id:
             res[st_line.id] = {'third_parties': 'hr.employee,%s' % st_line.employee_id.id}
             res[st_line.id]['partner_type'] = {'options': [('hr.employee', 'Employee')], 'selection': 'hr.employee,%s' % st_line.employee_id.id}
-        elif st_line.register_id:
-            res[st_line.id] = {'third_parties': 'account.bank.statement,%s' % st_line.register_id.id}
-            res[st_line.id]['partner_type'] = {'options': [('account.bank.statement', 'Register')], 
-                'selection': 'account.bank.statement,%s' % st_line.register_id.id}
         elif st_line.transfer_journal_id:
             res[st_line.id] = {'third_parties': 'account.journal,%s' % st_line.transfer_journal_id.id}
             res[st_line.id]['partner_type'] = {'options': [('account.journal', 'Journal')], 
@@ -65,29 +62,30 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
     """
     Set some fields in function of "Third Parties" field
     """
-    if name and value:
-        fields = value.split(",")
-        element = fields[0]
+    if name:
+        element = False
+        if value:
+            fields = value.split(",")
+            element = fields[0]
         sql = "UPDATE %s SET " % self._table
-        obj = False
+        emp_val = 'Null'
+        par_val = 'Null'
+        tra_val = 'Null'
         if element == 'hr.employee':
-            obj = 'employee_id'
-        elif element == 'account.bank.statement':
-            obj = 'register_id'
+            emp_val = fields[1] or 'Null'
         elif element == 'res.partner':
-            obj = 'partner_id'
+            par_val = fields[1] or 'Null'
         elif element == 'account.journal':
-            obj = 'transfer_journal_id'
-        if obj:
-            sql += "%s = %s " % (obj, fields[1])
-            sql += "WHERE id = %s" % id
-            if self._table == 'wizard_journal_items_corrections_lines':
-                self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
-                return True
-            cr.execute(sql)
+            tra_val = fields[1] or 'Null'
+        sql += "employee_id = %s, partner_id = %s, transfer_journal_id = %s " % (emp_val, par_val, tra_val)
+        sql += "WHERE id = %s" % id
+        if self._table == 'wizard_journal_items_corrections_lines':
+            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
+            return True
+        cr.execute(sql)
     # Delete values for Third Parties if no value given
     elif name == 'partner_type' and not value:
-        cr.execute("UPDATE %s SET employee_id = Null, register_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
+        cr.execute("UPDATE %s SET employee_id = Null, partner_id = Null, transfer_journal_id = Null WHERE id = %s" % (self._table, id))
     return True
 
 def _get_third_parties_name(self, cr, uid, vals, context=None):
@@ -95,7 +93,6 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
     Get third parties name from vals that could contain:
      - partner_type: displayed as "object,id"
      - partner_id: the id of res.partner
-     - register_id: the id of account.bank.statement
      - employee_id: the id of hr.employee
     """
     # Prepare some values
@@ -110,6 +107,8 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
         if len(a) and len(a) > 1:
             b = self.pool.get(a[0]).browse(cr, uid, [int(a[1])], context=context)
             res = b and b[0] and b[0].name or ''
+            if a[0] == "account.journal":
+                res = b and b[0] and b[0].code or ''
             return res
     if 'partner_id' in vals and vals.get('partner_id', False):
         partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')], context=context)
@@ -117,9 +116,6 @@ def _get_third_parties_name(self, cr, uid, vals, context=None):
     if 'employee_id' in vals and vals.get('employee_id', False):
         employee = self.pool.get('hr.employee').browse(cr, uid, [vals.get('employee_id')], context=context)
         res = employee and employee[0] and employee[0].name or ''
-    if 'register_id' in vals and vals.get('register_id', False):
-        register = self.pool.get('account.bank.statement').browse(cr, uid, [vals.get('register_id')], context=context)
-        res = register and register[0] and register[0].name or ''
     if 'transfer_journal_id' in vals and vals.get('transfer_journal_id', False):
         journal = self.pool.get('account.journal').browse(cr, uid, [vals['transfer_journal_id']], context=context)
         res = journal and journal[0] and journal[0].code or ''
@@ -310,4 +306,5 @@ def create_cashbox_lines(self, cr, uid, register_ids, ending=False, context=None
             if balance:
                 st_obj.write(cr, uid, [next_reg_id], {'balance_start': balance}, context=context)
     return True
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
