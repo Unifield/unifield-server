@@ -310,7 +310,7 @@ class purchase_order(osv.osv):
                     else:
                         # Change CC lines
                         for cc_line in ana_obj.browse(cr, uid, distrib_id).cost_center_lines:
-                            self.pool.get('cost.center.distribution.line').write(cr, uid, cc_line.id, {'analytic_id': intermission_cc[1]})
+                            self.pool.get('cost.center.distribution.line').write(cr, uid, [cc_line.id], {'analytic_id': intermission_cc[1]})
         return True
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
