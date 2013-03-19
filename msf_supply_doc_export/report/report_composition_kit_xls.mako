@@ -43,7 +43,7 @@
 </Styles>
 ## ==================================== we loop over the composition_kit so "objects" == composition_kit  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s %s %s" % (o.composition_product_id and o.composition_product_id.default_code.replace('/', '_'), o.composition_version_txt and o.composition_version_txt.replace('/', '_'), o.composition_creation_date and o.composition_creation_date.replace('/', '_'))|x}">
+<ss:Worksheet ss:Name="${"%s %s %s" % (o.composition_product_id and o.composition_product_id.default_code.replace('/', '_') or '', o.composition_version_txt and o.composition_version_txt.replace('/', '_') or '', o.composition_creation_date and o.composition_creation_date.replace('/', '_') or '')|x}">
 
 ## definition of the columns' size
 <Table x:FullColumns="1" x:FullRows="1">
