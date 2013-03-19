@@ -284,7 +284,7 @@ class purchase_order(osv.osv):
             intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
             'analytic_account_project_intermission')[1]
         except ValueError:
-            intermission_cc = None
+            intermission_cc = 0
         ana_obj = self.pool.get('analytic.distribution')
         # Check partner
         for p in self.browse(cr, uid, ids):
@@ -294,7 +294,6 @@ class purchase_order(osv.osv):
             if p.partner_id and p.partner_id.partner_type == 'intermission':
                 if not intermission_cc and not po.from_yml_test:
                     raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
-
                 for pl in p.order_line:
                     # Fetch analytic distribution from purchase order line, if none, take those from purchase.
                     distrib_id = pl.analytic_distribution_id and pl.analytic_distribution_id.id or p_distrib_id or False
