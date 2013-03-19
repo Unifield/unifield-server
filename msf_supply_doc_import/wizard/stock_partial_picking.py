@@ -162,9 +162,8 @@ class stock_partial_picking(osv.osv_memory):
                     info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
                         % (file_line_num, prodlot_name, expired_date, product.default_code))
                 except orm.except_orm as orm_error:
-                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors. Details: %s" % (file_line_num, orm_error.value))
-                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
-                    return False, prodlot_id
+                    error_list.append("Line %s of the Excel file, the batch was reset. Details: %s" % (file_line_num, orm_error.value))
+                    return True, prodlot_id
             elif not prodlot_name:
                 return True, prodlot_id
             else:
