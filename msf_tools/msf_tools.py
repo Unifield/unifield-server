@@ -514,8 +514,6 @@ class product_uom(osv.osv):
         uom = self.browse(cr, uid, uom_id, context=context)
         rounding_value = Decimal(str(uom.rounding).rstrip('0'))
 
-        print rounding_value
-
         return float(Decimal(str(qty)).quantize(rounding_value, rounding=ROUND_UP))
 
 product_uom()

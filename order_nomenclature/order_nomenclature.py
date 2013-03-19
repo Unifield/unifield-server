@@ -328,6 +328,14 @@ class sale_order_line(osv.osv):
         result = self.product_id_change(cr, uid, ids, pricelist, product, qty,
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
+
+        # Round up the quantity
+        res = self.onchange_uom(cr, uid, ids, result.get('value', {}).get('product_id', product),
+                                              result.get('value', {}).get('product_uom', uom),
+                                              result.get('value', {}).get('product_uom_qty', qty))
+
+        result.setdefault('value', {}).update(res.setdefault('value', {}))
+
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
