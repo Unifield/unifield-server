@@ -1,17 +1,17 @@
-active,code,name,type
-TRUE,PUR,Purchase,purchase
-TRUE,PURR,Purchase Refund,purchase
-TRUE,SAL,Sale,sale
-TRUE,SALR,Sale Refund,sale
-TRUE,OD,Correction,general
-TRUE,AHQ,Analytic HQ,hq
-TRUE,AHQ-Exp,HQ - Field expenses,hq
-TRUE,HR,HR,hr
-TRUE,BNK,Bank,general
-TRUE,CAS,Cash,cash
-TRUE,CHK,Cheque,general
-TRUE,ENG,Engagement Journal,engagement
-TRUE,AMT,Miscellaneous Transactions Journal,general
-TRUE,AC,Accruals,general
-TRUE,AIKD,Analytic In-kind Donation,inkind
-TRUE,AINT,Analytic Intermission,intermission
+"id","active","code","name","type"
+"purchase","TRUE","PUR","Purchase","purchase"
+"purchase_refund","TRUE","PURR","Purchase Refund","purchase"
+"sale","TRUE","SAL","Sale","sale"
+"sale_refund","TRUE","SALR","Sale Refund","sale"
+"correction","TRUE","OD","Correction","general"
+"analytic_hq","TRUE","AHQ","Analytic HQ","hq"
+"hq_-_field_expenses","TRUE","AHQ-Exp","HQ - Field expenses","hq"
+"hr","TRUE","HR","HR","hr"
+"bank","TRUE","BNK","Bank","general"
+"cash","TRUE","CAS","Cash","cash"
+"cheque","TRUE","CHK","Cheque","general"
+"engagement_journal","TRUE","ENG","Engagement Journal","engagement"
+"miscellaneous_transactions_journal","TRUE","AMT","Miscellaneous Transactions Journal","general"
+"accruals","TRUE","AC","Accruals","general"
+"analytic_in-kind_donation","TRUE","AIKD","Analytic In-kind Donation","inkind"
+"analytic_intermission","TRUE","AINT","Analytic Intermission","intermission"
