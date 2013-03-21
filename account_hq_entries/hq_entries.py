@@ -101,7 +101,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     del common_vals['destination_id']
                     if f1_id:
