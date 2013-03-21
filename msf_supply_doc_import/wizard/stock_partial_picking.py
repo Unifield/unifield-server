@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+import logging
 import threading
 import pooler
 from osv import fields, osv, orm
@@ -159,10 +160,13 @@ class stock_partial_picking(osv.osv_memory):
             elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)], context=context) and prodlot_name and expired_date:
                 try:
                     prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
-                    info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
-                        % (file_line_num, prodlot_name, expired_date, product.default_code))
+                    # no error message to keep the same existing logic as when we import a date on a product that does not takes expiry date
+#                    info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+#                        % (file_line_num, prodlot_name, expired_date, product.default_code))
                 except orm.except_orm as orm_error:
-                    error_list.append("Line %s of the Excel file, the batch was reset. Details: %s" % (file_line_num, orm_error.value))
+                    logging.getLogger('vertical integration of incoming shipment').info("Line %s of the Excel file, the batch was reset. Details: %s" % (file_line_num, orm_error.value))
+                    # we are just ignoring the error
+#                    error_list.append("Line %s of the Excel file, the batch was reset. Details: %s" % (file_line_num, orm_error.value))
                     return True, prodlot_id
             elif not prodlot_name:
                 return True, prodlot_id
