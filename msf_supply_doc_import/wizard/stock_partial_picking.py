@@ -631,7 +631,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
         if error_list or error:
-            error += 'Reported errors :' + '\n'.join(error_list)
+            error += 'Reported errors :\n' + '\n'.join(error_list)
         info += '\n'.join(info_list)
         message = '''Importation completed !
 # of imported lines : %s
