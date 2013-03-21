@@ -898,7 +898,7 @@
         <act_window
             id="account.act_account_move_to_account_move_line_open"
             name="Journal Items"
-            context="{'search_default_move_id':[active_id]}"
+            domain="[('move_id', 'in', [active_id])]"
             res_model="account.move.line"
             src_model="account.move"
             view_id="view_move_line_tree_from_move"/>
