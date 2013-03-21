@@ -1,4 +1,4 @@
 "id","type","property_account_expense_categ","property_account_income_categ","name","family_id"
-"oral_drugs","Normal","6400 Medicines","6400 Medicines","Oral drugs","Oral drugs"
-"injectable_drugs","Normal","6400 Medicines","6400 Medicines","Injectable drugs","Injectable drugs"
-"data_processing","Normal","6303 Office : furniture, IT, energy equipment","6303 Office : furniture, IT, energy equipment","Data processing","Data processing"
+"category_oral_drugs","Normal","6400 Medicines","6400 Medicines","Oral drugs","Oral drugs"
+"category_injectable_drugs","Normal","6400 Medicines","6400 Medicines","Injectable drugs","Injectable drugs"
+"category_data_processing","Normal","6303 Office : furniture, IT, energy equipment","6303 Office : furniture, IT, energy equipment","Data processing","Data processing"
