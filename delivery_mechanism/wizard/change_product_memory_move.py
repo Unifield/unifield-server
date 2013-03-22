@@ -32,11 +32,13 @@ class change_product_memory_move(osv.osv_memory):
     _description = "Change Product of Memory Move"
     _columns = {'old_product_id': fields.many2one('product.product', string='Present Product', readonly=True),
                 'old_uom_id': fields.many2one('product.uom', 'Restricted UoM', readonly=True),
+                'old_uom_category_id': fields.many2one('product.uom.categ', 'Restricted UoM Category', readonly=True),
                 'new_product_id': fields.many2one('product.product', string='New Product'),
                 'change_reason': fields.char(string='Change Reason', size=1024),
                 }
     _defaults = {'old_product_id': lambda obj, cr, uid, c: c and c.get('product_id', False),
                  'old_uom_id': lambda obj, cr, uid, c: c and c.get('uom_id', False),
+                 'old_uom_category_id': lambda obj, cr, uid, c: c and c.get('uom_category_id', False),
                  }
     
     def cancel(self, cr, uid, ids, context=None):
