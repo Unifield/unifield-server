@@ -19,18 +19,19 @@
 #
 ##############################################################################
 import threading
+import logging
 import pooler
 from osv import osv, fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
-from msf_supply_doc_import import check_line
-from msf_supply_doc_import.wizard import FO_LINE_COLUMNS_FOR_IMPORT as columns_for_fo_line_import
+from msf_doc_import import check_line
+from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
 
-class wizard_import_fo_line(osv.osv_memory):
-    _name = 'wizard.import.fo.line'
-    _description = 'Import FO Lines from Excel sheet'
+class wizard_import_po_line(osv.osv_memory):
+    _name = 'wizard.import.po.line'
+    _description = 'Import PO Lines from Excel sheet'
 
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
@@ -45,7 +46,7 @@ class wizard_import_fo_line(osv.osv_memory):
     _columns = {
         'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True),
-        'fo_id': fields.many2one('sale.order', string='Field Order', required=True),
+        'po_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),
         'filename_template': fields.char('Templates', size=256),
@@ -59,35 +60,31 @@ class wizard_import_fo_line(osv.osv_memory):
         '''
         Import file
         '''
+        if context is None:
+            context = {}
         if not context.get('yml_test', False):
             cr = pooler.get_db(dbname).cursor()
         else:
             cr = dbname
-        
-        if context is None:
-            context = {}
-        wiz_common_import = self.pool.get('wiz.common.import')
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
+        wiz_common_import = self.pool.get('wiz.common.import')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
         currency_obj = self.pool.get('res.currency')
-        sale_obj = self.pool.get('sale.order')
-        sale_line_obj = self.pool.get('sale.order.line')
+        purchase_obj = self.pool.get('purchase.order')
+        purchase_line_obj = self.pool.get('purchase.order.line')
         line_with_error = []
         vals = {'order_line': []}
         
         for wiz_browse in self.browse(cr, uid, ids, context):
-            fo_browse = wiz_browse.fo_id
-            fo_id = fo_browse.id
+            po_browse = wiz_browse.po_id
+            po_id = po_browse.id
             
             ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
-            line_ignored_num = []
-            error_list = []
-            error_log = ''
-            message = ''
-            line_num = 0
+            line_ignored_num, error_list = [], []
+            error_log, message = '', ''
             header_index = context['header_index']
             
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
@@ -98,9 +95,9 @@ class wizard_import_fo_line(osv.osv_memory):
             line_num = 0
             to_write = {}
             total_line_num = len([row for row in file_obj.getRows()])
-            percent_completed = 0
             for row in rows:
                 line_num += 1
+                percent_completed = float(line_num)/float(total_line_num-1)*100.0
                 # default values
                 to_write = {
                     'error_list': [],
@@ -108,14 +105,14 @@ class wizard_import_fo_line(osv.osv_memory):
                     'to_correct_ok': False,
                     'show_msg_ok': False,
                     'comment': '',
-                    'date_planned': fo_browse.delivery_requested_date,
-                    'functional_currency_id': fo_browse.pricelist_id.currency_id.id,
-                    'price_unit': 1,  # in case that the product is not found and we do not have price
+                    'date_planned': po_browse.delivery_requested_date,
+                    'functional_currency_id': po_browse.pricelist_id.currency_id.id,
+                    'price_unit': 1,  # as the price unit cannot be null, it will be computed in the method "compute_price_unit" after.
                     'product_qty': 1,
-                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
-                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
-                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
-                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
+                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                     'proc_type': 'make_to_order',
                     'default_code': False,
                     'confirmed_delivery_date': False,
@@ -124,11 +121,10 @@ class wizard_import_fo_line(osv.osv_memory):
                 col_count = len(row)
                 template_col_count = len(header_index.items())
                 if col_count != template_col_count:
-                    message += _("""Line %s in the Excel file: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_fo_line_import))
+                    message += _("""Line %s: You should have exactly %s columns in this order: %s \n""") % (line_num, template_col_count,','.join(columns_for_po_line_import))
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     self.write(cr, uid, ids, {'percent_completed':percent_completed})
                     continue
                 try:
@@ -141,65 +137,65 @@ class wizard_import_fo_line(osv.osv_memory):
     
                     # Cell 0: Product Code
                     p_value = {}
-                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'], 'price_unit': p_value['price_unit'],
-                                     'comment': p_value['comment'], 'error_list': p_value['error_list'], 'type': p_value['proc_type']})
+                    p_value = check_line.product_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],product_obj=product_obj, row=row, to_write=to_write, context=context)
+                    to_write.update({'default_code': p_value['default_code'], 'product_id': p_value['default_code'],
+                                     'comment': p_value['comment'], 'error_list': p_value['error_list']})
     
                     # Cell 2: Quantity
                     qty_value = {}
-                    qty_value = check_line.quantity_value(product_obj=product_obj, row=row, to_write=to_write, context=context)
-                    to_write.update({'product_uom_qty': qty_value['product_qty'], 'error_list': qty_value['error_list']})
+                    qty_value = check_line.quantity_value(product_obj=product_obj, cell_nb=header_index[_('Quantity')], row=row, to_write=to_write, context=context)
+                    to_write.update({'product_qty': qty_value['product_qty'], 'error_list': qty_value['error_list'],
+                                     'warning_list': qty_value['warning_list']})
     
                     # Cell 3: UOM
                     uom_value = {}
-                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
+                    uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('UoM')], product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
     
                     # Cell 4: Price
                     price_value = {}
-                    price_value = check_line.compute_price_value(row=row, to_write=to_write, price='Field Price', context=context)
+                    price_value = check_line.compute_price_value(row=row, to_write=to_write, cell_nb=header_index[_('Price')], price='Cost Price', context=context)
                     to_write.update({'price_unit': price_value['price_unit'], 'error_list': price_value['error_list'],
-                                     'warning_list': price_value['warning_list']})
+                                     'warning_list': price_value['warning_list'], 'price_unit_defined': price_value['price_unit_defined']})
     
-                    # Cell 5: Date
+                    # Cell 5: Delivery Request Date
                     date_value = {}
-                    date_value = check_line.compute_date_value(row=row, to_write=to_write, context=context)
-                    to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list'],
-                                     'warning_list': date_value['warning_list']})
+                    date_value = check_line.compute_date_value(cell_nb=header_index[_('Delivery requested date')], row=row, to_write=to_write, context=context)
+                    to_write.update({'date_planned': date_value['date_planned'], 'error_list': date_value['error_list']})
     
                     # Cell 6: Currency
                     curr_value = {}
-                    curr_value = check_line.compute_currency_value(cr, uid, cell_nb=6, browse_sale=fo_browse,
+                    curr_value = check_line.compute_currency_value(cr, uid, cell_nb=header_index[_('Currency')], browse_purchase=po_browse,
                                                         currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
     
                     # Cell 7: Comment
                     c_value = {}
-                    c_value = check_line.comment_value(row=row, cell_nb=7, to_write=to_write, context=context)
+                    c_value = check_line.comment_value(row=row, cell_nb=header_index[_('Comment')], to_write=to_write, context=context)
                     to_write.update({'comment': c_value['comment'], 'warning_list': c_value['warning_list']})
                     to_write.update({
                         'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                         'show_msg_ok': any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
-                        'order_id': fo_browse.id,
+                        'order_id': po_browse.id,
                         'text_error': '\n'.join(to_write['error_list'] + to_write['warning_list']),
                     })
                     # we check consistency on the model of on_change functions to call for updating values
-                    sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
-                    # write order line on FO
-                    vals['order_line'].append((0, 0, to_write))
-                    if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
-                        sale_line_obj.create(cr, uid, to_write, context=context)
+                    purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
+
+                    # write order line on PO
+                    if purchase_obj._check_service(cr, uid, po_id, vals, context=context):
+                        purchase_line_obj.create(cr, uid, to_write, context=context)
+                        vals['order_line'].append((0, 0, to_write))
                         if to_write['error_list']:
                             lines_to_correct += 1
-                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
                         complete_lines += 1
 
                 except IndexError, e:
-                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
+                    error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
+                                   ) % (line_num, template_col_count, e)
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     cr.rollback()
                     continue
                 except osv.except_osv as osv_error:
@@ -208,7 +204,18 @@ class wizard_import_fo_line(osv.osv_memory):
                     message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                     ignore_lines += 1
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
-                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
+                    continue
+                except UnicodeEncodeError as e:
+                    message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    logging.getLogger('import purchase order').error('Error %s' % e)
+                    cr.rollback()
+                    continue
+                except Exception as e:
+                    message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                    logging.getLogger('import purchase order').error('Error %s' % e)
                     cr.rollback()
                     continue
                 finally:
@@ -216,12 +223,12 @@ class wizard_import_fo_line(osv.osv_memory):
                     if not context.get('yml_test', False):
                         cr.commit()
         
-            error_log += '\n'.join(error_list)
-            if error_log:
-                error_log = _("Reported errors for ignored lines : \n") + error_log
-            end_time = time.time()
-            total_time = str(round(end_time-start_time)) + _(' second(s)')
-            final_message = _(''' 
+        error_log += '\n'.join(error_list)
+        if error_log:
+            error_log = _("Reported errors for ignored lines : \n") + error_log
+        end_time = time.time()
+        total_time = str(round(end_time-start_time)) + _(' second(s)')
+        final_message = _(''' 
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
@@ -230,26 +237,29 @@ Importation completed in %s!
 
 %s
 ''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
-            wizard_vals = {'message': final_message, 'state': 'done'}
-            if line_with_error:
-                file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index)
-                wizard_vals.update(file_to_export)
-            self.write(cr, uid, ids, wizard_vals, context=context)
-            # we reset the state of the FO to draft (initial state)
-            sale_obj.write(cr, uid, fo_id, {'state': 'draft'}, context)
-            if not context.get('yml_test', False):
-                cr.commit()
-                cr.close()
+#        try:
+        wizard_vals = {'message': final_message, 'state': 'done'}
+        if line_with_error:
+            file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=header_index, context=context)
+            wizard_vals.update(file_to_export)
+        self.write(cr, uid, ids, wizard_vals, context=context)
+        # we reset the state of the PO to draft (initial state)
+        purchase_obj.write(cr, uid, po_id, {'state': 'draft'}, context)
+        if not context.get('yml_test', False):
+            cr.commit()
+            cr.close()
 
 
     def import_file(self, cr, uid, ids, context=None):
         """
         Launch a thread for importing lines.
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
-        sale_obj = self.pool.get('sale.order')
-        for wiz_read in self.read(cr, uid, ids, ['fo_id', 'file']):
-            fo_id = wiz_read['fo_id']
+        purchase_obj = self.pool.get('purchase.order')
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
+            po_id = wiz_read['po_id']
             if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
@@ -260,8 +270,8 @@ Importation completed in %s!
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'fo_id': fo_id, 'header_index': header_index})
-                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_fo_line_import)
+                context.update({'po_id': po_id, 'header_index': header_index})
+                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_po_line_import)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:
@@ -270,8 +280,8 @@ Importation completed in %s!
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            sale_obj.write(cr, uid, fo_id, {'state': 'done'}, context)
-        if not context.get('yml_test', False):
+            purchase_obj.write(cr, uid, po_id, {'state': 'done'}, context)
+        if not context.get('yml_test'):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
             thread.start()
         else:
@@ -286,12 +296,12 @@ Otherwise, you can continue to use Unifield.""")
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        sale_obj = self.pool.get('sale.order')
-        for wiz_read in self.read(cr, uid, ids, ['fo_id', 'state', 'file']):
-            fo_id = wiz_read['fo_id']
-            fo_name = sale_obj.read(cr, uid, fo_id, ['name'])['name']
+        purchase_obj = self.pool.get('purchase.order')
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'state', 'file']):
+            po_id = wiz_read['po_id']
+            po_name = purchase_obj.read(cr, uid, po_id, ['name'])['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (fo_name, )})
+                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (po_name, )})
         return False
 
     def cancel(self, cr, uid, ids, context=None):
@@ -301,14 +311,14 @@ Otherwise, you can continue to use Unifield.""")
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
-            fo_id = wiz_obj['fo_id']
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
         return {'type': 'ir.actions.act_window',
-                'res_model': 'sale.order',
+                'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
                 'target': 'crush',
-                'res_id': fo_id,
+                'res_id': po_id,
                 'context': context,
                 }
 
@@ -318,15 +328,15 @@ Otherwise, you can continue to use Unifield.""")
         '''
         if isinstance(ids, (int, long)):
             ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
-            fo_id = wiz_obj['fo_id']
+        for wiz_obj in self.read(cr, uid, ids, ['po_id']):
+            po_id = wiz_obj['po_id']
         return {'type': 'ir.actions.act_window',
-                'res_model': 'sale.order',
+                'res_model': 'purchase.order',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
                 'target': 'crush',
-                'res_id': fo_id,
+                'res_id': po_id,
                 'context': context,
                 }
 
-wizard_import_fo_line()
+wizard_import_po_line()

@@ -64,7 +64,7 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import time
-from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration
+from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration
 from msf_order_date import TRANSPORT_TYPE
 
 

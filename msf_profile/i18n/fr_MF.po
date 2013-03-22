@@ -198,7 +198,7 @@
 #	* account_override
 #	* l10n_it
 #	* reason_types_moves
-#	* msf_supply_doc_import
+#	* msf_doc_import
 #	* claim_from_delivery
 #	* crm_claim
 #	* msf_accrual
@@ -1225,7 +1225,7 @@ msgstr "Facture d'Avoir"
 msgid "This period is a number of past months the system has to consider for AMC calculation.By default this value is equal to the frequency in the Threshold."
 msgstr "Cette période est un nombre correspondant aux derniers mois que le système doit prendre en compte pour le calcul de la CMM. Cette valeur est égale par défaut à la fréquence définie sous Seuil."
 
-#. modules: reason_types_moves, msf_supply_doc_import, specific_rules, stock
+#. modules: reason_types_moves, msf_doc_import, specific_rules, stock
 #: constraint:initial.stock.inventory.line:0
 #: constraint:stock.inventory.line:0
 #: constraint:initial.stock.inventory.line:0
@@ -1272,8 +1272,8 @@ msgstr "Confirmer en cochant la case 'Êtes-vous sûr ?' !"
 msgid "Draft Picking - closed"
 msgstr "Brouillon Piquage – fermé"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:73
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:73
 #, python-format
 msgid "You should have exactly 3 columns in this order:\n"
 "Product Code*, Product Description*, Product Cost*"
@@ -1694,7 +1694,7 @@ msgstr "Journal C. / Nom du mouvement"
 msgid "Indicate if the catalogue is currently active."
 msgstr "Indiquer si le catalogue est actuellement actif."
 
-#. modules: supplier_catalogue, msf_supply_doc_import
+#. modules: supplier_catalogue, msf_doc_import
 #: view:purchase.order:0
 #: view:sale.order:0
 #: view:tender:0
@@ -3054,8 +3054,8 @@ msgstr "Vous venez d'un compte donation. Et le nouveau compte n'en n'est pas un.
 msgid "Analytic Distribution on Invoices"
 msgstr "Allocation Analytique sur Factures"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/purchase_order.py:240
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:240
 #, python-format
 msgid "\n"
 " You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."
@@ -3745,11 +3745,11 @@ msgstr "Validation Automatique"
 msgid "Payable Accounts"
 msgstr "Comptes Fournisseurs"
 
-#. modules: supplier_catalogue, msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:285
+#. modules: supplier_catalogue, msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:285
 #: code:addons/supplier_catalogue/supplier_catalogue.py:459
-#: code:addons/msf_supply_doc_import/check_line.py:75
-#: code:addons/msf_supply_doc_import/check_line.py:78
+#: code:addons/msf_doc_import/check_line.py:75
+#: code:addons/msf_doc_import/check_line.py:78
 #, python-format
 msgid "The import of lines had errors, please correct the red lines below"
 msgstr "L'importation de lignes comporte des erreurs, veuillez corriger les lignes rouges ci-dessous"
@@ -4054,8 +4054,8 @@ msgstr "\n"
 msgid "Module"
 msgstr "Module"
 
-#. modules: reason_types_moves, msf_supply_doc_import, specific_rules, stock
-#: model:ir.model,name:msf_supply_doc_import.model_initial_stock_inventory_line
+#. modules: reason_types_moves, msf_doc_import, specific_rules, stock
+#: model:ir.model,name:msf_doc_import.model_initial_stock_inventory_line
 #: model:ir.model,name:reason_types_moves.model_stock_inventory_line
 #: model:ir.model,name:specific_rules.model_initial_stock_inventory_line
 #: model:ir.model,name:specific_rules.model_stock_inventory_line
@@ -5529,12 +5529,12 @@ msgstr "Vous ne pouvez pas supprimer le model '%s' !"
 msgid "It indicates that a picking has been done"
 msgstr "Indique qu'un Piquage a été effectué."
 
-#. modules: msf_order_date, tender_flow, analytic_distribution_supply, procurement_request, order_nomenclature, service_purchasing, sale, specific_rules, kit, sale_override, order_line_number, msf_audittrail, msf_supply_doc_import, res_currency_functional, sourcing
+#. modules: msf_order_date, tender_flow, analytic_distribution_supply, procurement_request, order_nomenclature, service_purchasing, sale, specific_rules, kit, sale_override, order_line_number, msf_audittrail, msf_doc_import, res_currency_functional, sourcing
 #: model:ir.model,name:analytic_distribution_supply.model_sale_order_line
 #: model:ir.model,name:kit.model_sale_order_line
 #: model:ir.model,name:msf_audittrail.model_sale_order_line
 #: model:ir.model,name:msf_order_date.model_sale_order_line
-#: model:ir.model,name:msf_supply_doc_import.model_sale_order_line
+#: model:ir.model,name:msf_doc_import.model_sale_order_line
 #: model:ir.model,name:order_line_number.model_sale_order_line
 #: model:ir.model,name:order_nomenclature.model_sale_order_line
 #: model:ir.model,name:procurement_request.model_sale_order_line
@@ -6312,7 +6312,7 @@ msgstr "Prix - Type"
 msgid "Create Pick List"
 msgstr "Créer une Liste de Piquages"
 
-#. modules: msf_partner, msf_supply_doc_import
+#. modules: msf_partner, msf_doc_import
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
@@ -8508,7 +8508,7 @@ msgstr "Pas de taux fixé. Choisissez en un svp avant d'activer la monnaie."
 msgid "Scrap Products"
 msgstr "Produits Rebut"
 
-#. modules: account_msf, account, msf_outgoing, purchase_allocation_report, product_attributes, supplier_catalogue, sale, consumption_calculation, product, kit, sales_followup, procurement_cycle, sourcing, analytic_distribution_invoice, purchase_followup, stock_override, mission_stock, msf_supply_doc_export, return_claim, procurement_report, stock, msf_supply_doc_import
+#. modules: account_msf, account, msf_outgoing, purchase_allocation_report, product_attributes, supplier_catalogue, sale, consumption_calculation, product, kit, sales_followup, procurement_cycle, sourcing, analytic_distribution_invoice, purchase_followup, stock_override, mission_stock, msf_supply_doc_export, return_claim, procurement_report, stock, msf_doc_import
 #: field:account.analytic.line,product_uom_id:0
 #: field:account.move.line,product_uom_id:0
 #: view:account.invoice:0
@@ -8558,10 +8558,10 @@ msgstr "Produits Rebut"
 #: view:stock.production.lot:0
 #: view:stock.move:0
 #: field:pricelist.partnerinfo,uom_id:0
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:24
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:29
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:34
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:39
+#: code:addons/msf_doc_import/wizard/__init__.py:24
+#: code:addons/msf_doc_import/wizard/__init__.py:29
+#: code:addons/msf_doc_import/wizard/__init__.py:34
+#: code:addons/msf_doc_import/wizard/__init__.py:39
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -9190,9 +9190,9 @@ msgstr "Règles du Stock Minimum"
 msgid "Product filters"
 msgstr "Produit - Filtres"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/purchase_order.py:252
-#: code:addons/msf_supply_doc_import/sale_order.py:346
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:252
+#: code:addons/msf_doc_import/sale_order.py:346
 #, python-format
 msgid "You need to correct the following line%s: %s"
 msgstr "Vous devez corriger les lignes suivantes%s: %s"
@@ -10142,7 +10142,7 @@ msgstr "Créateur de Rapport"
 msgid "Partial Reconcile Entries"
 msgstr "Lettrage Partiel d'Ecritures"
 
-#. modules: stock, tender_flow, financing_contract, account_voucher, account_hq_entries, account_corrections, base_report_designer, register_accounting, procurement_cycle, msf_accrual, account_msf, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase, purchase_compare_rfq, board, product_list, analytic_distribution, threshold_value, account_payment, msf_homere_interface, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, res_currency_functional, procurement_report, msf_budget, account_invoice_split, account, stock_move_tracking, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, procurement, sourcing, msf_custom_settings, msf_audittrail, sd, msf_profile, msf_supply_doc_import
+#. modules: stock, tender_flow, financing_contract, account_voucher, account_hq_entries, account_corrections, base_report_designer, register_accounting, procurement_cycle, msf_accrual, account_msf, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase, purchase_compare_rfq, board, product_list, analytic_distribution, threshold_value, account_payment, msf_homere_interface, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, res_currency_functional, procurement_report, msf_budget, account_invoice_split, account, stock_move_tracking, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, procurement, sourcing, msf_custom_settings, msf_audittrail, sd, msf_profile, msf_doc_import
 #: view:account.addtmpl.wizard:0
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
@@ -13112,9 +13112,9 @@ msgstr "Total général :"
 msgid "Category"
 msgstr "Catégorie"
 
-#. modules: msf_supply_doc_import, sd
-#: model:product.category,name:msf_supply_doc_import.cat_tbd
-#: model:product.category,name:sd.msf_supply_doc_import_cat_tbd
+#. modules: msf_doc_import, sd
+#: model:product.category,name:msf_doc_import.cat_tbd
+#: model:product.category,name:sd.msf_doc_import_cat_tbd
 msgid "Product Categ to be defined"
 msgstr "Catégorie du Produit à définir"
 
@@ -13314,7 +13314,7 @@ msgstr "Suivre Lots Entrants"
 msgid "List Type :"
 msgstr "Type de Liste :"
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, msf_supply_doc_import, supplier_catalogue, stock_forecast, order_line_number, msf_order_date, partner_modification, procurement_request, service_purchasing, purchase_override, specific_rules, kit, sale_override, res_currency_functional, sales_followup, order_nomenclature, sale, sourcing, purchase, msf_audittrail, purchase_msf
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, msf_doc_import, supplier_catalogue, stock_forecast, order_line_number, msf_order_date, partner_modification, procurement_request, service_purchasing, purchase_override, specific_rules, kit, sale_override, res_currency_functional, sales_followup, order_nomenclature, sale, sourcing, purchase, msf_audittrail, purchase_msf
 #: sql_constraint:purchase.order.line:0
 #: sql_constraint:sale.order.line:0
 #: sql_constraint:purchase.order.line:0
@@ -14573,10 +14573,10 @@ msgstr "Vous devez d'abord compléter le champ du Centre de Coût avant de pouvo
 msgid "Delivery Costs"
 msgstr "Coûts de Livraison"
 
-#. modules: sales_followup, tender_flow, purchase_compare_rfq, documents_done, sale, procurement, sourcing, msf_supply_doc_import, delete_button, useability_dashboard_and_menu, sd, stock_forecast
+#. modules: sales_followup, tender_flow, purchase_compare_rfq, documents_done, sale, procurement, sourcing, msf_doc_import, delete_button, useability_dashboard_and_menu, sd, stock_forecast
 #: model:ir.model,name:delete_button.model_tender
 #: selection:documents.done.wizard,model:0
-#: model:ir.model,name:msf_supply_doc_import.model_tender
+#: model:ir.model,name:msf_doc_import.model_tender
 #: model:process.node,name:procurement.process_node_procure_tender
 #: selection:procurement.order,state:0
 #: field:wizard.compare.rfq,tender_id:0
@@ -14737,7 +14737,7 @@ msgstr "Choisissez une période puis cliquez sur 'Confirmer la période' pour af
 msgid "Modify"
 msgstr "Modifier"
 
-#. modules: sales_followup, sync_client, import_data, base, purchase_followup, sd, stock, msf_supply_doc_import
+#. modules: sales_followup, sync_client, import_data, base, purchase_followup, sd, stock, msf_doc_import
 #: view:base.module.update:0
 #: view:base.update.translations:0
 #: selection:import_data,import_mode:0
@@ -15017,15 +15017,15 @@ msgstr "Journal de bord - Lignes"
 msgid "A7  11  74 x 105 mm"
 msgstr "A7  11  74 x 105 mm"
 
-#. modules: msf_supply_doc_export, purchase_followup, msf_supply_doc_import
+#. modules: msf_supply_doc_export, purchase_followup, msf_doc_import
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:75
 #: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:75
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
 #: field:purchase.order.followup,delivery_requested_date:0
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:25
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:30
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:163
+#: code:addons/msf_doc_import/wizard/__init__.py:25
+#: code:addons/msf_doc_import/wizard/__init__.py:30
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:163
 #, python-format
 msgid "Delivery requested date"
 msgstr "Date de livraison demandée"
@@ -16133,7 +16133,7 @@ msgstr "De:"
 msgid "Delivery Orders"
 msgstr "Bons de Livraison"
 
-#. modules: delivery_mechanism, msf_order_date, tender_flow, analytic_distribution_supply, partner_modification, purchase, order_nomenclature, stock_forecast, purchase_override, specific_rules, kit, sales_followup, supplier_catalogue, order_line_number, msf_audittrail, msf_supply_doc_import, purchase_msf, res_currency_functional, analytic_distribution
+#. modules: delivery_mechanism, msf_order_date, tender_flow, analytic_distribution_supply, partner_modification, purchase, order_nomenclature, stock_forecast, purchase_override, specific_rules, kit, sales_followup, supplier_catalogue, order_line_number, msf_audittrail, msf_doc_import, purchase_msf, res_currency_functional, analytic_distribution
 #: field:analytic.distribution.wizard,purchase_line_id:0
 #: field:account.invoice.line,order_line_id:0
 #: model:ir.model,name:analytic_distribution_supply.model_purchase_order_line
@@ -16143,7 +16143,7 @@ msgstr "Bons de Livraison"
 #: field:kit.selection.line,order_line_id_kit_selection_line:0
 #: model:ir.model,name:msf_audittrail.model_purchase_order_line
 #: model:ir.model,name:msf_order_date.model_purchase_order_line
-#: model:ir.model,name:msf_supply_doc_import.model_purchase_order_line
+#: model:ir.model,name:msf_doc_import.model_purchase_order_line
 #: model:ir.model,name:order_line_number.model_purchase_order_line
 #: model:ir.model,name:order_nomenclature.model_purchase_order_line
 #: model:ir.model,name:partner_modification.model_purchase_order_line
@@ -17319,7 +17319,7 @@ msgstr "\n"
 msgid "POs Creation Parameters"
 msgstr "Paramètres de création d'un Bon de Commande"
 
-#. modules: sales_followup, register_accounting, msf_outgoing, order_nomenclature, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_supply_doc_import, consumption_calculation
+#. modules: sales_followup, register_accounting, msf_outgoing, order_nomenclature, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import, consumption_calculation
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
@@ -17348,11 +17348,11 @@ msgstr "Paramètres de création d'un Bon de Commande"
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:66
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:69
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:55
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:24
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:29
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:34
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:39
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:140
+#: code:addons/msf_doc_import/wizard/__init__.py:24
+#: code:addons/msf_doc_import/wizard/__init__.py:29
+#: code:addons/msf_doc_import/wizard/__init__.py:34
+#: code:addons/msf_doc_import/wizard/__init__.py:39
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:140
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -18266,7 +18266,7 @@ msgstr "Aucune révision mensuelle des consommations n'a été trouvée !"
 msgid "Type"
 msgstr "Type"
 
-#. modules: product_list, msf_supply_doc_import
+#. modules: product_list, msf_doc_import
 #: sql_constraint:product.list:0
 #: sql_constraint:product.list:0
 msgid "A list or sublist with the same name already exists in the system!"
@@ -18450,8 +18450,8 @@ msgstr "Plan de Taxes"
 msgid "The new quantity must be positive !"
 msgstr "La nouvelle quantité doit être positive !"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/sale_order.py:138
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/sale_order.py:138
 #, python-format
 msgid "You should have exactly 6 columns in this order:\n"
 "Product Code, Product Description, Quantity, UoM, Currency, Comment.\n"
@@ -18715,9 +18715,9 @@ msgstr "Supprimer tous les Types de Comptes"
 msgid "Landscape Mode"
 msgstr "Mode Paysage"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/purchase_order.py:159
-#: code:addons/msf_supply_doc_import/sale_order.py:254
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:159
+#: code:addons/msf_doc_import/sale_order.py:254
 #, python-format
 msgid "You should have exactly 8 columns in this order:\n"
 "Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. "
@@ -19215,13 +19215,13 @@ msgstr "Analyse de Lignes d'Ecritures"
 msgid "7.  %H:%M:%S      ==> 18:25:20"
 msgstr "7.  %H:%M:%S ==> 18:25:20"
 
-#. modules: purchase, specific_rules, consumption_calculation, msf_supply_doc_import
+#. modules: purchase, specific_rules, consumption_calculation, msf_doc_import
 #: code:addons/purchase/purchase.py:801
 #: code:addons/specific_rules/specific_rules.py:318
 #: code:addons/consumption_calculation/consumption_calculation.py:553
-#: code:addons/msf_supply_doc_import/composition_kit.py:195
-#: code:addons/msf_supply_doc_import/sale_order.py:492
-#: code:addons/msf_supply_doc_import/tender.py:261
+#: code:addons/msf_doc_import/composition_kit.py:195
+#: code:addons/msf_doc_import/sale_order.py:492
+#: code:addons/msf_doc_import/tender.py:261
 #, python-format
 msgid "Wrong Product UOM !"
 msgstr "UdM Produit incorrecte !"
@@ -19832,23 +19832,23 @@ msgstr "Si le champ actif est sur Faux, cela vous permet de cacher la période c
 msgid "Products & Pricelists"
 msgstr "Produits & Listes de prix"
 
-#. modules: msf_budget, supplier_catalogue, msf_supply_doc_import, account_hq_entries, msf_homere_interface, consumption_calculation
+#. modules: msf_budget, supplier_catalogue, msf_doc_import, account_hq_entries, msf_homere_interface, consumption_calculation
 #: code:addons/account_hq_entries/wizard/hq_entries_import.py:198
 #: code:addons/msf_budget/wizard/wizard_budget_import.py:194
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:424
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:249
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:90
-#: code:addons/msf_supply_doc_import/product_list.py:56
-#: code:addons/msf_supply_doc_import/purchase_order.py:122
-#: code:addons/msf_supply_doc_import/sale_order.py:101
-#: code:addons/msf_supply_doc_import/sale_order.py:217
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:57
-#: code:addons/msf_supply_doc_import/tender.py:76
+#: code:addons/msf_doc_import/initial_stock_inventory.py:90
+#: code:addons/msf_doc_import/product_list.py:56
+#: code:addons/msf_doc_import/purchase_order.py:122
+#: code:addons/msf_doc_import/sale_order.py:101
+#: code:addons/msf_doc_import/sale_order.py:217
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:57
+#: code:addons/msf_doc_import/tender.py:76
 #: code:addons/supplier_catalogue/supplier_catalogue.py:338
 #: code:addons/supplier_catalogue/wizard/catalogue_import_lines.py:45
 #: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:85
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:83
-#: code:addons/msf_supply_doc_import/composition_kit.py:82
+#: code:addons/msf_doc_import/composition_kit.py:82
 #, python-format
 msgid "Nothing to import."
 msgstr "Rien à importer"
@@ -20060,8 +20060,8 @@ msgstr "Ile Norfolk"
 msgid "Go to document"
 msgstr "Aller au document"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/tender.py:101
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/tender.py:101
 #, python-format
 msgid " Tenders should have exactly 6 columns in this order:\n"
 "Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"
@@ -20250,7 +20250,7 @@ msgstr "Gère votre Demande d'achat, et vous permet de suivre et gérer facileme
 msgid "Tax Definition"
 msgstr "Définition Taxe"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: help:product.list,file_to_import:0
 msgid "You can use the template of the export for the format that you need to use. \n"
 " The file should be in XML Spreadsheet 2003 format. \n"
@@ -20351,7 +20351,7 @@ msgstr "Zone de Transit pour les transferts inter-sociétés"
 msgid "Image"
 msgstr "Image"
 
-#. modules: supplier_catalogue, msf_supply_doc_import
+#. modules: supplier_catalogue, msf_doc_import
 #: view:initial.stock.inventory:0
 #: view:purchase.order:0
 #: view:sale.order:0
@@ -20506,13 +20506,13 @@ msgstr "Fichier de l'icone web (survol)"
 msgid "Import / Import Translations"
 msgstr "Import / Import Translations"
 
-#. modules: product, stock, sd, msf_supply_doc_export, msf_supply_doc_import
+#. modules: product, stock, sd, msf_supply_doc_export, msf_doc_import
 #: model:product.price.type,name:product.standard_price
 #: field:product.template,standard_price:0
 #: model:product.price.type,name:sd.product_standard_price
 #: view:stock.change.standard.price:0
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:61
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:34
+#: code:addons/msf_doc_import/wizard/__init__.py:34
 msgid "Cost Price"
 msgstr "Prix Coûtant"
 
@@ -23860,7 +23860,7 @@ msgstr "Daté avant:"
 msgid "Asset Form N°"
 msgstr "Bien - Numéro du Formulaire"
 
-#. modules: msf_order_date, purchase, purchase_override, msf_supply_doc_export, msf_supply_doc_import
+#. modules: msf_order_date, purchase, purchase_override, msf_supply_doc_export, msf_doc_import
 #: field:purchase.order,delivery_requested_date:0
 #: field:sale.order,delivery_requested_date:0
 #: field:sale.order.line,date_planned:0
@@ -23868,7 +23868,7 @@ msgstr "Bien - Numéro du Formulaire"
 #: field:purchase.order.line,date_planned:0
 #: field:purchase.order.merged.line,date_planned:0
 #: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:74
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:40
+#: code:addons/msf_doc_import/wizard/__init__.py:40
 #, python-format
 msgid "Delivery Requested Date"
 msgstr "Date de Livraison Souhaitée"
@@ -24065,7 +24065,7 @@ msgstr "3. Lorsqu'un utilisateur appartient à plusieurs groupes, les résultats
 msgid "Clear Ids"
 msgstr "Clear Ids"
 
-#. modules: reason_types_moves, msf_supply_doc_import, specific_rules, stock
+#. modules: reason_types_moves, msf_doc_import, specific_rules, stock
 #: constraint:initial.stock.inventory.line:0
 #: constraint:stock.inventory.line:0
 #: constraint:initial.stock.inventory.line:0
@@ -25358,7 +25358,7 @@ msgstr "Confirmer Brouillons de Factures"
 msgid "2.  %a ,%A         ==> Fri, Friday"
 msgstr "2.  %a ,%A ==> Ven, Vendredi"
 
-#. modules: purchase, account, msf_outgoing, purchase_override, analytic, sale, product, specific_rules, kit, stock_forecast, procurement, sourcing, stock_batch_recall, register_accounting, msf_supply_doc_export, stock, msf_supply_doc_import
+#. modules: purchase, account, msf_outgoing, purchase_override, analytic, sale, product, specific_rules, kit, stock_forecast, procurement, sourcing, stock_batch_recall, register_accounting, msf_supply_doc_export, stock, msf_doc_import
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
 #: report:account.analytic.account.quantity_cost_ledger:0
@@ -25420,11 +25420,11 @@ msgstr "2.  %a ,%A ==> Ven, Vendredi"
 #: field:stock.forecast.line,qty:0
 #: report:stock.forecast.report:0
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:57
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:24
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:29
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:34
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:39
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:146
+#: code:addons/msf_doc_import/wizard/__init__.py:24
+#: code:addons/msf_doc_import/wizard/__init__.py:29
+#: code:addons/msf_doc_import/wizard/__init__.py:34
+#: code:addons/msf_doc_import/wizard/__init__.py:39
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:146
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -25907,7 +25907,7 @@ msgstr "Date du dernier Lettrage"
 msgid "Project Retro planning"
 msgstr "Retro-Plannification Projet"
 
-#. modules: msf_supply_doc_import, specific_rules
+#. modules: msf_doc_import, specific_rules
 #: constraint:initial.stock.inventory.line:0
 #: constraint:initial.stock.inventory.line:0
 msgid "You cannot have two lines with the same product and different average cost."
@@ -26471,8 +26471,8 @@ msgstr "Référence de la Commande"
 msgid "Are you sure to confirm this record ?"
 msgstr "Etes-vous certain de vouloir confirmer cet enregistrement ?"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/product_list.py:95
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/product_list.py:95
 #, python-format
 msgid "Line %s - You have to fill at least the product code or the product name !"
 msgstr "Ligne %s - Vous devez compléter au moins le code produit ou le nom du produit !"
@@ -26495,7 +26495,7 @@ msgstr "Your translation file has been successfully imported."
 msgid "Users"
 msgstr "Utilisateurs"
 
-#. modules: account, stock_override, sale, product_attributes, msf_supply_doc_export, stock, msf_supply_doc_import
+#. modules: account, stock_override, sale, product_attributes, msf_supply_doc_export, stock, msf_doc_import
 #: report:account.invoice2:0
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:74
 #: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:73
@@ -26505,10 +26505,10 @@ msgstr "Utilisateurs"
 #: view:sale.order.line:0
 #: field:stock.change.standard.price,new_price:0
 #: report:destruction.location:0
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:24
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:29
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:40
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:157
+#: code:addons/msf_doc_import/wizard/__init__.py:24
+#: code:addons/msf_doc_import/wizard/__init__.py:29
+#: code:addons/msf_doc_import/wizard/__init__.py:40
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:157
 #, python-format
 msgid "Price"
 msgstr "Prix"
@@ -27188,7 +27188,7 @@ msgstr "Approvisionnement- Demande"
 msgid "Receive Products"
 msgstr "Recevoir des Produits"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:tender:0
 msgid "The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*"
 msgstr "Les colonnes doivent être selon cet ordre: Code Produit*, Description du Produit *, Quantité, UdM Produit  *, Prix Unitaire*, Date de Livraison Souhaitée*"
@@ -27341,8 +27341,8 @@ msgstr "Choisire une fréquence"
 msgid "Helps you manage your inventory and main stock operations: delivery orders, receptions, etc."
 msgstr "Vous aide à gérer votre inventaire et les principales opérations de stocks : bons de livraison, réceptions, etc..."
 
-#. modules: product_list, msf_supply_doc_import
-#: model:ir.model,name:msf_supply_doc_import.model_product_list
+#. modules: product_list, msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_product_list
 #: model:ir.model,name:product_list.model_product_list
 msgid "Products list"
 msgstr "Listes Produits"
@@ -27448,7 +27448,7 @@ msgstr "Produit disponible"
 msgid "FO - draft"
 msgstr "Commande de Terrain - brouillon"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, out_step, base, stock, return_claim, analytic_distribution, msf_supply_doc_import, sourcing
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, out_step, base, stock, return_claim, analytic_distribution, msf_doc_import, sourcing
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -27908,7 +27908,7 @@ msgstr "Bons d'Engagement - Terminés"
 msgid "This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."
 msgstr "Ce compte provient d'une ligne de facture. Une fois rempli, cela permet de tester la compatibilité de chaque funding pool et d'afficher ceux qui y étaient liés. "
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:product.list:0
 msgid "Import Lines"
 msgstr "Importer lignes"
@@ -28181,7 +28181,7 @@ msgstr "Achats Mensuels par Catégorie"
 msgid "Next Configuration Step"
 msgstr "Etape suivante de configuration"
 
-#. modules: purchase, account, reason_types_moves, stock_override, order_nomenclature, sale, product_asset, specific_rules, purchase_override, supplier_catalogue, base, product_list, tender_flow, msf_supply_doc_export, return_claim, analytic_distribution, msf_supply_doc_import
+#. modules: purchase, account, reason_types_moves, stock_override, order_nomenclature, sale, product_asset, specific_rules, purchase_override, supplier_catalogue, base, product_list, tender_flow, msf_supply_doc_export, return_claim, analytic_distribution, msf_doc_import
 #: field:account.move.line.reconcile.writeoff,comment:0
 #: field:account.commitment,notes:0
 #: field:res.groups,comment:0
@@ -28219,10 +28219,10 @@ msgstr "Etape suivante de configuration"
 #: field:supplier.catalogue.line,comment:0
 #: field:pricelist.partnerinfo,comment:0
 #: field:tender.line,comment:0
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:25
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:30
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:35
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:174
+#: code:addons/msf_doc_import/wizard/__init__.py:25
+#: code:addons/msf_doc_import/wizard/__init__.py:30
+#: code:addons/msf_doc_import/wizard/__init__.py:35
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:174
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -28918,7 +28918,7 @@ msgstr "Base de Synchronisation"
 msgid "Closed state of tender."
 msgstr "Statut Fermé pour cet appel d'offres."
 
-#. modules: delivery_mechanism, tender_flow, financing_contract, msf_supply_doc_import, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, account_activable, analytic_distribution, msf_cross_docking, product, stock_override, account_reconciliation, kit, sale_override, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, stock, consumption_calculation
+#. modules: delivery_mechanism, tender_flow, financing_contract, msf_doc_import, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, account_activable, analytic_distribution, msf_cross_docking, product, stock_override, account_reconciliation, kit, sale_override, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, stock, consumption_calculation
 #: code:addons/account/account.py:516
 #: code:addons/account/account.py:529
 #: code:addons/account/account.py:532
@@ -29082,19 +29082,19 @@ msgstr "Statut Fermé pour cet appel d'offres."
 #: code:addons/msf_partner/partner.py:207
 #: code:addons/msf_partner/partner.py:210
 #: code:addons/msf_partner/partner.py:213
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:305
-#: code:addons/msf_supply_doc_import/purchase_order.py:127
-#: code:addons/msf_supply_doc_import/purchase_order.py:159
-#: code:addons/msf_supply_doc_import/purchase_order.py:240
-#: code:addons/msf_supply_doc_import/purchase_order.py:252
-#: code:addons/msf_supply_doc_import/purchase_order.py:374
-#: code:addons/msf_supply_doc_import/sale_order.py:106
-#: code:addons/msf_supply_doc_import/sale_order.py:222
-#: code:addons/msf_supply_doc_import/sale_order.py:346
-#: code:addons/msf_supply_doc_import/sale_order.py:454
-#: code:addons/msf_supply_doc_import/tender.py:80
-#: code:addons/msf_supply_doc_import/tender.py:151
-#: code:addons/msf_supply_doc_import/tender.py:241
+#: code:addons/msf_doc_import/initial_stock_inventory.py:305
+#: code:addons/msf_doc_import/purchase_order.py:127
+#: code:addons/msf_doc_import/purchase_order.py:159
+#: code:addons/msf_doc_import/purchase_order.py:240
+#: code:addons/msf_doc_import/purchase_order.py:252
+#: code:addons/msf_doc_import/purchase_order.py:374
+#: code:addons/msf_doc_import/sale_order.py:106
+#: code:addons/msf_doc_import/sale_order.py:222
+#: code:addons/msf_doc_import/sale_order.py:346
+#: code:addons/msf_doc_import/sale_order.py:454
+#: code:addons/msf_doc_import/tender.py:80
+#: code:addons/msf_doc_import/tender.py:151
+#: code:addons/msf_doc_import/tender.py:241
 #: code:addons/product/pricelist.py:228
 #: code:addons/product/pricelist.py:370
 #: code:addons/product/pricelist.py:388
@@ -29156,8 +29156,8 @@ msgstr "Statut Fermé pour cet appel d'offres."
 #: code:addons/consumption_calculation/consumption_calculation.py:581
 #: code:addons/consumption_calculation/consumption_calculation.py:1077
 #: code:addons/consumption_calculation/consumption_calculation.py:1148
-#: code:addons/msf_supply_doc_import/composition_kit.py:58
-#: code:addons/msf_supply_doc_import/composition_kit.py:222
+#: code:addons/msf_doc_import/composition_kit.py:58
+#: code:addons/msf_doc_import/composition_kit.py:222
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -29679,7 +29679,7 @@ msgstr "Danemark"
 msgid "The length of the package"
 msgstr "La longueur du colis"
 
-#. modules: msf_supply_doc_import, msf_profile
+#. modules: msf_doc_import, msf_profile
 #: help:user.access.configurator,file_to_import_uac:0
 #: help:initial.stock.inventory,file_to_import:0
 #: help:stock.cost.reevaluation,file_to_import:0
@@ -30141,9 +30141,9 @@ msgstr "Corps"
 msgid "Company Analysis"
 msgstr "Analyse Société"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:168
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:114
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:168
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:114
 #, python-format
 msgid "The Product [%s] %s was not found in the list of the products"
 msgstr "Le produit [%s] %s n'a pas été trouvé dans la liste de produits"
@@ -31489,7 +31489,7 @@ msgstr "Widget "
 msgid "The cost center %s is not an allocable cost center! The budget for it will be created automatically."
 msgstr "Le centre de coût %s n'est pas un centre de coût imputable! Le budget sera créé automatiquement pour cela."
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_supply_doc_import, account_msf, order_line_number, msf_custom_settings, purchase_followup, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, sale_override, delete_button, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, msf_outgoing, sale, transport_mgmt, sourcing, purchase, msf_audittrail, specific_locations, sync_so
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_doc_import, account_msf, order_line_number, msf_custom_settings, purchase_followup, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, sale_override, delete_button, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, msf_outgoing, sale, transport_mgmt, sourcing, purchase, msf_audittrail, specific_locations, sync_so
 #: sql_constraint:purchase.order:0
 #: sql_constraint:purchase.order:0
 #: sql_constraint:sale.order:0
@@ -31651,9 +31651,9 @@ msgstr "Espagnol (PR) / Español (PR)"
 msgid "Replacement Item quantity must be greater than 0."
 msgstr "Qté Article de Remplacement doit être supérieure à 0."
 
-#. modules: msf_supply_doc_import, sd
-#: model:product.uom,name:msf_supply_doc_import.uom_tbd
-#: model:product.uom,name:sd.msf_supply_doc_import_uom_tbd
+#. modules: msf_doc_import, sd
+#: model:product.uom,name:msf_doc_import.uom_tbd
+#: model:product.uom,name:sd.msf_doc_import_uom_tbd
 msgid "Uom to be defined"
 msgstr "UdM à définir"
 
@@ -33889,8 +33889,8 @@ msgstr "Pas de registre sélectionné. Veuillez faire une confirmation bancaire 
 msgid "The currency used to enter statement"
 msgstr "Devise utilisée pour entrer les relevés"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:106
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:106
 #, python-format
 msgid "You should have exactly 7 columns in this order:\n"
 "Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*"
@@ -33949,8 +33949,8 @@ msgstr "Inactif à partir de "
 msgid "Composition List without Batch Management Product does not allow Batch Number."
 msgstr "Liste de Composition - sans Gestion des produits par lots- ne permet pas de Numéro de lot"
 
-#. module: msf_supply_doc_import
-#: model:ir.module.module,shortdesc:msf_supply_doc_import.module_meta_information
+#. module: msf_doc_import
+#: model:ir.module.module,shortdesc:msf_doc_import.module_meta_information
 msgid "Import Files in Excel Format"
 msgstr "Importer les Fichiers sous Format Excel"
 
@@ -34427,8 +34427,8 @@ msgstr "Créer bon de piquage"
 msgid "VAT :"
 msgstr "TVA :"
 
-#. modules: msf_supply_doc_import, specific_rules
-#: model:ir.model,name:msf_supply_doc_import.model_stock_cost_reevaluation
+#. modules: msf_doc_import, specific_rules
+#: model:ir.model,name:msf_doc_import.model_stock_cost_reevaluation
 #: model:ir.model,name:specific_rules.model_stock_cost_reevaluation
 msgid "Cost reevaluation"
 msgstr "Réévaluation des coûts"
@@ -35385,11 +35385,11 @@ msgstr "Partenaires"
 msgid "Priority"
 msgstr "Priorité"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/purchase_order.py:127
-#: code:addons/msf_supply_doc_import/sale_order.py:106
-#: code:addons/msf_supply_doc_import/sale_order.py:222
-#: code:addons/msf_supply_doc_import/tender.py:80
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:127
+#: code:addons/msf_doc_import/sale_order.py:106
+#: code:addons/msf_doc_import/sale_order.py:222
+#: code:addons/msf_doc_import/tender.py:80
 #, python-format
 msgid "You can't have more than %s lines in your file."
 msgstr "Vous ne pouvez avoir plus de %s lignes dans votre fichier."
@@ -35523,7 +35523,7 @@ msgstr "Devise ESC"
 msgid "Not implemented search_memory method !"
 msgstr "La Méthode search_memory  n'est pas mise en œuvre!"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:purchase.order.line,text_error:0
 #: field:sale.order.line,text_error:0
 msgid "Errors when trying to import file"
@@ -35829,7 +35829,7 @@ msgstr "\n"
 msgid "Assigned qty must be smaller or equal to available qty"
 msgstr "Qté affectée doit être plus petite ou égale à la quantité disponible"
 
-#. modules: tender_flow, analytic_distribution_supply, product_nomenclature, product_asset, stock_schedule, product_attributes, msf_supply_doc_import, product_expiry, return_claim, account_msf, supplier_catalogue, unifield_setup, order_line_number, product_list, stock, msf_order_date, product, procurement_request, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, sync_so, product_manufacturer, res_currency_functional, msf_outgoing, order_nomenclature, sale, transport_mgmt, sourcing, msf_audittrail, purchase_msf
+#. modules: tender_flow, analytic_distribution_supply, product_nomenclature, product_asset, stock_schedule, product_attributes, msf_doc_import, product_expiry, return_claim, account_msf, supplier_catalogue, unifield_setup, order_line_number, product_list, stock, msf_order_date, product, procurement_request, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, sync_so, product_manufacturer, res_currency_functional, msf_outgoing, order_nomenclature, sale, transport_mgmt, sourcing, msf_audittrail, purchase_msf
 #: constraint:product.product:0
 #: constraint:sale.order.line:0
 #: constraint:product.product:0
@@ -36074,7 +36074,7 @@ msgstr "Type des Séquences"
 msgid "Linked loan"
 msgstr "Prêt Lié"
 
-#. modules: msf_homere_interface, documents_done, msf_supply_doc_import, analytic_distribution, consumption_calculation
+#. modules: msf_homere_interface, documents_done, msf_doc_import, analytic_distribution, consumption_calculation
 #: field:mass.reallocation.verification.wizard,error_ids:0
 #: field:documents.done.problem,errors:0
 #: field:hr.payroll.import.confirmation,errors:0
@@ -36429,7 +36429,7 @@ msgstr "Nombre de mois avant qu'un lot de production ne commence à se détério
 msgid "Daily"
 msgstr "Journalier"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:purchase.order:0
 #: view:sale.order:0
 msgid "The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment"
@@ -36521,7 +36521,7 @@ msgstr "\"Commande\" spécifiée non valide.  une spécification de \"commande\"
 msgid "Module dependency"
 msgstr "Dépendance du Module"
 
-#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, account_msf, data_finance, res_currency_tables, procurement_request, stock_forecast, analytic, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, return_claim, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock, msf_supply_doc_import
+#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, account_msf, data_finance, res_currency_tables, procurement_request, stock_forecast, analytic, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, return_claim, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock, msf_doc_import
 #: view:account.bank.statement:0
 #: selection:account.bank.statement,state:0
 #: view:account.invoice:0
@@ -37183,8 +37183,8 @@ msgstr "Ne trouve pas de journal de type %s pour cette société. \n"
 msgid "import.currencies"
 msgstr "import.currencies"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/tender.py:151
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/tender.py:151
 #, python-format
 msgid "You still have lines to correct: check the red lines"
 msgstr "Vous avez encore des lignes à corriger: vérifier les lignes rouges"
@@ -38612,8 +38612,8 @@ msgstr "Sociétés Filiales"
 msgid "Contact Address Name"
 msgstr "Nom de la personne de Contact "
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/product_list.py:96
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/product_list.py:96
 #, python-format
 msgid "Line %s - The Product [%s] %s was not found in the list of products"
 msgstr "Ligne %s - Le produit [%s] %s n'a pas été trouvé dans la liste de produits"
@@ -39289,8 +39289,8 @@ msgstr "Non Stockable"
 msgid "MSF Delete Button"
 msgstr "Bouton Supprimer de MSF"
 
-#. modules: reason_types_moves, msf_supply_doc_import, stock_batch_recall, specific_rules, stock
-#: model:ir.model,name:msf_supply_doc_import.model_initial_stock_inventory
+#. modules: reason_types_moves, msf_doc_import, stock_batch_recall, specific_rules, stock
+#: model:ir.model,name:msf_doc_import.model_initial_stock_inventory
 #: model:ir.model,name:reason_types_moves.model_stock_inventory
 #: model:ir.ui.menu,name:reason_types_moves.menu_configuration_inventory
 #: field:initial.stock.inventory.line,inventory_id:0
@@ -40557,7 +40557,7 @@ msgstr "Cette fenêtre"
 msgid "Publisher Warranty Contracts"
 msgstr "Contrats de Garantie Editeur"
 
-#. modules: account, msf_supply_doc_import
+#. modules: account, msf_doc_import
 #: model:ir.ui.menu,name:account.account_template_folder
 #: field:wizard.import.fo.line,filename_template:0
 #: field:wizard.import.ir.line,filename_template:0
@@ -40725,7 +40725,7 @@ msgstr "Mode de paiement"
 msgid "Hidden Menu"
 msgstr "Menu Caché"
 
-#. modules: supplier_catalogue, msf_supply_doc_import
+#. modules: supplier_catalogue, msf_doc_import
 #: view:initial.stock.inventory:0
 #: view:product.list:0
 #: view:purchase.order:0
@@ -41079,7 +41079,7 @@ msgstr "Vous essayez de mettre à jour-améliorer un module qui dépend du modul
 msgid "Destination Activity"
 msgstr "Destination de l'Activité"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:initial.stock.inventory,import_error_ok:0
 #: field:purchase.order,import_error_ok:0
 msgid "Error in Import"
@@ -41428,8 +41428,8 @@ msgstr "Navigateur de Données Multicritères "
 msgid "days"
 msgstr "ir.sequence"
 
-#. modules: supplier_catalogue, msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:305
+#. modules: supplier_catalogue, msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:305
 #: code:addons/supplier_catalogue/supplier_catalogue.py:479
 #, python-format
 msgid "You need to correct the following line%s : %s"
@@ -43708,7 +43708,7 @@ msgstr "Racine du Code de Taxe "
 msgid "Married"
 msgstr "Marié"
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_supply_doc_import, return_claim, account_msf, order_line_number, purchase_followup, analytic_distribution, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, delete_button, sync_so, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, purchase, msf_audittrail, specific_locations, sd
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_doc_import, return_claim, account_msf, order_line_number, purchase_followup, analytic_distribution, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, delete_button, sync_so, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, documents_done, sale, transport_mgmt, procurement, sourcing, purchase, msf_audittrail, specific_locations, sd
 #: model:ir.model,name:account_msf.model_purchase_order
 #: view:purchase.order:0
 #: field:analytic.distribution.wizard,purchase_id:0
@@ -43720,7 +43720,7 @@ msgstr "Marié"
 #: model:ir.model,name:msf_audittrail.model_purchase_order
 #: model:ir.model,name:msf_cross_docking.model_purchase_order
 #: model:ir.model,name:msf_order_date.model_purchase_order
-#: model:ir.model,name:msf_supply_doc_import.model_purchase_order
+#: model:ir.model,name:msf_doc_import.model_purchase_order
 #: model:ir.model,name:order_line_number.model_purchase_order
 #: model:process.node,name:procurement.process_node_procure_po
 #: model:ir.model,name:procurement_request.model_purchase_order
@@ -43833,14 +43833,14 @@ msgstr "N° d'identification"
 msgid "Problem in configuration `Record Id` in Server Action!"
 msgstr "Problème dans la configuration `Record Id` sous Action Server!"
 
-#. modules: msf_order_date, sales_followup, msf_outgoing, analytic_distribution_supply, procurement_request, sale, specific_rules, transport_mgmt, sale_override, order_line_number, msf_custom_settings, msf_audittrail, delete_button, sd, msf_supply_doc_import, sync_so, res_currency_functional, sourcing, purchase_followup
+#. modules: msf_order_date, sales_followup, msf_outgoing, analytic_distribution_supply, procurement_request, sale, specific_rules, transport_mgmt, sale_override, order_line_number, msf_custom_settings, msf_audittrail, delete_button, sd, msf_doc_import, sync_so, res_currency_functional, sourcing, purchase_followup
 #: model:ir.model,name:analytic_distribution_supply.model_sale_order
 #: model:ir.model,name:delete_button.model_sale_order
 #: model:ir.model,name:msf_audittrail.model_sale_order
 #: model:ir.model,name:msf_custom_settings.model_sale_order
 #: model:ir.model,name:msf_order_date.model_sale_order
 #: model:ir.model,name:msf_outgoing.model_sale_order
-#: model:ir.model,name:msf_supply_doc_import.model_sale_order
+#: model:ir.model,name:msf_doc_import.model_sale_order
 #: model:ir.model,name:order_line_number.model_sale_order
 #: model:ir.model,name:procurement_request.model_sale_order
 #: model:ir.model,name:purchase_followup.model_sale_order
@@ -47819,10 +47819,10 @@ msgstr "Messages d'erreur"
 msgid "Purchase Order Line Make Invoice"
 msgstr "Achat - Créer la Facture de la Ligne de Commande"
 
-#. modules: supplier_catalogue, msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:86
-#: code:addons/msf_supply_doc_import/product_list.py:52
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:53
+#. modules: supplier_catalogue, msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:86
+#: code:addons/msf_doc_import/product_list.py:52
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:53
 #: code:addons/supplier_catalogue/supplier_catalogue.py:329
 #, python-format
 msgid "All lines successfully imported"
@@ -48523,8 +48523,8 @@ msgstr "Réf."
 msgid "Display Items from Version"
 msgstr "Afficher des Articles par Version"
 
-#. modules: sales_followup, tender_flow, msf_supply_doc_import
-#: model:ir.model,name:msf_supply_doc_import.model_tender_line
+#. modules: sales_followup, tender_flow, msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_tender_line
 #: model:ir.model,name:sales_followup.model_tender_line
 #: model:ir.model,name:tender_flow.model_tender_line
 msgid "Tender Line"
@@ -49517,7 +49517,7 @@ msgstr "La méthode \"lire\" n'est pas mise en œuvre pour cet objet !"
 msgid "Claim"
 msgstr "Réclamation"
 
-#. modules: supplier_catalogue, msf_supply_doc_import, procurement_request, consumption_calculation, msf_profile
+#. modules: supplier_catalogue, msf_doc_import, procurement_request, consumption_calculation, msf_profile
 #: view:wizard.import.fmc:0
 #: field:wizard.import.fmc,file:0
 #: view:wizard.import.rac:0
@@ -49563,7 +49563,7 @@ msgstr "Budget vs. Exportations réelles"
 msgid "Ana. Name"
 msgstr "Nom Analytique"
 
-#. modules: return_claim, reason_types_moves, order_types, procurement_request, msf_supply_doc_import, sales_followup
+#. modules: return_claim, reason_types_moves, order_types, procurement_request, msf_doc_import, sales_followup
 #: view:stock.move:0
 #: view:sale.order:0
 #: view:stock.move:0
@@ -49855,7 +49855,7 @@ msgstr "Modification"
 msgid "24th"
 msgstr "24e"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: help:purchase.order,file_to_import:0
 #: help:sale.order,file_to_import:0
 #: help:tender,file_to_import:0
@@ -50550,7 +50550,7 @@ msgstr "La \"Date de début d'éligibilité\" devrait être antérieure à la \"
 msgid "Safety Stock in months"
 msgstr "Stock de Sécurité en mois"
 
-#. modules: consumption_calculation, procurement_request, msf_supply_doc_import
+#. modules: consumption_calculation, procurement_request, msf_doc_import
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
 #: view:procurement.request.import:0
@@ -51593,7 +51593,7 @@ msgstr "Si vous sélectionnez \"Non stockable\" comme type de produit, vous deve
 msgid "You must assign an asset for this product."
 msgstr "Vous devez mentionner un bien pour ce produit."
 
-#. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_supply_doc_import
+#. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_doc_import
 #: view:wizard.export.fmc:0
 #: view:wizard.export.rac:0
 #: view:wizard.import.fmc:0
@@ -52442,9 +52442,9 @@ msgstr "Référence de Composition  / Numéro de Lot / Date d'expiration non dis
 msgid "ECNJ"
 msgstr "ECNJ"
 
-#. modules: msf_supply_doc_import, sd
-#: model:product.uom.categ,name:msf_supply_doc_import.product_uom_tbd
-#: model:product.uom.categ,name:sd.msf_supply_doc_import_product_uom_tbd
+#. modules: msf_doc_import, sd
+#: model:product.uom.categ,name:msf_doc_import.product_uom_tbd
+#: model:product.uom.categ,name:sd.msf_doc_import_product_uom_tbd
 msgid "Categ uom to be defined"
 msgstr "Catégorie UdM à définir"
 
@@ -54838,7 +54838,7 @@ msgstr "Prix de base"
 msgid "Comments"
 msgstr "Commentaires"
 
-#. modules: reason_types_moves, msf_supply_doc_import, specific_rules, stock
+#. modules: reason_types_moves, msf_doc_import, specific_rules, stock
 #: constraint:initial.stock.inventory:0
 #: constraint:stock.inventory:0
 #: constraint:initial.stock.inventory:0
@@ -54914,8 +54914,8 @@ msgstr "Types de Commande"
 msgid "Process Transitions Actions"
 msgstr "Actions de Transitions de Processus"
 
-#. module: msf_supply_doc_import
-#: model:ir.module.module,description:msf_supply_doc_import.module_meta_information
+#. module: msf_doc_import
+#: model:ir.module.module,description:msf_doc_import.module_meta_information
 msgid "This module enables to import file in xls format"
 msgstr "Ce module vous permet d'importer un fichier sous format xls"
 
@@ -55025,9 +55025,9 @@ msgstr "Vous ne pouvez pas avoir deux lignes pour le produit %s avec un coût mo
 msgid "Automatic Procurement"
 msgstr "Approvisionnement Automatique "
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:167
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:113
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:167
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:113
 #, python-format
 msgid "You have to fill at least the product code or the product name on each line"
 msgstr "Vous devez compléter au moins le code produit ou le nom du produit sur chaque ligne"
@@ -55527,7 +55527,7 @@ msgstr "Ce module permet d'utiliser plusieurs plans analytiques, selon le journa
 "Le plan analytique valide le pourcentage minimum et maximum au moment de la création\n"
 "des modèles de distribution."
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:sale.order:0
 msgid "The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Currency*, Comment"
 msgstr "Les colonnes doivent être selon cet ordre: Code Produit*, Description du Produit *, Quantité, UdM Produit  *, Devise*, Commentaire "
@@ -56691,7 +56691,7 @@ msgstr "Namibie"
 msgid "Third Party (Country)"
 msgstr "Tiers (pays)"
 
-#. modules: tender_flow, analytic_distribution_supply, product_nomenclature, financing_contract, account_hq_entries, export_import_lang, account_override, procurement_cycle, account_journal, msf_supply_doc_import, register_accounting, mission_stock, return_claim, account_msf, account_corrections, account_mcdb, res_currency_tables, supplier_catalogue, stock_schedule, procurement_request, spreadsheet_xml, unifield_setup, purchase_compare_rfq, analytic_distribution_invoice, purchase_followup, stock_override, analytic_distribution, msf_order_date, msf_cross_docking, reason_types_moves, msf_homere_interface, msf_instance, account_reconciliation, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, account_subscription, res_currency_functional, sync_client, msf_budget, account_invoice_split, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, order_nomenclature, documents_done, sale, msf_config_locations, sales_followup, sourcing, msf_custom_settings, product_list, object_query, stock, stock_batch_recall, msf_profile
+#. modules: tender_flow, analytic_distribution_supply, product_nomenclature, financing_contract, account_hq_entries, export_import_lang, account_override, procurement_cycle, account_journal, msf_doc_import, register_accounting, mission_stock, return_claim, account_msf, account_corrections, account_mcdb, res_currency_tables, supplier_catalogue, stock_schedule, procurement_request, spreadsheet_xml, unifield_setup, purchase_compare_rfq, analytic_distribution_invoice, purchase_followup, stock_override, analytic_distribution, msf_order_date, msf_cross_docking, reason_types_moves, msf_homere_interface, msf_instance, account_reconciliation, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, account_subscription, res_currency_functional, sync_client, msf_budget, account_invoice_split, account, msf_outgoing, stock_move_tracking, purchase_allocation_report, order_nomenclature, documents_done, sale, msf_config_locations, sales_followup, sourcing, msf_custom_settings, product_list, object_query, stock, stock_batch_recall, msf_profile
 #: code:addons/account/account.py:948
 #: code:addons/account/account.py:950
 #: code:addons/account/account.py:1193
@@ -56974,25 +56974,25 @@ msgstr "Tiers (pays)"
 #: selection:user.access.results.groups.line,type_user_access_results_line:0
 #: selection:user.access.results.menus.line,type_user_access_results_line:0
 #: selection:user.access.results.users.line,type_user_access_results_line:0
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:90
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:106
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:167
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:168
-#: code:addons/msf_supply_doc_import/product_list.py:56
-#: code:addons/msf_supply_doc_import/product_list.py:70
-#: code:addons/msf_supply_doc_import/product_list.py:95
-#: code:addons/msf_supply_doc_import/product_list.py:96
-#: code:addons/msf_supply_doc_import/purchase_order.py:122
-#: code:addons/msf_supply_doc_import/sale_order.py:101
-#: code:addons/msf_supply_doc_import/sale_order.py:138
-#: code:addons/msf_supply_doc_import/sale_order.py:217
-#: code:addons/msf_supply_doc_import/sale_order.py:254
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:57
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:73
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:113
-#: code:addons/msf_supply_doc_import/stock_cost_reevaluation.py:114
-#: code:addons/msf_supply_doc_import/tender.py:76
-#: code:addons/msf_supply_doc_import/tender.py:101
+#: code:addons/msf_doc_import/initial_stock_inventory.py:90
+#: code:addons/msf_doc_import/initial_stock_inventory.py:106
+#: code:addons/msf_doc_import/initial_stock_inventory.py:167
+#: code:addons/msf_doc_import/initial_stock_inventory.py:168
+#: code:addons/msf_doc_import/product_list.py:56
+#: code:addons/msf_doc_import/product_list.py:70
+#: code:addons/msf_doc_import/product_list.py:95
+#: code:addons/msf_doc_import/product_list.py:96
+#: code:addons/msf_doc_import/purchase_order.py:122
+#: code:addons/msf_doc_import/sale_order.py:101
+#: code:addons/msf_doc_import/sale_order.py:138
+#: code:addons/msf_doc_import/sale_order.py:217
+#: code:addons/msf_doc_import/sale_order.py:254
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:57
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:73
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:113
+#: code:addons/msf_doc_import/stock_cost_reevaluation.py:114
+#: code:addons/msf_doc_import/tender.py:76
+#: code:addons/msf_doc_import/tender.py:101
 #: code:addons/object_query/wizard/query_value.py:34
 #: code:addons/object_query/wizard/query_value.py:61
 #: code:addons/object_query/wizard/query_value.py:86
@@ -57236,8 +57236,8 @@ msgstr "Tiers (pays)"
 #: code:addons/export_import_lang/lang_tools.py:26
 #: code:addons/msf_custom_settings/sale.py:44
 #: code:addons/msf_custom_settings/sale.py:50
-#: code:addons/msf_supply_doc_import/composition_kit.py:82
-#: code:addons/msf_supply_doc_import/composition_kit.py:107
+#: code:addons/msf_doc_import/composition_kit.py:82
+#: code:addons/msf_doc_import/composition_kit.py:107
 #: code:addons/sale_override/res_partner.py:55
 #, python-format
 msgid "Error"
@@ -57382,7 +57382,7 @@ msgstr "Le message d'enregistrement"
 msgid "Resource Calendar"
 msgstr "Calendrier Ressource"
 
-#. modules: product, msf_outgoing, order_nomenclature, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_supply_doc_import, consumption_calculation
+#. modules: product, msf_outgoing, order_nomenclature, product_asset, stock_forecast, product_list, msf_supply_doc_export, msf_doc_import, consumption_calculation
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
@@ -57408,10 +57408,10 @@ msgstr "Calendrier Ressource"
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:67
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:70
 #: report:addons/msf_supply_doc_export/report/report_composition_kit_xls.mako:56
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:24
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:29
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:34
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:39
+#: code:addons/msf_doc_import/wizard/__init__.py:24
+#: code:addons/msf_doc_import/wizard/__init__.py:29
+#: code:addons/msf_doc_import/wizard/__init__.py:34
+#: code:addons/msf_doc_import/wizard/__init__.py:39
 #, python-format
 msgid "Product Description"
 msgstr "Description Produit"
@@ -58596,7 +58596,7 @@ msgstr "Numéro d'Assurance Sociale (NAS)"
 msgid "%b - Abbreviated month name."
 msgstr "%b - Abréviation du nom du mois."
 
-#. modules: account, msf_supply_doc_import
+#. modules: account, msf_doc_import
 #: view:account.subscription:0
 #: view:composition.kit:0
 msgid "Remove Lines"
@@ -58827,7 +58827,7 @@ msgstr "Adresse de Facturation"
 msgid "Sourcing Lines"
 msgstr "Lignes de Sourcing"
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_supply_doc_import, account_msf, order_line_number, purchase_followup, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, delete_button, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, transport_mgmt, sourcing, purchase, msf_audittrail, specific_locations, sync_so
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_doc_import, account_msf, order_line_number, purchase_followup, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, delete_button, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, transport_mgmt, sourcing, purchase, msf_audittrail, specific_locations, sync_so
 #: constraint:purchase.order:0
 #: constraint:purchase.order:0
 #: constraint:purchase.order:0
@@ -60077,7 +60077,7 @@ msgstr "Téléphone Professionnel"
 msgid "on order"
 msgstr "Sur commande"
 
-#. modules: supplier_catalogue, msf_supply_doc_import, consumption_calculation
+#. modules: supplier_catalogue, msf_doc_import, consumption_calculation
 #: field:initial.stock.inventory.line,to_correct_ok:0
 #: field:purchase.order.line,to_correct_ok:0
 #: field:sale.order.line,to_correct_ok:0
@@ -62040,7 +62040,7 @@ msgstr "Aucune Ligne de Facture !"
 msgid "Report Type"
 msgstr "Type de Rapport"
 
-#. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, account_msf, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, sale_override, documents_done, sale, sales_followup, procurement, sourcing, msf_audittrail, stock, msf_supply_doc_import
+#. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, account_msf, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, sale_override, documents_done, sale, sales_followup, procurement, sourcing, msf_audittrail, stock, msf_doc_import
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -63320,7 +63320,7 @@ msgstr "kit.selection.sale.line"
 msgid "g"
 msgstr "g"
 
-#. modules: tender_flow, financing_contract, account_voucher, product_attributes, msf_accrual, account_msf, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, account_payment, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, sale_override, base, sync_so, account_subscription, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, msf_custom_settings, stock, msf_supply_doc_import
+#. modules: tender_flow, financing_contract, account_voucher, product_attributes, msf_accrual, account_msf, base_setup, account_mcdb, res_currency_tables, supplier_catalogue, stock_override, product_asset, purchase_compare_rfq, msf_supply_doc_export, analytic_distribution, product, account_payment, msf_homere_interface, msf_instance, register_accounting, specific_rules, kit, sale_override, base, sync_so, account_subscription, res_currency_functional, msf_budget, purchase, account, msf_outgoing, msf_partner, purchase_allocation_report, sale, transport_mgmt, msf_custom_settings, stock, msf_doc_import
 #: view:account.account:0
 #: report:account.analytic.account.journal:0
 #: field:account.bank.statement,currency:0
@@ -63444,10 +63444,10 @@ msgstr "g"
 #: report:account.bank.statement.line:0
 #: report:account.bank.statement.line_csv:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:242
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:25
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:30
-#: code:addons/msf_supply_doc_import/wizard/__init__.py:35
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:168
+#: code:addons/msf_doc_import/wizard/__init__.py:25
+#: code:addons/msf_doc_import/wizard/__init__.py:30
+#: code:addons/msf_doc_import/wizard/__init__.py:35
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:168
 #, python-format
 msgid "Currency"
 msgstr "Devises"
@@ -64202,7 +64202,7 @@ msgstr "UdM limitée"
 msgid "Receivale Accounts"
 msgstr "Comptes Clients "
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:purchase.order.line,show_msg_ok:0
 #: field:sale.order.line,show_msg_ok:0
 msgid "Info on importation of lines"
@@ -64763,7 +64763,7 @@ msgstr "Stock - Prévisions "
 msgid "El Salvador"
 msgstr "Salvador"
 
-#. modules: reason_types_moves, msf_supply_doc_import, specific_rules, stock
+#. modules: reason_types_moves, msf_doc_import, specific_rules, stock
 #: constraint:initial.stock.inventory.line:0
 #: constraint:stock.inventory.line:0
 #: constraint:initial.stock.inventory.line:0
@@ -65092,7 +65092,7 @@ msgstr "Produit Spécifique"
 msgid "Reordering Mode"
 msgstr "Mode de Réapprovisionnement"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:initial.stock.inventory:0
 #: view:product.list:0
 #: view:purchase.order:0
@@ -65554,7 +65554,7 @@ msgstr "Gérer les catégories de partenaires afin de mieux les classer à des f
 msgid "Batch Number Identification"
 msgstr "Identification du Numéro de Lot"
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_supply_doc_import, account_msf, order_line_number, purchase_followup, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, delete_button, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, transport_mgmt, sourcing, purchase, msf_audittrail, specific_locations, sync_so
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, purchase_allocation_report, msf_doc_import, account_msf, order_line_number, purchase_followup, msf_order_date, procurement_request, service_purchasing, purchase_override, specific_rules, delete_button, res_currency_functional, msf_cross_docking, sales_followup, register_accounting, transport_mgmt, sourcing, purchase, msf_audittrail, specific_locations, sync_so
 #: constraint:purchase.order:0
 #: constraint:purchase.order:0
 #: constraint:purchase.order:0
@@ -66515,12 +66515,12 @@ msgstr "Solde calculé dans la devise du registre"
 msgid "Register Balance in functional currency"
 msgstr "Solde du registre en devise fonctionnelle"
 
-#. module: msf_supply_doc_import
-#: model:ir.model,name:msf_supply_doc_import.model_wizard_import_fo_line
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_fo_line
 msgid "Import FO Lines from Excel sheet"
 msgstr "Importer des lignes de CdT à partir de feuilles Excel"
 
-#. modules: msf_supply_doc_import, consumption_calculation
+#. modules: msf_doc_import, consumption_calculation
 #: view:composition.kit:0
 #: view:initial.stock.inventory:0
 #: view:product.list:0
@@ -66530,26 +66530,26 @@ msgstr "Importer des lignes de CdT à partir de feuilles Excel"
 msgid "Are you sure that you want to remove all lines?"
 msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes ?"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:purchase.order:0
 msgid "Are you sure that you want to remove all the lines of this Purchase order?"
 msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes de ce bon de commandes ?"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: view:sale.order:0
 msgid "Are you sure that you want to remove all the lines of this Field order?"
 msgstr "Êtes-vous sûr de vouloir supprimer toutes les lignes de cette commande de terrain ?"
 
-#. module: msf_supply_doc_import
-#: model:ir.model,name:msf_supply_doc_import.model_wizard_import_ir_line
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_ir_line
 msgid "Import IR Lines from Excel sheet"
 msgstr "Importer des lignes de DI depuis Excel"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:228
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:215
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:227
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:181
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:228
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:215
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:227
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:181
 #, python-format
 msgid " \n"
 "Importation completed in %s!\n"
@@ -66570,31 +66570,31 @@ msgstr " \n"
 "%s\n"
 ""
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:composition.kit,hide_column_error_ok:0
 #: field:tender,hide_column_error_ok:0
 msgid "Show column errors"
 msgstr "Afficher la colonne des erreurs"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:227
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:214
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:226
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:180
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:227
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:214
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:226
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:180
 #, python-format
 msgid " second(s)"
 msgstr " seconde(s)"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:205
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:200
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:202
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:166
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:205
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:200
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:202
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:166
 #, python-format
 msgid "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
 msgstr "The line num %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:wizard.import.fo.line,import_error_ok:0
 #: field:wizard.import.ir.line,import_error_ok:0
 #: field:wizard.import.po.line,import_error_ok:0
@@ -66602,7 +66602,7 @@ msgstr "The line num %s in the Excel file was added to the file of the lines wit
 msgid "Error at import"
 msgstr "Erreur lors de l'import"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: help:composition.kit,file_to_import:0
 msgid "You can use the template of the export for the format that you need to use. \n"
 " \n"
@@ -66620,11 +66620,11 @@ msgstr "Vous pouvez utiliser le modèle généré depuis l'export. \n"
 msgid "Composition Kit Excel Export"
 msgstr "Export Excel de la Composition Kit"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:279
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:265
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:279
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:235
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:279
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:265
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:279
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:235
 #, python-format
 msgid "Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.\n"
 "Otherwise, you can continue to use Unifield."
@@ -66637,7 +66637,7 @@ msgstr "Import en cours, veuillez garder la fenêtre ouverte et appuyer sur le b
 msgid "The state of the following invoices cannot be updated automatically. Please cancel them manually or d    iscuss with the accounting team to solve the problem. Invoices references : %s"
 msgstr "L'état des factures suivantes ne peut être mis à jour automatiquement. Veuillez les annuler manuellement ou discuter avec l'équipe de comptabilité pour résoudre le problème. Références des factures: %s"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:wizard.import.fo.line,data:0
 #: field:wizard.import.fo.line,filename:0
 #: field:wizard.import.ir.line,data:0
@@ -66649,7 +66649,7 @@ msgstr "L'état des factures suivantes ne peut être mis à jour automatiquement
 msgid "Lines with errors"
 msgstr "Lignes avec des erreurs"
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: field:wizard.import.fo.line,percent_completed:0
 #: field:wizard.import.ir.line,percent_completed:0
 #: field:wizard.import.po.line,percent_completed:0
@@ -66657,49 +66657,49 @@ msgstr "Lignes avec des erreurs"
 msgid "% completed"
 msgstr "% terminé"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:225
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:212
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:224
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:178
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:225
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:212
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:224
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:178
 #, python-format
 msgid "Reported errors for ignored lines : \n"
 ""
 msgstr "Erreurs pour les lignes ingorées: \n"
 ""
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/composition_kit.py:58
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/composition_kit.py:58
 #, python-format
 msgid "Please fix the line with errors (red lines)"
 msgstr "Veuillez corriger les lignes avec des erreurs (lignes en rouge)"
 
-#. module: msf_supply_doc_import
-#: model:ir.model,name:msf_supply_doc_import.model_wizard_import_tender_line
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_tender_line
 msgid "Import Tender Lines from Excel sheet"
 msgstr "Importer des lignes d'AO"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:134
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:134
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:121
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:134
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:134
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:121
 #, python-format
 msgid "Line %s: You should have exactly %s columns in this order: %s \n"
 ""
 msgstr "Ligne %s: Vous devriez avoir exactement %s colonnes dans cet ordre: %s \n"
 ""
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/purchase_order.py:182
-#: code:addons/msf_supply_doc_import/sale_order.py:274
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:182
+#: code:addons/msf_doc_import/sale_order.py:274
 #, python-format
 msgid "You should have exactly 8 columns in this order:\n"
 "#Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment. "
 msgstr "Vous devriez avoir exactement 8 colonnes dans cet ordre:\n"
 "#Produit*, Description Produit*, Quantité*, UdM du produit UoM*, Prix unitaire*, Date de livraison demandée*, Devises*, Commentaire. "
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/check_line.py:237
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:237
 #, python-format
 msgid "The Price and Product were not found."
 msgstr "Le prix et le produit n'ont pas été trouvé."
@@ -66710,14 +66710,14 @@ msgstr "Le prix et le produit n'ont pas été trouvé."
 msgid "No error !"
 msgstr "Aucune erreur !"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/sale_order.py:421
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/sale_order.py:421
 #, python-format
 msgid " Please define the nomenclature levels."
 msgstr " Veuillez définir les niveaux de nomenclature."
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/composition_kit.py:150
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/composition_kit.py:150
 #, python-format
 msgid "# lines imported: %s. %s"
 msgstr "# lignes importées: %s. %s"
@@ -66730,16 +66730,16 @@ msgid "You should have exactly 7 columns in this order:\n"
 msgstr "Vous devriez avoir exactement 7 colonnes dans cet ordre:\n"
 "Code Produit*, Description du produit*, UdM du Produit, Numéro de Lot, Date d'Expiration, Quantité consommée, Remarque"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/check_line.py:158
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:158
 #, python-format
 msgid "The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default."
 msgstr "La quantité n'était pas un nombre et doit être supérieure à 0, par défaut elle est mise à 1."
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:127
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:129
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:114
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:127
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:129
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:114
 #, python-format
 msgid "Line %s in the Excel file: You should have exactly %s columns in this order: %s \n"
 ""
@@ -66753,9 +66753,9 @@ msgstr "Ligne %s du fichier: vous devriez avoir exactement %s colonnes dans cet 
 msgid "The Qty Consumed cant't be greater than the Indicative Stock"
 msgstr "La quantité consommée ne peut être supérieure à la quantité en stock."
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:209
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:215
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:209
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:215
 #, python-format
 msgid "Line %s in the Excel file, uncaught error: %s"
 msgstr "Ligne %s du fichier, erreur: %s"
@@ -66765,17 +66765,17 @@ msgstr "Ligne %s du fichier, erreur: %s"
 msgid "Are you sure you want to change the consumer location ? It will change the indicative stock, so please check the report lines before validating"
 msgstr "Êtes-vous certain de vouloir changer la zone de consommation ? Ceci va changer les valeurs du stock indicatif, merci de vérifier les lignes du rapport avant validation"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:205
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:205
 #, python-format
 msgid "The Location has to be a string."
 msgstr "La zone doit être une chaîne de caractères."
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_fo_line.py:198
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_ir_line.py:195
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_po_line.py:194
-#: code:addons/msf_supply_doc_import/wizard/wizard_import_tender_line.py:159
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:198
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:195
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:194
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:159
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
 msgstr "La ligne %s du fichier a été ajoutée au fichier des erreurs, il y a des données en dehors des %s colonnes définies. Détails: %s"
@@ -66802,8 +66802,8 @@ msgstr " Importation terminée en %s!\n"
 msgid "Line %s of the imported file: Qty Consumed (%s) can't be greater than the Indicative Stock (%s)"
 msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure à la qté indicative du stock (%s)"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/check_line.py:209
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:209
 #, python-format
 msgid "The UOM Name was empty. (Details: %s)"
 msgstr "Le nom de l'UdM était vide. (Détails: %s)"
@@ -66830,10 +66830,10 @@ msgid "You should have exactly 5 columns in this order:\n"
 msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
 "Code Produit*, Description du Produit*, CCM, PCM, Valide jusqu'au"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:249
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:352
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:384
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:249
+#: code:addons/msf_doc_import/initial_stock_inventory.py:352
+#: code:addons/msf_doc_import/initial_stock_inventory.py:384
 #, python-format
 msgid "Batch is missing.\n"
 ""
@@ -66855,8 +66855,8 @@ msgid "Line %s of the imported file: Batch Number required\n"
 msgstr "Ligne %s du fichier: Numéro de lot obligatoire\n"
 ""
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/check_line.py:202
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:202
 #, python-format
 msgid "The UOM Name was empty."
 msgstr "Le nom de l'UdM était vide."
@@ -66872,8 +66872,8 @@ msgstr "Vous devez assigner un numéro de lot pour le traiter."
 msgid "New location"
 msgstr "Nouvelle zone"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:145
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:145
 #, python-format
 msgid "No Product Description"
 msgstr "Aucune description du produit"
@@ -67127,7 +67127,7 @@ msgstr "La quantié %d pour %s est plus grande que la quantité disponible du lo
 msgid "Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s"
 msgstr "La date indiquée est inférieure à la date du document. Veuillez mettre une date supérieure ou égale à %s"
 
-#. modules: msf_supply_doc_import, register_accounting, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, register_accounting, stock_override, consumption_calculation, kit
 #: field:real.average.consumption.line,inactive_product:0
 #: field:composition.item,inactive_product:0
 #: field:initial.stock.inventory.line,inactive_product:0
@@ -67153,45 +67153,45 @@ msgstr "Le produit de la composition de kit est inactif. Veuillez changer le pro
 msgid "Indicative Total Value"
 msgstr "Valeur totale"
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:64
 #: code:addons/kit/kit.py:832
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:41
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:121
-#: code:addons/msf_supply_doc_import/purchase_order.py:83
-#: code:addons/msf_supply_doc_import/sale_order.py:94
-#: code:addons/msf_supply_doc_import/tender.py:70
+#: code:addons/msf_doc_import/initial_stock_inventory.py:41
+#: code:addons/msf_doc_import/initial_stock_inventory.py:121
+#: code:addons/msf_doc_import/purchase_order.py:83
+#: code:addons/msf_doc_import/sale_order.py:94
+#: code:addons/msf_doc_import/tender.py:70
 #: code:addons/stock_override/stock.py:218
 #, python-format
 msgid "A product has"
 msgstr "Un produit a"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:322
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:455
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:488
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:322
+#: code:addons/msf_doc_import/initial_stock_inventory.py:455
+#: code:addons/msf_doc_import/initial_stock_inventory.py:488
 #, python-format
 msgid "Location is missing.\n"
 ""
 msgstr "La Zone est manquante.\n"
 ""
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:587
 #: code:addons/kit/kit.py:1078
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:71
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:422
-#: code:addons/msf_supply_doc_import/purchase_order.py:188
-#: code:addons/msf_supply_doc_import/sale_order.py:467
-#: code:addons/msf_supply_doc_import/tender.py:242
+#: code:addons/msf_doc_import/initial_stock_inventory.py:71
+#: code:addons/msf_doc_import/initial_stock_inventory.py:422
+#: code:addons/msf_doc_import/purchase_order.py:188
+#: code:addons/msf_doc_import/sale_order.py:467
+#: code:addons/msf_doc_import/tender.py:242
 #: code:addons/stock_override/stock.py:775
 #, python-format
 msgid "The product in line is inactive !"
 msgstr "Le produit sur la ligne est incatif !"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/purchase_order.py:85
-#: code:addons/msf_supply_doc_import/sale_order.py:96
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/purchase_order.py:85
+#: code:addons/msf_doc_import/sale_order.py:96
 #, python-format
 msgid "%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous valider le document vous devez supprimer/corriger la ligne contenant les produits inactifs (ligne en rouge %s)"
@@ -67209,68 +67209,68 @@ msgstr "Ce code est utilisé pour un autre employé."
 
 
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:66
 #: code:addons/kit/kit.py:834
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:43
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:123
+#: code:addons/msf_doc_import/initial_stock_inventory.py:43
+#: code:addons/msf_doc_import/initial_stock_inventory.py:123
 #: code:addons/stock_override/stock.py:220
 #, python-format
 msgid "those inactive products"
 msgstr "ces produits inactifs"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/tender.py:72
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/tender.py:72
 #, python-format
 msgid "%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez générer une demande de devis vous devez supprimer/corriger les lignes contenant ces produits inactifs (lignes en rouge %s)"
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/check_line.py:245
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:245
 #, python-format
 msgid "The Price Unit was not defined properly."
 msgstr "Le prix unitaire n'a pas été défini correctement."
 
-#. module: msf_supply_doc_import
-#: code:addons/msf_supply_doc_import/check_line.py:199
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:199
 #, python-format
 msgid "The UOM Name was not valid."
 msgstr "Le nom de l'UdM était invalide."
 
-#. modules: account_msf, register_accounting, msf_supply_doc_import, tender_flow, procurement_request
+#. modules: account_msf, register_accounting, msf_doc_import, tender_flow, procurement_request
 #: constraint:purchase.order:0
 msgid "You cannot validate this purchase order because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas valider ce bon de commande, car il contient une ligne avec des produits inactifs."
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:64
 #: code:addons/kit/kit.py:832
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:41
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:121
-#: code:addons/msf_supply_doc_import/purchase_order.py:83
-#: code:addons/msf_supply_doc_import/sale_order.py:94
-#: code:addons/msf_supply_doc_import/tender.py:70
+#: code:addons/msf_doc_import/initial_stock_inventory.py:41
+#: code:addons/msf_doc_import/initial_stock_inventory.py:121
+#: code:addons/msf_doc_import/purchase_order.py:83
+#: code:addons/msf_doc_import/sale_order.py:94
+#: code:addons/msf_doc_import/tender.py:70
 #: code:addons/stock_override/stock.py:218
 #, python-format
 msgid "Some products have"
 msgstr "Certains produits ont"
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:66
 #: code:addons/kit/kit.py:834
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:43
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:123
+#: code:addons/msf_doc_import/initial_stock_inventory.py:43
+#: code:addons/msf_doc_import/initial_stock_inventory.py:123
 #: code:addons/stock_override/stock.py:220
 #, python-format
 msgid "this inactive product"
 msgstr "ce produit inactif"
 
-#. modules: sale_override, msf_outgoing, msf_supply_doc_import, procurement_request
+#. modules: sale_override, msf_outgoing, msf_doc_import, procurement_request
 #: constraint:sale.order:0
 msgid "You cannot validate this sale order because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas valider cette commande client car elle contient des lignes avec un produit inactif"
 
-#. modules: tender_flow, msf_supply_doc_import
+#. modules: tender_flow, msf_doc_import
 #: constraint:tender:0
 msgid "You cannot validate this tender because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas valider cet appel d'offre car il contient une ligne avec un produit inactif"
@@ -67287,37 +67287,37 @@ msgstr "Vous ne pouvez pas désactiver ce produit pour les raisons suivantes:"
 msgid "The product [%s] %s is already active."
 msgstr "Le produit [%s] %s est déjà actif."
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:67
 #: code:addons/kit/kit.py:835
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:44
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:124
+#: code:addons/msf_doc_import/initial_stock_inventory.py:44
+#: code:addons/msf_doc_import/initial_stock_inventory.py:124
 #: code:addons/stock_override/stock.py:221
 #, python-format
 msgid "%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez valider ce document vous devez supprimer/corriger les %s contenant %s (voir les %s en rouge)"
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:65
 #: code:addons/kit/kit.py:833
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:42
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:122
-#: code:addons/msf_supply_doc_import/purchase_order.py:84
-#: code:addons/msf_supply_doc_import/sale_order.py:95
-#: code:addons/msf_supply_doc_import/tender.py:71
+#: code:addons/msf_doc_import/initial_stock_inventory.py:42
+#: code:addons/msf_doc_import/initial_stock_inventory.py:122
+#: code:addons/msf_doc_import/purchase_order.py:84
+#: code:addons/msf_doc_import/sale_order.py:95
+#: code:addons/msf_doc_import/tender.py:71
 #: code:addons/stock_override/stock.py:219
 #, python-format
 msgid "line"
 msgstr "ligne"
 
-#. modules: msf_supply_doc_import, stock_override, consumption_calculation, kit
+#. modules: msf_doc_import, stock_override, consumption_calculation, kit
 #: code:addons/consumption_calculation/consumption_calculation.py:65
 #: code:addons/kit/kit.py:833
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:42
-#: code:addons/msf_supply_doc_import/initial_stock_inventory.py:122
-#: code:addons/msf_supply_doc_import/purchase_order.py:84
-#: code:addons/msf_supply_doc_import/sale_order.py:95
-#: code:addons/msf_supply_doc_import/tender.py:71
+#: code:addons/msf_doc_import/initial_stock_inventory.py:42
+#: code:addons/msf_doc_import/initial_stock_inventory.py:122
+#: code:addons/msf_doc_import/purchase_order.py:84
+#: code:addons/msf_doc_import/sale_order.py:95
+#: code:addons/msf_doc_import/tender.py:71
 #: code:addons/stock_override/stock.py:219
 #, python-format
 msgid "lines"
@@ -67335,13 +67335,13 @@ msgid "You cannot validate this document because it contains a line with an inac
 msgstr "Vous ne pouvez pas valider ce document car il contient des lignes avec un produit inactif"
 
 
-#. module: msf_supply_doc_import
+#. module: msf_doc_import
 #: constraint:initial.stock.inventory:0
 #: constraint:stock.inventory:0
 msgid "You cannot confirm this stock inventory because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas confirmer cet inventaire car il contient des lignes avec un produit inactif"
 
-#. modules: msf_supply_doc_import, kit
+#. modules: msf_doc_import, kit
 #: constraint:composition.kit:0
 msgid "You cannot confirm this kit because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas confirmer ce kit car il contient des lignes avec un produit inactif"

@@ -26,7 +26,7 @@
     context.update({'yml_test': True, 'lang': 'en_MF'})
     logging.getLogger('tests').log(logging.TEST, 'We import composition_kit.xls.')
     # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'composition_kit.xls')
+    file_path = addons.get_module_resource('msf_doc_import','test','import_files_for_testing', 'composition_kit.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     self.write(cr, uid, ref("kcl1"), {'file_to_import': file64}, context=context)
@@ -39,7 +39,7 @@
     context.update({'yml_test': True, 'lang': 'en_FR'})
     logging.getLogger('tests').log(logging.TEST, 'We import composition_kit.xls.')
     # get the file path
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'composition_kit.xls')
+    file_path = addons.get_module_resource('msf_doc_import','test','import_files_for_testing', 'composition_kit.xls')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     self.write(cr, uid, ref("kcl1"), {'file_to_import': file64}, context=context)

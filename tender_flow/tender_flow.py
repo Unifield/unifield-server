@@ -221,7 +221,7 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
                 
                 for line in tender.tender_line_ids:
-                    if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_supply_doc_import', 'product_tbd')[1]:
+                    if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_doc_import', 'product_tbd')[1]:
                         raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
                     # create an order line for each tender line
                     price = pricelist_obj.price_get(cr, uid, [pricelist_id], line.product_id.id, line.qty, supplier.id, {'uom': line.product_uom.id})[pricelist_id]

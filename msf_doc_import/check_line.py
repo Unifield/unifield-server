@@ -22,7 +22,7 @@
 """
 This module is dedicated to help checking lines of Excel file at importation.
 """
-from msf_supply_doc_import import MAX_LINES_NB
+from msf_doc_import import MAX_LINES_NB
 from tools.translate import _
 import logging
 
@@ -164,7 +164,7 @@ def product_value(cr, uid, **kwargs):
                     cost_price = product_obj.browse(cr, uid, [default_code])[0].standard_price
             else:
                 msg = _('The Product Code has to be a string.')
-        if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]:
+        if not default_code or default_code == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]:
             comment += _(' Product Code to be defined')
             error_list.append(msg or _('The Product\'s Code has to be defined'))
     # if the cell is empty
@@ -236,22 +236,22 @@ def compute_uom_value(cr, uid, **kwargs):
                             error_list.append(msg or _('The UOM imported was not in the same category than the UOM of the product so we took the UOM of the product instead.'))
             else:
                 msg = _('The UOM Name has to be a string.')
-            if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+            if not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
                 error_list.append(msg or _('The UOM Name was not valid.'))
-                uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+                uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         else:
             error_list.append(msg or _('The UOM Name was empty.'))
             if default_code:
                 uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
             else:
-                uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+                uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
     # if the cell is empty
     except IndexError, e:
         error_list.append(_('The UOM Name was empty. (Details: %s)') % e)
         if default_code:
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
         else:
-            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+            uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
     return {'uom_id': uom_id, 'error_list': error_list}
 
 

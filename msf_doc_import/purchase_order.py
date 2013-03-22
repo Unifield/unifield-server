@@ -28,13 +28,13 @@ from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from msf_supply_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
-from msf_supply_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
-from msf_supply_doc_import import GENERIC_MESSAGE
+from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
+from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+from msf_doc_import import GENERIC_MESSAGE
 from check_line import *
-from msf_supply_doc_import import MAX_LINES_NB
-from msf_supply_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
-from msf_supply_doc_import import check_line
+from msf_doc_import import MAX_LINES_NB
+from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
+from msf_doc_import import check_line
 
 
 class purchase_order(osv.osv):
@@ -224,8 +224,8 @@ class purchase_order(osv.osv):
         
         for var in self.browse(cr, uid, ids, context=context):
             # we check the supplier and the address
-            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','supplier_tbd')[1] \
-            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','address_tbd')[1]:
+            if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import','supplier_tbd')[1] \
+            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import','address_tbd')[1]:
                 raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
@@ -330,7 +330,7 @@ class purchase_order_line(osv.osv):
                     self.check_data_for_uom(cr, uid, False, to_write=to_write, context=context)
                 else:
                     if not context.get('po_integration'):
-                        uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+                        uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
                         text_error += _('\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.')
                         to_write.update({'product_uom': uom, 'text_error': text_error})
         return to_write
@@ -357,11 +357,11 @@ class purchase_order_line(osv.osv):
                 """) % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:
             # we take the default uom of the product
             product_uom = product.uom_id.id
             return to_write.update({'product_uom': product_uom})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
             # this is inspired by the on_change in purchase>purchase.py: product_uom_change
             text_error += _("\n The UoM was not defined so we set the price unit to 0.0.")
             return to_write.update({'text_error': text_error,
@@ -374,7 +374,7 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
         obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         message = ''
         if not context.get('import_in_progress') and not context.get('button'):
             if vals.get('product_uom') or vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
@@ -382,13 +382,13 @@ class purchase_order_line(osv.osv):
                     if vals.get('product_uom') == tbd_uom:
                         message += _('You have to define a valid UOM, i.e. not "To be defined".')
                 if vals.get('nomen_manda_0'):
-                    if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                    if vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]:
                         message += _('You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_1'):
-                    if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                    if vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]:
                         message += _('You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_2'):
-                    if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                    if vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]:
                         message += _('You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 # the 3rd level is not mandatory
                 if message:

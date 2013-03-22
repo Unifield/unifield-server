@@ -93,8 +93,8 @@ class composition_kit(osv.osv):
         for row in rows:
             # default values
             to_write = {
-                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
-                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
                 'product_qty': 1,
                 'error_list': [],
                 'warning_list': [],
@@ -187,8 +187,8 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
         for row in rows:
             # default values
             to_write = {
-                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
-                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
                 'product_qty': 1,
                 'error_list': [],
                 'warning_list': [],
@@ -314,8 +314,8 @@ class composition_item(osv.osv):
             context = {}
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             message = ''
             if vals.get('item_uom_id'):
                 if vals.get('item_uom_id') == tbd_uom:

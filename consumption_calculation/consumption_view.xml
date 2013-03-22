@@ -207,10 +207,10 @@
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
                     <field name="period_from" on_change="period_change(period_from, period_to)" />
-                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import) -->
+                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_doc_import) -->
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
                     <field name="period_to" on_change="period_change(period_from, period_to)" />
-                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import) -->
+                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_doc_import) -->
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
                     <field name="cons_location_id" />
                     <newline />
