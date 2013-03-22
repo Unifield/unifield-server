@@ -596,11 +596,7 @@ class real_average_consumption_line(osv.osv):
         '''
         warning = {}
         if product_uom and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
+            if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
                 warning = {
                     'title': _('Wrong Product UOM !'),
                     'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")

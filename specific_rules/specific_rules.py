@@ -308,13 +308,7 @@ class stock_warehouse_orderpoint(osv.osv):
         Check if the UoM is convertible to product standard UoM
         '''
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-        
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-        
-            if product.uom_id.category_id.id != uom.category_id.id:
+            if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
                 raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
         
         return {}

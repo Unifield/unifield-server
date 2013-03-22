@@ -501,3 +501,34 @@ class ir_translation(osv.osv):
 
 
 ir_translation()
+
+
+class uom_tools(osv.osv_memory):
+    """
+    This osv_memory class helps to check certain consistency related to the UOM.
+    """
+    _name = 'uom.tools'
+
+    def check_uom(self, cr, product_id, uom_id, context=None):
+        """
+        Check the consistency between the category of the UOM of a product and the category of a UOM.
+        Return a boolean value (if false, it will raise an error).
+        :param cr: database cursor
+        :param product_id: takes the id of a product
+        :param product_id: takes the id of a uom
+        Note that this method is not consistent with the onchange method that returns a dictionary.
+        """
+        if context is None:
+            context = {}
+        uom_obj = self.pool.get('product.uom')
+        product_obj = self.pool.get('product.product')
+        if product_id and uom_id:
+            if isinstance(product_id, (int, long)):
+                product_id = [product_id]
+            if isinstance(uom_id, (int, long)):
+                product_id = [uom_id]
+            if not product_obj.browse(cr, uid, product_id[0], context).uom_id.category_id.id == uom_obj.browse(cr, uid, uom_id[0], context).category_id.id:
+                return False
+        return True
+
+uom_tools()

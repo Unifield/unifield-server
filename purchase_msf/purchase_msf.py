@@ -48,12 +48,10 @@ class purchase_order_line(osv.osv):
         elif vals.get('comment'):
             vals.update(name=vals.get('comment'),)
         if not context.get('import_in_progress', False):
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
             product_id = vals.get('product_id', False)
             product_uom = vals.get('product_uom', False)
             if product_id and product_uom:
-                if product_obj.browse(cr, uid, product_id, context).uom_id.category_id.id != uom_obj.browse(cr, uid, product_uom, context).category_id.id:
+                if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
                     raise osv.except_osv(_('Error'),
                                          _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
@@ -74,26 +72,20 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id'):
             vals.update(name=prod_obj.browse(cr, uid, vals.get('product_id'), context=context).name,)
         elif vals.get('comment'):
             vals.update(name=vals.get('comment'),)
+        res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
         if not context.get('import_in_progress', False):
-            self._check_product_uom(cr, uid, ids, context)
+            for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
+                product_id = pol_read['product_id']
+                uom_id = pol_read['product_uom']
+                if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
+                    raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
         return res
-
-    def _check_product_uom(self, cr, uid, ids, context=None):
-        '''
-        Check if the UoM has the same category as the product standard UoM
-        '''
-        for pol in self.browse(cr, uid, ids, context=context):
-            if pol.product_id.uom_id.category_id.id != pol.product_uom.category_id.id:
-                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
-            
-        return True
 
     def _get_manufacturers(self, cr, uid, ids, field_name, arg, context=None):
         '''

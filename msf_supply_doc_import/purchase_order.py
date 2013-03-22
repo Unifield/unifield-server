@@ -346,12 +346,7 @@ class purchase_order_line(osv.osv):
         product_id = to_write['product_id']
         uom_id = to_write['product_uom']
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                # this is inspired by onchange_uom in specific_rules>specific_rules.py
+            if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
                 text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
                 The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
                 """) % (product.uom_id.category_id.name, uom.category_id.name)
