@@ -141,8 +141,6 @@ class update(osv.osv):
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
     }
 
-    _order = 'sequence, create_date desc'
-
     def __init__(self, pool, cr):
         self._cache_pullers = SavePullerCache(self)
         super(update, self).__init__(pool, cr)
@@ -402,7 +400,7 @@ class update(osv.osv):
                     forced_values[k] = unicode(v)
         return fields, forced_values
 
-    _order = 'sequence asc, id asc'
+    _order = 'create_date desc'
     
 update()
 puller_ids_rel()
