@@ -40,6 +40,9 @@ import pooler
 
 import functools
 
+MAX_EXECUTED_UPDATES = 500
+MAX_EXECUTED_MESSAGES = 500
+
 class SkipStep(StandardError):
     pass
 
@@ -276,7 +279,7 @@ class Entity(osv.osv):
                         else:
                             raise
                     logger.switch(step, 'failed')
-                    error = "%s: %s" % (e.__class__.__name__, tools.ustr(e))
+                    error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
                     if is_step:
                         self._logger.exception('Error in sync_process at step %s' % step)
                         logger.append(error, step)
@@ -414,26 +417,22 @@ class Entity(osv.osv):
     """
     @sync_process('data_pull')
     def pull_update(self, cr, uid, recover=False, logger=None, context=None):
-        
-        context = context or {}
-        entity = self.get_entity(cr, uid, context)
-        
-        if entity.state not in ['init', 'update_pull']: 
+        entity = self.get_entity(cr, uid, context=context)
+        if entity.state not in ('init', 'update_pull'): 
             raise SkipStep
         
         if entity.state == 'init': 
-            self.set_last_sequence(cr, uid, context)
-        
-        self.retrieve_update(cr, uid, recover=recover, logger=logger, context=context)
-        cr.commit()
+            self.set_last_sequence(cr, uid, context=context)
+        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
 
-        res = self.pool.get('sync.client.update_received').execute_update(cr, uid, context=context)
-        cr.commit()
-        return res
-    
+        updates_count = self.retrieve_update(cr, uid, max_packet_size, recover=recover, logger=logger, context=context)
+        updates_executed = self.execute_updates(cr, uid, logger=logger, context=context)
+        if updates_executed == 0 and updates_count > 0 and logger is not None:
+            logger.append(_("Warning: no update to execute, this case should never occurs."))
+        return True
 
     def set_last_sequence(self, cr, uid, context=None):
-        entity = self.get_entity(cr, uid, context)
+        entity = self.get_entity(cr, uid, context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_max_sequence(entity.identifier, context)
         if res and res[0]:
@@ -443,16 +442,13 @@ class Entity(osv.osv):
 
         return True
 
-    def retrieve_update(self, cr, uid, recover=False, logger=None, context=None):
+    def retrieve_update(self, cr, uid, max_packet_size, recover=False, logger=None, context=None):
         entity = self.get_entity(cr, uid, context)
         last = False
         last_seq = entity.update_last
-        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
         max_seq = entity.max_update
         offset = entity.update_offset
-        #Already up-to-date
-        if last_seq >= max_seq:
-            last = True
+        last = (last_seq >= max_seq)
         updates_count = 0
         logger_index = None
         while not last:
@@ -470,16 +466,61 @@ class Entity(osv.osv):
                     self.write(cr, uid, entity.id, {'update_offset' : offset}, context=context)
             elif res and not res[0]:
                 raise Exception, res[1]
-
-        if logger and updates_count:
-            logger.replace(logger_index, "Update(s) received: %d" % updates_count)
+            cr.commit()
 
         self.write(cr, uid, entity.id, {'update_offset' : 0, 
                                         'max_update' : 0, 
                                         'update_last' : max_seq}, context=context) 
+        cr.commit()
         
         return updates_count
 
+    def execute_updates(self, cr, uid, logger=None, context=None):
+        updates = self.pool.get('sync.client.update_received')
+
+        update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
+        update_count = len(update_ids)
+        if not update_count: return 0
+
+        # Sort updates by rule_sequence
+        whole = updates.browse(cr, uid, update_ids, context=context)
+        update_groups = dict()
+        
+        for update in whole:
+            group_key = (update.sequence, update.rule_sequence)
+            try:
+                update_groups[group_key].append(update.id)
+            except KeyError:
+                update_groups[group_key] = [update.id]
+
+        try:
+            if logger is not None: logger_index = logger.append()
+            done = []
+            updates_executed = 0
+            for rule_seq in sorted(update_groups.keys()):
+                update_ids = update_groups[rule_seq]
+                while update_ids:
+                    to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
+                    updates.execute_update(cr, uid, to_do, context=context)
+                    done.extend(to_do)
+                    updates_executed += len(to_do)
+                    if logger is not None:
+                        logger.replace(logger_index, _("Update(s) processed: %d/%d") % (updates_executed, update_count))
+                        logger.write()
+                    # intermittent commit
+                    if len(done) >= MAX_EXECUTED_UPDATES:
+                        done[:] = []
+                        cr.commit()
+        finally:
+            cr.commit()
+
+            if logger is not None:
+                logger.replace(logger_index, _("Update(s) processed: %d") % update_count)
+                notrun_count = updates.search(cr, uid, [('run', '=', False)], count=True, context=context)
+                if notrun_count > 0: logger.append(_("Update(s) not run left: %d") % notrun_count)
+                logger.write()
+
+        return update_count
 
 
     """
@@ -554,57 +595,71 @@ class Entity(osv.osv):
     """
     @sync_process('msg_pull')
     def pull_message(self, cr, uid, recover=False, logger=None, context=None):
-
-        context = context or {}
-        entity = self.get_entity(cr, uid, context)
+        entity = self.get_entity(cr, uid, context=context)
         if recover:
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-            proxy.message_recover_from_seq(entity.identifier, entity.message_last, context)
+            proxy.message_recover_from_seq(entity.identifier, entity.message_last, context=context)
 
-        if not entity.state in ['init']:
+        if not entity.state == 'init':
             raise SkipStep
-        
-        messages_count = self.get_message(cr, uid, context)
-        cr.commit()
 
-        self.execute_message(cr, uid, context)
-        cr.commit()
-
-        if logger and messages_count:
-            logger.append(_("Message(s) received: %d") % messages_count)
-
+        self.get_message(cr, uid, logger=logger, context=context)
+        self.execute_message(cr, uid, logger=logger, context=context)
         return True
         
-    def get_message(self, cr, uid, context):
-        def _ack_message(proxy, uuid, message_uuid):
-            res = proxy.message_received(uuid, message_uuids)
-            if res and not res[0]:
-                raise Exception, res[1]
-             
-        packet = True
-        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
-        entity = self.get_entity(cr, uid, context)
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+    def get_message(self, cr, uid, logger=None, context=None):
         messages_count = 0
-        while packet:
-            res = proxy.get_message(entity.identifier, max_packet_size)
-            if res and not res[0]:
-                raise Exception, res[1]
+        logger_index = None
 
-            if res and res[1]:
-                packet = res[1]
-                self.pool.get('sync.client.message_received').unfold_package(cr, uid, packet, context=context)
-                message_uuids = [data['id'] for data in packet]
-                messages_count += len(message_uuids)
-                _ack_message(proxy, entity.identifier, message_uuids)
-                
-            else:
-                packet = False
+        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+        instance_uuid = self.get_entity(cr, uid, context).identifier
+        while True:
+            res = proxy.get_message(instance_uuid, max_packet_size)
+            if not res[0]: raise Exception, res[1]
+
+            packet = res[1]
+            if not packet: break
+            messages_count += len(packet)
+            self.pool.get('sync.client.message_received').unfold_package(cr, uid, packet, context=context)
+            res = proxy.message_received(instance_uuid, [data['id'] for data in packet])
+            if not res[0]: raise Exception, res[1]
+            cr.commit()
+
+            if logger and messages_count:
+                if logger_index is None: logger_index = logger.append()
+                logger.replace(logger_index, _("Message(s) received: %d") % messages_count)
+                logger.write()
 
         return messages_count
             
-    def execute_message(self, cr, uid, context):
-        return self.pool.get('sync.client.message_received').execute(cr, uid, context=context)
+    def execute_message(self, cr, uid, logger=None, context=None):
+        messages = self.pool.get('sync.client.message_received')
+        message_ids = messages.search(cr, uid, [('run', '=', False)], context=context)
+        messages_count = len(message_ids)
+        if messages_count == 0: return 0
+
+        try:
+            if logger is not None: logger_index = logger.append()
+            messages_executed = 0
+            while message_ids:
+                to_do, message_ids = message_ids[:MAX_EXECUTED_MESSAGES], message_ids[MAX_EXECUTED_MESSAGES:]
+                messages.execute(cr, uid, message_ids, context=context)
+                messages_executed += len(to_do)
+                if logger is not None:
+                    logger.replace(logger_index, _("Message(s) processed: %d/%d") % (messages_executed, messages_count))
+                    logger.write()
+                # intermittent commit
+                cr.commit()
+        finally:
+            cr.commit()
+            if logger is not None:
+                logger.replace(logger_index, _("Message(s) processed: %d") % messages_count)
+                notrun_count = messages.search(cr, uid, [('run', '=', False)], count=True, context=context)
+                if notrun_count > 0: logger.append(_("Message(s) not run left: %d") % notrun_count)
+                logger.write()
+
+        return messages_count
 
 
     """
