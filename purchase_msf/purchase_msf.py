@@ -80,8 +80,8 @@ class purchase_order_line(osv.osv):
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
         if not context.get('import_in_progress', False):
             for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
-                product_id = pol_read['product_id']
-                uom_id = pol_read['product_uom']
+                product_id = pol_read['product_id'][0]
+                uom_id = pol_read['product_uom'][0]
                 if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                     raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
