@@ -36,8 +36,6 @@ from sync_common.common import sync_log
 
 from tools.safe_eval import safe_eval as eval
 
-MAX_IMPORT = 500
-
 def eval_poc_domain(obj, cr, uid, domain, context=None):
     if not context:
         context = {}
@@ -412,6 +410,7 @@ class update_received(osv.osv):
                         if "('warning', 'Warning !')" == import_message:
                             import_message = "Unknown! Please check the constraints of linked models. The use of raise Python's keyword in constraints typically give this message."
                         import_message = "Cannot import in model %s:\nData: %s\nReason: %s\n" % (obj._name, data, import_message)
+                        message += import_message
                         values.pop(value_index)
                         versions.pop(value_index)
                         self.write(cr, uid, [update_ids.pop(value_index)], {
@@ -444,25 +443,12 @@ class update_received(osv.osv):
 
             return message
 
-        # Commit any changes made til now coz we gonna make a lot of commits
-        cr.commit()
-        imported = []
-
         error_message = ""
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
-            while updates:
-                to_import, updates = updates[:MAX_IMPORT], updates[MAX_IMPORT:]
-                error_message += group_update_execution(to_import)
-                imported += to_import
-                if len(imported) >= MAX_IMPORT:
-                    cr.commit()
-                    imported[:] = []
+            error_message += group_update_execution(updates)
         
-        # Make sure the transaction is clean 
-        if imported:
-            cr.commit()
-        return error_message
+        return error_message.strip()
 
     def _check_fields(self, cr, uid, model, fields, context=None):
         """

@@ -225,7 +225,7 @@ class message_received(osv.osv):
     def execute(self, cr, uid, ids=False, context=None):
         if not ids:
             ids = self.search(cr, uid, [('run', '=', False)], context=context)
-        if not ids: return True
+        if not ids: return 0
         execution_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
         for message in self.browse(cr, uid, ids, context=context):
@@ -235,14 +235,15 @@ class message_received(osv.osv):
             try:
                 fn = getattr(self.pool.get(model), method)
                 res = fn(cr, uid, message.source, *arg)
-                self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
-                cr.execute("RELEASE SAVEPOINT exec_message")
             except BaseException, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
                 log += sync_log(self, e, 'error')
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
-        return True
+            else:
+                cr.execute("RELEASE SAVEPOINT exec_message")
+                self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
+        return len(ids)
 
     _order = 'id asc'
 
