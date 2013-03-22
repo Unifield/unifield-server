@@ -236,7 +236,7 @@ class tender_line(osv.osv):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
             if line.to_correct_ok:
-                res[line.id].upadte({'inactive_error': line.text_error})
+                res[line.id].update({'inactive_error': line.text_error})
             if line.tender_id and line.tender_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}

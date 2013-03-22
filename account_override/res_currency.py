@@ -56,6 +56,7 @@ class res_currency(osv.osv):
                 sql += """\nAND currency_table_id in %s"""
                 cr.execute(sql, (c.currency_name, tuple([c.currency_table_id.id])))
             else:
+                sql += """\nAND currency_table_id is Null"""
                 cr.execute(sql, (c.currency_name,))
             bad_ids = cr.fetchall()
             if bad_ids and len(bad_ids) > 1:
@@ -79,6 +80,7 @@ class res_currency(osv.osv):
                 sql += """\nAND currency_table_id in %s"""
                 cr.execute(sql, (c.name, tuple([c.currency_table_id.id])))
             else:
+                sql += """\nAND currency_table_id is Null"""
                 cr.execute(sql, (c.name,))
             bad_ids = cr.fetchall()
             if bad_ids and len(bad_ids) > 1:

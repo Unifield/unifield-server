@@ -37,10 +37,8 @@ def _get_instance_level(self, cr, uid):
                 instance_level = 'hq'
             return instance_level.lower()
         else:
-            logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
             return False
     else:
-        logging.getLogger(self._name).warn("No instance name for company with ID %s so cannot apply Field Access Rules" % user.company_id.id)
         return False
 
 def _record_matches_domain(self, cr, record_id, domain):
@@ -92,7 +90,6 @@ def create(self, cr, uid, vals, context=None):
 
                 rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
                 if not rules_pool:
-                    logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
                     return create_result
                     
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
@@ -250,7 +247,6 @@ def write(self, cr, uid, ids, vals, context=None):
 
     rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
     if not rules_pool:
-        logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
         return super_write(self, cr, uid, ids, vals, context=context)
     
     rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
@@ -298,7 +294,6 @@ def write(self, cr, uid, ids, vals, context=None):
                                         # and whose current value is different from the new value in the new values list
                                         if not _values_equate(columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
                                             # throw access denied error
-                                            logging.getLogger().warn("Access denied to field %s of model %s" % (line.field.name, self._name if hasattr(self, '_name') else '[error getting model name]'))
                                             raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % line.field.name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
@@ -358,7 +353,6 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
 
         rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
         if not rules_pool:
-            logging.getLogger(self._name).warn("Could not get msf_field_access_rights.field_access_rule pool, so no rules have been implemented!")
             return fields_view
         
         rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
