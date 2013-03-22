@@ -443,6 +443,8 @@ class stock_picking(osv.osv):
                 force_complete = False
                 # initial qty
                 initial_qty = move.product_qty
+                # initial uom
+                initial_uom = move.product_uom.id
                 # corresponding out move
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_move_id = mirror_data['move_id']
@@ -515,7 +517,7 @@ class stock_picking(osv.osv):
                             average_values = {'price_unit': product_price,
                                               'price_currency_id': product_currency}
                     # the quantity
-                    count = count + partial['product_qty']
+                    count = count + uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], initial_uom)
                     if first:
                         first = False
                         # line number does not need to be updated

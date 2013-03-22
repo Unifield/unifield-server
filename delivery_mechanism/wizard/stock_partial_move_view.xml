@@ -23,7 +23,7 @@
 					</field>
 					
 					<field name="product_uom" position="attributes">
-						<attribute name="readonly">True</attribute>
+						<attribute name="readonly">False</attribute>
 					</field>
 
 					<field name="quantity" position="before">
