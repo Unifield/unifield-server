@@ -509,7 +509,7 @@ class uom_tools(osv.osv_memory):
     """
     _name = 'uom.tools'
 
-    def check_uom(self, cr, product_id, uom_id, context=None):
+    def check_uom(self, cr, uid, product_id, uom_id, context=None):
         """
         Check the consistency between the category of the UOM of a product and the category of a UOM.
         Return a boolean value (if false, it will raise an error).
@@ -526,8 +526,8 @@ class uom_tools(osv.osv_memory):
             if isinstance(product_id, (int, long)):
                 product_id = [product_id]
             if isinstance(uom_id, (int, long)):
-                product_id = [uom_id]
-            if not product_obj.browse(cr, uid, product_id[0], context).uom_id.category_id.id == uom_obj.browse(cr, uid, uom_id[0], context).category_id.id:
+                uom_id = [uom_id]
+            if not product_obj.browse(cr, uid, product_id, context)[0].uom_id.category_id.id == uom_obj.browse(cr, uid, uom_id, context)[0].category_id.id:
                 return False
         return True
 

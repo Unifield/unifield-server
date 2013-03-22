@@ -497,7 +497,7 @@ class sale_order_line(osv.osv):
         product_id = to_write['product_id']
         uom_id = to_write['product_uom']
         if uom_id and product_id:
-            if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                 text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.""")
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
@@ -524,7 +524,7 @@ class sale_order_line(osv.osv):
             domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
             res['domain'] = domain
             if uom_id:
-                if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                     warning = {'title': _('Wrong Product UOM !'),
                                'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
                     res.update({'warning': warning})

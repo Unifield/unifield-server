@@ -231,7 +231,7 @@ def compute_uom_value(cr, uid, **kwargs):
                     uom_id = uom_ids[0]
                     # check the uom category consistency
                     if default_code:
-                        if not self.pool.get('uom.tools').check_uom(cr, default_code, uom_id, context):
+                        if not self.pool.get('uom.tools').check_uom(cr, uid, default_code, uom_id, context):
                             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
                             error_list.append(msg or _('The UOM imported was not in the same category than the UOM of the product so we took the UOM of the product instead.'))
             else:

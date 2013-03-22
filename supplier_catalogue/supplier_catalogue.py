@@ -428,7 +428,7 @@ class supplier_catalogue(osv.osv):
                 #[utp-129]: check consistency of uom
                 # I made the check on uom_id according to the constraint _check_uom in unifield-addons/product/product.py (l.744) so that we keep the consistency even when we create a supplierinfo directly from the product
                 if default_code != obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]:
-                    if not self.pool.get('uom.tools').check_uom(cr, default_code, uom_id, context):
+                    if not self.pool.get('uom.tools').check_uom(cr, uid, default_code, uom_id, context):
                         browse_uom = uom_obj.browse(cr, uid, uom_id, context)
                         browse_product = product_obj.browse(cr, uid, default_code, context)
                         uom_id = browse_product.uom_id.id

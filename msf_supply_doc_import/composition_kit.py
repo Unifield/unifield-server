@@ -298,7 +298,7 @@ class composition_item(osv.osv):
         '''
         warning = {}
         if product_uom and product_id:
-            if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
                 warning = {'title': _('Wrong Product UOM !'),
                            'message': _("You have to select a product UOM in the same category than the UOM of the product")}
         return {'warning': warning}

@@ -51,7 +51,7 @@ class purchase_order_line(osv.osv):
             product_id = vals.get('product_id', False)
             product_uom = vals.get('product_uom', False)
             if product_id and product_uom:
-                if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
                     raise osv.except_osv(_('Error'),
                                          _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
@@ -82,7 +82,7 @@ class purchase_order_line(osv.osv):
             for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
                 product_id = pol_read['product_id']
                 uom_id = pol_read['product_uom']
-                if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                     raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
         return res

@@ -657,6 +657,11 @@ class real_average_consumption_line(osv.osv):
         check = self._check_qty(cr, uid, res, context)
         if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+        if vals.get('uom_id') and vals.get('product_id'):
+            product_id = vals.get('product_id')
+            product_uom = vals.get('uom_id')
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                raise osv.except_osv(_('Warning !'), _("You have to select a product UOM in the same category than the purchase UOM of the product"))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -678,7 +683,7 @@ class real_average_consumption_line(osv.osv):
             if vals.get('uom_id') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('uom_id')
-                if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
                     message += _("You have to select a product UOM in the same category than the purchase UOM of the product")
             if message:
                 raise osv.except_osv(_('Warning !'), message)
