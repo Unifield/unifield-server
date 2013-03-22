@@ -1,14 +1,14 @@
-"id","code","currency","default_credit_account_id","default_debit_account_id","name","type","analytic_journal_id"
-"jou_accruals","AC","","","","Accruals","accrual","Accruals"
-"jou_hq","HQ","","","","HQ","hq","Analytic HQ"
-"jou_hq_field_expenses","HQ-Exp","","","","HQ - Field expenses","hq","HQ - Field expenses"
-"jou_hr","HR","","","","HR","hr","HR"
-"jou_miscellaneous_transactions","MT","","6940 Currency exchange difference HQ ONLY","6940 Currency exchange difference HQ ONLY","Miscellaneous Transactions","cur_adj","Miscellaneous Transactions Journal"
-"jou_correction","OD","","","","Correction","correction","Correction"
-"jou_purchase","PUR","","","","Purchase","purchase","Purchase"
-"jou_purchase_refund","PURR","","","","Purchase Refund","purchase_refund","Purchase Refund"
-"jou_sale","SAL","","","","Sale","sale","Sale"
-"jou_sale_refund","SALR","","","","Sale Refund","sale_refund","Sale Refund"
-"jou_stock","STO","","","","Stock","stock",""
-"jou_inkind_donation","IKD","","","","In-kind Donation","inkind","Analytic In-kind Donation"
-"jou_intermission","INT","","","","Intermission","intermission","Analytic Intermission"
+code,currency,default_credit_account_id,default_debit_account_id,name,type,analytic_journal_id
+AC,,,,Accruals,accrual,Accruals
+HQ,,,,HQ,hq,Analytic HQ
+HQ-Exp,,,,HQ - Field expenses,hq,HQ - Field expenses
+HR,,,,HR,hr,HR
+MT,,,6940 Currency exchange difference HQ ONLY,Miscellaneous Transactions,cur_adj,Miscellaneous Transactions Journal
+OD,,,,Correction,correction,Correction
+PUR,,,,Purchase,purchase,Purchase
+PURR,,,,Purchase Refund,purchase_refund,Purchase Refund
+SAL,,,,Sale,sale,Sale
+SALR,,,,Sale Refund,sale_refund,Sale Refund
+STO,,,,Stock,stock,
+IKD,,,,In-kind Donation,inkind,Analytic In-kind Donation
+INT,,,,Intermission,intermission,Analytic Intermission

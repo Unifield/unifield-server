@@ -1,17 +1,17 @@
-"id","active","code","name","type"
-"ana_purchase","TRUE","PUR","Purchase","purchase"
-"ana_purchase_refund","TRUE","PURR","Purchase Refund","purchase"
-"ana_sale","TRUE","SAL","Sale","sale"
-"ana_sale_refund","TRUE","SALR","Sale Refund","sale"
-"ana_correction","TRUE","OD","Correction","general"
-"ana_analytic_hq","TRUE","AHQ","Analytic HQ","hq"
-"ana_hq_field_expenses","TRUE","AHQ-Exp","HQ - Field expenses","hq"
-"ana_hr","TRUE","HR","HR","hr"
-"ana_bank","TRUE","BNK","Bank","general"
-"ana_cash","TRUE","CAS","Cash","cash"
-"ana_cheque","TRUE","CHK","Cheque","general"
-"ana_engagement","TRUE","ENG","Engagement Journal","engagement"
-"ana_misc_journal","TRUE","AMT","Miscellaneous Transactions Journal","general"
-"ana_accruals","TRUE","AC","Accruals","general"
-"ana_analytic_inkind_donation","TRUE","AIKD","Analytic In-kind Donation","inkind"
-"ana_analytic_intermission","TRUE","AINT","Analytic Intermission","intermission"
+active,code,name,type
+TRUE,PUR,Purchase,purchase
+TRUE,PURR,Purchase Refund,purchase
+TRUE,SAL,Sale,sale
+TRUE,SALR,Sale Refund,sale
+TRUE,OD,Correction,general
+TRUE,AHQ,Analytic HQ,hq
+TRUE,AHQ-Exp,HQ - Field expenses,hq
+TRUE,HR,HR,hr
+TRUE,BNK,Bank,general
+TRUE,CAS,Cash,cash
+TRUE,CHK,Cheque,general
+TRUE,ENG,Engagement Journal,engagement
+TRUE,AMT,Miscellaneous Transactions Journal,general
+TRUE,AC,Accruals,general
+TRUE,AIKD,Analytic In-kind Donation,inkind
+TRUE,AINT,Analytic Intermission,intermission
