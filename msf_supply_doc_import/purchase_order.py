@@ -347,9 +347,7 @@ class purchase_order_line(osv.osv):
         uom_id = to_write['product_uom']
         if uom_id and product_id:
             if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
-                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
-                The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """) % (product.uom_id.category_id.name, uom.category_id.name)
+                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.""")
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:

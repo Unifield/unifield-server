@@ -524,8 +524,7 @@ class sale_order_line(osv.osv):
             domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
             res['domain'] = domain
             if uom_id:
-                uom = uom_obj.browse(cr, uid, uom_id, context=context)
-                if product.uom_id.category_id.id != uom.category_id.id:
+                if not self.pool.get('uom.tools').check_uom(cr, product_id, uom_id, context):
                     warning = {'title': _('Wrong Product UOM !'),
                                'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
                     res.update({'warning': warning})
