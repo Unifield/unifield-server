@@ -571,4 +571,19 @@ class sale_order_line(osv.osv):
 
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        message = ''
+        if not context.get('import_in_progress'):
+            if vals.get('product_uom') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+        return super(sale_order_line, self).create(cr, uid, vals, context=context)
+
 sale_order_line()
