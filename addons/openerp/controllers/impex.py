@@ -143,7 +143,7 @@ class ImpEx(SecuredController):
         default = []
         if params._terp_listheaders:
             default = [x.split(',',1) for x in params._terp_listheaders]
-        elif kw.get('_terp_fields2') and kw.get('fields'):
+        elif kw.get('_terp_fields2') and kw.get('fields') and params.fields2:
             default = []
             for i in range(0, len(kw.get('fields'))):
                 if import_compat=='1' and '/' in kw.get('fields')[i] and kw.get('fields')[i].split('/')[-1] not in ('id', '.id'):
