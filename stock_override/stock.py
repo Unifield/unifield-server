@@ -802,6 +802,14 @@ class stock_move(osv.osv):
         'inactive_error': lambda *a: '',
     }
 
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_uom_constraint, 'Constraint error on Uom', [])]
+
     def create(self, cr, uid, vals, context=None):
         '''
         Update the partner or the address according to the other
