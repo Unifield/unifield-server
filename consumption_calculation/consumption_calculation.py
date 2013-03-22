@@ -590,19 +590,6 @@ class real_average_consumption_line(osv.osv):
 
         return True
 
-    def check_product_uom(self, cr, uid, ids, product_id, product_uom, context=None):
-        '''
-        Check if the UoM is convertible to product standard UoM
-        '''
-        warning = {}
-        if product_uom and product_id:
-            if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
-                warning = {
-                    'title': _('Wrong Product UOM !'),
-                    'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")
-                }
-        return {'warning': warning}
-
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
 
@@ -691,9 +678,8 @@ class real_average_consumption_line(osv.osv):
             if vals.get('uom_id') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('uom_id')
-                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
-                if res and res['warning']:
-                    message += res['warning']['message']
+                if not self.pool.get('uom.tools').check_uom(cr, product_id, product_uom, context):
+                    message += _("You have to select a product UOM in the same category than the purchase UOM of the product")
             if message:
                 raise osv.except_osv(_('Warning !'), message)
             else:
