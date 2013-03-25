@@ -516,7 +516,7 @@ class sale_order_line(osv.osv):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
-        res = {}
+        res = {'domain':{}, 'warning':{}}
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         if product_id:
@@ -527,7 +527,7 @@ class sale_order_line(osv.osv):
                 if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                     warning = {'title': _('Wrong Product UOM !'),
                                'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
-                    res.update({'warning': warning})
+                    res['warning'] = warning
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -570,5 +570,20 @@ class sale_order_line(osv.osv):
                     vals['text_error'] = False
 
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        message = ''
+        if not context.get('import_in_progress'):
+            if vals.get('product_uom') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context)
+                if res and res.get('warning', False):
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+        return super(sale_order_line, self).create(cr, uid, vals, context=context)
 
 sale_order_line()

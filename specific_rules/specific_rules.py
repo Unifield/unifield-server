@@ -1640,7 +1640,13 @@ class stock_inventory_line(osv.osv):
                  'type_check': 'in',
                  'dont_move': lambda *a: False,
                  }
-    
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
     _constraints = [(_check_batch_management,
                      'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
                      ['prod_lot_id']),
@@ -1650,6 +1656,7 @@ class stock_inventory_line(osv.osv):
                     (_check_prodlot_need,
                      'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
                      ['prod_lot_id']),
+                    (_uom_constraint, 'Constraint error on Uom', [])
                     ]
 
 stock_inventory_line()
