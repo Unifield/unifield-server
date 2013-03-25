@@ -139,7 +139,7 @@ class write_info(osv.osv):
             res_id = [res_id]
         read_res = self.pool.get(model_name).read(cr, uid, res_id, field, context=context)
         if not read_res: 
-            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id[0]))
+            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id and res_id[0]))
             return
         real_modif_field = []
         # read_res is a list (read) but we want the dict
