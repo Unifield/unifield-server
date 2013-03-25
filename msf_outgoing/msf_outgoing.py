@@ -2308,6 +2308,7 @@ class stock_picking(osv.osv):
         
         # stock move object
         move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         
         for pick in self.browse(cr, uid, ids, context=context):
             # create the new picking object
@@ -2329,12 +2330,15 @@ class stock_picking(osv.osv):
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
                     assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    # UTP-289 : Remove the check of the consistency of UoM
+                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    partial['product_qty'] = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
                     count = count + partial['product_qty']
                     # copy the stock move and set the quantity
                     values = {'picking_id': new_pick_id,
                               'product_qty': partial['product_qty'],
+                              'product_uom': partial['product_uom'],
                               'product_uos_qty': partial['product_qty'],
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],

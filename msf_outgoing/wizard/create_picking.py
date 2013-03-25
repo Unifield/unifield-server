@@ -123,6 +123,7 @@ class create_picking(osv.osv_memory):
                 'asset_id': move.asset_id.id, 
                 'composition_list_id': move.composition_list_id.id,
                 'quantity_ordered' : move.product_qty,
+                'uom_ordered': move.product_uom.id,
                 'product_uom' : move.product_uom.id, 
                 'prodlot_id' : move.prodlot_id.id, 
                 'move_id' : move.id,

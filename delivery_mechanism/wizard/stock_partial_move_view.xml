@@ -27,7 +27,8 @@
 					</field>
 
 					<field name="quantity" position="before">
-	           				<field name="quantity_ordered" readonly="1"/>
+                        <field name="quantity_ordered" readonly="1"/>
+                        <field name="uom_ordered" readonly="1" />
 					</field>
 
 					<field name="quantity" position="after">
@@ -68,11 +69,12 @@
 					</field>
 					
 					<field name="product_uom" position="attributes">
-						<attribute name="readonly">True</attribute>
+						<attribute name="readonly">False</attribute>
 					</field>
 
 					<field name="quantity" position="before">
-	           				<field name="quantity_ordered" readonly="1"  />
+                        <field name="quantity_ordered" readonly="1"  />
+                        <field name="uom_ordered" readonly="1" />
 					</field>
 				
 					<field name="quantity" position="after">
