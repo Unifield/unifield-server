@@ -176,14 +176,14 @@ class ir_ui_view(osv.osv):
         
         if view_xml_text:
             view_xml = etree.fromstring(isinstance(view_xml_text, unicode) and view_xml_text.encode('utf8') or view_xml_text)
-            buttons = view_xml.xpath("//button[ @name and @type != 'special' and not (@position) ]")
+            buttons = view_xml.xpath("//button[ @name and (@type != 'special' or not (@type)) and not (@position) ]")
             
             for button in buttons:
                 
                 name = button.attrib.get('name', '')
                 label = button.attrib.get('string', '')
                 groups = button.attrib.get('groups','')
-                type = button.attrib.get('type', '').lower()
+                type = button.attrib.get('type', '').lower() or 'workflow'
                 
                 if name:
                     button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id))
