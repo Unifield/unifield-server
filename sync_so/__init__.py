@@ -4,4 +4,3 @@ import specific_xml_id
 import account_analytic_line
 import account
 import picking
-
