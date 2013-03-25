@@ -135,11 +135,15 @@ class write_info(osv.osv):
         
     def log_write(self, cr, uid, model_name, res_id, values, context=None):
         field = [key for key in values.keys()]
+        if isinstance(res_id, (int, long)):
+            res_id = [res_id]
         read_res = self.pool.get(model_name).read(cr, uid, res_id, field, context=context)
         if not read_res: 
-            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id))
+            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id[0]))
             return
         real_modif_field = []
+        # read_res is a list (read) but we want the dict
+        read_res = read_res[0]
         for k, val in read_res.items():
             #TODO
             #if k in field and (not isinstance(values[k], list) or values[k]):
@@ -147,7 +151,7 @@ class write_info(osv.osv):
             if k in field and (not isinstance(values[k], list) or values[k]) and val != tools.ustr(values[k]):
                 real_modif_field.append(k)
         if real_modif_field:
-            self.create(cr, uid, {'model' : model_name, 'res_id' : res_id, 'fields_modif' : str(real_modif_field)}, context=context )
+            self.create(cr, uid, {'model' : model_name, 'res_id' : res_id[0], 'fields_modif' : str(real_modif_field)}, context=context )
         
     def delete_old_log(self, cr, uid, model_name, res_id, sync_date, context=None):
         ids = self.search(cr, uid, [('res_id', '=', res_id), ('model', '=', model_name), ('create_date', '<', sync_date)], context=context)
