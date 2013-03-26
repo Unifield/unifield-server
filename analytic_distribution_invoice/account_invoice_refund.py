@@ -35,6 +35,7 @@ class account_invoice_refund(osv.osv_memory):
         """
         # @@@override@account.wizard.account_invoice_refund.py
         obj_journal = self.pool.get('account.journal')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         if context is None:
             context = {}
         args = [('type', '=', 'sale_refund')]
