@@ -259,12 +259,24 @@ class product_nomenclature(osv.osv):
         return res
 
     def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
-        value = {}
-        for f in fields:
-            value[f] = False
+        """
+        With the UF-1853, we display the nomenclature levels in 4 different columns.
+        """
         ret = {}
-        for id in ids:
-            ret[id] = value
+        context = b.get('context')
+        if context is None:
+            context = {}
+        for nomen in self.browse(cr, uid, ids, context):
+            complete_name = nomen.complete_name
+            levels = complete_name.split('|')
+            if len(levels) == 1:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0]}
+            elif len(levels) == 2:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1]}
+            elif len(levels) == 3:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2]}
+            elif len(levels) == 4:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2], 'nomen_manda_3_s': levels[3]}
         return ret
 
     def _get_childs(self, cr, uid, narg, ids):
