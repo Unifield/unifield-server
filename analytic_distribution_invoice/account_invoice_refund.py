@@ -46,6 +46,21 @@ class account_invoice_refund(osv.osv_memory):
             args.append(('is_current_instance','=',True))
         journal = obj_journal.search(cr, uid, [('type', '=', 'purchase_refund')])
         return journal and journal[0] or False
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        journal_obj = self.pool.get('account.journal')
+        res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        type = context.get('journal_type', 'sale_refund')
+        if type in ('sale', 'sale_refund'):
+            type = 'sale_refund'
+        else:
+            type = 'purchase_refund'
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        for field in res['fields']:
+            if field == 'journal_id' and user.company_id.instance_id:
+                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', type),('is_current_instance','=',True)], context=context, limit=None, name_get_uid=1)
+                res['fields'][field]['selection'] = journal_select
+        return res
     
     _columns = {
         'date': fields.date('Posting date'),
