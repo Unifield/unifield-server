@@ -529,8 +529,10 @@ class stock_picking(osv.osv):
                             if out_values.get('location_dest_id', False):
                                 out_values.pop('location_dest_id')
                             second_assign_moves.append(out_move_id)
-                            move_obj.write(cr, uid, [out_move_id], out_values, context=context)
-                            if not update_out and move.product_id.id != partial['product_id']:
+                            if update_out:
+                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
+                            elif move.product_id.id != partial['product_id']:
+                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                                 # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
                                 update_out = True
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
