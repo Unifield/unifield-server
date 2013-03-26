@@ -107,6 +107,9 @@
             <field name="inherit_id" ref="account.view_account_invoice_refund"/>
             <field name="arch" type="xml">
                 <field name="period" position="replace"/>
+                <field name="journal_id" position="replace">
+                    <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
+                </field>
                 <field name="date" position="replace">
                     <field name="document_date"/>
                     <field name="date" on_change="onchange_date(date)"/>
