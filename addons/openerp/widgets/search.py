@@ -127,8 +127,8 @@ class Filter(TinyInputWidget):
         self.filter_domain = attrs.get('domain', [])
         self.help = attrs.get('help')
         self.filter_id = 'filter_%s' % (random.randint(0,10000))
-        self.filter_name = attrs.get('name', '')
-        self.filter_status = attrs.get('filter_status', {}).get(self.name)
+        self.filter_name = attrs.get('name', attrs.get('string', ''))
+        self.filter_status = attrs.get('filter_status', {}).get(self.filter_name)
         filter_context = attrs.get('context')
         screen_context = attrs.get('screen_context', {})
 
