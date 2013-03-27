@@ -53814,6 +53814,12 @@ msgstr "Lignes qui ont été contrepassées."
 msgid "You should choose a report to display."
 msgstr "Vous devriez choisir un rapport à afficher."
 
+#. module: mission_stock
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:94
+#, python-format
+msgid "The generation of this report is in progress. You could open this report when the last update field will be filled. Thank you for you comprehension."
+msgstr "La génération du rapport est en cours. Vous pourrez ouvrir ce rapport lorsque le champ Dernière Mise à jour sera rempli. Merci de votre compréhension."
+
 #. module: consumption_calculation
 #: view:real.average.consumption:0
 msgid "Save & Process"
