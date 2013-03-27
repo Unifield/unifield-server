@@ -36,8 +36,12 @@ class account_move_line(osv.osv):
         Check that for these IDS, no one is used in imported invoice.
         For imported invoice, the trick comes from the fact that do_import_invoices_reconciliation hard post the moves before reconciling them.
         """
+        # Some verifications
         if not context:
             context = {}
+        from_pending_payment = False
+        if context.get('pending_payment', False) and context.get('pending_payment') is True:
+            from_pending_payment = True
         # Create a SQL request that permit to fetch quickly statement lines that have an imported invoice
         sql = """SELECT st_line_id
         FROM imported_invoice
@@ -51,7 +55,7 @@ class account_move_line(osv.osv):
         """
         cr.execute(sql, (tuple(ids),))
         sql_res = cr.fetchall()
-        if sql_res:
+        if sql_res and not from_pending_payment:
             res = [x and x[0] for x in sql_res]
             # Search register lines
             msg = []
