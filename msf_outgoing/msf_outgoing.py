@@ -786,7 +786,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
                 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -949,7 +949,7 @@ class shipment(osv.osv):
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('is_current_instance', '=', True)])
             if not journal_ids:
-                raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
+                raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
             invoice_vals['journal_id'] = journal_ids[0]
                 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,
@@ -1358,6 +1358,26 @@ class stock_picking(osv.osv):
         
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
+        pick_obj = self.pool.get('stock.picking')
+        pick = kwargs['pick']
+        message = kwargs['message']
+        if pick.type and pick.subtype:
+            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
+            return self.pool.get('res.log').create(cr, uid,
+                                                   {'name': message,
+                                                    'res_model': pick_obj._name,
+                                                    'secondary': False,
+                                                    'res_id': pick.id,
+                                                    'domain': domain,
+                                                    }, context=context)
+        return result
+
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook from stock>stock.py>stock_picking>log_picking
@@ -1366,6 +1386,9 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
+            return False
+        # if false the log will be defined by the method _hook_custom_log (which include a domain)
+        if pick.type and pick.subtype:
             return False
 
         return result
@@ -3180,6 +3203,14 @@ class sale_order(osv.osv):
                 
             if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
                 move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+            
+            if 'sale_line_id' in move_data and move_data['sale_line_id']:
+                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+                if sale_line.type == 'make_to_order':
+                    move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                    move_data['move_cross_docking_ok'] = True
+                    # Update the stock.picking
+                    self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
 
         move_data['state'] = 'confirmed'
         return move_data
@@ -3234,6 +3265,7 @@ class sale_order(osv.osv):
         '''
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
+
         # On Simple OUT configuration, the system should confirm the OUT and launch a first check availability
         if setup.delivery_process != 'simple':
             cond = cond and False
@@ -3243,6 +3275,8 @@ class sale_order(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         if picking_id:
             picking_obj.log_picking(cr, uid, [picking_id], context=context)
+            # Launch a first check availability
+            self.pool.get('stock.picking').action_assign(cr, uid, [picking_id], context=context)
         
         return cond
 

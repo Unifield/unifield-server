@@ -20,14 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-from tools.translate import _
-
-from tempfile import TemporaryFile
-
-import base64
-import csv
-import time
-
 
 class wizard_valid_line(osv.osv_memory):
     _name = 'wizard.valid.line'

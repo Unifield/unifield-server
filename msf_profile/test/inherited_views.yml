@@ -25,3 +25,4 @@
     for view in self.browse(cr, uid, view_ids):
         obj = self.pool.get(view.model)
         res = obj.fields_view_get(cr, uid, view.id, view.type, {})
+        res = obj.fields_view_get(cr, uid, view.id, view.type, {'lang': 'fr_MF'})

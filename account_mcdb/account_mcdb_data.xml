@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+  <data>
+      <record forcecreate="True" id="ir_cron_account_mcdb_clean_up_action" model="ir.cron">
+          <field name="name">Clean up Selectors</field>
+          <field eval="True" name="active"/>
+          <field name="user_id" ref="base.user_root"/>
+          <field name="interval_number">30</field>
+          <field name="interval_type">minutes</field>
+          <field name="numbercall">-1</field>
+          <field eval="False" name="doall"/>
+          <field eval="'account.mcdb'" name="model"/>
+          <field eval="'clean_up_search'" name="function"/>
+          <field eval="'(False,)'" name="args"/>
+      </record>
+  </data>
+</openerp>

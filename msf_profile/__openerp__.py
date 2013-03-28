@@ -111,6 +111,9 @@
         "msf_supply_doc_import",
         "mission_stock_cron",
         "report_webkit_override",
+        "export_import_lang",
+        "msf_button_access_rights",
+        "msf_field_access_rights",
     ],
     "update_xml": [
         "report.xml",
@@ -121,10 +124,17 @@
     "demo_xml": [
     ],
     "function": [('user.access.configurator', 'do_update_after_module_install')],
+# add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
         'test/unique_fields_views.yml',
         'test/inherited_views.yml',
         'test/user_rights.yml',
+# the tests below are for the module msf_supply_doc_import (written here because they need the translation)
+#        'test/data.yml',
+#        'test/fr_import_ir.yml',
+#        'test/fr_import_po.yml',
+#        'test/fr_import_so.yml',
+#        'test/fr_import_tender.yml',
     ],
     "installable": True,
     "active": False,

@@ -8,7 +8,17 @@ from osv import osv
 from report_webkit.webkit_report import WebKitParser
 from report import report_sxw
 
+from mako.template import Template
+from mako import exceptions
+from tools.misc import file_open
+import pooler
+
 class SpreadsheetReport(WebKitParser):
+    _fields_process = {
+        'date': report_sxw._date_format,
+        'datetime': report_sxw._dttime_format
+    }
+
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         if not rml:
@@ -25,6 +35,24 @@ class SpreadsheetReport(WebKitParser):
         report_xml.webkit_header.html = "${_debug or ''|n}"
         return super(SpreadsheetReport, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
 
+    def getObjects(self, cr, uid, ids, context):
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=self._fields_process)
+
     def create(self, cr, uid, ids, data, context=None):
         a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
+
+
+
+class SpreadsheetCreator(object):
+    def __init__(self, title, headers, datas):
+        self.headers = headers
+        self.datas = datas
+        self.title = title
+
+    def get_xml(self, default_filters=[]):
+        f, filename = file_open('addons/spreadsheet_xml/report/spreadsheet_writer_xls.mako', pathinfo=True)
+        f[0].close()
+        tmpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8', default_filters=default_filters)
+        return tmpl.render(objects=self.datas, headers=self.headers, title= self.title)

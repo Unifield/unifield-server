@@ -71,7 +71,6 @@ class tender(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {'rfq_name_list': '',
                               }
-            
             rfq_names = []
             for rfq in obj.rfq_ids:
                 rfq_names.append(rfq.name)
@@ -80,7 +79,18 @@ class tender(osv.osv):
             result[obj.id]['rfq_name_list'] = ','.join(rfq_names)
             
         return result
-    
+
+    def _is_tender_from_fo(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for tender in self.browse(cr, uid, ids, context=context):
+            retour = False
+            ids_proc = self.pool.get('procurement.order').search(cr,uid,[('tender_id','=',tender.id)])
+            ids_sol = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','in',ids_proc),('order_id.procurement_request','=',False)])
+            if ids_sol:
+                retour = True
+            res[tender.id] = retour
+        return res
+
     _columns = {'name': fields.char('Tender Reference', size=64, required=True, select=True, readonly=True),
                 'sale_order_id': fields.many2one('sale.order', string="Sale Order", readonly=True),
                 'state': fields.selection([('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'), ('cancel', 'Cancelled'),], string="State", readonly=True),
@@ -100,7 +110,8 @@ class tender(osv.osv):
                 'notes': fields.text('Notes'),
                 'internal_state': fields.selection([('draft', 'Draft'),('updated', 'Rfq Updated'), ], string="Internal State", readonly=True),
                 'rfq_name_list': fields.function(_vals_get, method=True, string='RfQs Ref', type='char', readonly=True, store=False, multi='get_vals',),
-                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product')
+                'product_id': fields.related('tender_line_ids', 'product_id', type='many2one', relation='product.product', string='Product'),
+               'tender_from_fo': fields.function(_is_tender_from_fo, method=True, type='boolean', string='Is tender from FO ?',),
                 }
     
     _defaults = {'categ': 'other',
@@ -116,6 +127,22 @@ class tender(osv.osv):
     
     _order = 'name desc'
 
+    def _check_tender_from_fo(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        retour = True
+        for tender in self.browse(cr, uid, ids, context=context):
+            if not tender.tender_from_fo:
+                return retour
+            for sup in tender.supplier_ids:
+                if sup.partner_type == 'internal' :
+                    retour = False
+        return retour
+
+    _constraints = [
+        (_check_tender_from_fo, 'You cannot choose an internal supplier for this tender', []),
+    ]
+    
     def create(self, cr, uid, vals, context=None):
         '''
         Set the reference of the tender at this time
@@ -151,6 +178,20 @@ class tender(osv.osv):
             # check some supplier have been selected
             if not tender.supplier_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one supplier!'))
+            #utp-315: check that the suppliers are not inactive (I use a SQL request because the inactive partner are ignored with the browse)
+            sql = """
+            select tsr.supplier_id, rp.name, rp.active
+            from tender_supplier_rel tsr
+            left join res_partner rp
+            on tsr.supplier_id = rp.id
+            where tsr.tender_id=%s
+            and rp.active=False
+            """
+            cr.execute(sql, (ids[0],))
+            inactive_supplier_ids = cr.dictfetchall()
+            if any(inactive_supplier_ids):
+                raise osv.except_osv(_('Warning !'), _("You can't have inactive supplier! Please remove: %s"
+                                                       ) % ' ,'.join([partner['name'] for partner in inactive_supplier_ids]))
             # check some products have been selected
             tender_line_ids = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
             if not tender_line_ids:
@@ -777,6 +818,8 @@ class purchase_order(osv.osv):
         '''
         Set the reference at this step
         '''
+        if context is None:
+            context = {}
         if context.get('rfq_ok', False) and not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'rfq')})
         elif not vals.get('name', False):
@@ -809,10 +852,21 @@ class purchase_order(osv.osv):
         HOOK from purchase>purchase.py for COPY function. Modification of default copy values
         define which name value will be used
         '''
+        # default values from copy function
+        default = kwargs.get('default', False)
+        # flag defining if the new object will be a rfq
+        is_rfq = False
+        # calling super function
         result = super(purchase_order, self)._hook_copy_name(cr, uid, ids, context=context, *args, **kwargs)
-        for obj in self.browse(cr, uid, ids, context=context):
-            if obj.rfq_ok:
-                result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
+        if default.get('rfq_ok', False):
+            is_rfq = True
+        elif 'rfq_ok' not in default:
+            for obj in self.browse(cr, uid, ids, context=context):
+                # if rfq_ok is specified as default value for new object, we base our decision on this value
+                if obj.rfq_ok:
+                    is_rfq = True
+        if is_rfq:
+            result.update(name=self.pool.get('ir.sequence').get(cr, uid, 'rfq'))
         return result
 
     def hook_rfq_sent_check_lines(self, cr, uid, ids, context=None):
@@ -850,14 +904,16 @@ class purchase_order(osv.osv):
 
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'purchase.order',
-                'view_mode': 'form,tree,graph,calendar',
-                'view_type': 'form',
-                'target': 'crush',
-                'context': {'rfq_ok': True, 'search_default_draft_rfq': 1,},
-                'domain': [('rfq_ok', '=', True)],
-                'res_id': rfq.id}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order',
+            'view_mode': 'form,tree,graph,calendar',
+            'view_type': 'form',
+            'target': 'crush',
+            'context': {'rfq_ok': True, 'search_default_draft_rfq': 1},
+            'domain': [('rfq_ok', '=', True)],
+            'res_id': rfq.id,
+        }
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -886,9 +942,9 @@ class purchase_order(osv.osv):
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
                 form = etree.fromstring(result['arch'])
-                fields = form.xpath('//form[@string="Purchase Order"]')
+                fields = form.xpath('//form[@string="%s"]' % _('Purchase Order'))
                 for field in fields:
-                    field.set('string', "Requests for Quotation")
+                    field.set('string', _("Requests for Quotation"))
                 result['arch'] = etree.tostring(form)
         
         return result
@@ -975,18 +1031,18 @@ class ir_values(osv.osv):
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in po_accepted_values[key2] \
-                or v[2]['name'] == 'Purchase Order Excel Export' \
-                or v[2]['name'] == 'Purchase Order' \
-                or v[2]['name'] == 'Purchase Order (Merged)' \
-                or v[2]['name'] == 'Allocation report' \
-                or v[2]['name'] == 'Order impact vs. Budget' :
+                or v[1] == 'Purchase Order Excel Export' \
+                or v[1] == 'Purchase Order' \
+                or v[1] == 'Purchase Order (Merged)' \
+                or v[1] == 'Allocation report' \
+                or v[1] == 'Order impact vs. Budget' :
                     new_values.append(v)
         elif context.get('request_for_quotation', False) and 'purchase.order' in [x[0] for x in models]:
             new_values = []
             for v in values:
                 if key == 'action' and v[1] in rfq_accepted_values[key2] \
-                or v[2]['name'] == 'Request for Quotation' \
-                or v[2]['name'] == 'Request For Quotation Excel Export' :
+                or v[1] == 'Request for Quotation' \
+                or v[1] == 'Request For Quotation Excel Export' :
                     new_values.append(v)
  
         return new_values

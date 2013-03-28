@@ -24,6 +24,16 @@ from osv import fields, osv
 class msf_instance(osv.osv):
     _name = 'msf.instance'
     
+    def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
+        if not context:
+            context = {}
+        res = {}
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        if user.company_id and user.company_id.instance_id:
+            for id in ids:
+                res[id] = user.company_id.instance_id.level
+        return res
+    
     _columns = {
         'level': fields.selection([('section', 'Section'),
                                    ('coordo', 'Coordo'),
@@ -33,22 +43,61 @@ class msf_instance(osv.osv):
         'instance': fields.char('Instance', size=64),
         #'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project'), ('state', '=', 'active')]),
         'parent_id': fields.many2one('msf.instance', 'Parent', domain=[('level', '!=', 'project') ]),
+        'child_ids': fields.one2many('msf.instance', 'parent_id', 'Children'),
         'name': fields.char('Name', size=64, required=True),
         'note': fields.char('Note', size=256),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
+        'top_cost_center_id': fields.many2one('account.analytic.account', 'Main cost centre for this location', required=True),
+        'target_cost_center_ids': fields.one2many('account.target.costcenter', 'instance_id', 'Target Cost Centers'),
         'state': fields.selection([('draft', 'Draft'),
                                    ('active', 'Active'),
                                    ('inactive', 'Inactive')], 'State', required=True),
         'move_prefix': fields.char('Account move prefix', size=5, required=True),
-        'reconcile_prefix': fields.char('Reconcilation prefix', size=2, required=True),
+        'reconcile_prefix': fields.char('Reconcilation prefix', size=5, required=True),
+        'current_instance_level': fields.function(_get_current_instance_level, method=True, store=False, string="Current Instance Level", type="char", readonly="True"),
     }
     
     _defaults = {
         'state': 'draft',
     }
 
+    def button_cost_center_wizard(self, cr, uid, ids, context=None):
+        if not context:
+            context={}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        return {
+            'name': "Add Cost Centers",
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.add.cost.centers',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'context': context,
+        }
+
     def create(self, cr, uid, vals, context=None):
-        return osv.osv.create(self, cr, uid, vals, context=context)
+        # Check if lines are imported from coordo; if now, create those
+        res_id = osv.osv.create(self, cr, uid, vals, context=context)
+        if 'parent_id' in vals and 'level' in vals and vals['level'] == 'project':
+            parent_instance = self.browse(cr, uid, vals['parent_id'], context=context)
+            instance = self.browse(cr, uid, res_id, context=context)
+            if len(parent_instance.target_cost_center_ids) != len(instance.target_cost_center_ids):
+                # delete existing cost center lines
+                old_target_line_ids = [x.id for x in instance.target_cost_center_ids]
+                self.unlink(cr, uid, old_target_line_ids, context=context)
+                # copy existing lines for project
+                for line_to_copy in parent_instance.target_cost_center_ids:
+                    self.pool.get('account.target.costcenter').create(cr, uid, {'instance_id': instance.id,
+                                                                                'cost_center_id': line_to_copy.cost_center_id.id,
+                                                                                'is_target': False,
+                                                                                'parent_id': line_to_copy.id}, context=context)
+        return res_id
+        
 
     def _check_name_code_unicity(self, cr, uid, ids, context=None):
         if not context:
@@ -62,16 +111,25 @@ class msf_instance(osv.osv):
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
-
-    def _check_cost_center_unicity(self, cr, uid, ids, context=None):
+    
+    def onchange_parent_id(self, cr, uid, ids, parent_id, level, context=None):
+        # Some verifications
         if not context:
             context = {}
-        for instance in self.browse(cr, uid, ids, context=context):
-            bad_ids = self.search(cr, uid, [('&'),
-                                            ('state', '!=', 'inactive'),
-                                            ('cost_center_id','=',instance.cost_center_id.id)])
-            if len(bad_ids) and len(bad_ids) > 1:
-                return False
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if parent_id and level == 'project':
+            parent_instance = self.browse(cr, uid, parent_id, context=context)
+            for instance in self.browse(cr, uid, ids, context=context):
+                # delete existing cost center lines
+                old_target_line_ids = [x.id for x in instance.target_cost_center_ids]
+                self.unlink(cr, uid, old_target_line_ids, context=context)
+                # copy existing lines for project
+                for line_to_copy in parent_instance.target_cost_center_ids:
+                    self.pool.get('account.target.costcenter').create(cr, uid, {'instance_id': instance.id,
+                                                                                'cost_center_id': line_to_copy.cost_center_id.id,
+                                                                                'is_target': False,
+                                                                                'parent_id': line_to_copy.id}, context=context)
         return True
 
     def _check_database_unicity(self, cr, uid, ids, context=None):
@@ -111,7 +169,6 @@ class msf_instance(osv.osv):
 
     _constraints = [
          (_check_name_code_unicity, 'You cannot have the same code or name than an active instance!', ['code', 'name']),
-         (_check_cost_center_unicity, 'You cannot have the same cost_center than an active instance!', ['cost_center_id']),
          (_check_database_unicity, 'You cannot have the same database than an active instance!', ['instance']),
          (_check_move_prefix_unicity, 'You cannot have the same move prefix than an active instance!', ['move_prefix']),
          (_check_reconcile_prefix_unicity, 'You cannot have the same reconciliation prefix than an active instance!', ['reconcile_prefix']),

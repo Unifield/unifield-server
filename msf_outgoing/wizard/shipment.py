@@ -202,15 +202,15 @@ class shipment_wizard(osv.osv_memory):
         
         _moves_arch_lst = """<form string="%s">
 
-                        <button name="select_all" string="Copy all"
+                        <button name="select_all" string="%s"
                             colspan="1" type="object" icon="gtk-jump-to" />
-                        <button name="deselect_all" string="Clear all"
+                        <button name="deselect_all" string="%s"
                             colspan="1" type="object"  icon="gtk-undo"/>
 
                         <field name="date" invisible="1"/>
                         <separator colspan="4" string="%s"/>
                         <field name="product_moves_shipment_%s" colspan="4" nolabel="1" mode="tree,form"></field>
-                        """ % (_('Process Document'), _('Products'), step)
+                        """ % (_('Process Document'),_('Copy all'), _('Clear all'),  _('Products'), step)
         _moves_fields = result['fields']
 
         # add field related to picking type only
@@ -220,13 +220,13 @@ class shipment_wizard(osv.osv_memory):
 
         # specify the button according to the screen
         if step == 'create':
-            button = ('do_create_shipment', 'Create Shipment')
+            button = ('do_create_shipment', _('Create Shipment'))
             
         elif step == 'returnpacks':
-            button = ('do_return_packs', 'Return Packs')
+            button = ('do_return_packs', _('Return Packs'))
             
         elif step == 'returnpacksfromshipment':
-            button = ('do_return_packs_from_shipment', 'Return Packs from Shipment')
+            button = ('do_return_packs_from_shipment', _('Return Packs from Shipment'))
             
         else:
             button = ('undefined', 'Undefined: %s'%step)
@@ -406,8 +406,14 @@ class shipment_wizard(osv.osv_memory):
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
         packs_check = self.integrity_check_packs(cr, uid, ids, partial_datas_shipment, model_name='stock.move.memory.shipment.create', context=context)
         if not packs_check:
+            # for not blocking yml test with the raise I use 'yml_test' in context
+            if not context.get('yml_test'):
+                # the windows must be updated to trigger tree colors
+                self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
             # the windows must be updated to trigger tree colors
-            return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
+            else:
+                return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
     

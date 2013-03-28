@@ -19,13 +19,8 @@
 #
 ##############################################################################
 
-from datetime import datetime
-
 from osv import osv
 from osv import fields
-import logging
-import tools
-from os import path
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -34,7 +29,9 @@ class product_list(osv.osv):
     _inherit = 'product.list'
 
     _columns = {
-        'file_to_import': fields.binary(string='File to import', filters='*.xml', help='You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Comment'),
+        'file_to_import': fields.binary(string='File to import', filters='*.xml',
+                                        help="""You can use the template of the export for the format that you need to use. \n
+                                        The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : Product Code*, Product Description*, Comment"""),
     }
 
     def import_file(self, cr, uid, ids, context=None):
@@ -78,7 +75,7 @@ Product Code*, Product Description*, Comment""" % line_num))
             product_code = row.cells[0].data
             if product_code:
                 product_code = product_code.strip()
-                product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)])
+                product_ids = product_obj.search(cr, uid, ['|', ('default_code', '=', product_code.upper()), ('default_code', '=', product_code)], context=context)
                 if product_ids:
                     product_id = product_ids[0]
 
@@ -86,7 +83,7 @@ Product Code*, Product Description*, Comment""" % line_num))
             p_name = row.cells[1].data
             if not product_id and p_name:
                 p_name = p_name.strip()
-                product_ids = product_obj.search(cr, uid, [('name', '=', p_name)])
+                product_ids = product_obj.search(cr, uid, [('name', '=', p_name)], context=context)
                 if product_ids:
                     product_id = product_ids[0]
 

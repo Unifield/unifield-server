@@ -89,6 +89,7 @@ class purchase_order_report_xls(WebKitParser):
 
 purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/msf_supply_doc_export/report/report_purchase_order_xls.mako')
 
+
 class request_for_quotation_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
@@ -175,6 +176,40 @@ class product_list_report_xls(WebKitParser):
 
 product_list_report_xls('report.product.list.xls', 'product.list', 'addons/msf_supply_doc_export/report/product_list_xls.mako')
 
+class composition_kit_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(composition_kit_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(composition_kit_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+composition_kit_xls('report.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_composition_kit_xls.mako')
+
+
+class real_composition_kit_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(real_composition_kit_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(real_composition_kit_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+real_composition_kit_xls('report.real.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako')
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)
@@ -182,10 +217,12 @@ class ir_values(osv.osv):
     _name = 'ir.values'
     _inherit = 'ir.values'
 
+
     def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
         if context is None:
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        trans_obj = self.pool.get('ir.translation')
 # already defined in the module tender_flow
 #        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'purchase.order' in [x[0] for x in models]:
 #            new_act = []
@@ -198,46 +235,50 @@ class ir_values(osv.osv):
 #                or v[2]['report_name'] == 'request.for.quotation_xls' and context['_terp_view_name'] == 'Requests for Quotation' :
 #                    new_act.append(v)
 #                values = new_act
-        if context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
+        
+        Internal_Requests = trans_obj.tr_view(cr, 'Internal Requests', context)
+        Field_Orders = trans_obj.tr_view(cr, 'Sales Orders', context)
+        if key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
             new_act = []
+            #field_orders_view = data_obj.get_object_reference(cr, uid, 'procurement_request', 'action_procurement_request')[1]
             for v in values:
-                if v[2]['report_name'] == 'internal.request_xls' and context['_terp_view_name'] == 'Internal Requests' \
-                or v[2]['report_name'] == 'msf.sale.order' and context['_terp_view_name'] == 'Field Orders' \
-                or v[2]['report_name'] == 'sale.order_xls' and context['_terp_view_name'] == 'Field Orders' :
-                    new_act.append(v)
+                if context.get('procurement_request', False):
+                    if v[2]['report_name'] == 'internal.request_xls' \
+                    or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+                        new_act.append(v)
+                else:
+                    if v[2]['report_name'] == 'msf.sale.order' \
+                    or v[2]['report_name'] == 'sale.order_xls' \
+                    or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+                        new_act.append(v)
                 values = new_act
-        
-        # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
-        elif context.get('_terp_view_name') and context['_terp_view_name'] == 'Internal Requests' and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[2]['name'] == 'Import lines':
-                    new_act.append(v)
-            values = new_act
-        
-        # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
-        elif context.get('_terp_view_name') and context['_terp_view_name'] == 'Field Orders' and key == 'action' and key2 == 'client_action_multi' and 'sale.order' in [x[0] for x in models]:
-            new_act = []
-            for v in values:
-                if v[2]['name'] == 'Order Follow Up':
-                    new_act.append(v)
-            values = new_act
-            
+                
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
+            Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
+            Picking_Ticket = trans_obj.tr_view(cr, 'Picking Ticket', context)
+            Pre_Packing_Lists = trans_obj.tr_view(cr, 'Pre-Packing Lists', context)
+            Pre_Packing_List = trans_obj.tr_view(cr, 'Pre-Packing List', context)
+            Delivery_Orders = trans_obj.tr_view(cr, 'Delivery Orders', context)
+            Delivery_Order = trans_obj.tr_view(cr, 'Delivery Order', context)
             for v in values:
-                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in ('Picking Tickets', 'Picking Ticket') and context.get('picking_screen', False)\
-                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in ('Pre-Packing Lists', 'Pre-Packing List') and context.get('ppl_screen', False)\
-                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in ['Picking Ticket', 'Picking Tickets', 'Pre-Packing List', 'Pre-Packing Lists', 'Delivery Orders', 'Delivery Order']:
+                if v[2]['report_name'] == 'picking.ticket' and context['_terp_view_name'] in (Picking_Tickets, Picking_Ticket) and context.get('picking_screen', False)\
+                or v[2]['report_name'] == 'pre.packing.list' and context['_terp_view_name'] in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                or v[2]['report_name'] == 'labels' and context['_terp_view_name'] in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order]:
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
             new_act = []
+            Packing_Lists = trans_obj.tr_view(cr, 'Packing Lists', context)
+            Packing_List = trans_obj.tr_view(cr, 'Packing List', context)
+            Shipment_Lists = trans_obj.tr_view(cr, 'Shipment Lists', context)
+            Shipment_List = trans_obj.tr_view(cr, 'Shipment List', context)
+            Shipments = trans_obj.tr_view(cr, 'Shipments', context)
+            Shipment = trans_obj.tr_view(cr, 'Shipment', context)
             for v in values:
-
-                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in ('Packing Lists', 'Packing List') :
+                if v[2]['report_name'] == 'packing.list' and context['_terp_view_name'] in (Packing_Lists, Packing_List) :
                     new_act.append(v)
-                elif context['_terp_view_name'] in ('Shipment Lists', 'Shipment List', 'Shipments', 'Shipment'):
+                elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
                     new_act.append(v)
                 values = new_act
         elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
@@ -247,6 +288,14 @@ class ir_values(osv.osv):
                     if v[2]['report_name'] in ('picking.ticket', 'labels'):
                         new_act.append(v)
                 values = new_act
+
+        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if context.get('composition_type')=='theoretical' and v[2]['report_name'] == 'composition.kit.xls':
+                    new_act.append(v)
+            values = new_act
+
         return values
 
 ir_values()

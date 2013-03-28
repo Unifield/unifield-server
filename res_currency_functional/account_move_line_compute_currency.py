@@ -86,13 +86,13 @@ class account_move_line_compute_currency(osv.osv):
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
             ## Browse all lines to fetch some values
-            partner_id = employee_id = register_id = False
+            partner_id = employee_id = transfer_journal_id = False
             oldiest_date = False
             for rline in self.browse(cr, uid, lines):
                 account_id = (rline.account_id and rline.account_id.id) or False
                 partner_id = (rline.partner_id and rline.partner_id.id) or False
                 employee_id = (rline.employee_id and rline.employee_id.id) or False
-                register_id = (rline.register_id and rline.register_id.id) or False
+                transfer_journal_id = (rline.transfer_journal_id and rline.transfer_journal_id.id) or False
                 currency_id = (rline.currency_id and rline.currency_id.id) or False
                 if not oldiest_date:
                     oldiest_date = rline.date or False
@@ -111,7 +111,7 @@ class account_move_line_compute_currency(osv.osv):
                     break
             
             if not period_id:
-                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s' % current_date))
+                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s') % current_date)
             
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
@@ -165,7 +165,7 @@ class account_move_line_compute_currency(osv.osv):
                 'period_id': period_id,
                 'partner_id': partner_id,
                 'employee_id': employee_id,
-                'register_id': register_id,
+                'transfer_journal_id': transfer_journal_id,
                 'credit': 0.0,
                 'debit': 0.0,
                 'name': 'Realised loss/gain',

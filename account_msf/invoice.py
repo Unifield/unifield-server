@@ -153,6 +153,7 @@ class account_invoice(osv.osv):
             inkind_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_inkind_donation_form')
             intermission_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
+            customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
         except ValueError:
             return super(account_invoice, self).log(cr, uid, id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
@@ -163,13 +164,22 @@ class account_invoice(osv.osv):
         # Search intermission view
         intermission_view_id = intermission_res and intermission_res[1] or False
         intermission_ctx = {'view_id': intermission_view_id, 'journal_type': 'intermission', 'is_intermission': True}
+        customer_view_id = customer_invoice_res[1] or False
+        customer_ctx = {'view_id': customer_view_id, 'type': 'out_invoice', 'journal_type': 'sale'}
+        message_changed = False
+        pattern = re.compile('^(Invoice)')
         for el in [('is_debit_note', 'Debit Note', debit_note_ctx), ('is_inkind_donation', 'In-kind Donation', inkind_ctx), ('is_intermission', 'Intermission Voucher', intermission_ctx)]:
             if self.read(cr, uid, id, [el[0]]).get(el[0], False) is True:
-                pattern = re.compile('^(Invoice)')
                 m = re.match(pattern, message)
                 if m and m.groups():
                     message = re.sub(pattern, el[1], message, 1)
+                    message_changed = True
                 context.update(el[2])
+        # UF-1112: Give all customer invoices a name as "Stock Transfer Voucher".
+        if not message_changed and self.read(cr, uid, id, ['type']).get('type', False) == 'out_invoice':
+            message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
+
+            context.update(customer_ctx)
         # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
         # filled with all the information; this leaded to having a "Sale" journal in the supplier
         # invoice if it was saved after coming from this link. Here's the fix.

@@ -24,6 +24,8 @@ import StringIO
 import pooler
 import locale
 import datetime
+from tools.translate import _
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_budget_criteria(report_sxw.report_sxw):
     _name = 'report.budget.criteria'
@@ -114,6 +116,95 @@ class report_budget_criteria(report_sxw.report_sxw):
         out = buffer.getvalue()
         buffer.close()
         return (out, 'csv')
-    
+
 report_budget_criteria('report.msf.budget.criteria', 'msf.budget', False, parser=False)
+
+    
+
+class report_budget_actual_2(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(report_budget_actual_2, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'getLines': self.getLines,
+            'byMonth': self.byMonth,
+            'isComm': self.isComm,
+            'getBreak': self.getBreak,
+            'getComm': self.getComm,
+            'getF1': self.getF1,
+            'getF2': self.getF2,
+        })
+        return
+
+    def getF2(self,line):
+        print line
+        if int(line[1]) == 0:
+            return ''
+        return '=(+RC[-2])/RC[-3]'
+
+    def getF1(self,line):
+        if int(line[1]) == 0:
+            return ''
+        return '=(RC[-3]+RC[-2])/RC[-4]'
+
+    def getComm(self,):
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'commitment' in parameters and parameters['commitment']:
+            return 'Yes'
+        return 'No'
+
+    def getBreak(self,):
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'breakdown' in parameters and parameters['breakdown'] == 'year':
+            return 'Total figure'
+        return 'By month'
+
+    def byMonth(self,):
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'breakdown' in parameters and parameters['breakdown'] == 'month':
+            return True
+        return False
+
+    def isComm(self,):
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if 'commitment' in parameters and parameters['commitment']:
+            return True
+        return False
+
+    def getLines(self, lines, context={}):
+        budget_line_ids = [x.id for x in lines]
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        if context is None:
+            context = {}
+        result = []
+        # Column header
+        month_stop = 12
+        header = ['Account']
+        # check if month detail is needed
+        if 'breakdown' in parameters and parameters['breakdown'] == 'month':
+            month_list = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+            if 'period_id' in parameters:
+                period = self.pool.get('account.period').browse(self.cr, self.uid, parameters['period_id'], context=context)
+                month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
+            for month in range(month_stop):
+                header.append(month_list[month] + ' (Budget)')
+                header.append(month_list[month] + ' (Actual)')
+        header += ['Total (Budget)', 'Total (Actual)']
+        result.append(header)
+        # Update context
+        context.update(parameters)
+        # Retrieve lines
+        formatted_monthly_amounts = []
+        monthly_amounts = self.pool.get('msf.budget.line')._get_monthly_amounts(self.cr,
+                                                                           self.uid,
+                                                                           budget_line_ids,
+                                                                           context=context)
+
+        for amount_line in monthly_amounts:
+            formatted_amount_line = [amount_line[0]]
+            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
+            formatted_monthly_amounts.append(formatted_amount_line)
+        result += formatted_monthly_amounts
+        return result[1:]
+
+SpreadsheetReport('report.budget.criteria.2','msf.budget','addons/msf_budget/report/budget_criteria_xls.mako', parser=report_budget_actual_2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

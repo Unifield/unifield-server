@@ -46,7 +46,7 @@
                             </group>
                         </page>
                         <page string="Suppliers">
-                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner', '=', sale_order_id )]">
+                        	<field colspan="4" mode="tree,form,graph" name="supplier_ids" nolabel="1" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('check_partner', '=', sale_order_id ),('partner_not_int','in', { 'type':'tender', 'ids':[active_id] } )]">
                                 <tree string="Suppliers">
                                     <field name="name" />
                                     <field name="partner_type" />
@@ -192,16 +192,16 @@
                     </xpath>
 
                     <xpath expr="/form//field[@name='date_order']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='warehouse_id']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='order_type']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='priority']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
+                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
                     </xpath>
                     <xpath expr="/form//field[@name='categ']" position="attributes">
                         <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
