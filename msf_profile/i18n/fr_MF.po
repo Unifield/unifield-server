@@ -1529,6 +1529,7 @@ msgstr "Etes-vous sûr de vouloir créer des écritures ?"
 #: code:addons/msf_outgoing/msf_outgoing.py:2487
 #: model:ir.actions.report.xml,name:msf_outgoing.pre_packing_list
 #: model:process.process,name:msf_outgoing.process_process_ppl0
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_ppl_board
 #: view:stock.picking:0
 #: model:process.process,name:sd.msf_outgoing_process_process_ppl0
 #, python-format
@@ -16126,6 +16127,7 @@ msgstr "De:"
 #: code:addons/msf_outgoing/msf_outgoing.py:2240
 #: code:addons/return_claim/wizard/stock_partial_picking.py:127
 #: model:ir.actions.act_window,name:stock.action_picking_tree
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_outgoing_product_board
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree
 #: view:stock.picking:0
 #: view:purchase.order:0
@@ -51874,6 +51876,7 @@ msgstr "Commandes de terrain par mois"
 
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_ticket_board
 #: view:stock.picking:0
 msgid "Picking Tickets"
 msgstr "Bons de Piquage "

@@ -10,7 +10,6 @@
             <field name="domain">[('type','=','in'), ('state', 'not in', ['done', 'cancel'])]</field>
             <field name="context">{'contact_display': 'partner_address',"search_default_available":1, 'wh_dashboard': True, 'pick_type': 'incoming'}</field>
             <field name="search_view_id" ref="stock.view_picking_in_search"/>
-            <field name="help">The Incoming Shipments is the list of all orders you will receive from your supplier. An incoming shipment contains a list of products to be received according to the original purchase order. You can validate the shipment totally or partially.</field>
         </record>
         <record id="action_picking_tree_available_tree" model="ir.actions.act_window.view">
             <field name="view_mode">tree</field>
@@ -31,7 +30,6 @@
             <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'), ('state', 'not in', ['done', 'cancel'])]</field>
             <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard', 'wh_dashboard': True, 'pick_type': 'delivery'}</field>
             <field name="search_view_id" ref="stock.view_picking_out_search"/>
-            <field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
         </record>
         <record id="action_outgoing_product_tree_board" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>
@@ -54,7 +52,6 @@
             <field name="context">{'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1, 'wh_dashboard': True, 'pick_type': 'picking_ticket'}</field>
             <!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
             <field name="search_view_id" ref="msf_outgoing.view_picking_ticket_search"/>
-            <field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
         </record>
         <record id="action_picking_ticket_tree_board" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>
@@ -77,7 +74,6 @@
             <field name="context">{'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1, 'wh_dashboard': True, 'pick_type': 'pack'}</field>
             <!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
             <field name="search_view_id" ref="msf_outgoing.view_ppl_search"/>
-            <field name="help">This is the list of all ppl that have been picked.</field>
         </record>
         <record id="action_ppl_tree_board" model="ir.actions.act_window.view">
             <field eval="1" name="sequence"/>
@@ -101,7 +97,6 @@
             <field name="domain">[('state', '=', 'draft'), ('num_of_packs','!=', 0)]</field>
             <field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
             <field name="search_view_id" ref="msf_outgoing.view_shipment_search"/>
-            <field name="help">This is the list of all shipment lists that have been picked. The shipment lists are regrouped by address.</field>
         </record>
 
         <record id="board_warehouse_form_default" model="ir.ui.view">
