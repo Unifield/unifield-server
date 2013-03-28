@@ -43,7 +43,7 @@ class account_analytic_line(osv.osv):
         # otherwise duplicate entries will be created and these entries will be messed up in the later update
         if 'do_not_create_analytic_line' in context:
             if 'sync_data' in context:
-                return True
+                return False
             del context['do_not_create_analytic_line']
         
         # continue the create request if it comes from a normal requester
@@ -90,30 +90,35 @@ class account_move_line(osv.osv):
 
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=sync_check)
     
-    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
-        if not context:
+    def _hook_call_update_check(self, cr, uid, ids, vals, context=None):
+        if context is None:
             context = {}
-            
-        # indicate to the account.analytic.line not to create such an object to avoid duplication
-#        context['do_not_create_analytic_line'] = True
-        
-        # the coming block is a special treatment when, in sync, the update of an account.analytic.line triggers also an update 
-        # on the account move line, in which its move state!=draft, and journal=posted. This update request raises an exception in 
-        # opener-addons/account/account_move_line.py, method _update_check, line 1204
-        # if this special catch up is not done here, the execution of the synch data is considered as not running due to the exception raised
-        
-        sync_check = check
-        sync_check_update = update_check
-        if 'sync_data' in context:
-            sync_check = False
-            sync_check_update = False
-            for line in self.browse(cr, uid, ids, context=context):
-                if line.move_id.state <> 'draft' and (not line.journal_id.entry_posted):
-                    return True
-                if line.reconcile_id:
-                    return True
-                
-        return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=sync_check_update)
+        field_to_check = {'account_id': 'm2o', 'journal_id': 'm2o', 'period_id': 'm2o', 'move_id': 'm2o', 'debit': 'float', 'credit': 'float', 'date': 'date'}
+        done = {}
+        if not context.get('sync_data'):
+            return super(account_move_line, self)._hook_call_update_check(cr, uid, ids, vals, context)
+
+        # rewrite update_check, to raise error *only if values to write and values in DB differ*
+        for l in self.browse(cr, uid, ids):
+            for f,typ in field_to_check.iteritems():
+                if f in vals:
+                    to_write_val = l[f]
+                    if typ == 'm2o' and l[f]:
+                        to_write_val = l[f].id
+                    diff_val = vals[f] != to_write_val
+                    if typ == 'float' and l[f] and vals[f]:
+                        diff_val = abs(vals[f] - l[f]) > 10**-4
+                    if diff_val and l.move_id.state <> 'draft' and (not l.journal_id.entry_posted):
+                        raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
+                    if diff_val and l.reconcile_id:
+                        raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
+                t = (l.journal_id.id, l.period_id.id)
+                if t not in done:
+                    self._update_journal_check(cr, uid, l.journal_id.id, l.period_id.id, context)
+                    done[t] = True
+
+
+    #def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
 
 account_move_line()
 

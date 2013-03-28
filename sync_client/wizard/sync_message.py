@@ -109,7 +109,14 @@ class message_to_send(osv.osv):
         call = rule.remote_call
         identifiers = self._generate_message_uuid(cr, uid, obj, obj_ids, rule.server_id, context=context)
         for i, id in enumerate(obj_ids):
-            self.create_message(cr, uid, identifiers[id], call, args[id], dest[i], context)
+            update_destinations = []
+            if not issubclass(type(dest[i]), (list, tuple)):
+                update_destinations = [dest[i]]
+            else:
+                update_destinations = dest[i]
+            for update_destination in update_destinations:
+                self.create_message(cr, uid, identifiers[id], call, args[id], update_destination, context)
+        return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         res = {}
@@ -128,9 +135,10 @@ class message_to_send(osv.osv):
                 'destination_name': destination_name,
                 'sent' : False,
         }
-        res = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
-        if not res:
-            self.create(cr, uid, data, context=context)
+        ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
+        if not ids:
+            ids = [self.create(cr, uid, data, context=context)]
+        return ids[0]
         #else:
             #sync_log(self, "Message %s already exist" % identifier)
 
@@ -140,19 +148,17 @@ class message_to_send(osv.osv):
         Sending Part
     """
     def get_message_packet(self, cr, uid, max_size, context=None):
-        ids = self.search(cr, uid, [('sent', '=', False)], context=context)
-        if not ids:
-            return False
-
         packet = []
-        for data in self.browse(cr, uid, ids, context=context):
-            res = {
-                'id' : data.identifier,
-                'call' : data.remote_call,
-                'dest' : data.destination_name,
-                'args' : data.arguments,
-            }
-            packet.append(res)
+
+        for message in self.browse(cr, uid, self.search(cr, uid, [('sent', '=', False)],
+                                   limit=max_size, context=context), context=context):
+            packet.append({
+                'id' : message.identifier,
+                'call' : message.remote_call,
+                'dest' : message.destination_name,
+                'args' : message.arguments,
+            })
+            
         return packet
 
 
@@ -219,7 +225,7 @@ class message_received(osv.osv):
     def execute(self, cr, uid, ids=False, context=None):
         if not ids:
             ids = self.search(cr, uid, [('run', '=', False)], context=context)
-        if not ids: return True
+        if not ids: return 0
         execution_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
         for message in self.browse(cr, uid, ids, context=context):
@@ -229,14 +235,15 @@ class message_received(osv.osv):
             try:
                 fn = getattr(self.pool.get(model), method)
                 res = fn(cr, uid, message.source, *arg)
-                self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
-                cr.execute("RELEASE SAVEPOINT exec_message")
             except BaseException, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
                 log += sync_log(self, e, 'error')
                 self.write(cr, uid, message.id, {'run' : False, 'log' : log}, context=context)
-        return True
+            else:
+                cr.execute("RELEASE SAVEPOINT exec_message")
+                self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
+        return len(ids)
 
     _order = 'id asc'
 

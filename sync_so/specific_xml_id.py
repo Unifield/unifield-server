@@ -124,10 +124,19 @@ class hq_entries(osv.osv):
             for data in cost_center_data:
                 if data['cost_center_id']:
                     cost_center_name = data['cost_center_id'][1][:3]
-                    instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id', 'like', cost_center_name), ('level', '=', 'coordo')], context=context)
-                    if instance_ids:
-                        instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-                        res.append(instance_data['instance'])
+                    cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
+                                                                                                 ('code', '=', cost_center_name)], context=context)
+                    if len(cost_center_ids) > 0:
+                        target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_ids[0]),
+                                                                                                 ('is_target', '=', True)])
+                        if len(target_ids) > 0:
+                            target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
+                            if target.instance_id and target.instance_id.instance:
+                                res.append(target.instance_id.instance)
+                            else:
+                                res.append(False)
+                        else:
+                            res.append(False)
                     else:
                         res.append(False)
                 else:
@@ -137,6 +146,128 @@ class hq_entries(osv.osv):
 
 hq_entries()
 
+
+class account_target_costcenter(osv.osv):
+    
+    _inherit = 'account.target.costcenter'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if dest_field == 'instance_id':
+            res = []
+            for target_line in self.browse(cr, uid, ids, context=context):
+                if target_line.instance_id:
+                    instance = target_line.instance_id
+                    if instance.state == 'active':
+                        res_data = [instance.instance]
+                        # if it is a coordo instance, send it to its projects as well
+                        if instance.level == 'coordo':
+                            for project in instance.child_ids:
+                                res_data.append(project.instance)
+                        res.append(res_data)
+                    else:
+                        res.append(False)
+                else:
+                    res.append(False)
+            return res
+        return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+    
+    def create(self, cr, uid, vals, context={}):
+        res_id = super(account_target_costcenter, self).create(cr, uid, vals, context=context)
+        # create lines in instance's children
+        if 'instance_id' in vals:
+            instance = self.pool.get('msf.instance').browse(cr, uid, vals['instance_id'], context=context)
+            current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+            if instance.state == 'active' and current_instance.level == 'section':
+                # "touch" cost center if instance is active (to sync to new targets)
+                self.pool.get('account.analytic.account').write(cr, uid, [vals['cost_center_id']], {'category': 'OC'}, context=context)
+                self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
+                                                                         'res_id' : vals['cost_center_id'],
+                                                                         'fields_modif' : "['category']"}, context=context)
+        return res_id
+
+account_target_costcenter()
+
+class account_analytic_account(osv.osv):
+    
+    _inherit = 'account.analytic.account'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        # get all active project instance with the cost center in one of its target lines 
+        if dest_field == 'category':
+            if isinstance(ids, (long, int)):
+                ids = [ids]
+            res = []
+            for id in ids:
+                cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s" % (id))
+                instance_ids = [x[0] for x in cr.fetchall()]
+                if len(instance_ids) > 0:
+                    res_temp = []
+                    for instance_id in instance_ids:
+                        cr.execute("select instance from msf_instance where id = %s and state = 'active'" % (instance_id))
+                        result = cr.fetchone()
+                        if result:
+                            res_temp.append(result[0])
+                    res.append(res_temp)
+                else:
+                    res.append(False)
+            return res
+        
+        return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+
+account_analytic_account()
+
+class msf_instance(osv.osv):
+    
+    _inherit = 'msf.instance'
+    
+    def create(self, cr, uid, vals, context=None):
+        res_id = super(msf_instance, self).create(cr, uid, vals, context=context)
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if 'state' in vals and 'parent_id' in vals and vals['state'] == 'active' and current_instance.level == 'section':
+            instance = self.browse(cr, uid, res_id, context=context)
+            # touch cost centers and account_Target_cc lines in order to sync them
+            target_ids = [x.id for x in instance.target_cost_center_ids]
+            self.pool.get('account.target.costcenter').write(cr, uid, target_ids, {'instance_id': instance.id}, context=context)
+            
+            cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
+            for cost_center_id in cost_center_ids:
+                self.pool.get('account.analytic.account').write(cr, uid, [cost_center_id], {'category': 'OC'}, context=context)
+                self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
+                                                                         'res_id' : cost_center_id,
+                                                                         'fields_modif' : "['category']"}, context=context)
+                
+            # also touch parent instance and lines from parent, since those were already sent to other instances
+            if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
+                parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
+                self.pool.get('account.target.costcenter').write(cr, uid, parent_target_ids, {'instance_id': instance.parent_id.id}, context=context)
+        return res_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if 'state' in vals and vals['state'] == 'active' and current_instance.level == 'section':
+            for instance in self.browse(cr, uid, ids, context=context):
+                if instance.state != 'active':
+                    # only for now-activated instances (first push)
+                    # touch cost centers and account_Target_cc lines in order to sync them
+                    target_ids = [x.id for x in instance.target_cost_center_ids]
+                    self.pool.get('account.target.costcenter').write(cr, uid, target_ids, {'instance_id': instance.id}, context=context)
+                    
+                    cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
+                    for cost_center_id in cost_center_ids:
+                        self.pool.get('account.analytic.account').write(cr, uid, [cost_center_id], {'category': 'OC'}, context=context)
+                        self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
+                                                                                 'res_id' : cost_center_id,
+                                                                                 'fields_modif' : "['category']"}, context=context)
+                        
+                    # also touch parent instance and lines from parent, since those were already sent to other instances
+                    if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
+                        parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
+                        self.pool.get('account.target.costcenter').write(cr, uid, parent_target_ids, {'instance_id': instance.parent_id.id}, context=context)
+                        
+        return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+
+msf_instance()
+
 from sync_common.common import format_data_per_id 
 from sync_client.ir_model_data import generate_message_for_destination
 
@@ -145,15 +276,18 @@ class account_analytic_line(osv.osv):
     
     _inherit = 'account.analytic.line'
     _delete_owner_field = 'cost_center_id'
-    
-    def get_instance_name_from_cost_center(self, cr, uid, cost_center_code, context=None):
-        if cost_center_code:
-            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('cost_center_id.code', 'ilike', cost_center_code[:5] + '%')], context=context)
+        
+    def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
+        if cost_center_id:
+            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', cost_center_id),
+                                                                                     ('is_target', '=', True)])
             current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-            if instance_ids:
-                instance_data = self.pool.get('msf.instance').read(cr, uid, instance_ids[0], ['instance'], context=context)
-                return instance_data['instance']
-            elif current_instance.parent_id and current_instance.parent_id.instance:
+            if len(target_ids) > 0:
+                target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
+                if target.instance_id and target.instance_id.instance:
+                    return target.instance_id.instance
+                
+            if current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 return current_instance.parent_id.instance
             else:
@@ -166,12 +300,11 @@ class account_analytic_line(osv.osv):
             return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
         
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
         res = []
-        for data in cost_center_data:
-            if data['cost_center_id']:
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, data['cost_center_id'][0], context=context)
-                res.append(self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context))
+        for line_id in ids:
+            line_data = self.browse(cr, uid, line_id, context=context)
+            if line_data.cost_center_id:
+                res.append(self.get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res.append(current_instance.parent_id.instance)
@@ -185,23 +318,75 @@ class account_analytic_line(osv.osv):
 
         if isinstance(ids, (long, int)):
             ids = [ids]
-
+        
         instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
-        new_cost_center_id = vals['cost_center_id']
         xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
         line_data = format_data_per_id(self.read(cr, uid, ids, ['cost_center_id'], context=context))
         for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
             xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
             old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
-            if not old_cost_center_id == new_cost_center_id:
-                cost_center = self.pool.get('account.analytic.account').browse(cr, uid, old_cost_center_id, context=context)
-                destination_name = self.get_instance_name_from_cost_center(cr, uid, cost_center.code, context=context)
-                generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name)
+            
+            new_cost_center_id = False
+            if 'cost_center_id' in vals:
+                new_cost_center_id = vals['cost_center_id']
+            else:
+                new_cost_center_id = old_cost_center_id
+            
+            old_destination_name = self.get_instance_name_from_cost_center(cr, uid, old_cost_center_id, context=context)
+            new_destination_name = self.get_instance_name_from_cost_center(cr, uid, new_cost_center_id, context=context)
+            
+            if not old_destination_name == new_destination_name:
+                # Send delete message, but not to parents of the current instance
+                generate_message_for_destination(self, cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
+            
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
-        
 
 account_analytic_line()
+
+class funding_pool_distribution_line(osv.osv):
+    _inherit = 'funding.pool.distribution.line'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if not dest_field == 'cost_center_id':
+            return super(funding_pool_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+        
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        res = []
+        for line_id in ids:
+            line_data = self.browse(cr, uid, line_id, context=context)
+            if line_data.cost_center_id:
+                res.append(self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                res.append(current_instance.parent_id.instance)
+            else:
+                res.append(False)
+        return res
+    
+funding_pool_distribution_line()
+
+class cost_center_distribution_line(osv.osv):
+    _inherit = 'cost.center.distribution.line'
+    
+    def get_destination_name(self, cr, uid, ids, dest_field, context=None):
+        if not dest_field == 'analytic_id':
+            return super(cost_center_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
+        
+        current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        res = []
+        for line_id in ids:
+            line_data = self.browse(cr, uid, line_id, context=context)
+            if line_data.analytic_id:
+                res.append(self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.analytic_id.id, context))
+            elif current_instance.parent_id and current_instance.parent_id.instance:
+                # Instance has a parent
+                res.append(current_instance.parent_id.instance)
+            else:
+                res.append(False)
+        return res
+    
+cost_center_distribution_line()
 
 class product_product(osv.osv):
     _inherit = 'product.product'

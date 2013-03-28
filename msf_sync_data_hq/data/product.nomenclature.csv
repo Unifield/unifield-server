@@ -1,10 +1,10 @@
-level,name,type,parent_id
-1,Administration,Mandatory,LOG
-2,Data processing,Mandatory,Administration
-3,Cartridge,Mandatory,Data processing
-3,"Cable, dataprocessing",Mandatory,Data processing
-1,Drugs,Mandatory,MED
-2,Injectable drugs,Mandatory,Drugs
-2,Oral drugs,Mandatory,Drugs
-3,Didanosine,Mandatory,Oral drugs
-3,Cefazolin,Mandatory,Injectable drugs
+"id","level","name","type","parent_id"
+"nomenclature_administration","1","Administration","Mandatory","LOG"
+"nomenclature_data_processing","2","Data processing","Mandatory","Administration"
+"nomenclature_cartridge","3","Cartridge","Mandatory","Data processing"
+"nomenclature_cable_dataprocessing","3","Cable, dataprocessing","Mandatory","Data processing"
+"nomenclature_drugs","1","Drugs","Mandatory","MED"
+"nomenclature_injectable_drugs","2","Injectable drugs","Mandatory","Drugs"
+"nomenclature_oral_drugs","2","Oral drugs","Mandatory","Drugs"
+"nomenclature_didanosine","3","Didanosine","Mandatory","Oral drugs"
+"nomenclature_cefazolin","3","Cefazolin","Mandatory","Injectable drugs"

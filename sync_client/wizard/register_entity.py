@@ -101,6 +101,12 @@ class register_entity(osv.osv_memory):
         return False
     
     def next(self, cr, uid, ids, context=None):
+        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+        res = proxy.get_entity(
+            self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier,
+            context)
+        if res[0] and res[1]['entity_status'] == 'validated':
+            raise osv.except_osv(_("Error !"), _("Current instance already validated!"))
         self.pool.get("sync_client.instance.temp").fetch(cr, uid)
         parent_id = self._get_default_entity(cr, uid, ids, context)
         self.write(cr, uid, ids, {'state' : 'parents', 'parent_id' : parent_id}, context=context)

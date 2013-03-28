@@ -20,33 +20,111 @@
 ##############################################################################
 
 from osv import osv, fields
-from datetime import datetime
+import pooler
+
+
+class MonitorLogger(object):
+    def __init__(self, cr, uid, context=None):
+        db, pool = pooler.get_db_and_pool(cr.dbname)
+        self.monitor = pool.get('sync.monitor')
+        self.cr = db.cursor()
+        self.cr.autocommit(True)
+        self.uid = uid
+        self.context = context
+        self.info = {
+            'status' : 'in-progress',
+            'data_pull' : 'null',
+            'msg_pull' : 'null',
+            'data_push' : 'null',
+            'msg_push' : 'null',
+        }
+        self.final_status = 'ok'
+        self.messages = []
+        self.row_id = self.monitor.create(self.cr, self.uid, self.info, context=self.context)
+
+    def write(self):
+        if not hasattr(self, 'cr'):
+            raise Exception("Cannot write into a closed sync.monitor logger!")
+        self.info['error'] = "\n".join(self.messages)
+        self.monitor.write(self.cr, self.uid, [self.row_id], self.info, context=self.context)
+
+    def __format_message(self, message, step):
+        return "%s: %s" % (self.monitor._columns[step].string, message) \
+               if step is not None and not step == 'status' \
+               else message
+
+    def append(self, message='', step=None):
+        self.messages.append(self.__format_message(message, step))
+        return len(self.messages) - 1
+
+    def replace(self, index, message, step=None):
+        self.messages[index] = self.__format_message(message, step)
+
+    def switch(self, step, status):
+        if status in ('failed', 'aborted'):
+            self.final_status = status
+        self.info[step] = status
+        if step == 'status' and status != 'in-progress':
+            self.info['end'] = fields.datetime.now()
+            self.monitor.last_status = (status, self.info['end'])
+
+    def close(self):
+        self.switch('status', self.final_status)
+        self.write()
+        self.cr.close()
+        del self.cr
+
+    def __del__(self):
+        self.close()
 
 
 ## msf_III.3_Monitor_object
 class sync_monitor(osv.osv):
     _name = "sync.monitor"
 
-    _field_status = lambda *a,**o: fields.selection([('ok','Ok'),('null','/'),('in-progress','In Progress...'),('failed','Failed')],*a,**o)
+    status_dict = {
+        'ok' : 'Ok',
+        'null' : '/',
+        'in-progress' : 'In Progress...',
+        'failed' : 'Failed',
+        'aborted' : 'Aborted',
+    }
+
+    def __init__(self, pool, cr):
+        super(sync_monitor, self).__init__(pool, cr)
+        self.last_status = None
+        # check table existence
+        cr.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename = %s;",
+                   [self._table])
+        if not cr.fetchone(): return
+        # check rows existence
+        monitor_ids = self.search(cr, 1, [], limit=1, order='sequence_number desc')
+        if not monitor_ids: return
+        # get the status of the last row
+        row = self.read(cr, 1, monitor_ids, ['status', 'end'])[0]
+        self.last_status = (row['status'], row['end'])
+
+    def _get_default_sequence_number(self, cr, uid, context=None):
+        return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
+
+    def get_logger(self, cr, uid, context=None):
+        return MonitorLogger(cr, uid, context=context)
 
     _columns = {
         #TODO: auto increment
         'sequence_number' : fields.integer("Sequence",  readonly=True, required=True),
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),
-        'data_pull' : _field_status("Data Pull", readonly=True),
-        'msg_pull' : _field_status("Msg Pull", readonly=True),
-        'data_push' : _field_status("Data Push", readonly=True),
-        'msg_push' : _field_status("Msg Push", readonly=True),
-        'status' : _field_status("Status", readonly=True),
-        'error' : fields.text("Error message", readonly=True),
+        'data_pull' : fields.selection(status_dict.items(), string="Data Pull", readonly=True),
+        'msg_pull' : fields.selection(status_dict.items(), string="Msg Pull", readonly=True),
+        'data_push' : fields.selection(status_dict.items(), string="Data Push", readonly=True),
+        'msg_push' : fields.selection(status_dict.items(), string="Msg Push", readonly=True),
+        'status' : fields.selection(status_dict.items(), string="Status", readonly=True),
+        'error' : fields.text("Messages", readonly=True),
     }
 
-    def _get_default_sequence_number(self, cr, uid, context=None):
-            return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
-        
     _defaults = {
-        'start' : lambda *a : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'start' : fields.datetime.now,
         'sequence_number' : _get_default_sequence_number,
     }
 
