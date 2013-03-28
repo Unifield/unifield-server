@@ -41,10 +41,14 @@ class composition_kit(osv.osv):
         return res
 
     _columns = {
+        'real_file_to_import': fields.binary(string='File to import', filters='*.xml',
+                                             help="""You can use the template of the export for the format that you need to use. \n 
+                                             The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
+                                             Module, Product Code*, Product Description, Quantity, Product UoM, Asset, Batch Number and Expiry Date"""),
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n 
                                         The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
-                                        Module, Product Code*, Product Description, Quantity and Product UOM"""),
+                                        Module, Product Code*, Product Description, Quantity and Product UoM"""),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
 
@@ -172,10 +176,10 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
-        if not obj.file_to_import:
+        if not obj.real_file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.real_file_to_import))
 
         # iterator on rows
         rows = fileobj.getRows()
@@ -198,7 +202,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             # Check length of the row
             col_count = len(row)
             if col_count != 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Module, Product Code*, Product Description, Quantity, Product UOM, Asset, Batch Number, Expiry Date"""))
 
 #            if not check_line.check_empty_line(row=row, col_count=col_count):
