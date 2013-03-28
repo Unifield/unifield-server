@@ -50,18 +50,20 @@ class purchase_order_sync(osv.osv):
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
+        'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
     }
 
     _defaults = {
         'split_po': False,
         'push_fo': False,
         'sended_by_supplier': True,
+        'po_updated_by_sync': False,
     }
 
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({'active': True, 'split_po' : False})
+        default.update({'active': True, 'split_po' : False, 'po_updated_by_sync': False})
         return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
         
     def create_split_po(self, cr, uid, source, so_info, context=None):
@@ -212,6 +214,7 @@ class purchase_order_sync(osv.osv):
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, False, context)
+        header_result['po_updated_by_sync'] = True
 
         default = {}
         default.update(header_result)
@@ -243,6 +246,7 @@ class purchase_order_sync(osv.osv):
         
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref
+        header_result['po_updated_by_sync'] = True
 
         default = {}
         default.update(header_result)

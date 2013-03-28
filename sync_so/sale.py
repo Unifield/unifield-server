@@ -46,8 +46,20 @@ class sale_order_sync(osv.osv):
     
     _columns = {
                 'received': fields.boolean('Received by Client', readonly=True),
+                'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
     }
     
+    _defaults = {
+        'fo_created_by_po_sync': False,
+    }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        if not default.get('name', False) or not '-2' in default.get('name', False).split('/')[-1]:
+            default.update({'fo_created_by_po_sync': False})
+        return super(sale_order_sync, self).copy(cr, uid, id, default, context=context)
+
     def create_so(self, cr, uid, source, po_info, context=None):
         print "Create an FO from a PO (normal flow)"
         if not context:
@@ -66,6 +78,7 @@ class sale_order_sync(osv.osv):
             line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id']})
             order_line.append((0, 0, line[2]))
         header_result['order_line'] = order_line
+        header_result['fo_created_by_po_sync'] = True
         
         default = {}
         default.update(header_result)
