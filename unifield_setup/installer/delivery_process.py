@@ -60,7 +60,32 @@ So, you cannot choose 'Simple OUT' as Delivery process while these documents are
         
         return res
         
-    
+    def change_wh_board(self, cr, uid, type='simple', context=None):
+        '''
+        Update the WH dashboard according to Delivery process choice
+        '''
+        module_obj = self.pool.get('ir.module.module')
+        data_obj = self.pool.get('ir.model.data')
+
+        # In simple configuration, only display OUT on WH dashboard
+        module_name = 'useability_dashboard_and_menu'
+        view_xml_id = 'board_warehouse_form_default'
+
+        if type == 'simple':
+            view_xml_id = 'board_warehouse_form_default_only_out'
+
+        module_ok = module_obj.search(cr, uid, [('name', '=', module_name), ('state', '=', 'installed')], context=context)
+        if module_ok:
+            try:
+                wh_action_id = data_obj.get_object_reference(cr, uid, module_name, 'open_board_warehouse_unifield')[1]
+                wh_view_id = data_obj.get_object_reference(cr, uid, module_name, view_xml_id)[1]
+                # Update the action
+                self.pool.get('ir.actions.act_window').write(cr, uid, [wh_action_id], {'view_id': wh_view_id}, context=context)
+            except IndexError:
+                pass
+
+        return True
+
     def execute(self, cr, uid, ids, context=None):
         '''
         Fill the delivery process field in company
@@ -95,6 +120,9 @@ So, you cannot choose 'Simple OUT' as Delivery process while these documents are
         else:
             # In complex configuration, added the menu entries
             self.pool.get('ir.ui.menu').write(cr, uid, menu_ids, {'active': True}, context=context)
+        
+        # Update the WH dashboard view
+        self.change_wh_board(cr, uid, type=payload.delivery_process, context=context)
     
         setup_obj.write(cr, uid, [setup_id.id], {'delivery_process': payload.delivery_process}, context=context)
 
