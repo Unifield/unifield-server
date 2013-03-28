@@ -1183,6 +1183,9 @@ stock moves which are already processed : '''
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
+            fo_created_by_po_sync = False
+            if order.po_updated_by_sync:
+                fo_created_by_po_sync = True
             if order.sended_by_supplier and order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission'):
                 # UTP-392: This PO is created by the synchro from a Loan FO of internal/intermission partner, so do not generate the counterpart FO
                 return None 
@@ -1203,6 +1206,7 @@ stock moves which are already processed : '''
                       'categ': order.categ,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
+                      'fo_created_by_po_sync': fo_created_by_po_sync,
                       }
             order_id = sale_obj.create(cr, uid, values, context=context)
             for line in order.order_line:

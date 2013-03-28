@@ -589,6 +589,9 @@ class sale_order(osv.osv):
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
+            # don't create a PO if it is created by sync ofr the loan
+            if order.order_type == 'loan' and order.fo_created_by_po_sync:
+                return
             two_months = today() + RelativeDateTime(months=+2)
             # from yml test is updated according to order value
             values = {'partner_id': order.partner_id.id,
