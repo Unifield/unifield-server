@@ -1531,6 +1531,7 @@ msgstr "Etes-vous sûr de vouloir créer des écritures ?"
 #: model:process.process,name:msf_outgoing.process_process_ppl0
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_ppl_board
 #: view:stock.picking:0
+#: view:board.board:0
 #: model:process.process,name:sd.msf_outgoing_process_process_ppl0
 #, python-format
 msgid "Pre-Packing List"
@@ -16131,6 +16132,7 @@ msgstr "De:"
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree
 #: view:stock.picking:0
 #: view:purchase.order:0
+#: view:board.board:0
 #, python-format
 msgid "Delivery Orders"
 msgstr "Bons de Livraison"
@@ -24005,6 +24007,7 @@ msgstr "Vous ne pouvez pas confirmer une Commande de Terrain sans ligne !"
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_ppl
 #: view:stock.picking:0
+#: view:board.board:0
 msgid "Pre-Packing Lists"
 msgstr "Listes de Pré-Colisage"
 
@@ -48913,6 +48916,7 @@ msgstr "Produits Entrants"
 #: model:ir.actions.act_window,name:stock.action_picking_tree4
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree4
 #: view:stock.picking:0
+#: view:board.board:0
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_tree_available
 msgid "Incoming Shipments"
 msgstr "Livraisons Entrantes"
@@ -51878,6 +51882,7 @@ msgstr "Commandes de terrain par mois"
 #: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_ticket_board
 #: view:stock.picking:0
+#: view:board.board:0
 msgid "Picking Tickets"
 msgstr "Bons de Piquage "
 
@@ -62644,6 +62649,7 @@ msgstr "Type Int."
 
 #. module: transport_mgmt
 #: view:purchase.order:0
+#: view:board.board:0
 msgid "Shipments"
 msgstr "Expéditions"
 
