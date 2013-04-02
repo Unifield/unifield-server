@@ -161,6 +161,8 @@ class stock_partial_picking(osv.osv_memory):
             elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)], context=context) and prodlot_name and expired_date:
                 try:
                     prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
+                    # here we need to commit in order to be able to use the newly created batch number in the fields.function _vals_get_stock_override
+                    cr.commit()
                     # no error message to keep the same existing logic as when we import a date on a product that does not takes expiry date
 #                    info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
 #                        % (file_line_num, prodlot_name, expired_date, product.default_code))
