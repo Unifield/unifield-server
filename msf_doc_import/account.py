@@ -130,13 +130,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                 if line[cols['Booking Credit']]:
                     money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
                     r_credit = line[cols['Booking Credit']]
-                # Check that Third party exists (if not empty)
-                if line[cols['Third party']]:
-                    tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                    if not tp_ids:
-                        errors.append(_('Line %s. Employee not found: %s') % (current_line_num, line[cols['Third party']],))
-                        continue
-                    r_partner = tp_ids[0]
                 # Check document/posting dates
                 if not line[cols['Document Date']]:
                     errors.append(_('Line %s. No document date specified!') % (current_line_num,))
@@ -157,6 +150,18 @@ class msf_doc_import_accounting(osv.osv_memory):
                     continue
                 r_account = account_ids[0]
                 account = self.pool.get('account.account').browse(cr, uid, r_account)
+                # Check that Third party exists (if not empty)
+                tp_label = 'Partner'
+                if line[cols['Third party']]:
+                    if account.type_for_register == 'advance':
+                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Third party']])])
+                        tp_label = 'Employee'
+                    else:
+                        tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
+                    if not tp_ids:
+                        errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['Third party']],))
+                        continue
+                    r_partner = tp_ids[0]
                 # Check analytic axis only if G/L account is an expense account
                 if account.user_type_code == 'expense':
                     # Check Destination
