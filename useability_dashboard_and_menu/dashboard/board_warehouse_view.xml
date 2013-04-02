@@ -48,7 +48,7 @@
             <field name="res_model">stock.picking</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('overall_qty', '!=', 0.00), ('state', 'not in', ['done', 'cancel'])]</field>
             <field name="context">{'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1, 'wh_dashboard': True, 'pick_type': 'picking_ticket'}</field>
             <!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
             <field name="search_view_id" ref="msf_outgoing.view_picking_ticket_search"/>
