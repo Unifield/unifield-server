@@ -72,7 +72,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             rows = content.getRows()
             # Use the first row to find which column to use
             cols = {}
-            col_names = ['Description', 'Reference', 'Document Date', 'Posting Date', 'Third Party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+            col_names = ['Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
             for num, r in enumerate(rows):
                 header = [x and x.data for x in r.iter_cells()]
                 for el in col_names:
@@ -87,35 +87,89 @@ class msf_doc_import_accounting(osv.osv_memory):
             # All lines
             debit = 0
             credit = 0
+            # Check file's content
             for num, r in enumerate(rows):
+                # Prepare some values
+                r_debit = 0
+                r_credit = 0
+                r_currency = False
+                r_partner = False
+                r_account_id = False
+                current_line_num = num + base_num
+                # Fetch all XML row values
                 line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
-#                string = '%s - ' % (base_num + num)
-#                printline = False
                 # Bypass this line if NO debit AND NO credit
                 if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
                     continue
+                # Check that currency is active
+                if not line[cols['Booking Currency']]:
+                    errors.append(_('Line %s. No currency specified!') % (current_line_num,))
+                    continue
+                curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line[cols['Booking Currency']])])
+                if not curr_ids:
+                    errors.append(_('Line %s. Currency not found: %s') % (current_line_num, line[cols['Booking Currency']],))
+                    continue
+                for c in self.pool.get('res.currency').browse(cr, uid, curr_ids):
+                    if not c.active:
+                        errors.append(_('Line %s. Currency is not active: %s') % (current_line_num, line[cols['Booking Currency']],))
+                        continue
+                r_currency = curr_ids[0]
+                # Increment global debit/credit
                 if line[cols['Booking Debit']]:
                     debit += line[cols['Booking Debit']]
+                    r_debit = line[cols['Booking Debit']]
                 if line[cols['Booking Credit']]:
                     credit += line[cols['Booking Credit']]
-                if not line[cols['Third Party']]
-                if line[cols]
-#                for el in col_names:
-#                    if line[cols[el]]:
-#                        string += str(line[cols[el]])
-#                        printline = True
-#                if printline:
-#                    print string
+                    r_credit = line[cols['Booking Credit']]
+                # Check that Third party exists (if not empty)
+                if line[cols['Third party']]:
+                    tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
+                    if not tp_ids:
+                        errors.append(_('Line %s. Employee not found: %s') % (current_line_num, line[cols['Third party']],))
+                        continue
+                    r_partner = tp_ids[0]
+                # Check document/posting dates
+                if not line[cols['Document Date']]:
+                    errors.append(_('Line %s. No document date specified!') % (current_line_num,))
+                    continue
+                if not line[cols['Posting Date']]:
+                    errors.append(_('Line %s. No posting date specified!') % (current_line_num,))
+                    continue
+                if line[cols['Document Date']] > line[cols['Posting Date']]:
+                    errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['Document Date']], line[cols['Posting Date']],))
+                    continue
+                # Check G/L account
+                if not line[cols['G/L Account']]:
+                    errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
+                    continue
+                account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['G/L Account']])])
+                if not account_ids:
+                    errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, line[cols['G/L Account']],))
+                    continue
+                r_account = account_ids[0]
+                # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
+
+                # Launch journal entry write
+                # FIXME
             # Check if all is ok for the file
             ## The lines should be balanced
             if (debit - credit) != 0.0:
                 raise osv.except_osv(_('Error'), _('Not balanced: %s' ) % ((debit - credit),))
             print debit - credit
-            # Check file's content
-            # Launch journal entries write
+
+        for e in errors:
+            print e
 
         raise osv.except_osv('error', 'programmed error')
+
+        # FIXME
+        if errors:
+            cr.rollback()
+            created = 0
+            # FIXME
+        else:
+            pass
 
         # Display result
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
