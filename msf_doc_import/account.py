@@ -85,8 +85,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 if not el in cols:
                     raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el,))
             # All lines
-            debit = 0
-            credit = 0
+            money = {}
             # Check file's content
             for num, r in enumerate(rows):
                 # Prepare some values
@@ -94,7 +93,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                 r_credit = 0
                 r_currency = False
                 r_partner = False
-                r_account_id = False
+                r_account = False
+                r_destination = False
+                r_cc = False
                 current_line_num = num + base_num
                 # Fetch all XML row values
                 line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
@@ -114,12 +115,20 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. Currency is not active: %s') % (current_line_num, line[cols['Booking Currency']],))
                         continue
                 r_currency = curr_ids[0]
+                if not line[cols['Booking Currency']] in money:
+                    money[line[cols['Booking Currency']]] = {}
+                if not 'debit' in money[line[cols['Booking Currency']]]:
+                    money[line[cols['Booking Currency']]]['debit'] = 0
+                if not 'credit' in money[line[cols['Booking Currency']]]:
+                    money[line[cols['Booking Currency']]]['credit'] = 0
+                if not 'name' in money[line[cols['Booking Currency']]]:
+                    money[line[cols['Booking Currency']]]['name'] = line[cols['Booking Currency']]
                 # Increment global debit/credit
                 if line[cols['Booking Debit']]:
-                    debit += line[cols['Booking Debit']]
+                    money[line[cols['Booking Currency']]]['debit'] += line[cols['Booking Debit']]
                     r_debit = line[cols['Booking Debit']]
                 if line[cols['Booking Credit']]:
-                    credit += line[cols['Booking Credit']]
+                    money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
                     r_credit = line[cols['Booking Credit']]
                 # Check that Third party exists (if not empty)
                 if line[cols['Third party']]:
@@ -147,16 +156,36 @@ class msf_doc_import_accounting(osv.osv_memory):
                     errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, line[cols['G/L Account']],))
                     continue
                 r_account = account_ids[0]
+                account = self.pool.get('account.account').browse(cr, uid, r_account)
+                # Check analytic axis only if G/L account is an expense account
+                if account.user_type_code == 'expense':
+                    # Check Destination
+                    if not line[cols['Destination']]:
+                        errors.append(_('Line %s. No destination specified!') % (current_line_num,))
+                        continue
+                    destination_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['Destination']]), ('code', '=', line[cols['Destination']])])
+                    if not destination_ids:
+                        errors.append(_('Line %s. Destination %s not found!') % (current_line_num, line[cols['Destination']],))
+                        continue
+                    r_destination = destination_ids[0]
+                    # Check Cost Center
+                    if not line[cols['Cost Centre']]:
+                        errors.append(_('Line %s. No cost center specified:') % (current_line_num,))
+                        continue
+                    cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
+                    if not cc_ids:
+                        errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
+                        continue
+                    r_cc = cc_ids[0]
                 # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
-
 
                 # Launch journal entry write
                 # FIXME
             # Check if all is ok for the file
-            ## The lines should be balanced
-            if (debit - credit) != 0.0:
-                raise osv.except_osv(_('Error'), _('Not balanced: %s' ) % ((debit - credit),))
-            print debit - credit
+            ## The lines should be balanced for each currency
+            for c in money:
+                if (money[c]['debit'] - money[c]['credit']) != 0.0:
+                    raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s' ) % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
 
         for e in errors:
             print e
