@@ -1015,14 +1015,15 @@ class procurement_order(osv.osv):
         if 'procurement' in kwargs:
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
             if order_line_ids:
-                origin = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0]).order_id.name
-                line.update({'origin': origin})
+                origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
+                line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
         if line.get('price_unit', False) == False:
             st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
             if 'pricelist' in kwargs:
                 cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             line.update({'price_unit': st_price})
+
         return line
     
     def action_check_finished(self, cr, uid, ids):
