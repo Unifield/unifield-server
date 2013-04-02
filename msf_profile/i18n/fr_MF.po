@@ -16158,6 +16158,7 @@ msgstr "Bons de Livraison"
 #: model:ir.model,name:stock_forecast.model_purchase_order_line
 #: model:ir.model,name:supplier_catalogue.model_purchase_order_line
 #: model:ir.model,name:tender_flow.model_purchase_order_line
+#: code:addons/tender_flow/tender_flow.py:983
 msgid "Purchase Order Line"
 msgstr "Ligne Bon de Commande"
 
@@ -59528,14 +59529,22 @@ msgstr "Demande de Devis - brouillon"
 msgid "Can not create Journal Entry, Input Account defined on this product and Variant account on category of this product are same."
 msgstr "Vous ne pouvez pas créer d'Ecritures Comptables, le compte d'entrée défini sur ce produit et le compte de variantes de la catégorie de ce produit sont les mêmes."
 
-#. modules: purchase, documents_done, purchase_override, sd
+#. modules: purchase, documents_done, purchase_override, tender_flow, sd
 #: selection:documents.done.wizard,model:0
 #: model:ir.actions.report.xml,name:purchase.report_purchase_quotation
 #: model:process.process,name:purchase.process_process_rfq0
 #: model:ir.actions.report.xml,name:purchase_override.report_purchase_msf_quotation
 #: model:process.process,name:sd.purchase_process_process_rfq0
+#: code:addons/tender_flow/tender_flow.py:948
 msgid "Request for Quotation"
 msgstr "Demande de Devis"
+
+#. module: tender_flow
+#: code:addons/tender_flow/tender_flow.py:984
+#: view:purchase.order.line:0
+#, python-format
+msgid "Request for Quotation Line"
+msgstr "Ligne de Demande de Devis"
 
 #. module: msf_budget
 #: model:ir.model,name:msf_budget.model_msf_budget_decision_moment
