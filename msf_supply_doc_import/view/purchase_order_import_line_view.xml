@@ -49,6 +49,7 @@
                         readonly="1" 
                         colspan="4" 
                         attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
+                        <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4" />
                     </xpath>
                 </data>
             </field>
