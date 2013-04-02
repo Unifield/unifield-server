@@ -1366,6 +1366,8 @@ class account_bank_statement_line(osv.osv):
             move_obj.post(cr, uid, move_ids, context=context)
             
             # STEP 3 : Reconcile
+            # UTP-574 Avoid problem of reconciliation for pending payments
+            context.update({'pending_payment': True})
             if total_payment:
                 move_line_obj.reconcile_partial(cr, uid, move_lines+[x.id for x in st_line.imported_invoice_line_ids], context=context)
             else:
