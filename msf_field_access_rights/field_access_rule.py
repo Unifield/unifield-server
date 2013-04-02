@@ -34,6 +34,25 @@ class field_access_rule(osv.osv):
 
     _name = "msf_field_access_rights.field_access_rule"
     _description = 'Field Access Rule'
+    
+    def _get_all_model_ids(self, cr, uid, model_name):
+        def recur_get_model(model, res):
+            ids = self.pool.get('ir.model').search(cr, 1, [('model','=',model._name)])
+            res.extend(ids)
+            for parent in model._inherits.keys():
+                new_model = self.pool.get(parent)
+                recur_get_model(new_model, res)
+            return res
+        model = self.pool.get(model_name)
+        return recur_get_model(model, [])
+    
+    def _get_family_model_ids(self, cr, uid, ids, field, args, context=None):
+        res = dict.fromkeys(ids, [])
+        for field_access_rule in self.browse(cr, 1, ids, context=context):
+            if field_access_rule.model_id:
+                res[field_access_rule.id] = self._get_all_model_ids(cr, 1, field_access_rule.model_name)
+        print res
+        return res
 
     _columns = {
         'name': fields.char('Name', size=256, required=True),
@@ -47,7 +66,9 @@ class field_access_rule(osv.osv):
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
         'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
-    }
+        
+        'family_model_ids': fields.function(_get_family_model_ids, string='Family Model IDs', type='many2many', relation='ir.model', method=True, store=True),
+        }
 
     _defaults = {
         'active': False,
