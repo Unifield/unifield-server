@@ -201,7 +201,7 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             line_num += 1
             # Check length of the row
             col_count = len(row)
-            if col_count < 5:
+            if col_count < 5 or col_count > 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
 Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Batch Number, Expiry Date"""))
 
