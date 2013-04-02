@@ -20,7 +20,8 @@ gl_accounts,TRUE,TRUE,Down,[],"['code', 'default_destination_id/id', 'is_not_hq_
 gl_accounts_tree,TRUE,TRUE,Down,"[('parent_id', '!=', '')]",['parent_id/id'],OC,account.account,,GL Accounts Tree,Valid,,32
 analytical_journal_hq,TRUE,TRUE,Down,"[('instance_id.level', '=', 'section')]","['active', 'code', 'name', 'type','instance_id/id']",OC,account.analytic.journal,,Analytical Journal (HQ),Valid,,38
 analytical_journal_coordo,TRUE,TRUE,Down,"[('instance_id.level', '=', 'coordo')]","['active', 'code', 'name', 'type','instance_id/id']",MISSION,account.analytic.journal,,Analytical Journal (Coordo),Valid,,39
-analytical_journal,TRUE,TRUE,Bidirectional-Private,[],"['active', 'code', 'name', 'type','instance_id/id']",OC,account.analytic.journal,instance_id,Analytical Journal,Valid,,40
+analytical_journal_project,TRUE,TRUE,Bidirectional,"[('instance_id.level', '=', 'project')]","['active', 'code', 'name', 'type','instance_id/id']",MISSION,account.analytic.journal,,Analytical Journal (Project),Valid,,40
+analytical_journal,TRUE,TRUE,Bidirectional-Private,[],"['active', 'code', 'name', 'type','instance_id/id']",OC,account.analytic.journal,instance_id,Analytical Journal,Valid,,41
 link_accounts_destination,TRUE,TRUE,Down,[],"['account_id/id', 'destination_id/id']",OC,account.destination.link,,Link accounts Destination,Valid,,42
 funding_pool,TRUE,TRUE,Bidirectional,"[('category' , '=' , 'FUNDING')]","['category', 'code', 'cost_center_ids/id', 'date', 'date_start', 'description', 'name', 'tuple_destination_account_ids/id', 'type']",OC,account.analytic.account,,Funding Pool,Valid,,43
 fp_tree,TRUE,TRUE,Down,"[('category', '!=', 'OC'),('parent_id', '!=', '')]",['parent_id/id'],OC,account.analytic.account,,FP Tree,Valid,,44
