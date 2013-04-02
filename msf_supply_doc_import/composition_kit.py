@@ -229,8 +229,9 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
 
             # Cell 5: Asset
             asset_value = {}
-            asset_value = check_line.compute_asset_value(cr, uid, cell_nb=5, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
-            to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
+            if col_count > 5 and row[5]:
+                asset_value = check_line.compute_asset_value(cr, uid, cell_nb=5, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
 
             # Cell 6: Batch (only text)
             cell_nb = 6
@@ -246,7 +247,7 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
                          'item_product_id': to_write['product_id'],
                          'item_qty': to_write['qty'],
                          'item_uom_id': to_write['product_uom'],
-                         'item_asset_id': to_write['asset_id'],
+                         'item_asset_id': 'asset_id' in to_write and to_write['asset_id'] or False,
                          'item_lot': batch,
                          'item_exp': to_write['expiry_date'],
                          'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red
