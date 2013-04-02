@@ -24,6 +24,22 @@ class SpreadsheetReport(WebKitParser):
         if not rml:
             rml = 'addons/spreadsheet_xml/report/spreadsheet_xls.mako'
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+        self.sheet_name_used = []
+        self.total_sheet_number = 1
+
+    def sheet_name(self, default_name=False, context=None):
+        sheet_max_size = 31
+        if not default_name:
+            default_name = 'Sheet %s' % (self.total_sheet_number, )
+
+        default_name = default_name[0:sheet_max_size]
+
+        if default_name in self.sheet_name_used:
+            default_name = '%s %s'% (default_name[0:sheet_max_size - len('%s' % self.total_sheet_number) - 1], self.total_sheet_number)
+
+        self.sheet_name_used.append(default_name)
+        self.total_sheet_number += 1
+        return default_name
 
     def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
         if self.tmpl:
@@ -37,6 +53,9 @@ class SpreadsheetReport(WebKitParser):
 
     def getObjects(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        self.sheet_name_used = []
+        self.total_sheet_number = 1
+        self.parser_instance.localcontext['sheet_name'] = self.sheet_name
         return table_obj.browse(cr, uid, ids, list_class=report_sxw.browse_record_list, context=context, fields_process=self._fields_process)
 
     def create(self, cr, uid, ids, data, context=None):
