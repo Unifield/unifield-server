@@ -30,6 +30,35 @@ from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from csv import DictReader
 
+class msf_doc_import_accounting_lines(osv.osv):
+    _name = 'msf.doc.import.accounting.lines'
+
+    _columns = {
+        'description': fields.text("Description", required=False, readonly=True),
+        'ref': fields.text("Reference", required=False, readonly=True),
+        'document_date': fields.date("Document date", required=True, readonly=True),
+        'date': fields.date("Posting date", required=True, readonly=True),
+        'account_id': fields.many2one('account.account', "G/L Account", required=True, readonly=True),
+        'destination_id': fields.many2one('account.analytic.account', "Destination", required=False, readonly=True),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, readonly=True),
+        'debit': fields.float("Debit", required=False, readonly=True),
+        'credit': fields.float("Credit", required=False, readonly=True),
+        'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
+        'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
+        'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
+    }
+
+    _defaults = {
+        'description': lambda *a: '',
+        'ref': lambda *a: '',
+        'document_date': lambda *a: strftime('%Y-%m-%d'),
+        'date': lambda *a: strftime('%Y-%m-%d'),
+        'debit': lambda *a: 0.0,
+        'credit': lambda *a: 0.0,
+    }
+
+msf_doc_import_accounting_lines()
+
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
 
@@ -57,6 +86,10 @@ class msf_doc_import_accounting(osv.osv_memory):
         created = 0
         processed = 0
         errors = []
+
+        # Clean up old temporary imported lines
+        old_lines_ids = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [])
+        self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
 
         # Check wizard data
         for wiz in self.browse(cr, uid, ids):
@@ -96,12 +129,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                 r_account = False
                 r_destination = False
                 r_cc = False
+                r_document_date = False
+                r_date = False
                 current_line_num = num + base_num
                 # Fetch all XML row values
                 line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                 # Bypass this line if NO debit AND NO credit
                 if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
                     continue
+                processed += 1
                 # Check that currency is active
                 if not line[cols['Booking Currency']]:
                     errors.append(_('Line %s. No currency specified!') % (current_line_num,))
@@ -140,6 +176,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                 if line[cols['Document Date']] > line[cols['Posting Date']]:
                     errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['Document Date']], line[cols['Posting Date']],))
                     continue
+                # Fetch document date and posting date
+                r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
+                r_date = line[cols['Posting Date']].strftime('%Y-%m-%d')
                 # Check G/L account
                 if not line[cols['G/L Account']]:
                     errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
@@ -184,32 +223,62 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_cc = cc_ids[0]
                 # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
-                # Launch journal entry write
-                # FIXME
+                # Registering data regarding these "keys":
+                # - G/L Account
+                # - Third Party
+                # - Destination
+                # - Cost Centre
+                # - Booking Currency
+                vals = {
+                    'description': line[cols['Description']] or '',
+                    'ref': line[cols['Reference']] or '',
+                    'account_id': r_account or False,
+                    'debit': r_debit or 0.0,
+                    'credit': r_credit or 0.0,
+                    'cost_center_id': r_cc or False,
+                    'destination_id': r_destination or False,
+                    'document_date': r_document_date or False,
+                    'date': r_date or False,
+                    'currency_id': r_currency or False,
+                }
+                if account.type_for_register == 'advance':
+                    vals.update({'employee_id': r_partner,})
+                else:
+                    vals.update({'partner_id': r_partner,})
+                line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
+                if not line_res:
+                    errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
+                    continue
+                created += 1
             # Check if all is ok for the file
             ## The lines should be balanced for each currency
             for c in money:
                 if (money[c]['debit'] - money[c]['credit']) != 0.0:
                     raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s' ) % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
 
-        for e in errors:
-            print e
-
-        raise osv.except_osv('error', 'programmed error')
-
-        # FIXME
+        # If errors, cancel probable modifications
         if errors:
             cr.rollback()
             created = 0
-            # FIXME
+            message = 'Import FAILED.'
+            # Delete old errors
+            error_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [])
+            if error_ids:
+                self.pool.get('hr.payroll.employee.import.errors').unlink(cr, uid, error_ids)
+            # create errors lines
+            for e in errors:
+                self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': e})
+            context.update({'employee_import_wizard_ids': wiz.id})
         else:
-            pass
+            # Create all journal entries
+            # FIXME: self.create_entries()
+            message = 'Import successful.'
 
         # Display result
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
-        context.update({'from': 'msf_doc_import_accounting'})
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'total': processed, 'state': 'migration', 'errors': "\n".join(errors), 'nberrors': len(errors)})
+        context.update({'from': 'msf_doc_import_accounting', 'message': message})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': wiz.filename, 'created': created, 'total': processed, 'state': 'migration', 'nberrors': len(errors)}, context)
         
         return {
             'name': 'Accounting Import Confirmation',
