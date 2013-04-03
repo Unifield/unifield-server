@@ -125,6 +125,7 @@ product_cold_chain()
 
 class product_supply_source(osv.osv):
     _name = "product.supply.source"
+    _rec_name = 'source'
     _columns = {
         'source': fields.char('Supply source', size=32),
     }

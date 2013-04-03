@@ -396,11 +396,33 @@
             <field name="model">product.supply.source</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Supply Source" hide_new_button="context.get('from_product')" >
-                    <field name="source" nolabel="1"/>
+                <tree string="Supply Source" editable="top" hide_new_button="context.get('from_product')" >
+                    <field name="source" nolabel="1" required="True"/>
                 </tree>
             </field>
         </record>
+
+        <record id="product_supply_source_search_view" model="ir.ui.view">
+            <field name="name">product.supply.source.search</field>
+            <field name="model">product.supply.source</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Supply sources">
+                    <field name="source" />
+                </search>
+            </field>
+        </record>
+
+        <record id="product_supply_source_action" model="ir.actions.act_window">
+            <field name="name">Supply sources</field>
+            <field name="res_model">product.supply.source</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="product_supply_source_action"
+                  id="product_supply_source_menu"
+                  parent="purchase.menu_product_in_config_purchase" />
 
         <record id="product.product_search_form_view" model="ir.ui.view">
             <field name="name">product.search.form</field>
