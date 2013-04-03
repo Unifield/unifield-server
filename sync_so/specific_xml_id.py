@@ -245,6 +245,8 @@ class msf_instance(osv.osv):
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if 'state' in vals and vals['state'] == 'active' and current_instance.level == 'section':
             for instance in self.browse(cr, uid, ids, context=context):
