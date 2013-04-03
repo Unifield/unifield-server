@@ -11,7 +11,8 @@
                 <data>
                 <xpath expr="/form//field[@name='composition_item_ids']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" col="24" attrs="{'invisible': [('state', '!=', 'draft')]}">
-                    <field name="file_to_import" colspan="2" />
+                    <field name="file_to_import" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" />
+                    <field name="real_file_to_import" colspan="2" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
                     <button name="import_file_real" string="Import the file" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
                     <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}"/>
                     <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" confirm="Are you sure that you want to remove all lines?" invisible="1"/>

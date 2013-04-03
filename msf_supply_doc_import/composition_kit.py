@@ -41,10 +41,14 @@ class composition_kit(osv.osv):
         return res
 
     _columns = {
+        'real_file_to_import': fields.binary(string='File to import', filters='*.xml',
+                                             help="""You can use the template of the export for the format that you need to use. \n 
+                                             The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
+                                             Module*, Product Code*, Product Description*, Quantity*, Product UoM*, Asset, Batch Number and Expiry Date"""),
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n 
                                         The file should be in XML Spreadsheet 2003 format. \n The columns should be in this order : 
-                                        Module, Product Code*, Product Description, Quantity and Product UOM"""),
+                                        Module*, Product Code*, Product Description*, Quantity* and Product UoM*"""),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
     }
 
@@ -172,10 +176,10 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
         error = ''
 
         obj = self.browse(cr, uid, ids, context=context)[0]
-        if not obj.file_to_import:
+        if not obj.real_file_to_import:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
-        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.file_to_import))
+        fileobj = SpreadsheetXML(xmlstring=base64.decodestring(obj.real_file_to_import))
 
         # iterator on rows
         rows = fileobj.getRows()
@@ -197,9 +201,9 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             line_num += 1
             # Check length of the row
             col_count = len(row)
-            if col_count != 8:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 5 columns in this order:
-Module, Product Code*, Product Description, Quantity, Product UOM, Asset, Batch Number, Expiry Date"""))
+            if col_count < 5 or col_count > 8:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
+Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Batch Number, Expiry Date"""))
 
 #            if not check_line.check_empty_line(row=row, col_count=col_count):
 #                continue
@@ -225,8 +229,9 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Asset, Batch 
 
             # Cell 5: Asset
             asset_value = {}
-            asset_value = check_line.compute_asset_value(cr, uid, cell_nb=5, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
-            to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
+            if col_count > 5 and row[5]:
+                asset_value = check_line.compute_asset_value(cr, uid, cell_nb=5, asset_obj=asset_obj, row=row, to_write=to_write, context=context)
+                to_write.update({'asset_id': asset_value['asset_id'], 'error_list': asset_value['error_list']})
 
             # Cell 6: Batch (only text)
             cell_nb = 6
@@ -242,7 +247,7 @@ Module, Product Code*, Product Description, Quantity, Product UOM, Asset, Batch 
                          'item_product_id': to_write['product_id'],
                          'item_qty': to_write['qty'],
                          'item_uom_id': to_write['product_uom'],
-                         'item_asset_id': to_write['asset_id'],
+                         'item_asset_id': 'asset_id' in to_write and to_write['asset_id'] or False,
                          'item_lot': batch,
                          'item_exp': to_write['expiry_date'],
                          'to_correct_ok': [True for x in to_write['error_list']],  # the lines with to_correct_ok=True will be red

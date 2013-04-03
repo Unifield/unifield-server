@@ -297,7 +297,7 @@ def write(self, cr, uid, ids, vals, context=None):
                                             raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % line.field.name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
-        if context.get('sync_data') or user.login == 'msf_field_access_rights_benchmarker':
+        if context.get('sync_data'):
 
             # iterate over current records 
             for record in current_records:

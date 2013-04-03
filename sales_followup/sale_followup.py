@@ -163,7 +163,7 @@ class sale_order_followup(osv.osv_memory):
         followup_id = False
         
         for o in order_obj.browse(cr, uid, ids, context=context):
-            followup_id = self.create(cr, uid, {'order_id': o.id})
+            followup_id = self.create(cr, uid, {'order_id': o.id}, context=context)
             
             for line in o.order_line:
                 split_line_ids = sol_obj.search(cr, uid, [('original_line_id', '=', line.id)], context=context)
@@ -194,7 +194,7 @@ class sale_order_followup(osv.osv_memory):
                                               'purchase_line_ids': [(6,0,purchase_line_ids)],
                                               'incoming_ids': [(6,0,incoming_ids)],
                                               'outgoing_ids': [(6,0,outgoing_ids)],
-                                              'displayed_out_ids': [(6,0,displayed_out_ids)]})
+                                              'displayed_out_ids': [(6,0,displayed_out_ids)]}, context=context)
                     first_line = False
                    
         if split_lines:

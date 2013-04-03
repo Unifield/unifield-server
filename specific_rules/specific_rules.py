@@ -1386,6 +1386,7 @@ class stock_inventory_line(osv.osv):
     add mandatory or readonly behavior to prodlot
     '''
     _inherit = 'stock.inventory.line'
+    _rec_name = 'product_id'
     
     def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
         '''

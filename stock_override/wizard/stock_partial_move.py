@@ -64,7 +64,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
                     result = 'missing_lot'
                 else:
                     data = lot_obj.read(cr, uid, [item.prodlot_id.id], ['life_date','name','type'], context=context)
-                    lot_type = data[0]['type']
+                    lot_type = data and data[0]['type']
                     if lot_type != 'standard':
                         result = 'wrong_lot_type_need_standard'
             elif perishable:

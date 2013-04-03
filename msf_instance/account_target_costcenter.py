@@ -26,14 +26,17 @@ class account_target_costcenter(osv.osv):
     
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
+        'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True),
+        'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'is_target': fields.boolean('Is target'),
+        'is_top_cost_center': fields.boolean('Is main cost centre'),
         'parent_id': fields.many2one('account.target.costcenter', 'Parent'),
         'child_ids': fields.one2many('account.target.costcenter', 'parent_id', 'Children'),
     }
     
     _defaults = {
         'is_target': False,
+        'is_top_cost_center': False,
         'parent_id': False,
     }
 
@@ -45,9 +48,29 @@ class account_target_costcenter(osv.osv):
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
+
+    def _check_top_cost_center(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('cost_center_id', '=', line.cost_center_id.id),('is_top_cost_center', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    def _check_top_cost_center_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('instance_id', '=', line.instance_id.id),('is_top_cost_center', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
     
     _constraints = [
         (_check_target, 'This cost centre is already defined as target in another proprietary instance.', ['is_target', 'cost_center_id', 'instance_id']),
+        (_check_top_cost_center, 'This cost centre is already defined as the main one in another proprietary instance.', ['is_top_cost_center', 'cost_center_id', 'instance_id']),
+        (_check_top_cost_center_unicity, 'Another cost centre is already defined as the main one in this proprietary instance.', ['is_top_cost_center', 'cost_center_id', 'instance_id']),
     ]
     
     def create(self, cr, uid, vals, context={}):

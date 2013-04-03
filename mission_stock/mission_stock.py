@@ -157,6 +157,8 @@ class stock_mission_report(osv.osv):
                                                'instance_id': instance_id.id,
                                                'full_view': True}, context=c)]
 
+        cr.commit()
+
         if context.get('update_full_report'):
             report_ids = full_report_ids
             
@@ -269,12 +271,12 @@ class stock_mission_report(osv.osv):
                 if line_id:
                     line = line_obj.browse(cr, uid, line_id[0])
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
-                    vals = {'internal_qty': line.internal_qty,
-                            'stock_qty': line.stock_qty,
-                            'central_qty': line.central_qty,
-                            'cross_qty': line.cross_qty,
-                            'secondary_qty': line.secondary_qty,
-                            'cu_qty': line.cu_qty,
+                    vals = {'internal_qty': line.internal_qty or 0.00,
+                            'stock_qty': line.stock_qty or 0.00,
+                            'central_qty': line.central_qty or 0.00,
+                            'cross_qty': line.cross_qty or 0.00,
+                            'secondary_qty': line.secondary_qty or 0.00,
+                            'cu_qty': line.cu_qty or 0.00,
                             'updated': True}
                     
                     if move[4] in internal_loc:
@@ -414,7 +416,8 @@ class stock_mission_report_line(osv.osv):
         'stock_val': fields.float(digits=(16,2), string='Stock Val.'),
         'central_qty': fields.float(digits=(16,2), string='Unallocated Stock Qty.'),
         'central_val': fields.float(digits=(16,2), string='Unallocated Stock Val.'),
-        'wh_qty': fields.function(_get_wh_qty, method=True, type='float', string='Warehouse stock', store=False),
+        'wh_qty': fields.function(_get_wh_qty, method=True, type='float', string='Warehouse stock', 
+                                  store={'stock.mission.report.line': (lambda self, cr, uid, ids, c=None: ids, ['stock_qty', 'central_qty'], 10),}),
         'cross_qty': fields.float(digits=(16,3), string='Cross-docking Qty.'),
         'cross_val': fields.float(digits=(16,3), string='Cross-docking Val.'),
         'secondary_qty': fields.float(digits=(16,2), string='Secondary Stock Qty.'),
@@ -428,6 +431,26 @@ class stock_mission_report_line(osv.osv):
         'updated': fields.boolean(string='Updated'),
         'full_view': fields.related('mission_report_id', 'full_view', string='Full view', type='boolean', store=True),
         'move_ids': fields.many2many('stock.move', 'mission_line_move_rel', 'line_id', 'move_id', string='Noves'),
+    }
+
+    _defaults = {
+        'internal_qty': 0.00,
+        'internal_val': 0.00,
+        'stock_qty': 0.00,
+        'stock_val': 0.00,
+        'wh_qty': 0.00,
+        'central_qty': 0.00,
+        'central_val': 0.00,
+        'cross_qty': 0.00,
+        'cross_val': 0.00,
+        'secondary_qty': 0.00,
+        'secondary_val': 0.00,
+        'cu_qty': 0.00,
+        'cu_val': 0.00,
+        'in_pipe_qty': 0.00,
+        'in_pipe_val': 0.00,
+        'in_pipe_coor_qty': 0.00,
+        'in_pipe_coor_val': 0.00,
     }
 
     def update_full_view_line(self, cr, uid, ids, context=None):
