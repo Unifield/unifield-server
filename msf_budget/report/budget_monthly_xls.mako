@@ -126,7 +126,7 @@
 </Styles>
 
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +' (id'+str(o.id)+')' or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
 
 <Table ss:ExpandedColumnCount="15" ss:ExpandedRowCount="319" x:FullColumns="1" x:FullRows="1">
 <Column ss:Width="160.75"/>
