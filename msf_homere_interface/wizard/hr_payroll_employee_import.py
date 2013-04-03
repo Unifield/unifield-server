@@ -124,6 +124,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
             if context.get('from') == 'msf_doc_import_accounting':
                 result = ('view_move_tree_2', 'account.move','account_override')
+                context.update({'from_web_menu': True}) # Permit user to edit/delete journal entries
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:

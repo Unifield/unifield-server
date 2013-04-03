@@ -47,6 +47,7 @@ class msf_doc_import_accounting_lines(osv.osv):
         'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
+        'wizard_id': fields.many2one('msf.doc.import.accounting', "Wizard", required=True, readonly=True),
     }
 
     _defaults = {
@@ -86,13 +87,13 @@ class msf_doc_import_accounting(osv.osv_memory):
         if not journal_ids:
             raise osv.except_osv(_('Warning'), _('No migration journal found!'))
         journal_id = journal_ids[0]
+        # Fetch default funding pool: MSF Private Fund
+        try: 
+            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_fp_id = 0
         # Browse all wizards
         for w in self.browse(cr, uid, ids):
-            # Prepare some values
-            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, w.date, context)
-            if not period_ids:
-                raise osv.except_osv(_('Warning'), _('No period found for this date: %s') % (w.date,))
-            period_id = period_ids[0]
             # Search lines
             entries = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [('wizard_id', '=', w.id)])
             if not entries:
@@ -102,8 +103,8 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Search all currencies (to create moves)
             available_currencies = []
             for entry in b_entries:
-                if (x.currency_id.id, x.period_id.id) not in available_currencies:
-                    available_currencies.append((x.currency_id.id, x.period_id.id))
+                if (entry.currency_id.id, entry.period_id.id) not in available_currencies:
+                    available_currencies.append((entry.currency_id.id, entry.period_id.id))
             # Delete duplicates
             if available_currencies and len(available_currencies) > 1:
                 available_currencies = list(set(available_currencies))
@@ -111,26 +112,46 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Create a move
                 move_vals = {
                     'currency_id': c_id,
+                    'manual_currency_id': c_id,
                     'journal_id': journal_id,
-                    'name': '%s - Accounting data migration' % (w.date,),
                     'document_date': w.date,
                     'date': w.date,
                     'period_id': p_id,
-                    'status': 'manual',
+                    'status': 'manu',
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, move_vals, context)
                 for l in b_entries:
-                    if l.currency_id.id == c_id:
+                    if l.currency_id.id == c_id and l.period_id.id == p_id:
+                        distrib_id = False
+                        # Create analytic distribution
+                        if l.account_id.user_type_code == 'expense':
+                            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                            common_vals = {
+                                'distribution_id': distrib_id,
+                                'currency_id': c_id,
+                                'percentage': 100.0,
+                                'date': l.date,
+                                'source_date': l.date,
+                                'destination_id': l.destination_id.id,
+                            }
+                            common_vals.update({'analytic_id': l.cost_center_id.id,})
+                            cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                            common_vals.update({'analytic_id': msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
+                            fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                         # Create move line
                         move_line_vals = {
                             'move_id': move_id,
                             'name': l.description,
-                            'ref': l.ref,
+                            'reference': l.ref,
                             'account_id': l.account_id.id,
                             'period_id': p_id,
                             'document_date': l.document_date,
                             'date': l.date,
                             'journal_id': journal_id,
+                            'debit_currency': l.debit,
+                            'credit_currency': l.credit,
+                            'currency_id': c_id,
+                            'analytic_distribution_id': distrib_id,
                         }
                         self.pool.get('account.move.line').create(cr, uid, move_line_vals, context)
         return res
