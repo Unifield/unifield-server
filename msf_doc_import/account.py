@@ -46,6 +46,7 @@ class msf_doc_import_accounting_lines(osv.osv):
         'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
         'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
+        'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
     }
 
     _defaults = {
@@ -71,6 +72,68 @@ class msf_doc_import_accounting(osv.osv_memory):
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
     }
+
+    def create_entries(self, cr, uid, ids, context=None):
+        """
+        Create journal entry 
+        """
+        # Checks
+        if not context:
+            context = {}
+        # Prepare some values
+        res = True
+        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration')])
+        if not journal_ids:
+            raise osv.except_osv(_('Warning'), _('No migration journal found!'))
+        journal_id = journal_ids[0]
+        # Browse all wizards
+        for w in self.browse(cr, uid, ids):
+            # Prepare some values
+            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, w.date, context)
+            if not period_ids:
+                raise osv.except_osv(_('Warning'), _('No period found for this date: %s') % (w.date,))
+            period_id = period_ids[0]
+            # Search lines
+            entries = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [('wizard_id', '=', w.id)])
+            if not entries:
+                return res
+            # Browse result
+            b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
+            # Search all currencies (to create moves)
+            available_currencies = []
+            for entry in b_entries:
+                if (x.currency_id.id, x.period_id.id) not in available_currencies:
+                    available_currencies.append((x.currency_id.id, x.period_id.id))
+            # Delete duplicates
+            if available_currencies and len(available_currencies) > 1:
+                available_currencies = list(set(available_currencies))
+            for c_id, p_id in available_currencies:
+                # Create a move
+                move_vals = {
+                    'currency_id': c_id,
+                    'journal_id': journal_id,
+                    'name': '%s - Accounting data migration' % (w.date,),
+                    'document_date': w.date,
+                    'date': w.date,
+                    'period_id': p_id,
+                    'status': 'manual',
+                }
+                move_id = self.pool.get('account.move').create(cr, uid, move_vals, context)
+                for l in b_entries:
+                    if l.currency_id.id == c_id:
+                        # Create move line
+                        move_line_vals = {
+                            'move_id': move_id,
+                            'name': l.description,
+                            'ref': l.ref,
+                            'account_id': l.account_id.id,
+                            'period_id': p_id,
+                            'document_date': l.document_date,
+                            'date': l.date,
+                            'journal_id': journal_id,
+                        }
+                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context)
+        return res
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -131,6 +194,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 r_cc = False
                 r_document_date = False
                 r_date = False
+                r_period = False
                 current_line_num = num + base_num
                 # Fetch all XML row values
                 line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
@@ -179,6 +243,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Fetch document date and posting date
                 r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
                 r_date = line[cols['Posting Date']].strftime('%Y-%m-%d')
+                # Check that a period exist and is open
+                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
+                if not period_ids:
+                    errors.append(_('Line %s. No period found for given date: %s') % (current_line_num, r_date))
+                    continue
+                r_period = period_ids[0]
                 # Check G/L account
                 if not line[cols['G/L Account']]:
                     errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
@@ -240,6 +310,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                     'document_date': r_document_date or False,
                     'date': r_date or False,
                     'currency_id': r_currency or False,
+                    'wizard_id': wiz.id,
+                    'period_id': r_period or False,
                 }
                 if account.type_for_register == 'advance':
                     vals.update({'employee_id': r_partner,})
@@ -268,10 +340,10 @@ class msf_doc_import_accounting(osv.osv_memory):
             # create errors lines
             for e in errors:
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': e})
-            context.update({'employee_import_wizard_ids': wiz.id})
+            context.update({'employee_import_wizard_ids': ids})
         else:
             # Create all journal entries
-            # FIXME: self.create_entries()
+            self.create_entries(cr, uid, ids, context)
             message = 'Import successful.'
 
         # Display result
