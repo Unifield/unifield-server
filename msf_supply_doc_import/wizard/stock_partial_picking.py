@@ -19,9 +19,10 @@
 #
 ##############################################################################
 
+import logging
 import threading
 import pooler
-from osv import fields, osv
+from osv import fields, osv, orm
 from tools.translate import _
 # import xml file
 import base64
@@ -144,8 +145,9 @@ class stock_partial_picking(osv.osv_memory):
             # Error if no expiry date
             if not expired_date:
                 if not prodlot_name:
-                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found or it has a wrong format ('DD-MM-YYYY')" % (file_line_num))
-                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
+                    # there is already a message on the line
+#                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found or it has a wrong format ('DD-MM-YYYY')" % (file_line_num))
+#                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                     return True, prodlot_id
                 else:
                     prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id)])
@@ -157,9 +159,18 @@ class stock_partial_picking(osv.osv_memory):
             if prodlot_ids:
                 prodlot_id = prodlot_ids[0]
             elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)], context=context) and prodlot_name and expired_date:
-                prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
-                info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
-                    % (file_line_num, prodlot_name, expired_date, product.default_code))
+                try:
+                    prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
+                    # here we need to commit in order to be able to use the newly created batch number in the fields.function _vals_get_stock_override
+                    cr.commit()
+                    # no error message to keep the same existing logic as when we import a date on a product that does not takes expiry date
+#                    info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
+#                        % (file_line_num, prodlot_name, expired_date, product.default_code))
+                except orm.except_orm as orm_error:
+                    logging.getLogger('vertical integration of incoming shipment').info("Line %s of the Excel file, the batch was reset. Details: %s" % (file_line_num, orm_error.value))
+                    # we are just ignoring the error
+#                    error_list.append("Line %s of the Excel file, the batch was reset. Details: %s" % (file_line_num, orm_error.value))
+                    return True, prodlot_id
             elif not prodlot_name:
                 return True, prodlot_id
             else:
@@ -621,19 +632,18 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : A line was found in the Incoming shipment but the UoM of the Excel line (%s) is not compatible with UoM (%s) of the incoming shipment line.") % (l.file_line_number, l.uom_id.name, m.product_uom.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
-                    
-        error += '\n'.join(error_list)
+        if error_list or error:
+            error += 'Reported errors :\n' + '\n'.join(error_list)
         info += '\n'.join(info_list)
         message = '''Importation completed !
 # of imported lines : %s
 # of ignored lines : %s
 
-Reported errors :
 %s
 
 %s
 %s
-                '''  % (complete_lines, ignore_lines, error or 'No error !', info and 'Reported information :' or '', info or '')
+                '''  % (complete_lines, ignore_lines, error, info and 'Reported information :' or '', info or '')
         vals = {'message': message, 'percent_completed': percent_completed}
         if line_with_error:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
