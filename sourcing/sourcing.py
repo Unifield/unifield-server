@@ -1083,6 +1083,12 @@ class procurement_order(osv.osv):
         # Set the origin of the line with the origin of the Procurement order
         if procurement.origin:
             values['order_line'][0][2].update({'origin': procurement.origin})
+            
+        if procurement.tender_id:
+            if values.get('origin'):
+                values['origin'] = '%s;%s' % (values['origin'], procurement.tender_id.name)
+            else:
+                values['origin'] = procurement.tender_id.name
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
