@@ -942,9 +942,15 @@ class purchase_order(osv.osv):
             if context.get('rfq_ok', False):
                 # the title of the screen depends on po type
                 form = etree.fromstring(result['arch'])
+                
                 fields = form.xpath('//form[@string="%s"]' % _('Purchase Order'))
                 for field in fields:
-                    field.set('string', _("Requests for Quotation"))
+                    field.set('string', _("Request for Quotation"))
+                
+                fields2 = form.xpath('//page[@string="%s"]' % _('Purchase Order'))
+                for field2 in fields2:
+                    field2.set('string', _("Request for Quotation"))
+
                 result['arch'] = etree.tostring(form)
         
         return result
@@ -961,6 +967,26 @@ class purchase_order_line(osv.osv):
                 'rfq_ok': fields.related('order_id', 'rfq_ok', type='boolean', string='RfQ ?'),
                 }
     
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        columns for the tree
+        """
+        if context is None:
+            context = {}
+                 
+        # call super
+        result = super(purchase_order_line, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'form':
+            if context.get('rfq_ok', False):
+                # the title of the screen depends on po type
+                form = etree.fromstring(result['arch'])
+                fields = form.xpath('//form[@string="%s"]' % _('Purchase Order Line'))
+                for field in fields:
+                    field.set('string', _("Request for Quotation Line"))
+                result['arch'] = etree.tostring(form)
+        
+        return result
+
 purchase_order_line()
 
 

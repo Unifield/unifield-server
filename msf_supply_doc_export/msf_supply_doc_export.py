@@ -289,10 +289,12 @@ class ir_values(osv.osv):
                         new_act.append(v)
                 values = new_act
 
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
+        elif key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
             new_act = []
             for v in values:
                 if context.get('composition_type')=='theoretical' and v[2]['report_name'] == 'composition.kit.xls':
+                    new_act.append(v)
+                elif context.get('composition_type')=='real' and v[2]['report_name'] == 'real.composition.kit.xls':
                     new_act.append(v)
             values = new_act
 

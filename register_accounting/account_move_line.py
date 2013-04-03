@@ -28,6 +28,7 @@ from operator import itemgetter
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import _get_third_parties_name
+from lxml import etree
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -204,18 +205,25 @@ class account_move_line(osv.osv):
             context = {}
         if 'from' in context:
             c_from = context.get('from')
+            module = 'register_accounting'
             if c_from == 'wizard_import_invoice' or c_from == 'wizard_import_cheque':
                 view_name = 'invoice_from_registers_tree'
                 if c_from == 'wizard_import_cheque':
                     view_name = 'cheque_from_registers_tree'
                 if view_type == 'search':
-                    view_name = 'invoice_from_registers_search'
-                    if c_from == 'wizard_import_cheque':
-                        view_name = 'cheque_from_registers_search'
-                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', view_name)
+                    module = 'account'
+                    view_name = 'view_account_move_line_filter'
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
                 if view:
                     view_id = view[1]
         result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'search' and 'from' in context:
+            if context.get('from') == 'wizard_import_invoice' or context.get('from') == 'wizard_import_cheque':
+                search = etree.fromstring(result['arch'])
+                tags = search.xpath('/search')
+                for tag in tags:
+                    tag.set('string', _("Account Entry Lines"))
+                result['arch'] = etree.tostring(search)
         return result
 
     def onchange_account_id(self, cr, uid, ids, account_id=False, third_party=False):
