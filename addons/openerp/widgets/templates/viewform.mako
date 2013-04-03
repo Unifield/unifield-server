@@ -38,22 +38,24 @@
                              % endif
                         </td>
                         <td align="right">
-                            <select name="filter_list" id="filter_list"
-                                onchange="change_filter(); return false;">
-                                <option value="blk">-- ${_("Filters")} --</option>
-                                % if len(search.filters_list):
-                                    <optgroup id="filter_list_options_group" label="${_('Saved Filters')}">
-                                    % for f in search.filters_list:
-                                        <option id="${f[3]}" value="${f[0]}" group_by="${f[2]}">${f[1]}</option>
-                                    % endfor
+                            % if search.model not in ['account.move.line', 'account.move']:
+                                <select name="filter_list" id="filter_list"
+                                    onchange="change_filter(); return false;">
+                                    <option value="blk">-- ${_("Filters")} --</option>
+                                    % if len(search.filters_list):
+                                        <optgroup id="filter_list_options_group" label="${_('Saved Filters')}">
+                                        % for f in search.filters_list:
+                                            <option id="${f[3]}" value="${f[0]}" group_by="${f[2]}">${f[1]}</option>
+                                        % endfor
+                                        </optgroup>
+                                    % endif
+                                    <optgroup label="${_('Actions')}">
+                                        <option value="nf">${_("New Filter")}</option>
+                                        <option value="sf">${_("Save Filter")}</option>
+                                        <option value="mf">${_("Manage Filters")}</option>
                                     </optgroup>
-                                % endif
-                                <optgroup label="${_('Actions')}">
-                                    <option value="nf">${_("New Filter")}</option>
-                                    <option value="sf">${_("Save Filter")}</option>
-                                    <option value="mf">${_("Manage Filters")}</option>
-                                </optgroup>
-                            </select>
+                                </select>
+                            % endif
                         </td>
                     </tr>
                 </table>
