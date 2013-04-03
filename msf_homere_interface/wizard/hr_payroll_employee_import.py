@@ -123,8 +123,8 @@ class hr_payroll_import_confirmation(osv.osv_memory):
                 result = ('inherit_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
             if context.get('from') == 'msf_doc_import_accounting':
-                result = ('account_override', 'view_move_form_2')
-            mf result:
+                result = ('view_move_tree_2', 'account.move','account_override')
+            if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:
                     module_name = result[2]
