@@ -638,7 +638,7 @@
 	    <field name="model">product.heat_sensitive</field>
 	    <field name="type">search</field>
 	    <field name="arch" type="xml">
-	        <search string="Heat sensitive">
+	        <search string="Temperature sensitive">
 	            <field name="name" />
 	        </search>
 	    </field>
@@ -648,13 +648,13 @@
 	    <field name="model">product.heat_sensitive</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Heat sensitive" editable="top" >
+                <tree string="Temperature sensitive" editable="top" >
 	            <field name="name" />
                 </tree>
             </field>
         </record>
 	<record id="product_heat_sensitive_action" model="ir.actions.act_window">
-            <field name="name">Heat sensitive</field>
+            <field name="name">Temperature sensitive</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">product.heat_sensitive</field>
             <field name="view_type">form</field>
