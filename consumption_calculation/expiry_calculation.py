@@ -191,7 +191,7 @@ class product_likely_expire_report(osv.osv_memory):
         'location_id': fields.many2one('stock.location', string='Location'),
         'msf_instance': fields.char(size=64, string='Location', readonly=True),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
-        'date_from': fields.date(string='From', required=True),
+        'date_from': fields.date(string='From', required=True, readonly=True),
         'date_to': fields.date(string='To', required=True),
         'consumption_type': fields.selection([('fmc', 'FMC -- Forecasted Monthly Consumption'), 
                                               ('amc', 'AMC -- Average Monthly Consumption'), 
@@ -233,6 +233,9 @@ class product_likely_expire_report(osv.osv_memory):
         
         product_obj = self.pool.get('product.product')
         res = 0.00
+
+        if context.get('manual_consumption'):
+            return context.get('manual_consumption')
         
         new_context = context.copy()
         new_context.update({'from_date': date_from,
@@ -283,6 +286,10 @@ class product_likely_expire_report(osv.osv_memory):
         
         location_ids = []
         not_loc_ids = []
+        only_product_ids = []
+
+        if context.get('only_product_ids'):
+            only_product_ids = context.get('only_product_ids')
 
         if report.input_output_ok:
             wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
@@ -307,8 +314,12 @@ class product_likely_expire_report(osv.osv_memory):
                         location_ids.append(move.location_dest_id.id)
             
         context.update({'location_id': location_ids, 'location': location_ids})
+
+        lot_domain = [('stock_available', '>', 0.00)]
+        if only_product_ids:
+            lot_domain.append(('product_id', 'in', only_product_ids))
         
-        lot_ids = lot_obj.search(cr, uid, [('stock_available', '>', 0.00)], order='product_id, life_date', context=context)
+        lot_ids = lot_obj.search(cr, uid, lot_domain, order='product_id, life_date', context=context)
         
         from_date = DateFrom(report.date_from)
         to_date = DateFrom(report.date_to) + RelativeDateTime(day=1, months=1, days=-1)
@@ -334,7 +345,7 @@ class product_likely_expire_report(osv.osv_memory):
                                                                                          'product_id': lot.product_id.id,
                                                                                          'in_stock': lot.product_id.qty_available,
                                                                                          'total_expired': 0.00,
-                                                                                         'consumption': consumption,})})
+                                                                                         'consumption': consumption,}, context=context)})
                 
                 # Create an item for each date
                 seq = 0
@@ -367,7 +378,8 @@ class product_likely_expire_report(osv.osv_memory):
                         # Uncomment the first line if you want products already expired in the first month
                         #domain.append(('life_date', '>=', month.strftime('%Y-%m-01')))
                         # Comment line if you want all products already expired
-                        domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+                        #if not context.get('only_product_ids'):
+                        #    domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
                         
 
                     # Remove the token after the first month processing
@@ -416,7 +428,7 @@ class product_likely_expire_report(osv.osv_memory):
                                                                'lot_id': product_lot.id,
                                                                'location_id': location,
                                                                'available_qty': product2.qty_available,
-                                                               'expired_qty': new_lot_expired})
+                                                               'expired_qty': new_lot_expired}, context=context)
                             
                         available_qty += product.qty_available
                             
@@ -589,65 +601,99 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
     
-    def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, context=None):
+    def get_expiry_qty(self, cr, uid, product_id, location_id, monthly_consumption, d_values=None, context=None):
         '''
         Get the expired quantity of product
         '''
         if context is None:
             context = {}
-        move_obj = self.pool.get('stock.move')
-        uom_obj = self.pool.get('product.uom')
-        product_obj = self.pool.get('product.product')
-        lot_obj = self.pool.get('stock.production.lot')
-        stock_obj = self.pool.get('stock.location')
+
+        if d_values is None:
+            d_values = {}
         
-        monthly_consumption = 0.00
+        monthly_consumption = 'rac'
         
         # Get the monthly consumption
-        if context.get('reviewed_consumption', False):
-            monthly_consumption = product_obj.browse(cr, uid, product_id, context=context).reviewed_consumption
-        elif context.get('monthly_consumption', False):
-            monthly_consumption = product_obj.browse(cr, uid, product_id, context=context).monthly_consumption
+        if d_values.get('reviewed_consumption', False):
+            monthly_consumption = 'fmc'
+        elif d_values.get('past_consumption', False):
+            monthly_consumption = 'amc'
         else:
-            monthly_consumption = context.get('manual_consumption', 0.00)
-            
-        location_ids = stock_obj.search(cr, uid, [('location_id', 'child_of', location_id)])
-            
-        move_ids = move_obj.search(cr, uid, ['|', ('location_id', 'in', location_ids), ('location_dest_id', 'in', location_ids), 
-                                             ('product_id', '=', product_id), ('prodlot_id', '!=', False)], context=context)
-        
-        lots = []
-        for move in move_obj.browse(cr, uid, move_ids, context=context):
-            if not move.prodlot_id.id in lots:
-                lots.append(move.prodlot_id.id)
-        
-        # Get all lots for the product product_id
-        lot_ids = lot_obj.search(cr, uid, [('product_id', '=', product_id), ('stock_available', '>', 0.00), ('id', 'in', lots)], \
-                                order='life_date', context=context)
+            monthly_consumption = d_values.get('manual_consumption', 0.00)
+            context.update({'manual_consumption': monthly_consumption})
 
+        product = self.browse(cr, uid, product_id, context=context)
+        # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
+        delivery_leadtime = product.procure_delay and round(int(product.procure_delay)/30.0, 2) or 1
+        # Get the leadtime of the rule if defined
+        if 'leadtime' in d_values and d_values.get('leadtime', 0.00) != 0.00:
+            delivery_leadtime = d_values.get('leadtime')
+        elif product.seller_ids:
+            # Get the supplier lead time if supplier is defined
+            # The seller delay is defined in days, so divide it by 30.0 to have a LT in months
+            delivery_leadtime = product.seller_delay and round(int(product.seller_delay)/30.0, 2) or 1
+            
+        delta = (delivery_leadtime + d_values.get('coverage', 0.00))*30.0
 
+        report_data = {'date_from': today().strftime('%Y-%m-%d'),
+                       'date_to': (today() + RelativeDateTime(days=delta)).strftime('%Y-%m-%d'),
+                       'consumption_type': monthly_consumption,
+                       'consumption_from': d_values.get('consumption_period_from'),
+                       'consumption_to': d_values.get('consumption_period_to'),
+                       'location_id': location_id}
+
+        report_obj = self.pool.get('product.likely.expire.report')
+        line_obj = self.pool.get('product.likely.expire.report.line')
+
+        exp_context = context.copy()
+        exp_context.update({'only_product_ids': [product_id]})
+        report_id = report_obj.create(cr, uid, report_data, context=exp_context)
+        # Process report
+        report_obj.process_lines(cr, uid, report_id, context=exp_context)
         
-        # Sum of months before expiry
-        sum_ni = 0.00      
-        expired_qty = 0.00
-        last_date = now()
-        last_qty = False
+        lines = line_obj.search(cr, uid, [('report_id', '=', report_id)], context=context)
+        for line in line_obj.browse(cr, uid, lines, context=context):
+            if line.product_id.id == product_id:
+                return line.total_expired
         
-        for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
-            life_date = strptime(lot.life_date, '%Y-%m-%d')
-            rel_time = RelativeDateDiff(life_date, now())
-            ni = round((rel_time.months*30 + rel_time.days)/30.0, 2)
-            if last_qty == False:
-                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
-            if last_date > life_date:
-                expired_qty = lot.stock_available                
-            elif ni - sum_ni > 0.00:
-                expired_qty += last_qty
-                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
-                sum_ni += ni
-            else:
-                break
-        return expired_qty
+            
+#        location_ids = stock_obj.search(cr, uid, [('location_id', 'child_of', location_id)])
+#            
+#        move_ids = move_obj.search(cr, uid, ['|', ('location_id', 'in', location_ids), ('location_dest_id', 'in', location_ids), 
+#                                             ('product_id', '=', product_id), ('prodlot_id', '!=', False)], context=context)
+#        
+#        lots = []
+#        for move in move_obj.browse(cr, uid, move_ids, context=context):
+#            if not move.prodlot_id.id in lots:
+#                lots.append(move.prodlot_id.id)
+#        
+#        # Get all lots for the product product_id
+#        lot_ids = lot_obj.search(cr, uid, [('product_id', '=', product_id), ('stock_available', '>', 0.00), ('id', 'in', lots)], \
+#                                order='life_date', context=context)
+#
+#
+#        
+#        # Sum of months before expiry
+#        sum_ni = 0.00      
+#        expired_qty = 0.00
+#        last_date = now()
+#        last_qty = False
+#        
+#        for lot in lot_obj.browse(cr, uid, lot_ids, context=context):
+#            life_date = strptime(lot.life_date, '%Y-%m-%d')
+#            rel_time = RelativeDateDiff(life_date, now())
+#            ni = round((rel_time.months*30 + rel_time.days)/30.0, 2)
+#            if last_qty == False:
+#                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
+#            if last_date > life_date:
+#                expired_qty = lot.stock_available                
+#            elif ni - sum_ni > 0.00:
+#                expired_qty += last_qty
+#                last_qty = uom_obj._compute_qty(cr, uid, lot.product_id.uom_id.id, (ni-sum_ni)*monthly_consumption, lot.product_id.uom_id.id)
+#                sum_ni += ni
+#            else:
+#                break
+#        return expired_qty
     
 product_product()
 

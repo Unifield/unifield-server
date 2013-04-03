@@ -73,6 +73,7 @@ class unifield_setup_configuration(osv.osv):
                                                  string='Restrictive countries'),
         'field_orders_ok': fields.boolean(string='Activate the Field Orders feature ?'),
         'lang_id': fields.char(size=5, string='Default language'),
+        'payroll_ok': fields.boolean(string='System manages payrolls ?'),
     }
     
     _defaults = {
@@ -84,6 +85,7 @@ class unifield_setup_configuration(osv.osv):
         'lang_id': lambda *a: 'en_MF',
         'unallocated_ok': lambda *a: False,
         'fixed_asset_ok': lambda *a: False,
+        'payroll_ok': lambda *a: True,
     }
     
     _constraints = [
@@ -128,5 +130,18 @@ class res_config_view(osv.osv_memory):
     }
 
 res_config_view()
+
+class res_config(osv.osv_memory):
+    _inherit = 'res.config'
+
+    def _next(self, cr, uid, context=None):
+        res = super(res_config, self)._next(cr, uid, context=context)
+        if isinstance(res, dict) and res.get('res_model') == 'restrictive.country.setup' and not res.get('res_id'):
+            wiz_id = self.pool.get('restrictive.country.setup').create(cr, uid, {}, context=context)
+            res['res_id'] = wiz_id
+            res['active_id'] = wiz_id
+        return res
+
+res_config()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -147,11 +147,12 @@ class product_template(osv.osv):
         return res
     
     _columns = {
+            'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account Computation'), help="Product's cost for accounting stock valuation. It is the base price for the supplier price."),
             'list_price': fields.function(_get_list_price, method=True, type='float', string='Sale Price', 
             store = {
                 'product.template': (lambda self, cr, uid, ids, c=None: ids, ['standard_price'], 10),
             },
-            digits_compute=dp.get_precision('Sale Price'),
+            digits_compute=dp.get_precision('Sale Price Computation'),
             help="Base price for computing the customer price. Sometimes called the catalog price."),
     }
     

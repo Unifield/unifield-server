@@ -19,7 +19,9 @@
 #
 ##############################################################################
 import msf_instance
+import account_target_costcenter
 import res_company
 import add_instance
 import msf_instance_installer
+import wizard
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

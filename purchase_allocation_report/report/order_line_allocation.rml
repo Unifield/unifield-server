@@ -18,7 +18,6 @@
     </blockTableStyle>
     
     <blockTableStyle id="LinesList">
-        <blockAlignment value="CENTER" />
         <blockValign value="MIDDLE" />
         <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
         <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
@@ -39,7 +38,7 @@
   </stylesheet>
   <story>    
     <!-- LINES LIST -->
-    <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,105.0,89.0,43.0,43.0,43.0" style="LinesList">
+    <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,89.0,65.0,65.0,43.0,43.0,43.0" style="LinesList">
         <tr>
             <td>
                 <para style="InformationHeader">PO</para>
@@ -74,12 +73,17 @@
             <td>
                 <para style="InformationHeader">Currency</para>
             </td>
-            <td>
-                <para style="InformationHeader">Distribution / Cost Center</para>
-            </td>
+
             <td>
                 <para style="InformationHeader">Account</para>
             </td>
+            <td>
+                <para style="InformationHeader">Destination</para>
+            </td>
+          	<td>
+                <para style="InformationHeader">Cost Center</para>
+            </td>
+
             <td>
                 <para style="InformationHeader">Source Doc</para>
             </td>
@@ -95,16 +99,16 @@
    
    <section>
    [[repeatIn(objects,'o')]]
-   <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,105.0,89.0,43.0,43.0,43.0" style="LinesList">
+   <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,89.0,65.0,65.0,43.0,43.0,43.0" style="LinesList">
         <tr>
             <td>
-                <para style="Information">[[ o.order_id.name ]]</para>
+                <parawrap style="Information">[[ o.order_id.name ]]</parawrap>
             </td>
             <td>
-                <para style="Information">[[ get_selection(o, 'order_type') ]]</para>
+                <para style="Information">[[ getSel(o, 'order_type') ]]</para>
             </td>
             <td>
-                <para style="Information">[[ get_selection(o, 'order_category') ]]</para>
+                <para style="Information">[[ getSel(o, 'order_category') ]]</para>
             </td>
             <td>
                 <para style="Information">[[ o.line_number ]]</para>
@@ -131,19 +135,22 @@
                 <para style="Information">[[ o.currency_id.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.destination_id.name ]] / [[ o.cost_center_id.name ]]</para>
+                <para style="Information">[[ o.account_id.code ]] [[ o.account_id.name ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.account_id.name ]]</para>
+                <para style="Information">[[ line.destination_id.code ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.source_doc ]]</para>
+                <para style="Information">[[ line.cost_center_id.code ]]</para>
             </td>
             <td>
-                <para style="Information">[[ o.partner_id.name ]]</para>
+                <parawrap style="Information">[[ o.source_doc ]]</parawrap>
             </td>
             <td>
-                <para style="Information">[[ o.partner_doc ]]</para>
+                <parawrap style="Information">[[ o.partner_id.name ]]</parawrap>
+            </td>
+            <td>
+                <parawrap style="Information">[[ o.partner_doc ]]</parawrap>
             </td>
         </tr>
    </blockTable>

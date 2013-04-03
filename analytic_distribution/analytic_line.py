@@ -69,6 +69,12 @@ class analytic_line(osv.osv):
                     res.append(('destination_id', '=', t[1]))
         return res
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.analytic.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -78,6 +84,8 @@ class analytic_line(osv.osv):
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
+        'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
+            help="Indicates the Journal Type of the Analytic journal item"),
     }
 
     _defaults = {
@@ -115,19 +123,50 @@ class analytic_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No account_id found in given values!'))
         if 'date' in vals and vals['date'] is not False:
             account_obj = self.pool.get('account.analytic.account')
+            date = vals['date']
             account = account_obj.browse(cr, uid, vals['account_id'], context=context)
-            if vals['date'] < account.date_start \
-            or (account.date != False and \
-                vals['date'] >= account.date):
+            # FIXME: refactoring of next code
+            if date < account.date_start or (account.date != False and date >= account.date):
                 if 'from' not in context or context.get('from') != 'mass_reallocation':
-                    raise osv.except_osv(_('Error !'), _("The analytic account selected '%s' is not active.") % account.name)
+                    raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (account.name or '',))
+            if 'cost_center_id' in vals:
+                cc = account_obj.browse(cr, uid, vals['cost_center_id'], context=context)
+                if date < cc.date_start or (cc.date != False and date >= cc.date):
+                    if 'from' not in context or context.get('from') != 'mass_reallocation':
+                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (cc.name or '',))
+            if 'destination_id' in vals:
+                dest = account_obj.browse(cr, uid, vals['destination_id'], context=context)
+                if date < dest.date_start or (dest.date != False and date >= dest.date):
+                    if 'from' not in context or context.get('from') != 'mass_reallocation':
+                        raise osv.except_osv(_('Error'), _("The analytic account selected '%s' is not active.") % (dest.name or '',))
+        return True
 
     def create(self, cr, uid, vals, context=None):
         """
         Check date for given date and given account_id
         """
+        # Some verifications
+        if not context:
+            context = {}
+        # Default behaviour
+        res = super(analytic_line, self).create(cr, uid, vals, context=context)
+        # Check date
         self._check_date(cr, uid, vals, context=context)
-        return super(analytic_line, self).create(cr, uid, vals, context=context)
+        # Check soft/hard closed contract
+        sql = """SELECT fcc.id
+        FROM financing_contract_funding_pool_line fcfpl, account_analytic_account a, financing_contract_format fcf, financing_contract_contract fcc
+        WHERE fcfpl.funding_pool_id = a.id
+        AND fcfpl.contract_id = fcf.id
+        AND fcc.format_id = fcf.id
+        AND a.id = %s
+        AND fcc.state in ('soft_closed', 'hard_closed');"""
+        cr.execute(sql, tuple([vals.get('account_id')]))
+        sql_res = cr.fetchall()
+        if sql_res:
+            account = self.pool.get('account.analytic.account').browse(cr, uid, vals.get('account_id'))
+            contract = self.pool.get('financing.contract.contract').browse(cr, uid, sql_res[0][0])
+            raise osv.except_osv(_('Warning'), _('Selected Funding Pool analytic account (%s) is blocked by a soft/hard closed contract: %s') % (account and account.code or '', contract and contract.name or ''))
+        return res
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -137,18 +176,17 @@ class analytic_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for id in ids:
+        for l in self.browse(cr, uid, ids):
             vals2 = vals.copy()
-            if not 'account_id' in vals:
-                line = self.browse(cr, uid, [id], context=context)
-                account_id = line and line[0] and line[0].account_id.id or False
-                vals2.update({'account_id': account_id})
+            for el in ['account_id', 'cost_center_id', 'destination_id']:
+                if not el in vals:
+                    vals2.update({el: getattr(l, el, False),})
             self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
-    def update_account(self, cr, uid, ids, account_id, context=None):
+    def update_account(self, cr, uid, ids, account_id, date=False, context=None):
         """
-        Update account on given analytic lines with account_id
+        Update account on given analytic lines with account_id on given date
         """
         # Some verifications
         if not context:
@@ -157,6 +195,8 @@ class analytic_line(osv.osv):
             ids = [ids]
         if not account_id:
             return False
+        if not date:
+            date = strftime('%Y-%m-%d')
         # Prepare some value
         account = self.pool.get('account.analytic.account').browse(cr, uid, [account_id], context)[0]
         context.update({'from': 'mass_reallocation'}) # this permits reallocation to be accepted when rewrite analaytic lines
@@ -172,14 +212,14 @@ class analytic_line(osv.osv):
                 # if period is not closed, so override line.
                 if period and period.state != 'done':
                     # Update account
-                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': strftime('%Y-%m-%d'), 
+                    self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
                         'source_date': aline.source_date or aline.date}, context=context)
                 # else reverse line before recreating them with right values
                 else:
                     # First reverse line
                     self.pool.get('account.analytic.line').reverse(cr, uid, [aline.id])
                     # then create new lines
-                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': strftime('%Y-%m-%d'),
+                    self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
                         'source_date': aline.source_date or aline.date}, context=context)
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})

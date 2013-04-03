@@ -193,6 +193,7 @@ class return_claim(osv.osv):
         '''
         # objects
         event_obj = self.pool.get('claim.event')
+        field_trans = self.pool.get('ir.model.fields').get_selection
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             # allow flag
@@ -213,7 +214,7 @@ class return_claim(osv.osv):
                 if not previous_id:
                     # depend on the claim type
                     available_list = self.get_claim_type_rules().get(claim_type[0])
-                    list = [(x, y[1]) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
+                    list = [(x, field_trans(cr, uid, 'claim.event', 'type_claim_event', y[1], context)) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
                     allow = True # list cannot be empty, because other we would not be here!
                 else:
                     # we are interested in the last value of returned list -> -1
@@ -236,7 +237,7 @@ class return_claim(osv.osv):
                         available_list = available_list and available_list.get(last_event_type_key, False) or False
                         if available_list:
                             allow = True
-                            list = [(x, y[1]) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
+                            list = [(x, field_trans(cr, uid, 'claim.event', 'type_claim_event', y[1], context)) for x in available_list for y in self.get_claim_event_type() if y[0] == x]
             # update result
             result[obj.id] = {'allow': allow,
                               'last_type': last_event_type,
@@ -746,7 +747,10 @@ class claim_event(osv.osv):
         picking_values = {'name': new_name,
                           'partner_id': claim.partner_id_return_claim.id, # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
-                          'reason_type_id': context['common']['rt_goods_return']}
+                          'purchase_id': origin_picking.purchase_id.id,
+                          'sale_id': origin_picking.sale_id.id,
+                          'reason_type_id': context['common']['rt_goods_return'],
+                          'invoice_state': '2binvoiced'}
         move_values = {'reason_type_id': context['common']['rt_goods_return']}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
@@ -763,8 +767,6 @@ class claim_event(osv.osv):
         picking_tools.confirm(cr, uid, event_picking_id, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking) - force assign - must be available thanks to UI checks
-        picking_tools.check_assign(cr, uid, event_picking_id, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type

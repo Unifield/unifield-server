@@ -147,6 +147,7 @@ class account_period(osv.osv):
         return True
 
     _columns = {
+        'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
             help="These periods can overlap.", readonly=True),
         'state': fields.selection(_get_state, 'State', readonly=True,
@@ -169,6 +170,7 @@ class account_period(osv.osv):
     _defaults = {
         'state': lambda *a: 'created',
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
+        'special': lambda *a: False,
     }
 
     def button_overdue_invoice(self, cr, uid, ids, context=None):

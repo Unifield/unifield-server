@@ -23,6 +23,8 @@ from osv import fields, osv
 import decimal_precision as dp
 from tools.misc import flatten
 from time import strftime
+import netsvc
+from tools.translate import _
 
 class analytic_distribution1(osv.osv):
     _name = "analytic.distribution"
@@ -61,6 +63,7 @@ class analytic_distribution1(osv.osv):
         if context is None:
             context = {}
         # Have an analytic distribution on another account than expense account make no sense. So their analytic distribution is valid
+        logger = netsvc.Logger()
         if account_id:
             account =  self.pool.get('account.account').browse(cr, uid, account_id)
             if account and account.user_type and account.user_type.code != 'expense':
@@ -68,6 +71,7 @@ class analytic_distribution1(osv.osv):
         if not id:
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
+            logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: NONE!") % (id or ''))
             return 'none'
         distrib = self.browse(cr, uid, id)
         # Search MSF Private Fund element, because it's valid with all accounts
@@ -80,6 +84,7 @@ class analytic_distribution1(osv.osv):
         # Check Cost Center lines with destination/account link
         for cc_line in distrib.cost_center_lines:
             if cc_line.destination_id.id not in [x.id for x in account.destination_ids]:
+                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, destination not compatible with G/L account in CC lines") % (id or ''))
                 return 'invalid'
         # Check Funding pool lines regarding:
         # - destination / account
@@ -87,13 +92,16 @@ class analytic_distribution1(osv.osv):
         # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
             if fp_line.destination_id.id not in [x.id for x in account.destination_ids]:
+                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, destination not compatible with G/L account for FP lines") % (id or ''))
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue
             if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
+                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, account/destination tuple not compatible with given FP analytic account") % (id or ''))
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
+                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, CC is not compatible with given FP analytic account") % (id or ''))
                 return 'invalid'
         return 'valid'
 
@@ -118,6 +126,19 @@ class distribution_line(osv.osv):
         'date': lambda *a: strftime('%Y-%m-%d'),
         'source_date': lambda *a: strftime('%Y-%m-%d'),
     }
+
+    def _check_percentage(self, cr, uid, ids, context=None):
+        """
+        Do not allow 0.0 percentage value
+        """
+        for l in self.browse(cr, uid, ids):
+            if l.percentage == 0.0:
+                return False
+        return True
+
+    _constraints = [
+        (_check_percentage, '0 is not allowed as percentage value!', ['percentage']),
+    ]
 
     def create_analytic_lines(self, cr, uid, ids, move_line_id, date, document_date, source_date=False, name=False, context=None):
         '''
@@ -212,12 +233,12 @@ class analytic_distribution(osv.osv):
         # Some verifications
         if not context:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         # Prepare some values
         res = {}
         if not ids:
             return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Browse given invoices
         for distrib in self.browse(cr, uid, ids, context=context):
             txt = ''

@@ -67,20 +67,20 @@
 
 ## we loop over the sale_order_line
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Quantity</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">UoM</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Price</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Delivery requested date</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Currency</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">Comment</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>
     % for line in o.order_line:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_uom_qty)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_uom_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
         % if line.date_planned :
@@ -92,6 +92,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
-% endfor
 </Table>
-<x:WorksheetOptions/></ss:Worksheet></Workbook>
+<x:WorksheetOptions/></ss:Worksheet>
+% endfor
+</Workbook>

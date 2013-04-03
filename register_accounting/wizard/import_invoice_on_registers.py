@@ -146,12 +146,16 @@ class wizard_import_invoice(osv.osv_memory):
                     else:
                         amount_cur += line.amount_residual_import_inv
                     total += line.amount_currency
-            
+            # Search register line reference size
+            ref_field_data = self.pool.get('account.bank.statement.line').fields_get(cr, uid, ['ref'])
+            size = 0
+            if ref_field_data and 'ref' in ref_field_data and ref_field_data.get('ref').get('size', False):
+                size = ref_field_data.get('ref').get('size')
             # Create register line
             new_lines.append({
                 'line_ids': [(6, 0, [x.id for x in ordered_lines[key]])],
                 'partner_id': ordered_lines[key][0].partner_id.id or None,
-                'ref': 'Imported Invoice',
+                'ref': ' / '.join([x.ref and x.ref for x in ordered_lines[key]])[:size],
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
                 'document_date': wizard.date or time.strftime('%Y-%m-%d'),
@@ -160,7 +164,7 @@ class wizard_import_invoice(osv.osv_memory):
                 'amount_currency': total,
                 'currency_id': ordered_lines[key][0].currency_id.id,
             })
-        self.write(cr, uid, [wizard.id], {'state': 'open', 'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]})
+        self.write(cr, uid, [wizard.id], {'state': 'open', 'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]}, context=context)
         return {
          'type': 'ir.actions.act_window',
          'res_model': 'wizard.import.invoice',
@@ -199,7 +203,8 @@ class wizard_import_invoice(osv.osv_memory):
 
             # Create register line
             register_vals = {
-                'name': line.ref,
+                'name': '%s Imported Invoice(s)' % (line.number_invoices),
+                'ref': line.ref,
                 'date': line.date,
                 'document_date': line.document_date,
                 'statement_id': st_id,

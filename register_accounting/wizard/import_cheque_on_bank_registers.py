@@ -48,16 +48,19 @@ class wizard_import_cheque_lines(osv.osv_memory):
         'line_id': fields.many2one('account.move.line', string="Invoice", required=True),
         'wizard_id': fields.many2one('wizard.import.cheque', string='wizard'),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
+        'partner_txt': fields.char('Third Party', size=255, readonly=True),
+        'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True),
+        'transfer_journal_id': fields.many2one('account.journal', string="Transfer Journal", readonly=True),
     }
 
 wizard_import_cheque_lines()
 
 class wizard_import_cheque(osv.osv_memory):
     """
-    Wizard to select some cheque register lines in order to import them into a bank register.
+    Wizard to select some cheque register lines in order to import them into a bank statement.
     """
     _name = 'wizard.import.cheque'
-    _description = 'Import cheque register from a bank register'
+    _description = 'Import cheque register from a bank statement'
     _columns = {
         'line_ids': fields.many2many('account.move.line', 'imported_cheque', 'wizard_id', 'move_line_id', string="Imported Cheques"),
         'imported_lines_ids': fields.one2many('wizard.import.cheque.lines', 'wizard_id', string=''),
@@ -99,6 +102,7 @@ class wizard_import_cheque(osv.osv_memory):
                     'partner_id': line.partner_id.id or None,
                     'ref': line.ref or None,
                     'number': line.invoice.number or None,
+                    'cheque_number': line.cheque_number or None,
                     'supplier_ref': line.invoice.name or None,
                     'account_id': line.account_id.id or None,
                     'date_maturity': line.date_maturity or None,
@@ -108,6 +112,9 @@ class wizard_import_cheque(osv.osv_memory):
                     'currency_id': line.currency_id.id or None,
                     'wizard_id': wizard.id or None,
                     'document_date': document_date or None,
+                    'partner_txt': line.partner_txt or None,
+                    'employee_id': line.employee_id and line.employee_id.id or None,
+                    'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 }
                 new_lines.append((0, 0, vals))
         
@@ -126,7 +133,7 @@ class wizard_import_cheque(osv.osv_memory):
 
     def action_confirm(self, cr, uid, ids, context=None):
         """
-        Import some cheque statement lines into the bank register and temp post them.
+        Import some cheque statement lines into the bank statement and temp post them.
         """
         # Some verifications
         if not ids:
@@ -146,13 +153,15 @@ class wizard_import_cheque(osv.osv_memory):
             line = imported_line.line_id
             total = line.amount_currency
             vals = {
-                'name': 'Imported Cheque: ' + (line.name or line.ref or ''),
+                'name': 'Imported Cheque: ' + (line.cheque_number or line.name or line.ref or ''),
                 'ref': line.ref,
                 'date': _get_date_in_period(self, cr, uid, imported_line.date or curr_date, wizard.period_id.id, context=context),
                 'document_date': imported_line.document_date,
                 'statement_id': wizard.statement_id.id,
                 'account_id': line.account_id.id,
                 'partner_id': line.partner_id.id,
+                'employee_id': line.employee_id and line.employee_id.id or None,
+                'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
                 #'partner_type_mandatory': True, # if we come from another register, Third Parties is mandatory !
                 'amount': total,
                 'from_import_cheque_id': line.id,

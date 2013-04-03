@@ -71,7 +71,7 @@ class import_currencies(osv.osv_memory):
                     context.update({'active_test': False})
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', line[0])], context=context)
                     if len(currency_ids) == 0:
-                        raise osv.except_osv(_('Error'), _('The currency %s is not defined!' % line[0]))
+                        raise osv.except_osv(_('Error'), _('The currency %s is not defined!') % line[0])
                         break
                     else:
                         # check for date. 2 checks done:

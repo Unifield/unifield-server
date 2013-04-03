@@ -117,20 +117,20 @@
     assert bank_data.move_line_ids, "Move lines not created for bank statement"
     for line in bank_data.move_line_ids:
       assert line.move_id.state == 'posted', "Move state is not posted"
--
-  I launch the "Cash Discrepancy Case" wizard and do a write-off
--
-  !record {model: cashbox.write.off, id: cashbox_write_off_1}: 
-    choice: writeoff
-    account_id: account_account_expense0
--
-  I check that the amount is 50.0
--
-  !python {model: cashbox.write.off}: |
-    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref('account_bank_statement_1')})
-    result['amount'] == 50.0
--
-  I click on the 'Ok' button to do the write-off
--
-  !python {model: cashbox.write.off, id: cashbox_write_off_1}: |
-    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref("account_bank_statement_1")})
+#-
+#  I launch the "Cash Discrepancy Case" wizard and do a write-off
+#-
+#  !record {model: cashbox.write.off, id: cashbox_write_off_1}: 
+#    choice: writeoff
+#    account_id: account_account_expense0
+#-
+#  I check that the amount is 50.0
+#-
+#  !python {model: cashbox.write.off}: |
+#    result = self.default_get(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref('account_bank_statement_1')})
+#    result['amount'] == 50.0
+#-
+#  I click on the 'Ok' button to do the write-off
+#-
+#  !python {model: cashbox.write.off, id: cashbox_write_off_1}: |
+#    self.action_confirm_choice(cr, uid, [ref("cashbox_write_off_1")], {"active_id": ref("account_bank_statement_1")})

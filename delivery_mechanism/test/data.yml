@@ -93,4 +93,8 @@
     company = self.pool.get('res.company').browse(cr, uid, uid, context=context)
     if company and company.instance_id:
       self.write(cr, uid, journal_ids, {'instance_id': company.instance_id.id})
-    
+-
+  Location Test for testing the request_location_id on the IR
+-
+  !record {model: stock.location, id: location_test}:
+    name: Location Test

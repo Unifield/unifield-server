@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
 				<data>
 		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
-						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" />
+						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]"/>
 		    		</xpath>
 
                     <xpath expr="/tree/field[@name='product_uom']" position="after">
@@ -30,7 +30,7 @@
             <field name="arch" type="xml">
 				<data>
 		    		<xpath expr="/tree/field[@name='location_dest_id']" position="replace">
-						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" />
+						<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('id', '!=', location_id)]" />
 		    		</xpath>
 
 	                <xpath expr="/tree/field[@name='create_date']" position="after">
@@ -241,7 +241,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="blue:state in ('draft');grey:state in ('done');red:state not in ('cancel', 'done') and date &lt; current_date" string="Picking list">
+                <tree colors="blue:state in ('draft');grey:state in ('done');red:state not in ('cancel', 'done') and date &lt; current_date" string="Incoming Shipments">
                     <field name="name"/>
                     <field name="partner_id" />
                     <field name="backorder_id" />

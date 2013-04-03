@@ -397,7 +397,7 @@ def common_onchange_date_order(self, cr, uid, ids, part=False, date_order=False,
     
     return res
 
-def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
+def common_onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
     '''
     Common function when Partner is changing
     '''
@@ -692,11 +692,11 @@ class purchase_order(osv.osv):
         res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         return res
     
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
         """
         Set the delivery_confirmed_date if order_type == 'purchase_list'
         """
-        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, dest_partner_id, warehouse_id, delivery_requested_date)
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)
         if not 'value' in res:
             res['value'] = {}
         if order_type == 'purchase_list' and delivery_requested_date:
@@ -1096,7 +1096,7 @@ class sale_order(osv.osv):
         res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, requested_date=requested_date, type=get_type(self), res=res, context=context)
         return res
     
-    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
+    def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, date_order=False, transport_lt=0, context=None):
         '''
         Fills the Requested and Confirmed delivery dates
         
@@ -1106,9 +1106,9 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, order_type)
         # compute requested date and transport type
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=part, order_type=order_type, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
@@ -1394,8 +1394,10 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self).get_min_max_date(cr, uid, ids, field_name, arg, context=context)
         # modify the min_date value for delivery_confirmed_date from corresponding purchase_order if exist
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.manual_min_date_stock_picking:
+            if not result[obj.id].get('min_date') and obj.manual_min_date_stock_picking:
                 result.setdefault(obj.id, {}).update({'min_date': obj.manual_min_date_stock_picking})
+            elif result[obj.id].get('min_date'):
+                continue
             else:
                 if obj.purchase_id:
                     result.setdefault(obj.id, {}).update({'min_date': obj.purchase_id.delivery_confirmed_date})
@@ -1430,14 +1432,38 @@ class stock_picking(osv.osv):
         self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
         return True
 
-    _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
+    # utp-360: I rename the date 'Actual Receipt Date' because before it was 'Creation Date'
+    _columns = {'date': fields.datetime('Actual Receipt Date', help="Date of Order", select=True),
                 'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
                                             method=True, store=True, type='datetime', string='Expected Date', select=1,
                                             help="Expected date for the picking to be processed"),
-                'manual_min_date_stock_picking': fields.date(string='Manual Date'),
+                'manual_min_date_stock_picking': fields.datetime(string='Manual Date'),
+                'min_date_manually': fields.boolean(string='change manually')
                 }
     
-    _defaults = {'manual_min_date_stock_picking': False}
+    _defaults = {'manual_min_date_stock_picking': False,
+                 'min_date_manually': False,}
+    
+    def change_min_date(self, cr, uid, ids, context=None):
+        return {'value': {'min_date_manually': True}}
+    
+    def create(self, cr, uid, vals, context=None):
+        if not vals.get('purchase id') or not vals.get('sale_id'):
+            vals['manual_min_date_stock_picking'] = vals.get('min_date')
+        return super(stock_picking, self).create(cr, uid, vals, context=context)
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Update all stock moves if the min_date of the picking was changed manually
+        '''
+        move_obj = self.pool.get('stock.move')
+        for pick in self.browse(cr, uid, ids, context=context):
+            if vals.get('min_date_manually', pick.min_date_manually) and vals.get('min_date', vals.get('manual_min_date_stock_picking')):
+                vals.update({'manual_min_date_stock_picking': vals.get('min_date', vals.get('manual_min_date_stock_picking'))})
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), ('state', 'not in', ('done', 'cancel'))], context=context)
+                move_obj.write(cr, uid, move_ids, {'date_expected': vals.get('min_date', vals.get('manual_min_date_stock_picking'))}, context=context)
+                
+        return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
 
     # @@@override stock>stock.py>stock_picking>do_partial
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
@@ -1459,7 +1485,7 @@ class stock_picking(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
         return res
 
 stock_picking()
@@ -1470,6 +1496,15 @@ class stock_move(osv.osv):
     shipment date of sale order is updated
     '''
     _inherit = 'stock.move'
+    
+    def default_get(self, cr, uid, fields, context=None):
+        if not context:
+            context = {}
+            
+        res = super(stock_move, self).default_get(cr, uid, fields, context=context)
+        res['date'] = res['date_expected'] = context.get('date_expected', time.strftime('%Y-%m-%d %H:%M:%S'))
+        
+        return res
     
     def do_partial(self, cr, uid, ids, partial_datas, context=None):
         '''
@@ -1490,7 +1525,7 @@ class stock_move(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
         return res
     
 stock_move()

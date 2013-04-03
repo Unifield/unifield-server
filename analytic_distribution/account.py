@@ -135,6 +135,8 @@ class account_destination_summary(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             first = True
+        if fields_to_read is None:
+            fields_to_read = []
         ret = super(account_destination_summary, self).read(cr, uid, ids, fields_to_read, context, load)
         f_to_read = []
         for field in fields_to_read:
@@ -294,6 +296,8 @@ class account_move(osv.osv):
             'move_id': move.id,
             'currency_id': currency or False,
             'state': 'dispatch',
+            'posting_date': move.date,
+            'document_date': move.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -307,7 +311,7 @@ class account_move(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

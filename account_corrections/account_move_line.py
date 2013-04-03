@@ -364,6 +364,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             vals = {
                 'move_id': move_id,
                 'date': date,
+                'document_date': date,
                 'journal_id': journal_id,
                 'period_id': period_ids[0],
             }
@@ -382,6 +383,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'account_id': ml.account_id.id,
                 'source_date': ml.date,
                 'reversal': True,
+                'reference': ml.move_id and ml.move_id.name or '',
+                'ref': ml.move_id and ml.move_id.name or '',
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Inform old line that it have been corrected
@@ -457,7 +460,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
             
             # Create a new move
-            new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+            new_move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': m.document_date}, context=context)
             # Search move line that have to be corrected.
             # NB: this is useful when you correct a move line twice and do a reverse on it. It should be reverse the complementary move line of the first move line
             # and reverse the last correction line.
@@ -499,7 +502,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     new_distrib_id = ana_obj.copy(cr, uid, ml.analytic_distribution_id.id, {}, context=context)
                     # update amount on new distribution
                     ana_obj.update_distribution_line_amount(cr, uid, new_distrib_id, (-1 * (ml.debit - ml.credit)), context=context)
-                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'period_id': period_ids[0]}, context=context)
+                new_line_id = self.copy(cr, uid, ml.id, {'move_id': new_move_id, 'date': date, 'document_date': ml.document_date, 'period_id': period_ids[0]}, context=context)
                 vals.update({
                     'name': name,
                     'debit': ml.credit,
@@ -508,6 +511,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
                     'reversal_line_id': ml.id,
                     'source_date': ml.source_date or ml.date,
                     'reversal': True,
+                    'reference': ml.move_id and ml.move_id.name or '',
+                    'ref': ml.move_id and ml.move_id.name or '',
                 })
                 # Add distribution if new one
                 if new_distrib_id:
@@ -617,11 +622,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 if check_accounts and aal.account_id.id in check_accounts:
                     raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
             # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date}, context=context)
+            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
             # Prepare default value for new line
             vals = {
                 'move_id': move_id,
                 'date': date,
+                'document_date': ml.document_date,
                 'journal_id': journal_id,
                 'period_id': period_ids[0],
             }
@@ -640,8 +646,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'name': name,
                 'reversal_line_id': ml.id,
                 'account_id': ml.account_id.id,
-                'source_date': ml.date,
+                'source_date': ml.source_date or ml.date,
                 'reversal': True,
+                'document_date': ml.document_date,
+                'reference': ml.move_id and ml.move_id.name or '',
+                'ref': ml.move_id and ml.move_id.name or '',
             })
             self.write(cr, uid, [rev_line_id], vals, context=context)
             # Do the correction line
@@ -652,8 +661,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 'corrected_line_id': ml.id,
                 'account_id': new_account_id,
                 'ref': ml.ref,
-                'source_date': ml.date,
+                'source_date': ml.source_date or ml.date,
                 'have_an_historic': True,
+                'document_date': ml.document_date,
+                'reference': ml.move_id and ml.move_id.name or '',
+                'ref': ml.move_id and ml.move_id.name or '',
             }
             if distrib_id:
                 cor_vals['analytic_distribution_id'] = distrib_id

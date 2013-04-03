@@ -69,5 +69,38 @@
             menu="False"
          />
 
+    <!-- Account Bank Statement Line Report (register lines) -->
+        <report
+            id="report_account_bank_statement_line"
+            string="Register Lines"
+            model="account.bank.statement.line"
+            name="account.bank.statement.line"
+            rml="account_mcdb/report/report_account_bank_statement_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_bank_statement_line_csv"
+            string="Register Lines"
+            model="account.bank.statement.line"
+            name="account.bank.statement.line_csv"
+            rml="account_mcdb/report/report_account_bank_statement_line.rml"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+        <report
+            id="report_account_bank_statement_line_xls"
+            string="Register Lines"
+            model="account.bank.statement.line"
+            name="account.bank.statement.line_xls"
+            file="account_mcdb/report/report_account_bank_statement_line_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+
     </data>
 </openerp>

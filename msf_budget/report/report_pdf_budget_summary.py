@@ -27,8 +27,15 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         super(report_pdf_budget_summary, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'process': self.process,
+            'checkCount': self.checkCount,
         })
         return
+
+    def checkCount(self, line):
+        if line[0] and line[0].split():
+            if int(line[0].split()[0]) in [6, 61, 62, 63, 64, 65, 66, 67, 68, 69]:
+                return True
+        return False
 
     def process(self, selected_lines):
         result = []
@@ -50,11 +57,7 @@ class report_pdf_budget_summary(report_sxw.rml_parse):
         
         # regroup both dicts in a list
         for line_id in sorted_line_names:
-            result_line = [line_names[line_id],
-                           locale.format("%d", total_amounts[line_id]['budget_amount'], grouping=True),
-                           locale.format("%d", total_amounts[line_id]['actual_amount'], grouping=True),
-                           locale.format("%d", total_amounts[line_id]['balance'], grouping=True),
-                           str(total_amounts[line_id]['percentage'])]
+            result_line = [line_names[line_id],total_amounts[line_id]['budget_amount'],total_amounts[line_id]['actual_amount'], total_amounts[line_id]['balance'], float(total_amounts[line_id]['percentage'])]
             result.append(result_line)
         return result
 

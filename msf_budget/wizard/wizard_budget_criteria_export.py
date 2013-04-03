@@ -41,7 +41,8 @@ class wizard_budget_criteria_export(osv.osv_memory):
         'granularity': 'all',
     }
 
-    def button_create_budget(self, cr, uid, ids, context=None):
+
+    def button_create_budget_2(self, cr, uid, ids, context=None):
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         data['ids'] = context.get('active_ids', [])
@@ -57,8 +58,8 @@ class wizard_budget_criteria_export(osv.osv_memory):
             if wizard.period_id:
                 data['form'].update({'period_id': wizard.period_id.id})
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'msf.budget.criteria', 'datas': data}
-        
+        return {'type': 'ir.actions.report.xml', 'report_name': 'budget.criteria.2', 'datas': data}
+
 
 wizard_budget_criteria_export()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

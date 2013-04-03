@@ -23,7 +23,6 @@
 
 from osv import osv
 from osv import fields
-import tools
 from tools.translate import _
 
 class account_analytic_line(osv.osv):

@@ -67,16 +67,26 @@ class stock_partial_picking(osv.osv_memory):
         if context.get('active_ids', []):
             if 'dest_type' in fields:
                 for pick in pick_obj.browse(cr, uid, obj_ids, context=context):
-                    if pick.purchase_id.cross_docking_ok:
-                        res.update({'dest_type': 'to_cross_docking'})
-                    elif pick.purchase_id.cross_docking_ok == False:
-                    # take care: if pick.purchase_id.cross_docking_ok is None we shouldn't be here but in the next else block
-                    # pick.purchase_id.cross_docking_ok is None if pick.purchase_id is empty
-                        res.update({'dest_type': 'to_stock'})
+                    if not pick.backorder_id:
+                        if pick.purchase_id.cross_docking_ok:
+                            res.update({'dest_type': 'to_cross_docking'})
+                        elif pick.purchase_id.cross_docking_ok == False:
+                        # take care: if pick.purchase_id.cross_docking_ok is None we shouldn't be here but in the next else block
+                        # pick.purchase_id.cross_docking_ok is None if pick.purchase_id is empty
+                            res.update({'dest_type': 'to_stock'})
+                        else:
+                            res.update({'dest_type': 'default'})
                     else:
-                        res.update({'dest_type': 'default'})
+                        if pick.cd_from_bo:
+                            res.update({'dest_type': 'to_cross_docking'})
+                        elif pick.cd_from_bo == False:
+                            res.update({'dest_type': 'to_stock'})
+                        else:
+                            res.update({'dest_type': 'default'})
+            
             if 'source_type' in fields:
                 res.update({'source_type': 'default'})
+
         return res
 
     def onchange_dest_type(self, cr, uid, ids, dest_type, context=None):
@@ -103,11 +113,6 @@ class stock_partial_picking(osv.osv_memory):
                     # display warning
                     result['warning'] = {'title': _('Error'),
                                          'message': _('You want to receive the IN on Cross Docking but "Cross docking" was not checked.')}
-            elif pick.purchase_id and dest_type == 'to_cross_docking' and pick.purchase_id.categ in ['service', 'transport']:
-                    # display warning
-                    result['warning'] = {'title': _('Error'),
-                                         'message': _("""The option "Cross docking" is not convenient for
-                                         a purchase order which the category is "Service" or "Transport".""")}
 
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
 

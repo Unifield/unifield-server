@@ -46,6 +46,8 @@ class account_line_csv_export(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
+        field_sel = self.pool.get('ir.model.fields').get_browse_selection
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not writer:
@@ -56,14 +58,13 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 'Period', 'Account Code', 'Account Description', 'Third party', 
-            'Book. Debit', 'Book. Credit', 'Book. currency']
+        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Posting Date'), _('Document Date'), _('Period'), _('Account Code'), _('Account Description'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
         if not currency_id:
-            head += ['Func. Debit', 'Func. Credit', 'Func. Currency']
+            head += [_('Func. Debit'), _('Func. Credit'), _('Func. Currency')]
         else:
-            head += ['Output Debit', 'Output Credit', 'Output Currency']
-        head += ['Reconcile', 'State']
-        writer.writerow(head)
+            head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
+        head += [_('Reconcile'), _('State')]
+        writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
         ids.sort()
         # Then write lines
@@ -90,7 +91,7 @@ class account_line_csv_export(osv.osv_memory):
             #account_id name
             csv_line.append(ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or '')
             #partner_txt
-            csv_line.append(ml.partner_txt.encode('utf-8') or '')
+            csv_line.append(ml.partner_txt and ml.partner_txt.encode('utf-8') or '')
             #debit_currency
             csv_line.append(ml.debit_currency or 0.0)
             #credit_currency
@@ -118,7 +119,7 @@ class account_line_csv_export(osv.osv_memory):
             #reconcile_total_partial_id
             csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
             #state
-            csv_line.append(ml.state.encode('utf-8') or '')
+            csv_line.append(field_sel(cr, uid, ml, 'state', context).encode('utf-8'))
             # Write line
             writer.writerow(csv_line)
             
@@ -161,17 +162,16 @@ class account_line_csv_export(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
         # Prepare csv head
-        head = ['Proprietary Instance', 'Journal Code', 'Entry Sequence', 'Description', 'Reference', 'Posting Date', 'Document Date', 
-            'Period', 'General Account']
+        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Posting Date'), _('Document Date'), _('Period'), _('General Account')]
         if display_fp:
-            head += ['Destination', 'Cost Center', 'Funding Pool']
+            head += [_('Destination'), _('Cost Center'), _('Funding Pool')]
         else:
-            head += ['Analytic Account']
-        head += ['Third Party', 'Book. Amount', 'Book. Currency', 'Func. Amount', 'Func. Currency']
+            head += [_('Analytic Account')]
+        head += [_('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency')]
         if currency_id:
-            head += ['Output amount', 'Output currency']
-        head+= ['Reversal Origin']
-        writer.writerow(head)
+            head += [_('Output amount'), _('Output currency')]
+        head+= [_('Reversal Origin')]
+        writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
         ids.sort()
         # Then write lines
@@ -223,6 +223,83 @@ class account_line_csv_export(osv.osv_memory):
             writer.writerow(csv_line)
         return True
 
+    def _account_bank_statement_line_to_csv(self, cr, uid, ids, writer, currency_id, context=None):
+        """
+        Take account_bank_statement_line and return a csv string
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not writer:
+            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+        # Prepare some value
+        currency_name = ""
+        if currency_id:
+            currency_obj = self.pool.get('res.currency')
+            currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
+        # Prepare csv head
+        head = [_('Document Date'), _('Posting Date'), _('Entry Sequence'), _('Description'), _('Reference'), _('Account Code'), _('Account Description'), _('Third party'), _('Amount In'), _('Amount Out'), _('Currency')]
+        if not currency_id:
+            head += [_('Func. In'), _('Func. Out'), _('Func. Currency')]
+        else:
+            head += [_('Output In'), _('Output Out'), _('Output Currency')]
+        head += [_('State'), _('Register Name')]
+        writer.writerow(map(lambda x: x.encode('utf-8'), head))
+        # Sort items
+        ids.sort()
+        # Then write lines
+        for absl in self.pool.get('account.bank.statement.line').browse(cr, uid, ids, context=context):
+            csv_line = []
+            #document_date
+            csv_line.append(absl.document_date or '')
+            #date
+            csv_line.append(absl.date or '')
+            #sequence_for_reference (Entry Sequence)
+            csv_line.append(absl.sequence_for_reference and absl.sequence_for_reference.encode('utf-8') or '')
+            #name
+            csv_line.append(absl.name and absl.name.encode('utf-8') or '')
+            #ref
+            csv_line.append(absl.ref and absl.ref.encode('utf-8') or '')
+            #account_id code
+            csv_line.append(absl.account_id and absl.account_id.code and absl.account_id.code.encode('utf-8') or '')
+            #account_id name
+            csv_line.append(absl.account_id and absl.account_id.name and absl.account_id.name.encode('utf-8') or '')
+            #partner_txt
+            csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.name and absl.transfer_journal_id.name.encode('utf-8') or '')
+            #debit_currency
+            csv_line.append(absl.amount_in or 0.0)
+            #credit_currency
+            csv_line.append(absl.amount_out or 0.0)
+            #currency_id
+            csv_line.append(absl.currency_id and absl.currency_id.name and absl.currency_id.name.encode('utf-8') or '')
+            if not currency_id:
+                #debit
+                csv_line.append(absl.functional_in or 0.0)
+                #credit
+                csv_line.append(absl.functional_out or 0.0)
+                #functional_currency_id
+                csv_line.append(absl.functional_currency_id and absl.functional_currency_id.name and absl.functional_currency_id.name.encode('utf-8') or '')
+            else:
+                #output amount (debit/credit) regarding booking currency
+                amount = currency_obj.compute(cr, uid, absl.currency_id.id, currency_id, absl.amount, round=True, context=context)
+                if amount < 0.0:
+                    csv_line.append(0.0)
+                    csv_line.append(abs(amount) or 0.0)
+                else:
+                    csv_line.append(abs(amount) or 0.0)
+                    csv_line.append(0.0)
+                #output currency
+                csv_line.append(currency_name.encode('utf-8') or '')
+            #state
+            csv_line.append(field_sel(cr, uid, absl, 'state', context).encode('utf-8'))
+            #statement
+            csv_line.append(absl.statement_id and absl.statement_id.name and absl.statement_id.name.encode('utf-8') or '')
+            # Write line
+            writer.writerow(csv_line)
+        return True
+
     def export_to_csv(self, cr, uid, ids, currency_id, model, context=None):
         """
         Return a CSV file containing all given line
@@ -249,6 +326,8 @@ class account_line_csv_export(osv.osv_memory):
             self._account_move_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
         elif model == 'account.analytic.line':
             self._account_analytic_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
+        elif model == 'account.bank.statement.line':
+            self._account_bank_statement_line_to_csv(cr, uid, ids, writer, currency_id, context=context) or ''
         
         outfile.seek(0)
         file = encodestring(outfile.read())

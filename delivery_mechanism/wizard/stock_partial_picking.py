@@ -30,20 +30,36 @@ from lxml import etree
 class stock_partial_picking(osv.osv_memory):
     _inherit = "stock.partial.picking"
     
-    def integrity_check_do_incoming_shipment(self, cr, uid, ids, data, context=None):
+    def integrity_check_do_incoming_shipment(self, cr, uid, ids, picking_type, data, context=None):
         '''
-        integrity for incoming shipment wizard
+        integrity must be OK
         
-        - values cannot be negative
+        'integrity_status_func_stock_memory_move'
+        
         - at least one partial data !
         '''
-        total_qty = 0
-        for move_dic in data.values():
-            for arrays in move_dic.values():
-                for partial_dic in arrays:
-                    total_qty += partial_dic['product_qty']
-        if not total_qty:
-            raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.'))
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        # check if not empty wizard  
+        if data:
+            total_qty = 0
+            for move_dic in data.values():
+                for arrays in move_dic.values():
+                    for partial_dic in arrays:
+                        total_qty += partial_dic['product_qty']
+            if not total_qty:
+                raise osv.except_osv(_('Warning !'), _('Selected list to process cannot be empty.'))
+        
+        # checking line integrity field
+        for obj in self.browse(cr, uid, ids, context=context):
+            for item in getattr(obj, 'product_moves_%s'%picking_type):
+                # integrity is not met
+                if item.integrity_status_func_stock_memory_move != 'empty':
+                    return False
         return True
     
     def do_incoming_shipment(self, cr, uid, ids, context=None):
@@ -72,6 +88,7 @@ class stock_partial_picking(osv.osv_memory):
         partial_datas = {}
         
         for pick in pick_obj.browse(cr, uid, picking_ids, context=context):
+            total_qty = 0.00
             # for each picking
             partial_datas[pick.id] = {}
             # picking type openERP bug passion logic
@@ -80,6 +97,10 @@ class stock_partial_picking(osv.osv_memory):
             memory_moves_list = getattr(partial, 'product_moves_%s'%picking_type)
             # organize data according to move id
             for move in memory_moves_list:
+                total_qty += move.quantity
+                # if no quantity, don't process the move
+                if not move.quantity:
+                    continue
                 # by default prodlot_id comes from the wizard
                 prodlot_id = move.prodlot_id.id
                 # treat internal batch to be created# if only expiry date mandatory, and not batch management
@@ -123,6 +144,9 @@ class stock_partial_picking(osv.osv_memory):
                                    'product_currency': move.currency.id,
                                    })
                 partial_datas[pick.id].setdefault(move.move_id.id, []).append(values)
+
+            if not total_qty:
+                raise osv.except_osv(_('Processing Error'), _("You have to enter the quantities you want to process before processing the move"))
             # treated moves
             move_ids = partial_datas[pick.id].keys()
             # all moves
@@ -147,10 +171,11 @@ class stock_partial_picking(osv.osv_memory):
                                    })
                 partial_datas[pick.id].setdefault(missing_move.id, []).append(values)
             
-        # integrity check on wizard data
-        if not self.integrity_check_do_incoming_shipment(cr, uid, ids, partial_datas, context=context):
-            # inline integrity status not yet implemented - will trigger the wizard update
-            pass
+            # integrity constraint
+            integrity_check = self.integrity_check_do_incoming_shipment(cr, uid, ids, picking_type, partial_datas, context=context)
+            if not integrity_check:
+                # the windows must be updated to trigger tree colors
+                return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
         # call stock_picking method which returns action call
         return pick_obj.do_incoming_shipment(cr, uid, picking_ids, context=dict(context, partial_datas=partial_datas))
     

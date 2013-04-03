@@ -95,11 +95,14 @@ class account_journal(osv.osv):
         return False
     
     def name_get(self, cr, user, ids, context=None):
-        result = self.browse(cr, user, ids, context=context)
+        """
+        Get code for journals
+        """
+        result = self.read(cr, user, ids, ['code'])
         res = []
         for rs in result:
-            txt = rs.name
-            res += [(rs.id, txt)]
+            txt = rs.get('code', '')
+            res += [(rs.get('id'), txt)]
         return res
     
     def onchange_type(self, cr, uid, ids, type, currency, context=None):

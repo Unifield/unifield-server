@@ -4,6 +4,8 @@ from lxml import etree
 from mx import DateTime
 from tools.translate import _
 from osv import osv
+import csv
+
 
 # example to read a Excel XML file in consumption_calculation/wizard/wizard_import_rac.py
 class SpreadsheetTools():
@@ -25,9 +27,9 @@ class SpreadsheetCell(SpreadsheetTools):
                 dtype = self.get(data, 'Type')
                 self.data = data.text
                 if dtype == 'Number':
-                    if '.' in self.data:
+                    if not self.data or '.' in self.data:
                         self.type = 'float'
-                        self.data = float(self.data)
+                        self.data = float(self.data or 0.0)
                     else:
                         self.type = 'int'
                         self.data = int(self.data)
@@ -131,6 +133,26 @@ class SpreadsheetXML(SpreadsheetTools):
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
         return SpreadsheetRow(table[0].getiterator(etree.QName(self.defaultns, 'Row')))
+
+    def enc(self, s):
+        if isinstance(s, unicode):
+            return s.encode('utf8')
+        return s
+
+    def to_csv(self, to_file=False, worksheet=1):
+        if to_file:
+            writer=csv.writer(to_file, 'UNIX')
+        else:
+            data = []
+        for row in self.getRows(worksheet):
+                if to_file:
+                    writer.writerow([self.enc(x.data) for x in row.iter_cells()])
+                else:
+                    data.append([self.enc(x.data) for x in row.iter_cells()])
+        if to_file:
+            return True
+        return data
+
 
 
 if __name__=='__main__':

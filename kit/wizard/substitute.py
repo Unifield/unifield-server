@@ -160,7 +160,7 @@ class substitute(osv.osv_memory):
         if item.product_id_substitute_item.batch_management:
             # lot number must have been filled in
             if not item.lot_mirror:
-                raise osv.except_osv(_('Warning !'), _('Batch Number is missing for %s.'%item.product_id_substitute_item.name))
+                raise osv.except_osv(_('Warning !'), _('Batch Number is missing for %s.')%item.product_id_substitute_item.name)
             # we search for existing standard lot, if does not exist, we create a new one
             prodlot_ids = lot_obj.search(cr, uid, [('name', '=', item.lot_mirror),
                                                    ('type', '=', 'standard'),
@@ -181,13 +181,13 @@ class substitute(osv.osv_memory):
                         exp_item_text = item.exp_substitute_item
                     else:
                         exp_item_text = 'n/a'
-                    lot_obj.log(cr, uid, prodlot_ids[0], _('Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.'%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item_text)))
+                    lot_obj.log(cr, uid, prodlot_ids[0], _('Batch Number %s for %s with Expiry Date %s does not match the Expiry Date from the composition list %s.')%(lot_name,item.product_id_substitute_item.name,exp_obj.strftime(date_format),exp_item_text))
                 # select production lot
                 prodlot_id = prodlot_ids[0]
             else:
                 # lot number must have been filled in
                 if not item.exp_substitute_item:
-                    raise osv.except_osv(_('Warning !'), _('Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
+                    raise osv.except_osv(_('Warning !'), _('Expiry Date is missing for %s.')%item.product_id_substitute_item.name)
                 # the batch does not exist, we create a new one
                 lot_name = item.lot_mirror# or self.pool.get('ir.sequence').get(cr, uid, 'kit.lot')
                 exp_item = datetime.strptime(item.exp_substitute_item, db_date_format)
@@ -198,11 +198,11 @@ class substitute(osv.osv_memory):
                               }
                 prodlot_id = lot_obj.create(cr, uid, lot_values, context=context)
                 # lot creation message
-                lot_obj.log(cr, uid, prodlot_id, _('Batch Number %s for %s with Expiry Date %s has been created.'%(lot_name,item.product_id_substitute_item.name,exp_item.strftime(date_format))))
+                lot_obj.log(cr, uid, prodlot_id, _('Batch Number %s for %s with Expiry Date %s has been created.')%(lot_name,item.product_id_substitute_item.name,exp_item.strftime(date_format)))
         elif item.product_id_substitute_item.perishable:
             # expiry date must have been filled in
             if not item.exp_substitute_item:
-                raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.'%item.product_id_substitute_item.name))
+                raise osv.except_osv(_('Warning !'), _('Batch Number/Expiry Date is missing for %s.')%item.product_id_substitute_item.name)
             # we search for existing internal lot, if does not exist, we create a new one
             prodlot_ids = lot_obj.search(cr, uid, [('life_date', '=', item.exp_substitute_item),
                                                    ('type', '=', 'internal'),

@@ -25,6 +25,9 @@ from product._common import rounding
 from tools.translate import _
 import netsvc
 
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+import base64
+
 
 class split_purchase_order_line_wizard(osv.osv_memory):
     _name = 'split.purchase.order.line.wizard'
@@ -132,6 +135,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                     new_so_line_id = so_line_obj.copy(cr, uid, split.corresponding_so_line_id_split_po_line_wizard.id, so_copy_data, context=dict(context, keepDateAndDistrib=True))
                     # call the new procurement creation method
                     so_obj.action_ship_proc_create(cr, uid, [split.corresponding_so_id_split_po_line_wizard.id], context=context)
+                    # run the procurement, the make_po function detects the link to original po
+                    # and force merge the line to this po (even if it is not draft anymore)
                     # run the procurement, the make_po function detects the link to original po
                     # and force merge the line to this po (even if it is not draft anymore)
                     new_data_so = so_line_obj.read(cr, uid, [new_so_line_id], ['procurement_id'], context=context)

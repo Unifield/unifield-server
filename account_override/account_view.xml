@@ -58,6 +58,7 @@
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="type"/>
                     <field name="type_for_register"/>
+                    <field name="accrual_account" invisible="1"/>
                 </xpath>
             </field>
         </record>
@@ -71,12 +72,14 @@
             <field name="priority">25</field>
             <field name="arch" type="xml">
                 <xpath expr="/search/group[1]" position="replace">
-                    <group col="10" colspan="4">
+                    <group col="12" colspan="4">
 
-	                    <filter name="active" icon="terp-check" string="Active" context="{'filter_inactive_accounts': 1}"/>
-	                    <separator orientation="vertical"/>
+                        <filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
+                        <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('filter_active', '=', False)]"/>
+                        <separator orientation="vertical"/>
                         <filter icon="terp-sale" string="Receivable Accounts" domain="[('type','=','receivable')]"/>
                         <filter icon="terp-purchase" string="Payable Accounts" domain="[('type','=','payable')]"/>
+                        <filter name="accrual_account" string="Accrual Account" domain="[('accrual_account','=',True)]"/>
                         <separator orientation="vertical"/>
                         <newline/>
 
@@ -191,9 +194,14 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//filter[@string='To Review']" position="replace"/>
-                    <xpath expr="//field[@name='partner_id']" position="replace">
-                        <field name="partner_id" invisible="1"/>
-                        <field name="partner_type"/>
+                    <xpath expr="//field[@name='journal_id']" position="replace">
+                        <field name="journal_id"/>
+                        <field name="journal_type"/>
+                    </xpath>
+                    <xpath expr="//field[@name='date']" position="replace">
+                        <newline/>
+                        <field name="document_date" select="1"/>
+                        <field name="date" select="1"/>
                     </xpath>
                 </data>
             </field>
@@ -205,10 +213,37 @@
             <field name="model">account.move.line</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_move_line_filter" />
+            <field name="priority" eval="10"/>
             <field name="arch" type="xml">
-                <xpath expr="//filter[@string='Unbalanced']" position="replace">
-                    <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
-                </xpath>
+                <data>
+                    <xpath expr="//filter[@string='Unbalanced']" position="replace">
+                        <filter icon="terp-document-new" string="Invalid" domain="[('state','=','draft')]" help="Invalid Journal Items"/>
+                      </xpath>
+                    <xpath expr="//field[@name='ref']" position="replace">
+                    </xpath>
+                    <xpath expr="//field[@name='name']" position="replace">
+                    </xpath>
+                    <xpath expr="//field[@name='move_id']" position="replace">
+                        <newline/>
+                    </xpath>
+                    <xpath expr="//field[@name='date']" position="replace">
+                        <newline/>
+                        <field name="document_date" select="1"/>
+                        <field name="date" select="1"/>
+                        <newline/>
+                    </xpath>
+                    <xpath expr="//field[@name='partner_id']" position="replace">
+                        <field name="name" select="1"/>
+                    </xpath>
+                    <xpath expr="//field[@name='account_id']" position="before">
+                        <field name="move_id" select="1"/>
+                        <field name="ref" select="1"/>
+                    </xpath>
+                    <xpath expr="//field[@name='journal_id']" position="replace">
+                        <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
+                        <field name="journal_type"/>
+                    </xpath>
+                </data>
             </field>
         </record>
 
@@ -223,6 +258,9 @@
             <field name="help">A journal entry consists of several journal items, each of which is either a debit or a credit transaction. OpenERP automatically creates one journal entry per accounting document: invoice, refund, supplier payment, bank statements, etc.</field>
             <field name="context">{'from_web_menu': True}</field>
         </record>
+
+    <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
+    <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
 
     </data>
 </openerp>

@@ -786,7 +786,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
                 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -949,7 +949,7 @@ class shipment(osv.osv):
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', journal_type),
                                                                             ('is_current_instance', '=', True)])
             if not journal_ids:
-                raise osv.except_osv(_('Warning'), _('No %s journal found!' % (journal_type,)))
+                raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
             invoice_vals['journal_id'] = journal_ids[0]
                 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,
@@ -1044,7 +1044,7 @@ class shipment(osv.osv):
                                                         'analytic_distribution_id': distrib_id,
                                                        }, context=context)
 
-                    self.pool.get('stock.move').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
+                    self.pool.get('shipment').write(cr, uid, [shipment.id], {'invoice_id': invoice_id}, context=context)
                     if move.sale_line_id:
                         sale_obj.write(cr, uid, [move.sale_line_id.order_id.id], {'invoice_ids': [(4, invoice_id)],})
                         sale_line_obj.write(cr, uid, [move.sale_line_id.id], {'invoiced': True,
@@ -1153,7 +1153,9 @@ class pack_family_memory(osv.osv_memory):
                         values['amount'] += move.amount
                         values['currency_id'] = move.currency_id and move.currency_id.id or False
                     else:
-                        raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
+                        # when multiple moves are modified from/to values, the first one would raise an exception as the second one is not written yet
+                        pass
+                        #raise osv.except_osv(_('Error !'), _('Integrity check failed! Pack Family and Stock Moves from/to do not match.'))
                     
         return result
 
@@ -1318,6 +1320,28 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+
+    def fields_view_get(self, cr, uid, view_id, view_type, context=None, toolbar=False, submenu=False):
+        '''
+        Set the appropriate search view according to the context
+        '''
+        if not context:
+            context = {}
+
+        if not view_id and context.get('wh_dashboard') and view_type == 'search':
+            try:
+                if context.get('pick_type') == 'incoming':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
+                elif context.get('pick_type') == 'delivery':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_search')[1]
+                elif context.get('pick_type') == 'picking_ticket':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')[1]
+                elif context.get('pick_type') == 'pack':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_search')[1]
+            except ValueError:
+                pass
+
+        return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -1356,6 +1380,26 @@ class stock_picking(osv.osv):
         
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
+        pick_obj = self.pool.get('stock.picking')
+        pick = kwargs['pick']
+        message = kwargs['message']
+        if pick.type and pick.subtype:
+            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
+            return self.pool.get('res.log').create(cr, uid,
+                                                   {'name': message,
+                                                    'res_model': pick_obj._name,
+                                                    'secondary': False,
+                                                    'res_id': pick.id,
+                                                    'domain': domain,
+                                                    }, context=context)
+        return result
+
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook from stock>stock.py>stock_picking>log_picking
@@ -1364,6 +1408,9 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
+            return False
+        # if false the log will be defined by the method _hook_custom_log (which include a domain)
+        if pick.type and pick.subtype:
             return False
 
         return result
@@ -1387,6 +1434,9 @@ class stock_picking(osv.osv):
                                    sale_id=False,
                                    )
                 else:
+                    # if the corresponding draft picking ticket is done, we do not allow copy
+                    if obj.backorder_id and obj.backorder_id.state == 'done':
+                        raise osv.except_osv(_('Error !'), _('Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied.'))
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
                     base = base.split('-')[0] + '-'
@@ -1426,6 +1476,8 @@ class stock_picking(osv.osv):
         default.update(backorder_ids=[])
         default.update(previous_step_ids=[])
         default.update(pack_family_memory_ids=[])
+        
+        context['not_workflow'] = True
         result = super(stock_picking, self).copy_data(cr, uid, id, default=default, context=context)
         
         return result
@@ -1679,7 +1731,7 @@ class stock_picking(osv.osv):
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'), # old_multi get_vals
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals'),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
@@ -2305,6 +2357,7 @@ class stock_picking(osv.osv):
                     # copy the stock move and set the quantity
                     values = {'picking_id': new_pick_id,
                               'product_qty': partial['product_qty'],
+                              'product_uos_qty': partial['product_qty'],
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
@@ -2313,9 +2366,9 @@ class stock_picking(osv.osv):
                     values = self.do_create_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
                     new_move = move_obj.copy(cr, uid, move.id, values, context=dict(context, keepLineNumber=True))
                     
-                # decrement the initial move, cannot be less than zero
+                # decrement the initial move, cannot be less than zero and mark the stock move as processed - will not be updated by delivery_mech anymore
                 initial_qty = max(initial_qty - count, 0)
-                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty}, context=context)
+                move_obj.write(cr, uid, [move.id], {'product_qty': initial_qty, 'product_uos_qty': initial_qty, 'processed_stock_move': True}, context=context)
                 
             # confirm the new picking ticket
             wf_service = netsvc.LocalService("workflow")
@@ -2409,6 +2462,7 @@ class stock_picking(osv.osv):
                         first = False
                         # update existing move
                         values = {'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2419,6 +2473,7 @@ class stock_picking(osv.osv):
                         # copy the stock move and set the quantity
                         values = {'state': 'assigned',
                                   'product_qty': partial['product_qty'],
+                                  'product_uos_qty': partial['product_qty'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -3045,8 +3100,8 @@ class stock_move(osv.osv):
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
                 'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p', multi='get_vals',),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
-                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
+                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
+                'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',), # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
@@ -3167,6 +3222,17 @@ class sale_order(osv.osv):
                 move_data['location_dest_id'] = order.shop_id.warehouse_id.lot_output_id.id
             else:
                 move_data['location_dest_id'] = order.shop_id.warehouse_id.lot_packing_id.id
+                
+            if self.pool.get('product.product').browse(cr, uid, move_data['product_id']).type == 'service_recep':
+                move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+            
+            if 'sale_line_id' in move_data and move_data['sale_line_id']:
+                sale_line = self.pool.get('sale.order.line').browse(cr, uid, move_data['sale_line_id'], context=context)
+                if sale_line.type == 'make_to_order':
+                    move_data['location_id'] = self.pool.get('stock.location').get_cross_docking_location(cr, uid)
+                    move_data['move_cross_docking_ok'] = True
+                    # Update the stock.picking
+                    self.pool.get('stock.picking').write(cr, uid, move_data['picking_id'], {'cross_docking_ok': True}, context=context)
 
         move_data['state'] = 'confirmed'
         return move_data
@@ -3202,9 +3268,6 @@ class sale_order(osv.osv):
                 picking_data['subtype'] = 'standard'
                 picking_data['reason_type_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
                 pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
-            else:
-                # use the name according to picking ticket sequence
-                pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
             
         picking_data['name'] = pick_name        
         picking_data['flow_type'] = 'full'
@@ -3224,6 +3287,7 @@ class sale_order(osv.osv):
         '''
         setup = self.pool.get('unifield.setup.configuration').get_config(cr, uid)
         cond = super(sale_order, self)._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, *args, **kwargs)
+
         # On Simple OUT configuration, the system should confirm the OUT and launch a first check availability
         if setup.delivery_process != 'simple':
             cond = cond and False
@@ -3233,6 +3297,8 @@ class sale_order(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         if picking_id:
             picking_obj.log_picking(cr, uid, [picking_id], context=context)
+            # Launch a first check availability
+            self.pool.get('stock.picking').action_assign(cr, uid, [picking_id], context=context)
         
         return cond
 

@@ -108,7 +108,7 @@
 -
   !python {model: stock.forecast}: |
     import time
-    sf = self.create(cr, uid, {'product_id': ref("product_product_p0"),}, context=None)
+    sf = self.create(cr, uid, {'product_id': ref("product_product_p0"),}, context={})
     # test onchange
     self.onchange(cr, uid, [sf], ref("product_product_p0"), False, False, False, context=None)
     # update date planned of sol

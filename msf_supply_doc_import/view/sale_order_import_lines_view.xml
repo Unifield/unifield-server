@@ -12,16 +12,15 @@
                 <data>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree[@string='Sales Order Lines']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                    <label colspan="4" string="The columns should be in this order : Product Code*, Product Description*, Quantity*, Product UoM*, Unit Price*, Delivery Requested Date*, Currency*, Comment" align="0.0" invisible="1"/>
-                    <field name="file_to_import" colspan="2" />
-                    <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1"/>
+                    <button name="wizard_import_fo_line" string="Import the file" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1" confirm="Are you sure that you want to remove all the lines of this Field order?"/>
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
                 </group>
                 </xpath>
@@ -34,6 +33,8 @@
                     readonly="1" 
                     colspan="3" 
                     attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
+                    <field name="inactive_product" invisible="1" />
+                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="3"/>
                     <newline/>
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
@@ -42,6 +43,22 @@
                 </data>
             </field>
         </record>
+        
+        <!-- we display the error message in the form view instead
+        <record id="view_order_form_error" model="ir.ui.view">
+            <field name="name">sale.order.form.view.error</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="order_nomenclature.view_order_form" />
+            <field name="arch" type="xml">
+        		<xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree[@string='Sales Order Lines']//field[@name='comment']" position="replace"> 
+                	<field name="inactive_product" invisible="1" />
+                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                </xpath>
+            </field>
+        </record>
+         -->
         
     </data>
 </openerp>

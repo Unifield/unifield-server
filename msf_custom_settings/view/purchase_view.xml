@@ -29,16 +29,17 @@
                     <xpath expr="/form//field[@name='pricelist_id']" position="replace" >
                     </xpath>
                     <xpath expr="/form//group[@name='import']" position="before" >
-                        <group colspan="4" col="12">
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" 
-                            domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id}),  ('check_partner_rfq', '=', tender_id)]" 
-                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
-                            <field name="partner_type" colspan="3" />
-                            <field name="internal_type" string="Zone" colspan="3" />
-                            <field name="partner_address_id" colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                        <group name="partner_info" colspan="4" col="4">
+                            <field name="po_from_ir" invisible="1" />
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}"
+                                domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id}),  ('check_partner_rfq', '=', tender_id), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]"
+                                attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
+                            <field name="partner_type"  />
+                            <field name="partner_address_id"  attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="internal_type" string="Zone"  />
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
-                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
-                            <field name="origin" colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                         </group>
                     </xpath>
                     <xpath expr="/form/notebook" position="after">
@@ -47,20 +48,21 @@
                                 <field name="display_intl_transport_ok" invisible="1"/>
                                 <field name="intl_supplier_ok" invisible="1"/>
                                 <field name="transport_mode"
-                                    attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'readonly': [('shipped_rate', '!=', 0.00)]}"
+                                    attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'readonly': [('shipped_rate', 'not in', ['0,00', '0.00'])]}"
                                     />
                                 <label colspan="15"/>
                                 <field name="transport_cost" 
-                                    attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '!=', 0.00)]}" 
+                                    attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', 'not in', ['0,00', '0.00'])]}" 
                                     nolabel="1"
                                     />
-                                <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
+                                <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', 'not in', ['0,00', '0.00'])]}" nolabel="1"/>
                                 <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                             </group>
                                 <field name="currency_id" readonly="1"/>
                                 <field name="amount_untaxed" sum="Untaxed amount"/>
                                 <field name="amount_tax"/>
                                 <field name="amount_total" sum="Total amount"/>
+                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
                                 <newline/>
                                 <field name="functional_currency_id" readonly="1"/>
                                 <field name="functional_amount_untaxed"/>
@@ -73,13 +75,14 @@
                         </group>
                         <newline/>
 
-                        <group colspan="4" col="14">
+                        <group colspan="4" col="16">
                             <field name="state" readonly="1"/>
                             <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
                                 attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
-                            <button name="purchase_cancel" states="draft,confirmed,wait_auth,rfq_sent" string="Cancel" icon="gtk-cancel"/>
-                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
-                            <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/>
+                            <button name="purchase_cancel" states="draft,confirmed,rfq_sent" string="Cancel" icon="gtk-cancel"/>
+                            <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', ('po_from_ir', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
+                            <!-- UTP-469 − Remove the cancel button
+                                 <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/> -->
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
                             <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
@@ -87,6 +90,7 @@
                             <button name="purchase_confirm" states="draft" string="Validate" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '!=', False), ('state', '!=', 'draft')]}" />
                             <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
                             <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
+                            <button name="generate_po_from_rfq" states="done" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                             <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated')]}" />
                         </group>
                     </xpath>
@@ -94,10 +98,10 @@
                         <group colspan="2" col="3">
                             <field name="no_line" invisible="1" />
                             <field name="pricelist_id" string="Currency" colspan="2" 
-                                   attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"
+                                   attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"
                                    domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
                             <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
-                                    attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'in', ['rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
+                                    attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
                         </group>
                     </xpath>
 

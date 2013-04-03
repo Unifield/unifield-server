@@ -30,11 +30,11 @@
                                 </group>
                                 <group colspan="2" col="4">
                                     <separator string="Analytic Accounting"/>
-                                    <field name="destination_id"/>
-                                    <field name="cost_center_id"/>
-                                    <field name="funding_pool_id"/>
-                                    <field name="free1_id"/>
-                                    <field name="free2_id"/>
+                                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
+                                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
                                 </group>
                             </group>
                         </page>
@@ -89,11 +89,11 @@
                     <field name="amount" sum="Total amount"/>
                     <field name="currency_id"/>
                     <field name="state"/>
-                    <field name="destination_id" on_change="onchange_destination(destination_id, funding_pool_id, account_id)"/>
-                    <field name="cost_center_id"/>
-                    <field name="funding_pool_id"/>
-                    <field name="free1_id"/>
-                    <field name="free2_id"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, funding_pool_id, account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
                     <field name="analytic_state"/>
                 </tree>
             </field>
@@ -113,12 +113,13 @@
         </record>
 
         <record id="action_employee_allocation_tree" model="ir.actions.act_window">
-            <field name="name">Employee Allocation</field>
+            <field name="name">Local Staff Allocation</field>
             <field name="res_model">hr.employee</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="editable_view_employee_tree"/>
-            <field name="context">{'search_default_active': 1, 'search_default_employee_type_local': 1}</field>
+            <field name="search_view_id" ref="view_employee_filter_2"/>
+            <field name="domain">[('employee_type', '=', 'local')]</field>
         </record>
 
         <record id="action_employee_import_wizard" model="ir.actions.act_window">
@@ -146,7 +147,7 @@
         <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="1"/>
         <menuitem string="Import Payroll" action="action_payroll_import_wizard" id="menu_finance_payroll_import" parent="menu_finance_payroll" sequence="2"/>
         <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>
-        <menuitem string="Employee Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
+        <menuitem string="Local Staff Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
 
     </data>
 </openerp>

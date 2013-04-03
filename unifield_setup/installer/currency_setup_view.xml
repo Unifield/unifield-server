@@ -46,7 +46,7 @@
 
     <record id="currency_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_currency_setup"/>
-        <field name="sequence">15</field>
+        <field name="sequence">16</field>
         <field name="restart">onskip</field>
     </record>
   </data>

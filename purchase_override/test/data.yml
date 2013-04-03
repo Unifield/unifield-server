@@ -57,6 +57,7 @@
     name: S2
     supplier: True
     partner_type: external
+    donation_payable_account: donation_account
 -
     I create the address for S2
 -

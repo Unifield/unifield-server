@@ -131,7 +131,7 @@
 			id="menu_sourcing_line" parent="base.menu_sales" />
 			
 		<act_window name="Auto POs creation"
-		    res_model="procurement.order.compute.all"
+		    res_model="procurement.purchase.compute.all"
 		    src_model="sourcing.line"
 		    view_mode="form"
 		    target="new"

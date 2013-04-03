@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from collections import defaultdict
+from time import strftime
 
 class mass_reallocation_verification_wizard(osv.osv_memory):
     _name = 'mass.reallocation.verification.wizard'
@@ -48,6 +49,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
 
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, readonly=True),
+        'date': fields.date('Posting date', required=True, readonly=True),
         'error_ids': fields.many2many('account.analytic.line', 'mass_reallocation_error_rel', 'wizard_id', 'analytic_line_id', string="Errors", readonly=True),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_non_supported_rel', 'wizard_id', 'analytic_line_id', string="Non supported", readonly=True),
         'process_ids': fields.many2many('account.analytic.line', 'mass_reallocation_process_rel', 'wizard_id', 'analytic_line_id', string="Allocatable", readonly=True),
@@ -102,7 +104,7 @@ class mass_reallocation_verification_wizard(osv.osv_memory):
                     # Update distribution
                     self.pool.get('analytic.distribution').update_distribution_line_account(cr, uid, line.distrib_line_id.id, account_id, context=context)
                     # Then update analytic line
-                    self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, context=context)
+                    self.pool.get('account.analytic.line').update_account(cr, uid, [x.id for x in lines[distrib_id]], account_id, wiz.date, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 mass_reallocation_verification_wizard()
@@ -113,6 +115,7 @@ class mass_reallocation_wizard(osv.osv_memory):
 
     _columns = {
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True, domain="[('category', 'in', ['OC', 'FUNDING', 'FREE1', 'FREE2']), ('type', '!=', 'view')]"),
+        'date': fields.date('Posting date', required=True),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id', 
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
@@ -122,6 +125,7 @@ class mass_reallocation_wizard(osv.osv_memory):
     _default = {
         'state': lambda *a: 'normal',
         'display_fp': lambda *a: False,
+        'date': lambda *a: strftime('%Y-%m-%d'),
     }
 
     def default_get(self, cr, uid, fields=None, context=None):
@@ -144,6 +148,40 @@ class mass_reallocation_wizard(osv.osv_memory):
         res['display_fp'] = context.get('display_fp', False)
         return res
 
+    def check_date(self, cr, uid, ids, al_ids=[], date=False, context=None):
+        """
+        Date should be after document date and after posting date. So for all selected lines, the date should be:
+        - the youngest document date for all lines. For an example with 2 lines that have a document date to 5 januray and 6 february, the youngest date should be after February, the 6th.
+        - the youngest posting date for all lines. For an example with 2 lines that have a document date to 3 March and 26 March, the new posting date should be after the 26 March.
+        If the youngest document date is after the youngest posting date, there is a problem with lines. So user should refine its filtering.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if not date or not al_ids:
+            if not al_ids:
+                raise osv.except_osv(_('Warning'), _('No line to be processed (So no one is compatible.)'))
+            raise osv.except_osv(_('Error'), _('Some missing args in check_date method. Please contact an administrator.'))
+        # Initialisation of Document Date and Posting Date
+        dd = False
+        pd = False
+        for l in self.pool.get('account.analytic.line').browse(cr, uid, al_ids):
+            if not dd:
+                dd = l.document_date
+            if not pd:
+                pd = l.date
+            if l.document_date > dd:
+                dd = l.document_date
+            if l.date > pd:
+                pd = l.date
+        if dd > pd:
+            raise osv.except_osv(_('Error'), _('Maximum document date is superior to maximum of posting date. Check selected analytic lines dates first.'))
+        if date < dd:
+            raise osv.except_osv(_('Warning'), _('Given date is inferior to those from the maximum document date. Please change it to be superior or equal to %s') % (dd,))
+        if date < pd:
+            raise osv.except_osv(_('Warning'), _('Given date is inferior to those from the maximum posting date. You cannot post lines before the youngest one. Please change it to be superior or equal to %s') % (pd,))
+        return True
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Launch mass reallocation process
@@ -158,10 +196,12 @@ class mass_reallocation_wizard(osv.osv_memory):
         non_supported_ids = []
         process_ids = []
         account_id = False
+        date = False
         # Browse given wizard
         for wiz in self.browse(cr, uid, ids, context=context):
             to_process = [x.id for x in wiz.line_ids] or []
             account_id = wiz.account_id.id
+            date = wiz.date or strftime('%Y-%m-%d')
             # Don't process lines:
             # - that have same account (or cost_center_id)
             # - that are commitment lines
@@ -189,7 +229,7 @@ class mass_reallocation_wizard(osv.osv_memory):
                 valid_ids = self.pool.get('account.analytic.line').check_analytic_account(cr, uid, tmp_to_process, account_id, context=context)
                 process_ids.extend(valid_ids)
                 error_ids.extend([x for x in tmp_to_process if x not in valid_ids])
-        vals = {'account_id': account_id,}
+        vals = {'account_id': account_id, 'date': date,}
         # Display of elements
         if error_ids:
             vals.update({'error_ids': [(6, 0, error_ids)]})
@@ -197,6 +237,8 @@ class mass_reallocation_wizard(osv.osv_memory):
             vals.update({'other_ids': [(6, 0, non_supported_ids)]})
         if process_ids:
             vals.update({'process_ids': [(6, 0, process_ids)]})
+        # Check process_ids and date
+        self.check_date(cr, uid, ids, process_ids, date, context)
         verif_id = self.pool.get('mass.reallocation.verification.wizard').create(cr, uid, vals, context=context)
         # Create Mass Reallocation Verification Wizard
         return {

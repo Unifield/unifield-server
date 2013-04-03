@@ -86,13 +86,13 @@ class account_move_line_compute_currency(osv.osv):
         distrib_id = False
         if journal.default_debit_account_id.user_type.code == 'expense':
             ## Browse all lines to fetch some values
-            partner_id = employee_id = register_id = False
+            partner_id = employee_id = transfer_journal_id = False
             oldiest_date = False
             for rline in self.browse(cr, uid, lines):
                 account_id = (rline.account_id and rline.account_id.id) or False
                 partner_id = (rline.partner_id and rline.partner_id.id) or False
                 employee_id = (rline.employee_id and rline.employee_id.id) or False
-                register_id = (rline.register_id and rline.register_id.id) or False
+                transfer_journal_id = (rline.transfer_journal_id and rline.transfer_journal_id.id) or False
                 currency_id = (rline.currency_id and rline.currency_id.id) or False
                 if not oldiest_date:
                     oldiest_date = rline.date or False
@@ -111,12 +111,12 @@ class account_move_line_compute_currency(osv.osv):
                     break
             
             if not period_id:
-                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s' % current_date))
+                raise osv.except_osv(_('Warning'), _('No open period found for this date: %s') % current_date)
             
             # verify that a fx gain/loss account exists
             search_ids = self.pool.get('account.analytic.account').search(cr, uid, [('for_fx_gain_loss', '=', True)], context=context)
             if not search_ids:
-                raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "Fox FX gain/loss" to permit reconciliation!'))
+                raise osv.except_osv(_('Warning'), _('Please activate an analytic account with "For FX gain/loss" to allow reconciliation!'))
             # Prepare some values
             partner_db = partner_cr = addendum_db = addendum_cr = None
             if total < 0.0:
@@ -165,7 +165,7 @@ class account_move_line_compute_currency(osv.osv):
                 'period_id': period_id,
                 'partner_id': partner_id,
                 'employee_id': employee_id,
-                'register_id': register_id,
+                'transfer_journal_id': transfer_journal_id,
                 'credit': 0.0,
                 'debit': 0.0,
                 'name': 'Realised loss/gain',
@@ -242,16 +242,22 @@ class account_move_line_compute_currency(osv.osv):
                     # search other line from same move in order to update its amount
                     other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
                     # Update addendum line
+                    partner_txt = ''
                     sql = """
                         UPDATE account_move_line
-                        SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
+                        SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s, partner_txt=%s
                         WHERE id=%s
                     """
-                    cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
+                    cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, partner_txt or '', tuple([al.id])])
                     # Update partner line
                     if isinstance(other_line_ids, (int, long)):
                         other_line_ids = [other_line_ids]
-                    cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple(other_line_ids)])
+                    for o in self.pool.get('account.move.line').browse(cr, uid, other_line_ids):
+                        if o.reconcile_total_partial_id:
+                            data = self.pool.get('account.move.reconcile').name_get(cr, uid, o.reconcile_total_partial_id.id)
+                            if data and data[0] and data[0][1]:
+                                partner_txt = data[0][1]
+                        cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, partner_txt or '', tuple([o.id])])
                     # Update analytic lines
                     analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
                     al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total,}, context=context)

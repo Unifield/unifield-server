@@ -31,8 +31,69 @@ class analytic_account(osv.osv):
     _name = "account.analytic.account"
     _inherit = "account.analytic.account"
 
+    def _get_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        If date out of date_start/date of given analytic account, then account is inactive.
+        The comparison could be done via a date given in context.
+        '''
+        res = {}
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for a in self.browse(cr, uid, ids):
+            res[a.id] = True
+            if a.date_start > cmp_date:
+                res[a.id] = False
+            if a.date and a.date <= cmp_date:
+                res[a.id] = False
+        return res
+
+    def _search_filter_active(self, cr, uid, ids, name, args, context=None):
+        """
+        UTP-410: Add the search on active/inactive CC
+        """
+        arg = []
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for x in args:
+            if x[0] == 'filter_active' and x[2] == True:
+                arg.append(('date_start', '<=', cmp_date))
+                arg.append('|')
+                arg.append(('date', '>', cmp_date))
+                arg.append(('date', '=', False))
+            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append(('date_start', '>', cmp_date))
+                arg.append(('date', '<=', cmp_date))
+        return arg
+
+    def _search_closed_by_a_fp(self, cr, uid, ids, name, args, context=None):
+        """
+        UTP-423: Do not display analytic accounts linked to a soft/hard closed contract.
+        """
+        res = [('id', 'not in', [])]
+        if args and args[0] and len(args[0]) == 3:
+            if args[0][1] != '=':
+                raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
+            # Search all fp_ids from soft_closed contract
+            sql="""SELECT a.id
+                FROM account_analytic_account a, financing_contract_contract fcc, financing_contract_funding_pool_line fcfl
+                WHERE fcfl.contract_id = fcc.id
+                AND fcfl.funding_pool_id = a.id
+                AND fcc.state in ('soft_closed', 'hard_closed');"""
+            cr.execute(sql)
+            sql_res = cr.fetchall()
+            if sql_res:
+                aa_ids = self.is_blocked_by_a_contract(cr, uid, [x and x[0] for x in sql_res])
+                if aa_ids:
+                    if isinstance(aa_ids, (int, long)):
+                        aa_ids = [aa_ids]
+                    res = [('id', 'not in', aa_ids)]
+        return res
+
     _columns = {
-        'name': fields.char('Name', size=128, required=True),
+        'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
         'type': fields.selection([('view','View'), ('normal','Normal')], 'Type', help='If you select the View Type, it means you won\'t allow to create journal entries using that account.'),
         'date_start': fields.date('Active from', required=True),
@@ -47,12 +108,15 @@ class analytic_account(osv.osv):
         'destination_ids': many2many_notlazy('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
         'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
+        'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
+        'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
     }
 
     _defaults ={
         'date_start': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'for_fx_gain_loss': lambda *a: False,
     }
+
     def _check_unicity(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -116,7 +180,11 @@ class analytic_account(osv.osv):
         default = default.copy()
         default['code'] = (account['code'] or '') + '(copy)'
         default['name'] = (account['name'] or '') + '(copy)'
-        return super(analytic_account, self).copy(cr, uid, id, default, context=context)
+        default['tuple_destination_summary'] = []
+        # code is deleted in copy method in addons
+        new_id = super(analytic_account, self).copy(cr, uid, id, default, context=context)
+        self.write(cr, uid, new_id, {'code': '%s(copy)' % (account['code'] or '')})
+        return new_id
 
     def set_funding_pool_parent(self, cr, uid, vals):
         if 'category' in vals and \
@@ -130,8 +198,8 @@ class analytic_account(osv.osv):
     def _check_date(self, vals):
         if 'date' in vals and vals['date'] is not False:
             if vals['date'] <= datetime.date.today().strftime('%Y-%m-%d'):
-                 # validate the date (must be > today)
-                 raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
+                # validate the date (must be > today)
+                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date 
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
@@ -154,13 +222,10 @@ class analytic_account(osv.osv):
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         """
-        No description found
+        FIXME: this method do others things that not have been documented. Please complete here what method do.
         """
-        if context and 'filter_inactive_accounts' in context and context['filter_inactive_accounts']:
-            args.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append('|')
-            args.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
-            args.append(('date', '=', False))
+        if not context:
+            context = {}
         if context and 'search_by_ids' in context and context['search_by_ids']:
             args2 = args[-1][2]
             del args[-1]
@@ -178,7 +243,8 @@ class analytic_account(osv.osv):
                     fp_ids.append(adl.get('funding_pool_ids'))
                 fp_ids = flatten(fp_ids)
                 args[i] = ('id', 'in', fp_ids)
-        return super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        res = super(analytic_account, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+        return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
@@ -210,6 +276,8 @@ class analytic_account(osv.osv):
             args=[]
         if context is None:
             context={}
+        if context.get('hide_inactive', False):
+            args.append(('filter_active', '=', True))
         if context.get('current_model') == 'project.project':
             cr.execute("select analytic_account_id from project_project")
             project_ids = [x[0] for x in cr.fetchall()]

@@ -25,18 +25,58 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from time import strftime
+import datetime
 
 class account_account(osv.osv):
     _name = "account.account"
     _inherit = "account.account"
 
+    def _get_active(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        If date out of date_start/date of given account, then account is inactive.
+        The comparison could be done via a date given in context.
+        '''
+        res = {}
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for a in self.browse(cr, uid, ids):
+            res[a.id] = True
+            if a.activation_date > cmp_date:
+                res[a.id] = False
+            if a.inactivation_date and a.inactivation_date <= cmp_date:
+                res[a.id] = False
+        return res
+
+    def _search_filter_active(self, cr, uid, ids, name, args, context=None):
+        """
+        Add the search on active/inactive account
+        """
+        arg = []
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for x in args:
+            if x[0] == 'filter_active' and x[2] == True:
+                arg.append(('activation_date', '<=', cmp_date))
+                arg.append('|')
+                arg.append(('inactivation_date', '>', cmp_date))
+                arg.append(('inactivation_date', '=', False))
+            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append(('activation_date', '>', cmp_date))
+                arg.append(('inactivation_date', '<=', cmp_date))
+        return arg
+
     _columns = {
+        'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'), 
             ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')], string="Type for specific treatment", required=True,
             help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element 
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
             when he add a new register line.
             """),
+        'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
     }
 
     _defaults = {
@@ -77,6 +117,12 @@ account_journal()
 class account_move(osv.osv):
     _inherit = 'account.move'
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id', 
@@ -84,8 +130,10 @@ class account_move(osv.osv):
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj']),('is_current_instance','=',True)]"),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj'])]"),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
+        'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
+            help="This indicates which Journal Type is attached to this Journal Entry"),
     }
 
     _defaults = {
@@ -162,17 +210,22 @@ class account_move(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        Check that we can write on this if we come from web menu
+        Check that we can write on this if we come from web menu or synchronisation.
         """
         if not context:
             context = {}
-        if context.get('from_web_menu', False):
+        if context.get('from_web_menu', False) or context.get('sync_data', False):
+            # by default, from synchro, we just need to update period_id and journal_id
+            fields = ['journal_id', 'period_id']
+            # from web menu, we also update document_date and date
+            if context.get('from_web_menu', False):
+                fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
-                if m.status == 'sys':
+                if context.get('from_web_menu', False) and m.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
-                for el in ['document_date', 'date', 'journal_id', 'period_id']:
+                for el in fields:
                     if el in vals:
                         context[el] = vals.get(el)
                         for ml in m.line_id:
@@ -180,6 +233,22 @@ class account_move(osv.osv):
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
+        return res
+
+    def post(self, cr, uid, ids, context=None):
+        """
+        Add document date
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # If invoice in context, we come from self.action_move_create from invoice.py. So at invoice validation step.
+        if context.get('invoice', False):
+            inv_info = self.pool.get('account.invoice').read(cr, uid, context.get('invoice') and context.get('invoice').id, ['document_date'])
+            if inv_info.get('document_date', False):
+                self.write(cr, uid, ids, {'document_date': inv_info.get('document_date')})
+        res = super(account_move, self).post(cr, uid, ids, context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):

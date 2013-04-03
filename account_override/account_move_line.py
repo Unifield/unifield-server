@@ -65,7 +65,13 @@ class account_move_line(osv.osv):
         m = re.match(pattern, text)
         if m and m.groups():
             number = m.groups() and m.groups()[0]
-            replacement = string + str(int(number) + 1) + ' - '
+            # Add a check on number due to UF-1396
+            if not isinstance(number, int):
+                try:
+                    nn = int(number)
+                except ValueError:
+                    nn = 0
+            replacement = string + str(nn + 1) + ' - '
             if string == 'REV':
                 replacement = string + ' - '
             result = re.sub(pattern, replacement, text, 1)
@@ -97,8 +103,8 @@ class account_move_line(osv.osv):
         Just used to not break default OpenERP behaviour
         """
         if name and value:
-            sql = "UPDATE %s SET %s = '%s' WHERE id = %s" % (self._table, 'ref', value, id)
-            cr.execute(sql)
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            cr.execute(sql, (value, id))
         return True
 
     def _search_reference(self, cr, uid, obj, name, args, context):
@@ -114,13 +120,19 @@ class account_move_line(osv.osv):
             return [('move_id.reference', '=', args[0][2])]
         return []
 
+    def _journal_type_get(self, cr, uid, context=None):
+        """
+        Get journal types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context)
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
             help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
-        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, domain="[('state', '=', 'draft')]"),
+        'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True),
         'name': fields.char('Description', size=64, required=True),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
         'debit': fields.float('Func. Debit', digits_compute=dp.get_precision('Account')),
@@ -137,6 +149,9 @@ class account_move_line(osv.osv):
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True, readonly=True),
         'state': fields.selection([('draft','Invalid'), ('valid','Valid')], 'State', readonly=True,
             help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
+        'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
+        help="This indicates the type of the Journal attached to this Journal Item"),
+        'reconcile_txt': fields.text(string="Reconcile", help="Help user to display and sort Reconciliation"),
     }
 
     _defaults = {
@@ -144,6 +159,7 @@ class account_move_line(osv.osv):
         'is_write_off': lambda *a: False,
         'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
+        'reconcile_txt': lambda *a: '',
     }
 
     _order = 'move_id DESC'
@@ -247,6 +263,22 @@ class account_move_line(osv.osv):
                 self.copy(cr, uid, ml.id, {'move_id': ml.move_id.id, 'name': '(copy) ' + ml.name or '', 'document_date': ml.move_id.document_date, 'date': ml.move_id.date}, context)
                 ml_copied_ids.append(ml.id)
         return ml_copied_ids
+
+    def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=80):
+        """
+        In search view permit to search regarding Entry Sequence from journal entry (move_id.name field).
+        This comes from UF-1719.
+        """
+        if args is None:
+            args = []
+        if context is None:
+            context = {}
+        ids = []
+        if name:
+            ids = self.search(cr, user, ['|', ('name', 'ilike', name), ('move_id.name', 'ilike', name)]+ args, limit=limit)
+        if not ids:
+            ids = self.search(cr, user, [('name', operator, name)]+ args, limit=limit)
+        return self.name_get(cr, user, ids, context=context)
 
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

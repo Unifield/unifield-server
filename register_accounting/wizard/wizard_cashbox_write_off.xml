@@ -11,10 +11,11 @@
                     <separator string="Your decision about the action to do on this CashBox"/>
                     <field name='choice'/>
                     <newline />
-                    <field name='account_id' attrs="{'invisible':[('choice','!=','writeoff')], 'required':[('choice', '=', 'writeoff')]}"/>
+                    <!-- Delete since UTP-209 -->
+                    <!--field name='account_id' attrs="{'invisible':[('choice','!=','writeoff')], 'required':[('choice', '=', 'writeoff')]}"/>
                     <newline />
                     <field name='amount' attrs="{'invisible':[('choice','!=','writeoff')]}"/>
-                    <newline />
+                    <newline /-->
                     <group colspan="4">
                         <button string='Cancel' special='cancel' icon='gtk-cancel' />
                         <button string='Ok' name='action_confirm_choice' type='object' icon='gtk-apply'/>
@@ -25,7 +26,7 @@
 
           <!-- Actions -->
           <act_window id="action_write_off"
-            name="Handle Cash Discrepancy"
+            name="Re-Open cash box"
             res_model="cashbox.write.off"
             src_model="account.bank.statement"
             key2="client_action_multi"

@@ -236,6 +236,27 @@ class account_cash_statement(osv.osv):
                         self.write(cr, uid, [next_st.id], {'balance_start': amount})
         return res
 
+    def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Sum of given register's transactions
+        """
+        res = {}
+        if not ids:
+            return res
+        # Complete those that have no result
+        for id in ids:
+            res[id] = 0.0
+        # COMPUTE amounts
+        cr.execute("""
+        SELECT statement_id, SUM(amount) 
+        FROM account_bank_statement_line 
+        WHERE statement_id in %s
+        GROUP BY statement_id""", (tuple(ids,),))
+        sql_res = cr.fetchall()
+        if sql_res:
+            res.update(dict(sql_res))
+        return res
+
     _columns = {
             'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
             'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')), 
@@ -250,6 +271,8 @@ class account_cash_statement(osv.osv):
             'comments': fields.char('Comments', size=64, required=False, readonly=False),
             'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance', 
                 help="Opening balance + Cash Transaction"),
+            # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
+            'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):
@@ -311,30 +334,25 @@ account_cash_statement()
 class account_cashbox_line(osv.osv):
 
     _inherit = "account.cashbox.line"
+    _order = "pieces"
 
     def create(self, cr, uid, vals, context=None):
         """
-        Override for the synch module: create new cashbox line only when this line for the cash register does not exist 
+        Override for the synch module: remove existing cashbox line if it is here
         """
-        pieces = int(vals['pieces'])
+        pieces = float(vals['pieces'])
         existed_ids = False
-        temp = "-open-"
         
         if 'starting_id' in vals:
-            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], context=context)
+            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], limit=1, context=context)
 
         if 'ending_id' in vals:
-            temp = "-close-"
-            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], context=context)
-        
-        number = False
-        if 'number' in vals:
-            number = vals['number']
+            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], limit=1, context=context)
         
         if existed_ids:
-            return osv.osv.write(self, cr, uid, existed_ids, vals, context=context)
+            self.unlink(cr, uid, existed_ids, context=context)
         
-        return osv.osv.create(self, cr, uid, vals, context=None)
+        return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
     
 account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
