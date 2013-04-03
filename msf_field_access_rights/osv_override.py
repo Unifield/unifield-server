@@ -415,21 +415,20 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                     if attrs.get('readonly', False):
                                         # concatenate domain with existing domains
                                         if isinstance(attrs.get('readonly'), (tuple, list)):
-                                            attrs['readonly'].insert(0, domain_value)
-                                            attrs['readonly'].insert(0, '|')
+                                            attrs['readonly'].insert(0, domain_value_or)
                                         else:
                                             attrs['readonly'] = str(domain_value)
                                     else:
-                                        attrs['readonly'] = str( domain_value_or )
+                                        attrs['readonly'] = str( domain_value )
 
                                     field.set('attrs', str(attrs))
                                 else:
-                                    field.set('attrs', str( {'readonly': domain_value_or} ))
+                                    field.set('attrs', str( {'readonly': domain_value} ))
 
                         # add 'hidden by field access rules' flag
                         if field_name in self._columns:
                             field.attrib['help'] = '[Field Disabled by Field Access Rights] ' + self._columns[field_name].help
-                                
+                
                 # get the modified xml string and return it
                 fields_view['arch'] = etree.tostring(view_xml)
                 return fields_view
