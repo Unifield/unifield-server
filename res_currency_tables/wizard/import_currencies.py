@@ -51,16 +51,22 @@ class import_currencies(osv.osv_memory):
         return
                 
     def import_rates(self, cr, uid, ids, context=None):
+        """
+        
+        """
+        # Some checks
         if context is None:
             context = {}
+        # Prepare some values
         currency_obj = self.pool.get('res.currency')
         currency_rate_obj = self.pool.get('res.currency.rate')
-        
         undefined_currencies = ""
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
+            if not import_data:
+                raise osv.except_osv(_('Warning'), _('File is empty.'))
         
             self._check_periods(cr, uid, wizard.rate_date, context=context)
         
@@ -96,7 +102,7 @@ class import_currencies(osv.osv_memory):
                             currency_rate_obj.create(cr, uid, {'name': wizard.rate_date,
                                                                'rate': float(line[1]),
                                                                'currency_id': currency_ids[0]})
-                            
+        # Return undefined currencies
         if len(undefined_currencies) > 0:
             wizard_id = self.pool.get('warning.import.currencies').create(cr,
                                                                           uid,
