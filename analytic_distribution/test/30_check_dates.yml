@@ -47,7 +47,7 @@
     al_ids = ana_obj.search(cr, uid, [('cost_center_id', '=', ref('cc1')), ('account_id', '=', ref('analytic_account_msf_private_funds')), ('general_account_id', '=', ref('account_account_expense0'))])
     if isinstance(al_ids, (int, long)):
       al_ids = [al_ids]
-    wiz_id = self.create(cr, uid, {'account_id': ref('fp1'), 'line_ids': [(6, 0, x) for x in [al_ids]], 'date': '%s-%s-17' % (datetime.now().year + 10, datetime.now().month)})
+    wiz_id = self.create(cr, uid, {'account_id': ref('fp1'), 'line_ids': [(6, 0, x) for x in [al_ids]], 'date': '%s-%s-17' % (datetime.now().year + 10, datetime.now().month)}, context={})
     try:
       res = self.button_validate(cr, uid, wiz_id)
     except osv.except_osv, e:
@@ -64,7 +64,7 @@
     al_ids = ana_obj.search(cr, uid, [('cost_center_id', '=', ref('cc1')), ('account_id', '=', ref('analytic_account_msf_private_funds')), ('general_account_id', '=', ref('account_account_expense0'))])
     if isinstance(al_ids, (int, long)):
       al_ids = [al_ids]
-    wiz_id = self.create(cr, uid, {'account_id': ref('cc2'), 'line_ids': [(6, 0, x) for x in [al_ids]], 'date': '%s-%s-17' % (datetime.now().year + 10, datetime.now().month)})
+    wiz_id = self.create(cr, uid, {'account_id': ref('cc2'), 'line_ids': [(6, 0, x) for x in [al_ids]], 'date': '%s-%s-17' % (datetime.now().year + 10, datetime.now().month)}, context={})
     try:
       res = self.button_validate(cr, uid, wiz_id)
     except osv.except_osv, e:
@@ -83,7 +83,7 @@
     from datetime import datetime
     for al in ana_obj.browse(cr, uid, al_ids):
       ana_obj.write(cr, uid, al_ids, {'document_date': '%s-%s-01' % (datetime.now().year, datetime.now().month), })
-    wiz_id = self.create(cr, uid, {'account_id': ref('cc3'), 'line_ids': [(6, 0, x) for x in [al_ids]], 'date': '%s-%s-17' % (datetime.now().year + 10, datetime.now().month)})
+    wiz_id = self.create(cr, uid, {'account_id': ref('cc3'), 'line_ids': [(6, 0, x) for x in [al_ids]], 'date': '%s-%s-17' % (datetime.now().year + 10, datetime.now().month)}, context={})
     res = self.button_validate(cr, uid, wiz_id)
     # Should have this: {'view_mode': 'form', 'res_id': [1], 'name': 'Verification Result', 'context': {}, 'view_type': 'form', 'res_model': 'mass.reallocation.verification.wizard', 'type': 'ir.actions.act_window', 'target': 'new'}
     next_obj = res.get('res_model', False) and self.pool.get(res.get('res_model')) or False

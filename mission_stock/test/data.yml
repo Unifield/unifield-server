@@ -112,20 +112,20 @@
 -
   !python {model: stock.location.configuration.wizard}: |
     eprep_id = self.create(cr, uid, {'location_name': 'EPREP',
-                                     'location_usage': 'eprep',})
+                                     'location_usage': 'eprep',}, context={})
     is1_id = self.create(cr, uid, {'location_name': 'IS1',
-                                   'location_usage': 'stock',})
+                                   'location_usage': 'stock',}, context={})
     is2_id = self.create(cr, uid, {'location_name': 'IS2',
-                                   'location_usage': 'stock',})
+                                   'location_usage': 'stock',}, context={})
     cu1_id = self.create(cr, uid, {'location_name': 'CU1',
                                    'location_usage': 'consumption_unit',
-                                   'location_type': 'internal'})
+                                   'location_type': 'internal'}, context={})
     cu2_id = self.create(cr, uid, {'location_name': 'CU2',
                                    'location_usage': 'consumption_unit',
-                                   'location_type': 'internal'})
+                                   'location_type': 'internal'}, context={})
     cu3_id = self.create(cr, uid, {'location_name': 'CU3',
                                    'location_usage': 'consumption_unit',
-                                   'location_type': 'customer'})
+                                   'location_type': 'customer'}, context={})
     for to_create in [eprep_id, is1_id, is2_id, cu1_id, cu2_id, cu3_id]:
         self.confirm_creation(cr, uid, to_create)
 -
