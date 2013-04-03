@@ -245,7 +245,7 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <search string="Link nomenclature/category">
-		            <field name="name" />
+		            <field name="custom_name" />
 		            <field name="category_id" />
 				<field name="nomen_type_s"  />
 

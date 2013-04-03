@@ -381,12 +381,38 @@ class product_nomenclature(osv.osv):
                 narg += [('type','=',arg[2] )]
         return narg
 
+    def _get_custom_name(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
+
+    def _search_custom_name(self, cr, uid, obj, name, args, context=None):
+        """
+        Enable to search a nomenclature level according all its levels
+        """
+        if not args:
+            return []
+        if args[0][1] != "ilike":
+            raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
+        dom = ['|', ('name', 'ilike', args[0][2]), ('parent_id', 'ilike', args[0][2])]
+        ids = self.search(cr, uid, dom)
+        if not ids:
+            return [('id', '=', 0)]
+        return [('id', 'in', ids)]
+
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
         'name': fields.char('Name', size=64, required=True, select=True, translate=1),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
+        'custom_name': fields.function(_get_custom_name, method=True, type="char", string='Name', fnct_search=_search_custom_name),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
         # TODO try to display child_ids on screen. which result ?
