@@ -119,11 +119,13 @@ class hq_entries(osv.osv):
     
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'cost_center_id':
-            cost_center_data = self.read(cr, uid, ids, [dest_field], context=context)
             res = []
-            for data in cost_center_data:
-                if data['cost_center_id']:
-                    cost_center_name = data['cost_center_id'][1][:3]
+            for line_id in ids:
+                line_data = self.browse(cr, uid, line_id, context=context)
+                if line_data.cost_center_id:
+                    cost_center_name = line_data.cost_center_id and \
+                                       line_data.cost_center_id.code and \
+                                       line_data.cost_center_id.code[:3] or ""
                     cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
                                                                                                  ('code', '=', cost_center_name)], context=context)
                     if len(cost_center_ids) > 0:
