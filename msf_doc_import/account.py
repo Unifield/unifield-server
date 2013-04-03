@@ -373,7 +373,7 @@ class msf_doc_import_accounting_lines(osv.osv):
         'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
-        'wizard_id': fields.many2one('msf.doc.import.accounting', "Wizard", required=True, readonly=True),
+        'wizard_id': fields.integer("Wizard", required=True, readonly=True),
     }
 
     _defaults = {
