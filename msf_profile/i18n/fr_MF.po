@@ -49539,6 +49539,7 @@ msgstr "Réclamation"
 #: view:procurement.request.import:0
 #: field:supplier.catalogue,file_to_import:0
 #: field:composition.kit,file_to_import:0
+#: field:composition.kit,real_file_to_import:0
 #: view:wizard.import.fo.line:0
 #: field:wizard.import.fo.line,file:0
 #: view:wizard.import.ir.line:0
@@ -66639,6 +66640,19 @@ msgstr "Vous pouvez utiliser le modèle généré depuis l'export. \n"
 " Les colonnes doivent être dans cet ordre: \n"
 "                                        Module, Code Produit*, Description produit, Quantité et UdM du produit"
 
+#. module: msf_supply_doc_import
+#: help:composition.kit,real_file_to_import:0
+msgid "You can use the template of the export for the format that you need to use. \n"
+" \n"
+"                                        The file should be in XML Spreadsheet 2003 format. \n"
+" The columns should be in this order : \n"
+"                                        Module*, Product Code*, Product Description*, Quantity*, Product UoM*, Asset, Batch Number and Expiry Date"
+msgstr "Vous pouvez utiliser le modèle généré depuis l'export. \n"
+" \n"
+"                                        Le fichier doit être dans le format XML Spreadsheet 2003. \n"
+" Les colonnes doivent être dans cet ordre: \n"
+"                                        Module, Code Produit*, Description produit, Quantité, UdM du produit, Bien, Numéro de lot et Date d'expiration"
+
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_composition_kit_xls
 msgid "Composition Kit Excel Export"
@@ -66831,6 +66845,14 @@ msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure �
 #, python-format
 msgid "The UOM Name was empty. (Details: %s)"
 msgstr "Le nom de l'UdM était vide. (Détails: %s)"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:110
+#, python-format
+msgid "You should have exactly 5 columns in this order:\n"
+"Product Code*, Product Description*, AMC, FMC, Valid Until"
+msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
+"Code Produit*, Description du Produit*, CCM, PCM, Valide jusqu'au"
 
 #. module: consumption_calculation
 #: view:real.average.consumption:0
@@ -67248,6 +67270,22 @@ msgstr "ces produits inactifs"
 #, python-format
 msgid "%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez générer une demande de devis vous devez supprimer/corriger les lignes contenant ces produits inactifs (lignes en rouge %s)"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/composition_kit.py:205
+#, python-format
+msgid "You should have exactly 8 columns in this order:\n"
+"Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Batch Number, Expiry Date"
+msgstr "Vous devriez avoir exactement 8 colonnes dans cet ordre:\n"
+"Module, Code Produit*, Description du Produit*, Quantité et UdM du produit, Bien, Numéro de lot, Date d'expiration"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/composition_kit.py:111
+#, python-format
+msgid "You should have exactly 5 columns in this order:\n"
+"Module, Product Code*, Product Description, Quantity and Product UOM"
+msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
+"Module, Code Produit*, Description du Produit*, Quantité et UdM du produit"
 
 #. module: msf_supply_doc_import
 #: code:addons/msf_supply_doc_import/check_line.py:245
