@@ -30,37 +30,6 @@ from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from csv import DictReader
 
-class msf_doc_import_accounting_lines(osv.osv):
-    _name = 'msf.doc.import.accounting.lines'
-
-    _columns = {
-        'description': fields.text("Description", required=False, readonly=True),
-        'ref': fields.text("Reference", required=False, readonly=True),
-        'document_date': fields.date("Document date", required=True, readonly=True),
-        'date': fields.date("Posting date", required=True, readonly=True),
-        'account_id': fields.many2one('account.account', "G/L Account", required=True, readonly=True),
-        'destination_id': fields.many2one('account.analytic.account', "Destination", required=False, readonly=True),
-        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, readonly=True),
-        'debit': fields.float("Debit", required=False, readonly=True),
-        'credit': fields.float("Credit", required=False, readonly=True),
-        'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
-        'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
-        'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
-        'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
-        'wizard_id': fields.many2one('msf.doc.import.accounting', "Wizard", required=True, readonly=True),
-    }
-
-    _defaults = {
-        'description': lambda *a: '',
-        'ref': lambda *a: '',
-        'document_date': lambda *a: strftime('%Y-%m-%d'),
-        'date': lambda *a: strftime('%Y-%m-%d'),
-        'debit': lambda *a: 0.0,
-        'credit': lambda *a: 0.0,
-    }
-
-msf_doc_import_accounting_lines()
-
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
 
@@ -386,4 +355,35 @@ class msf_doc_import_accounting(osv.osv_memory):
         }
 
 msf_doc_import_accounting()
+
+class msf_doc_import_accounting_lines(osv.osv):
+    _name = 'msf.doc.import.accounting.lines'
+
+    _columns = {
+        'description': fields.text("Description", required=False, readonly=True),
+        'ref': fields.text("Reference", required=False, readonly=True),
+        'document_date': fields.date("Document date", required=True, readonly=True),
+        'date': fields.date("Posting date", required=True, readonly=True),
+        'account_id': fields.many2one('account.account', "G/L Account", required=True, readonly=True),
+        'destination_id': fields.many2one('account.analytic.account', "Destination", required=False, readonly=True),
+        'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", required=False, readonly=True),
+        'debit': fields.float("Debit", required=False, readonly=True),
+        'credit': fields.float("Credit", required=False, readonly=True),
+        'currency_id': fields.many2one('res.currency', "Currency", required=True, readonly=True),
+        'partner_id': fields.many2one('res.partner', "Partner", required=False, readonly=True),
+        'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
+        'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
+        'wizard_id': fields.many2one('msf.doc.import.accounting', "Wizard", required=True, readonly=True),
+    }
+
+    _defaults = {
+        'description': lambda *a: '',
+        'ref': lambda *a: '',
+        'document_date': lambda *a: strftime('%Y-%m-%d'),
+        'date': lambda *a: strftime('%Y-%m-%d'),
+        'debit': lambda *a: 0.0,
+        'credit': lambda *a: 0.0,
+    }
+
+msf_doc_import_accounting_lines()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
