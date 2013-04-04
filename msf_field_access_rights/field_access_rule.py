@@ -67,7 +67,7 @@ class field_access_rule(osv.osv):
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
         'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
         
-        'family_model_ids': fields.function(_get_family_model_ids, string='Family Model IDs', type='many2many', relation='ir.model', method=True, store=True),
+        'family_model_ids': fields.function(_get_family_model_ids, string='Family Model IDs', type='many2many', relation='ir.model', method=True),
         }
 
     _defaults = {
