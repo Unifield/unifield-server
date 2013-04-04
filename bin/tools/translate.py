@@ -922,6 +922,7 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
 
         # read the rest of the file
         line = 1
+        clear_cache = False
         for row in reader:
             line += 1
             # skip empty rows and rows where the translation field (=last fiefd) is empty
@@ -962,9 +963,14 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
             ids = trans_obj.search(cr, uid, args)
             if ids:
                 if context.get('overwrite') and dic['value']:
-                    trans_obj.write(cr, uid, ids, {'value': dic['value']})
+                    # trans_obj.write(cr, uid, ids, {'value': dic['value']})
+                    # bypass write method to speed up the update, the cache will be cleared after the import
+                    clear_cache = True
+                    cr.execute('UPDATE ir_translation SET value=%s WHERE id in %s', (dic['value'], tuple(ids)))
             else:
                 trans_obj.create(cr, uid, dic)
+        if clear_cache:
+            tools.cache.clean_caches_for_db(cr.dbname)
         if verbose:
             logger.info("translation file loaded succesfully")
     except IOError:
