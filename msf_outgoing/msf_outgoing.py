@@ -2626,6 +2626,8 @@ class stock_picking(osv.osv):
                                 updated[move]['partial_qty'] += partial['product_qty']
                                 # force state to 'assigned'
                                 values.update(state='assigned')
+                                values.update({'location_id': moves[move].location_id.id,
+                                               'location_dest_id': moves[move].location_dest_id.id})
                                 # copy stock.move with new product_qty, qty_per_pack. from_pack, to_pack, pack_type, length, width, height, weight
                                 move_obj.copy(cr, uid, move, values, context=context)
                             else:
