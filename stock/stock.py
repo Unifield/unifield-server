@@ -1437,9 +1437,10 @@ class stock_picking(osv.osv):
             # modify the message to be displayed
             message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick,)
             # conditional test for message log
-            if self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,):
+            log_cond = self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,)
+            if log_cond and log_cond != 'packing':
                 self.log(cr, uid, pick.id, message, context=context)
-            else:
+            elif not log_cond:
                 self._hook_custom_log(cr, uid, ids, context=context, message=message, pick=pick,)
         return True
 
