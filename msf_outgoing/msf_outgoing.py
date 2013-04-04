@@ -1408,7 +1408,7 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
-            return False
+            return 'packing'
         # if false the log will be defined by the method _hook_custom_log (which include a domain)
         if pick.type and pick.subtype:
             return False
