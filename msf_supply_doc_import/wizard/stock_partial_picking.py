@@ -19,6 +19,7 @@
 #
 ##############################################################################
 
+from lxml import etree
 import logging
 import threading
 import pooler
@@ -722,28 +723,31 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
         picking_type = context.get('picking_type')
         if view_type == 'form':
             if picking_type == 'incoming_shipment':
+                # load the xml form
+                root = etree.fromstring(result['arch'])
+                fields = root.xpath('//button[@name="uncopy_all"]')
+                state_index = root.index(fields[0])
                 new_field_txt = """
-                <newline/>
-                <field name="import_in_progress" invisible="1" />
-                <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
-                <field name="file_to_import" filename="filename_template" colspan="2"/>
-                <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
-                <field name="import_error_ok" invisible="1"/>
-                <field name="filename" invisible="1"  />
-                <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
-                <newline />
-                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('import_in_progress', '=', False)]}" />
-                <field name="data" filename="filename" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
+                <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
+                    <field name="import_in_progress" invisible="1" />
+                    <field name="file_to_import" filename="filename_template" colspan="2"/>
+                    <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
+                    <field name="import_error_ok" invisible="1"/>
+                    <field name="filename" invisible="1"  />
+                    <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
+                    <newline />
+                    <field name="percent_completed" widget="progressbar" attrs="{\'invisible\': [(\'import_in_progress\', \'=\', False)]}" />
+                    <field name="data" filename="filename" colspan="2" attrs="{\'invisible\':[(\'import_error_ok\', \'=\', False)]}"/>
+                    <newline />
+                    <field name="message" attrs="{\'invisible\':[(\'import_in_progress\', \'=\', False)]}" colspan="4" nolabel="1"/>
                 </group>
-                <field name="message" attrs="{'invisible':[('import_in_progress', '=', False)]}" colspan="4" nolabel="1"/>
                 """
-                # add field in arch
-                arch = result['arch']
-                l = arch.split('<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>')
-                arch = l[0]
-                arch += '<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>' + new_field_txt + l[1]
-                result['arch'] = arch
-                
+                #generate new xml form
+                new_form = etree.fromstring(new_field_txt)
+                # insert new form just after state index position
+                root.insert(state_index+1, new_form)
+                # generate xml back to string
+                result['arch'] = etree.tostring(root)
         return result
 
 stock_partial_picking()
