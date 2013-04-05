@@ -171,7 +171,7 @@ class purchase_order(osv.osv):
         export_id = self.pool.get('wizard.export.po').create(cr, uid, {'po_id': ids[0], 
                                                                         'file': file, 
                                                                         'filename': 'po_%s.xls' % (po.name.replace(' ', '_')), 
-                                                                        'message': 'The PO has been exported. Please click on Save As button to download the file'})
+                                                                        'message': 'The PO has been exported. Please click on Save As button to download the file'}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.export.po',
