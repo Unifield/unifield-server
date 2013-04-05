@@ -93,7 +93,8 @@ class split_memory_move(osv.osv_memory):
                 values = {'quantity_ordered': new_qty}
 
             if available_qty_to_process > 0.0 and class_name != 'stock.move.memory.ppl':
-                values['quantity'] = 0.0
+                if not context.get('import_in_progress'):
+                    values['quantity'] = 0.0
             # update the object    
             memory_move_obj.write(cr, uid, [memory_move.id], values)
             
@@ -118,6 +119,7 @@ class split_memory_move(osv.osv_memory):
                 default_val['quantity'] = 0.0
 
             new_memory_move = memory_move_obj.create(cr, uid, default_val, context=context)
+            context.update({'new_memory_move_id': new_memory_move})
         
         # no data for type 'back'
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], type='back', context=context)

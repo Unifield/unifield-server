@@ -26,6 +26,8 @@ import pooler
 import locale
 import csv
 import StringIO
+from tools.translate import _
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_cheque_inventory(report_sxw.report_sxw):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -89,4 +91,6 @@ class report_cheque_inventory(report_sxw.report_sxw):
         return (out, 'csv')
 
 report_cheque_inventory('report.cheque.inventory', 'account.bank.statement', False, parser=False)
+
+SpreadsheetReport('report.cheque.inventory.2','account.bank.statement','addons/register_accounting/report/cheque_inventory_xls.mako')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

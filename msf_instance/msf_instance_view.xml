@@ -10,22 +10,42 @@
                 <form string="Proprietary Instance" hide_duplicate_button="1" hide_delete_button="1">
                     <field name="code"/>
                     <field name="name"/>
-                       <newline/>
                     <field name="level"/>
-                    <newline />
-                    <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
-                    <field name="instance" readonly="1"/>
-                    <newline/>
-                    <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
-                    <field name="note"/>
-                    <newline/>
-                    <field name="cost_center_id"/>
+                    <field name="current_instance_level" invisible="1"/>
+                    <notebook colspan="4">
+                        <page string="General Information">
+		                    <field name="mission" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}"/>
+		                    <field name="instance" readonly="1"/>
+		                    <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}" on_change="onchange_parent_id(parent_id, level)"/>
+		                    <field name="note"/>
+		                    <field name="move_prefix"/>
+		                    <field name="reconcile_prefix"/>
+                            <field name="top_cost_center_id"/>
+                        </page>
+                        <page string="Cost Centres">
+		                    <button name="button_cost_center_wizard" string="Add Cost Centres" type="object" icon="terp-document-new" attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"/>
+		                    <group colspan="4">
+			                    <field name="target_cost_center_ids" colspan="4" nolabel="1" attrs="{'invisible': [('level', '=', 'section')]}" widget="one2many_list">
+			                        <tree editable="top" string="Cost Centres" hide_new_button="1" hide_delete_button="1">
+	                                    <field name="cost_center_id" readonly="1"/>
+	                                    <field name="cost_center_name"/>
+			                            <field name="is_target"/>
+                                        <field name="is_top_cost_center"/>
+			                        </tree>
+			                        <form string="Cost Centres">
+			                            <field name="cost_center_id" readonly="1"/>
+                                        <field name="cost_center_name"/>
+			                            <field name="is_target"/>
+                                        <field name="is_top_cost_center"/>
+			                        </form>
+			                    </field>
+		                    </group>
+                        </page>
+                    </notebook>
                     <field name="state" readonly="1"/>
-                    <newline/>
-                    <field name="move_prefix"/>
-                    <field name="reconcile_prefix"/>
                     <button name="button_deactivate" string="Deactivate" type="object"
-                            attrs="{'invisible': [('state', '!=', 'active')]}" icon="terp-check"/>
+                            attrs="{'invisible': [('state', '!=', 'active')]}" icon="gtk-cancel"
+                            confirm="You are about to deactivate this proprietary instance. This action can not be undone, do you want to proceed?" />
                 </form>
             </field>
         </record>
@@ -42,7 +62,6 @@
                     <field name="mission"/>
                     <field name="instance"/>
                     <field name="parent_id"/>
-                    <field name="cost_center_id"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -115,9 +134,11 @@
             <field name="model">account.analytic.line</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="priority" eval="30"/>
             <field name="arch" type="xml">
-                <field name="journal_id" position="before">
-                    <field name="instance_id"/>
+                <field name="journal_id" position="replace">
+                    <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                    <field name="journal_id_fake"/>
                 </field>
             </field>
         </record>
@@ -376,34 +397,6 @@
                 </xpath>
             </field>
         </record>
-
-    <!-- Redefine MCDB -->
-        <record id="account_mcdb_form_instance_inherit" model="ir.ui.view">
-            <field name="name">account.mcdb.form.instance.inherit</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">form</field>
-            <field name="priority" eval="18"/>
-            <field name='inherit_id' ref='account_mcdb.account_mcdb_form' />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='journal_ids']/tree/field[@name='code']" position="before">
-                    <field name="instance_id"/>
-                </xpath>
-            </field>
-        </record>
-
-        <record id="account_mcdb_analytic_form_instance_inherit" model="ir.ui.view">
-            <field name="name">account.mcdb.analytic.form.instance.inherit</field>
-            <field name="model">account.mcdb</field>
-            <field name="type">form</field>
-            <field name="priority" eval="18"/>
-            <field name='inherit_id' ref='account_mcdb.account_mcdb_analytic_form' />
-            <field name="arch" type="xml">
-                <xpath expr="/form//field[@name='analytic_journal_ids']/tree/field[@name='code']" position="before">
-                    <field name="instance_id"/>
-                </xpath>
-            </field>
-        </record>
-account_mcdb_analytic_form
 
     </data>
 </openerp>

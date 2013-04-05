@@ -218,7 +218,7 @@
                     <para style="TextInformation">Transport :</para>
                 </td>
                 <td>
-                    <para style="TextInformation2">[[ getTransport(objects[0]) ]]</para>
+                    <para style="TextInformation2">[[ getSel(objects[0], 'transport_type') ]]</para>
                 </td>
                 <td> 
                    <para style="TextInformation"></para>
@@ -629,7 +629,7 @@
                     <para style="Standard" alignment="LEFT"></para>
                 </td>
                 <td>
-                    <para style="Standard" alignment="LEFT">If so, claim referece :</para>
+                    <para style="Standard" alignment="LEFT">If so, claim reference :</para>
                 </td>
             </tr>
 

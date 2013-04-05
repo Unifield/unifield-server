@@ -37,10 +37,10 @@ class stock_partial_picking(osv.osv_memory):
         '''
         pick_obj = self.pool.get('stock.picking')
         picking_ids = context.get('active_ids', False)
-        message_in = '<label string="You receive %s products, please refer to the appropriate procedure." colspan="4" />'
-        message_out = '<label string="You ship %s products, please refer to the appropriate procedure and ensure that the mean of transport is appropriate." colspan="4" />'
-        button = '<button name="copy_all" string="Copy all" colspan="1" type="object" icon="gtk-jump-to"/>'
-        button_2 = '<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>'
+        message_in = '<label string="%s" colspan="4" />' % _('You receive %s products, please refer to the appropriate procedure.')
+        message_out = '<label string="%s" colspan="4" />' % _('You ship %s products, please refer to the appropriate procedure and ensure that the mean of transport is appropriate.')
+        button = '<button name="copy_all" string="%s" colspan="1" type="object" icon="gtk-jump-to"/>' % _('Copy all')
+        button_2 = '<button name="uncopy_all" string="%s" colspan="1" type="object" icon="gtk-undo"/>' % _('Clear all')
         if not picking_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
@@ -58,11 +58,11 @@ class stock_partial_picking(osv.osv_memory):
                     contains_dg = True
             
         if contains_kc and contains_dg:
-            fill = 'heat sensitive and dangerous goods'
+            fill = _('heat sensitive and dangerous goods')
         elif contains_kc:
-            fill = 'heat sensitive'
+            fill = _('heat sensitive')
         elif contains_dg:
-            fill = 'dangerous goods'
+            fill = _('dangerous goods')
         else:
             fill = ''
             

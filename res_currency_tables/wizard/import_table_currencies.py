@@ -79,7 +79,7 @@ class import_table_currencies(osv.osv_memory):
                                 currency_ids = [currency_obj.create(cr, uid, currency_vals, context=context)]
                             else:
                                 # Currency doesn't exist in main table
-                                raise osv.except_osv(_('Error'), _('The currency %s is not defined in the main set!' % line[0]))
+                                raise osv.except_osv(_('Error'), _('The currency %s is not defined in the main set!') % line[0])
                                 break
                         currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', currency_ids[0]), ('name', '=', wizard.rate_date)], context=context)
                         if len(currency_rates) > 0:

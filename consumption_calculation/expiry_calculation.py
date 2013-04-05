@@ -191,7 +191,7 @@ class product_likely_expire_report(osv.osv_memory):
         'location_id': fields.many2one('stock.location', string='Location'),
         'msf_instance': fields.char(size=64, string='Location', readonly=True),
         'input_output_ok': fields.boolean(string='Exclude Input and Output locations'),
-        'date_from': fields.date(string='From', required=True),
+        'date_from': fields.date(string='From', required=True, readonly=True),
         'date_to': fields.date(string='To', required=True),
         'consumption_type': fields.selection([('fmc', 'FMC -- Forecasted Monthly Consumption'), 
                                               ('amc', 'AMC -- Average Monthly Consumption'), 
@@ -345,7 +345,7 @@ class product_likely_expire_report(osv.osv_memory):
                                                                                          'product_id': lot.product_id.id,
                                                                                          'in_stock': lot.product_id.qty_available,
                                                                                          'total_expired': 0.00,
-                                                                                         'consumption': consumption,})})
+                                                                                         'consumption': consumption,}, context=context)})
                 
                 # Create an item for each date
                 seq = 0
@@ -378,8 +378,8 @@ class product_likely_expire_report(osv.osv_memory):
                         # Uncomment the first line if you want products already expired in the first month
                         #domain.append(('life_date', '>=', month.strftime('%Y-%m-01')))
                         # Comment line if you want all products already expired
-                        if not context.get('only_product_ids'):
-                            domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
+                        #if not context.get('only_product_ids'):
+                        #    domain.append(('life_date', '>=', month.strftime('%Y-%m-%d')))
                         
 
                     # Remove the token after the first month processing
@@ -428,7 +428,7 @@ class product_likely_expire_report(osv.osv_memory):
                                                                'lot_id': product_lot.id,
                                                                'location_id': location,
                                                                'available_qty': product2.qty_available,
-                                                               'expired_qty': new_lot_expired})
+                                                               'expired_qty': new_lot_expired}, context=context)
                             
                         available_qty += product.qty_available
                             

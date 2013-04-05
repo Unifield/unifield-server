@@ -42,8 +42,10 @@
         'funding_pool_report.xml',
     ],
     'test': [
-        'test/analytic_account_activable.yml',
-        'test/analytic_data.yml',
+        'test/10_analytic_account_activable.yml',
+        'test/20_analytic_data.yml',
+        'test/30_check_dates.yml',
+        'test/bug_1681.yml',
     ],
     'demo_xml': [
     ],

@@ -1083,6 +1083,12 @@ class procurement_order(osv.osv):
         # Set the origin of the line with the origin of the Procurement order
         if procurement.origin:
             values['order_line'][0][2].update({'origin': procurement.origin})
+            
+        if procurement.tender_id:
+            if values.get('origin'):
+                values['origin'] = '%s;%s' % (values['origin'], procurement.tender_id.name)
+            else:
+                values['origin'] = procurement.tender_id.name
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
@@ -1270,7 +1276,30 @@ class purchase_order(osv.osv):
         override for debugging purpose
         '''
         return super(purchase_order, self).create(cr, uid, vals, context)
-        
+
+    def _check_order_type_and_partner(self, cr, uid, ids, context=None):
+        """
+        Check order type and partner type compatibilities.
+        """
+        compats = {
+            'regular':       ['internal', 'intermission', 'section', 'external', 'esc'],
+            'donation_st':   ['internal', 'intermission', 'section'],
+            'loan':          ['internal', 'intermission', 'section', 'external'],
+            'donation_exp':  ['internal', 'intermission', 'section'],
+            'in_kind':       ['external', 'esc'],
+            'direct':        ['external', 'esc'],
+            'purchase_list': ['external'],
+        }
+        # Browse PO
+        for po in self.browse(cr, uid, ids):
+            if po.order_type not in compats or po.partner_id.partner_type not in compats[po.order_type]:
+                return False
+        return True
+
+    _constraints = [
+        (_check_order_type_and_partner, "Partner type and order type are incompatible! Please change either order type or partner.", ['order_type', 'partner_id']),
+    ]
+
 purchase_order()
 
 class product_template(osv.osv):
