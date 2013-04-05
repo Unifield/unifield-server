@@ -273,7 +273,7 @@ class hq_entries_import_wizard(osv.osv_memory):
         # This is to redirect to HQ Entries Tree View
         context.update({'from': 'hq_entries_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'total': processed, 'state': 'hq', 'errors': "\n".join(errors), 'nberrors': len(errors)})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'total': processed, 'state': 'hq', 'errors': "\n".join(errors), 'nberrors': len(errors)}, context=context)
         
         return {
             'name': 'HQ Entries Import Confirmation',
