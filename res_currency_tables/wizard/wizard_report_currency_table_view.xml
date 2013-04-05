@@ -32,7 +32,7 @@
             <field name="target">new</field>
         </record>
         
-        <menuitem action="action_report_currency_table_menu" id="menu_action_report_currency_table_form" parent="account.menu_configuration_misc"/>
+        <menuitem action="action_report_currency_table_menu" id="menu_action_report_currency_table_form" parent="account.menu_finance_currency_mgmt"/>
 
     </data>
 </openerp>
