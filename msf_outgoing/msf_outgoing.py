@@ -2627,7 +2627,7 @@ class stock_picking(osv.osv):
                                 # force state to 'assigned'
                                 values.update(state='assigned')
                                 # copy stock.move with new product_qty, qty_per_pack. from_pack, to_pack, pack_type, length, width, height, weight
-                                move_obj.copy(cr, uid, move, values, context=context)
+                                new_move = move_obj.copy(cr, uid, move, values, context=context)
                                 # Need to change the locations after the copy, because the create of a new stock move with
                                 # non-stockable product force the locations
                                 move_obj.write(cr, uid, [new_move], {'location_id': moves[move].location_id.id,
