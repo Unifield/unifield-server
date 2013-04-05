@@ -2626,10 +2626,12 @@ class stock_picking(osv.osv):
                                 updated[move]['partial_qty'] += partial['product_qty']
                                 # force state to 'assigned'
                                 values.update(state='assigned')
-                                values.update({'location_id': moves[move].location_id.id,
-                                               'location_dest_id': moves[move].location_dest_id.id})
                                 # copy stock.move with new product_qty, qty_per_pack. from_pack, to_pack, pack_type, length, width, height, weight
                                 move_obj.copy(cr, uid, move, values, context=context)
+                                # Need to change the locations after the copy, because the create of a new stock move with
+                                # non-stockable product force the locations
+                                move_obj.write(cr, uid, [new_move], {'location_id': moves[move].location_id.id,
+                                                                     'location_dest_id': moves[move].location_dest_id.id}, context=context)
                             else:
                                 # update the existing stock move
                                 updated[move] = {'initial': moves[move].product_qty, 'partial_qty': partial['product_qty']}
