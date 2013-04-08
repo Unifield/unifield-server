@@ -462,7 +462,7 @@ class purchase_order(osv.osv):
             partner = partner_obj.browse(cr, uid, part)
             if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
-            elif partner.partner_type == 'intermission':
+            elif ids and partner.partner_type == 'intermission':
                 try:
                     intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
                         'analytic_account_project_intermission')[1]
