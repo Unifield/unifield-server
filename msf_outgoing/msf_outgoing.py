@@ -591,6 +591,8 @@ class shipment(osv.osv):
         # shipment ids from ids must be equal to shipment ids from partial datas
         assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
         
+        dispatch_name = _('Dispatch')
+        
         # for each shipment
         for shipment_id in partial_datas:
             # for each packing
@@ -655,6 +657,7 @@ class shipment(osv.osv):
                                 # values
                                 location_dispatch = move.picking_id.warehouse_id.lot_dispatch_id.id
                                 location_distrib = move.picking_id.warehouse_id.lot_distribution_id.id
+                                dispatch_name = move.picking_id.warehoust_id.lot_dispatch_id.name
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
                                           'product_qty': new_qty,
@@ -685,7 +688,7 @@ class shipment(osv.osv):
             
             # log corresponding action
             shipment_name = self.read(cr, uid, shipment_id, ['name'], context=context)['name']
-            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to dispatch location.")%(shipment_name,))
+            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to %s location.")%(shipment_name,dispatch_name))
             self.log(cr, uid, draft_shipment_id, _("The corresponding Draft Shipment (%s) has been updated.")%(packing.backorder_id.shipment_id.name,))
                             
         # call complete_finished on the shipment object
