@@ -40741,8 +40741,8 @@ msgstr "Menu Caché"
 #: view:catalogue.import.lines:0
 #: view:supplier.catalogue:0
 #: view:composition.kit:0
-msgid "Import the file"
-msgstr "Importer le fichier"
+msgid "Import lines"
+msgstr "Importer des lignes"
 
 #. module: account
 #: field:account.tax.template,description:0
