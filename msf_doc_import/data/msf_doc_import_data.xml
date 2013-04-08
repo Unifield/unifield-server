@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-    <!-- We deactivate the cat_tbd in the file msf_supply_doc_import/inactive_categ.xml -->
+    <!-- We deactivate the cat_tbd in the file msf_doc_import/inactive_categ.xml -->
      <record id="cat_tbd" model="product.category">
         <field name="name">Product Categ to be defined</field>
     </record>
@@ -63,10 +63,10 @@
         <field name="default_code" >TBD</field>
         <field name="name">To be defined</field>
         <field name="type">product</field>
-        <field name="nomen_manda_0" ref="msf_supply_doc_import.nomen_tbd0"/>
-        <field name="nomen_manda_1" ref="msf_supply_doc_import.nomen_tbd1"/>
-        <field name="nomen_manda_2" ref="msf_supply_doc_import.nomen_tbd2"/>
-        <field name="nomen_manda_3" ref="msf_supply_doc_import.nomen_tbd3"/>
+        <field name="nomen_manda_0" ref="msf_doc_import.nomen_tbd0"/>
+        <field name="nomen_manda_1" ref="msf_doc_import.nomen_tbd1"/>
+        <field name="nomen_manda_2" ref="msf_doc_import.nomen_tbd2"/>
+        <field name="nomen_manda_3" ref="msf_doc_import.nomen_tbd3"/>
         <field name="uom_id" ref="product.product_uom_unit"/>
         <field name="uom_po_id" ref="product.product_uom_unit"/>
         <field name="categ_id" ref="product.cat0"/>

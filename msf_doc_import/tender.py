@@ -23,15 +23,15 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import base64
-from msf_supply_doc_import import GENERIC_MESSAGE
+from msf_doc_import import GENERIC_MESSAGE
 # import below commented in utp-1344: becomes useless as the import is done in wizard
 #from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 #import check_line
-#from msf_supply_doc_import import MAX_LINES_NB
+#from msf_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from msf_supply_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
-from msf_supply_doc_import import GENERIC_MESSAGE
-from msf_supply_doc_import.wizard import TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
+from msf_doc_import.wizard import TENDER_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_tender_line_import
+from msf_doc_import import GENERIC_MESSAGE
+from msf_doc_import.wizard import TENDER_COLUMNS_FOR_IMPORT as columns_for_tender_line_import
 
 
 class tender(osv.osv):
@@ -130,8 +130,8 @@ class tender(osv.osv):
 #                'error_list': [],
 #                'warning_list': [],
 #                'to_correct_ok': False,
-#                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
-#                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+#                'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
+#                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
 #                'product_qty': 1,
 #            }
 #            line_num += 1
@@ -279,11 +279,11 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                 """) % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:
             # we take the default uom of the product
             product_uom = product.uom_id.id
             return to_write.update({'product_uom': product_uom})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
             # this is inspired by the on_change in purchase>purchase.py: product_uom_change
             text_error += _("\n The UoM was not defined so we set the price unit to 0.0.")
             return to_write.update({'text_error': text_error,
@@ -312,8 +312,8 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             context = {}
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             message = ''
             if vals.get('product_uom'):
                 if vals.get('product_uom') == tbd_uom:

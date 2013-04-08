@@ -41,7 +41,7 @@
     from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
     # we set the lang to English and take the file to import accordingly
     lang = 'en_MF'
-    file_path = addons.get_module_resource('msf_supply_doc_import','test','import_files_for_testing', 'tender.xml')
+    file_path = addons.get_module_resource('msf_doc_import','test','import_files_for_testing', 'tender.xml')
     file = open(file_path, 'r')
     file64 = base64.b64encode(file.read())
     vals={'file': file64,

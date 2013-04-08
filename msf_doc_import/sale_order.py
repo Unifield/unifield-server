@@ -29,12 +29,12 @@ import base64
 # import below commented in utp-1344: becomes useless as the import is done in wizard
 #from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 #import check_line
-#from msf_supply_doc_import import MAX_LINES_NB
+#from msf_doc_import import MAX_LINES_NB
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from msf_supply_doc_import.wizard import FO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_fo_line_import, IR_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_ir_line_import
-from msf_supply_doc_import.wizard import FO_LINE_COLUMNS_FOR_IMPORT as columns_for_fo_line_import
-from msf_supply_doc_import import GENERIC_MESSAGE
-from msf_supply_doc_import.wizard import IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
+from msf_doc_import.wizard import FO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_fo_line_import, IR_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_ir_line_import
+from msf_doc_import.wizard import FO_LINE_COLUMNS_FOR_IMPORT as columns_for_fo_line_import
+from msf_doc_import import GENERIC_MESSAGE
+from msf_doc_import.wizard import IR_COLUMNS_FOR_IMPORT as columns_for_ir_line_import
 
 
 class sale_order(osv.osv):
@@ -45,18 +45,18 @@ class sale_order(osv.osv):
 
     def init(self, cr):
         """
-        Load data (msf_supply_doc_import_data.xml) before self
+        Load data (msf_doc_import_data.xml) before self
         """
         if hasattr(super(sale_order, self), 'init'):
             super(sale_order, self).init(cr)
 
         mod_obj = self.pool.get('ir.module.module')
-        mode = mod_obj.search(cr, 1, [('name', '=', 'msf_supply_doc_import'), ('state', '=', 'to install')]) and 'init' or 'update'
-        logging.getLogger('init').info('HOOK: module msf_supply_doc_import: loading data/msf_supply_doc_import_data.xml')
-        pathname = path.join('msf_supply_doc_import', 'data/msf_supply_doc_import_data.xml')
+        mode = mod_obj.search(cr, 1, [('name', '=', 'msf_doc_import'), ('state', '=', 'to install')]) and 'init' or 'update'
+        logging.getLogger('init').info('HOOK: module msf_doc_import: loading data/msf_doc_import_data.xml')
+        pathname = path.join('msf_doc_import', 'data/msf_doc_import_data.xml')
         file = tools.file_open(pathname)
         # mode to force noupdate=True when reloading this module
-        tools.convert_xml_import(cr, 'msf_supply_doc_import', file, {}, mode=mode, noupdate=True)
+        tools.convert_xml_import(cr, 'msf_doc_import', file, {}, mode=mode, noupdate=True)
 
 # The field below were replaced by the wizard_import_fo_line (utp-113)
 #    _columns = {
@@ -164,10 +164,10 @@ class sale_order(osv.osv):
 #                'functional_currency_id': browse_sale.pricelist_id.currency_id.id,
 #                'price_unit': 1,  # in case that the product is not found and we do not have price
 #                'product_qty': 1,
-#                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
-#                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
-#                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
-#                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
+#                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+#                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+#                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+#                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
 #                'proc_type': 'make_to_order',
 #                'default_code': False,
 #                'confirmed_delivery_date': False,
@@ -281,10 +281,10 @@ class sale_order(osv.osv):
 #                'functional_currency_id': browse_sale.pricelist_id.currency_id.id,
 #                'price_unit': 1,  # in case that the product is not found and we do not have price
 #                'product_qty': 1,
-#                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1],
-#                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1],
-#                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1],
-#                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1],
+#                'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+#                'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+#                'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+#                'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
 #                'proc_type': 'make_to_order',
 #                'default_code': False,
 #                'confirmed_delivery_date': False,
@@ -508,11 +508,11 @@ class sale_order_line(osv.osv):
                 """) % (product.uom_id.category_id.name, uom.category_id.name)
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1] and product_id:
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:
             # we take the default uom of the product
             product_uom = product.uom_id.id
             return to_write.update({'product_uom': product_uom})
-        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]:
+        elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]:
             # this is inspired by the on_change in purchase>purchase.py: product_uom_change
             text_error += _("\n The UoM was not defined so we set the price unit to 0.0.")
             return to_write.update({'text_error': text_error,
@@ -545,7 +545,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         message = ''
 
         if not context.get('import_in_progress') or not context.get('button') and context.get('button') == 'save_and_close':
@@ -554,13 +554,13 @@ class sale_order_line(osv.osv):
                 if vals.get('product_uom') and vals.get('product_uom') == tbd_uom:
                     message += _('You have to define a valid UOM, i.e. not "To be defined".')
                 if vals.get('nomen_manda_0') and vals.get('nomen_manda_0') == obj_data.get_object_reference(cr, uid,
-                                                                                                            'msf_supply_doc_import', 'nomen_tbd0')[1]:
+                                                                                                            'msf_doc_import', 'nomen_tbd0')[1]:
                     message += _('You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_1') and vals.get('nomen_manda_1') == obj_data.get_object_reference(cr, uid,
-                                                                                                            'msf_supply_doc_import', 'nomen_tbd1')[1]:
+                                                                                                            'msf_doc_import', 'nomen_tbd1')[1]:
                     message += _('You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be defined".')
                 if vals.get('nomen_manda_2') and vals.get('nomen_manda_2') == obj_data.get_object_reference(cr, uid,
-                                                                                                            'msf_supply_doc_import', 'nomen_tbd2')[1]:
+                                                                                                            'msf_doc_import', 'nomen_tbd2')[1]:
                     message += _('You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be defined".')
 
                 if vals.get('product_uom') and vals.get('product_id'):
