@@ -26,8 +26,8 @@
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" invisible="1" confirm="Are you sure that you want to remove all the lines of this Purchase order?"/>
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
                 </group>
-                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
-                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="2" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
+                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
+                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
                 </xpath>
                 </data>
             </field>
