@@ -63,10 +63,18 @@ background = '#F5F5F5'
         <tr class="grid-row grid-row-group" id="${grp_row.get('groups_id')}" parent="${parent_group}"
             parent_grp_id="${grp_row.get('group_by_id')}" record="${ch.get('id')}"
             style="cursor: pointer; display:none;">
+            % for field, field_attrs in hiddens:
+                % if field in ch:
+                    ${ch[field].display()}
+                % endif
+            % endfor
+
             % if editable:
                 <td class="grid-cell">
+                    % if not ch.get('id') or ch.get('id') not in noteditable:
                     <img src="/openerp/static/images/listgrid/edit_inline.gif" class="listImage" border="0"
                          title="${_('Edit')}" onclick="editRecord(${ch.get('id')}, '${source}')"/>
+                    % endif
                 </td>
             % endif
             % for i, (field, field_attrs) in enumerate(headers):
@@ -82,9 +90,9 @@ background = '#F5F5F5'
                     </td>
                 % endif
             % endfor
-            % if editable:
+            % if editable and not hide_delete_button:
                 <td class="grid-cell selector">
-                    <img src="/openerp/static/images/listgrid/delete_inline.gif" class="listImage" border="0"
+                    <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage" border="0"
                          title="${_('Delete')}" onclick="new ListView('${name}').remove(${ch.get('id')})"/>
                 </td>
             % endif
