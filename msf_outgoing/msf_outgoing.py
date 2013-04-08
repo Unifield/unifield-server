@@ -960,7 +960,7 @@ class shipment(osv.osv):
                 company_currency = company.currency_id and company.currency_id.id or False
                 if not company_currency:
                     raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
             
             # Link the invoice to the shipment

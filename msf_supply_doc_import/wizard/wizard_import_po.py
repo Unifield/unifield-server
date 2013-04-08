@@ -537,7 +537,7 @@ The columns should be in this values:
         for row in rows:
             file_line_number += 1
             if len(row) < len(header_index.keys()):
-                import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
+                import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True}, context=context)
                 error_log += _('Line %s in the Excel file was added to the file of the lines with errors because it got elements that do not fit the template. Then, none of the lines are updated. \n Please make sure that all the lines are within the template. \n'
                                ) % (file_line_number+1,)
                 line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=False, context=context))
@@ -552,7 +552,7 @@ The columns should be in this values:
                 if first_row:
                     to_write_po = self.get_po_header_row_values(cr, uid, ids, row, po_browse, header_index, context)
                     if to_write_po.get('error_list', False):
-                        import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True})
+                        import_po_obj.create(cr, uid, {'file_line_number': file_line_number, 'line_ignored_ok': True}, context=context)
                         error_log += _('Line %s in the Excel file was added to the file of the lines with errors: %s \n') % (file_line_number+1, ' '.join(to_write_po.get('error_list', False)))
                         line_with_error.append(self.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=to_write_po.get('error_list', False), line_num=False, context=context))
                     else:

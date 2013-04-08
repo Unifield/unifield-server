@@ -283,7 +283,7 @@ class hr_payroll_validation(osv.osv_memory):
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
         
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'state': 'none'})
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'state': 'none'}, context=context)
         
         return {
             'name': 'Payroll Validation Confirmation',
