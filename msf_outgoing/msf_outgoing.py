@@ -340,7 +340,7 @@ class shipment(osv.osv):
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
                                                 'shipment_id': False,
-                                                'move_lines': []}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+                                                'move_lines': []}, context=dict(context, keep_prodlot=True, allow_copy=True, non_stock_noupdate=True))
 
                 # confirm the new packing
                 wf_service = netsvc.LocalService("workflow")
@@ -465,7 +465,7 @@ class shipment(osv.osv):
                                                              'location_dest_id': move.initial_location.id,
                                                              'from_pack': selected_from_pack,
                                                              'to_pack': selected_to_pack,
-                                                             'state': 'done'}, context=context)
+                                                             'state': 'done'}, context=dict(context, non_stock_noupdate=True))
                             # find the corresponding move in draft in the draft **picking**
                             draft_move = move.backmove_id
                             # increase the draft move with the move quantity
@@ -657,7 +657,7 @@ class shipment(osv.osv):
                                 # values
                                 location_dispatch = move.picking_id.warehouse_id.lot_dispatch_id.id
                                 location_distrib = move.picking_id.warehouse_id.lot_distribution_id.id
-                                dispatch_name = move.picking_id.warehoust_id.lot_dispatch_id.name
+                                dispatch_name = move.picking_id.warehouse_id.lot_dispatch_id.name
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
                                           'product_qty': new_qty,
@@ -667,7 +667,7 @@ class shipment(osv.osv):
                                 
                                 # create a back move in the packing object
                                 # distribution -> dispatch
-                                new_back_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                new_back_move_id = move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
                                 updated[move.id]['partial_qty'] += new_qty
 
                                 # create the draft move
@@ -677,7 +677,7 @@ class shipment(osv.osv):
                                               location_dest_id=location_distrib,
                                               picking_id=draft_packing_id,
                                               state='assigned')
-                                new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
                                 
                             # quantities are right - stay + return qty = original qty
                             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
