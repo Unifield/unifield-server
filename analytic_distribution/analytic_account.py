@@ -92,6 +92,31 @@ class analytic_account(osv.osv):
                     res = [('id', 'not in', aa_ids)]
         return res
 
+    def _get_fake(self, cr, uid, ids, *a, **b):
+        return {}.fromkeys(ids, False)
+
+    def _search_intermission_restricted(self, cr, uid, ids, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        print "Restricted"
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Operator not supported on field intermission_restricted!'))
+            if not isinstance(arg[2], (list, tuple)):
+                raise osv.except_osv(_('Error'), _('Operand not supported on field intermission_restricted!'))
+            if arg[2] and (arg[2][0] or arg[2][1]):
+                try:
+                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                            'analytic_account_project_intermission')[1]
+                except ValueError:
+                    pass
+                if arg[2][2] == 'intermission':
+                    newargs.append(('id', '=', intermission))
+                else:
+                    newargs.append(('id', '!=', intermission))
+        return newargs
+    
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -110,6 +135,7 @@ class analytic_account(osv.osv):
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
+        'intermission_restricted': fields.function(_get_fake, fnct_search=_search_intermission_restricted, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
     }
 
     _defaults ={
