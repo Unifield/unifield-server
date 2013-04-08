@@ -470,9 +470,9 @@ class purchase_order(osv.osv):
                     intermission = 0
                 cr.execute('''select po.id from purchase_order po
                     left join purchase_order_line pol on pol.order_id = po.id
-                    left join cost_center_distribution_line cl1 on cl1.id = po.analytic_distribution_id
-                    left join cost_center_distribution_line cl2 on cl2.id = pol.analytic_distribution_id
-                    where po.id=%s and (cl1.analytic_id!=%s or cl2.analytic_id!=%s)''', (tuple(ids), intermission, intermission))
+                    left join cost_center_distribution_line cl1 on cl1.distribution_id = po.analytic_distribution_id
+                    left join cost_center_distribution_line cl2 on cl2.distribution_id = pol.analytic_distribution_id
+                    where po.id in %s and (cl1.analytic_id!=%s or cl2.analytic_id!=%s)''', (tuple(ids), intermission, intermission))
                 if cr.rowcount > 0:
                     res.setdefault('warning', {})
                     msg = _('You set an intermission partner, at validation Cost Centers will be changed to intermission.')

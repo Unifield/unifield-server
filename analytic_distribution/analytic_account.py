@@ -99,7 +99,6 @@ class analytic_account(osv.osv):
         if not args:
             return []
         newargs = []
-        print "Restricted"
         for arg in args:
             if arg[1] != '=':
                 raise osv.except_osv(_('Error'), _('Operator not supported on field intermission_restricted!'))
