@@ -343,7 +343,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': wiz.filename, 'created': created, 'total': processed, 'state': 'migration', 'nberrors': len(errors)}, context)
         
         return {
-            'name': 'Accounting Import Confirmation',
+            'name': 'Import Migration Entries Confirmation',
             'type': 'ir.actions.act_window',
             'res_model': 'hr.payroll.import.confirmation',
             'view_mode': 'form',

@@ -10,7 +10,7 @@
             <field name="model">msf.doc.import.accounting</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Accounting Migration">
+                <form string="Import Migration Entries">
                     <label string="This will import Migration Entries from a XML file." colspan="4"/>
                     <newline/>
                     <field name="file" filename="filename"/>
@@ -29,7 +29,7 @@
     -->
 
         <record id="action_migration_accounting_import_wizard" model="ir.actions.act_window">
-            <field name="name">Accounting</field>
+            <field name="name">Import Migration Entries</field>
             <field name="res_model">msf.doc.import.accounting</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -38,7 +38,7 @@
         </record>
 
         <menuitem id="menu_finance_migration" name="Migration" parent="account.menu_finance_configuration" sequence="40"/>
-        <menuitem id="menu_finance_migration_accounting" name="Accounting" parent="menu_finance_migration" sequence="1" action="action_migration_accounting_import_wizard"/>
+        <menuitem id="menu_finance_migration_accounting" name="Import Migration Entries" parent="menu_finance_migration" sequence="1" action="action_migration_accounting_import_wizard"/>
 
     </data>
 </openerp>
