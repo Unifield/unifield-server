@@ -2185,11 +2185,11 @@ class orm_memory(orm_template):
                         continue
                     
                     if order_column._classic_read:
-                        getter = lambda d, i: d[1][order_field]
+                        getter = lambda d, i: d[1].get(order_field)
                     elif order_column._type == 'many2one':
                         if sort_raw_id:
                             # uppon read, many2one sorting is done directly on 'id'
-                            getter = lambda d, i: d[1][order_field]
+                            getter = lambda d, i: d[1].get(order_field)
                         else:
                             # use the fact the read follow object standard _parent_order/_order to get many2one ordered
                             dest_model = self.pool.get(order_column._obj)
@@ -2201,7 +2201,7 @@ class orm_memory(orm_template):
                             if dest_ids_has_false:
                                 ordered_ids.insert(0, False) # false is always first
                             order_info[order_field] = ordered_ids
-                            getter = lambda d, i: i[order_field].index(d[1][order_field] or False)
+                            getter = lambda d, i: i.get(order_field).index(d[1].get(order_field) or False)
                 else:
                     raise NotImplementedError()
                 order_parts_getters.append((getter, order_direction))
