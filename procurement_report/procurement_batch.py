@@ -132,14 +132,17 @@ class procurement_batch_cron(osv.osv):
     def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
         if not fields_to_read:
             fields_to_read = []
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
+# UF-1703 and SP-132: we don't systematically turn the ids into a list because it is already managed in the method read() of the orm
+# and was breaking the behaviour of the method log_write() of the clas  ir_model_data in procurement_report/procurement_batch.py
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
 
         res = super(procurement_batch_cron, self).read(cr, uid, ids, fields_to_read, context=context)
 
         if 'nextcall' in fields_to_read:
             for data in res:
+                if isinstance(res, (dict, )):
+                    data = res
                 cron_ids = self.pool.get('ir.cron').search(cr, uid, [('batch_id', '=', data['id'])])
                 if cron_ids:
                     nextcall = self.pool.get('ir.cron').browse(cr, uid, cron_ids[0]).nextcall
