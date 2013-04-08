@@ -960,7 +960,7 @@ class shipment(osv.osv):
                 company_currency = company.currency_id and company.currency_id.id or False
                 if not company_currency:
                     raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
             
             # Link the invoice to the shipment
@@ -1320,6 +1320,28 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+
+    def fields_view_get(self, cr, uid, view_id, view_type, context=None, toolbar=False, submenu=False):
+        '''
+        Set the appropriate search view according to the context
+        '''
+        if not context:
+            context = {}
+
+        if not view_id and context.get('wh_dashboard') and view_type == 'search':
+            try:
+                if context.get('pick_type') == 'incoming':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
+                elif context.get('pick_type') == 'delivery':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_search')[1]
+                elif context.get('pick_type') == 'picking_ticket':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')[1]
+                elif context.get('pick_type') == 'pack':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_search')[1]
+            except ValueError:
+                pass
+
+        return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -1386,7 +1408,7 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
-            return False
+            return 'packing'
         # if false the log will be defined by the method _hook_custom_log (which include a domain)
         if pick.type and pick.subtype:
             return False

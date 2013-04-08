@@ -167,7 +167,11 @@
 			<field name="priority">1</field>
 			<field name="arch" type="xml">
 				<tree string="Product Nomenclature">
-					<field name="complete_name" />
+					<field name="complete_name" invisible="1"/>
+                    <field name="nomen_manda_0_s" />
+                    <field name="nomen_manda_1_s" />
+                    <field name="nomen_manda_2_s" />
+                    <field name="nomen_manda_3_s" />
 					<field name="type" />
 					<field name="sub_level" />
 				</tree>
@@ -241,7 +245,7 @@
 		    <field name="priority" eval="99" />
 		    <field name="arch" type="xml">
 		        <search string="Link nomenclature/category">
-		            <field name="name" />
+		            <field name="custom_name" />
 		            <field name="category_id" />
 				<field name="nomen_type_s"  />
 

@@ -131,4 +131,17 @@ class res_config_view(osv.osv_memory):
 
 res_config_view()
 
+class res_config(osv.osv_memory):
+    _inherit = 'res.config'
+
+    def _next(self, cr, uid, context=None):
+        res = super(res_config, self)._next(cr, uid, context=context)
+        if isinstance(res, dict) and res.get('res_model') == 'restrictive.country.setup' and not res.get('res_id'):
+            wiz_id = self.pool.get('restrictive.country.setup').create(cr, uid, {}, context=context)
+            res['res_id'] = wiz_id
+            res['active_id'] = wiz_id
+        return res
+
+res_config()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

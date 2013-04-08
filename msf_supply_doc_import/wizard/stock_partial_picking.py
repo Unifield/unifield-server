@@ -19,9 +19,11 @@
 #
 ##############################################################################
 
+from lxml import etree
+import logging
 import threading
 import pooler
-from osv import fields, osv
+from osv import fields, osv, orm
 from tools.translate import _
 # import xml file
 import base64
@@ -144,8 +146,6 @@ class stock_partial_picking(osv.osv_memory):
             # Error if no expiry date
             if not expired_date:
                 if not prodlot_name:
-                    error_list.append("Line %s of the Excel file was added to the file of the lines with errors: The Expiry Date was not found or it has a wrong format ('DD-MM-YYYY')" % (file_line_num))
-                    line_with_error.append(cell_data.get_line_values(cr, uid, ids, row))
                     return True, prodlot_id
                 else:
                     prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id)])
@@ -156,10 +156,10 @@ class stock_partial_picking(osv.osv_memory):
             prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', prodlot_name), ('product_id', '=', product_id), ('life_date', '=', expired_date)])
             if prodlot_ids:
                 prodlot_id = prodlot_ids[0]
-            elif not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)], context=context) and prodlot_name and expired_date:
-                prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
-                info_list.append("Line %s of the Excel file: the batch %s with the expiry date %s was created for the product %s"
-                    % (file_line_num, prodlot_name, expired_date, product.default_code))
+            elif prodlot_name and expired_date and not prodlot_obj.search(cr, uid, [('name', '=', prodlot_name)], context=context):
+                if product.batch_management:
+                    prodlot_id = prodlot_obj.create(cr, uid, {'name': prodlot_name, 'life_date': expired_date, 'product_id': product_id}, context=context)
+                    return True, prodlot_id
             elif not prodlot_name:
                 return True, prodlot_id
             else:
@@ -621,19 +621,18 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                         error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : A line was found in the Incoming shipment but the UoM of the Excel line (%s) is not compatible with UoM (%s) of the incoming shipment line.") % (l.file_line_number, l.uom_id.name, m.product_uom.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
-                    
-        error += '\n'.join(error_list)
+        if error_list or error:
+            error += 'Reported errors :\n' + '\n'.join(error_list)
         info += '\n'.join(info_list)
         message = '''Importation completed !
 # of imported lines : %s
 # of ignored lines : %s
 
-Reported errors :
 %s
 
 %s
 %s
-                '''  % (complete_lines, ignore_lines, error or 'No error !', info and 'Reported information :' or '', info or '')
+                '''  % (complete_lines, ignore_lines, error, info and 'Reported information :' or '', info or '')
         vals = {'message': message, 'percent_completed': percent_completed}
         if line_with_error:
             file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
@@ -724,28 +723,31 @@ Reported errors :
         picking_type = context.get('picking_type')
         if view_type == 'form':
             if picking_type == 'incoming_shipment':
+                # load the xml form
+                root = etree.fromstring(result['arch'])
+                fields = root.xpath('//button[@name="uncopy_all"]')
+                state_index = root.index(fields[0])
                 new_field_txt = """
-                <newline/>
-                <field name="import_in_progress" invisible="1" />
-                <group name="import_file_lines" string="Import Lines" colspan="28" col="7">
-                <field name="file_to_import" filename="filename_template" colspan="2"/>
-                <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
-                <field name="import_error_ok" invisible="1"/>
-                <field name="filename" invisible="1"  />
-                <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
-                <newline />
-                <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('import_in_progress', '=', False)]}" />
-                <field name="data" filename="filename" colspan="2" attrs="{'invisible':[('import_error_ok', '=', False)]}"/>
+                <group name="import_file_lines" string="Import Lines" colspan="24" col="8">
+                    <field name="import_in_progress" invisible="1" />
+                    <field name="file_to_import" filename="filename_template" colspan="2"/>
+                    <button name="import_file" string="Import the file" icon="gtk-execute" colspan="1" type="object" />
+                    <field name="import_error_ok" invisible="1"/>
+                    <field name="filename" invisible="1"  />
+                    <button name="dummy" string="Update" icon="gtk-execute" colspan="1" type="object" />
+                    <newline />
+                    <field name="percent_completed" widget="progressbar" attrs="{\'invisible\': [(\'import_in_progress\', \'=\', False)]}" />
+                    <field name="data" filename="filename" colspan="2" attrs="{\'invisible\':[(\'import_error_ok\', \'=\', False)]}"/>
+                    <newline />
+                    <field name="message" attrs="{\'invisible\':[(\'import_in_progress\', \'=\', False)]}" colspan="4" nolabel="1"/>
                 </group>
-                <field name="message" attrs="{'invisible':[('import_in_progress', '=', False)]}" colspan="4" nolabel="1"/>
                 """
-                # add field in arch
-                arch = result['arch']
-                l = arch.split('<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>')
-                arch = l[0]
-                arch += '<button name="uncopy_all" string="Clear all" colspan="1" type="object" icon="gtk-undo"/>' + new_field_txt + l[1]
-                result['arch'] = arch
-                
+                #generate new xml form
+                new_form = etree.fromstring(new_field_txt)
+                # insert new form just after state index position
+                root.insert(state_index+1, new_form)
+                # generate xml back to string
+                result['arch'] = etree.tostring(root)
         return result
 
 stock_partial_picking()

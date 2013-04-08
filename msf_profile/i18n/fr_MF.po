@@ -1529,7 +1529,9 @@ msgstr "Etes-vous sûr de vouloir créer des écritures ?"
 #: code:addons/msf_outgoing/msf_outgoing.py:2487
 #: model:ir.actions.report.xml,name:msf_outgoing.pre_packing_list
 #: model:process.process,name:msf_outgoing.process_process_ppl0
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_ppl_board
 #: view:stock.picking:0
+#: view:board.board:0
 #: model:process.process,name:sd.msf_outgoing_process_process_ppl0
 #, python-format
 msgid "Pre-Packing List"
@@ -16126,9 +16128,11 @@ msgstr "De:"
 #: code:addons/msf_outgoing/msf_outgoing.py:2240
 #: code:addons/return_claim/wizard/stock_partial_picking.py:127
 #: model:ir.actions.act_window,name:stock.action_picking_tree
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_outgoing_product_board
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree
 #: view:stock.picking:0
 #: view:purchase.order:0
+#: view:board.board:0
 #, python-format
 msgid "Delivery Orders"
 msgstr "Bons de Livraison"
@@ -16158,6 +16162,7 @@ msgstr "Bons de Livraison"
 #: model:ir.model,name:stock_forecast.model_purchase_order_line
 #: model:ir.model,name:supplier_catalogue.model_purchase_order_line
 #: model:ir.model,name:tender_flow.model_purchase_order_line
+#: code:addons/tender_flow/tender_flow.py:983
 msgid "Purchase Order Line"
 msgstr "Ligne Bon de Commande"
 
@@ -24003,6 +24008,7 @@ msgstr "Vous ne pouvez pas confirmer une Commande de Terrain sans ligne !"
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_ppl
 #: view:stock.picking:0
+#: view:board.board:0
 msgid "Pre-Packing Lists"
 msgstr "Listes de Pré-Colisage"
 
@@ -48911,6 +48917,7 @@ msgstr "Produits Entrants"
 #: model:ir.actions.act_window,name:stock.action_picking_tree4
 #: model:ir.ui.menu,name:stock.menu_action_picking_tree4
 #: view:stock.picking:0
+#: view:board.board:0
 #: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_tree_available
 msgid "Incoming Shipments"
 msgstr "Livraisons Entrantes"
@@ -49532,6 +49539,7 @@ msgstr "Réclamation"
 #: view:procurement.request.import:0
 #: field:supplier.catalogue,file_to_import:0
 #: field:composition.kit,file_to_import:0
+#: field:composition.kit,real_file_to_import:0
 #: view:wizard.import.fo.line:0
 #: field:wizard.import.fo.line,file:0
 #: view:wizard.import.ir.line:0
@@ -51874,7 +51882,9 @@ msgstr "Commandes de terrain par mois"
 
 #. module: msf_outgoing
 #: model:ir.actions.act_window,name:msf_outgoing.action_picking_ticket
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_picking_ticket_board
 #: view:stock.picking:0
+#: view:board.board:0
 msgid "Picking Tickets"
 msgstr "Bons de Piquage "
 
@@ -53813,6 +53823,12 @@ msgstr "Lignes qui ont été contrepassées."
 #, python-format
 msgid "You should choose a report to display."
 msgstr "Vous devriez choisir un rapport à afficher."
+
+#. module: mission_stock
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:94
+#, python-format
+msgid "The generation of this report is in progress. You could open this report when the last update field will be filled. Thank you for you comprehension."
+msgstr "La génération du rapport est en cours. Vous pourrez ouvrir ce rapport lorsque le champ Dernière Mise à jour sera rempli. Merci de votre compréhension."
 
 #. module: consumption_calculation
 #: view:real.average.consumption:0
@@ -59528,14 +59544,22 @@ msgstr "Demande de Devis - brouillon"
 msgid "Can not create Journal Entry, Input Account defined on this product and Variant account on category of this product are same."
 msgstr "Vous ne pouvez pas créer d'Ecritures Comptables, le compte d'entrée défini sur ce produit et le compte de variantes de la catégorie de ce produit sont les mêmes."
 
-#. modules: purchase, documents_done, purchase_override, sd
+#. modules: purchase, documents_done, purchase_override, tender_flow, sd
 #: selection:documents.done.wizard,model:0
 #: model:ir.actions.report.xml,name:purchase.report_purchase_quotation
 #: model:process.process,name:purchase.process_process_rfq0
 #: model:ir.actions.report.xml,name:purchase_override.report_purchase_msf_quotation
 #: model:process.process,name:sd.purchase_process_process_rfq0
+#: code:addons/tender_flow/tender_flow.py:948
 msgid "Request for Quotation"
 msgstr "Demande de Devis"
+
+#. module: tender_flow
+#: code:addons/tender_flow/tender_flow.py:984
+#: view:purchase.order.line:0
+#, python-format
+msgid "Request for Quotation Line"
+msgstr "Ligne de Demande de Devis"
 
 #. module: msf_budget
 #: model:ir.model,name:msf_budget.model_msf_budget_decision_moment
@@ -62641,6 +62665,7 @@ msgstr "Type Int."
 
 #. module: transport_mgmt
 #: view:purchase.order:0
+#: view:board.board:0
 msgid "Shipments"
 msgstr "Expéditions"
 
@@ -66615,6 +66640,19 @@ msgstr "Vous pouvez utiliser le modèle généré depuis l'export. \n"
 " Les colonnes doivent être dans cet ordre: \n"
 "                                        Module, Code Produit*, Description produit, Quantité et UdM du produit"
 
+#. module: msf_supply_doc_import
+#: help:composition.kit,real_file_to_import:0
+msgid "You can use the template of the export for the format that you need to use. \n"
+" \n"
+"                                        The file should be in XML Spreadsheet 2003 format. \n"
+" The columns should be in this order : \n"
+"                                        Module*, Product Code*, Product Description*, Quantity*, Product UoM*, Asset, Batch Number and Expiry Date"
+msgstr "Vous pouvez utiliser le modèle généré depuis l'export. \n"
+" \n"
+"                                        Le fichier doit être dans le format XML Spreadsheet 2003. \n"
+" Les colonnes doivent être dans cet ordre: \n"
+"                                        Module, Code Produit*, Description produit, Quantité, UdM du produit, Bien, Numéro de lot et Date d'expiration"
+
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_composition_kit_xls
 msgid "Composition Kit Excel Export"
@@ -66807,6 +66845,14 @@ msgstr "Ligne %s du fichier: la qté consommée (%s) ne peut être supérieure �
 #, python-format
 msgid "The UOM Name was empty. (Details: %s)"
 msgstr "Le nom de l'UdM était vide. (Détails: %s)"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:110
+#, python-format
+msgid "You should have exactly 5 columns in this order:\n"
+"Product Code*, Product Description*, AMC, FMC, Valid Until"
+msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
+"Code Produit*, Description du Produit*, CCM, PCM, Valide jusqu'au"
 
 #. module: consumption_calculation
 #: view:real.average.consumption:0
@@ -67224,6 +67270,22 @@ msgstr "ces produits inactifs"
 #, python-format
 msgid "%s been inactivated. If you want to generate RfQ from this document you have to remove/correct the line containing those inactive products (see red %s of the document)"
 msgstr "%s a été désactivé. Si vous voulez générer une demande de devis vous devez supprimer/corriger les lignes contenant ces produits inactifs (lignes en rouge %s)"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/composition_kit.py:205
+#, python-format
+msgid "You should have exactly 8 columns in this order:\n"
+"Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Batch Number, Expiry Date"
+msgstr "Vous devriez avoir exactement 8 colonnes dans cet ordre:\n"
+"Module, Code Produit*, Description du Produit*, Quantité et UdM du produit, Bien, Numéro de lot, Date d'expiration"
+
+#. module: msf_supply_doc_import
+#: code:addons/msf_supply_doc_import/composition_kit.py:111
+#, python-format
+msgid "You should have exactly 5 columns in this order:\n"
+"Module, Product Code*, Product Description, Quantity and Product UOM"
+msgstr "Vous devriez avoir exactement 5 colonnes dans cet ordre:\n"
+"Module, Code Produit*, Description du Produit*, Quantité et UdM du produit"
 
 #. module: msf_supply_doc_import
 #: code:addons/msf_supply_doc_import/check_line.py:245

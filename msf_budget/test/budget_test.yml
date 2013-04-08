@@ -233,10 +233,11 @@
     code: TSTINSTANCE
     name: Test Instance
     level: section
-    top_cost_center_id: analytic_account_OC1
     target_cost_center_ids:
       - cost_center_id: analytic_account_OC1
         is_target: True
+        is_top_cost_center: True
+        is_po_fo_cost_center: True
     move_prefix: TEST
     reconcile_prefix: T1
 -

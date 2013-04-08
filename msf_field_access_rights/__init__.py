@@ -19,6 +19,6 @@
 #
 ##############################################################################
 import osv_override
-
+import ir_model_fields
 import field_access_rule
 import field_access_rule_line

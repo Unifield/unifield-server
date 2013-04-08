@@ -101,7 +101,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     del common_vals['destination_id']
                     if f1_id:
@@ -255,6 +257,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
             ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
             # create new lines
+            if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
+                continue
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
                 'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
             # update old ana lines
