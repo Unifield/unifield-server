@@ -505,8 +505,6 @@
     from dateutil.relativedelta import relativedelta
     req_date = (datetime.datetime.today() + relativedelta(days=1)).strftime('%Y-%m-%d 00:00:00')
     self.write(cr, uid, [ref('po_gr_sp1')], {'delivery_requested_date': req_date})
-    po = self.browse(cr, uid, ref('po_gr_sp1'))
-    print po.delivery_requested_date, po.partner_id.id, po.order_type, po.state, po.rfq_ok
 -
   I validate the sale order
 -
