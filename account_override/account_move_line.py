@@ -126,6 +126,26 @@ class account_move_line(osv.osv):
         """
         return self.pool.get('account.journal').get_journal_type(cr, uid, context)
 
+    def _get_reconcile_txt(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Get total/partial reconcile name
+        """
+        res = {}
+        for aml in self.browse(cr, uid, ids):
+            res[aml.id] = ''
+            r_id = None
+            if aml.reconcile_id:
+                r_id = aml.reconcile_id.id
+            elif aml.reconcile_partial_id:
+                r_id = aml.reconcile_partial_id.id
+            if r_id:
+                d = self.pool.get('account.move.reconcile').name_get(cr, uid, [r_id])
+                name = ''
+                if d and d[0] and d[0][1]:
+                    name = d[0][1]
+                res[aml.id] = name
+        return res
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
@@ -151,7 +171,7 @@ class account_move_line(osv.osv):
             help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
         'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
         help="This indicates the type of the Journal attached to this Journal Item"),
-        'reconcile_txt': fields.text(string="Reconcile", help="Help user to display and sort Reconciliation"),
+        'reconcile_txt': fields.function(_get_reconcile_txt, store=True, type='text', method=True, string="Reconcile", help="Help user to display and sort Reconciliation"),
     }
 
     _defaults = {
