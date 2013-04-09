@@ -352,19 +352,19 @@ class supplier_catalogue(osv.osv):
                 #Product code
                 product_code = row.cells[0].data
                 if not product_code :
-                    default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                    default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                     to_correct_ok = True
                 else:
                     try:
                         product_code = product_code.strip()
                         code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                         if not code_ids:
-                            default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                            default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                             to_correct_ok = True
                         else:
                             default_code = code_ids[0]
                     except Exception:
-                         default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                         default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                          to_correct_ok = True
 
                 #Product Description
@@ -373,19 +373,19 @@ class supplier_catalogue(osv.osv):
                 #Product UoM
                 p_uom = row.cells[2].data
                 if not p_uom:
-                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                     to_correct_ok = True
                 else:
                     try:
                         uom_name = p_uom.strip()
                         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                         if not uom_ids:
-                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                             to_correct_ok = True
                         else:
                             uom_id = uom_ids[0]
                     except Exception:
-                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                          to_correct_ok = True
 
                 #Product Min Qty
@@ -557,8 +557,8 @@ class supplier_catalogue_line(osv.osv):
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-        prod_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+        uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
+        prod_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
 
         for line in self.browse(cr, uid, ids, context=context):    
             if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  

@@ -26,7 +26,7 @@ from os.path import join as opj
 import tools
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from msf_supply_doc_import.check_line import *
+from msf_doc_import.check_line import *
 
 RESULT_MODELS_SELECTION = [('group', 'Group'), ('user', 'User'), ('menu', 'Menu')]
 RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated')]
