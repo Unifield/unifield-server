@@ -121,6 +121,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'credit_currency': l.credit,
                             'currency_id': c_id,
                             'analytic_distribution_id': distrib_id,
+                            'partner_id': l.partner_id and l.partner_id.id or False,
+                            'employee_id': l.employee_id and l.employee_id.id or False,
                         }
                         self.pool.get('account.move.line').create(cr, uid, move_line_vals, context)
         return res
