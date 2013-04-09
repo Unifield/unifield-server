@@ -1123,7 +1123,7 @@ class procurement_order(osv.osv):
             # and tender name if exist
             origins = set([po.origin, procurement.origin, procurement.tender_id and procurement.tender_id.name])
             # Add different origin on 'Source document' field if the origin is nat already listed
-            origin = ';'.join(o for o in list(origins) if o and (o == po.origin or not re.search(o, po.origin)))
+            origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': origin}, context=context)
             
             if location_id:
