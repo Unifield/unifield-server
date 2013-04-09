@@ -273,9 +273,9 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+"""WH
                 assert data.res_id == values['res_id'], \
                        "Oops...! There is multiple resources for a unique xml_id! Expected: %s, got: %s" \
                        % (values['res_id'], data.res_id)
-                super(ir_model_data_sync, self).write(cr, uid, sd_ids, args, context=context)
+                self.write(cr, uid, sd_ids, args, context=context)
             else:
-                super(ir_model_data_sync, self).create(cr, uid, args, context=context)
+                self.create(cr, uid, args, context=context)
     
         return id
 
