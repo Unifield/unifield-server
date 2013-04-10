@@ -59,6 +59,7 @@ class res_partner(osv.osv):
             ret[id] = False
         return ret
 
+    # This method have been abandonned since UTP-510 because of prepaid accounts (type receivable) that doesn't show any partners.
     def _search_filter_third(self, cr, uid, obj, name, args, context):
         if not context:
             context = {}
@@ -73,7 +74,7 @@ class res_partner(osv.osv):
         return []
 
     _columns = {
-        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
+        'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_fake, method=True), # search is now fake because of UTP-510
     }
 res_partner()
 
@@ -159,7 +160,7 @@ class account_bank_statement(osv.osv):
 
     def _balance_gap_compute(self, cr, uid, ids, name, attr, context=None):
         """
-        Calculate Gap between bank register balance (balance_end_real) and calculated balance (balance_end)
+        Calculate Gap between bank statement balance (balance_end_real) and calculated balance (balance_end)
         """
         res = {}
         for statement in self.browse(cr, uid, ids):
@@ -172,7 +173,7 @@ class account_bank_statement(osv.osv):
         'virtual_id': fields.function(_get_register_id, method=True, store=False, type='integer', string='Id', readonly="1",
             help='Virtual Field that take back the id of the Register'),
         'balance_end_real': fields.float('Closing Balance', digits_compute=dp.get_precision('Account'), states={'confirm':[('readonly', True)]}, 
-            help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank register is equal to that amount."),
+            help="Please enter manually the end-of-month balance, as per the printed bank statement received. Before confirming closing balance & closing the register, you must make sure that the calculated balance of the bank statement is equal to that amount."),
         'closing_balance_frozen': fields.boolean(string="Closing balance freezed?", readonly="1"),
         'name': fields.char('Register Name', size=64, required=True, states={'confirm': [('readonly', True)]},
             help='If you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself'),
@@ -245,7 +246,7 @@ class account_bank_statement(osv.osv):
 
     def button_confirm_bank(self, cr, uid, ids, context=None):
         """
-        Confirm Bank Register
+        Confirm Bank Statement
         """
         # First verify that all lines are in hard state
         for register in self.browse(cr, uid, ids, context=context):
@@ -428,7 +429,7 @@ class account_bank_statement(osv.osv):
             # Create next starting balance for cash registers
             if reg.journal_id.type == 'cash':
                 create_cashbox_lines(self, cr, uid, reg.id, context=context)
-            # For bank register, give balance_end
+            # For bank statement, give balance_end
             elif reg.journal_id.type == 'bank':
                 # Verify that another bank statement exists
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
@@ -440,7 +441,7 @@ class account_bank_statement(osv.osv):
 
     def button_confirm_closing_bank_balance(self, cr, uid, ids, context=None):
         """
-        Verify bank register balance before closing it.
+        Verify bank statement balance before closing it.
         """
         if not context:
             context = {}
@@ -451,7 +452,7 @@ class account_bank_statement(osv.osv):
             # NB: UTP-187 reveals that some difference appears between balance_end_real and balance_end. These fields are float. And balance_end_real is calculated. In python this imply some difference.
             # Because of fields values with 2 digits, we compare the two fields difference with 0.001 (10**-3)
             if (abs(round(reg.balance_end_real, 2) - round(reg.balance_end, 2))) > 10**-3:
-                raise osv.except_osv(_('Warning'), _('Bank register balance is not equal to Calculated balance.'))
+                raise osv.except_osv(_('Warning'), _('Bank statement balance is not equal to Calculated balance.'))
         return self.button_confirm_closing_balance(cr, uid, ids, context=context)
 
     def button_open_advances(self, cr, uid, ids, context=None):
@@ -787,7 +788,6 @@ class account_bank_statement_line(osv.osv):
         return result
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
@@ -796,8 +796,7 @@ class account_bank_statement_line(osv.osv):
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
             ('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
-            ('account.bank.statement', 'Register')], multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled", 
             type='boolean', store=False),
@@ -812,15 +811,14 @@ class account_bank_statement_line(osv.osv):
         'invoice_id': fields.many2one('account.invoice', "Invoice", required=False),
         'first_move_line_id': fields.many2one('account.move.line', "Register Move Line"),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), 
-            ('account.bank.statement', 'Register')], help="To use for python code when registering", multi="third_parties_key"),
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], help="To use for python code when registering", multi="third_parties_key"),
         'imported_invoice_line_ids': fields.many2many('account.move.line', 'imported_invoice', 'st_line_id', 'move_line_id', 
             string="Imported Invoices", required=False, readonly=True),
         'number_imported_invoice': fields.function(_get_number_imported_invoice, method=True, string='Number Invoices', type='integer'),
         'is_down_payment': fields.function(_get_down_payment_state, method=True, string="Is a down payment line?", 
             type='boolean', store=False),
         'from_import_cheque_id': fields.many2one('account.move.line', "Cheque Line", 
-            help="This move line has been taken for create an Import Cheque in a bank register."),
+            help="This move line has been taken for create an Import Cheque in a bank statement."),
         'is_transfer_with_change': fields.function(_get_transfer_with_change_state, method=True, string="Is a transfer with change line?", 
             type='boolean', store=False),
         'down_payment_id': fields.many2one('purchase.order', "Down payment", readonly=True),
@@ -900,9 +898,8 @@ class account_bank_statement_line(osv.osv):
             'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id, register_id and partner_type support
+            # Add employee_id, transfer_journal_id and partner_type support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
-            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
@@ -951,9 +948,8 @@ class account_bank_statement_line(osv.osv):
             'document_date': st_line.document_date,
             'move_id': move_id,
             'partner_id': ((st_line.partner_id) and st_line.partner_id.id) or False,
-            # Add employee_id and register_id support
+            # Add employee_id and transfer_journal_id support
             'employee_id': ((st_line.employee_id) and st_line.employee_id.id) or False,
-            'register_id': ((st_line.register_id) and st_line.register_id.id) or False,
             'transfer_journal_id': ((st_line.transfer_journal_id) and st_line.transfer_journal_id.id) or False,
 #            'partner_type': partner_type or False,
             'partner_type_mandatory': st_line.partner_type_mandatory or False,
@@ -1002,6 +998,72 @@ class account_bank_statement_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
         if amount:
             res.update({'amount': amount})
+        return res
+
+    def _update_employee_analytic_distribution(self, cr, uid, values):
+        """
+        Update analytic distribution if some expat staff is in values
+        """
+        # Prepare some values
+        res = values.copy()
+        # Fetch default funding pool: MSF Private Fund
+        try:
+            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+        except ValueError:
+            msf_fp_id = 0
+        # Check that an employee is given in employee_id or third_parties
+        if values.get('employee_id', False) or values.get('partner_type', False):
+            # Fetch account (should be mandatory)
+            account = self.pool.get('account.account').browse(cr, uid, values.get('account_id'))
+            is_expense = False
+            if account.user_type and account.user_type.code == 'expense':
+                is_expense = True
+            if values.get('employee_id'):
+                emp_id = values.get('employee_id')
+            else:
+                data = values.get('partner_type')
+                if not ',' in data:
+                    raise osv.except_osv(_('Error'), _('Wrong 3rd parties format!'))
+                third = data.split(',')
+                # Do not do anything if partner is another object that employee
+                if third and third[0] and third[0] != "hr.employee":
+                    return res
+                emp_id = third and third[1] or False
+            employee = self.pool.get('hr.employee').browse(cr, uid, int(emp_id))
+            if is_expense and employee.cost_center_id:
+                # Create a distribution
+                destination_id = (employee.destination_id and employee.destination_id.id) or (account.default_destination_id and account.default_destination_id.id) or False
+                cc_id = employee.cost_center_id and employee.cost_center_id.id or False
+                fp_id = employee.funding_pool_id and employee.funding_pool_id.id or False
+                f1_id = employee.free1_id and employee.free1_id.id or False
+                f2_id = employee.free2_id and employee.free2_id.id or False
+                if not fp_id:
+                    fp_id = msf_fp_id
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {})
+                statement_id = values.get('statement_id', False)
+                st = self.pool.get('account.bank.statement').browse(cr, uid, statement_id)
+                currency_id = st.journal_id and st.journal_id.currency and st.journal_id.currency.id or False
+                if distrib_id:
+                    common_vals = {
+                        'distribution_id': distrib_id,
+                        'currency_id': currency_id,
+                        'percentage': 100.0,
+                        'date': values.get('date', False),
+                        'source_date': values.get('date', False),
+                        'destination_id': destination_id,
+                    }
+                    common_vals.update({'analytic_id': cc_id,})
+                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                    common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id,})
+                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    del common_vals['cost_center_id']
+                    if f1_id:
+                        common_vals.update({'analytic_id': f1_id,})
+                        self.pool.get('free.1.distribution.line').create(cr, uid, common_vals)
+                    if f2_id:
+                        common_vals.update({'analytic_id': f2_id})
+                        self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+                res.update({'analytic_distribution_id': distrib_id})
         return res
 
     def _verify_dates(self, cr, uid, ids, context=None):
@@ -1304,6 +1366,8 @@ class account_bank_statement_line(osv.osv):
             move_obj.post(cr, uid, move_ids, context=context)
             
             # STEP 3 : Reconcile
+            # UTP-574 Avoid problem of reconciliation for pending payments
+            context.update({'pending_payment': True})
             if total_payment:
                 move_line_obj.reconcile_partial(cr, uid, move_lines+[x.id for x in st_line.imported_invoice_line_ids], context=context)
             else:
@@ -1402,6 +1466,12 @@ class account_bank_statement_line(osv.osv):
         """
         # First update amount
         values = self._update_amount(values=values)
+        # Then update expat analytic distribution
+        distrib_id = False
+        if 'analytic_distribution_id' in values and values.get('analytic_distribution_id') != False:
+            distrib_id = values.get('analytic_distribution_id')
+        if not distrib_id:
+            values = self._update_employee_analytic_distribution(cr, uid, values=values)
         # Then create a new bank statement line
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
@@ -1435,6 +1505,18 @@ class account_bank_statement_line(osv.osv):
                 self._update_move_from_st_line(cr, uid, id, values, context=context)
             if saveddate:
                 values['date'] = saveddate
+        # Then update analytic distribution
+        if 'employee_id' or 'partner_type' in values:
+            res = []
+            for line in self.read(cr, uid, ids, ['analytic_distribution_id', 'account_id', 'statement_id']):
+                if not 'account_id' in values:
+                    values.update({'account_id': line.get('account_id')[0]})
+                if not 'statement_id' in values:
+                    values.update({'statement_id': line.get('statement_id')[0]})
+                values = self._update_employee_analytic_distribution(cr, uid, values)
+                tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
+                res.append(tmp)
+            return res
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Amount verification regarding Down payments
@@ -1549,6 +1631,12 @@ class account_bank_statement_line(osv.osv):
                 if absl.account_id.user_type.code in ['expense']:
                     self.update_analytic_lines(cr, uid, absl.id)
                 # some verifications
+                if self.analytic_distribution_is_mandatory(cr, uid, absl.id, context=context) and not context.get('from_yml'):
+                    vals = self._update_employee_analytic_distribution(cr, uid, {'employee_id': absl.employee_id and absl.employee_id.id or False, 'account_id': absl.account_id.id, 'statement_id': absl.statement_id.id,})
+                    if 'analytic_distribution_id' in vals:
+                        self.write(cr, uid, [absl.id], {'analytic_distribution_id': vals.get('analytic_distribution_id'),})
+                    else:
+                        raise osv.except_osv(_('Error'), _('No analytic distribution found!'))
                 if absl.is_transfer_with_change:
                     if not absl.transfer_journal_id:
                         raise osv.except_osv(_('Warning'), _('Third party is required in order to hard post a transfer with change register line!'))
@@ -1587,6 +1675,18 @@ class account_bank_statement_line(osv.osv):
         Write some statement lines into some account move lines in draft state.
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
+
+    def button_delete(self, cr, uid, ids, context=None):
+        """
+        Delete given ids
+        """
+        forbidden = []
+        for absl in self.browse(cr, uid, ids, context=context):
+            if absl.state != 'draft':
+                forbidden.append(absl.id)
+        if forbidden:
+            raise osv.except_osv(_('Warning'), _('You can only delete draft lines!'))
+        return self.unlink(cr, uid, ids, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -1692,7 +1792,7 @@ class account_bank_statement_line(osv.osv):
             if inv.journal_id and inv.journal_id.type not in journal_type:
                 journal_type.append(inv.journal_id.type)
         return {
-            'name': "Invoice Lines",
+            'name': "Supplier Invoices",
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',

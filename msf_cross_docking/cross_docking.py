@@ -336,8 +336,8 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
         # we check availability : cancel then check
-        self.cancel_assign(cr, uid, ids)
-        self.action_assign(cr, uid, ids)
+        self.cancel_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context)
         return False
 
     def button_stock_all(self, cr, uid, ids, context=None):
@@ -378,8 +378,8 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
         # we check availability : cancel then check
-        self.cancel_assign(cr, uid, ids)
-        self.action_assign(cr, uid, ids)
+        self.cancel_assign(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context)
         return False
 
     def _do_incoming_shipment_first_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -429,6 +429,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 product_id = values['product_id']
                 product_type = self.pool.get('product.product').read(cr, uid, product_id, ['type'], context=context)['type']
                 values.update({'location_dest_id': cross_docking_location})
+                values.update({'cd_from_bo': True})
             elif var.dest_type == 'to_stock':
                 var.source_type = None
                 # below, "source_type" is only used for the outgoing shipment. We set it to "None" because
@@ -442,6 +443,7 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 else:
                     # treat moves towards STOCK if NOT SERVICE
                     values.update({'location_dest_id': stock_location_input})
+                values.update({'cd_from_bo': False})
         return values
 
     def _do_partial_hook(self, cr, uid, ids, context, *args, **kwargs):
@@ -564,7 +566,8 @@ class stock_move(osv.osv):
             self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
-
+            #FEFO
+            self.fefo_update(cr, uid, ids, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)
@@ -612,6 +615,9 @@ class stock_move(osv.osv):
             self.cancel_assign(cr, uid, todo, context=context)
             # we rechech availability
             self.action_assign(cr, uid, todo)
+            
+            #FEFO
+            self.fefo_update(cr, uid, todo, context)
             # below we cancel availability to recheck it
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]
 #            picking_todo.append(stock_picking_id)

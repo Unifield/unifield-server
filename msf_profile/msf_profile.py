@@ -23,6 +23,7 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 from os.path import join as opj
+from os.path import exists
 import tools
 
 class ir_model_data(osv.osv):
@@ -38,6 +39,12 @@ class ir_model_data(osv.osv):
         ctx = context.copy()
         ctx['update_mode'] = mode
         return super(ir_model_data, self)._update(cr, uid, model, module, values, xml_id, store, noupdate, mode, res_id, ctx)
+
+    def patch13_install_export_import_lang(self, cr, uid, *a, **b):
+        mod_obj = self.pool.get('ir.module.module')
+        mod_ids = mod_obj.search(cr, uid, [('name', '=', 'export_import_lang')])
+        if mod_ids and mod_obj.read(cr, uid, mod_ids, ['state'])[0]['state'] == 'uninstalled':
+            mod_obj.write(cr, uid, mod_ids[0], {'state': 'to install'})
 
 ir_model_data()
 

@@ -13,7 +13,7 @@
             auto="False"
             menu="True"
          />
-         
+
         <report
             id="report_request_for_quotation_xls"
             string="Request For Quotation Excel Export"
@@ -96,6 +96,32 @@
             model="product.list"
             name="product.list.xls"
             file="msf_supply_doc_export/report/product_list_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- KIT COMPOSITION LIST -->
+        <report
+            id="report_composition_kit_xls"
+            string="Composition Kit Excel Export"
+            model="composition.kit"
+            name="composition.kit.xls"
+            file="msf_supply_doc_export/report/report_composition_kit_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- KIT REAL COMPOSITION LIST -->
+        <report
+            id="report_real_composition_kit_xls"
+            string="Real Composition Kit Excel Export"
+            model="composition.kit"
+            name="real.composition.kit.xls"
+            file="msf_supply_doc_export/report/report_real_composition_kit_xls.mako"
             report_type="webkit"
             header="False"
             auto="False"

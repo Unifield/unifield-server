@@ -249,5 +249,16 @@
             <field name="analytic_journal_id" ref="account_journal.analytic_extra_accounting_journal"/>
         </record>
 
+        <record id="account_journal.analytic_migration_journal" model="account.analytic.journal">
+            <field name="name">Migration</field>
+            <field name="code">AMIGRATE</field>
+            <field name="type">migration</field>
+        </record>
+        <record id="account_journal.migration_journal" model="account.journal">
+            <field name="name">Migration</field>
+            <field name="code">MIGRATE</field>
+            <field name="type">migration</field>
+            <field name="analytic_journal_id" ref="account_journal.analytic_migration_journal"/>
+        </record>
     </data>
 </openerp>

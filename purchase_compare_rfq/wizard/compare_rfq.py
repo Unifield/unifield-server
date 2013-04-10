@@ -263,7 +263,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                                                              'compare_line_id': line_id.id,
                                                              'compare_id': line_id.compare_id.id,
                                                              'currency_id': l.order_id.pricelist_id.currency_id.id,
-                                                             'price_total': l.product_qty*l.price_unit}))
+                                                             'price_total': l.product_qty*l.price_unit}, context=context))
         choose_sup_obj.write(cr, uid, [new_id], {'line_ids': [(6,0,line_ids)],
                                                  'line_notes_ids': [(6,0,line_ids)]})
         

@@ -59,8 +59,7 @@
 	                        <field name="functional_amount_tax"/>
 	                        <field name="functional_amount_total"/>
                         </group>
-                        <newline />
-                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+
                     </group>
                 </data>
             </field>

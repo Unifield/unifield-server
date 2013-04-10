@@ -36,6 +36,8 @@ class add_event(osv.osv_memory):
         '''
         filter available types according to existing events
         '''
+        if not context:
+            context = {}
         claim_id = context.get('claim_id', False)
         # when coming from unique_fields_views.yml, inherited_views.yml, we do not have corresponding claim_id in context
         if not claim_id:

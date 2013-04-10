@@ -24,7 +24,7 @@
 
         <!-- Display all Analytic Lines attached to Register Lines from given Register -->
         <record id="action_analytic_register_lines_search" model="ir.actions.server">
-            <field name="name">Analytic Lines (FP)</field>
+            <field name="name">Analytic Lines</field>
             <field name="model_id" ref="model_account_bank_statement"/>
             <field name="state">code</field>
             <field name="code">action = obj.get_analytic_register_lines(context=context)</field>
@@ -33,7 +33,7 @@
         <record id="ir_open_analytic_register_lines_search" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">account.bank.statement</field>
-            <field name="name">Analytic Lines (FP)</field>
+            <field name="name">Analytic Lines</field>
             <field eval="'ir.actions.server,%d'%action_analytic_register_lines_search" name="value"/>
             <field eval="True" name="object"/>
         </record>
@@ -49,7 +49,7 @@
             <field name="code">action = obj.return_to_register(context=context)</field>
         </record>
 
-        <record id="ir_open_analytic_register_lines_search" model="ir.values">
+        <record id="ir_open_return_to_register" model="ir.values">
             <field name="key2">client_action_multi</field>
             <field name="model">account.bank.statement.line</field>
             <field name="name">Return to register</field>

@@ -97,12 +97,16 @@
                                  -->
                             </group>
 
-                            <group colspan="2" col="2" name="status">
-                                <separator string="Status" colspan="2"/>
-                                <field name="categ_id" readonly="1"/>
-                                <field name="international_status" required="1" widget="selection" />
-                                <field name="state" widget="selection" />
-                                <field name="active"/>
+                            <group colspan="2" col="3" name="status">
+                                <separator string="Status" colspan="3"/>
+                                <field name="categ_id" readonly="1" colspan="3"/>
+                                <field name="international_status" required="1" widget="selection" colspan="3" />
+                                <field name="state" colspan="3"/>
+                                <field name="active" readonly="1"/>
+                                <group colspan="1" col="1">
+                                   <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
+                                   <button name="reactivate_product" icon="gtk-execute" string="Re-activate product" type="object" attrs="{'invisible': [('active', '=', True)]}" />
+                                </group>
                             </group>
 
                             <group colspan="2" col="2" name="quality">
@@ -531,6 +535,15 @@
             res_model="purchase.order"
             src_model="product.product"
             groups=""/>
+            
+        <!-- Add a link to see all inactivated products -->
+        <act_window
+           context="{}"
+           domain="[('active', '=', False)]"
+           id="unactive_product_list"
+           name="Inactivated products"
+           res_model="product.product"
+           src_model="product.product" />
 
 
 
@@ -542,7 +555,7 @@
             <field name="model">stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="grey:state in ('cancel')" string="Moves"  noteditable="1" hide_delete_button="1" 	hide_new_button="1" editable="top">
+                <tree colors="grey:state in ('cancel')" string="Moves"  noteditable="1" hide_delete_button="1"    hide_new_button="1" editable="top">
                     <field name="name" />
                     <field name="picking_id" string="Reference"/>
                     <field name="origin"/>
@@ -755,5 +768,35 @@
                   action="product_justification_code_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
+        
+        
+        <!--  Deactivation product error wizard -->
+        <record id="deactivation_product_error_form_view" model="ir.ui.view">
+           <field name="name">deactivation.product.error.form.view</field>
+           <field name="model">product.deactivation.error</field>
+           <field name="type">form</field>
+           <field name="arch" type="xml">
+              <form string="Product deactivation error">
+                 <separator string="Concerned product" />
+                 <field name="product_id" colspan="4"/>
+                 <separator string="You cannot inactivate this product due to below reasons :" />
+                 <field name="stock_exist" colspan="4" />
+                 <field name="opened_object" colspan="4" />
+                 <group attrs="{'invisible': [('opened_object', '=', False)]}" colspan="4" col="4">
+                    <separator colspan="4" string="Documents" />
+                    <field name="error_lines" attrs="{'invisible': [('opened_object', '=', False)]}" mode="tree" readonly="1" colspan="4" nolabel="1">
+                       <tree string="Error documents">
+                          <field name="type"/>
+                          <field name="doc_ref"/>
+                          <button name="open_doc" type="object" string="Open the document" icon="terp-gtk-go-back-rtl"/> 
+                       </tree>
+                    </field>
+                    </group>
+                    <separator string="Actions" colspan="4" />
+                    <label colspan="3"> </label>
+                    <button special="cancel" string="Close window" icon="gtk-cancel" />
+              </form>
+           </field>
+        </record>
     </data>
 </openerp>

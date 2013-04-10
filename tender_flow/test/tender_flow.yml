@@ -85,9 +85,28 @@
     name: res_partner_1
     product_id: product_template_p0
     sequence: 10
-    
-    
-- 
+-
+  Create the partner
+-
+  !record {model: res.partner, id: supplier1}:
+    credit_limit: 0.0
+    debit_limit: 0.0
+    name: Berthe
+    supplier: true
+-
+  I create the corresponding addresses
+-
+  !record {model: res.partner.address, id: supplier_address_1}:
+    country_id: base.fr
+    partner_id: supplier1
+    street: street
+    type: default
+-
+  In order to test the procurement list module, I start by creating a new product category
+-
+  !record {model: product.category, id: product_cat1}:
+    name: Categ1
+-
   Creating a sale.order record
 - 
   !record {model: sale.order, id: sale_order_tender_so0}:

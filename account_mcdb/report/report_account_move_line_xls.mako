@@ -39,7 +39,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="17" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
+<Table ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
 x:FullRows="1">
 % for x in range(0,17):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
@@ -112,7 +112,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${o.state or ''}</Data>
+        <Data ss:Type="String">${getSel(o,'state')}</Data>
 </Cell>
 </Row>
 % endfor

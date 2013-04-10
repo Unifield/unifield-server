@@ -29,6 +29,8 @@ from os import path
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
+    _rec_name = 'section'
+
     _columns = {
         'code': fields.char('Code', size=4),
         'section': fields.char('Section', size=32),
@@ -126,6 +128,7 @@ product_cold_chain()
 class product_supply_source(osv.osv):
     _name = "product.supply.source"
     _rec_name = 'source'
+    
     _columns = {
         'source': fields.char('Supply source', size=32),
     }
@@ -134,7 +137,7 @@ product_supply_source()
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
     _columns = {
-        'code': fields.char('Justification Code', size=32, required=True),
+        'code': fields.char('Justification Code', size=32, required=True, translate=True),
         'description': fields.char('Justification Description', size=256, required=True),
     }
     
@@ -192,17 +195,11 @@ class product_attributes(osv.osv):
         
         for product in self.browse(cr, uid, ids, context=context):
             res[product.id] = []
-            res[product.id].append(product.nomen_manda_0.id)
-            res[product.id].append(product.nomen_manda_1.id)
-            res[product.id].append(product.nomen_manda_2.id)
-            res[product.id].append(product.nomen_manda_3.id)
-            res[product.id].append(product.nomen_sub_0.id)
-            res[product.id].append(product.nomen_sub_1.id)
-            res[product.id].append(product.nomen_sub_2.id)
-            res[product.id].append(product.nomen_sub_3.id)
-            res[product.id].append(product.nomen_sub_4.id)
-            res[product.id].append(product.nomen_sub_5.id)
-            
+            nomen_field_names = ['nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3', 'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4', 'nomen_sub_5']
+            for field in nomen_field_names:
+                value = getattr(product, field, False).id
+                if value:
+                    res[product.id].append(value)
         return res
     
     def _search_nomen(self, cr, uid, obj, name, args, context=None):
@@ -373,6 +370,302 @@ class product_attributes(osv.osv):
                 vals.update({'duplicate_ok': False})
         return super(product_attributes, self).write(cr, uid, ids, vals, context=context)
     
+    def reactivate_product(self, cr, uid, ids, context=None):
+        '''
+        Re-activate product.
+        '''
+        for product in self.browse(cr, uid, ids, context=context):
+            if product.active:
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
+        
+        self.write(cr, uid, ids, {'active': True}, context=context)
+        
+        return True
+    
+    def deactivate_product(self, cr, uid, ids, context=None):
+        '''
+        De-activate product. 
+        Check if the product is not used in any document in Unifield
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        location_obj = self.pool.get('stock.location')
+        po_line_obj = self.pool.get('purchase.order.line')
+        tender_line_obj = self.pool.get('tender.line')
+        fo_line_obj = self.pool.get('sale.order.line')
+        move_obj = self.pool.get('stock.move')
+        kit_obj = self.pool.get('composition.item')
+        inv_obj = self.pool.get('stock.inventory.line')
+        in_inv_obj = self.pool.get('initial.stock.inventory.line')
+        auto_supply_obj = self.pool.get('stock.warehouse.automatic.supply')
+        auto_supply_line_obj = self.pool.get('stock.warehouse.automatic.supply.line')
+        cycle_obj = self.pool.get('stock.warehouse.order.cycle')
+        cycle_line_obj = self.pool.get('stock.warehouse.order.cycle.line')
+        threshold_obj = self.pool.get('threshold.value')
+        threshold_line_obj = self.pool.get('threshold.value.line')
+        orderpoint_obj = self.pool.get('stock.warehouse.orderpoint')
+        invoice_obj = self.pool.get('account.invoice.line')
+
+        error_obj = self.pool.get('product.deactivation.error')
+        error_line_obj = self.pool.get('product.deactivation.error.line')
+        
+        internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
+        
+        c = context.copy()
+        c.update({'location_id': internal_loc})
+        
+        for product in self.browse(cr, uid, ids, context=context):
+            # Raise an error if the product is already inactive
+            if not product.active:
+                raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
+            
+            # Check if the product is in some purchase order lines or request for quotation lines
+            has_po_line = po_line_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                
+            # Check if the product is in some tender lines
+            has_tender_line = tender_line_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                               ('tender_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                
+            # Check if the product is in field order lines or in internal request lines
+            context.update({'procurement_request': True})
+            has_fo_line = fo_line_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                       ('order_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            
+            # Check if the product is in stock picking
+            # All stock moves in a stock.picking not draft/cancel/done or all stock moves in a shipment not delivered/done/cancel
+            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                      ('picking_id', '!=', False),
+                                                      '|', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+                                                      '&', ('picking_id.shipment_id', '!=', False),
+                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel']),
+                                                      ], context=context)
+#            has_move_line = move_obj.search(cr, uid, [('product_id', '=', product.id),
+#                                                      ('picking_id', '!=', False),
+#                                                      '|', '&', ('picking_id.state', 'not in', ['draft', 'done', 'cancel']),
+#                                                      ('picking_id.shipment_id', '!=', False),
+#                                                      ('picking_id.shipment_id.state', 'not in', ['delivered', 'done', 'cancel'])], context=context)
+                
+            # Check if the product is in a stock inventory
+            has_inventory_line = inv_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                          ('inventory_id', '!=', False),
+                                                          ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            
+            # Check if the product is in an initial stock inventory
+            has_initial_inv_line = in_inv_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                          ('inventory_id', '!=', False),
+                                                          ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                
+            # Check if the product is in a real kit composition
+            has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id),
+                                               ('item_kit_id.composition_type', '=', 'real'),
+                                               ('item_kit_id.state', '=', 'completed'),
+                                              ], context=context)
+            has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('composition_product_id', '=', product.id),
+                                                                         ('composition_type', '=', 'real'),
+                                                                         ('state', '=', 'completed')], context=context)
+            has_kit.extend(has_kit2)
+
+            # Check if the product is in an invoice
+            has_invoice_line = invoice_obj.search(cr, uid, [('product_id', '=', product.id),
+                                                            ('invoice_id', '!=', False),
+                                                            ('invoice_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+            
+            # Check if the product has stock in internal locations
+            has_stock = product.qty_available
+            
+            opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line
+            if has_stock or opened_object:
+                # Create the error wizard
+                wizard_id = error_obj.create(cr, uid, {'product_id': product.id,
+                                                       'stock_exist': has_stock and True or False,
+                                                       'opened_object': opened_object}, context=context)
+                
+                # Create lines for error in PO/RfQ
+                po_ids = []
+                for po_line in po_line_obj.browse(cr, uid, has_po_line, context=context):
+                    if po_line.order_id.id not in po_ids:
+                        po_ids.append(po_line.order_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': po_line.order_id.rfq_ok and 'Request for Quotation' or 'Purchase order',
+                                                        'internal_type': 'purchase.order',
+                                                        'doc_ref': po_line.order_id.name,
+                                                        'doc_id': po_line.order_id.id}, context=context)
+                        
+                # Create lines for error in Tender
+                tender_ids = []
+                for tender_line in tender_line_obj.browse(cr, uid, has_tender_line, context=context):
+                    if tender_line.tender_id.id not in tender_ids:
+                        tender_ids.append(tender_line.tender_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Tender',
+                                                        'internal_type': 'tender',
+                                                        'doc_ref': tender_line.tender_id.name,
+                                                        'doc_id': tender_line.tender_id.id}, context=context)
+                        
+                # Create lines for error in FO/IR
+                fo_ids = []
+                for fo_line in fo_line_obj.browse(cr, uid, has_fo_line, context=context):
+                    if fo_line.order_id.id not in fo_ids:
+                        fo_ids.append(fo_line.order_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': fo_line.order_id.procurement_request and 'Internal request' or 'Field order',
+                                                        'internal_type': 'sale.order',
+                                                        'doc_ref': fo_line.order_id.name,
+                                                        'doc_id': fo_line.order_id.id}, context=context)
+                        
+                # Create lines for error in picking
+                pick_ids = []
+                ship_ids = []
+                pick_type = {'in': 'Incoming shipment',
+                             'internal': 'Internal move',
+                             'out': 'Delivery Order'}
+                pick_subtype = {'standard': 'Delivery Order', 
+                                'picking': 'Picking Ticket', 
+                                'ppl': 'PPL', 
+                                'packing': 'Packing'}
+                for move in move_obj.browse(cr, uid, has_move_line, context=context):
+                    # Get the name of the stock.picking object
+                    picking_type = pick_type.get(move.picking_id.type)
+                    if move.picking_id.type == 'out':
+                        picking_type = pick_subtype.get(move.picking_id.subtype)
+                    
+                    # If the error picking is in a shipment, display the shipment instead of the picking
+                    if move.picking_id.shipment_id and move.picking_id.id not in ship_ids:
+                        ship_ids.append(move.picking_id.shipment_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Shipment',
+                                                        'internal_type': 'shipment',
+                                                        'doc_ref': move.picking_id.shipment_id.name,
+                                                        'doc_id': move.picking_id.shipment_id.id}, context=context)
+                        
+                    elif not move.picking_id.shipment_id and move.picking_id.id not in pick_ids:
+                        pick_ids.append(move.picking_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': picking_type,
+                                                        'internal_type': 'stock.picking',
+                                                        'doc_ref': move.picking_id.name,
+                                                        'doc_id': move.picking_id.id}, context=context)
+                        
+                # Create lines for error in kit composition
+                kit_ids = []
+                for kit in kit_obj.browse(cr, uid, has_kit, context=context):
+                    if kit.id not in kit_ids:
+                        kit_ids.append(kit.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': kit.item_kit_id.composition_type == 'real' and 'Kit Composition' or 'Theorical Kit Composition',
+                                                        'internal_type': 'composition.kit',
+                                                        'doc_ref': kit.item_kit_id.composition_type == 'real' and kit.item_kit_id.composition_reference or kit.item_kit_id.name,
+                                                        'doc_id': kit.item_kit_id.id}, context=context)
+                        
+                # Create lines for error in inventory
+                inv_ids = []
+                for inv in inv_obj.browse(cr, uid, has_inventory_line, context=context):
+                    if inv.inventory_id.id not in inv_ids:
+                        inv_ids.append(inv.inventory_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Physical Inventory',
+                                                        'internal_type': 'stock.inventory',
+                                                        'doc_ref': inv.inventory_id.name,
+                                                        'doc_id': inv.inventory_id.id}, context=context)
+                        
+                # Create lines for error in inventory
+                inv_ids = []
+                for inv in in_inv_obj.browse(cr, uid, has_initial_inv_line, context=context):
+                    if inv.inventory_id.id not in inv_ids:
+                        inv_ids.append(inv.inventory_id.id)
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': 'Initial stock inventory',
+                                                        'internal_type': 'initial.stock.inventory',
+                                                        'doc_ref': inv.inventory_id.name,
+                                                        'doc_id': inv.inventory_id.id}, context=context)
+
+                # Create lines for error in invoices
+                invoice_ids = []
+                for invoice in invoice_obj.browse(cr, uid, has_invoice_line, context=context):
+                    if invoice.invoice_id.id not in invoice_ids:
+                        invoice_ids.append(invoice.invoice_id.id)
+                        obj = invoice.invoice_id
+                        type_name = 'Invoice'
+                        # Customer Refund
+                        if obj.type == 'out_refund':
+                            type_name = 'Customer Refund'
+                        # Supplier Refund
+                        elif obj.type == 'in_refund':
+                            type_name = 'Supplier Refund'
+                        # Debit Note
+                        elif obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_inkind_donation:
+                            type_name = 'Debit Note'
+                        # Donation (in-kind donation)
+                        elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
+                            type_name = 'In-kind Donation'
+                        # Intermission voucher out
+                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                            type_name = 'Intermission Voucher Out'
+                        # Intermission voucher in
+                        elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                            type_name = 'Intermission Voucher In'
+                        # Stock Transfer Voucher
+                        elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
+                            type_name = 'Stock Transfer Voucher'
+                        # Supplier Invoice
+                        elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
+                            type_name = 'Supplier Invoice'
+                        # Supplier Direct Invoice
+                        elif obj.type == 'in_invoice' and obj.register_line_ids:
+                            type_name = 'Supplier Direct Invoice'
+
+                        error_line_obj.create(cr, uid, {'error_id': wizard_id,
+                                                        'type': type_name,
+                                                        'internal_type': 'account.invoice',
+                                                        'doc_ref': invoice.invoice_id.number,
+                                                        'doc_id': invoice.invoice_id.id}, context=context)
+                
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'product.deactivation.error',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'res_id': wizard_id,
+                        'target': 'new',
+                        'context': context}
+        
+        # Remove the replenishment rules associated to this product
+        # Automatic supply
+        auto_line_ids = auto_supply_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        for auto in auto_supply_line_obj.browse(cr, uid, auto_line_ids, context=context):
+            if len(auto.supply_id.line_ids) == 1:
+                auto_supply_obj.unlink(cr, uid, [auto.supply_id.id], context=context)
+            else:
+                auto_supply_line_obj.unlink(cr, uid, [auto.id], context=context)
+                
+        # Order cycle
+        cycle_ids = cycle_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        for cycle in cycle_line_obj.browse(cr, uid, cycle_ids, context=context):
+            if len(cycle.order_cycle_id.product_line_ids) == 1:
+                cycle_obj.unlink(cr, uid, [cycle.order_cycle_id.id], context=context)
+            else:
+                cycle_line_obj.unlink(cr, uid, [cycle.id], context=context)
+                
+        # Threshold value
+        threshold_ids = threshold_line_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        for threshold in threshold_line_obj.browse(cr, uid, threshold_ids, context=context):
+            if len(threshold.threshold_value_id.line_ids) == 1:
+                threshold_obj.unlink(cr, uid, [threshold.threshold_value_id.id], context=context)
+            else:
+                threshold_line_obj.unlink(cr, uid, [threshold.id], context=context)
+                
+        # Minimum stock rules
+        orderpoint_ids = orderpoint_obj.search(cr, uid, [('product_id', 'in', ids)], context=context)
+        orderpoint_obj.unlink(cr, uid, orderpoint_ids, context=context)
+        
+        self.write(cr, uid, ids, {'active': False}, context=context)
+        
+        return True
+    
     def onchange_batch_management(self, cr, uid, ids, batch_management, context=None):
         '''
         batch management is modified -> modification of Expiry Date Mandatory (perishable)
@@ -395,6 +688,11 @@ class product_attributes(osv.osv):
                        default_code="XXX",
                        # we set international_status to "temp" so that it won't be synchronized with this status
                        international_status=temp_status,
+                       # we do not duplicate the o2m objects
+                       asset_ids=False,
+                       prodlot_ids=False,
+                       attribute_ids=False,
+                       packaging=False,
                        )
         copydef.update(default)
         return super(product_attributes, self).copy(cr, uid, id, copydef, context)
@@ -411,7 +709,7 @@ class product_attributes(osv.osv):
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})
         return res
     
-    _constraints = [
+    _constraints = [ 
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
 
@@ -425,5 +723,117 @@ class product_template(osv.osv):
     }
 
 product_template()
+
+class product_deactivation_error(osv.osv_memory):
+    _name = 'product.deactivation.error'
+    
+    _columns = {
+        'product_id': fields.many2one('product.product', string='Product', required=True, readonly=True),
+        'stock_exist': fields.boolean(string='Stocks exist (internal locations)', readonly=True),
+        'opened_object': fields.boolean(string='Product is contain in opened documents', readonly=True),
+        'error_lines': fields.one2many('product.deactivation.error.line', 'error_id', string='Error lines'),
+    }
+    
+    _defaults = {
+        'stock_exist': False,
+        'opened_object': False,
+    }
+    
+product_deactivation_error()
+
+class product_deactivation_error_line(osv.osv_memory):
+    _name = 'product.deactivation.error.line'
+    
+    _columns = {
+        'error_id': fields.many2one('product.deactivation.error', string='Error', readonly=True),
+        'type': fields.char(size=64, string='Documents type'),
+        'internal_type': fields.char(size=64, string='Internal document type'),
+        'doc_ref': fields.char(size=64, string='Reference'),
+        'doc_id': fields.integer(string='Internal Reference'),
+        'view_id': fields.integer(string='Reference of the view to open'),
+    }
+    
+    def open_doc(self, cr, uid, ids, context=None):
+        '''
+        Open the associated documents
+        '''
+        if not context:
+            context = {}
+            
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        for line in self.browse(cr, uid, ids, context=context):
+            view_id, context = self._get_view(cr, uid, line, context=context)
+            return {'type': 'ir.actions.act_window',
+                    'name': line.type,
+                    'res_model': line.internal_type,
+                    'res_id': line.doc_id,
+                    'view_mode': 'form,tree',
+                    'view_type': 'form',
+                    'target': 'current',
+                    'view_id': view_id,
+                    'nodestroy': True,
+                    'context': context}
+
+    def _get_view(self, cr, uid, line, context=None):
+        '''
+        Return the good view according to the type of the object
+        '''
+        if not context:
+            context = {}
+            
+        view_id = False
+        data_obj = self.pool.get('ir.model.data')
+        obj = self.pool.get(line.internal_type).browse(cr, uid, line.doc_id)
+        
+        if line.internal_type == 'composition.kit':
+            context.update({'composition_type': 'theoretical'})
+            if obj.composition_type == 'real':
+                context.update({'composition_type': 'real'})
+        elif line.internal_type == 'stock.picking':
+            view_id = self.pool.get('stock.picking')._hook_picking_get_view(cr, uid, [line.doc_id], context=context, pick=obj)
+        elif line.internal_type == 'sale.order':
+            context.update({'procurement_request': obj.procurement_request})
+        elif line.internal_type == 'purchase.order':
+            context.update({'rfq_ok': obj.rfq_ok})
+        elif line.internal_type == 'account.invoice':
+            view_id = data_obj.get_object_reference(cr, uid, 'account', 'invoice_form')
+            # Customer Refund
+            if obj.type == 'out_refund':
+                context.update({'type':'out_refund', 'journal_type': 'sale_refund'})
+            # Supplier Refund
+            elif obj.type == 'in_refund':
+                context.update({'type':'in_refund', 'journal_type': 'purchase_refund'})
+            # Debit Note
+            elif obj.type == 'out_invoice' and obj.is_debit_note and not obj.is_inkind_donation:
+                context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
+            # Donation (in-kind donation)
+            elif obj.type == 'in_invoice' and not obj.is_debit_note and obj.is_inkind_donation:
+                context.update({'type':'in_invoice', 'journal_type': 'inkind'})
+            # Intermission voucher out
+            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                view_id = data_obj.get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+                context.update({'type':'out_invoice', 'journal_type': 'intermission'})
+            # Intermission voucher in
+            elif obj.type == 'in_invoice' and not obj.is_debit_note and not obj.is_inkind_donation and obj.is_intermission:
+                view_id = data_obj.get_object_reference(cr, uid, 'account_msf', 'view_intermission_form')
+                context.update({'type':'in_invoice', 'journal_type': 'intermission'})
+            # Stock Transfer Voucher
+            elif obj.type == 'out_invoice' and not obj.is_debit_note and not obj.is_inkind_donation:
+                context.update({'type':'out_invoice', 'journal_type': 'sale'})
+            # Supplier Invoice
+            elif obj.type == 'in_invoice' and not obj.register_line_ids and not obj.is_debit_note and not obj.is_inkind_donation:
+                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
+            # Supplier Direct Invoice
+            elif obj.type == 'in_invoice' and obj.register_line_ids:
+                context.update({'type':'in_invoice', 'journal_type': 'purchase'})
+
+        if view_id:
+            view_id = [view_id[1]]
+                
+        return view_id, context
+
+product_deactivation_error_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

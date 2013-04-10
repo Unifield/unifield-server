@@ -22,10 +22,10 @@
 ##############################################################################
 
 import account_mcdb
-import account_mcdb_export
 import report
 import account_move_line
 import account_analytic_line
+import account_bank_statement
 import wizard
 import mass_reallocation_search
 

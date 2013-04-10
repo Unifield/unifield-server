@@ -668,7 +668,7 @@ class composition_kit(osv.osv):
                 lot_name = obj.composition_lot_id.name
                 prod_name = obj.composition_product_id.name
                 exp_obj = datetime.strptime(value, db_date_format)
-                lot_obj.log(cr, uid, obj.composition_lot_id.id, _('Expiry Date of Batch Number %s for product %s has been updated to %s.'%(lot_name,prod_name,exp_obj.strftime(date_format))))
+                lot_obj.log(cr, uid, obj.composition_lot_id.id, _('Expiry Date of Batch Number %s for product %s has been updated to %s.')%(lot_name,prod_name,exp_obj.strftime(date_format)))
             else:
                 # not lot because the product is not batch managment, we have a reference instead, we write in composition_ref_exp
                 self.write(cr, uid, ids, {'composition_ref_exp': value}, context=context)
@@ -819,8 +819,31 @@ class composition_kit(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('Selected Version is for a different product.'))
             
         return True
+
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the kit composition list contains a line with an inactive product
+        '''
+        inactive_lines = self.pool.get('composition.item').search(cr, uid, [('item_product_id.active', '=', False),
+                                                                            ('item_kit_id', 'in', ids),
+                                                                            ('item_kit_id.composition_type', '=', 'real'),
+                                                                            ('item_kit_id.state', '=', 'completed')], context=context)
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+
+        for kit in self.browse(cr, uid, ids, context=context):
+            if kit.composition_type == 'real' and kit.state == 'completed' and not kit.composition_product_id.active:
+                raise osv.except_osv(_('Error'), _('The product of the kit composition is inactive. Please change the product.'))
+                return False
+
+        return True
     
     _constraints = [(_composition_kit_constraint, 'Constraint error on Composition Kit.', []),
+                    (_check_active_product, 'You cannot confirm this kit because it contains a line with an inactive product', ['state', 'composition_item_ids']),
                     ]
     _sql_constraints = [('unique_composition_kit_real_ref', "unique(composition_product_id,composition_reference)", 'Kit Composition List Reference must be unique for a given product.'),
                         # the composition list with lot A should not be taken into account if state is in ['done', 'cancel']
@@ -1040,7 +1063,23 @@ class composition_item(osv.osv):
         item_obj = self.pool.get('composition.item')
         result = item_obj.search(cr, uid, [('item_kit_id', 'in', ids)], context=context)
         return result
-    
+
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.item_kit_id and line.item_kit_id.state not in ('cancel', 'done') and line.item_product_id and not line.item_product_id.active:
+                res[line.id] = {
+                    'inactive_product': True,
+                    'inactive_error': _('The product in line is inactive !')
+                }
+                
+        return res
+        
     _columns = {'item_module': fields.char(string='Module', size=1024),
                 'item_product_id': fields.many2one('product.product', string='Product', required=True),
                 'item_qty': fields.float(string='Qty', digits_compute=dp.get_precision('Product UoM'), required=True),
@@ -1066,11 +1105,15 @@ class composition_item(osv.osv):
                 'hidden_perishable_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Exp', multi='get_vals', store=False, readonly=True),
                 'hidden_batch_management_mandatory': fields.function(_vals_get, method=True, type='boolean', string='B.Num', multi='get_vals', store=False, readonly=True),
                 'hidden_asset_mandatory': fields.function(_vals_get, method=True, type='boolean', string='Asset', multi='get_vals', store=False, readonly=True),
+                'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+                'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
                 }
     
     _defaults = {'hidden_batch_management_mandatory': False,
                  'hidden_perishable_mandatory': False,
                  'hidden_asset_mandatory': False,
+                 'inactive_product': False,
+                 'inactive_error': lambda *a: '',
                  }
     
     def _composition_item_constraint(self, cr, uid, ids, context=None):

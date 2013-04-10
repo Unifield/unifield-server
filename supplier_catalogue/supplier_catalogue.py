@@ -104,7 +104,7 @@ class supplier_catalogue(osv.osv):
             over_cat_to = self.pool.get('date.tools').get_date_formatted(cr, uid, d_type='date', datetime=over_cat.period_to, context=context)
             raise osv.except_osv(_('Error'), _('The \'To\' date of this catalogue is older than the \'From\' date of another catalogue - ' \
                                                'Please change the \'To\' date of this catalogue or the \'From\' date of the following ' \
-                                               'catalogue : %s (\'From\' : %s - \'To\' : %s)' % (over_cat.name, over_cat_from, over_cat_to)))
+                                               'catalogue : %s (\'From\' : %s - \'To\' : %s)') % (over_cat.name, over_cat_from, over_cat_to))
         
         # Search all catalogues with the same partner/currency which are done
         # after the beginning of the new catalogue
@@ -352,19 +352,19 @@ class supplier_catalogue(osv.osv):
                 #Product code
                 product_code = row.cells[0].data
                 if not product_code :
-                    default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                    default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                     to_correct_ok = True
                 else:
                     try:
                         product_code = product_code.strip()
                         code_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)])
                         if not code_ids:
-                            default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                            default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                             to_correct_ok = True
                         else:
                             default_code = code_ids[0]
                     except Exception:
-                         default_code = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+                         default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                          to_correct_ok = True
 
                 #Product Description
@@ -373,19 +373,19 @@ class supplier_catalogue(osv.osv):
                 #Product UoM
                 p_uom = row.cells[2].data
                 if not p_uom:
-                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                    uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                     to_correct_ok = True
                 else:
                     try:
                         uom_name = p_uom.strip()
                         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                         if not uom_ids:
-                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                            uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                             to_correct_ok = True
                         else:
                             uom_id = uom_ids[0]
                     except Exception:
-                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                          to_correct_ok = True
 
                 #Product Min Qty
@@ -395,7 +395,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[3].type in ['int', 'float']:
                         p_min_qty = row.cells[3].data
                     else:
-                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Qty"') )
+                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Min Qty"') % (line_num,))
 
                 #Product Unit Price
                 if not row.cells[4].data :
@@ -406,7 +406,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[4].type in ['int', 'float']:
                         p_unit_price = row.cells[4].data
                     else:
-                        raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Unit Price"') )
+                        raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Unit Price"') % (line_num,) )
 
                 #Product Rounding
                 if not row.cells[5].data:
@@ -415,7 +415,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[5] and row.cells[5].type in ['int', 'float']:
                         p_rounding = row.cells[5].data
                     else:
-                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Rounding"') )
+                       raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Rounding"') % (line_num,) )
 
                 #Product Min Order Qty
                 if not row.cells[6].data:
@@ -424,7 +424,7 @@ class supplier_catalogue(osv.osv):
                     if row.cells[6].type in ['int', 'float']:
                         p_min_order_qty = row.cells[6].data
                     else:
-                       raise osv.except_osv(_('Error'), _('Please, format the line number ' + str(line_num) + ', column "Min Order Qty"') )
+                       raise osv.except_osv(_('Error'), _('Please, format the line number %s, column "Min Order Qty"') % (line_num,) )
 
                 #Product Comment
                 if row.cells[7].data:
@@ -557,8 +557,8 @@ class supplier_catalogue_line(osv.osv):
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-        uom_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
-        prod_id = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','product_tbd')[1]
+        uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
+        prod_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
 
         for line in self.browse(cr, uid, ids, context=context):    
             if 'product_id' in vals and 'line_uom_id' in vals and vals['product_id'] != prod_id and vals['line_uom_id'] != uom_id:  

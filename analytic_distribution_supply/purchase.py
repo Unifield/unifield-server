@@ -87,6 +87,9 @@ class purchase_order(osv.osv):
             'purchase_id': purchase.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
+            'partner_type': purchase.partner_type,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -100,7 +103,7 @@ class purchase_order(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -319,8 +322,17 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        try:
+            intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                    'analytic_account_project_intermission')[1]
+        except ValueError:
+            intermission_cc = 0
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
+            is_intermission = False
+            if line.order_id and line.order_id.partner_id and line.order_id.partner_id.partner_type == 'intermission':
+                is_intermission = True
+
             # Check if PO is inkind
             is_inkind = False
             if line.order_id and line.order_id.order_type == 'in_kind':
@@ -337,14 +349,20 @@ class purchase_order_line(osv.osv):
                     res[line.id] = 'invalid'
                     continue
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+                if res[line.id] == 'valid' and not is_intermission:
+                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
+                    if cr.rowcount > 0:
+                        res[line.id] = 'invalid'
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
+        get_sel = self.pool.get('ir.model.fields').get_selection
         for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
-            res[pol['id']] = "%s%s"%(pol['analytic_distribution_state'].capitalize(), pol['have_analytic_distribution_from_header'] and " (from header)" or "")
+            d_state = get_sel(cr, uid, self._name, 'analytic_distribution_state', pol['analytic_distribution_state'], context)
+            res[pol['id']] = "%s%s"%(d_state, pol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
         return res
 
     def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
@@ -440,6 +458,9 @@ class purchase_order_line(osv.osv):
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
+            'partner_type': context.get('partner_type'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -453,7 +474,7 @@ class purchase_order_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

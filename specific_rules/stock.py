@@ -212,7 +212,7 @@ class initial_stock_inventory(osv.osv):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'initial.stock.inventory',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
@@ -256,7 +256,7 @@ class initial_stock_inventory_line(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'average_cost': lambda *a: 0.00,
         'product_qty': lambda *a: 0.00,
-        'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
     }
     
     def _check_batch_management(self, cr, uid, ids, context=None):
@@ -407,21 +407,32 @@ class stock_cost_reevaluation(osv.osv):
         'state': lambda *a: 'draft',
         'date': lambda *a: time.strftime('%Y-%m-%d'),
     }
-    
+
+    _sql_constraints = [
+        ('name_unique', "unique(name)", 'The Reference of the Product Cost Revaluation must be unique'),
+    ]
+
     def copy(self, cr, uid, ids, default=None, context=None):
         '''
         Set the state to 'draft' and the creation date to the current date
         '''
         if not default:
             default = {}
-            
+        name = self.read(cr, uid, ids, ['name'])['name']
+        i = 1
+        new_name = '%s (copy %s)' % (name, i)
+        while self.search_count(cr, uid, [('name', '=', new_name)]):
+            i += 1
+            new_name = '%s (copy %s)' % (name, i)
+
         if not 'state' in default:
             default.update({'state': 'draft'})
 
-        default.update({'date': time.strftime('%Y-%m-%d')})
+        default.update({'date': time.strftime('%Y-%m-%d'),
+                        'name': new_name})
             
         return super(stock_cost_reevaluation, self).copy(cr, uid, ids, default=default, context=context)
-    
+
     def action_confirm(self, cr, uid, ids, context=None):
         '''
         Confirm the cost reevaluation (don't change the price at this time)
@@ -440,7 +451,7 @@ class stock_cost_reevaluation(osv.osv):
                 if line.product_id.id not in products:
                     products.append(line.product_id.id)
                 else:
-                    raise osv.except_osv(_('Error'), _('You cannot have two lines with the same product. (Product : [%s] %s)' % (line.product_id.default_code, line.product_id.name)))
+                    raise osv.except_osv(_('Error'), _('You cannot have two lines with the same product. (Product : [%s] %s)') % (line.product_id.default_code, line.product_id.name))
         
         return self.write(cr, uid, ids, {'state': 'confirm'}, context=context)
         
@@ -530,7 +541,7 @@ class stock_cost_reevaluation(osv.osv):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.cost.reevaluation',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
