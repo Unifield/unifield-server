@@ -743,14 +743,34 @@ class res_groups(osv.osv):
     _inherit = 'res.groups'
     _columns = {'visible_res_groups': fields.boolean('Visible', readonly=True),
                 'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
-                'has_an_admin_profile': fields.boolean('Has an admin profile', readonly=True),
+                'is_an_admin_profile': fields.boolean('Is an admin profile', readonly=True),
                 }
     _defaults = {'visible_res_groups': True,
                  'from_file_import_res_groups': False,
-                 'has_an_admin_profile': False,
+                 'is_an_admin_profile': False,
                  }
 
 res_groups()
+
+
+class res_users(osv.osv):
+    _inherit = 'res.users'
+
+    def _check_admin_profile(self, cr, uid, ids, field, arg, context=None):
+        res = {}
+        group_obj = self.pool.get('res.groups')
+        for user in self.browse(cr, uid, ids, context=context):
+            if group_obj.search(cr, uid, [(uid, 'in', 'users'), ('is_an_admin_profile', '=', True)], context=context):
+                res[user.id] = True
+            else:
+                res[user.id] = False
+        return res
+
+    _columns = {
+            'has_an_admin_profile': fields.function(_check_admin_profile, type='boolean', string='Belongs to the admin', method=True, store=True),
+    }
+
+res_users()
 
 
 class ir_model_access(osv.osv):
