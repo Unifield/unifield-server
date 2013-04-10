@@ -37,7 +37,7 @@ class msf_language_import(osv.osv_memory):
     def open_requests(self, cr, uid, ids, context=None):
         return lang_tools.open_requests(self, cr, uid, ids, 'import', context)
 
-    def _get_languages(self, cr, uid, context):
+    def _get_languages(self, cr, uid, context=None):
         return self.pool.get('base.language.export')._get_languages(cr, uid, context)
 
     _columns = {

@@ -75,6 +75,7 @@ class report_contract_list(report_sxw.rml_parse):
                       'earmarked_funding_pools': earmarked_funding_pools,
                       'total_project_funding_pools': total_project_funding_pools}
             result.append(values)
+
         return result
         
 report_sxw.report_sxw('report.financing.contract.list', 'financing.contract.contract', 'addons/financing_contract/report/contract_list.rml', parser=report_contract_list, header=False)

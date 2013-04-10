@@ -63,6 +63,7 @@ class contract(report_sxw.rml_parse):
                       'line_type': register_states[line.line_type],
                       'account_list': account_list}
             result.append(values)
+
         return result
         
 

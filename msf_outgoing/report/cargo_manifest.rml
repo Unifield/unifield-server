@@ -218,7 +218,7 @@
           <para style="P3">Mode of Transport</para>
         </td>
         <td>
-          <para style="terp_default_8">[[ get_selection(shipment, 'transport_type') ]]</para>
+          <para style="terp_default_8">[[ getSel(shipment, 'transport_type') ]]</para>
         </td>
       </tr>
       <tr>

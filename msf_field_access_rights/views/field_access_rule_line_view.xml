@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Field Access Rule Line Tree View -->
+        <record id="field_access_rule_tree_view" model="ir.ui.view">
+            <field name='name'>Field Access Rule Line List</field>
+            <field name='model'>msf_field_access_rights.field_access_rule_line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree editable="top" string="Field Access Rule Line">
+                    <field name="field" on_change='onchange_field(field)' domain="[('model_id', 'in', parent.family_model_ids)]" context="{'tree_view_ref' : 'base.view_model_fields_tree'}" />
+                    <field name="field_name" readonly='1' />
+                    <field name="write_access" />
+                    <field name="value_not_synchronized_on_create" />
+                    <field name="value_not_synchronized_on_write" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Field Access Rule Line Tree View Full-->
+        <record id="field_access_rule_full_tree_view" model="ir.ui.view">
+            <field name='name'>Field Access Rule Line List</field>
+            <field name='model'>msf_field_access_rights.field_access_rule_line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="17"/>
+            <field name="arch" type="xml">
+                <tree editable="top" string="Field Access Rule Line">
+                    <field name="field_access_rule" on_change="onchange_field_access_rule(field_access_rule)" />
+                    <field name="field_access_rule_model_id" readonly='1' />
+                    <field name="field" on_change='onchange_field(field)' domain="[('model_id', 'in', parent.family_model_ids)]" attrs="{'readonly':[('field_access_rule','=','')]}" context="{'tree_view_ref' : 'base.view_model_fields_tree'}" />
+                    <field name="field_name" readonly='1' />
+                    <field name="write_access" />
+                    <field name="value_not_synchronized_on_create" />
+                    <field name="value_not_synchronized_on_write" />
+                </tree>
+            </field>
+        </record>
+
+        <!-- Field Access Rule Search View -->
+        <record id="field_access_rule_line_search" model="ir.ui.view">
+            <field name='name'>Field Access Rule Line Search</field>
+            <field name='model'>msf_field_access_rights.field_access_rule_line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Field Access Rule Lines">
+                    <group>
+                        <field name="field_access_rule" />
+                        <field name="field" />
+                        <field name="field_name" />
+                    </group>
+                    <newline/>
+                    <group>
+                        <field name="write_access" />
+                        <field name="value_not_synchronized_on_create" />
+                        <field name="value_not_synchronized_on_write" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By...">
+                       <filter string="Rule" icon="terp-project" domain="[]" context="{'group_by':'field_access_rule'}"/>
+                       <filter string="Write Access" icon="terp-project" domain="[]" context="{'group_by':'write_access'}"/>
+                       <filter string="No Sync on Create" icon="terp-project" domain="[]" context="{'group_by':'value_not_synchronized_on_create'}"/>
+                       <filter string="No Sync on Write" icon="terp-project" domain="[]" context="{'group_by':'value_not_synchronized_on_write'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    </data>
+</openerp>

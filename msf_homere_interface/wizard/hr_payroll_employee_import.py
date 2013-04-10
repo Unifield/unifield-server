@@ -40,7 +40,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'updated': fields.integer(string="Updated", size=64, readonly=True),
         'created': fields.integer(string="Created", size=64, readonly=True),
         'total': fields.integer(string="Processed", size=64, readonly=True),
-        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')], 
+        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries'), ('migration', 'From Migration')], 
             string="State", required=True, readonly=True),
         'error_line_ids': fields.many2many("hr.payroll.employee.import.errors", "employee_import_error_relation", "wizard_id", "error_id", "Error list", 
             readonly=True),
@@ -107,7 +107,8 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             domain = False
             if context.get('from') == 'employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
-                context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
+                context.update({'search_default_active': 1})
+                domain = "[('employee_type', '=', 'local')]"
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
                 domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
@@ -121,6 +122,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'nat_staff_import':
                 result = ('inherit_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
+            if context.get('from') == 'msf_doc_import_accounting':
+                result = ('view_move_tree_2', 'account.move','account_override')
+                context.update({'from_web_menu': True}) # Permit user to edit/delete journal entries
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:

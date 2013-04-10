@@ -177,6 +177,18 @@ class sale_order(osv.osv):
                 
         return res
 
+    def _get_manually_corrected(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = False
+            for line in order.order_line:
+                if line.manually_corrected:
+                    res[order.id] = True
+                    break
+
+        return res
+
     _columns = {
         # we increase the size of client_order_ref field from 64 to 128
         'client_order_ref': fields.char('Customer Reference', size=128),
@@ -223,6 +235,7 @@ class sale_order(osv.osv):
         'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
+        'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
     }
     
     _defaults = {
@@ -492,6 +505,23 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
         
         return True
+
+    def sale_except_correction(self, cr, uid, ids, context=None):
+        '''
+        Remove the link between a Field order and the canceled procurement orders
+        '''
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if line.procurement_id and line.procurement_id.state == 'cancel':
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'state': 'exception',
+                                                                                'manually_corrected': True,
+                                                                                'procurement_id': False}, context=context)
+            if (order.order_policy == 'manual'):
+                self.write(cr, uid, [order.id], {'state': 'manual'})
+            else:
+                self.write(cr, uid, [order.id], {'state': 'progress'})
+
+        return
     
     def wkf_split_done(self, cr, uid, ids, context=None):
         '''
@@ -713,6 +743,8 @@ class sale_order(osv.osv):
         '''
         line = kwargs['line']
         result = super(sale_order, self)._hook_ship_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
+        if line.order_id.manually_corrected:
+            return False
         if line.order_id.procurement_request:
             if line.type == 'make_to_order':
                 result = False
@@ -730,9 +762,8 @@ class sale_order(osv.osv):
         order = kwargs['order']
         result = super(sale_order, self)._hook_procurement_create_line_condition(cr, uid, ids, context=context, *args, **kwargs)
         
-        # for new Fo split logic, we create procurement order in action_ship_create only for IR or when the sale order is shipping in exception
-        # when shipping in exception, we recreate a procurement order each time action_ship_create is called... this is standard openERP
-        return result and (line.order_id.procurement_request or order.state == 'shipping_except' or order.yml_module_name == 'sale')
+        # for new Fo split logic, we create procurement order in action_ship_create only for IR
+        return result and (line.order_id.procurement_request or order.yml_module_name == 'sale')
 
     def _hook_ship_create_product_id(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -747,7 +778,7 @@ class sale_order(osv.osv):
         if line.product_id:
             result = line.product_id.id
         elif line.order_id.procurement_request and not line.product_id and line.comment:
-            result = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            result = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         return result
     
     def _hook_ship_create_uom_id(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -1071,7 +1102,7 @@ class sale_order(osv.osv):
                 continue
             for line in order.order_line:
                 # the product needs to have a product selected, otherwise not procurement, and no po to trigger back the so
-                if line.type == 'make_to_order' and line.state != 'confirmed' and line.product_id:
+                if line.product_id and line.type == 'make_to_order' and line.state != 'confirmed' and (not line.procurement_id or line.procurement_id.state != 'cancel'):
                     return False
         return True
 
@@ -1099,6 +1130,7 @@ class sale_order_line(osv.osv):
                 # This field is used to identify the FO PO line between 2 instances of the sync
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
                 'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
+                'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
                 }
 
     _sql_constraints = [
@@ -1166,18 +1198,18 @@ class sale_order_line(osv.osv):
         '''
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
         obj_browse = self.browse(cr, uid, ids, context=context)
         vals={}
         message = ''
         for var in obj_browse:
             if var.product_uom.id == tbd_uom:
                 message += 'You have to define a valid UOM, i.e. not "To be define".'
-            if var.nomen_manda_0.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+            if var.nomen_manda_0.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]:
                 message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
-            if var.nomen_manda_1.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+            if var.nomen_manda_1.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]:
                 message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
-            if var.nomen_manda_2.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+            if var.nomen_manda_2.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]:
                 message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
         # the 3rd level is not mandatory
         if message:
@@ -1268,12 +1300,27 @@ class sale_order_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Override create method so that the procurement method is on order if no product is selected
+        If it is a procurement request, we update the cost price.
         """
         if context is None:
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
-            
+        
+        # UF-1739: as we do not have product_uos_qty in PO (only in FO), we recompute here the product_uos_qty for the SYNCHRO
+        qty = vals.get('product_uom_qty')
+        product_id = vals.get('product_id')
+        product_obj = self.pool.get('product.product')
+        if product_id and qty:
+            if isinstance(qty, str):
+                qty = float(qty)
+            vals.update({'product_uos_qty' : qty * product_obj.read(cr, uid, product_id, ['uos_coeff'])['uos_coeff']})
+
+        # Internal request
+        order_id = vals.get('order_id', False)
+        if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
+            vals.update({'cost_price': vals.get('cost_price', False)})
+
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
@@ -1288,12 +1335,17 @@ class sale_order_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         """
-        Override write method so that the procurement method is on order if no product is selected
+        Override write method so that the procurement method is on order if no product is selected.
+        If it is a procurement request, we update the cost price.
         """
         if context is None:
             context = {}
         if not vals.get('product_id') and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
+        # Internal request
+        order_id = vals.get('order_id', False)
+        if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
+            vals.update({'cost_price': vals.get('cost_price', False)})
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
 sale_order_line()

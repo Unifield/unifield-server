@@ -37,7 +37,6 @@ class freight_manifest(report_sxw.rml_parse):
             'get_lines': self.get_lines,
             'getEtd': self.getEtd,
             'getEta': self.getEta,
-            'getTransport': self.getTransport,
             'getDataRef': self.getDataRef,
             'getDataPpl': self.getDataPpl,
             'getDataDescr': self.getDataDescr,
@@ -78,20 +77,6 @@ class freight_manifest(report_sxw.rml_parse):
 
     def getEta(self, o):
         return time.strftime('%d/%m/%Y',time.strptime(o.planned_date_of_arrival,'%Y-%m-%d'))
-
-    def getTransport(self, o):
-        sta = self.get_selection(o, 'transport_type')
-        return sta
-
-    def get_selection(self, o, field):
-        sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-        res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-        name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-        if tr_ids:
-            return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-        else:
-            return res
 
     def getDataRef(self, ligne):
         if ligne.currency_id:

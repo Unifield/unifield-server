@@ -91,8 +91,9 @@ class account_model_line(osv.osv):
                 continue
             from_header = ''
             if model_line.have_analytic_distribution_from_header:
-                from_header = ' (from header)'
-            res[model_line.id] = model_line.analytic_distribution_state.capitalize() + from_header
+                from_header = _(' (from header)')
+            ana_distri_state = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, model_line, 'analytic_distribution_state', context)
+            res[model_line.id] = "%s%s" % (ana_distri_state, from_header)
         return res
     
     _columns = {
@@ -161,7 +162,7 @@ class account_model_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -322,7 +323,7 @@ class account_model(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

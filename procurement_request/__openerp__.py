@@ -53,6 +53,8 @@
     'test': [
         'test/data.yml',
         'test/proc_request.yml',
+        'test/deactivate_product_valid_ir.yml',
+        'test/deactivate_product_validate_ir.yml',
     ],
     'installable': True,
     'active': False,

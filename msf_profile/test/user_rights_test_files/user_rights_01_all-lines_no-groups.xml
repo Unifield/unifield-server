@@ -1419,7 +1419,7 @@
     <Cell><Data ss:Type="String">account</Data></Cell>
     <Cell><Data ss:Type="String">menu_bank_statement_tree</Data></Cell>
     <Cell><Data ss:Type="String">++</Data></Cell>
-    <Cell><Data ss:Type="String">Bank Registers</Data></Cell>
+    <Cell><Data ss:Type="String">Bank Statements</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
     <Cell><Data ss:Type="String">register_accounting</Data></Cell>

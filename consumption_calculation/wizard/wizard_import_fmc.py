@@ -24,7 +24,7 @@ from tools.translate import _
 
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from msf_supply_doc_import import check_line
+from msf_doc_import import check_line
 import time
 
 class wizard_import_fmc(osv.osv_memory):
@@ -38,7 +38,7 @@ class wizard_import_fmc(osv.osv_memory):
     }
     
     _defaults = {
-        'message': lambda *a : """
+        'message': lambda *a : _("""
         IMPORTANT : The first line will be ignored by the system.
         
         The file should be in Excel xml 2003 format.
@@ -47,7 +47,7 @@ class wizard_import_fmc(osv.osv_memory):
           * Product Description
           * FMC
           * Valid until (DD-MMM-YYYY)
-        """
+        """)
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -98,8 +98,8 @@ class wizard_import_fmc(osv.osv_memory):
             to_write = {
                 'error_list': [],
                 'warning_list': [],
-                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
-                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
             }
             error = ''
             fmc = 0
