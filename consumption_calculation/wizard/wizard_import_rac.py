@@ -24,7 +24,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
-from msf_supply_doc_import import check_line
+from msf_doc_import import check_line
 
 class wizard_import_rac(osv.osv_memory):
     _name = 'wizard.import.rac'
@@ -71,7 +71,7 @@ class wizard_import_rac(osv.osv_memory):
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('real.average.consumption.line')
         obj_data = self.pool.get('ir.model.data')
-        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
 
         import_rac = self.browse(cr, uid, ids[0], context)
         rac_id = import_rac.rac_id.id
@@ -97,8 +97,8 @@ class wizard_import_rac(osv.osv_memory):
 Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Consumed Quantity, Remark"""))
             # default values
             to_write = {
-                'default_code': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1],
-                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1],
+                'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
+                'uom_id': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1],
                 'consumed_qty': 0,
                 'error_list': [],
                 'warning_list': [],

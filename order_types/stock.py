@@ -203,7 +203,7 @@ class stock_picking(osv.osv):
                 if not context.get('yesorno',False) :
                     for move in pick.move_lines:
                         if move.state == 'confirmed':
-                            not_avail_id = self.pool.get("stock.picking.not.available").create(cr, uid, {'move_id': move.id, 'picking_id': pick.id, }, )
+                            not_avail_id = self.pool.get("stock.picking.not.available").create(cr, uid, {'move_id': move.id, 'picking_id': pick.id, }, context=context)
                             return {'name':_("Warning"),
                                     'view_mode': 'form',
                                     'view_id': False,

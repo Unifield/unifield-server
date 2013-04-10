@@ -199,11 +199,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
                                                                            budget_line_ids,
                                                                            context=context)
 
-        for amount_line in monthly_amounts:
-            formatted_amount_line = [amount_line[0]]
-            formatted_amount_line += [locale.format("%d", amount, grouping=True) for amount in amount_line[1:]]
-            formatted_monthly_amounts.append(formatted_amount_line)
-        result += formatted_monthly_amounts
+        result += monthly_amounts
         return result[1:]
 
 SpreadsheetReport('report.budget.criteria.2','msf.budget','addons/msf_budget/report/budget_criteria_xls.mako', parser=report_budget_actual_2)

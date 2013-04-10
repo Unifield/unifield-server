@@ -206,7 +206,7 @@ class stock_move(osv.osv):
                             integrity_check = []
                             for move in self.browse(cr, uid, move_ids, context=context):
                                 # move from draft picking or standard picking
-                                if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
+                                if (move.product_qty != 0.00 and not move.processed_stock_move and move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
                                     integrity_check.append(move)
                             # return the first one matching
                             if integrity_check:

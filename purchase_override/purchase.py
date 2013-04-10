@@ -462,7 +462,24 @@ class purchase_order(osv.osv):
             partner = partner_obj.browse(cr, uid, part)
             if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
-        
+            elif ids and partner.partner_type == 'intermission':
+                try:
+                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                        'analytic_account_project_intermission')[1]
+                except ValueError:
+                    intermission = 0
+                cr.execute('''select po.id from purchase_order po
+                    left join purchase_order_line pol on pol.order_id = po.id
+                    left join cost_center_distribution_line cl1 on cl1.distribution_id = po.analytic_distribution_id
+                    left join cost_center_distribution_line cl2 on cl2.distribution_id = pol.analytic_distribution_id
+                    where po.id in %s and (cl1.analytic_id!=%s or cl2.analytic_id!=%s)''', (tuple(ids), intermission, intermission))
+                if cr.rowcount > 0:
+                    res.setdefault('warning', {})
+                    msg = _('You set an intermission partner, at validation Cost Centers will be changed to intermission.')
+                    if res.get('warning', {}).get('message'):
+                        res['warning']['message'] += msg
+                    else:
+                        res['warning'] = {'title': _('Warning'), 'message': msg}
         return res
     
     # Be careful during integration, the onchange_warehouse_id method is also defined on UF-965
@@ -576,17 +593,36 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Analytic distribution verification
         for po in self.browse(cr, uid, ids, context=context):
+            try:
+                intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                'analytic_account_project_intermission')[1]
+            except ValueError:
+                intermission_cc = 0
+
             if po.order_type and po.order_type == 'in_kind':
                 if not po.partner_id.donation_payable_account:
                     raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
+
+            is_intermission = False
+            if po.partner_id and po.partner_id.partner_type == 'intermission' and not po.from_yml_test:
+                if not intermission_cc:
+                    raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
+                is_intermission = True
+
             for pol in po.order_line:
                 # Forget check if we come from YAML tests
                 if po.from_yml_test:
                     continue
-                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
-                if not distrib_id:
+                if not distrib:
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                for cc_line in distrib.cost_center_lines:
+                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+                        cc_line.write({'analytic_id': intermission_cc})
+                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+
                 # Change distribution to be valid if needed by using those from header
                 if pol.analytic_distribution_state != 'valid':
                     id_ad = self.pool.get('analytic.distribution').create(cr, uid, {})
