@@ -364,6 +364,8 @@ class stock_picking(osv.osv):
             new_qty = max(present_qty + diff_qty, 0)
             if new_qty > 0.00 and present_qty != 0.00:
                 new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                                                                   'product_uom': data_back['product_uom'],
+                                                                   'product_uos': data_back['product_uom'],
                                                                    'product_uos_qty': diff_qty,}, context=context)
                 move_obj.action_confirm(cr, uid, [new_move_id], context=context)
 #                if present_qty == 0.00:
@@ -371,6 +373,8 @@ class stock_picking(osv.osv):
 #                    move_obj.unlink(cr, uid, out_move_id, context=context)
             else:
                 move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                                                        'product_uom': data['product_uom'][0],
+                                                        'product_uos': data['product_uom'][0],
                                                         'product_uos_qty': new_qty,}, context=context)
     
             # log the modification
@@ -531,7 +535,7 @@ class stock_picking(osv.osv):
                             second_assign_moves.append(out_move_id)
                             if update_out:
                                 move_obj.write(cr, uid, [out_move_id], out_values, context=context)
-                            elif move.product_id.id != partial['product_id']:
+                            elif move.product_id.id != partial['product_id'] or move.product_uom.id != partial['product_uom']:
                                 move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                                 # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
                                 update_out = True
