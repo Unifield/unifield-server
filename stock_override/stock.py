@@ -704,10 +704,11 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids, context=context):
-            for move in pick.move_lines:
-                if move.product_id.perishable: # perishable for perishable or batch management
-                    move_obj.fefo_update(cr, uid, move.id, context) # FEFO
+        if not context.get('already_checked'):
+            for pick in self.browse(cr, uid, ids, context=context):
+                # perishable for perishable or batch management
+                move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context) # FEFO
+        context['already_checked'] = True
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
 stock_picking()
