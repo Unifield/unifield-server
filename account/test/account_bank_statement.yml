@@ -59,7 +59,7 @@
           bal = obj_st.read(cr, uid, ref("account_bank_statement_0"), ['balance_end'])
           #obj_st.button_confirm_bank(cr, uid, [ref("account_bank_statement_0")])
           # Confirm CashBox by opening a wizard an confirm it in order to close cashbox
-          wiz_id = self.pool.get('wizard.closing.cashbox').create(cr, uid, {'be_sure': True})
+          wiz_id = self.pool.get('wizard.closing.cashbox').create(cr, uid, {'be_sure': True}, context={})
           self.pool.get('wizard.closing.cashbox').button_close_cashbox(cr, uid, [wiz_id], { "active_ids": [ref("account_bank_statement_0")], \
         "active_id": ref("account_bank_statement_0"), })
 

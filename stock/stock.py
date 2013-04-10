@@ -764,6 +764,20 @@ class stock_picking(osv.osv):
         - allow to choose wether or not an exception should be raised in case of no stock move
         '''
         return True
+    
+    def _hook_get_move_ids(self, cr, uid, *args, **kwargs):
+        pick = kwargs['pick']
+        return [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
+
+    def _hook_action_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the action_assign method from stock>stock.py>stock_picking class
+        
+        -  when product is Expiry date mandatory, a "pre-assignment" of batch numbers regarding the available quantity
+        and location logic in addition to FEFO logic (First expired first out).
+        '''
+        return True
 
     def action_assign(self, cr, uid, ids, context=None, *args):
         """ Changes state of picking to available if all moves are confirmed.
@@ -772,12 +786,13 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state in ('waiting', 'confirmed')]
+        for pick in self.browse(cr, uid, ids): 
+            move_ids = self._hook_get_move_ids(cr, uid, pick=pick)
             if not move_ids:
                 if self._hook_action_assign_raise_exception(cr, uid, ids, context=context,):
                     raise osv.except_osv(_('Warning !'),_('Not enough stock, unable to reserve the products.'))
             move_obj.action_assign(cr, uid, move_ids)
+            self._hook_action_assign_batch(cr, uid, ids, context=context)
         return True
 
     def force_assign(self, cr, uid, ids, *args):
@@ -1374,6 +1389,13 @@ class stock_picking(osv.osv):
         '''
         return kwargs['state_list']
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        return True
+
     def log_picking(self, cr, uid, ids, context=None):
         """ This function will create log messages for picking.
         @param cr: the database cursor
@@ -1413,10 +1435,13 @@ class stock_picking(osv.osv):
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
             # modify the message to be displayed
-            message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick,)
+            message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
             # conditional test for message log
-            if self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick,):
+            log_cond = self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick)
+            if log_cond and log_cond != 'packing':
                 self.log(cr, uid, pick.id, message, context=context)
+            elif not log_cond:
+                self._hook_custom_log(cr, uid, ids, context=context, message=message, pick=pick)
         return True
 
 stock_picking()
@@ -2046,10 +2071,20 @@ class stock_move(osv.osv):
         self.write(cr, uid, ids, {'state': 'assigned'})
         return True
 
+    def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
+        '''
+        Please copy this to your module's method also.
+        This hook belongs to the cancel_assign method from stock>stock.py>stock_move class
+        
+        -  it erases the batch number associated if any and reset the source location to the original one.
+        '''
+        return True
+
     def cancel_assign(self, cr, uid, ids, context=None):
         """ Changes the state to confirmed.
         @return: True
         """
+        self._hook_cancel_assign_batch(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'state': 'confirmed'})
         return True
     
