@@ -173,7 +173,7 @@ class account_move_line(osv.osv):
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
         
-        if func_balance != 0.0:
+        if abs(func_balance) > 10**-3: # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
 
             # Add partner_line to do total reconciliation

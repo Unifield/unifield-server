@@ -108,7 +108,7 @@
         "delete_button",
         "spreadsheet_xml",
         "msf_supply_doc_export",
-        "msf_supply_doc_import",
+        "msf_doc_import",
         "mission_stock_cron",
         "report_webkit_override",
         "export_import_lang",
@@ -129,7 +129,7 @@
         'test/unique_fields_views.yml',
         'test/inherited_views.yml',
         'test/user_rights.yml',
-# the tests below are for the module msf_supply_doc_import (written here because they need the translation)
+# the tests below are for the module msf_doc_import (written here because they need the translation)
 #        'test/data.yml',
 #        'test/fr_import_ir.yml',
 #        'test/fr_import_po.yml',

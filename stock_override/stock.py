@@ -645,6 +645,8 @@ class stock_picking(osv.osv):
         Prepare intermission voucher IN/OUT
         Change invoice purchase_list field to TRUE if this picking come from a PO which is 'purchase_list'
         """
+        if not context:
+            context = {}
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission'),
                                                                                      ('is_current_instance', '=', True)])
@@ -668,7 +670,7 @@ class stock_picking(osv.osv):
                 company_currency = company.currency_id and company.currency_id.id or False
                 if not company_currency:
                     raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': inv_id})
         return res
 

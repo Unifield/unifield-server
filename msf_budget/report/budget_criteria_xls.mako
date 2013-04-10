@@ -441,7 +441,7 @@
 <ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
 
 
-<Table ss:ExpandedColumnCount="43" ss:ExpandedRowCount="326" x:FullColumns="1" x:FullRows="1">
+<Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="0" ss:Width="100.5"/>
 <Column ss:AutoFitWidth="0" ss:Width="267"/>
 <Column ss:Index="43" ss:AutoFitWidth="0" ss:Width="62.25"/>

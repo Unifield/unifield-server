@@ -39,7 +39,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="16" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
+<Table ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
 x:FullRows="1">
 % for x in range(0,16):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
