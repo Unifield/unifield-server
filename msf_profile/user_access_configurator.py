@@ -743,9 +743,11 @@ class res_groups(osv.osv):
     _inherit = 'res.groups'
     _columns = {'visible_res_groups': fields.boolean('Visible', readonly=True),
                 'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
+                'has_an_admin_profile': fields.boolean('Has an admin profile', readonly=True),
                 }
     _defaults = {'visible_res_groups': True,
                  'from_file_import_res_groups': False,
+                 'has_an_admin_profile': False,
                  }
 
 res_groups()
