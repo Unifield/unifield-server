@@ -228,9 +228,9 @@ class res_currency(osv.osv):
         for p_list in self.check_in_use(cr, uid, ids, 'delete', context=context):
             pricelist_obj.unlink(cr, uid, p_list, context=context)
         for cur_id in ids:
-            res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
+            super(res_currency, self).unlink(cr, uid, cur_id, context=context)
             
-        return res   
+        return True
 
 #        remove this block because it has been moved to the sync module
 #    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
