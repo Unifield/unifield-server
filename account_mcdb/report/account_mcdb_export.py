@@ -244,11 +244,7 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = [_('Document Date'), _('Posting Date'), _('Sequence'), _('Description'), _('Reference'), _('Account Code'), _('Account Description'), _('Third party'), _('Amount In'), _('Amount Out'), _('Currency')]
-        if not currency_id:
-            head += [_('Func. In'), _('Func. Out'), _('Func. Currency')]
-        else:
-            head += [_('Output In'), _('Output Out'), _('Output Currency')]
+        head = [_('Document Date'), _('Posting Date'), _('Sequence'), _('Description'), _('Reference'), _('Account Code'), _('Account Description'), _('Third party'), _('Amount In'), _('Amount Out'), _('Currency'), _('Output In'), _('Output Out'), _('Output Currency')]
         head += [_('State'), _('Register Name')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
