@@ -20,6 +20,7 @@
     <input id="_terp_model" name="_terp_field/string" value="${field['string']}" type="hidden"/>
     <input id="_terp_model" name="_terp_deps2" value="${deps}" type="hidden"/>
     <input id="click_ok" name="click_ok" value="${click_ok}" type="hidden"/>
+    <input id="admin_profile" name="admin_profile" value="${admin_profile}" type="hidden"/>
 
     <table class="view" cellspacing="5" border="0" width="100%">
         <tr>
@@ -61,7 +62,8 @@
                                                 <input type="radio" class="radio" name="_terp_you" value="True" checked="checked"/>
                                             </td>
                                             <td>${_("Only for you")}</td>
-                                            % if rpc.session.uid == 1:
+                                            ## utp-457: we display the for all option only for the admin profile
+                                            % if admin_profile:
                                             <td class="item">
                                                 <input type="radio" class="radio" name="_terp_you" value="False"/>
                                             </td>

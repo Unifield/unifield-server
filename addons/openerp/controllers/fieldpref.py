@@ -30,10 +30,14 @@ class FieldPref(SecuredController):
     @expose(template="/openerp/controllers/templates/fieldpref.mako")
     def index(self, **kw): #_terp_model, _terp_field, _terp_deps
 
+        proxy = rpc.RPCProxy('res.users')
+        read_proxy = proxy.read(rpc.session.uid, ['has_an_admin_profile'])
+        admin_profile = read_proxy['has_an_admin_profile']
+        
         click_ok = None
         params, data = TinyDict.split(kw)
         deps = params.deps
-        return dict(model=params.model, click_ok=click_ok, field=params.field, deps=deps)
+        return dict(model=params.model, click_ok=click_ok, field=params.field, deps=deps, admin_profile=admin_profile)
 
     @expose('json')
     def get(self, **kw):
