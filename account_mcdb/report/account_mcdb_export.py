@@ -58,7 +58,7 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Posting Date'), _('Document Date'), _('Period'), _('Account Code'), _('Account Description'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
+        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Posting Date'), _('Document Date'), _('Period'), _('Account'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
         if not currency_id:
             head += [_('Func. Debit'), _('Func. Credit'), _('Func. Currency')]
         else:
@@ -86,10 +86,10 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(ml.document_date or '')
             #period_id
             csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
-            #account_id code
-            csv_line.append(ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or '')
-            #account_id name
-            csv_line.append(ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or '')
+            #account_id code - name
+            account_code = ml.account_id and ml.account_id.code and ml.account_id.code.encode('utf-8') or ''
+            account_description = ml.account_id and ml.account_id.name and ml.account_id.name.encode('utf-8') or ''
+            csv_line.append("%s - %s" % (account_code or '', account_description or ''))
             #partner_txt
             csv_line.append(ml.partner_txt and ml.partner_txt.encode('utf-8') or '')
             #debit_currency
@@ -195,15 +195,17 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(al.document_date or '')
             #period
             csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
-            #general_account_id (general account)
-            csv_line.append(al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or '')
+            #general_account_id (general account) code  - name
+            account_code = al.general_account_id and al.general_account_id.code and al.general_account_id.code.encode('utf-8') or ''
+            account_description = al.general_account_id and al.general_account_id.name and al.general_account_id.name.encode('utf-8') or ''
+            csv_line.append("%s - %s" % (account_code or '', account_description or ''))
             if display_fp:
                 # destination_id
-                csv_line.append(al.destination_id and al.destination_id.name and al.destination_id.name.encode('utf-8') or '')
+                csv_line.append(al.destination_id and al.destination_id.code and al.destination_id.code.encode('utf-8') or '')
                 #cost_center_id
-                csv_line.append(al.cost_center_id and al.cost_center_id.name and al.cost_center_id.name.encode('utf-8') or '')
+                csv_line.append(al.cost_center_id and al.cost_center_id.code and al.cost_center_id.code.encode('utf-8') or '')
             #account_id name (analytic_account)
-            csv_line.append(al.account_id and al.account_id.name and al.account_id.name.encode('utf-8') or '')
+            csv_line.append(al.account_id and al.account_id.code and al.account_id.code.encode('utf-8') or '')
             #third party
             csv_line.append(al.partner_txt and al.partner_txt.encode('utf-8') or '')
             #amount_currency
@@ -244,7 +246,7 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = [_('Document Date'), _('Posting Date'), _('Sequence'), _('Description'), _('Reference'), _('Account Code'), _('Account Description'), _('Third party'), _('Amount In'), _('Amount Out'), _('Currency'), _('Output In'), _('Output Out'), _('Output Currency')]
+        head = [_('Document Date'), _('Posting Date'), _('Sequence'), _('Description'), _('Reference'), _('Account'), _('Third party'), _('Amount In'), _('Amount Out'), _('Currency'), _('Output In'), _('Output Out'), _('Output Currency')]
         head += [_('State'), _('Register Name')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
@@ -262,10 +264,10 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(absl.name and absl.name.encode('utf-8') or '')
             #ref
             csv_line.append(absl.ref and absl.ref.encode('utf-8') or '')
-            #account_id code
-            csv_line.append(absl.account_id and absl.account_id.code and absl.account_id.code.encode('utf-8') or '')
-            #account_id name
-            csv_line.append(absl.account_id and absl.account_id.name and absl.account_id.name.encode('utf-8') or '')
+            #account_id code - name
+            account_code = absl.account_id and absl.account_id.code and absl.account_id.code.encode('utf-8') or ''
+            account_description = absl.account_id and absl.account_id.name and absl.account_id.name.encode('utf-8') or ''
+            csv_line.append("%s - %s" % (account_code or '', account_description or ''))
             #partner_txt
             csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.name and absl.transfer_journal_id.name.encode('utf-8') or '')
             #debit_currency
