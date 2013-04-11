@@ -139,7 +139,7 @@
           <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>
         </td>
         <td>
-          <parawrap style="P3">[[ o.account_id and o.account_id.code or '' ]] [[ o.account_id and o.account_id.name or '']]</parawrap>
+          <parawrap style="P3">[[ "%s - %s" % (o.account_id and o.account_id.code or '', o.account_id and getEscape(o.account_id.name) or '') ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3">[[ o.partner_txt or '' ]]</parawrap>
