@@ -36,8 +36,12 @@ class account_move_line(osv.osv):
         Check that for these IDS, no one is used in imported invoice.
         For imported invoice, the trick comes from the fact that do_import_invoices_reconciliation hard post the moves before reconciling them.
         """
+        # Some verifications
         if not context:
             context = {}
+        from_pending_payment = False
+        if context.get('pending_payment', False) and context.get('pending_payment') is True:
+            from_pending_payment = True
         # Create a SQL request that permit to fetch quickly statement lines that have an imported invoice
         sql = """SELECT st_line_id
         FROM imported_invoice
@@ -51,7 +55,7 @@ class account_move_line(osv.osv):
         """
         cr.execute(sql, (tuple(ids),))
         sql_res = cr.fetchall()
-        if sql_res:
+        if sql_res and not from_pending_payment:
             res = [x and x[0] for x in sql_res]
             # Search register lines
             msg = []
@@ -169,7 +173,7 @@ class account_move_line(osv.osv):
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
         
-        if func_balance != 0.0:
+        if abs(func_balance) > 10**-3: # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
 
             # Add partner_line to do total reconciliation
@@ -260,4 +264,58 @@ class account_move_line(osv.osv):
         return res
 
 account_move_line()
+
+class account_move_reconcile(osv.osv):
+    _name = 'account.move.reconcile'
+    _inherit = 'account.move.reconcile'
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
+        """
+        if not context:
+            context = {}
+        res = super(account_move_reconcile, self).create(cr, uid, vals, context)
+        if res:
+            tmp_res = res
+            if isinstance(res, (int, long)):
+                tmp_res = [tmp_res]
+            for r in self.browse(cr, uid, tmp_res):
+                t = [x.id for x in r.line_id]
+                p = [x.id for x in r.line_partial_ids]
+                d = self.name_get(cr, uid, [r.id])
+                name = ''
+                if d and d[0] and d[0][1]:
+                    name = d[0][1]
+                if p or t:
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    cr.execute(sql, (name, tuple(p+t)))
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
+        if res:
+            tmp_res = res
+            if isinstance(res, (int, long)):
+                tmp_res = [tmp_res]
+            for r in self.browse(cr, uid, tmp_res):
+                t = [x.id for x in r.line_id]
+                p = [x.id for x in r.line_partial_ids]
+                d = self.name_get(cr, uid, [r.id])
+                name = ''
+                if d and d[0] and d[0][1]:
+                    name = d[0][1]
+                if p or t:
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    cr.execute(sql, (name, tuple(p+t)))
+        return res
+
+account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

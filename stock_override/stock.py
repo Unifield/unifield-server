@@ -645,6 +645,8 @@ class stock_picking(osv.osv):
         Prepare intermission voucher IN/OUT
         Change invoice purchase_list field to TRUE if this picking come from a PO which is 'purchase_list'
         """
+        if not context:
+            context = {}
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission'),
                                                                                      ('is_current_instance', '=', True)])
@@ -668,7 +670,7 @@ class stock_picking(osv.osv):
                 company_currency = company.currency_id and company.currency_id.id or False
                 if not company_currency:
                     raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': inv_id})
         return res
 
@@ -1487,12 +1489,6 @@ class ir_values(osv.osv):
             for v in values:
                 if key == 'action' and v[1] in picking_accepted_values[key2]:
                     new_values.append(v)
-        elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
-            new_values = []
-            for v in values:
-                if context.get('composition_type')=='real' and v[2]['report_name'] == 'real.composition.kit.xls':
-                    new_values.append(v)
- 
         return new_values
 
 ir_values()

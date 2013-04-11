@@ -89,6 +89,7 @@ class purchase_order(osv.osv):
             'state': 'cc',
             'posting_date': strftime('%Y-%m-%d'),
             'document_date': strftime('%Y-%m-%d'),
+            'partner_type': purchase.partner_type,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -321,8 +322,17 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        try:
+            intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                    'analytic_account_project_intermission')[1]
+        except ValueError:
+            intermission_cc = 0
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
+            is_intermission = False
+            if line.order_id and line.order_id.partner_id and line.order_id.partner_id.partner_type == 'intermission':
+                is_intermission = True
+
             # Check if PO is inkind
             is_inkind = False
             if line.order_id and line.order_id.order_type == 'in_kind':
@@ -339,6 +349,10 @@ class purchase_order_line(osv.osv):
                     res[line.id] = 'invalid'
                     continue
                 res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+                if res[line.id] == 'valid' and not is_intermission:
+                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
+                    if cr.rowcount > 0:
+                        res[line.id] = 'invalid'
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -446,6 +460,7 @@ class purchase_order_line(osv.osv):
             'account_id': account_id or False,
             'posting_date': strftime('%Y-%m-%d'),
             'document_date': strftime('%Y-%m-%d'),
+            'partner_type': context.get('partner_type'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

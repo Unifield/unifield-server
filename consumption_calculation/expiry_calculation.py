@@ -345,7 +345,7 @@ class product_likely_expire_report(osv.osv_memory):
                                                                                          'product_id': lot.product_id.id,
                                                                                          'in_stock': lot.product_id.qty_available,
                                                                                          'total_expired': 0.00,
-                                                                                         'consumption': consumption,})})
+                                                                                         'consumption': consumption,}, context=context)})
                 
                 # Create an item for each date
                 seq = 0
@@ -428,7 +428,7 @@ class product_likely_expire_report(osv.osv_memory):
                                                                'lot_id': product_lot.id,
                                                                'location_id': location,
                                                                'available_qty': product2.qty_available,
-                                                               'expired_qty': new_lot_expired})
+                                                               'expired_qty': new_lot_expired}, context=context)
                             
                         available_qty += product.qty_available
                             

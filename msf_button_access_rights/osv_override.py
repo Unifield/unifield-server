@@ -26,6 +26,8 @@ from lxml import etree
 import pooler
 import random
 import string
+import logging
+import traceback
 
 super_fields_view_get = orm.orm.fields_view_get
 
@@ -163,9 +165,16 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
                     if rule.type == 'action':
                         return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
                 
+                    # for action type object, the signature is always the same
+                    if 'context' in kw:
+                        context = kw['context']
+                    else:
+                        context = args[-1]
+                        assert isinstance(context, dict), "Oops! The last argument of call type=object method=%s on object=%s should be a dict! Please contact the developper team." % (method, obj)
+
                     # continue action as admin user
-                    if rule.type != 'action':
-                        return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
+                    context['real_user'] = uid
+                    return super_execute_cr(self, cr, 1, obj, method, *args, **kw)
                     
                 else:
                     # throw access denied
@@ -228,3 +237,13 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
             return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
     
 osv.object_proxy.exec_workflow_cr = exec_workflow_cr
+
+
+super_create = orm.orm_memory.create
+
+def create(self, cr, user, vals, context=None):
+    if user == 1 and context is None:
+        logging.getLogger('orm_memory').warning("".join(["Traceback:\n"] + traceback.format_stack()[:-1] + ["Possible mistake on the caller method. Please check if the context argument has been given.\n"]).strip())
+    return super_create(self, cr, (context or {}).get('real_user', user), vals, context=context)
+
+orm.orm_memory.create = create

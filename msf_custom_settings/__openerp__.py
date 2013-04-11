@@ -33,7 +33,7 @@
                 'msf_cross_docking',
                 'procurement',
                 'product',
-                'msf_supply_doc_import',
+                'msf_doc_import',
                 'msf_supply_doc_export',
                 'tender_flow',
                 ],

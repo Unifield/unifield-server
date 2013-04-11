@@ -34,6 +34,8 @@ class import_analytic_lines(osv.osv_memory):
     }
 
     def _import(self, dbname, uid, ids, context=None):
+        if not context:
+            context = {}
         cr = pooler.get_db(dbname).cursor()
 
         curr_obj = self.pool.get('res.currency')
@@ -77,7 +79,7 @@ class import_analytic_lines(osv.osv_memory):
 
         if max_date.year != DateTime.now().year:
             create_period_obj = self.pool.get('account.period.create')
-            new_fy = create_period_obj.create(cr, uid, {'fiscalyear': 'next'})
+            new_fy = create_period_obj.create(cr, uid, {'fiscalyear': 'next'}, context=context)
             create_period_obj.account_period_create_periods(cr, uid, new_fy, context={})
 
 
@@ -139,7 +141,7 @@ class import_analytic_lines(osv.osv_memory):
             if period_obj.read(cr, uid, period[0], ['state'])['state'] == 'created':
                 period_obj.action_set_state(cr, uid, period, context={'state': 'draft'})
             try:
-                creation_id = creation_obj.create(cr, uid, {'period_id': period[0]})
+                creation_id = creation_obj.create(cr, uid, {'period_id': period[0]}, context=context)
                 creation_obj.button_confirm_period(cr, uid, [creation_id])
             except osv.except_osv, e:
                 pass
@@ -242,7 +244,7 @@ Nb register lines: %s
             context = {}
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
-        new_id = self.pool.get('data_finance.import_lines.result').create(cr, uid, {})
+        new_id = self.pool.get('data_finance.import_lines.result').create(cr, uid, {}, context=context)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'data_finance.import_lines.result',

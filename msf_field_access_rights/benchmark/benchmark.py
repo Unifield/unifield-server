@@ -67,7 +67,7 @@ def _get_instance_level():
     company_id = connection.get_model('res.users').read(connection.user_id)['company_id']
     company = connection.get_model('res.company').read(company_id[0])
     
-    if company['instance_id']:
+    if 'instance_id' in company and company['instance_id']:
         instance = connection.get_model('msf.instance').read(company['instance_id'])
         
         instance_level = instance.get('level', False)

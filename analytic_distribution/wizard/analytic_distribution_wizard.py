@@ -80,6 +80,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         amount = abs(res.get('amount', 0.0))
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
+            purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
+            if purchase and wiz[0].partner_type == 'intermission':
+                try:
+                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                            'analytic_account_project_intermission')[1]
+                except ValueError:
+                    pass
             if 'destination_id' in fields and wiz[0].account_id:
                 res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
 
@@ -174,7 +181,7 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 # Change OC field
                 fields = tree.xpath('/tree/field[@name="analytic_id"]')
                 for field in fields:
-                    field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s])]" % oc_id)
+                    field.set('domain', "[('type', '!=', 'view'), ('id', 'child_of', [%s]),  ('intermission_restricted', '=', [parent.purchase_id, parent.purchase_line_id, parent.partner_type])]" % oc_id)
                 # Change Destination field
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
@@ -561,6 +568,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'from_direct_inv': fields.many2one('account.bank.statement.line', string="Register Line For Direct Invoice"),
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
+        'partner_type': fields.char('Partner Type', readonly=1, size=128),
     }
 
     _defaults = {
