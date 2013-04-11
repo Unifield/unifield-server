@@ -146,13 +146,13 @@ class account_move_line(osv.osv):
                 res[aml.id] = name
         return res
 
-    def _get_move_lines(self, cr, uid, ids, context=None):
+    def _get_move_lines_for_reconcile(self, cr, uid, ids, context=None):
         res = []
         for r in self.pool.get('account.move.reconcile').browse(cr, uid, ids):
             for t in r.line_id:
-                res.update(t.id)
+                res.append(t.id)
             for p in r.line_partial_ids:
-                res.update(p.id)
+                res.append(p.id)
         return res
 
     _columns = {
@@ -180,7 +180,7 @@ class account_move_line(osv.osv):
             help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
         'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
         help="This indicates the type of the Journal attached to this Journal Item"),
-        'reconcile_txt': fields.function(_get_reconcile_txt, type='text', method=True, string="Reconcile", help="Help user to display and sort Reconciliation", store = {'account.move.reconcile': (_get_move_lines, ['reconcile_id', 'partial_reconcile_id'], 10), 'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['reconcile_id', 'partial_reconcile_id', 'debit', 'credit'], 10),}),
+        'reconcile_txt': fields.function(_get_reconcile_txt, type='text', method=True, string="Reconcile", help="Help user to display and sort Reconciliation", store = {'account.move.reconcile': (_get_move_lines_for_reconcile, ['name', 'line_id', 'line_partial_ids'], 10), 'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['reconcile_id', 'partial_reconcile_id', 'debit', 'credit'], 10),}),
     }
 
     _defaults = {
