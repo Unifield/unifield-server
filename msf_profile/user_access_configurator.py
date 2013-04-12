@@ -756,21 +756,16 @@ res_groups()
 class res_users(osv.osv):
     _inherit = 'res.users'
 
-    def _check_admin_profile(self, cr, uid, ids, field, arg, context=None):
+    def get_admin_profile(self, cr, uid, context=None):
         """
         It is called from the web.
         It enables to display certain fields if the user belongs to a group profiled 'admin'.
         """
-        res = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for user in self.browse(cr, uid, ids, context=context):
-            res[user.id] = any([group.is_an_admin_profile for group in user.groups_id])
-        return res
-
-    _columns = {
-            'has_an_admin_profile': fields.function(_check_admin_profile, type='boolean', string='Belongs to the admin', method=True),
-    }
+        for user in self.browse(cr, uid, [uid], context=context):
+            for group in user.groups_id:
+                if group.is_an_admin_profile:
+                    return True
+        return False
 
 res_users()
 
