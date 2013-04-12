@@ -58,7 +58,7 @@ class account_line_csv_export(osv.osv_memory):
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
         # Prepare csv head
-        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Posting Date'), _('Document Date'), _('Period'), _('Account'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
+        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third party'), _('Book. Debit'), _('Book. Credit'), _('Book. currency')]
         if not currency_id:
             head += [_('Func. Debit'), _('Func. Credit'), _('Func. Currency')]
         else:
@@ -80,10 +80,10 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(ml.name and ml.name.encode('utf-8') or '')
             #ref
             csv_line.append(ml.ref and ml.ref.encode('utf-8') or '')
-            #date
-            csv_line.append(ml.date or '')
             #document_date
             csv_line.append(ml.document_date or '')
+            #date
+            csv_line.append(ml.date or '')
             #period_id
             csv_line.append(ml.period_id and ml.period_id.name and ml.period_id.name.encode('utf-8') or '')
             #account_id code - name
@@ -162,7 +162,7 @@ class account_line_csv_export(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.name or ""
         # Prepare csv head
-        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Posting Date'), _('Document Date'), _('Period'), _('General Account')]
+        head = [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Reference'), _('Document Date'), _('Posting Date'), _('Period'), _('General Account')]
         if display_fp:
             head += [_('Destination'), _('Cost Center'), _('Funding Pool')]
         else:
@@ -189,10 +189,10 @@ class account_line_csv_export(osv.osv_memory):
             csv_line.append(al.name and al.name.encode('utf-8') or '')
             #ref
             csv_line.append(al.ref and al.ref.encode('utf-8') or '')
-            #date
-            csv_line.append(al.date or '')
             #document_date
             csv_line.append(al.document_date or '')
+            #date
+            csv_line.append(al.date or '')
             #period
             csv_line.append(al.period_id and al.period_id.name and al.period_id.name.encode('utf-8') or '')
             #general_account_id (general account) code  - name
