@@ -37,6 +37,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="Short Date" />
 </Style>
+<Style ss:ID="ssNumber">
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
 <Table ss:ExpandedColumnCount="17" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
@@ -84,19 +94,19 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.amount_in or '0.0'}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.amount_out or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.output_amount_debit or '0.0'}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder">
+<Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.output_amount_credit or '0.0'}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
