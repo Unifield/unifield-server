@@ -31,8 +31,7 @@ class FieldPref(SecuredController):
     def index(self, **kw): #_terp_model, _terp_field, _terp_deps
 
         proxy = rpc.RPCProxy('res.users')
-        read_proxy = proxy.read(rpc.session.uid, ['has_an_admin_profile'])
-        admin_profile = read_proxy['has_an_admin_profile']
+        admin_profile = proxy.get_admin_profile(rpc.session.uid)
         
         click_ok = None
         params, data = TinyDict.split(kw)
