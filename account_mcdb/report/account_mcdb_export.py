@@ -167,7 +167,7 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Destination'), _('Cost Center'), _('Funding Pool')]
         else:
             head += [_('Analytic Account')]
-        head += [_('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency')]
+        head += [_('Third Party'), _('Booking Amount'), _('Book. Currency')]
         if not currency_id:
             head += [_('Func. Amount'), _('Func. Currency')]
         else:
