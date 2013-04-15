@@ -174,7 +174,8 @@ class ir_model_data_sync(osv.osv):
 
     _logger = logging.getLogger('ir.model.data')
 
-    def __init__(self, pool, cr):
+    def _auto_init(self,cr,context=None):
+        res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
         # Check existence of unique_sdref_constraint
         cr.execute("""\
 SELECT i.relname
@@ -229,10 +230,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             except:
                 cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
                 raise
-        super(ir_model_data_sync, self).__init__(pool, cr)
-
-    def _auto_init(self,cr,context=None):
-        res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
+        # Make sd reference to every object
         ids = self.search(cr, 1, [('model', 'not in', MODELS_TO_IGNORE), ('module', '!=', 'sd'), ('name', 'not in', XML_ID_TO_IGNORE)], context=context)
         for rec in self.browse(cr, 1, ids):
             name = "%s_%s" % (rec.module, rec.name)
