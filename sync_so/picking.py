@@ -145,7 +145,7 @@ class stock_picking(osv.osv):
                 header_result['note'] = False
             
             header_result['min_date'] = pick_dict['min_date']
-            res_id = self.write(cr, uid, in_id, header_result, context=context)
+            res_id = self.write(cr, uid, [in_id], header_result, context=context)
             
             # update lines
             for line in pack_data:
@@ -173,7 +173,7 @@ class stock_picking(osv.osv):
                         # search orders by default by id, we therefore take the smallest id first
                         move_id = move_ids.pop(0)
                         # update existing line and drop from list
-                        move_obj.write(cr, uid, move_id, data, context=context)
+                        move_obj.write(cr, uid, [move_id], data, context=context)
                     else:
                         # copy the first one used
                         move_id = move_obj.copy(cr, uid, completed_ids[0], dict(data, state='confirmed'), context=context)
