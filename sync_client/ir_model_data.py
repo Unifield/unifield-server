@@ -222,7 +222,7 @@ GROUP BY module, model, res_id
 DELETE FROM ir_model_data WHERE id IN %s""", [tuple(to_delete)])
                 for id, rec in to_write:
                     cr.execute("""\
-UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+"""WHERE id = %s""", rec.values() + [id])
+UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" WHERE id = %s""", rec.values() + [id])
                 cr.execute("""CREATE UNIQUE INDEX unique_sdref_constraint ON ir_model_data (model, res_id) WHERE module = 'sd'""")
                 cr.commit()
                 self._logger.info("%d sdref(s) deleted, %d kept." % (len(to_delete), len(to_write)))
