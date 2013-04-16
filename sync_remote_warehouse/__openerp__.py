@@ -14,6 +14,7 @@
         'views/logging.xml',
         'views/setup_remote_warehouse.xml',
         'views/usb_synchronisation.xml',
+        'views/sync_monitor.xml',
     ],
     'depends': ['sync_client'],
     'installable': True,
