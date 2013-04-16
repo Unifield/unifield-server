@@ -30,6 +30,7 @@ import pooler
 import time
 import tools
 from tools.safe_eval import safe_eval as eval
+import logging
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -508,9 +509,11 @@ def create_log_line(self, cr, uid, model, lines=[]):
             field = field_pool.read(cr, uid, field_id)
             if field['ttype'] == 'selection':
                 # if we have a fields.selection, we want to evaluate the 2nd part of the tuple which is user readable
-                selection_values = self.pool.get(field['model'])._columns[line['name']].selection
-                if not callable(selection_values):
-                    dict_of_values = dict(selection_values)
+                try:
+                    dict_of_values = dict(self.pool.get(field['model'])._columns[line['name']].selection)
+                except TypeError as e:
+                    logging.getLogger('orm_memory').warning("""Can\'t track changes for the field %s of the model %s. Error is %s"""
+                                                            % (line['name'], model.name, e))
 
         # Get the values
         old_value = line.get('old_value')
@@ -837,7 +840,7 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
             # we take below the fields.function that were ignored
             fields_obj = self.pool.get('ir.model.fields')
-            fields_to_trace_ids = fields_obj.search(cr, uid, [('name', 'in', fields_to_trace)])
+            fields_to_trace_ids = fields_obj.search(cr, uid, [('name', 'in', fields_to_trace), ('model_id', '=', model_id)])
             for fields_value in fields_obj.read(cr, uid, fields_to_trace_ids, ['is_function', 'name']):
                 if fields_value['is_function']:
                     fields.append(fields_value['name'])
