@@ -492,7 +492,6 @@ def create_log_line(self, cr, uid, model, lines=[]):
     model_pool = pool.get('ir.model')
     field_pool = pool.get('ir.model.fields')
     log_line_pool = pool.get('audittrail.log.line')
-    first = True
     #start Loop
     for line in lines:
         dict_of_values = {}
