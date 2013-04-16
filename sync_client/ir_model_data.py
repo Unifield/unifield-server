@@ -116,10 +116,65 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
 
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
+        # Check existence of unique_sdref_constraint
+        cr.execute("""\
+SELECT i.relname
+FROM pg_class t,
+     pg_class i,
+     pg_index ix
+WHERE t.oid = ix.indrelid
+      AND i.oid = ix.indexrelid
+      AND t.relkind = 'r'
+      AND t.relname = 'ir_model_data'
+      AND i.relname = 'unique_sdref_constraint'""")
+        # If there is not, we will migrate and create it after
+        if not cr.fetchone():
+            self._logger.info("Remove duplicated sdrefs and create a constraint...")
+            assert self._order.strip().lower() == 'id desc', "Sorry, this migration script works only if default ir.model.data order is 'id desc'"
+            cr.execute("SAVEPOINT make_sdref_constraint")
+            try:
+                cr.execute("""\
+SELECT ARRAY_AGG(id),
+       ARRAY_AGG(name),
+       MAX(sync_date),
+       MAX(last_modification),
+       MAX(version)
+FROM ir_model_data
+WHERE module = 'sd'
+GROUP BY module, model, res_id
+    HAVING COUNT(*) > 1""")
+                row = cr.fetchone()
+                to_delete = []
+                to_write = []
+                while row:
+                    ids, names, sync_date, last_modification, version = row
+                    sdrefs = sorted(zip(ids, names))
+                    taken_id, taken_sdref = sdrefs.pop(-1)
+                    sdrefs = dict(sdrefs)
+                    to_delete.extend(sdrefs.keys())
+                    to_write.append((taken_id, {
+                        'sync_date' : sync_date,
+                        'last_modification' : last_modification,
+                        'version' : version,
+                    }))
+                    row = cr.fetchone()
+                if to_delete:
+                    cr.execute("""\
+DELETE FROM ir_model_data WHERE id IN %s""", [tuple(to_delete)])
+                for id, rec in to_write:
+                    cr.execute("""\
+UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" WHERE id = %s""", rec.values() + [id])
+                cr.execute("""CREATE UNIQUE INDEX unique_sdref_constraint ON ir_model_data (model, res_id) WHERE module = 'sd'""")
+                cr.commit()
+                self._logger.info("%d sdref(s) deleted, %d kept." % (len(to_delete), len(to_write)))
+            except:
+                cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
+                raise
+        # Make sd reference to every object
         ids = self.search(cr, 1, [('model', 'not in', MODELS_TO_IGNORE), ('module', '!=', 'sd'), ('name', 'not in', XML_ID_TO_IGNORE)], context=context)
         for rec in self.browse(cr, 1, ids):
             name = "%s_%s" % (rec.module, rec.name)
-            res_ids = self.search(cr, 1, [('module', '=', 'sd'), ('name', '=', name)] )
+            res_ids = self.search(cr, 1, [('module','=','sd'),('res_id','=',rec.res_id)])
             if res_ids:
                 continue
             args = {
@@ -157,10 +212,10 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                 assert data.res_id == values['res_id'], \
                        "Oops...! There is multiple resources for a unique xml_id! Expected: %s, got: %s" \
                        % (values['res_id'], data.res_id)
-                super(ir_model_data_sync, self).write(cr, uid, sd_ids, args, context=context)
+                self.write(cr, uid, sd_ids, args, context=context)
             else:
-                super(ir_model_data_sync, self).create(cr, uid, args, context=context)
-
+                self.create(cr, uid, args, context=context)
+    
         return id
 
     # TODO replace this deprecated method with get_sd_ref(field='id') in your call
