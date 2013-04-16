@@ -110,12 +110,19 @@ import itertools
                     </tr>
 
                     % for ch in grp_row.get('child_rec'):
-                    <tr class="grid-row grid-row-group" id="${grp_row.get('groups_id')}" parent_grp_id="${grp_row.get('group_by_id')}"
+                    <tr class="grid-row grid-row-group ${ch.get('id') and ch['id'] in noteditable and 'noteditable' or ''}" id="${grp_row.get('groups_id')}" parent_grp_id="${grp_row.get('group_by_id')}"
                     	record="${ch.get('id')}" style="cursor: pointer; display: none;">
+                         % for field, field_attrs in hiddens:
+                            % if field in ch:
+                                ${ch[field].display()}
+                            % endif
+                         % endfor
                         % if editable:
                             <td class="grid-cell">
+                                % if not ch.get('id') or ch.get('id') not in noteditable:
                                 <img src="/openerp/static/images/iconset-b-edit.gif" class="listImage" border="0"
                                      title="${_('Edit')}" onclick="editRecord(${ch.get('id')}, '${source}')"/>
+                                % endif
                             </td>
                         % endif
                         % for i, (field, field_attrs) in enumerate(headers):
@@ -132,7 +139,7 @@ import itertools
                             % endif
                         % endfor
 
-                        % if editable:
+                        % if editable and not hide_delete_button:
                             <td class="grid-cell selector">
                                 <img src="/openerp/static/images/iconset-b-remove.gif" class="listImage" border="0"
                                      title="${_('Delete')}" onclick="new ListView('${name}').remove(${ch.get('id')})"/>
@@ -221,6 +228,7 @@ import itertools
                         var $this = jQuery(this);
                         if(event.detail != 1
                          || jQuery(event.target).is('img, input')
+                         || jQuery(event.target).hasClass('noteditable')
                          || view_type != 'tree'
                          || !$this.attr('record')) {
                             return;
