@@ -840,6 +840,12 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 res_ids = list(args[2])
             if len(args)>3 and type(args[3]) == dict:
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
+            # we take below the fields.function that were ignored
+            fields_obj = self.pool.get('ir.model.fields')
+            fields_to_trace_ids = fields_obj.search(cr, uid, [('name', 'in', fields_to_trace)])
+            for fields_value in fields_obj.read(cr, uid, fields_to_trace_ids, ['is_function', 'name']):
+                if fields_value['is_function']:
+                    fields.append(fields_value['name'])
                 
         model_id = model.id
 
