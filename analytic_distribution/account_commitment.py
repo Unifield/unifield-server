@@ -315,7 +315,7 @@ class account_commitment(osv.osv):
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
                         cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.date or False, 
-                        c.purchase_id and c.purchase_id.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
+                        (c.purchase_id and c.purchase_id.name) or c.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
                         cl.id, context=context)
         return True
 
