@@ -147,8 +147,7 @@ class sync_rule(osv.osv):
                            JOIN sync_server_group_type t ON (g.type_id=t.id) 
                            JOIN sync_server_sync_rule r
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
-                                     OR (r.type_id = t.id AND r.applies_to_type))
-                                    AND r.active)
+                                     OR (r.type_id = t.id AND r.applies_to_type)))
                       WHERE g.id IN %s
                       GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
         return dict(cr.fetchall())
@@ -204,6 +203,7 @@ class sync_rule(osv.osv):
                     'sequence_number' : rule.sequence_number,
                     'included_fields' : rule.included_fields,
                     'can_delete' : rule.can_delete,
+                    'active' : rule.active,
             }
             rules_data.append(data)
         return rules_data

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+		<record id="wizard_view_usb_synchronisation" model="ir.ui.view">
+            <field name="name">USB Synchronisation Wizard</field>
+            <field name="model">usb_synchronisation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="USB Synchronisation">
+                	<field name="usb_sync_step" invisible="1" />
+                	
+                	<separator colspan="4" string="Pull" />
+                	<field name="pull_data" colspan="4" attrs="{'invisible': [('usb_sync_step','!=','push_performed')], 'required': [('usb_sync_step','=','push_performed')]}" />
+                	<button type="object" colspan="4" name="pull" attrs="{'readonly': [('usb_sync_step','!=','push_performed')]}" string="Upload and Import the Data" />
+                	<field name="pull_result" colspan="4" />
+                	
+                	<separator colspan="4" string="Validate" />
+                	<button type="object" name="validate" string="Validate the Pull" colspan="4" attrs="{'readonly': [('usb_sync_step','!=','pull_performed')]}" />
+                	
+                	<separator colspan="4" string="Push" />
+                	<button type="object" name="push" string="Download the Data to Push" attrs="{'readonly': [('usb_sync_step','!=','pull_validated')]}" colspan="4" />
+                	<field name="push_result" colspan="4" />
+                </form>
+            </field>
+        </record> 
+    </data>
+</openerp>

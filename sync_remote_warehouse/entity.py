@@ -1,0 +1,25 @@
+from osv import osv, fields, orm
+
+class Entity(osv.osv):
+    _inherit = 'sync.client.entity'
+
+    _columns = {
+        # used to determine which sync rules to use 
+        'is_remote_warehouse': fields.boolean('Remote Warehouse?'),
+        'is_central_platform': fields.boolean('Central Platform?'),
+        
+        # used to ignore all data older than this date when syncing as it is already in the db
+        'clone_date': fields.datetime('Backup Date And Time', help='The date that the Central Platform database was backed up to provide the seed data for the Remote Warehouse'),
+        
+        # the step of the synchronisation process - first_sync, pull_performed, pull_validated, push_performed
+        'usb_sync_step': fields.selection((('first_sync','First Synchronisation'), ('pull_performed','Pull Performed'), ('pull_validated', 'Pull Validated'), ('push_performed', 'Push Performed')), 'USB Synchronisation Step'), 
+        
+        # used to make sure user does not try to import old data
+        'last_push_date': fields.datetime('Last Push Date', help='The date and time of the last Push'),
+    }
+    
+    _defaults = {
+        'usb_sync_step': 'first_sync',
+    }
+    
+Entity()
