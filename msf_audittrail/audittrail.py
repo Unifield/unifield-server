@@ -508,9 +508,10 @@ def create_log_line(self, cr, uid, model, lines=[]):
             field = field_pool.read(cr, uid, field_id)
             if field['ttype'] == 'selection':
                 # if we have a fields.selection, we want to evaluate the 2nd part of the tuple which is user readable
-                print field['name']
-                if not field['is_function'] or field['is_function'] and self.pool.get(field['model'])._columns[line['name']].store:
+                try:
                     dict_of_values = dict(self.pool.get(field['model'])._columns[line['name']].selection)
+                except TypeError:
+                    print 'error is '+field +' '+line
 
         # Get the values
         old_value = line.get('old_value')
