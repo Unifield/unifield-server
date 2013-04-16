@@ -8,6 +8,7 @@
             <field name="level">section</field>
             <field name="state">draft</field>
             <field name="move_prefix">SO120</field>
+            <field name="commitment_prefix">CV</field>
             <field name="reconcile_prefix">A1</field>
         </record>
 
