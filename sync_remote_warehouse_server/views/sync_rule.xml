@@ -7,20 +7,20 @@
             <field name="inherit_id" ref="sd.sync_server_sync_rule_form_view" />
             <field name="arch" type="xml">
                 <field name="sequence_number" position="after">
-                    <field name="horizontal" />
+                    <field name="usb" />
                 </field>  
                 <field name="direction" position="replace">
-                	<field name="direction" attrs="{'invisible': [('horizontal','=',True)]}" />
-                	<field name="direction_remote_warehouse" attrs="{'invisible': [('horizontal','=',False)]}" />
+                	<field name="direction" attrs="{'invisible': [('usb','=',True)]}" />
+                	<field name="direction_remote_warehouse" attrs="{'invisible': [('usb','=',False)]}" />
                 </field>
                 <field name="applies_to_type" position="attributes">
-                	<attribute name="attrs">{'invisible': [('horizontal','=',True)]}</attribute>
+                	<attribute name="attrs">{'invisible': [('usb','=',True)]}</attribute>
                 </field>
                 <field name="group_id" position="attributes">
-                	<attribute name="attrs">{'invisible':['|', ('applies_to_type','=',True), ('horizontal','=',True)], 'required':[('applies_to_type','=',False),('horizontal','=',False)]}</attribute>
+                	<attribute name="attrs">{'invisible':['|', ('applies_to_type','=',True), ('usb','=',True)], 'required':[('applies_to_type','=',False),('usb','=',False)]}</attribute>
                 </field>
                 <field name="type_id" position="attributes">
-                	<attribute name="attrs">{'invisible':['|', ('applies_to_type','=',False), ('horizontal','=',True)], 'required':[('applies_to_type','=',True),('horizontal','=',False)]}</attribute>
+                	<attribute name="attrs">{'invisible':['|', ('applies_to_type','=',False), ('usb','=',True)], 'required':[('applies_to_type','=',True),('usb','=',False)]}</attribute>
                 </field>
             </field>
         </record>
