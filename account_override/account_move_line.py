@@ -152,6 +152,7 @@ class account_move_line(osv.osv):
         'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
         help="This indicates the type of the Journal attached to this Journal Item"),
         'reconcile_txt': fields.text(string="Reconcile", help="Help user to display and sort Reconciliation"),
+        'exported': fields.boolean("Exported"),
     }
 
     _defaults = {
@@ -160,6 +161,7 @@ class account_move_line(osv.osv):
         'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
         'reconcile_txt': lambda *a: '',
+        'exported': lambda *a: False,
     }
 
     _order = 'move_id DESC'
