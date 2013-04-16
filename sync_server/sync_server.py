@@ -544,7 +544,6 @@ class sync_manager(osv.osv):
                      a : boolean : is True is if the call is succesfull, False otherwise
                      b : string : is an error message if a is False
         """
-        self._logger.debug("message receive from %s, %s" % (entity, packet))
         res = self.pool.get("sync.server.update").unfold_package(cr, 1, entity, packet, context=context)
         return (True, res)
             

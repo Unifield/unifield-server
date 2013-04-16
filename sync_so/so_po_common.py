@@ -58,15 +58,6 @@ class so_po_common(osv.osv_memory):
         part = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
         return part.property_product_pricelist and part.property_product_pricelist.id or False
 
-    def get_record_id(self, cr, uid, context, entry):
-        if not entry:
-            return False
-        ir_data = self.pool.get('ir.model.data').get_ir_record(cr, uid, entry.id, context=context)
-        if ir_data:
-            return ir_data.res_id
-        return False
-
-
     def get_full_original_fo_ref(self, source, original_fo_name):
         '''
         Get the full original name of the FO, prefixed by the source name --> Ex: COORDO_2.12/OC/BI101/PO00018
@@ -203,9 +194,7 @@ class so_po_common(osv.osv_memory):
         # --> be careful when modifying the statement below
         analytic_id = data_dict.get('analytic_distribution_id', False)
         if analytic_id:
-            ir_data = self.pool.get('ir.model.data').get_ir_record(cr, uid, analytic_id['id'], context=context)
-            if ir_data:
-                return ir_data.res_id
+            return self.find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
         return False 
 
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
@@ -293,7 +282,7 @@ class so_po_common(osv.osv_memory):
                 values['price_unit'] = line.price_unit
                 
             if 'product_id' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.product_id)
+                rec_id = self.find_sd_ref(cr, uid, line.product_id.id, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
@@ -312,22 +301,22 @@ class so_po_common(osv.osv_memory):
                 values['name'] = line.comment
 
             if 'nomen_manda_0' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_0)
+                rec_id = self.find_sd_ref(cr, uid, line.nomen_manda_0.id, context=context)
                 if rec_id:
                     values['nomen_manda_0'] = rec_id 
                 
             if 'nomen_manda_1' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_1)
+                rec_id = self.find_sd_ref(cr, uid, line.nomen_manda_1.id, context=context)
                 if rec_id:
                     values['nomen_manda_1'] = rec_id 
 
             if 'nomen_manda_2' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_2)
+                rec_id = self.find_sd_ref(cr, uid, line.nomen_manda_2.id, context=context)
                 if rec_id:
                     values['nomen_manda_2'] = rec_id 
 
             if 'nomen_manda_3' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_3)
+                rec_id = self.find_sd_ref(cr, uid, line.nomen_manda_3.id, context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
                 
@@ -409,7 +398,7 @@ class so_po_common(osv.osv_memory):
                 values['date_expected'] = line.date_expected
                 
             if 'product_id' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.product_id)
+                rec_id = self.find_sd_ref(cr, uid, line.product_id.id, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name

@@ -25,7 +25,7 @@ from osv import orm
 from tools.translate import _
 
 import logging
-from sync_common.common import sync_log
+from sync_common import sync_log
 
 class entity_manager(osv.osv_memory):
     _name = "sync.client.entity_manager"

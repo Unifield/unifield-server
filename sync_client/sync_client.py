@@ -33,7 +33,7 @@ import traceback
 from psycopg2 import OperationalError
 
 import logging
-from sync_common.common import sync_log
+from sync_common import sync_log
 
 from threading import Thread, RLock, Lock
 import pooler
@@ -347,8 +347,8 @@ class Entity(osv.osv):
             updates_count = 0
             ids = self.pool.get('sync.client.rule').search(cr, uid, [], context=context)
             for rule_id in ids:
-                updates_count += self.pool.get('sync.client.update_to_send').create_update(
-                    cr, uid, rule_id, session, context=context)
+                updates_count += sum(self.pool.get('sync.client.update_to_send').create_update(
+                    cr, uid, rule_id, session, context=context))
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
@@ -372,30 +372,32 @@ class Entity(osv.osv):
             if not res[0]:
                 raise Exception, res[1]
             self.pool.get('sync.client.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
-            return len(ids)
+            return (len(packet['load']), len(packet['unload']))
 
         # get update count
         max_updates = self.pool.get('sync.client.update_to_send').search(cr, uid, [('sent','=',False)], count=True, context=context)
         if max_updates == 0:
             return 0
 
-        updates_count = 0
+        imported, deleted = 0, 0
         logger_index = None
         res = create_package()
         while res:
-            updates_sent = send_package(*res)
-            updates_count += updates_sent
+            imported_package, deleted_package = send_package(*res)
+            imported += imported_package
+            deleted += deleted_package
             if logger:
                 if logger_index is None: logger_index = logger.append()
-                logger.replace(logger_index, _("Update(s) sent: %d/%d") % (updates_count, max_updates))
+                logger.replace(logger_index, _("Update(s) sent: %d import update(s) + %d delete update(s) on %d update(s)") % (imported, deleted, max_updates))
                 logger.write()
             res = create_package()
 
-        if logger and updates_count:
-            logger.replace(logger_index, _("Update(s) sent: %d") % updates_count)
+        if logger and (imported or deleted):
+            logger.replace(logger_index, _("Update(s) sent: %d import update(s) and %d delete update(s) = %d total update(s)") \
+                                         % (imported, deleted, (imported + deleted)))
 
         #state update_send => update_validate
-        return updates_count
+        return imported + deleted
 
     def validate_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)
@@ -496,16 +498,19 @@ class Entity(osv.osv):
         try:
             if logger is not None: logger_index = logger.append()
             done = []
-            updates_executed = 0
+            imported, deleted = 0, 0
             for rule_seq in sorted(update_groups.keys()):
                 update_ids = update_groups[rule_seq]
                 while update_ids:
                     to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
-                    updates.execute_update(cr, uid, to_do, context=context)
+                    messages, imported_executed, deleted_executed = updates.execute_update(cr, uid, to_do, context=context)
+                    imported += imported_executed
+                    deleted += deleted_executed
+                    # Do nothing with messages
                     done.extend(to_do)
-                    updates_executed += len(to_do)
                     if logger is not None:
-                        logger.replace(logger_index, _("Update(s) processed: %d/%d") % (updates_executed, update_count))
+                        logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
+                                                     % (imported, deleted, update_count))
                         logger.write()
                     # intermittent commit
                     if len(done) >= MAX_EXECUTED_UPDATES:
@@ -515,8 +520,9 @@ class Entity(osv.osv):
             cr.commit()
 
             if logger is not None:
-                logger.replace(logger_index, _("Update(s) processed: %d") % update_count)
-                notrun_count = updates.search(cr, uid, [('run', '=', False)], count=True, context=context)
+                logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates = %d total updates") % \
+                                             (imported, deleted, update_count))
+                notrun_count = updates.search(cr, uid, [('run','=',False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Update(s) not run left: %d") % notrun_count)
                 logger.write()
 

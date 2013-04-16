@@ -42,7 +42,7 @@ class account_analytic_line(osv.osv):
         # create this object, because this object is sync-ed on a separate rule 
         # otherwise duplicate entries will be created and these entries will be messed up in the later update
         if 'do_not_create_analytic_line' in context:
-            if 'sync_data' in context:
+            if context.get('sync_update_execution'):
                 return False
             del context['do_not_create_analytic_line']
         
@@ -85,7 +85,7 @@ class account_move_line(osv.osv):
 #        context['do_not_create_analytic_line'] = True
 
         sync_check = check
-        if 'sync_data' in context:
+        if context.get('sync_update_execution'):
             sync_check = False
 
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=sync_check)
@@ -95,7 +95,7 @@ class account_move_line(osv.osv):
             context = {}
         field_to_check = {'account_id': 'm2o', 'journal_id': 'm2o', 'period_id': 'm2o', 'move_id': 'm2o', 'debit': 'float', 'credit': 'float', 'date': 'date'}
         done = {}
-        if not context.get('sync_data'):
+        if not context.get('sync_update_execution'):
             return super(account_move_line, self)._hook_call_update_check(cr, uid, ids, vals, context)
 
         # rewrite update_check, to raise error *only if values to write and values in DB differ*

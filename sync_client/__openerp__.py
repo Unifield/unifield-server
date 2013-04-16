@@ -33,6 +33,8 @@
     'init_xml': [],
     'data': [
         'sync_client_view.xml',
+        'update_view.xml',
+        'message_view.xml',
         'wizard/sync_wiz_view.xml',
         'wizard/monitoring_view.xml',
         'monitor_view.xml',

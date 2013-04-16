@@ -47,6 +47,7 @@
                     <field name="sequence_number"/>
                     <field name="name"/>
                     <field name="model_ref"/>
+                    <field name="can_delete" />
                     <field name="applies_to_type"/>
                     <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)]}"/>
                     <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)]}" />
@@ -64,22 +65,29 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Sync Rule Form">
-                    <field name="model_id" invisible="1"/>
-                    <group colspan="4" col="6">
-                        <field name="name"/>
-                        <field name="sequence_number" on_change="invalidate(model_ref)"/>
-                        <newline/>
-                        <field name="active" attrs="{'readonly':[('status','!=','valid')]}"/>
-                        <field name="direction" on_change="invalidate(model_ref)" />
-                        <group colspan="2" col="2">
-                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}"/>
+                    <field name="model_id" invisible="1" />
+                    <field name="model_ids" invisible="1" />
+                    <group colspan="4" col="3">
+                        <group col="2">
+                            <separator string="Rule"/>
+                            <field name="name" nolabel="1" colspan="2" />
+                            <field name="sequence_number" on_change="invalidate(model_ref)" />
+                            <field name="model_ref" on_change="invalidate(model_ref)" required="1" />
                         </group>
-                        <field name="model_ref" on_change="invalidate(model_ref)" required="1"/>
-                        <field name="applies_to_type"/>
-                        <field name="model_ids" invisible="1" />
-                        <group colspan="2" col="4">
-                            <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}"/>
-                            <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)], 'required':[('applies_to_type','=',True)]}" widget="selection"/>
+                        <group col="2">
+                            <separator string="Settings" />
+                            <group colspan="2" col="4">
+                                <field name="active" attrs="{'readonly':[('status','!=','valid')]}" />
+                                <field name="can_delete" />
+                            </group>
+                            <field name="direction" on_change="invalidate(model_ref)" />
+                            <field name="owner_field" on_change="invalidate(model_ref)" attrs="{'invisible':[('direction','!=','bi-private')], 'required':[('direction','=','bi-private')]}" />
+                        </group>
+                        <group col="2">
+                            <separator string="Group" />
+                            <field name="group_id" attrs="{'invisible':[('applies_to_type','=',True)], 'required':[('applies_to_type','=',False)]}" />
+                            <field name="type_id" attrs="{'invisible':[('applies_to_type','=',False)], 'required':[('applies_to_type','=',True)]}" widget="selection" />
+                            <field name="applies_to_type" />
                         </group>
                     </group>
                     <group colspan="4" col="2">
@@ -115,9 +123,6 @@
                     </group>
                     <separator string="" colspan="4"/>
                     <group colspan="4" col="6">
-                        <label string="" colspan="6"/>
-                        <label string="" colspan="6"/>
-                        <label string="" colspan="6"/>
                         <label string="" colspan="3"/>
                         <field name="status" attrs="{'readonly':[]}"/>
                         <button type="object" string="Validate" name="validate" />

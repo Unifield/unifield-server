@@ -119,9 +119,8 @@ class hq_entries(osv.osv):
     
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'cost_center_id':
-            res = []
-            for line_id in ids:
-                line_data = self.browse(cr, uid, line_id, context=context)
+            res = dict.fromkeys(ids, False)
+            for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
                     cost_center_name = line_data.cost_center_id and \
                                        line_data.cost_center_id.code and \
@@ -134,15 +133,7 @@ class hq_entries(osv.osv):
                         if len(target_ids) > 0:
                             target = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0], context=context)
                             if target.instance_id and target.instance_id.instance:
-                                res.append(target.instance_id.instance)
-                            else:
-                                res.append(False)
-                        else:
-                            res.append(False)
-                    else:
-                        res.append(False)
-                else:
-                    res.append(False)
+                                res[line_data.id] = target.instance_id.instance
             return res
         return super(hq_entries, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
@@ -155,7 +146,7 @@ class account_target_costcenter(osv.osv):
     
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         if dest_field == 'instance_id':
-            res = []
+            res = dict.fromkeys(ids, False)
             for target_line in self.browse(cr, uid, ids, context=context):
                 if target_line.instance_id:
                     instance = target_line.instance_id
@@ -165,11 +156,7 @@ class account_target_costcenter(osv.osv):
                         if instance.level == 'coordo':
                             for project in instance.child_ids:
                                 res_data.append(project.instance)
-                        res.append(res_data)
-                    else:
-                        res.append(False)
-                else:
-                    res.append(False)
+                        res[target_line.id] = res_data
             return res
         return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
     
@@ -198,7 +185,7 @@ class account_analytic_account(osv.osv):
         if dest_field == 'category':
             if isinstance(ids, (long, int)):
                 ids = [ids]
-            res = []
+            res = dict.fromkeys(ids, False)
             for id in ids:
                 cr.execute("select instance_id from account_target_costcenter where cost_center_id = %s" % (id))
                 instance_ids = [x[0] for x in cr.fetchall()]
@@ -209,9 +196,7 @@ class account_analytic_account(osv.osv):
                         result = cr.fetchone()
                         if result:
                             res_temp.append(result[0])
-                    res.append(res_temp)
-                else:
-                    res.append(False)
+                    res[id] = res_temp
             return res
         
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
@@ -272,10 +257,6 @@ class msf_instance(osv.osv):
 
 msf_instance()
 
-from sync_common.common import format_data_per_id 
-from sync_client.ir_model_data import generate_message_for_destination
-
-
 class account_analytic_line(osv.osv):
     
     _inherit = 'account.analytic.line'
@@ -304,16 +285,13 @@ class account_analytic_line(osv.osv):
             return super(account_analytic_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
         
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        res = []
-        for line_id in ids:
-            line_data = self.browse(cr, uid, line_id, context=context)
+        res = dict.fromkeys(ids, False)
+        for line_id in self.browse(cr, uid, line_id, context=context):
             if line_data.cost_center_id:
                 res.append(self.get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
-                res.append(current_instance.parent_id.instance)
-            else:
-                res.append(False)
+                res[line_data.id] = current_instance.parent_id.instance
         return res
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -325,7 +303,8 @@ class account_analytic_line(osv.osv):
         
         instance_name = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context).name
         xml_ids = self.pool.get('ir.model.data').get(cr, uid, self, ids, context=context)
-        line_data = format_data_per_id(self.read(cr, uid, ids, ['cost_center_id'], context=context))
+        line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
+        line_data = dict((data['id'], data) for data in line_data)
         for i,  xml_id_record in enumerate(self.pool.get('ir.model.data').browse(cr, uid, xml_ids, context=context)):
             xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
             old_cost_center_id = line_data[ids[i]]['cost_center_id'] and line_data[ids[i]]['cost_center_id'][0] or False
@@ -341,7 +320,7 @@ class account_analytic_line(osv.osv):
             
             if not old_destination_name == new_destination_name:
                 # Send delete message, but not to parents of the current instance
-                generate_message_for_destination(self, cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
+                self.generate_message_for_destination(cr, uid, old_destination_name, xml_id, instance_name, send_to_parent_instances=False)
             
 
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)

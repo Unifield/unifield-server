@@ -19,20 +19,32 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-from datetime import datetime
+from osv import osv, fields
 import tools
-import time
-import sync_data
-from sync_client.ir_model_data import link_with_ir_model, dict_to_obj
 
 import logging
-from sync_common.common import sync_log
+from sync_common import sync_log
 
 from tools.safe_eval import safe_eval as eval
+
+class dict_to_obj(object):
+    def __init__(self, values):
+        assert isinstance(values, dict), "Must be a dictionary"
+        self.values = values
+        for k, v in values.items():
+            if isinstance(v, dict):
+                v = dict_to_obj(v)
+            elif hasattr(v, '__iter__'):
+                gen = (dict_to_obj(i) if isinstance(i, dict) else i \
+                       for i in v)
+                v = type(v)(gen)
+            setattr(self, k, v)
+
+    def __str__(self):
+        return str(self.values)
+
+    def to_dict(self):
+        return self.values
 
 
 class local_message_rule(osv.osv):
@@ -96,35 +108,25 @@ class message_to_send(osv.osv):
         Creation from rule
     """
     def create_from_rule(self, cr, uid, rule, context=None):
-        obj = self.pool.get(rule.model.model)
         domain = rule.domain and eval(rule.domain) or []
         context = dict(context or {})
         context['active_test'] = False
-        obj_ids = sync_data.eval_poc_domain(obj, cr, uid, domain, context=context)
+        obj_ids = self.pool.get(rule.model.model).search_ext(cr, uid, domain, context=context)
         dest = self.pool.get(rule.model.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:
             arg = self.pool.get(rule.model.model).get_message_arguments(cr, uid, obj_id, rule, context=context)
             args[obj_id] = arg
         call = rule.remote_call
-        identifiers = self._generate_message_uuid(cr, uid, obj, obj_ids, rule.server_id, context=context)
-        for i, id in enumerate(obj_ids):
-            update_destinations = []
-            if not issubclass(type(dest[i]), (list, tuple)):
-                update_destinations = [dest[i]]
-            else:
-                update_destinations = dest[i]
-            for update_destination in update_destinations:
-                self.create_message(cr, uid, identifiers[id], call, args[id], update_destination, context)
+        identifiers = self._generate_message_uuid(cr, uid, rule.model.model, obj_ids, rule.server_id, context=context)
+        for id in obj_ids:
+            for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
+                self.create_message(cr, uid, identifiers[id], call, args[id], dest[id], context)
         return len(obj_ids)
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
-        res = {}
-        for id in ids:
-            model_data_id = link_with_ir_model(model, cr, uid, id, context=context)
-            name = self.pool.get('ir.model.data').browse(cr, uid, model_data_id, context=context).name
-            res[id] = name + "_" + str(server_rule_id)
-        return res
+        return dict( (id, "%s_%s" % (name, server_rule_id)) \
+                     for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context) )
 
 
     def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, context=None):
@@ -166,7 +168,7 @@ class message_to_send(osv.osv):
         message_uuids = [data['id'] for data in packet]
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids)], context=context)
         if ids:
-            self.write(cr, uid, ids, {'sent' : True, 'sent_date' : datetime.now().strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
 
     _order = 'id asc'
 
@@ -215,7 +217,7 @@ class message_received(osv.osv):
 
     def get_arg(self, args):
         res = []
-        for arg  in eval(args):
+        for arg in eval(args):
             if isinstance(arg, dict):
                 res.append(dict_to_obj(arg))
             else:
@@ -226,7 +228,7 @@ class message_received(osv.osv):
         if not ids:
             ids = self.search(cr, uid, [('run', '=', False)], context=context)
         if not ids: return 0
-        execution_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        execution_date = fields.datetime.now()
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
         for message in self.browse(cr, uid, ids, context=context):
             cr.execute("SAVEPOINT exec_message")

@@ -33,6 +33,8 @@
     'init_xml': [],
     'data': [
         'sync_server_view.xml',
+        'update_view.xml',
+        'message_view.xml',
         'rules_view.xml',
         'security/ir.model.access.csv',
         'data/cron.xml',
