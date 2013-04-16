@@ -107,8 +107,8 @@ class analytic_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
             res.append('|')
             res.append('&')
-            res.append(('move_id.move_id.name', 'ilike', '%%s%s%%s' % (arg[2],)))
-            res.append(('commitment_line_id.commit_id.name', 'ilike', '%%s%s%%s' % (arg[2],)))
+            res.append(('move_id.move_id.name', 'ilike', '%%%s%%' % (arg[2],)))
+            res.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % (arg[2],)))
         return res
 
     _columns = {
