@@ -601,13 +601,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 "fct_object_id": fct_object_id,
                 "sub_obj_name": sub_obj_name,
                 }
-        # this is to avoid several line with the same values, if a line already exists, we override it
-        search_tuple = [(a, '=', b) for a,b in vals.items() if a not in ['timestamp', 'log'] and b != None]
-        search_existing_line_ids = log_line_pool.search(cr, uid, search_tuple)
-        if not search_existing_line_ids:
-            log_line_pool.create(cr, uid, vals)
-        else:
-            log_line_pool.write(cr, uid, search_existing_line_ids, vals)
+        log_line_pool.create(cr, uid, vals)
     #End Loop
     return True
 
