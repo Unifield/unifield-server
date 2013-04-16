@@ -16,6 +16,9 @@
                         <button string="Have been reallocated" attrs="{'invisible': [('is_reallocated', '=', False)]}" 
                             icon="terp-mail-" colspan="2"/>
                     </xpath>
+                    <xpath expr="/tree/field[@name='move_id']" position='replace'>
+                        <field name="entry_sequence"/>
+                    </xpath>
                 </data>
             </field>
         </record>
@@ -42,6 +45,9 @@
                     </xpath>
                     <xpath expr="/search//field[@name='journal_id']" position="after">
                         <field name="journal_type"/>
+                    </xpath>
+                    <xpath expr="/search//field[@name='move_id']" position="replace">
+                        <field name="entry_sequence" select="1"/>
                     </xpath>
                 </data>
             </field>
