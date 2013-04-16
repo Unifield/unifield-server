@@ -30,6 +30,19 @@ class procurement_request(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
     
+    def _ir_amount_all(self, cr, uid, ids, field_name, arg, context=None):
+        cur_obj = self.pool.get('res.currency')
+        res = {}
+        for ir in self.browse(cr, uid, ids, context=context):
+            res[ir.id] = 0.0
+            val = 0.0
+            if ir.procurement_request:
+                curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
+                for line in ir.order_line:
+                    val += line.price_subtotal
+                res[ir.id] = cur_obj.round(cr, uid, curr_browse, val)
+        return res
+    
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Override the method to return 0.0 if the sale.order is a prcourement request
@@ -76,7 +89,7 @@ class procurement_request(osv.osv):
     
     _columns = {
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-        domain=[('usage', '=', 'internal')], help='You can only select an internal location'),
+        domain=[('usage', '=', 'internal'), ('location_category', '!=', 'transition')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
@@ -84,7 +97,7 @@ class procurement_request(osv.osv):
         'notes': fields.text(string='Notes'),
         'order_ids': fields.many2many('purchase.order', 'procurement_request_order_rel',
                                       'request_id', 'order_id', string='Orders', readonly=True),
-        
+        'ir_total_amount': fields.function(_ir_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Indicative Total Value'),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
             store = {
                 'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
@@ -251,11 +264,11 @@ class procurement_request(osv.osv):
         It is the action called on the activity of the workflow.
         '''
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         nb_lines = 0
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
@@ -341,9 +354,12 @@ class procurement_request_line(osv.osv):
         '''
         res = {}
         new_ids= []
+        cur_obj = self.pool.get('res.currency')
+        curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
         for line in self.browse(cr, uid, ids):
             if line.order_id.procurement_request:
-                res[line.id] = 0.0
+                subtotal = line.cost_price * line.product_uom_qty
+                res[line.id] = cur_obj.round(cr, uid, curr_browse, subtotal)
             else:
                 new_ids.append(line.id)
                 
@@ -387,6 +403,7 @@ class procurement_request_line(osv.osv):
         return res
     
     _columns = {
+        'cost_price': fields.float(string='Cost price'),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
@@ -412,9 +429,10 @@ class procurement_request_line(osv.osv):
         'date_planned': _get_planned_date,
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'product_ok': False,
-        'comment_ok': False,
+        'comment_ok': True,
     }
     
+
     def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
         '''
         Fills automatically the product_uom_id field and the name on the line when the 
@@ -429,12 +447,12 @@ class procurement_request_line(osv.osv):
         value = {}
         domain = {}
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False}
+            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False}
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
-                     'type': product.procure_method, 'comment_ok': True}
+                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price}
             if value['type'] != 'make_to_stock':
                 value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
@@ -469,12 +487,12 @@ class procurement_request_line(osv.osv):
         '''
         if context is None:
             context = {}
-        value = {}
+        value = {'comment': comment}
         domain = {}
         obj_data = self.pool.get('ir.model.data')
-        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]
+        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]
+        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]
         
         if comment and not product_id:
             value.update({'name': 'To be defined',

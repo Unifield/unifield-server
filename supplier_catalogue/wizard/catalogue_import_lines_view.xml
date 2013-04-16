@@ -13,7 +13,7 @@
 					<field name="file_to_import" colspan="4" />
 					<separator colspan="4" string="Actions" />
 					<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
-					<button name="import_file" string="Import the file" icon="gtk-execute" colspan="2" type="object" />
+					<button name="import_file" string="Import lines" icon="gtk-execute" colspan="2" type="object" />
 				</form>
 			</field>
 		</record>

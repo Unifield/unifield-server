@@ -43,6 +43,7 @@
         "analytic_distribution",
         "purchase_override",
         "analytic_distribution_invoice",
+        "msf_homere_interface",
     ],
     "init_xml" : [],
     "update_xml" : [

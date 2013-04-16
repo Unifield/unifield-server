@@ -133,13 +133,10 @@ class procurement_batch_cron(osv.osv):
         if not fields_to_read:
             fields_to_read = []
 
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
         res = super(procurement_batch_cron, self).read(cr, uid, ids, fields_to_read, context=context)
 
         if 'nextcall' in fields_to_read:
-            for data in res:
+            for data in ([res] if isinstance(res, dict) else res):
                 cron_ids = self.pool.get('ir.cron').search(cr, uid, [('batch_id', '=', data['id'])])
                 if cron_ids:
                     nextcall = self.pool.get('ir.cron').browse(cr, uid, cron_ids[0]).nextcall

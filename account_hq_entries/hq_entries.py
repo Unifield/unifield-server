@@ -25,7 +25,6 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
-from collections import defaultdict
 from lxml import etree
 
 class hq_entries_validation_wizard(osv.osv_memory):
@@ -102,9 +101,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
                         'destination_id': destination_id,
                     }
                     common_vals.update({'analytic_id': cc_id,})
-                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id})
-                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     del common_vals['destination_id']
                     if f1_id:
@@ -172,7 +171,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             if same_document_date:
                 self.pool.get('account.move').write(cr, uid, [move_id], {'document_date': document_date})
             # Post move
-            post = self.pool.get('account.move').post(cr, uid, [move_id])
+            self.pool.get('account.move').post(cr, uid, [move_id])
         return res
 
     def validate(self, cr, uid, ids, context=None):
@@ -187,7 +186,6 @@ class hq_entries_validation_wizard(osv.osv_memory):
             active_ids = [active_ids]
         # Fetch some data
         ana_line_obj = self.pool.get('account.analytic.line')
-        distrib_obj = self.pool.get('account.analytic.distribution')
         distrib_fp_line_obj = self.pool.get('funding.pool.distribution.line')
         distrib_cc_line_obj = self.pool.get('cost.center.distribution.line')
         # Search an analytic correction journal
@@ -259,6 +257,8 @@ class hq_entries_validation_wizard(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('No analytic correction journal found!'))
             ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id})
             # create new lines
+            if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
+                continue
             ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': current_date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id, 
                 'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id})
             # update old ana lines
@@ -321,6 +321,8 @@ class hq_entries(osv.osv):
         # C/ (account/DEST) in FP except B
         # D/ CC in FP except when B
         # E/ DEST in list of available DEST in ACCOUNT
+        # F/ Check posting date with cost center and destination if exists
+        # G/ Check document date with funding pool
         ## CASES where FP is filled in (or not) and/or DEST is filled in (or not).
         ## CC is mandatory, so always available:
         # 1/ no FP, no DEST => Distro = valid
@@ -334,6 +336,24 @@ class hq_entries(osv.osv):
             # if account is not expense, so it's valid
             if line.account_id and line.account_id.user_type_code and line.account_id.user_type_code != 'expense':
                 continue
+            # Date checks
+            # F Check
+            if line.cost_center_id:
+                cc = self.pool.get('account.analytic.account').browse(cr, uid, line.cost_center_id.id, context={'date': line.date})
+                if cc and cc.filter_active is False:
+                    res[line.id] = 'invalid'
+                    continue
+            if line.destination_id:
+                dest = self.pool.get('account.analytic.account').browse(cr, uid, line.destination_id.id, context={'date': line.date})
+                if dest and dest.filter_active is False:
+                    res[line.id] = 'invalid'
+                    continue
+            # G Check
+            if line.analytic_id:
+                fp = self.pool.get('account.analytic.account').browse(cr, uid, line.analytic_id.id, context={'date': line.document_date})
+                if fp and fp.filter_active is False:
+                    res[line.id] = 'invalid'
+                    continue
             # if just a cost center, it's also valid! (CASE 1/)
             if not line.analytic_id and not line.destination_id:
                 continue

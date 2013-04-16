@@ -61,7 +61,7 @@ class res_currency_functional(osv.osv):
 
 
     _columns = {
-        'currency_name': fields.char('Currency Name', size=64, required=True),
+        'currency_name': fields.char('Currency Name', size=64, required=True, translate=1),
         'rate': fields.function(_current_date_rate, method=True, string='Current Rate', digits=(12,6),
             help='The rate of the currency to the functional currency',  multi='_date_rate'),
         'date': fields.function(_current_date_rate, method=True, string='Validity From', type='date', multi='_date_rate'),

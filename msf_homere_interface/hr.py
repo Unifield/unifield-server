@@ -80,7 +80,7 @@ class hr_employee(osv.osv):
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination",),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
     }
@@ -93,18 +93,24 @@ class hr_employee(osv.osv):
         'gender': lambda *a: 'unknown',
     }
 
-    def check_identification_id(self, cr, uid, ids, vals, context=None):
+    def _check_unicity(self, cr, uid, ids, context=None):
         """
-        Check that no employee have the same identification number.
+        Check that identification_id is not used yet.
         """
-        if not vals:
-            return True
-        if vals.get('identification_id', False):
-            e_ids = self.search(cr, uid, [('identification_id', '=', vals.get('identification_id'))])
-            if e_ids:
-                msg = ','.join([x and x.get('name', '') for x in self.read(cr, uid, e_ids, ['name'])])
-                raise osv.except_osv(_('Error'), _('Employee code already used by: %s') % (msg or '',))
+        # Some verifications
+        if not context:
+            context = {}
+        # Search if no one use this identification_id
+        for e in self.browse(cr, uid, ids):
+            if e.identification_id:
+                same = self.search(cr, uid, [('identification_id', '=', e.identification_id)])
+                if same and len(same) > 1:
+                    return False
         return True
+
+    _constraints = [
+        (_check_unicity, "Another employee has the same unique code.", ['identification_id']),
+    ]
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -126,7 +132,6 @@ class hr_employee(osv.osv):
 #            # Raise an error if no cost_center
 #            if not vals.get('cost_center_id', False):
 #                raise osv.except_osv(_('Warning'), _('You have to complete Cost Center field before employee creation!'))
-            self.check_identification_id(cr, uid, [], vals, context)
             # Add Nat. staff by default if not in vals
             if not vals.get('destination_id', False):
                 try:
@@ -175,9 +180,6 @@ class hr_employee(osv.osv):
                 for el in vals:
                     if el in ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id']:
                         new_vals.update({el: vals[el]})
-            # Check identification number
-            if local:
-                self.check_identification_id(cr, uid, [emp.id], vals, context)
             # Write changes
             employee_id = super(hr_employee, self).write(cr, uid, emp.id, new_vals, context)
             if employee_id:
@@ -233,7 +235,7 @@ class hr_employee(osv.osv):
             fp_id = 0
         fp_fields = form.xpath('/'  + view_type + '//field[@name="funding_pool_id"]')
         for field in fp_fields:
-            field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+            field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
         view['arch'] = etree.tostring(form)
         return view
 
@@ -257,6 +259,20 @@ class hr_employee(osv.osv):
             if cost_center_id not in [x.id for x in fp.cost_center_ids]:
                 vals.update({'funding_pool_id': False})
         return {'value': vals}
+
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        if not args:
+            args=[]
+        if context is None:
+            context={}
+        # UTP-441: only see active employee execept if args also contains a search on 'active' field
+        disrupt = False
+        if context.get('disrupt_inactive', False) and context.get('disrupt_inactive') == True:
+            disrupt = True
+        if not disrupt:
+            if not ('active', '=', False) or not ('active', '=', True) in args:
+                args += [('active', '=', True)]
+        return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
 
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

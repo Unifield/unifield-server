@@ -147,6 +147,7 @@ class account_period(osv.osv):
         return True
 
     _columns = {
+        'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
             help="These periods can overlap.", readonly=True),
         'state': fields.selection(_get_state, 'State', readonly=True,

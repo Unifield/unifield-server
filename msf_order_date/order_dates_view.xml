@@ -11,19 +11,19 @@
             <field name="arch" type="xml">
                 <data>
                 
-                	<field name="partner_id" position="replace" >
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" />
-                		<field name="partner_type" />
-                	</field>
-                	
-                	<field name="pricelist_id" position="attributes">
-                		<attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
-                	</field>
+                    <field name="partner_id" position="replace" >
+                        <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" />
+                        <field name="partner_type" />
+                    </field>
+                    
+                    <field name="pricelist_id" position="attributes">
+                        <attribute name="domain">[('type', '=', 'purchase'), ('in_search', '=', partner_type)]</attribute>
+                    </field>
 
-                	
-                	<field name="date_order" position="replace">
-                		<field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
-                	</field>
+                    
+                    <field name="date_order" position="replace">
+                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
+                    </field>
                 	
                     <!--  Add dates on header -->
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
@@ -36,10 +36,10 @@
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
                             <group colspan="2" col="3">
-	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}"
+	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}"
 	                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent"
-	                            	attrs="{'invisible': [('state', '!=', 'draft')]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>
                             <group colspan="2" col="3">
 	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
@@ -80,7 +80,7 @@
             <field name="arch" type="xml">
                 <data>
                 <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="replace">
-                    <field name="date_planned" attrs="{'readonly': [('po_state_stored', '!=', 'draft')]}" />
+                    <field name="date_planned" attrs="{'readonly': [('po_state_stored', 'not in', ('draft', 'confirmed'))]}" />
                     <field name="po_state_stored" invisible="True" />
                     <field name="po_partner_type_stored" invisible="True" />
                     <field name="confirmed_delivery_date" attrs="{'readonly': ['|', ('po_partner_type_stored', 'in', ('internal', 'section', 'empty')), ('po_state_stored', 'not in', ('draft','confirmed'))]}" />
@@ -99,10 +99,10 @@
             <field name="arch" type="xml">
                 <data>
                 
-                	<field name="partner_id" position="replace" >
-                		<field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" />
-                		<field name="partner_type" />
-                	</field>
+                    <field name="partner_id" position="replace" >
+                      <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}"  domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]" />
+                      <field name="partner_type" />
+                    </field>
                     
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <field name="internal_type" invisible="True" />
@@ -134,7 +134,7 @@
 	                            	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" />
 	                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"
 	                            	on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"  />
-	                            <field name="ready_to_ship_date" attrs="{'readonly': [('shipped', '=', True)]}" />
+	                            <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'validated'])]}" />
 	                            <field name="shipment_date" />
 	                        </group>
 	                    </page>
@@ -142,7 +142,7 @@
                     
                     <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="replace">
                     	<field name="so_state_stored" invisible="True" />
-                        <field name="date_planned" attrs="{'readonly': [('so_state_stored', '!=', 'draft')]}" />
+                        <field name="date_planned" attrs="{'readonly': [('so_state_stored', 'not in', ['draft', 'validated'])]}" />
                         <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}" />
                     </xpath>
                     

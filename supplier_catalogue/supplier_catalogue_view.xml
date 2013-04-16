@@ -40,7 +40,7 @@
 
                     <group name="import" string=" Import Lines " colspan="4"  >
 					    <field name="file_to_import" />
-					    <button name="catalogue_import_lines" type="object" string="Import the file" icon="gtk-execute" colspan="1" />
+					    <button name="catalogue_import_lines" type="object" string="Import lines" icon="gtk-execute" colspan="1" />
                         <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" />
                     </group>
     

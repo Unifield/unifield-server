@@ -214,15 +214,20 @@ class res_currency(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
+        # Search for move lines with this currency. If those exists,
+        # exception.
+        move_line_ids = self.pool.get('account.move.line').search(cr, uid, [('|'),
+                                                                            ('currency_id','in',ids),
+                                                                            ('functional_currency_id', 'in', ids)], context=context)
+        if len(move_line_ids) > 0:
+            raise osv.except_osv(_('Currency currently used !'), _('The currency cannot be deleted as one or more journal items are currently using it!'))
+            
         pricelist_obj = self.pool.get('product.pricelist')
             
         # If no error, unlink pricelists
         for p_list in self.check_in_use(cr, uid, ids, 'delete', context=context):
             pricelist_obj.unlink(cr, uid, p_list, context=context)
-        for cur_id in ids:
-            res = super(res_currency, self).unlink(cr, uid, cur_id, context=context)
-            
-        return res   
+        return super(res_currency, self).unlink(cr, uid, ids, context=context)
 
 #        remove this block because it has been moved to the sync module
 #    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):

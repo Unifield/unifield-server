@@ -9,8 +9,8 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
-                    <field name="destination_id" context="{'search_default_active': 1}"/>
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]" string="Cost Center" context="{'search_default_active': 1}"/>
+                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'OC'), ('state', '=', 'open')]" string="Cost Center" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
@@ -23,9 +23,9 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
-                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)" context="{'search_default_active': 1}"/>
-                    <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1}"/>
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool" context="{'search_default_active': 1}"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, parent.account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('posting_date')}"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
@@ -38,7 +38,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1'), ('state', '=', 'open')]" context="{'search_default_active': 1}"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE1'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
@@ -51,7 +51,7 @@
             <field name="type">tree</field>
             <field name="arch" type='xml'>
                 <tree string="" editable="top">
-                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2'), ('state', '=', 'open')]" context="{'search_default_active': 1}"/>
+                    <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FREE2'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
                     <field name="percentage" sum="Total Percentage" digits="(16,2)"/>
                     <field name="amount" sum="Total Amount"/>
                 </tree>
@@ -74,6 +74,9 @@
                     <field name="model_id" invisible="1"/>
                     <field name="sale_order_id" invisible="1"/>
                     <field name="sale_order_line_id" invisible="1"/>
+                    <field name="posting_date" invisible="1"/>
+                    <field name="document_date" invisible="1"/>
+                    <field name="partner_type" invisible="1"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
                         <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1" attrs="{'invisible': [('is_writable', '=', False)]}"/>
@@ -91,7 +94,7 @@
                     </group>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <separator colspan="4" string="Cost Center and Funding Pool allocation"/>
-                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'from_move': move_id, 'parent_id':active_id}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
+                        <field colspan="4" name="fp_line_ids" nolabel="1" widget="one2many_list" context="{'mode': entry_mode, 'from_invoice': invoice_id, 'from_commitment': commitment_id, 'from_model': model_id, 'direct_invoice_id': direct_invoice_id, 'from_move': move_id, 'parent_id':active_id, 'posting_date': posting_date, 'document_date': document_date}" attrs="{'readonly': [('is_writable', '=', False)]}"/>
                     </group>
                     <group colspan="6" attrs="{'invisible': [('state', 'in', ['draft', 'cc'])]}">
                         <group colspan="2">
@@ -134,7 +137,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/>
+                  <field name="account_id" colspan="2" attrs="{'readonly': [('state', '=', 'blocked')]}"/><label string="" colspan="2"/>
+                    <newline/>
+                    <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
                     <field name="display_fp" invisible="1"/>
                     <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
@@ -162,6 +167,8 @@
                     </group>
                     <field name="display_fp" invisible="1"/>
                     <field name="account_id" colspan="2"/>
+                    <newline/>
+                    <field name="date"/>
                     <newline/>
                     <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />

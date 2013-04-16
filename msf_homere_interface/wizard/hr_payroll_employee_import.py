@@ -40,7 +40,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'updated': fields.integer(string="Updated", size=64, readonly=True),
         'created': fields.integer(string="Created", size=64, readonly=True),
         'total': fields.integer(string="Processed", size=64, readonly=True),
-        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')], 
+        'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries'), ('migration', 'From Migration')], 
             string="State", required=True, readonly=True),
         'error_line_ids': fields.many2many("hr.payroll.employee.import.errors", "employee_import_error_relation", "wizard_id", "error_id", "Error list", 
             readonly=True),
@@ -107,7 +107,8 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             domain = False
             if context.get('from') == 'employee_import':
                 result = ('editable_view_employee_tree', 'hr.employee')
-                context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
+                context.update({'search_default_active': 1})
+                domain = "[('employee_type', '=', 'local')]"
             if context.get('from') == 'payroll_import':
                 result = ('view_hr_payroll_msf_tree', 'hr.payroll.msf')
                 domain = "[('state', '=', 'draft'), ('account_id.user_type.code', '=', 'expense')]"
@@ -121,6 +122,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'nat_staff_import':
                 result = ('inherit_view_employee_tree', 'hr.employee')
                 context.update({'search_default_employee_type_local': 1, 'search_default_active': 1})
+            if context.get('from') == 'msf_doc_import_accounting':
+                result = ('view_move_tree_2', 'account.move','account_override')
+                context.update({'from_web_menu': True}) # Permit user to edit/delete journal entries
             if result:
                 module_name = 'msf_homere_interface'
                 if result and len(result) > 2:
@@ -217,57 +221,67 @@ class hr_payroll_employee_import(osv.osv_memory):
         current_date = strftime('%Y-%m-%d')
         # Extract information
         try:
-            adresse, adressecontact, anciennete, anglais, annee_diplome, annee_diplome2, asuivre, autrecausedeces, autreidentite, autrelangue, bqbic, \
-                bqcommentaire, bqiban, bqmodereglement, bqnom, bqnumerocompte, bqsortnumber, canddetachement, carteemploye, causedeces, civilite, \
-                code_staff, codeterrain, commentaire, date_maj, datedebanciennete, datedeces, dateemission, dateentree, dateexpiration, datenaissance, \
-                decede, delegue, diplome, diplome2, email, enfants, espagnol, fax, fichierstaff, francais, id_staff, id_unique, lieuemission, \
-                lieunaissance, nation, nom, num_soc, numidentite, OPE1EMPLOYER, OPE1OCCUPATION, OPE1YEAR, OPE2EMPLOYER, OPE2OCCUPATION, OPE2YEAR, \
-                OPE3EMPLOYER, OPE3OCCUPATION, OPE3YEAR, pays, PIN1, PIN2, PIN3, PIN4, PIN5, poolurgence, portable, prenom, qui, relocatedstaff, sexe, \
-                statutfamilial, tel_bureau, tel_prive, typeidentite = zip(employee_data)
+            code_staff = employee_data.get('code_staff', False)
+            codeterrain = employee_data.get('codeterrain', False)
+            commentaire = employee_data.get('commentaire', False)
+            datenaissance = employee_data.get('datenaissance', False)
+            decede = employee_data.get('decede', False)
+            email = employee_data.get('email', False)
+            id_staff = employee_data.get('id_staff', False)
+            id_unique = employee_data.get('id_unique', False)
+            nation = employee_data.get('nation', False)
+            nom = employee_data.get('nom', False)
+            num_soc = employee_data.get('num_soc', False)
+            portable = employee_data.get('portable', False)
+            prenom = employee_data.get('prenom', False)
+            sexe = employee_data.get('sexe', False)
+            statutfamilial = employee_data.get('statutfamilial', False)
+            tel_bureau = employee_data.get('tel_bureau', False)
+            tel_prive = employee_data.get('tel_prive', False)
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('The given file is probably corrupted!\n%s') % (e))
         # Process data
         # Due to UF-1742, if no id_unique, we fill it with "empty"
-        uniq_id = id_unique and id_unique[0] or False
-        if not id_unique or not id_unique[0]:
+        uniq_id = id_unique or False
+        if not id_unique:
             uniq_id = 'empty'
-        if codeterrain and codeterrain[0] and id_staff and id_staff[0] and code_staff and code_staff[0]:
+        if codeterrain and id_staff and code_staff:
             # Employee name
-            employee_name = (nom and prenom and nom[0] and prenom[0] and ustr(nom[0]) + ', ' + ustr(prenom[0])) or (nom and ustr(nom[0])) or (prenom and ustr(prenom[0])) or False
+            employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
             # Do some check
-            employee_check = self.update_employee_check(cr, uid, ustr(code_staff[0]), ustr(codeterrain[0]), id_staff[0], ustr(uniq_id), wizard_id, employee_name)
+            employee_check = self.update_employee_check(cr, uid, ustr(code_staff), ustr(codeterrain), id_staff, ustr(uniq_id), wizard_id, employee_name)
             if not employee_check:
                 return False, created, updated
             # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
-            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0]), ('homere_id_unique', '=', uniq_id)])
+            e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
             # Prepare vals
             res = False
-            name = (nom and prenom and nom[0] and prenom[0] and ustr(nom[0]) + ', ' + ustr(prenom[0])) or (nom and ustr(nom[0])) or (prenom and ustr(prenom[0])) or False
+            name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
             vals = {
                 'active': True,
                 'employee_type': 'local',
-                'homere_codeterrain': codeterrain[0],
-                'homere_id_staff': id_staff[0],
+                'homere_codeterrain': codeterrain,
+                'homere_id_staff': id_staff,
                 'homere_id_unique': uniq_id,
                 'photo': False,
-                'identification_id': code_staff and code_staff[0] or False,
-                'notes': commentaire and ustr(commentaire[0]) or '',
-                'birthday': datenaissance and datenaissance[0] or False,
-                'work_email': email and email[0] or False,
+                'identification_id': code_staff or False,
+                'notes': commentaire and ustr(commentaire) or '',
+                'birthday': datenaissance or False,
+                'work_email': email or False,
                 # Do "NOM, Prenom"
                 'name': employee_name,
                 'name': name,
-                'ssnid': num_soc and num_soc[0] or False,
-                'mobile_phone': portable and portable[0] or False,
-                'work_phone': tel_bureau and tel_bureau[0] or False,
-                'private_phone': tel_prive and tel_prive[0] or False,
+                'ssnid': num_soc or False,
+                'mobile_phone': portable or False,
+                'work_phone': tel_bureau or False,
+                'private_phone': tel_prive or False,
             }
             # Update Birthday if equal to 0000-00-00
-            if datenaissance and datenaissance[0] and datenaissance[0] == '0000-00-00':
+            if datenaissance and datenaissance == '0000-00-00':
                 vals.update({'birthday': False,})
             # Update Nationality
-            if nation and nation[0]:
-                n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation[0]))])
+            if nation:
+                n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation))])
                 res_nation = False
                 # Only get nationality if one result
                 if n_ids:
@@ -277,20 +291,20 @@ class hr_payroll_employee_import(osv.osv_memory):
                         raise osv.except_osv(_('Error'), _('An error occured on nationality. Please verify all nationalities.'))
                 vals.update({'country_id': res_nation})
             # Update gender
-            if sexe and sexe[0]:
+            if sexe:
                 gender = 'unknown'
-                if sexe[0] == 'M':
+                if sexe == 'M':
                     gender = 'male'
-                elif sexe[0] == 'F':
+                elif sexe == 'F':
                     gender = 'female'
                 vals.update({'gender': gender})
             # Update Marital Status
-            if statutfamilial and statutfamilial[0]:
+            if statutfamilial:
                 statusname = False
                 status = False
-                if statutfamilial[0] == 'MA':
+                if statutfamilial == 'MA':
                     statusname = 'Married'
-                elif statutfamilial[0] == 'VE':
+                elif statutfamilial == 'VE':
                     statusname = 'Widower'
                 elif statutfamilial == 'CE':
                     statusname = 'Single'
@@ -300,13 +314,13 @@ class hr_payroll_employee_import(osv.osv_memory):
                         status = s_ids[0]
                 vals.update({'marital': status})
             # In case of death, desactivate employee
-            if decede and decede[0] and decede[0] == 'Y':
+            if decede and decede == 'Y':
                 vals.update({'active': False})
             # Desactivate employee if:
             # - no contract line found
             # - end of current contract exists and is inferior to current date
             # - no contract line found with current = True
-            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain[0]), ('homere_id_staff', '=', id_staff[0])])
+            contract_ids = self.pool.get('hr.contract.msf').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff)])
             if not contract_ids:
                 vals.update({'active': False})
             current_contract = False
@@ -448,13 +462,9 @@ class hr_payroll_employee_import(osv.osv_memory):
             # read the staff file
             if zipobj.namelist() and staff_file in zipobj.namelist():
                 # Doublequote and escapechar avoid some problems
-                reader = csv.reader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
+                reader = csv.DictReader(zipobj.open(staff_file), quotechar='"', delimiter=',', doublequote=False, escapechar='\\')
             else:
                 raise osv.except_osv(_('Error'), _('%s not found in given zip file!') % (staff_file,))
-            try:
-                reader.next()
-            except:
-                raise osv.except_osv(_('Error'), _('Problem to read given file.'))
             res = True
             for i, employee_data in enumerate(reader):
                 update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)

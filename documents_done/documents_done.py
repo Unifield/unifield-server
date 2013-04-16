@@ -265,14 +265,14 @@ class documents_done_wizard(osv.osv):
                                           'doc_state': move.picking_id.state,
                                           'doc_model': 'stock.picking',
                                           'doc_id': move.picking_id.id,
-                                          'doc_type': doc_type})
+                                          'doc_type': doc_type}, context=context)
             elif not move.picking_id:
                 line_obj.create(cr, uid, {'problem_id': problem_id,
                                           'doc_name': move.name,
                                           'doc_state': move.state,
                                           'doc_model': 'stock.move',
                                           'doc_id': move.id,
-                                          'doc_type': 'Stock move'})
+                                          'doc_type': 'Stock move'}, context=context)
         return
 
     def _add_purchase_order(self, cr, uid, problem_id, po_ids, context=None):
@@ -288,7 +288,7 @@ class documents_done_wizard(osv.osv):
                                       'doc_state': order.state,
                                       'doc_model': 'purchase.order',
                                       'doc_id': order.id,
-                                      'doc_type': order.rfq_ok and 'Request for Quotation' or 'Purchase Order'})
+                                      'doc_type': order.rfq_ok and 'Request for Quotation' or 'Purchase Order'}, context=context)
         return
 
     def go_to_problems(self, cr, uid, ids, context=None):
@@ -318,7 +318,7 @@ class documents_done_wizard(osv.osv):
             invoice_ids = []
             doc = self.pool.get(wiz.real_model).browse(cr, uid, wiz.res_id, context=context)
             pb_id = pb_obj.create(cr, uid, {'wizard_id': wiz.id,
-                                            'doc_name': doc.name})
+                                            'doc_name': doc.name}, context=context)
 
             # For sales orders and procurement request
             if wiz.real_model == 'sale.order':
@@ -341,7 +341,7 @@ class documents_done_wizard(osv.osv):
                                              'doc_state': tender.state,
                                              'doc_model': 'tender',
                                              'doc_id': tender.id,
-                                             'doc_type': 'Tender'})
+                                             'doc_type': 'Tender'}, context=context)
             # Search all procurement orders attached to the sale order
             for proc in self.pool.get('procurement.order').browse(cr, uid, proc_ids, context=context):
                 pb_line_obj.create(cr, uid, {'problem_id': pb_id,
@@ -349,7 +349,7 @@ class documents_done_wizard(osv.osv):
                                              'doc_state': proc.state,
                                              'doc_model': 'procurement.order',
                                              'doc_id': proc.id,
-                                             'doc_type': 'Procurement Order'})
+                                             'doc_type': 'Procurement Order'}, context=context)
 
             # Process all invoices
             for inv in self.pool.get('account.invoice').browse(cr, uid, invoice_ids, context=context):
@@ -358,7 +358,7 @@ class documents_done_wizard(osv.osv):
                                              'doc_state': inv.state,
                                              'doc_model': 'account.invoice',
                                              'doc_id': inv.id,
-                                             'doc_type': 'Invoice'})
+                                             'doc_type': 'Invoice'}, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'documents.done.problem',
@@ -531,7 +531,7 @@ class documents_done_problem(osv.osv_memory):
                     if invoice_state == 'draft':
                         wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'invoice_cancel', cr)
 #                    elif invoice_state not in ('cancel', 'paid'):
-#                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s' % ([map(x.name + '/') for x in error_inv_ids])))
+#                        raise osv.except_osv(_('Error'), _('You cannot set the SO to \'Closed\' because the following invoices are not Cancelled or Paid : %s') % ([map(x.name + '/') for x in error_inv_ids]))
                 elif line.doc_model == 'tender':
                     wf_service.trg_validate(uid, line.doc_model, line.doc_id, 'manually_done', cr)
                 elif self.pool.get(line.doc_model).browse(cr, uid, line.doc_id, context=context).state not in ('cancel', 'done'):
@@ -543,6 +543,7 @@ class documents_done_problem(osv.osv_memory):
                 'res_model': 'documents.done.wizard',
                 'view_type': 'form',
                 'view_mode': 'tree',
+                'context': context,
                 'target': 'crush'}
 
     def cancel_document(self, cr, uid, ids, context=None):
@@ -607,6 +608,7 @@ class documents_done_problem_line(osv.osv_memory):
                     'name': item.doc_type,
                     'view_type': 'form',
                     'view_mode': 'form',
+                    'context': context,
                     'res_id': item.doc_id,}
 
 documents_done_problem_line()
