@@ -192,20 +192,29 @@ class sync_rule(osv.osv):
                     
         return list(rules_to_send)
     
+    _rules_serialization_mapping = {
+        'id' : 'server_id',
+        'name' : 'name',
+        'owner_field' : 'owner_field',
+        'model_id' : 'model',
+        'domain' : 'domain',
+        'sequence_number' : 'sequence_number',
+        'included_fields' : 'included_fields',
+        'can_delete' : 'can_delete',
+    }
+
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []
+        rules_serialization_mapping = dict(
+            sum((c._rules_serialization_mapping.items()
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
+        )
         for rule in self.browse(cr, uid, ids, context=context):
-            data = {
-                    'server_id' : rule.id,
-                    'name' : rule.name,
-                    'owner_field' : rule.owner_field,
-                    'model' : rule.model_id,
-                    'domain' : rule.domain,
-                    'sequence_number' : rule.sequence_number,
-                    'included_fields' : rule.included_fields,
-                    'can_delete' : rule.can_delete,
-            }
-            rules_data.append(data)
+            rules_data.append(dict(
+                (data, rule[column]) for column, data
+                    in rules_serialization_mapping.items()
+            ))
         return rules_data
 
     
