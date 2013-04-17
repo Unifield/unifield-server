@@ -512,7 +512,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
                 try:
                     dict_of_values = dict(self.pool.get(field['model'])._columns[line['name']].selection)
                 except TypeError as e:
-                    logging.getLogger('orm_memory').warning("""Can\'t track changes for the field %s of the model %s. Error is %s"""
+                    logging.getLogger('Track changes').warning("""Can\'t track changes for the field %s of the model %s. Error is %s"""
                                                             % (line['name'], model.name, e))
 
         # Get the values

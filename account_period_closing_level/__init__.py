@@ -19,6 +19,18 @@
 #
 ##############################################################################
 
+    # To avoid issues with existing OpenERP code (account move line for example),
+    # the state are:
+    #  - 'created' for Draft
+    #  - 'draft' for Open
+    #  - 'done' for HQ-Closed
+ACCOUNT_PERIOD_STATE_SELECTION = [('created','Draft'),
+                                  ('draft', 'Open'),
+                                  ('field-closed', 'Field-Closed'),
+                                  ('mission-closed', 'Mission-Closed'),
+                                  ('done', 'HQ-Closed')
+                                   ]
+
 import account
 import account_period
 import account_fiscalyear
