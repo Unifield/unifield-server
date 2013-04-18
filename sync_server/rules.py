@@ -112,12 +112,16 @@ class sync_rule(osv.osv):
         'can_delete': fields.boolean('Can delete record?', help='Propagate the delete of old unused records'),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
-        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True)
+        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
+        'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?'),
+        'direction_remote_warehouse': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization', required=True),
     }
 
     _defaults = {
         'active': False,
         'status': 'invalid',
+        'usb': False,
+        'direction_remote_warehouse': 'bidirectional',
     }
 
     _order = 'sequence_number asc,model_id asc'
@@ -147,7 +151,8 @@ class sync_rule(osv.osv):
                            JOIN sync_server_group_type t ON (g.type_id=t.id) 
                            JOIN sync_server_sync_rule r
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
-                                     OR (r.type_id = t.id AND r.applies_to_type)))
+                                     OR (r.type_id = t.id AND r.applies_to_type)
+                                     OR (r.usb = true)))
                       WHERE g.id IN %s
                       GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
         return dict(cr.fetchall())
@@ -204,6 +209,7 @@ class sync_rule(osv.osv):
                     'included_fields' : rule.included_fields,
                     'can_delete' : rule.can_delete,
                     'active' : rule.active,
+                    'usb' : rule.usb,
             }
             rules_data.append(data)
         return rules_data
@@ -323,12 +329,12 @@ class sync_rule(osv.osv):
 
     ## Checkers & Validator ##################################################
 
-    def check_domain(obj, cr, uid, rec, context=None):
+    def check_domain(self, cr, uid, rec, context=None):
         error = False
         message = "* Domain syntax... "
         try:
             domain = eval(rec.domain)
-            obj.pool.get(rec.model_id).search_ext(cr, uid, domain, context=None)
+            self.pool.get(rec.model_id).search_ext(cr, uid, domain, context=None)
         except:
             message += "failed!\n"
             error = True
@@ -338,7 +344,7 @@ class sync_rule(osv.osv):
             if error: message += "Example: ['|', ('name', 'like', 'external_'), ('supplier', '=', True)]\n"
         return (message, error)
 
-    def check_fields(obj, cr, uid, rec, title="", context=None):
+    def check_fields(self, cr, uid, rec, title="", context=None):
         message = title
         error = False
         try:
@@ -346,8 +352,8 @@ class sync_rule(osv.osv):
             for field in included_fields:
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
-                model_ids = self.pool.get(rec.model_id.model).get_model_ids(cr, uid, context=context)
-                if not len(obj.pool.get('ir.model.fields').search(cr, uid, [('model_id','in', model_ids),('name','=',base_field)], context=context)): raise KeyError
+                model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
+                if not len(self.pool.get('ir.model.fields').search(cr, uid, [('model_id','in', model_ids),('name','=',base_field)], context=context)): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"
             error = True
@@ -364,7 +370,7 @@ class sync_rule(osv.osv):
             
         return (message, error)
 
-    def check_arguments(obj, cr, uid, rec, title="", context=None):
+    def check_arguments(self, cr, uid, rec, title="", context=None):
         message = title
         error = False
         try:
@@ -374,7 +380,7 @@ class sync_rule(osv.osv):
                 base_field = field.split('/')[0]
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id.model).get_model_ids(cr, uid, context=context)
-                if not len(obj.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)): 
+                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)): 
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -393,7 +399,7 @@ class sync_rule(osv.osv):
             
         return (message, error)
 
-    def check_forced_values(obj, cr, uid, rec, context=None):
+    def check_forced_values(self, cr, uid, rec, context=None):
         error = False
         message = "* Forced values syntax... "
         try:
@@ -414,7 +420,7 @@ class sync_rule(osv.osv):
 
 
 
-    def check_fallback_values(obj, cr, uid, rec, context=None):
+    def check_fallback_values(self, cr, uid, rec, context=None):
         error = False
         message = "* Fallback values syntax... "
         try:
@@ -433,13 +439,13 @@ class sync_rule(osv.osv):
             # Sequence is unique
         return (message, error)
 
-    def check_owner_field(obj, cr, uid, rec, context=None):
+    def check_owner_field(self, cr, uid, rec, context=None):
         if rec.direction != 'bi-private': return ('', False)
         error = False
         message = "* Owner field existence... "
         try:
             fields = []
-            ir_model_fields = obj.pool.get('ir.model.fields')
+            ir_model_fields = self.pool.get('ir.model.fields')
             model_ids = self.pool.get(rec.model_id.model).get_model_ids(cr, uid, context=context)
             fields_ids = ir_model_fields.search(cr, uid, [('model_id','in', model_ids)], context=context)
             fields = ir_model_fields.browse(cr, uid, fields_ids, context=context)
@@ -464,23 +470,23 @@ class sync_rule(osv.osv):
         error = False
         message = []
         for rec in self.browse(cr, uid, ids, context=context):
-            mess, err = check_domain(self, cr, uid, rec, context)
+            mess, err = self.check_domain(cr, uid, rec, context)
             error = err or error
             message.append(mess)
             # Check field syntax
-            mess, err = check_fields(self, cr, uid, rec, title="* Included fields syntax... ", context=context)
+            mess, err = self.check_fields(cr, uid, rec, title="* Included fields syntax... ", context=context)
             error = err or error
             message.append(mess)
             # Check force values syntax (can be empty)
-            mess, err = check_forced_values(self, cr, uid, rec, context)
+            mess, err = self.check_forced_values(cr, uid, rec, context)
             error = err or error
             message.append(mess)
             # Check fallback values syntax (can be empty)
-            mess, err = check_fallback_values(self, cr, uid, rec, context)
+            mess, err = self.check_fallback_values(cr, uid, rec, context)
             error = err or error
             message.append(mess)
             # Check Owner Field
-            mess, err = check_owner_field(self, cr, uid, rec, context)
+            mess, err = self.check_owner_field(cr, uid, rec, context)
             error = err or error
             message.append(mess)
             
@@ -587,6 +593,7 @@ class message_rule(osv.osv):
                     'remote_call' : rule.remote_call,
                     'arguments' : rule.arguments,
                     'destination_name' : rule.destination_name,
+                    'active' : rule.active,
             }
             rules_data.append(data)
         return rules_data

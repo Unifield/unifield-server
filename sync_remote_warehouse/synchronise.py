@@ -3,6 +3,7 @@ import base64
 import zipfile
 from cStringIO import StringIO
 import csv
+import copy
 
 IMPORT_ERROR_NOT_CSV = 'Not a CSV file'
 IMPORT_ERROR_NOT_OBJECT = 'Could not find object in object pool'
@@ -10,7 +11,7 @@ IMPORT_ERROR_NOT_OBJECT = 'Could not find object in object pool'
 def _update_usb_sync_step(obj, cr, uid, step):
     entity_pool = obj.pool.get('sync.client.entity')
     entity = entity_pool.get_entity(cr, uid)
-    return entity_pool.write(cr, uid, entity.id, {'usb_sync_step': step})
+    #return entity_pool.write(cr, uid, entity.id, {'usb_sync_step': step})
 
 def pull(obj, cr, uid, uploaded_file_base64, context=None):
     """
@@ -99,4 +100,18 @@ def push(obj, cr, uid, ids, context=None):
     if obj.pool.get('sync.client.entity').get_entity(cr, uid, context).usb_sync_step not in ['pull_validated', 'first_sync']:
         raise osv.except_osv('Cannot Push', 'We cannot perform a Push until we have Validated the last Pull')
     
+    # prepare
+    context_usb = dict(copy.deepcopy(context), usb_sync_update_push=True)
+    entity = obj.pool.get('sync.client.entity')
+    
+    # udpate rules then create updates_to_send
+    updates_count = entity.create_update(cr, uid, context=context_usb)
+    
+    if updates_count:
+        updates_added = entity.create_update_zip(cr, uid, context=context_usb)
+    else:
+        raise osv.except_osv('No Updates', 'No changes that need to be synchronized have been made so there is nothing to download')
+    
     _update_usb_sync_step(obj, cr, uid, 'push_performed')
+    
+    return {}

@@ -16,6 +16,14 @@ class usb_synchronisation(osv.osv_memory):
         res = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_sync_step
         return res
     
+    def _get_entity_last_push_file(self, cr, uid, ids, field_name, arg, context):
+        return dict.fromkeys(ids, self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_last_push_file)
+    
+    def _get_entity_last_push_file_name(self, cr, uid, ids, field_name, arg, context):
+        last_push_date = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_last_push_date
+        last_push_file_name = '%s.zip' % last_push_date
+        return dict.fromkeys(ids, last_push_file_name)
+        
     _columns = {
         # used to store pulled and pushed data, and to show results in the UI
         'pull_data' : fields.binary('Pull Data', filters='*.zip'),
@@ -24,6 +32,10 @@ class usb_synchronisation(osv.osv_memory):
         
         # used for view state logic
         'usb_sync_step' : fields.char('USB Sync step', size=64),
+        
+        # used to let user download pushed information
+        'push_file' : fields.function(_get_entity_last_push_file, type='binary', method=True, string='Last Push File'),
+        'push_file_name' : fields.function(_get_entity_last_push_file_name, type='char', method=True, string='Last Push File Name'),
     }
     
     _defaults = {

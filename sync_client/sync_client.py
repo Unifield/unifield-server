@@ -335,6 +335,10 @@ class Entity(osv.osv):
 
     
     def create_update(self, cr, uid, context=None):
+        
+        usb = context.get('usb_sync_update_push', False)
+        module = usb and 'sync_remote_warehouse' or 'sync.client'
+        
         def set_rules(identifier):
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_model_to_sync(identifier)
@@ -344,15 +348,23 @@ class Entity(osv.osv):
             return res[1]
         
         def prepare_update(session):
+            search_domain = [('usb','=',usb)]
             updates_count = 0
-            ids = self.pool.get('sync.client.rule').search(cr, uid, [], context=context)
+            ids = self.pool.get('sync.client.rule').search(cr, uid, search_domain, context=context)
             for rule_id in ids:
-                updates_count += sum(self.pool.get('sync.client.update_to_send').create_update(
+                updates_count += sum(self.pool.get('%s.update_to_send' % module).create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
-        session = set_rules(entity.identifier)
+        
+        # if we are performing a usb sync we cannot update the rules
+        if not usb:
+            session = set_rules(entity.identifier)
+        else:
+            import random
+            session = str(random.random()) #self.pool.get("sync.server.sync_manager")._generate_session_id()
+            
         updates_count = prepare_update(session)
         if updates_count > 0:
             self.write(cr, uid, [entity.id], {'session_id' : session})
@@ -367,7 +379,7 @@ class Entity(osv.osv):
         def create_package():
             return self.pool.get('sync.client.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
 
-        def send_package(ids, packet):
+        def add_and_mark_as_done(ids, packet):
             res = proxy.receive_package(entity.identifier, packet, context)
             if not res[0]:
                 raise Exception, res[1]
@@ -383,7 +395,7 @@ class Entity(osv.osv):
         logger_index = None
         res = create_package()
         while res:
-            imported_package, deleted_package = send_package(*res)
+            imported_package, deleted_package = add_and_mark_as_done(*res)
             imported += imported_package
             deleted += deleted_package
             if logger:

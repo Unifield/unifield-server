@@ -42,11 +42,20 @@ class local_rule(osv.osv):
         'owner_field' : fields.char('Owner Field', size=128, readonly=True),
         'can_delete': fields.boolean('Can delete record?', readonly=True, help='Propagate the delete of old unused records'),
         'active' : fields.boolean('Active', select=True),
+        
+        # Specifies that this rule is a rule for USB synchronisations
+        'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?', required=True),
+        
+        # specifies the direction of the USB synchronisation - like the 'direction' field
+        'direction_usb': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization', required=True),
     }
 
     _defaults = {
         'included_fields' : '[]',
         'active' : True,
+        
+        'usb': False,
+        'direction_usb': 'bidirectional',
     }
 
     _sql_constraints = [
@@ -133,10 +142,12 @@ class update_to_send(osv.osv):
             included_fields = eval(rule.included_fields or '[]') 
             if not 'id' in included_fields: 
                 included_fields.append('id')
+                
+            sync_field = context.get('usb_sync_update_push', False) and 'usb_sync_date' or 'sync_date'
 
             ids_to_compute = self.need_to_push(cr, uid,
                 self.search_ext(cr, uid, domain, context=context),
-                included_fields, context=context)
+                included_fields, context=context, sync_field=sync_field)
             if not ids_to_compute:
                 return 0
 
@@ -164,10 +175,14 @@ class update_to_send(osv.osv):
         def create_delete_update(self, rule, context):
             if not rule.can_delete:
                 return 0
+            
+            included_fields = eval(rule.included_fields or '[]') 
+            if not 'id' in included_fields: 
+                included_fields.append('id')
 
             ids_to_delete = self.need_to_push(cr, uid,
                 self.search_deleted(cr, uid, [('module','=','sd')], context=context),
-                context=context)
+                included_fields, context=context)
 
             if not ids_to_delete:
                 return 0
