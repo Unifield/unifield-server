@@ -563,7 +563,7 @@
     <!--Bank Statement modification to change "Bank Statement" into "Bank Statement" -->
 
         <record id="account.action_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Bank Statements</field>
+            <field name="name">Bank Registers</field>
             <field name="res_model">account.bank.statement</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,graph</field>
@@ -630,7 +630,7 @@
             <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
 
-        <menuitem string="Bank Statements" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" sequence="7"/>
+        <menuitem string="Bank Registers" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" sequence="7"/>
 
     <!-- Cheque Register View -->
         <record id="view_cheque_register_form" model="ir.ui.view">
