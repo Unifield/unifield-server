@@ -159,7 +159,8 @@ class tender(osv.osv):
             ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
-        
+        if context.get('import_in_progress'):
+            return True
         for tender in self.browse(cr, uid, ids, context=context):
             for line in tender.tender_line_ids:
                 if vals.get('categ', tender.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
@@ -176,7 +177,7 @@ class tender(osv.osv):
         Check consistency between lines and categ of tender
         """
         self._check_service(cr, uid, ids, vals, context=context)
-        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+        return super(tender, self).write(cr, uid, ids, vals, context=context)
 
     def onchange_categ(self, cr, uid, ids, categ, context=None):
         """ Check that the categ is compatible with the product
