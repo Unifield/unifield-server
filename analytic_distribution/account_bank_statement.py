@@ -103,6 +103,8 @@ class account_bank_statement_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': absl.account_id and absl.account_id.id or False,
+            'posting_date': absl.date,
+            'document_date': absl.document_date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})

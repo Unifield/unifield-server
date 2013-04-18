@@ -50,6 +50,23 @@ class real_average_consumption(osv.osv):
             
         return res
 
+    def _check_active_product(self, cr, uid, ids, context=None):
+        '''
+        Check if the real consumption report contains a line with an inactive product
+        '''
+        inactive_lines = self.pool.get('real.average.consumption.line').search(cr, uid, [
+            ('product_id.active', '=', False),
+            ('rac_id', 'in', ids),
+            ('rac_id.created_ok', '=', True)
+        ], context=context)
+
+        if inactive_lines:
+            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+            p_plural = len(inactive_lines) == 1 and _('this inactive product') or _('those inactive products')
+            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the %s containing %s (see red %s of the document)') % (plural, l_plural, p_plural, l_plural))
+            return False
+        return True
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -57,6 +74,8 @@ class real_average_consumption(osv.osv):
         and stock moves has been generated
         '''
         for report in self.browse(cr, uid, ids, context=context):
+            if report.state == 'done':
+                raise osv.except_osv(_('Error'), _('This report is closed. You cannot delete it !'))
             if report.created_ok and report.picking_id:
                 if report.picking_id.state != 'cancel':
                     raise osv.except_osv(_('Error'), _('You cannot delete this report because stock moves has been generated and validated from this report !'))
@@ -125,19 +144,37 @@ class real_average_consumption(osv.osv):
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
+        'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
     }
-    
+
     _defaults = {
-        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
+        #'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
+        'state': lambda *a: 'draft',
     }
 
     _sql_constraints = [
         ('date_coherence', "check (period_from <= period_to)", '"Period from" must be less than or equal to "Period to"'),
     ]
+
+    _constraints = [
+        (_check_active_product, "You cannot confirm this real consumption report because it contains a line with an inactive product", ['line_ids', 'created_ok']),
+    ]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Add name of the report at creation
+        '''
+        if not vals:
+            vals = {}
+
+        if not 'name' in vals:
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
+
+        return super(real_average_consumption, self).create(cr, uid, vals, context=context)
 
     def change_cons_location_id(self, cr, uid, ids, context=None):
         '''
@@ -182,6 +219,39 @@ class real_average_consumption(osv.osv):
                 'res_id': ids[0],
                 }
         
+    def draft_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state':'draft'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+    def cancel_button(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+        
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'real.average.consumption',
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'target': 'dummy',
+                'res_id': ids[0],
+                }
+
+
     def process_moves(self, cr, uid, ids, context=None):
         '''
         Creates all stock moves according to the report lines
@@ -241,11 +311,11 @@ class real_average_consumption(osv.osv):
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
-                                                       'reason_type_id': reason_type_id})
+                                                        'reason_type_id': reason_type_id})
                     move_ids.append(move_id)
                     line_obj.write(cr, uid, [line.id], {'move_id': move_id})
 
-            self.write(cr, uid, [rac.id], {'picking_id': picking_id}, context=context)
+            self.write(cr, uid, [rac.id], {'picking_id': picking_id, 'state': 'done'}, context=context)
 
             # Confirm the picking
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
@@ -415,8 +485,8 @@ class real_average_consumption(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
 
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
@@ -500,17 +570,18 @@ class real_average_consumption_line(osv.osv):
                     prodlot_id = obj.prodlot_id.id
                     expiry_date = obj.prodlot_id.life_date
 
-            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00 and not context.get('noraise'):
+            if date_mandatory and not batch_mandatory and obj.consumed_qty != 0.00:
                 prod_ids = self.pool.get('stock.production.lot').search(cr, uid, [('life_date', '=', obj.expiry_date),
-                                                    ('type', '=', 'internal'),
-                                                    ('product_id', '=', obj.product_id.id)])
+                                                                                  ('type', '=', 'internal'),
+                                                                                  ('product_id', '=', obj.product_id.id)], context=context)
                 expiry_date = obj.expiry_date or None # None because else it is False and a date can't have a boolean value
                 if not prod_ids:
                     if not noraise:
                         raise osv.except_osv(_('Error'), 
                             _("Product: %s, no internal batch found for expiry (%s)")%(obj.product_id.name, obj.expiry_date or _('No expiry date set')))
                     elif context.get('import_in_progress'):
-                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)") % (context.get('line_num', False), strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
+                        error_message.append(_("Line %s of the imported file: no internal batch number found for ED %s (please correct the data)"
+                                               ) % (context.get('line_num', False), expiry_date and strptime(expiry_date, '%Y-%m-%d').strftime('%d-%m-%Y')))
                         context.update({'error_message': error_message})
                 else:
                     prodlot_id = prod_ids[0]
@@ -531,13 +602,6 @@ class real_average_consumption_line(osv.osv):
 
         return True
 
-    def create(self, cr, uid, vals, context=None):
-        if context is None:
-            context = {}
-        res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
-        self._check_qty(cr, uid, res, context)
-        return res
-
     def check_product_uom(self, cr, uid, ids, product_id, product_uom, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
@@ -555,38 +619,24 @@ class real_average_consumption_line(osv.osv):
                 }
         return {'warning': warning}
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if not context.get('import_in_progress') and not context.get('button'):
-            obj_data = self.pool.get('ir.model.data')
-            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
-            message = ''
-            if vals.get('uom_id'):
-                if vals.get('uom_id') == tbd_uom:
-                    message += _('You have to define a valid UOM, i.e. not "To be define".')
-            if vals.get('product_id'):
-                if vals.get('product_id') == tbd_product:
-                    message += _('You have to define a valid product, i.e. not "To be define".')
-            if vals.get('uom_id') and vals.get('product_id'):
-                product_id = vals.get('product_id')
-                product_uom = vals.get('uom_id')
-                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
-                if res and res['warning']:
-                    message += res['warning']['message']
-            if message:
-                raise osv.except_osv(_('Warning !'), message)
-            else:
-                vals['text_error'] = False
-        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
-        self._check_qty(cr, uid, ids, context)
-        return res
-
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
+
+    def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Fill the error message if the product of the line is inactive
+        '''
+        res = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.product_id and not line.product_id.active:
+                res[line.id] = {
+                    'inactive_product': True,
+                    'inactive_error': _('The product in line is inactive !')
+                }
+
+        return res
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
@@ -608,6 +658,13 @@ class real_average_consumption_line(osv.osv):
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
+        'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        }
+
+    _defaults = {
+        'inactive_product': False,
+        'inactive_error': lambda *a: '',
     }
 
 # uf-1344 => need to pass the context so we use create and write instead
@@ -619,26 +676,48 @@ class real_average_consumption_line(osv.osv):
         ('unique_lot_poduct', "unique(product_id, prodlot_id, rac_id)", 'The couple product, batch number has to be unique'),
     ]
 
-    def create(self, cr, uid, values=None, context=None):
+    def create(self, cr, uid, vals=None, context=None):
         '''
         Call the constraint
         '''
-        new_id = super(real_average_consumption_line, self).create(cr, uid, values, context=context)
-
-        if not self._check_qty(cr, uid, [new_id], context=context):
+        if context is None:
+            context = {}
+        res = super(real_average_consumption_line, self).create(cr, uid, vals, context=context)
+        check = self._check_qty(cr, uid, res, context)
+        if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+        return res
 
-        return new_id
-
-    def write(self, cr, uid, ids, values=None, context=None):
-        '''
-        Call the constraint
-        '''
-        res = super(real_average_consumption_line, self).write(cr, uid, ids, values, context=context)
-
-        if not self._check_qty(cr, uid, ids, context=context):
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not context.get('import_in_progress') and not context.get('button'):
+            obj_data = self.pool.get('ir.model.data')
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+            message = ''
+            if vals.get('uom_id'):
+                if vals.get('uom_id') == tbd_uom:
+                    message += _('You have to define a valid UOM, i.e. not "To be define".')
+            if vals.get('product_id'):
+                if vals.get('product_id') == tbd_product:
+                    message += _('You have to define a valid product, i.e. not "To be define".')
+            if vals.get('uom_id') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('uom_id')
+                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), message)
+            else:
+                vals['text_error'] = False
+        res = super(real_average_consumption_line, self).write(cr, uid, ids, vals, context=context)
+        check = self._check_qty(cr, uid, ids, context)
+        if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
-
         return res
 
     def change_expiry(self, cr, uid, id, expiry_date, product_id, location_id, uom, remark=False, context=None):
@@ -1142,7 +1221,7 @@ class monthly_review_consumption_line(osv.osv):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             if vals.get('name'):
                 if vals.get('name') == tbd_product:
                     raise osv.except_osv(_('Warning !'), _('You have to define a valid product, i.e. not "To be define".'))

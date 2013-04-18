@@ -80,7 +80,7 @@ class hr_employee(osv.osv):
         'gender': fields.selection([('male', 'Male'),('female', 'Female'), ('unknown', 'Unknown')], 'Gender'),
         'private_phone': fields.char(string='Private Phone', size=32),
         'name_resource': fields.related('resource_id', 'name', string="Name", type='char', size=128, store=True),
-        'destination_id': fields.many2one('account.analytic.account', string="Destination",),
+        'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'allow_edition': fields.function(_get_allow_edition, method=True, type='boolean', store=False, string="Allow local employee edition?", readonly=True),
         'photo': fields.binary('Photo', readonly=True),
     }
@@ -235,7 +235,7 @@ class hr_employee(osv.osv):
             fp_id = 0
         fp_fields = form.xpath('/'  + view_type + '//field[@name="funding_pool_id"]')
         for field in fp_fields:
-            field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
+            field.set('domain', "[('category', '=', 'FUNDING'), ('type', '!=', 'view'), ('state', '=', 'open'), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
         view['arch'] = etree.tostring(form)
         return view
 
@@ -259,6 +259,20 @@ class hr_employee(osv.osv):
             if cost_center_id not in [x.id for x in fp.cost_center_ids]:
                 vals.update({'funding_pool_id': False})
         return {'value': vals}
+
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        if not args:
+            args=[]
+        if context is None:
+            context={}
+        # UTP-441: only see active employee execept if args also contains a search on 'active' field
+        disrupt = False
+        if context.get('disrupt_inactive', False) and context.get('disrupt_inactive') == True:
+            disrupt = True
+        if not disrupt:
+            if not ('active', '=', False) or not ('active', '=', True) in args:
+                args += [('active', '=', True)]
+        return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
 
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

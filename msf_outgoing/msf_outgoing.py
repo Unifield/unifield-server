@@ -340,7 +340,7 @@ class shipment(osv.osv):
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
                                                 'shipment_id': False,
-                                                'move_lines': []}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+                                                'move_lines': []}, context=dict(context, keep_prodlot=True, allow_copy=True, non_stock_noupdate=True))
 
                 # confirm the new packing
                 wf_service = netsvc.LocalService("workflow")
@@ -465,7 +465,7 @@ class shipment(osv.osv):
                                                              'location_dest_id': move.initial_location.id,
                                                              'from_pack': selected_from_pack,
                                                              'to_pack': selected_to_pack,
-                                                             'state': 'done'}, context=context)
+                                                             'state': 'done'}, context=dict(context, non_stock_noupdate=True))
                             # find the corresponding move in draft in the draft **picking**
                             draft_move = move.backmove_id
                             # increase the draft move with the move quantity
@@ -591,6 +591,8 @@ class shipment(osv.osv):
         # shipment ids from ids must be equal to shipment ids from partial datas
         assert set(ids) == set(partial_datas.keys()), 'shipment ids from ids and partial do not match'
         
+        dispatch_name = _('Dispatch')
+        
         # for each shipment
         for shipment_id in partial_datas:
             # for each packing
@@ -655,6 +657,7 @@ class shipment(osv.osv):
                                 # values
                                 location_dispatch = move.picking_id.warehouse_id.lot_dispatch_id.id
                                 location_distrib = move.picking_id.warehouse_id.lot_distribution_id.id
+                                dispatch_name = move.picking_id.warehouse_id.lot_dispatch_id.name
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
                                           'product_qty': new_qty,
@@ -664,7 +667,7 @@ class shipment(osv.osv):
                                 
                                 # create a back move in the packing object
                                 # distribution -> dispatch
-                                new_back_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                new_back_move_id = move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
                                 updated[move.id]['partial_qty'] += new_qty
 
                                 # create the draft move
@@ -674,7 +677,7 @@ class shipment(osv.osv):
                                               location_dest_id=location_distrib,
                                               picking_id=draft_packing_id,
                                               state='assigned')
-                                new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
+                                new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
                                 
                             # quantities are right - stay + return qty = original qty
                             assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
@@ -685,7 +688,7 @@ class shipment(osv.osv):
             
             # log corresponding action
             shipment_name = self.read(cr, uid, shipment_id, ['name'], context=context)['name']
-            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to dispatch location.")%(shipment_name,))
+            self.log(cr, uid, shipment_id, _("Packs from the shipped Shipment (%s) have been returned to %s location.")%(shipment_name,dispatch_name))
             self.log(cr, uid, draft_shipment_id, _("The corresponding Draft Shipment (%s) has been updated.")%(packing.backorder_id.shipment_id.name,))
                             
         # call complete_finished on the shipment object
@@ -786,7 +789,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db,}, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(new_packing.sale_id.name, today))
                 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -960,7 +963,7 @@ class shipment(osv.osv):
                 company_currency = company.currency_id and company.currency_id.id or False
                 if not company_currency:
                     raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
             
             # Link the invoice to the shipment
@@ -1320,6 +1323,28 @@ class stock_picking(osv.osv):
     '''
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+
+    def fields_view_get(self, cr, uid, view_id, view_type, context=None, toolbar=False, submenu=False):
+        '''
+        Set the appropriate search view according to the context
+        '''
+        if not context:
+            context = {}
+
+        if not view_id and context.get('wh_dashboard') and view_type == 'search':
+            try:
+                if context.get('pick_type') == 'incoming':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_search')[1]
+                elif context.get('pick_type') == 'delivery':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_out_search')[1]
+                elif context.get('pick_type') == 'picking_ticket':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')[1]
+                elif context.get('pick_type') == 'pack':
+                    view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_search')[1]
+            except ValueError:
+                pass
+
+        return super(stock_picking, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
     
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -1358,6 +1383,26 @@ class stock_picking(osv.osv):
         
         return super(stock_picking, self)._hook_picking_get_view(cr, uid, ids, context=context, *args, **kwargs)
 
+    def _hook_custom_log(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        hook from stock>stock.py>log_picking
+        update the domain and other values if necessary in the log creation
+        '''
+        result = super(stock_picking, self)._hook_custom_log(cr, uid, ids, context=context, *args, **kwargs)
+        pick_obj = self.pool.get('stock.picking')
+        pick = kwargs['pick']
+        message = kwargs['message']
+        if pick.type and pick.subtype:
+            domain = [('type', '=', pick.type), ('subtype', '=', pick.subtype)]
+            return self.pool.get('res.log').create(cr, uid,
+                                                   {'name': message,
+                                                    'res_model': pick_obj._name,
+                                                    'secondary': False,
+                                                    'res_id': pick.id,
+                                                    'domain': domain,
+                                                    }, context=context)
+        return result
+
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook from stock>stock.py>stock_picking>log_picking
@@ -1366,6 +1411,9 @@ class stock_picking(osv.osv):
         result = super(stock_picking, self)._hook_log_picking_log_cond(cr, uid, ids, context=context, *args, **kwargs)
         pick = kwargs['pick']
         if pick.subtype == 'packing':
+            return 'packing'
+        # if false the log will be defined by the method _hook_custom_log (which include a domain)
+        if pick.type and pick.subtype:
             return False
 
         return result
@@ -2585,7 +2633,11 @@ class stock_picking(osv.osv):
                                 # force state to 'assigned'
                                 values.update(state='assigned')
                                 # copy stock.move with new product_qty, qty_per_pack. from_pack, to_pack, pack_type, length, width, height, weight
-                                move_obj.copy(cr, uid, move, values, context=context)
+                                new_move = move_obj.copy(cr, uid, move, values, context=context)
+                                # Need to change the locations after the copy, because the create of a new stock move with
+                                # non-stockable product force the locations
+                                move_obj.write(cr, uid, [new_move], {'location_id': moves[move].location_id.id,
+                                                                     'location_dest_id': moves[move].location_dest_id.id}, context=context)
                             else:
                                 # update the existing stock move
                                 updated[move] = {'initial': moves[move].product_qty, 'partial_qty': partial['product_qty']}

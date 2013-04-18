@@ -23,29 +23,13 @@ import time
 
 from report import report_sxw
 
-def _get_selection(self, o, field):
-    """
-    Retourne le libellé d'un champ sélection
-    """
-    sel = self.pool.get(o._name).fields_get(self.cr, self.uid, [field])
-    res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
-    name = '%s,%s' % (o._name, field)
-    tr_ids = self.pool.get('ir.translation').search(self.cr, self.uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
-    if tr_ids:
-        return self.pool.get('ir.translation').read(self.cr, self.uid, tr_ids, ['value'])[0]['value']
-    else:
-        return res
-
 class order_line_allocation(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(order_line_allocation, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
         })
         
-    def get_selection(self, obj, field):
-        return _get_selection(self, obj, field)
 
 report_sxw.report_sxw('report.purchase.order.allocation.report', 
                       'purchase.order.line.allocation.report', 
@@ -57,11 +41,8 @@ class po_line_allocation_report(report_sxw.rml_parse):
         super(po_line_allocation_report, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'get_selection': self.get_selection,
         })
         
-    def get_selection(self, obj, field):
-        return _get_selection(self, obj, field)
 
 report_sxw.report_sxw('report.po.line.allocation.report', 
                       'purchase.order', 
@@ -69,4 +50,3 @@ report_sxw.report_sxw('report.po.line.allocation.report',
                       parser=order_line_allocation, header="landscape")
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

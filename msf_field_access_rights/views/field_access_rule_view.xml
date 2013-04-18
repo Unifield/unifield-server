@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- Field Access Rule Tree View -->
+        <record id="field_access_rule_list_view" model="ir.ui.view">
+            <field name='name'>Field Access Rule List</field>
+            <field name='model'>msf_field_access_rights.field_access_rule</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <form string="Field Access Rule">
+                    <field name="active" invisible='1' />
+                    <field name="name" />
+                    <field name="model_id" />
+                    <field name="instance_level" />
+                    <field name="domain_text" />
+                    <field name="status" />
+                </form>
+            </field>
+        </record>
+
+        <!-- Field Access Rule Search View -->
+        <record id="field_access_rule_search" model="ir.ui.view">
+            <field name='name'>Field Access Rule Search</field>
+            <field name='model'>msf_field_access_rights.field_access_rule</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Field Access Rules">
+                    <group col="6" colspan="4">     
+                        <filter string="Inactive" icon="terp-partner"
+                            domain="[('active','!=','1')]"
+                            help="Show only Field Access Rules marked as Inactive"/>
+                        <field name="name" />
+                        <field name="model_id" />
+                        <field name="instance_level" />
+                        <field name="group_ids" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Field Access Rule Form View -->
+        <record id="field_access_rule_form_view" model="ir.ui.view">
+            <field name='name'>Field Access Rule Form</field>
+            <field name='model'>msf_field_access_rights.field_access_rule</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group col="6" colspan="4">
+                        <field name="name" default_focus='1' colspan="1" />
+                        <field name="model_id" attrs="{'readonly':[('status','!=','not_validated')]}" on_change='onchange_model_id(model_id)'  colspan="1" />
+                        <field name="model_name" readonly='1' colspan="1" />    
+                        <button type='object' name='validate_button' string='Validate Model' icon='icons/camera_test' attrs="{'readonly':[('status','!=','not_validated')]}" colspan="6" />
+                        <field name="instance_level" attrs="{'readonly':[('status','=','not_validated')], 'required':[('status','!=','not_validated')]}" colspan="1" />
+                        <field name="domain_id" on_change='onchange_domain_id(domain_id)' attrs="{'readonly':[('status','=','not_validated')]}" colspan="1" />
+                        <button type='object' name='create_new_filter_button' string='Create New Filter' icon='stock/gtk-add' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" />
+                    </group>
+
+                    <separator string="Advanced Filter" colspan="2" />
+                    <separator string="Groups" colspan="2" />
+                    <field name="domain_text" on_change='onchange_domain_text(domain_text)' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" nolabel="1" />
+                    <field name="group_ids" attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" nolabel="1" />
+
+                    <separator string="Field Access Rule Lines" colspan="4" />
+                    <button type='object' name='generate_rules_button' string='Generate Rules' icon='stock/gtk-execute' attrs="{'readonly':[('status','=','not_validated')]}" colspan="2" />
+                    <button type='object' name='manage_rule_lines_button' string='Manage Rule Lines' colspan="2" attrs="{'readonly':[('status','=','not_validated')]}" icon='stock/gtk-find-and-replace' />
+                    <field name="field_access_rule_line_ids" attrs="{'readonly':[('status','=','not_validated')]}" colspan='4' nolabel='1' />
+
+                    <separator string="Comments" colspan="4" />
+                    <field name="comment" nolabel='1' attrs="{'readonly':[('status','=','not_validated')]}" colspan="4" />
+
+                    <separator string="Rule Status" colspan="4" />
+                    <group col="6" colspan="4">
+                        <button type='object' name='validate_domain_button' string='Validate Filter' icon='icons/camera_test' attrs="{'readonly':[('status','!=','validated')]}" colspan="2" />
+                        <field name="status" readonly='1' colspan="2" />
+                        <field name="active" attrs="{'readonly':[('status','!=','domain_validated')]}" colspan="2" />
+                    </group>
+                    <field name="family_model_ids" invisible="1" />
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 ##############################################################################
 #
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
+#    Copyright (C) 2013 MSF, TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,80 +18,60 @@
 #
 ##############################################################################
 
-import time
-import csv
-import StringIO
-
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from report import report_sxw
+from tools.translate import _
 
-class report_open_invoices(report_sxw.report_sxw):
-    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-        report_sxw.report_sxw.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-    
-    def _enc(self, st):
-        if isinstance(st, unicode):
-            return st.encode('utf8')
-        return st
-    
-    def create(self, cr, uid, ids, data, context=None):
+
+class report_open_invoices2(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(report_open_invoices2, self).__init__(cr, uid, name, context=context)
+        self.funcCur = ''
+        self.localcontext.update({
+            'getLines':self.getLines,
+            'getConvert':self.getConvert,
+            'getFuncCur':self.getFuncCur,
+        })
+        return
+
+    def getLines(self,option):
         result = []
-        # Create the header
-        customer_header = ['Document Date', 'Posting Date', 'Number', 'Customer', 'Description', 'Responsible', 'Due Date', 'Source Document', 'Currency', 'Residual', 'Total', 'State']
-        supplier_header = ['Document Date', 'Posting Date', 'Number', 'Supplier', 'Description', 'Responsible', 'Due Date', 'Source Document', 'Currency', 'Residual', 'Total', 'State']
-        
-        # retrieve a big sql query with all information
         sql_request = """
-            SELECT DISTINCT invoice.document_date, invoice.date_invoice, move.name,
+            SELECT DISTINCT invoice.id, invoice.document_date, invoice.date_invoice, move.name,
                             partner.name, invoice.name, responsible.name,
                             invoice.date_due, invoice.origin,
                             currency.name, invoice.residual,
-                            invoice.amount_total, invoice.state
-            FROM 
+                            invoice.amount_total, invoice.state,
+                            currency.id
+            FROM
                 account_invoice invoice
                 LEFT JOIN account_move move ON invoice.move_id = move.id
                 LEFT JOIN res_partner partner ON invoice.partner_id = partner.id
                 LEFT JOIN res_users responsible ON invoice.user_id = responsible.id
                 LEFT JOIN res_currency currency ON invoice.currency_id = currency.id
-            WHERE 
+            WHERE
                 invoice.state NOT IN ('paid', 'cancel') AND
-                invoice.type = '%s'
+                invoice.type = %s
             ORDER BY invoice.date_invoice
         """
-        
-        # Customer Invoices
-        result.append(['Customer Invoices'])
-        result.append(customer_header)
-        cr.execute(sql_request % ('out_invoice'))
-        result += cr.fetchall()
-        result.append([])
-        
-        # Supplier Invoices
-        result.append(['Supplier Invoices'])
-        result.append(supplier_header)
-        cr.execute(sql_request % ('in_invoice'))
-        result += cr.fetchall()
-        result.append([])
-        
-        # Customer Refunds
-        result.append(['Customer Refunds'])
-        result.append(customer_header)
-        cr.execute(sql_request % ('out_refund'))
-        result += cr.fetchall()
-        result.append([])
-        
-        # Supplier Refunds
-        result.append(['Supplier Refunds'])
-        result.append(supplier_header)
-        cr.execute(sql_request % ('in_refund'))
-        result += cr.fetchall()
-        
-        buffer = StringIO.StringIO()
-        writer = csv.writer(buffer, quoting=csv.QUOTE_ALL)
-        for line in result:
-            writer.writerow(map(self._enc,line))
-        out = buffer.getvalue()    
-        buffer.close()
-        return (out, 'csv')
 
-report_open_invoices('report.open.invoices', 'account.invoice', False, parser=False)
+        option_type = {'ci': 'out_invoice', 'si': 'in_invoice', 'cr': 'out_refund', 'sr': 'in_refund'}
+        if option_type.get(option):
+            self.cr.execute(sql_request, (option_type[option], ))
+            result = self.cr.fetchall()
+
+        return result
+
+    def getConvert(self, amount, line):
+        company = self.localcontext['company']
+        func_cur_id = company and company.currency_id and company.currency_id.id or False
+        conv = self.pool.get('res.currency').compute(self.cr, self.uid, line[13], func_cur_id, amount or 0.0, round=True)
+        return conv
+
+    def getFuncCur(self, ):
+        company = self.localcontext['company']
+        return company and company.currency_id and company.currency_id.name or ''
+
+
+SpreadsheetReport('report.open.invoices.2','account.invoice','addons/account_override/report/open_invoices_xls.mako', parser=report_open_invoices2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

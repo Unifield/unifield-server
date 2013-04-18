@@ -212,7 +212,7 @@ class initial_stock_inventory(osv.osv):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'initial.stock.inventory',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
@@ -256,7 +256,7 @@ class initial_stock_inventory_line(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'average_cost': lambda *a: 0.00,
         'product_qty': lambda *a: 0.00,
-        'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1]
     }
     
     def _check_batch_management(self, cr, uid, ids, context=None):
@@ -541,7 +541,7 @@ class stock_cost_reevaluation(osv.osv):
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.cost.reevaluation',
                 'view_type': 'form',
-                'view_mode': 'form',
+                'view_mode': 'form,tree',
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}

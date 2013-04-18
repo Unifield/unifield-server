@@ -21,6 +21,7 @@
 #
 ##############################################################################
 
+import res_currency
 import account
 import invoice
 import account_voucher

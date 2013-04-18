@@ -197,7 +197,31 @@ class purchase_order(osv.osv):
             # better: if order.order_line: res[order.id] = False
                 
         return res
-    
+
+    def _is_po_from_ir(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            retour = False
+            for line in po.order_line:
+                if line.procurement_id:
+                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),])
+                    if ids_proc:
+                        retour = True
+            res[po.id] = retour
+        return res
+
+    def _is_po_from_fo(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            retour = False
+            for line in po.order_line:
+                if line.procurement_id:
+                    ids_proc = self.pool.get('sale.order.line').search(cr,uid,[('procurement_id','=',line.procurement_id.id),('order_id.procurement_request','=',False)])
+                    if ids_proc:
+                        retour = True
+            res[po.id] = retour
+        return res
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
@@ -242,6 +266,8 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),
+        'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
+        'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
     }
     
     _defaults = {
@@ -257,7 +283,20 @@ class purchase_order(osv.osv):
         'active': True,
         'name': lambda *a: False,
     }
-    
+
+    def _check_po_from_fo(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        retour = True
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.partner_id.partner_type == 'internal' and po.po_from_fo:
+                retour = False
+        return retour
+
+    _constraints = [
+        (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
+    ]
+
     def _check_service(self, cr, uid, ids, vals, context=None):
         '''
         Avoid the saving of a PO with non service products on Service PO
@@ -325,6 +364,8 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': 'manual'})
                 else:
                     vals.update({'invoice_method': 'picking'})
+            # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
+            vals = self._get_location_id(cr, uid, vals,  warehouse_id=vals.get('warehouse_id', order.warehouse_id.id), context=context)
 
         return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
     
@@ -421,7 +462,24 @@ class purchase_order(osv.osv):
             partner = partner_obj.browse(cr, uid, part)
             if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
-        
+            elif ids and partner.partner_type == 'intermission':
+                try:
+                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                        'analytic_account_project_intermission')[1]
+                except ValueError:
+                    intermission = 0
+                cr.execute('''select po.id from purchase_order po
+                    left join purchase_order_line pol on pol.order_id = po.id
+                    left join cost_center_distribution_line cl1 on cl1.distribution_id = po.analytic_distribution_id
+                    left join cost_center_distribution_line cl2 on cl2.distribution_id = pol.analytic_distribution_id
+                    where po.id in %s and (cl1.analytic_id!=%s or cl2.analytic_id!=%s)''', (tuple(ids), intermission, intermission))
+                if cr.rowcount > 0:
+                    res.setdefault('warning', {})
+                    msg = _('You set an intermission partner, at validation Cost Centers will be changed to intermission.')
+                    if res.get('warning', {}).get('message'):
+                        res['warning']['message'] += msg
+                    else:
+                        res['warning'] = {'title': _('Warning'), 'message': msg}
         return res
     
     # Be careful during integration, the onchange_warehouse_id method is also defined on UF-965
@@ -535,17 +593,36 @@ class purchase_order(osv.osv):
             ids = [ids]
         # Analytic distribution verification
         for po in self.browse(cr, uid, ids, context=context):
+            try:
+                intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                                                'analytic_account_project_intermission')[1]
+            except ValueError:
+                intermission_cc = 0
+
             if po.order_type and po.order_type == 'in_kind':
                 if not po.partner_id.donation_payable_account:
                     raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
+
+            is_intermission = False
+            if po.partner_id and po.partner_id.partner_type == 'intermission' and not po.from_yml_test:
+                if not intermission_cc:
+                    raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
+                is_intermission = True
+
             for pol in po.order_line:
                 # Forget check if we come from YAML tests
                 if po.from_yml_test:
                     continue
-                distrib_id = (pol.analytic_distribution_id and pol.analytic_distribution_id.id) or (po.analytic_distribution_id and po.analytic_distribution_id.id) or False
+                distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
-                if not distrib_id:
+                if not distrib:
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                for cc_line in distrib.cost_center_lines:
+                    if is_intermission and cc_line.analytic_id.id != intermission_cc:
+                        cc_line.write({'analytic_id': intermission_cc})
+                    elif not is_intermission and cc_line.analytic_id.id == intermission_cc:
+                        raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
+
                 # Change distribution to be valid if needed by using those from header
                 if pol.analytic_distribution_state != 'valid':
                     id_ad = self.pool.get('analytic.distribution').create(cr, uid, {})
@@ -984,6 +1061,7 @@ stock moves which are already processed : '''
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
         # from so, list corresponding po
         all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+
         # from listed po, list corresponding so
         all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
         # if we have sol_ids, we are treating a po which is make_to_order from sale order
@@ -998,6 +1076,7 @@ stock moves which are already processed : '''
             all_sol_not_confirmed_ids = sol_obj.search(cr, uid, [('order_id', 'in', all_so_ids),
                                                                  ('type', '=', 'make_to_order'),
                                                                  ('product_id', '!=', False),
+                                                                 ('procurement_id.state', '!=', 'cancel'),
                                                                  ('state', 'not in', ['confirmed', 'done'])], context=context)
             # if any lines exist, we return False
             if all_sol_not_confirmed_ids:
@@ -1321,6 +1400,25 @@ stock moves which are already processed : '''
         return picking_id
         # @@@end
 
+    def _get_location_id(self, cr, uid, vals, warehouse_id=False, context=None):
+        """
+        Get the location_id according to the cross_docking_ok option
+        Return vals
+        """
+        if 'cross_docking_ok' not in vals:
+            return vals
+
+        if not warehouse_id:
+            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
+
+        if not vals.get('cross_docking_ok', False):
+            vals.update({'location_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_input_id.id})
+        elif vals.get('cross_docking_ok', False):
+            vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
+
+        return vals
+
+
     def create(self, cr, uid, vals, context=None):
         """
         Filled in 'from_yml_test' to True if we come from tests
@@ -1346,7 +1444,9 @@ stock moves which are already processed : '''
             
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
-            
+        # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
+        vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
+        
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
         self._check_service(cr, uid, [res], vals, context=context)
     
@@ -1361,7 +1461,44 @@ stock moves which are already processed : '''
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        
+        wf_service = netsvc.LocalService("workflow")
+
+        for order in self.browse(cr, uid, ids, context=context):
+            for line in order.order_line:
+                if line.procurement_id and line.procurement_id.move_id:
+                    self.pool.get('stock.move').write(cr, uid, line.procurement_id.move_id.id, {'state': 'cancel'}, context=context)
+                    if line.procurement_id.move_id.picking_id:
+                        wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
+        
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+
+    def wkf_confirm_cancel(self, cr, uid, ids, context=None):
+        """
+        Continue the workflow if all other POs are confirmed
+        """
+        wf_service = netsvc.LocalService("workflow")
+        so_obj = self.pool.get('sale.order')
+        
+        # corresponding sale order
+        so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        # from so, list corresponding po first level
+        all_po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+        # from listed po, list corresponding so
+        all_so_ids = self.get_so_ids_from_po_ids(cr, uid, all_po_ids, context=context)
+        # from all so, list all corresponding po second level
+        all_po_for_all_so_ids = so_obj.get_po_ids_from_so_ids(cr, uid, all_so_ids, context=context)
+        
+        # we trigger all the corresponding sale order -> test_lines is called on these so
+        for so_id in all_so_ids:
+            wf_service.trg_write(uid, 'sale.order', so_id, cr)
+        
+        # we trigger pos of all sale orders -> all_po_confirm is called on these po
+        for po_id in all_po_for_all_so_ids:
+            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+
+        return True
+        
 
     def action_done(self, cr, uid, ids, context=None):
         """

@@ -33,11 +33,19 @@ class analytic_account(osv.osv):
 
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
-        Returns the good value according to the doc type
+        If date out of date_start/date of given analytic account, then account is inactive.
+        The comparison could be done via a date given in context.
         '''
         res = {}
-        for id in ids:
-            res[id] = False
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
+        for a in self.browse(cr, uid, ids):
+            res[a.id] = True
+            if a.date_start > cmp_date:
+                res[a.id] = False
+            if a.date and a.date <= cmp_date:
+                res[a.id] = False
         return res
 
     def _search_filter_active(self, cr, uid, ids, name, args, context=None):
@@ -45,12 +53,19 @@ class analytic_account(osv.osv):
         UTP-410: Add the search on active/inactive CC
         """
         arg = []
+        cmp_date = datetime.date.today().strftime('%Y-%m-%d')
+        if context.get('date', False):
+            cmp_date = context.get('date')
         for x in args:
             if x[0] == 'filter_active' and x[2] == True:
-                arg.append(('date_start', '<=', datetime.date.today().strftime('%Y-%m-%d')))
+                arg.append(('date_start', '<=', cmp_date))
                 arg.append('|')
-                arg.append(('date', '>', datetime.date.today().strftime('%Y-%m-%d')))
+                arg.append(('date', '>', cmp_date))
                 arg.append(('date', '=', False))
+            elif x[0] == 'filter_active' and x[2] == False:
+                arg.append('|')
+                arg.append(('date_start', '>', cmp_date))
+                arg.append(('date', '<=', cmp_date))
         return arg
 
     def _search_closed_by_a_fp(self, cr, uid, ids, name, args, context=None):
@@ -77,6 +92,30 @@ class analytic_account(osv.osv):
                     res = [('id', 'not in', aa_ids)]
         return res
 
+    def _get_fake(self, cr, uid, ids, *a, **b):
+        return {}.fromkeys(ids, False)
+
+    def _search_intermission_restricted(self, cr, uid, ids, name, args, context=None):
+        if not args:
+            return []
+        newargs = []
+        for arg in args:
+            if arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Operator not supported on field intermission_restricted!'))
+            if not isinstance(arg[2], (list, tuple)):
+                raise osv.except_osv(_('Error'), _('Operand not supported on field intermission_restricted!'))
+            if arg[2] and (arg[2][0] or arg[2][1]):
+                try:
+                    intermission = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+                            'analytic_account_project_intermission')[1]
+                except ValueError:
+                    pass
+                if arg[2][2] == 'intermission':
+                    newargs.append(('id', '=', intermission))
+                else:
+                    newargs.append(('id', '!=', intermission))
+        return newargs
+    
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=1),
         'code': fields.char('Code', size=24),
@@ -95,6 +134,7 @@ class analytic_account(osv.osv):
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active analytic accounts",),
         'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
+        'intermission_restricted': fields.function(_get_fake, fnct_search=_search_intermission_restricted, type="boolean", method=True, store=False, string="Domain to restrict intermission cc"),
     }
 
     _defaults ={
@@ -261,6 +301,8 @@ class analytic_account(osv.osv):
             args=[]
         if context is None:
             context={}
+        if context.get('hide_inactive', False):
+            args.append(('filter_active', '=', True))
         if context.get('current_model') == 'project.project':
             cr.execute("select analytic_account_id from project_project")
             project_ids = [x[0] for x in cr.fetchall()]
