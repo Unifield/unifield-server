@@ -150,7 +150,35 @@ class tender(osv.osv):
         if not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
         return super(tender, self).create(cr, uid, vals, context=context)
-    
+
+    def onchange_categ(self, cr, uid, ids, categ, context=None):
+        """ Check that the categ is compatible with the product
+        @param categ: Changed value of categ.
+        @return: Dictionary of values.
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        message = {}
+        if ids and categ in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service Tender
+            category = categ=='service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+                          FROM tender_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                            LEFT JOIN tender t ON l.tender_id = t.id
+                          WHERE (pt.type != 'service_recep' %s) AND t.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+            res = cr.fetchall()
+            if res:
+                cat_name = categ=='service' and 'Service' or 'Transport'
+                message.update({'title': _('Warning'),
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can purchase only \'%s\' products on a \'%s\' purchase order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+                
+        return {'warning': message}
+
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
         on_change function for the warehouse

@@ -17,7 +17,8 @@
                         <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="company_id" invisible="True" />
-                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                        on_change="onchange_categ(categ)"/>
                         <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="details" />
                     </group>
