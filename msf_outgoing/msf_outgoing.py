@@ -66,6 +66,20 @@ class pack_type(osv.osv):
 pack_type()
 
 
+class additional_item(osv.osv):
+    _name = 'additional.item'
+    _description = 'Additional Item'
+    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
+                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, required=True, on_delete='cascade'),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'uom': fields.many2one('product.uom', string='UOM', required=True),
+                'comment': fields.char(string='Name', size=1024),
+                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
+                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
+                }
+additional_item()
+
+
 class shipment(osv.osv):
     '''
     a shipment presents the data from grouped stock moves in a 'sequence' way
@@ -272,6 +286,7 @@ class shipment(osv.osv):
                 # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
                 'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
+                'additional_items_ids': fields.one2many('additional.item', 'shipment_id', string='Additional Items',),
                 }
     _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
     
