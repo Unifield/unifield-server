@@ -348,7 +348,6 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 num_returned = memory_move.return_to > 0 \
                 and memory_move.return_from > 0 \
                 and memory_move.return_to >= memory_move.return_from \
-                and memory_move.return_to - memory_move.return_from \
                 and memory_move.return_to - memory_move.return_from + 1 \
                 or 0.0
                 selected_weight = memory_move.weight * num_returned
