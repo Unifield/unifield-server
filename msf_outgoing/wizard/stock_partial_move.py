@@ -345,7 +345,11 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             if not context.get('step') == 'returnpacksfromshipment':
                 selected_weight = memory_move.weight * memory_move.selected_number
             if context.get('step') == 'returnpacksfromshipment':
-                selected_weight = memory_move.weight * (memory_move.return_to - memory_move.return_from + 1)
+                num_returned = memory_move.return_to > memory_move.return_from \
+                and memory_move.return_to - memory_move.return_from \
+                and memory_move.return_to - memory_move.return_from + 1 \
+                or 0.0
+                selected_weight = memory_move.weight * num_returned
             values['selected_weight'] = selected_weight
                     
         return result
