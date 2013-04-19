@@ -166,10 +166,10 @@ class tender(osv.osv):
         for tender in self.browse(cr, uid, ids, context=context):
             for line in tender.tender_line_ids:
                 if vals.get('categ', tender.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can purchase only \'Transport\' products on a \'Transport\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can have only \'Transport\' products on a \'Transport\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
                     return False
                 elif vals.get('categ', tender.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
+                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can have only \'Service\' products on a \'Service\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
                     return False
                 
         return True
@@ -205,7 +205,7 @@ class tender(osv.osv):
             if res:
                 cat_name = categ=='service' and 'Service' or 'Transport'
                 message.update({'title': _('Warning'),
-                                'message': _('The product [%s] %s is not a \'%s\' product. You can purchase only \'%s\' products on a \'%s\' purchase order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+                                'message': _('The product [%s] %s is not a \'%s\' product. You can have only \'%s\' products on a \'%s\' tender. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
                 
         return {'warning': message}
 
