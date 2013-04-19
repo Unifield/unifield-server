@@ -305,7 +305,8 @@ class purchase_order(osv.osv):
             ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
-        
+        if context is None:
+            context = {}
         if context.get('import_in_progress'):
             return True
         

@@ -159,6 +159,8 @@ class tender(osv.osv):
             ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
+        if context is None:
+            context = {}
         if context.get('import_in_progress'):
             return True
         for tender in self.browse(cr, uid, ids, context=context):

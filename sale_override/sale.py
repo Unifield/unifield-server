@@ -314,7 +314,8 @@ class sale_order(osv.osv):
                  'service': _('Service')}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
+        if context is None:
+            context = {}
         if context.get('import_in_progress'):
             return True
 
