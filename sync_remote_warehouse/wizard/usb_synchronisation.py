@@ -6,13 +6,6 @@ from tools.translate import _
 class usb_synchronisation(osv.osv_memory):
     _name = 'usb_synchronisation'
     
-    def _format_results_dictionary(self, dict):
-        res = ''
-        for key in dict.keys():
-            val = (dict[key][0] and 'Successful') or 'Errors: %s' % '\n'.join(dict[key][1])   
-            res = res + '\n%s: %s' % (key, val)
-        return res
-    
     def _usb_sync_step(self, cr, uid, context):
         res = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_sync_step
         return res
@@ -53,14 +46,26 @@ class usb_synchronisation(osv.osv_memory):
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
         
+        import_count, import_error = 0, False
         try:
-            results = synchronise.pull(self, cr, uid, wizard.pull_data, context=context)
+            import_count, import_error, updates_ran, run_error = synchronise.pull(self, cr, uid, wizard.pull_data, context=context)
         except zipfile.BadZipfile:
             raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a .zip file'))
         
+        # handle returned values
+        pull_result = ''
+        if not import_error:
+            pull_result = 'Successfully Pulled %d update(s) and deletion(s)' % import_count
+            if not run_error:
+                pull_result += '\nSuccessfully ran %d updates and deletions' % import_count
+            else:
+                pull_result += '\nError while executing the updates: %s' % run_error
+        else:
+            pull_result = 'Got an error while pulling %d update(s) and deletion(s): %s' % (import_count, import_error)
+        
         # write results to wizard object to update ui
         vals = {
-            'pull_result': self._format_results_dictionary(results),
+            'pull_result': pull_result,
             'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
             'push_file_visible': False,
         }
@@ -97,7 +102,7 @@ class usb_synchronisation(osv.osv_memory):
         if push_result == 0:
             vals['push_result'] = _('No changes that need to be synchronized have been made so there is nothing to download')
         else:
-            vals['push_result'] = _('Push successfully exported %s updates and %s deletions' % (push_result[0], push_result[1]))
+            vals['push_result'] = _('Push successfully exported %s update(s) and %s deletion(s)' % (push_result[0], push_result[1]))
             vals['push_file_visible'] = True,
          
         return self.write(cr, uid, ids, vals, context=context)

@@ -129,19 +129,5 @@ class Entity(osv.osv):
         self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
         
         return (total_updates, total_deletions)
-
-    def validate_update(self, cr, uid, context=None):
-        entity = self.get_entity(cr, uid, context)
-        session_id = entity.session_id
-        update_obj = self.pool.get('sync.client.update_to_send')
-        update_ids = update_obj.search(cr, uid, [('session_id', '=', session_id)], context=context)
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        res = proxy.confirm_update(entity.identifier, session_id, context)
-        if not res[0]:
-            raise Exception, res[1]
-        update_obj.sync_finished(cr, uid, update_ids, context=context)
-        self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
-        #state update validate => init 
-        return res[1]
     
 Entity()

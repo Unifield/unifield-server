@@ -52,6 +52,8 @@ def pull(obj, cr, uid, uploaded_file_base64, context=None):
             first = False
         else:
             data.append(row)
+            
+    zip_file.close()
     
     # insert into import_data
     import_data['fields'] = fields
@@ -59,29 +61,31 @@ def pull(obj, cr, uid, uploaded_file_base64, context=None):
     
     # do importation and set result[model] = [True/False, [any error messages,...]]
     model_pool = obj.pool.get(update_received_model_name)
-    import_result = [True,[]]
+    import_error = None
+    
     try:
         model_pool.import_data(cr, uid, fields, data, context=context)
-        import_result[0] = True
     except Exception as e:
-        import_result[0] = False
-        import_result[1].append('%s: %s' % (type(e), str(e))) # KeyError: 'state'
-    except KeyError as k:
-        import_result[0] = False
-        import_result[1].append('%s: %s' % (type(e), str(k))) 
-    except ValueError as v:
-        import_result[0] = False
-        import_result[1].append('%s: %s' % (type(e), str(v)))
-    results[update_received_model_name] = tuple(import_result)
-        
-    # run imported updates
+        import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
+    except KeyError as e:
+        import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e)) 
+    except ValueError as e:
+        import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
     
+    # run updates
+    updates_ran = None
+    run_error = ''
+    context_usb = dict(copy.deepcopy(context), usb_sync_update_push=True)
+    if not import_error:
+        try:
+            entity_pool = obj.pool.get('sync.client.entity')
+            updates_ran = entity_pool.execute_updates(cr, uid, logger=None, context=context_usb)
+            _update_usb_sync_step(obj, cr, uid, 'pull_performed')
+        except AttributeError, e:
+            run_error = '%s: %s' % (type(e), str(e))
 
-    # clean up and increment usb sync step
-    zip_file.close()
-    _update_usb_sync_step(obj, cr, uid, 'pull_performed')
-    
-    return results
+    # increment usb sync step and return results
+    return (len(data), import_error, updates_ran, run_error)
 
 def validate(obj, cr, uid, ids, context=None):
     

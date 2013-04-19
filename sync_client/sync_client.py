@@ -490,7 +490,12 @@ class Entity(osv.osv):
         return updates_count
 
     def execute_updates(self, cr, uid, logger=None, context=None):
-        updates = self.pool.get('sync.client.update_received')
+        
+        context = context or {}
+        usb = context.get('usb_sync_update_push', False)
+        sync_module = usb and 'sync_remote_warehouse' or 'sync.client' 
+        
+        updates = self.pool.get('%s.update_received' % sync_module)
 
         update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
         update_count = len(update_ids)
