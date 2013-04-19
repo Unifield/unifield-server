@@ -247,7 +247,8 @@ class product_nomenclature(osv.osv):
             ids = self.search(cr, uid, dom, context=context)
             if not ids:
                 return [('id', '=', 0)]
-            return [('id', 'in', ids)]
+            res.append(('id', 'in', ids))
+            return res
         
         if args[0][1] not in ('=', '!=', 'ilike'):
             raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\', \'!=\' or \'ilike\' as operator'))
