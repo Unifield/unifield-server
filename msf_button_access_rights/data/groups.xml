@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+		<record model="res.groups" id="button_access_rule_group">
+			<field name="name">Button Access Rules Admin</field>
+		</record>
+	</data>
+</openerp>

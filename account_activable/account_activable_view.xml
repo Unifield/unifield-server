@@ -78,7 +78,7 @@
             <field name="name">Accounts</field>
             <field name="res_model">account.account</field>
             <field name="inherit_id" ref="account.action_account_form"/>
-            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
+            <field name="context">{'search_default_active': 1,}</field>
         </record>
         
         <menuitem action="action_account_activable_form" id="account.menu_action_account_form" parent="account.account_account_menu"/>

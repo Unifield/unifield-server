@@ -43,13 +43,16 @@
             <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/tree//field[@name='quantity']" position="attributes">
+                        <attribute name="on_change">change_lot(prodlot_id, quantity, location_id)</attribute>
+                    </xpath>
 				
 					<field name="prodlot_id" position="replace">
                     	<field name="prodlot_id" string="Batch Number"
-                    		domain="[('product_id', '=', product_id), ('check_type','=', True)]"
+                            domain="[('product_id', '=', product_id), ('check_type','=', True), ('stock_available', '>', 0.00)]"
                     		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
                     		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
-                    		on_change="change_lot(prodlot_id)" />
+                    		on_change="change_lot(prodlot_id, quantity, location_id)" />
                     		
                     	<field name="expiry_date" attrs="{'readonly': ['|', '&amp;', ('batch_number_check', '=', False), ('expiry_date_check', '=', False), '&amp;', ('batch_number_check', '=', True), ('expiry_date_check', '=', True)]}"
                     		on_change="change_expiry(expiry_date, product_id, type_check)" />

@@ -83,6 +83,7 @@
   Process the incoming shipment
 -
   !python {model: stock.picking}: |
+    context.update({'yml_test': True})
     po_id = context['po_id_claim']
     # find the IN
     in_ids = self.search(cr, uid, [('purchase_id', '=', po_id)], context=context)
@@ -216,6 +217,7 @@
   I process the last event
 -
   !python {model: claim.event}: |
+    context.update({'yml_test': True})
     self.do_process_event(cr, uid, context['event_id_claim'], context=dict(context,active_ids=[context['claim_id_claim']]))
     # event must be done
     data_event = self.read(cr, uid, context['event_id_claim'], ['state'], context=context)
@@ -268,6 +270,7 @@
   I process the last event
 -
   !python {model: claim.event}: |
+    context.update({'yml_test': True})
     self.do_process_event(cr, uid, context['event_id_claim'], context=dict(context,active_ids=[context['claim_id_claim']]))
     # event must be done
     data_event = self.read(cr, uid, context['event_id_claim'], ['state'], context=context)

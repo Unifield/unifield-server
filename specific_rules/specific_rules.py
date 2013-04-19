@@ -483,7 +483,7 @@ class stock_move(osv.osv):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
 
-            if vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+            if not context.get('non_stock_noupdate') and vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
                 pick_bro = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'))
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
                 if vals.get('sale_line_id'):
@@ -1352,6 +1352,7 @@ class stock_inventory_line(osv.osv):
     add mandatory or readonly behavior to prodlot
     '''
     _inherit = 'stock.inventory.line'
+    _rec_name = 'product_id'
     
     def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
         '''
@@ -1705,14 +1706,18 @@ report_stock_inventory()
 class product_product(osv.osv):
     _inherit = 'product.product'
     def open_stock_by_location(self, cr, uid, ids, context=None):
-        name = 'Stock by Location'
         if context is None:
             context = {}
+
+        ctx = {'product_id': context.get('active_id') , 'compute_child': False}
+        if context.get('lang'):
+            ctx['lang'] = context['lang']
+
+        name = _('Stock by Location')
         if ids:
-            prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'])
+            prod = self.pool.get('product.product').read(cr, uid, ids[0], ['name', 'code'], context=ctx)
             name = "%s: [%s] %s"%(name, prod['code'], prod['name'])
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'view_location_tree_tree')[1] 
-
         return {
             'name': name,
             'type': 'ir.actions.act_window',
@@ -1721,7 +1726,7 @@ class product_product(osv.osv):
             'view_id': [view_id],
             'domain': [('location_id','=',False)],
             'view_mode': 'tree',
-            'context': {'product_id': context.get('active_id') , 'compute_child': False},
+            'context': ctx,
             'target': 'current',
         }
 

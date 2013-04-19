@@ -47,6 +47,8 @@ class account_invoice(osv.osv):
     _columns = {
         'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order', 
             help="Purchase Order from which invoice have been generated"),
+        'order_ids': fields.many2many('sale.order', 'sale_order_invoice_rel', 'invoice_id', 'order_id', 'Sale Order', 
+            help="Sale Order from which invoice have been generated"),
     }
 
     def fetch_analytic_distribution(self, cr, uid, ids, context=None):
@@ -79,6 +81,17 @@ class account_invoice(osv.osv):
                             raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
                         # create default funding pool lines
                         ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
+                        self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
+            for so in inv.order_ids:
+                # Create analytic distribution on invoices regarding FO
+                if so.analytic_distribution_id:
+                    distrib_id = so.analytic_distribution_id and so.analytic_distribution_id.id or False
+                    if distrib_id:
+                        new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {})
+                        if not new_distrib_id:
+                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                        # create default funding pool lines
+                        self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id])
                         self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
             # Then set distribution on invoice line regarding purchase order line distribution
             for invl in inv.invoice_line:
@@ -248,6 +261,10 @@ class account_invoice(osv.osv):
             for po in inv.purchase_ids:
                 if po.commitment_ids:
                     to_process.append(inv.id)
+                    # UTP-536 : Check if the PO is closed and all SI are draft, then close the CV
+                    if po.state == 'done' and all(x.id in ids or x.state != 'draft' for x in po.invoice_ids):
+                        self.pool.get('purchase.order')._finish_commitment(cr, uid, [po.id], context=context)
+                
         # Process invoices
         res = self.update_commitments(cr, uid, to_process, context=context)
         return super(account_invoice, self).action_open_invoice(cr, uid, ids, context=context)

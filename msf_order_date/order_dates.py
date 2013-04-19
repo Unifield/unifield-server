@@ -397,7 +397,7 @@ def common_onchange_date_order(self, cr, uid, ids, part=False, date_order=False,
     
     return res
 
-def common_onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
+def common_onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, date_order=False, transport_lt=0, type=False, res=None, context=None):
     '''
     Common function when Partner is changing
     '''
@@ -1096,7 +1096,7 @@ class sale_order(osv.osv):
         res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, requested_date=requested_date, type=get_type(self), res=res, context=context)
         return res
     
-    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
+    def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, date_order=False, transport_lt=0, context=None):
         '''
         Fills the Requested and Confirmed delivery dates
         
@@ -1106,9 +1106,9 @@ class sale_order(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
+        res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, order_type)
         # compute requested date and transport type
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=part, order_type=order_type, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
@@ -1485,7 +1485,7 @@ class stock_picking(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(picking.sale_id.name, today))
         return res
 
 stock_picking()
@@ -1525,7 +1525,7 @@ class stock_move(osv.osv):
                 today = time.strftime(date_format)
                 today_db = time.strftime(db_date_format)
                 so_obj.write(cr, uid, [sale_id], {'shipment_date': today_db})
-                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Sale Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
+                so_obj.log(cr, uid, sale_id, _("Shipment Date of the Field Order '%s' has been updated to %s.")%(obj.picking_id.sale_id.name, today))
         return res
     
 stock_move()

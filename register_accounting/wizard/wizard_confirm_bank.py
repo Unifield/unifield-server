@@ -31,7 +31,7 @@ class wizard_confirm_bank(osv.osv_memory):
 
     def button_confirm(self, cr, uid, ids, context=None):
         """
-        Confirm that we close the bank register
+        Confirm that we close the bank statement
         """
         if context is None:
             context = {}
@@ -39,11 +39,11 @@ class wizard_confirm_bank(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not 'statement_id' in context:
-            raise osv.except_osv(_('Error'), _('No register selected. Please do a bank confirmation from a bank register!'))
+            raise osv.except_osv(_('Error'), _('No register selected. Please do a bank confirmation from a bank statement!'))
         # Prepare some variables
         st_id = context.get('statement_id')
         st_obj = self.pool.get('account.bank.statement')
-        # All is ok ? Let's go closing the bank register!
+        # All is ok ? Let's go closing the bank statement!
         res = st_obj.write(cr, uid, [st_id], {'state':'confirm', 'closing_date': datetime.today()}, context=context)
         # Then close wizard
         if res:

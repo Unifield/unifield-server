@@ -18,7 +18,7 @@
 		
 		<record forcecreate="True" id="ir_cron_stock_mission_update_action" model="ir.cron">
             <field name="name">Update stock mission</field>
-            <field eval="True" name="active"/>
+            <field eval="False" name="active"/>
             <field name="user_id" ref="base.user_root"/>
             <field name="interval_number">30</field>
             <field name="interval_type">minutes</field>

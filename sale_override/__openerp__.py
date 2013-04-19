@@ -46,6 +46,8 @@
         "test/data.yml",
         "test/sale_test.yml",
         "test/split_line.yml",
+        "test/deactivate_product_valid_fo.yml",
+        "test/deactivate_product_validate_fo.yml",
     ],
     "installable": True,
     "active": False,

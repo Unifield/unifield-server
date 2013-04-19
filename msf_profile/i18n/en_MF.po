@@ -794,3 +794,8 @@ msgid "You have to select a pricelist or a supplier in the purchase form !\n"
 "Please set one before choosing a product."
 msgstr "You have to select a currency or a supplier in the purchase form !\n"
 "Please set one before choosing a product."
+
+#. module: purchase
+#: view:purchase.order:0
+msgid "Delivery & Invoicing"
+msgstr "Delivery"
