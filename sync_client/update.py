@@ -239,11 +239,16 @@ class update_to_send(osv.osv):
         return (ids_in_package, data)
 
     def sync_finished(self, cr, uid, update_ids, context=None):
+        
+        context = context or {}
+        sync_date_column = context.get('usb_sync_update_push') and 'usb_sync_date' or 'sync_date'
+        log_prefix = context.get('usb_sync_update_push') and 'USB ' or ''
+        
         self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-            dict((update.sdref, {'version':update.version,'sync_date':update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
+            dict((update.sdref, {'version':update.version,sync_date_column: update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
             context=context)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
-        self._logger.debug(_("Push finished: %d updates") % len(update_ids))
+        self._logger.debug(_("%sPush finished: %d updates") % (log_prefix, len(update_ids)))
 
     _order = 'id asc'
 

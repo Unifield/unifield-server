@@ -31,39 +31,46 @@ class Entity(osv.osv):
 
     def create_update_zip(self, cr, uid, logger=None, context=None):
         """
-        Create packages out of all total_updates marked as "to send", format as CSV, zip, attach to entity record and send to user
+        Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
         """
         
-        zip_contents = []
+        csv_contents = []
         
         def create_package():
             return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
 
-        def add_and_mark_as_done(ids, packet):
+        def add_and_mark_as_sent(ids, packet):
             """
-            add the package contents to the zip_contents dictionary and mark the package as sent
-            @return: (number of total_updates, number of delete rules)
+            add the package contents to the csv_contents dictionary and mark the package as sent
+            @return: (number of total_updates, number of delete_sdref rules)
             """
-            
-            # TODO: find nicer way of doing this...
-            update_columns = ['owner','version','values','sdref']
-            delete_columns = ['is_deleted']
             
             # create header row if needed
-            if packet['model'] not in zip_contents:
-                zip_contents.append(['model'] + update_columns + delete_columns)
+            columns = ['model', 'version', 'fields', 'values', 'sdref', 'is_deleted']
+            if not csv_contents:
+                csv_contents.append(columns)
             
             # insert update data
             for update in packet['load']:
-                data = [packet['model']]
-                for key in update_columns:
-                    data.append(update.get(key, False))
-                zip_contents.append(data)
+                csv_contents.append([
+                    packet['model'], # model
+                    update['version'],
+                    packet['fields'],
+                    update['values'],
+                    update['sdref'],
+                    False,
+                ])
                 
             # insert delete data
-            for delete in packet['unload']:
-                data = [packet['model'],'','','',delete,True]
-                zip_contents.append(data)
+            for delete_sdref in packet['unload']:
+                csv_contents.append([
+                    packet['model'],
+                    '',
+                    '',
+                    '',
+                    delete_sdref,
+                    True,
+                ])
             
             self.pool.get('sync_remote_warehouse.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
             return (len(packet['load']), len(packet['unload']))
@@ -82,8 +89,8 @@ class Entity(osv.osv):
         package = create_package()
         
         while package:
-            # add the package to the zip_contents dictionary and mark it has 'sent'
-            new_updates, new_deletions = add_and_mark_as_done(*package)
+            # add the package to the csv_contents dictionary and mark it has 'sent'
+            new_updates, new_deletions = add_and_mark_as_sent(*package)
             
             # add new updates and deletions to total
             total_updates += new_updates
@@ -103,10 +110,10 @@ class Entity(osv.osv):
             logger.replace(logger_id, _("USB Push prepared with %d updates and %d deletions equating to %d") % (total_updates, total_deletions, (total_updates + total_deletions)))
             
         # create csv file
-        csv_file_name = 'sync_remote_warehouse_update_received.csv'
+        csv_file_name = 'sync_remote_warehouse.update_received.csv'
         with open(csv_file_name, 'wb') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-            for data_row in zip_contents:
+            for data_row in csv_contents:
                 csv_writer.writerow(data_row)
                 
         # compress csv file into zip

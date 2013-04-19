@@ -60,7 +60,7 @@ class usb_synchronisation(osv.osv_memory):
             'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
         }
         
-        self.write(cr, uid, ids, vals, context=context)
+        return self.write(cr, uid, ids, vals, context=context)
         
     def validate(self, cr, uid, ids, context=None):
         
@@ -74,7 +74,7 @@ class usb_synchronisation(osv.osv_memory):
             'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
         }
         
-        self.write(cr, uid, ids, vals, context=context)
+        return self.write(cr, uid, ids, vals, context=context)
         
     def push(self, cr, uid, ids, context=None):
         
@@ -82,12 +82,14 @@ class usb_synchronisation(osv.osv_memory):
         if wizard.usb_sync_step not in ['pull_validated', 'first_sync']:
             raise osv.except_osv('Cannot Push', 'We cannot perform a Push until we have Validated the last Pull')
         
-        synchronise.push(self, cr, uid, wizard.pull_data, context=context)
+        res = synchronise.push(self, cr, uid, wizard.pull_data, context=context)
+        if not res:
+            raise osv.except_osv('No Updates', 'No changes that need to be synchronized have been made so there is nothing to download')
                 
         vals = {
             'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
         }
         
-        self.write(cr, uid, ids, vals, context=context)
+        return self.write(cr, uid, ids, vals, context=context)
 
 usb_synchronisation()
