@@ -128,7 +128,7 @@ class Entity(osv.osv):
 
         self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
         
-        return total_updates + total_deletions
+        return (total_updates, total_deletions)
 
     def validate_update(self, cr, uid, context=None):
         entity = self.get_entity(cr, uid, context)

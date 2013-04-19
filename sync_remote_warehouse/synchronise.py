@@ -119,10 +119,10 @@ def push(obj, cr, uid, ids, context=None):
     updates_count = entity.create_update(cr, uid, context=context_usb)
     
     if updates_count:
-        updates_added = entity.create_update_zip(cr, uid, context=context_usb)
+        updates, deletions = entity.create_update_zip(cr, uid, context=context_usb)
     else:
         return 0
     
     _update_usb_sync_step(obj, cr, uid, 'push_performed')
     
-    return 1
+    return updates, deletions
