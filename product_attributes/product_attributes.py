@@ -22,6 +22,7 @@
 from osv import fields, osv
 import re
 from tools.translate import _
+from lxml import etree
 import logging
 import re
 import tools
@@ -284,6 +285,7 @@ class product_attributes(osv.osv):
             context = {}
             
         for arg in args:
+            print arg
             if arg[0] == 'available_for_restriction' and arg[1] == '=' and arg[2]:
                 if arg[2] == 'external':
                     return [('no_external', '=', False)]
@@ -409,6 +411,39 @@ class product_attributes(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        '''
+        Add a filter if the 'available_for_restriction' attribute is passed on context
+        '''
+        if not context:
+            context = {}
+
+        res = super(product_attributes, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+
+        if view_type == 'search' and context.get('available_for_restriction'):
+            context.update({'search_default_not_restricted': 1})
+            root = etree.fromstring(res['arch'])
+            # xpath of fields to be modified
+            xpath = '//filter[@string="Service with Reception"]'
+            fields = root.xpath(xpath)
+
+            if not fields:
+                return res
+
+            state_index = root.index(fields[0])
+            new_separator = """<separator orientation="vertical" />"""
+            sep_form = etree.fromstring(new_separator)
+            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="[('available_for_restriction','=','%s')]" />""" % context.get('available_for_restriction')
+            #generate new xml form$
+            new_form = etree.fromstring(new_filter)
+            # instert new form just after state index position
+            root.insert(state_index+1, new_form)
+            root.insert(state_index+1, sep_form)
+            # generate xml back to string
+            res['arch'] = etree.tostring(root)
+
+        return res
 
     def _test_restriction_error(self, cr, uid, ids, vals={}, context=None):
         '''
