@@ -4,7 +4,6 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -21,15 +20,30 @@
 #
 ##############################################################################
 
-import res_currency
-import account
-import invoice
-import account_voucher
-import account_move_line
-import account_analytic_line
-import account_bank_statement
-import account_export_mapping
-import report
-import wizard
+from osv import osv, fields
 
+class account_export_mapping(osv.osv):
+    _name = 'account.export.mapping'
+    _description = 'Mapping of UF code into AX code'
+    _rec_name = 'account_id'
+    
+    _columns = {
+        'account_id': fields.many2one('account.account', string="Unifield Account Code", required=True),
+        'mapping_value': fields.char('HQ System Account Code', required=True, size=64)
+    }
+
+    def _check_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('account_id', '=', line.account_id and line.account_id.id or False)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    _constraints = [
+        (_check_unicity, "A mapping already exists for this account", ['account_id']),
+    ]
+    
+account_export_mapping()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

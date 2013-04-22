@@ -39,27 +39,39 @@ class report_hq_export(report_sxw.report_sxw):
             return st.encode('utf8')
         return st
     
-    def create_counterpart(self, cr, uid, line_key, line_debit, counterpart_date, period_name):
-        pool = pooler.get_pool(cr.dbname)
-        # method to create counterpart line
-        if len(line_key) > 3 and line_debit != 0.0:
-            journal = pool.get('account.journal').browse(cr, uid, line_key[1])
-            currency = pool.get('res.currency').browse(cr, uid, line_key[2])
-            return [journal.instance_id and journal.instance_id.code or "",
-                    line_key[0],
-                    "",
-                    line_key[3],
-                    "",
-                    counterpart_date,
-                    counterpart_date,
-                    period_name,
-                    "10100055 - Buffer Account",
-                    "",
-                    "",
-                    "",
-                    line_debit > 0 and "0.00" or round(-line_debit, 2),
-                    line_debit > 0 and round(line_debit, 2) or "0.00",
-                    currency.name]
+    def translate_account(self, cr, uid, pool, browse_account, context={}):
+        mapping_obj = pool.get('account.export.mapping')
+        if browse_account:
+            mapping_ids = mapping_obj.search(cr, uid, [('account_id', '=', browse_account.id)], context=context)
+            if len(mapping_ids) > 0:
+                mapping = mapping_obj.browse(cr, uid, mapping_ids[0], context=context)
+                return mapping.mapping_value
+            else:
+                return browse_account.code + " " + browse_account.name
+        return ""
+
+# Commented for OCG, but can be useful for other OCs
+#    def create_counterpart(self, cr, uid, line_key, line_debit, counterpart_date, period_name):
+#        pool = pooler.get_pool(cr.dbname)
+#        # method to create counterpart line
+#        if len(line_key) > 3 and line_debit != 0.0:
+#            journal = pool.get('account.journal').browse(cr, uid, line_key[1])
+#            currency = pool.get('res.currency').browse(cr, uid, line_key[2])
+#            return [journal.instance_id and journal.instance_id.code or "",
+#                    line_key[0],
+#                    "",
+#                    line_key[3],
+#                    "",
+#                    counterpart_date,
+#                    counterpart_date,
+#                    period_name,
+#                    "10100055 - Buffer Account",
+#                    "",
+#                    "",
+#                    "",
+#                    line_debit > 0 and "0.00" or round(-line_debit, 2),
+#                    line_debit > 0 and round(line_debit, 2) or "0.00",
+#                    currency.name]
     
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name):
         pool = pooler.get_pool(cr.dbname)
@@ -76,28 +88,29 @@ class report_hq_export(report_sxw.report_sxw):
                      counterpart_date,
                      counterpart_date,
                      period_name,
-                     account.code + " " + account.name,
+                     self.translate_account(cr, uid, pool, account),
                      "",
                      "",
                      "",
                      line_debit > 0 and round(line_debit, 2) or "0.00",
                      line_debit > 0 and "0.00" or round(-line_debit, 2),
-                     currency.name],
-                    [journal.instance_id and journal.instance_id.code or "",
-                     journal.code,
-                     "",
-                     "",
-                     "",
-                     counterpart_date,
-                     counterpart_date,
-                     period_name,
-                     "10100055 - Buffer Account",
-                     "",
-                     "",
-                     "",
-                     line_debit > 0 and "0.00" or round(-line_debit, 2),
-                     line_debit > 0 and round(line_debit, 2) or "0.00",
                      currency.name]]
+# Commented for OCG, but can be useful for other OCs
+#                    ,[journal.instance_id and journal.instance_id.code or "",
+#                     journal.code,
+#                     "",
+#                     "",
+#                     "",
+#                     counterpart_date,
+#                     counterpart_date,
+#                     period_name,
+#                     "10100055 - Buffer Account",
+#                     "",
+#                     "",
+#                     "",
+#                     line_debit > 0 and "0.00" or round(-line_debit, 2),
+#                     line_debit > 0 and round(line_debit, 2) or "0.00",
+#                     currency.name]]
         
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
@@ -165,7 +178,7 @@ class report_hq_export(report_sxw.report_sxw):
                               datetime.datetime.strptime(move_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               move_line.period_id and move_line.period_id.code or "",
-                              account and account.code + " " + account.name or "",
+                              self.translate_account(cr, uid, pool, account),
                               "",
                               "",
                               "",
@@ -182,9 +195,7 @@ class report_hq_export(report_sxw.report_sxw):
             if journal.type in ['correction', 'intermission'] or account.is_settled_at_hq:
                 if (journal.code, journal.id, currency.id, "") not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id, "")] = []
-                    main_lines_debit[(journal.code, journal.id, currency.id, "")] = 0.0
                 main_lines[(journal.code, journal.id, currency.id, "")].append(formatted_data[:11] + formatted_data[12:16])
-                main_lines_debit[(journal.code, journal.id, currency.id, "")] += (move_line.debit_currency - move_line.credit_currency)
             else:
                 if (account.code, journal.id, currency.id, account.id) not in account_lines_debit:
                     account_lines_debit[(account.code, journal.id, currency.id, account.id)] = 0.0
@@ -229,24 +240,24 @@ class report_hq_export(report_sxw.report_sxw):
             first_result_lines.append(formatted_data)
             
             # For second report: add to regular lines
-            line_name = ""
-            if journal.type == 'cash':
-                line_name = "Tresorerie des missions cash " + journal.code + " - Contrepartie compte d'expense"
-            elif journal.type == 'bank':
-                line_name = "Tresorerie des missions banque " + journal.code + " - Contrepartie compte d'expense"
-            elif journal.type == 'cheque':
-                line_name = "Tresorerie des missions cheque " + journal.code + " - Contrepartie compte d'expense"
-            elif account.user_type and account.user_type.code == 'payable':
-                line_name = "Local A/P - Contrepartie compte d'expense"
-            elif account.user_type and account.user_type.code == 'receivable':
-                line_name = "Local A/R - Contrepartie compte d'expense"
-            elif account.accrual_account:
-                line_name = "Local accrual - Contrepartie compte d'expense"
-            if (journal.code, journal.id, currency.id, line_name) not in main_lines:
-                main_lines[(journal.code, journal.id, currency.id, line_name)] = []
-                main_lines_debit[(journal.code, journal.id, currency.id, line_name)] = 0.0
-            main_lines[(journal.code, journal.id, currency.id, line_name)].append(formatted_data[:11] + formatted_data[12:16])
-            main_lines_debit[(journal.code, journal.id, currency.id, line_name)] -= analytic_line.amount_currency
+            
+# Commented for OCG, but can be useful for other OCs
+#            line_name = ""
+#            if journal.type == 'cash':
+#                line_name = "Tresorerie des missions cash " + journal.code + " - Contrepartie compte d'expense"
+#            elif journal.type == 'bank':
+#                line_name = "Tresorerie des missions banque " + journal.code + " - Contrepartie compte d'expense"
+#            elif journal.type == 'cheque':
+#                line_name = "Tresorerie des missions cheque " + journal.code + " - Contrepartie compte d'expense"
+#            elif account.user_type and account.user_type.code == 'payable':
+#                line_name = "Local A/P - Contrepartie compte d'expense"
+#            elif account.user_type and account.user_type.code == 'receivable':
+#                line_name = "Local A/R - Contrepartie compte d'expense"
+#            elif account.accrual_account:
+#                line_name = "Local accrual - Contrepartie compte d'expense"
+            if (journal.code, journal.id, currency.id) not in main_lines:
+                main_lines[(journal.code, journal.id, currency.id)] = []
+            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:11] + formatted_data[12:16])
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
@@ -259,12 +270,6 @@ class report_hq_export(report_sxw.report_sxw):
         
         for key in sorted(main_lines.iterkeys(), key=lambda tuple: tuple[0]):
             second_result_lines += sorted(main_lines[key], key=lambda line: line[2])
-            counterpart_line = self.create_counterpart(cr, uid, key,
-                                                       main_lines_debit[key],
-                                                       counterpart_date,
-                                                       period_name)
-            if counterpart_line:
-                second_result_lines.append(counterpart_line)
         
         for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
             subtotal_lines = self.create_subtotal(cr, uid, key,
@@ -274,12 +279,7 @@ class report_hq_export(report_sxw.report_sxw):
             if subtotal_lines:
                 second_result_lines += subtotal_lines
         
-        second_report = [second_header] + second_result_lines
-        
-        # Write lines as exported
-#        pool.get('account.move.line').write(cr, uid, move_line_ids, {'exported': True}, context=context)
-#        pool.get('account.analytic.line').write(cr, uid, analytic_line_ids, {'exported': True}, context=context)
-#        
+        second_report = [second_header] + second_result_lines    
         
         # file names
         prefix = ""
