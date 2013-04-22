@@ -1,20 +1,21 @@
 from osv import osv, fields
-from .. import synchronise
 import zipfile
 from tools.translate import _
 
 class usb_synchronisation(osv.osv_memory):
     _name = 'usb_synchronisation'
     
-    def _usb_sync_step(self, cr, uid, context):
-        res = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_sync_step
-        return res
+    def _get_entity(self, cr, uid, context):
+        return self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
+    
+    def _get_usb_sync_step(self, cr, uid, context):
+        return self._get_entity(cr, uid, context).usb_sync_step
     
     def _get_entity_last_push_file(self, cr, uid, ids=None, field_name=None, arg=None, context=None):
-        return dict.fromkeys(ids, self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_last_push_file)
+        return dict.fromkeys(ids, self._get_entity(cr, uid, context).usb_last_push_file)
     
     def _get_entity_last_push_file_name(self, cr, uid, ids=None, field_name=None, arg=None, context=None):
-        last_push_date = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).usb_last_push_date
+        last_push_date = self._get_entity(cr, uid, context).usb_last_push_date
         last_push_file_name = '%s.zip' % last_push_date
         return dict.fromkeys(ids, last_push_file_name)
     
@@ -34,7 +35,7 @@ class usb_synchronisation(osv.osv_memory):
     }
     
     _defaults = {
-        'usb_sync_step': _usb_sync_step,
+        'usb_sync_step': _get_usb_sync_step,
         'push_file_name': _get_entity_last_push_file_name,
         'push_file_visible': False,
     }
@@ -48,7 +49,7 @@ class usb_synchronisation(osv.osv_memory):
         
         import_count, import_error = 0, False
         try:
-            import_count, import_error, updates_ran, run_error = synchronise.pull(self, cr, uid, wizard.pull_data, context=context)
+            import_count, import_error, updates_ran, run_error = self.pool.get('sync.client.entity').usb_pull_update(cr, uid, wizard.pull_data, context=context)
         except zipfile.BadZipfile:
             raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a .zip file'))
         
@@ -57,7 +58,7 @@ class usb_synchronisation(osv.osv_memory):
         if not import_error:
             pull_result = 'Successfully Pulled %d update(s) and deletion(s)' % import_count
             if not run_error:
-                pull_result += '\nSuccessfully ran %d updates and deletions' % import_count
+                pull_result += '\nSuccessfully ran %d update(s) and deletion(s)' % import_count
             else:
                 pull_result += '\nError while executing the updates: %s' % run_error
         else:
@@ -66,7 +67,7 @@ class usb_synchronisation(osv.osv_memory):
         # write results to wizard object to update ui
         vals = {
             'pull_result': pull_result,
-            'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
+            'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
             'push_file_visible': False,
         }
         
@@ -78,10 +79,10 @@ class usb_synchronisation(osv.osv_memory):
         if wizard.usb_sync_step != 'pull_performed':
             raise osv.except_osv(_('Cannot Validated'), _('We cannot Validate the last Pull until we have performed a Pull'))
         
-        synchronise.validate(self, cr, uid, wizard.pull_data, context=context)
+        self.pool.get('sync.client.entity').usb_validate_update(cr, uid, wizard.pull_data, context=context)
                 
         vals = {
-            'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
+            'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
             'push_file_visible': False,
         }
         
@@ -93,14 +94,14 @@ class usb_synchronisation(osv.osv_memory):
         if wizard.usb_sync_step not in ['pull_validated', 'first_sync']:
             raise osv.except_osv(_('Cannot Push'), _('We cannot perform a Push until we have Validated the last Pull'))
         
-        push_result = synchronise.push(self, cr, uid, wizard.pull_data, context=context)
+        push_result = self.pool.get('sync.client.entity').usb_push_update(cr, uid, wizard.pull_data, context=context)
         
         vals = {
-            'usb_sync_step': self._usb_sync_step(cr, uid, context=context),
+            'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
         }
         
         if push_result == 0:
-            vals['push_result'] = _('No changes that need to be synchronized have been made so there is nothing to download')
+            vals['push_result'] = _('No changes that need to be synchronized have been made so there is nothing to Push')
         else:
             vals['push_result'] = _('Push successfully exported %s update(s) and %s deletion(s)' % (push_result[0], push_result[1]))
             vals['push_file_visible'] = True,

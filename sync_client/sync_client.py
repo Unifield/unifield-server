@@ -199,6 +199,8 @@ class Entity(osv.osv):
 
             @functools.wraps(fn)
             def wrapper(self, cr, uid, context=None, *args, **kwargs):
+                
+                usb = context.get('usb_sync_update_push', False)
 
                 # First, check if we can acquire the lock or return False
                 sync_lock = self.sync_lock
@@ -225,10 +227,11 @@ class Entity(osv.osv):
                         kwargs['logger'] = logger = self.pool.get('sync.monitor').get_logger(cr, uid, context=context)
 
                         # Check if connection is up
-                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
-                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                        if not usb:
+                            if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                                raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
                         # Check for update (if connection is up)
-                        if hasattr(self, 'upgrade'):
+                        if not usb and hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
                             up_to_date = self.upgrade(cr, uid, context=context)
                             cr.commit()
@@ -247,7 +250,7 @@ class Entity(osv.osv):
                     cr.commit()
 
                     # is the synchronization finished?
-                    if make_log:
+                    if not usb and make_log:
                         entity = self.get_entity(cr, uid, context=context)
                         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                         proxy.end_synchronization(entity.identifier, context)
@@ -493,11 +496,12 @@ class Entity(osv.osv):
         
         context = context or {}
         usb = context.get('usb_sync_update_push', False)
-        sync_module = usb and 'sync_remote_warehouse' or 'sync.client' 
+        sync_module = usb and 'sync_remote_warehouse' or 'sync.client'
+        update_search_domain = usb and [('run', '=', False),('usb','=',usb)] or [('run', '=', False)] 
         
         updates = self.pool.get('%s.update_received' % sync_module)
 
-        update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
+        update_ids = updates.search(cr, uid, update_search_domain, context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
