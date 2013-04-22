@@ -469,7 +469,7 @@ class product_nomenclature(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for nomen in self.browse(cr, uid, ids, context=context):
-            if self.search(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context):
+            if self.search_count(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context)>1:
                 return False
         return True
 
