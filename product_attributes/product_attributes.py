@@ -291,7 +291,7 @@ class product_attributes(osv.osv):
                     # Compute the constraint if a location is passed in vals
                     location = self.pool.get('stock.location').browse(cr, uid, arg[2].get('location_id'), context=context)
                     bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
-                    if location.usage != 'inventory' or not location.destruction_location or (bef_scrap_id and location.id != bef_scrap_id):
+                    if location.usage != 'inventory' and not location.destruction_location and (not bef_scrap_id or location.id != bef_scrap_id):
                         return [('no_storage', '=', False)]
 
                 if arg[2] == 'external':
@@ -474,7 +474,11 @@ class product_attributes(osv.osv):
 
         # Compute the constraint if a partner is passed in vals 
         if vals.get('partner_id'):
-            partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id'), context=context).partner_type
+            partner_obj = self.pool.get('res.partner')
+            partner_type = partner_obj.browse(cr, 
+                                              uid, 
+                                              vals.get('partner_id'), 
+                                              context=context).partner_type
             if partner_type == 'external':
                 constraints.append('external')
             elif partner_type == 'esc':
@@ -486,7 +490,7 @@ class product_attributes(osv.osv):
         if vals.get('location_id'):
             location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_id'), context=context)
             bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
-            if location.usage != 'inventory' or not location.destruction_location or (bef_scrap_id and location.id != bef_scrap_id):
+            if location.usage != 'inventory' and not location.destruction_location and (not bef_scrap_id or location.id != bef_scrap_id):
                 constraints.append('storage')
 
         # Compute constraints if constraints is passed in vals
