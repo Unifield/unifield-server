@@ -465,9 +465,18 @@ class product_nomenclature(osv.osv):
                 
         return True
 
+    def _check_complete_name_uniq(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for nomen in self.browse(cr, uid, ids, context=context):
+            if self.search(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context):
+                return False
+        return True
+
     _constraints = [
         (_check_recursion, 'Error ! You can not create recursive nomenclature.', ['parent_id']),
-        (_check_link, 'Error ! You can not have a category linked to two different family', ['category_ids'])
+        (_check_link, 'Error ! You can not have a category linked to two different family', ['category_ids']),
+        (_check_complete_name_uniq, 'Error! The nomenclature complete name must be unique.', [])
     ]
     def child_get(self, cr, uid, ids):
         return [ids]
