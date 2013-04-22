@@ -16,12 +16,7 @@ class setup_remote_warehouse(osv.osv_memory):
         entity = entity_pool.get_entity(cr, uid, context=context)
         
         if entity.is_remote_warehouse or entity.is_central_platform:
-            type = '';
-            if entity.is_remote_warehouse:
-                type = 'Remote Warehouse'
-            else:
-                type = 'Central Platform'
-            raise osv.except_osv('Already Setup', 'Entity is already set as a %s!' % type)
+            raise osv.except_osv('Already Setup', 'Entity is already set as a %s!' % (entity.is_remote_warehouse and 'Remote Warehouse' or 'Central Platform'))
         
         new_vals = {
             'clone_date': wizard.clone_date,

@@ -46,13 +46,14 @@ class Entity(osv.osv):
             """
             
             # create header row if needed
-            columns = ['model', 'version', 'fields', 'values', 'sdref', 'is_deleted']
+            columns = ['source', 'model', 'version', 'fields', 'values', 'sdref', 'is_deleted']
             if not csv_contents:
                 csv_contents.append(columns)
             
             # insert update data
             for update in packet['load']:
                 csv_contents.append([
+                    entity.name,
                     packet['model'], # model
                     update['version'],
                     packet['fields'],
@@ -64,6 +65,7 @@ class Entity(osv.osv):
             # insert delete data
             for delete_sdref in packet['unload']:
                 csv_contents.append([
+                    entity.name,
                     packet['model'],
                     '',
                     '',
