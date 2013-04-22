@@ -328,8 +328,7 @@ class purchase_order(osv.osv):
         res = True
 
         for order in self.browse(cr, uid, ids, context=context):
-            if order.state not in ('draft', 'done', 'cancel'):
-                res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
 
         return res
 
@@ -386,9 +385,6 @@ class purchase_order(osv.osv):
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
-        # Check restrictions on lines
-        self._check_restriction_line(cr, uid, ids, context=context)
-        
         return res
     
     def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
@@ -677,6 +673,7 @@ class purchase_order(osv.osv):
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
+        self._check_restriction_line(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
         # CODE MOVED TO self.check_analytic_distribution()
         self.check_analytic_distribution(cr, uid, ids, context=context)
@@ -1471,8 +1468,6 @@ stock moves which are already processed : '''
         
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
         self._check_service(cr, uid, [res], vals, context=context)
-        # Check constraints on lines
-        self._check_restriction_line(cr, uid, res, context=context)
     
         return res
 
@@ -1919,7 +1914,7 @@ class purchase_order_line(osv.osv):
             context = {}
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.parnter_id and line.order_id.state != 'done':
+            if line.order_id and line.order_id.partner_id and line.order_id.state != 'done':
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id}, context=context):
                     return False
 
@@ -1964,9 +1959,6 @@ class purchase_order_line(osv.osv):
         if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
             name = self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id'), context=context).name
             super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
-
-        # Check constraints on lines
-        self._check_restriction_line(cr, uid, po_line_id, context=context)
 
         return po_line_id
     
@@ -2040,9 +2032,6 @@ class purchase_order_line(osv.osv):
             vals.update({'old_price_unit': vals.get('price_unit')})
 
         res = super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
-
-        # Add restriction check
-        self._check_restriction_line(cr, uid, ids, context=context)
 
         return res
 
