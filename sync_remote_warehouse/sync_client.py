@@ -23,6 +23,7 @@ from osv import osv, fields, orm
 from tools.translate import _
 import csv
 import base64
+import os
 from zipfile import ZipFile
 from datetime import datetime
 
@@ -119,7 +120,11 @@ class Entity(osv.osv):
                 csv_writer.writerow(data_row)
                 
         # compress csv file into zip
-        zip_file_name = '%s.zip' % entity.session_id
+        zip_file_name = 'usb_sync_data.zip'
+        
+        if os.path.exists(zip_file_name):
+            os.remove(zip_file_name)
+            
         with ZipFile(zip_file_name, 'w') as zip_file:
             zip_file.write(csv_file_name)
                 
