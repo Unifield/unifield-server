@@ -56,6 +56,21 @@ class ir_model_field(osv.osv):
      
 ir_model_field()
        
+def check_domain(self, cr, uid, rec, context=None):
+    error = False
+    message = "* Domain syntax... "
+    try:
+        domain = eval(rec.domain)
+        self.pool.get(rec.model_id).search_ext(cr, uid, domain, context=None)
+    except:
+        message += "failed!\n"
+        error = True
+    else:
+        message += "pass.\n"
+    finally:
+        if error: message += "Example: ['|', ('name', 'like', 'external_'), ('supplier', '=', True)]\n"
+    return (message, error)
+
 class sync_rule(osv.osv):
     """ Synchronization Rule """
 
@@ -196,22 +211,29 @@ class sync_rule(osv.osv):
                     
         return list(rules_to_send)
     
+    _rules_serialization_mapping = {
+        'id' : 'server_id',
+        'name' : 'name',
+        'owner_field' : 'owner_field',
+        'model_id' : 'model',
+        'domain' : 'domain',
+        'sequence_number' : 'sequence_number',
+        'included_fields' : 'included_fields',
+        'can_delete' : 'can_delete',
+    }
+
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []
+        rules_serialization_mapping = dict(
+            sum((c._rules_serialization_mapping.items()
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
+        )
         for rule in self.browse(cr, uid, ids, context=context):
-            data = {
-                    'server_id' : rule.id,
-                    'name' : rule.name,
-                    'owner_field' : rule.owner_field,
-                    'model' : rule.model_id,
-                    'domain' : rule.domain,
-                    'sequence_number' : rule.sequence_number,
-                    'included_fields' : rule.included_fields,
-                    'can_delete' : rule.can_delete,
-                    'active' : rule.active,
-                    'usb' : rule.usb,
-            }
-            rules_data.append(data)
+            rules_data.append(dict(
+                (data, rule[column]) for column, data
+                    in rules_serialization_mapping.items()
+            ))
         return rules_data
 
     
@@ -329,21 +351,6 @@ class sync_rule(osv.osv):
 
     ## Checkers & Validator ##################################################
 
-    def check_domain(self, cr, uid, rec, context=None):
-        error = False
-        message = "* Domain syntax... "
-        try:
-            domain = eval(rec.domain)
-            self.pool.get(rec.model_id).search_ext(cr, uid, domain, context=None)
-        except:
-            message += "failed!\n"
-            error = True
-        else:
-            message += "pass.\n"
-        finally:
-            if error: message += "Example: ['|', ('name', 'like', 'external_'), ('supplier', '=', True)]\n"
-        return (message, error)
-
     def check_fields(self, cr, uid, rec, title="", context=None):
         message = title
         error = False
@@ -359,35 +366,6 @@ class sync_rule(osv.osv):
             error = True
         except KeyError:
             message += "failed (Field %s doesn't exist for the selected model/object)!\n" % base_field
-            error = True
-        except:
-            message += "failed! (Syntax Error : not a python expression) \n"
-            error = True
-        else:
-            message += "pass.\n"
-        finally:
-            if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
-            
-        return (message, error)
-
-    def check_arguments(self, cr, uid, rec, title="", context=None):
-        message = title
-        error = False
-        try:
-            field_error = False
-            arguments = eval(rec.arguments)
-            for field in arguments:
-                base_field = field.split('/')[0]
-                if not isinstance(field, str): raise TypeError
-                model_ids = self.pool.get(rec.model_id.model).get_model_ids(cr, uid, context=context)
-                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)): 
-                    field_error = field
-                    raise KeyError
-        except TypeError:
-            message += "failed (Fields list should be a list of string)!\n"
-            error = True
-        except KeyError:
-            message += "failed (Field %s doesn't exist for the selected model/object)!\n" % field_error
             error = True
         except:
             message += "failed! (Syntax Error : not a python expression) \n"
@@ -446,25 +424,26 @@ class sync_rule(osv.osv):
         try:
             fields = []
             ir_model_fields = self.pool.get('ir.model.fields')
-            model_ids = self.pool.get(rec.model_id.model).get_model_ids(cr, uid, context=context)
+            model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
             fields_ids = ir_model_fields.search(cr, uid, [('model_id','in', model_ids)], context=context)
             fields = ir_model_fields.browse(cr, uid, fields_ids, context=context)
             fields = [x.name for x in fields]
             included_fields = eval(rec.included_fields or '[]')
             if not rec.owner_field in fields: raise KeyError
-        except:
-            message += "failed!\n"
-            message += "Please choose one of these: %s\n" % (", ".join(fields),)
-            error = True
-        try:
             if not (rec.owner_field in included_fields or rec.owner_field+'/id' in included_fields): raise KeyError
         except KeyError:
             message += "failed!\n"
             message += "The owner field must be present in the included fields!\n"
             error = True
-        if not error:
+        except:
+            message += "failed!\n"
+            message += "Please choose one of these: %s\n" % (", ".join(fields),)
+            error = True
+        else:
             message += "pass.\n"
         return (message, error)
+
+    check_domain = check_domain
 
     def validate(self, cr, uid, ids, context=None):
         error = False
@@ -620,7 +599,40 @@ class message_rule(osv.osv):
             if dirty:
                 values.update({'active' : False, 'status' : 'invalid'})
         return super(message_rule, self).write(cr, uid, ids, values, context=context)
-    
+
+    ## Checkers & Validator ##################################################
+
+    check_domain = check_domain
+
+    def check_arguments(self, cr, uid, rec, title="", context=None):
+        message = title
+        error = False
+        try:
+            field_error = False
+            arguments = eval(rec.arguments)
+            for field in arguments:
+                base_field = field.split('/')[0]
+                if not isinstance(field, str): raise TypeError
+                model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
+                if not len(self.pool.get('ir.model.fields').search(cr, uid,  [('model_id','in', model_ids),('name','=',base_field)], context=context)): 
+                    field_error = field
+                    raise KeyError
+        except TypeError:
+            message += "failed (Fields list should be a list of string)!\n"
+            error = True
+        except KeyError:
+            message += "failed (Field %s doesn't exist for the selected model/object)!\n" % field_error
+            error = True
+        except:
+            message += "failed! (Syntax Error : not a python expression) \n"
+            error = True
+        else:
+            message += "pass.\n"
+        finally:
+            if error: message += "Example: ['name', 'order_line/product_id/id', 'order_line/product_id/name', 'order_line/product_uom_qty']\n"
+            
+        return (message, error)
+
     def validate(self, cr, uid, ids, context=None):
         error = False
         message = []
@@ -638,7 +650,7 @@ class message_rule(osv.osv):
                 message.append("pass.\n")
                 
                 
-            mess, err = check_domain(self, cr, uid, rec, context)
+            mess, err = self.check_domain(cr, uid, rec, context)
             error = err or error
             message.append(mess)
             
@@ -659,7 +671,7 @@ class message_rule(osv.osv):
                 message.append("pass.\n")
             # Arguments of the call syntax and existence
             
-            mess, err = check_arguments(self, cr, uid, rec, title="* Checking arguments..." , context=context)
+            mess, err = self.check_arguments(cr, uid, rec, title="* Checking arguments..." , context=context)
             error = err or error
             message.append(mess)
             
@@ -705,9 +717,9 @@ class fallback_values(osv.osv):
     _name = "sync_server.sync_rule.fallback_values" 
 
     def _get_fallback_value(self, cr, uid, context=None):
-        obj = self.pool.get('ir.model')
-        ids = obj.search(cr, uid, MODELS_TO_IGNORE_DOMAIN)
-        res = obj.read(cr, uid, ids, ['model'], context)
+        model = self.pool.get('ir.model')
+        ids = model.search(cr, uid, MODELS_TO_IGNORE_DOMAIN)
+        res = model.read(cr, uid, ids, ['model'], context)
         return [(r['model'], r['model']) for r in res]
 
     _columns = {

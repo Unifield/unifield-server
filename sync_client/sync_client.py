@@ -200,6 +200,7 @@ class Entity(osv.osv):
             @functools.wraps(fn)
             def wrapper(self, cr, uid, context=None, *args, **kwargs):
                 
+                context = context or {}
                 usb = context.get('usb_sync_update_push', False)
 
                 # First, check if we can acquire the lock or return False
