@@ -100,7 +100,7 @@ class account_commitment(osv.osv):
             raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
         journal_name = journal[0].code
         if instance and sequence_number and journal_name:
-            vals.update({'name': "%s-%s-%s" % (instance.commitment_prefix, journal_name, sequence_number)})
+            vals.update({'name': "%s-%s-%s" % (instance.move_prefix, journal_name, sequence_number)})
         else:
             raise osv.except_osv(_('Error'), _('Error creating commitment sequence!'))
         return super(account_commitment, self).create(cr, uid, vals, context=context)

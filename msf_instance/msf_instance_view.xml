@@ -19,7 +19,6 @@
 		                    <field name="parent_id" attrs="{'required': [('level', '!=', 'section')], 'readonly': [('level', '=', 'section')]}" on_change="onchange_parent_id(parent_id, level)"/>
 		                    <field name="note"/>
 		                    <field name="move_prefix"/>
-		                    <field name="commitment_prefix"/>
 		                    <field name="reconcile_prefix"/>
                             <field name="top_cost_center_id"/>
                             <field name="po_fo_cost_center_id"/>
