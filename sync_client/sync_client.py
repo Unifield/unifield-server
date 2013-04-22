@@ -192,7 +192,7 @@ class Entity(osv.osv):
         finally:
             self.renew_lock.release()
 
-    def sync_process(step='status'):
+    def sync_process(step='status', need_connection=True, defaults_logger={}):
         is_step = not (step == 'status')
 
         def decorator(fn):
@@ -222,20 +222,22 @@ class Entity(osv.osv):
                     # we have to make the log
                     if make_log:
                         # get a whole new logger from sync.monitor object
-                        kwargs['logger'] = logger = self.pool.get('sync.monitor').get_logger(cr, uid, context=context)
+                        kwargs['logger'] = logger = \
+                            self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
 
-                        # Check if connection is up
-                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
-                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
-                        # Check for update (if connection is up)
-                        if hasattr(self, 'upgrade'):
-                            # TODO: replace the return value of upgrade to a status and raise an error on required update
-                            up_to_date = self.upgrade(cr, uid, context=context)
-                            cr.commit()
-                            if not up_to_date[0]:
-                                raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
-                            elif 'last' not in up_to_date[1].lower():
-                                logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
+                        if need_connection:
+                            # Check if connection is up
+                            if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                                raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                            # Check for update (if connection is up)
+                            if hasattr(self, 'upgrade'):
+                                # TODO: replace the return value of upgrade to a status and raise an error on required update
+                                up_to_date = self.upgrade(cr, uid, context=context)
+                                cr.commit()
+                                if not up_to_date[0]:
+                                    raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
+                                elif 'last' not in up_to_date[1].lower():
+                                    logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
 
                         # more information
                         add_information(logger)
