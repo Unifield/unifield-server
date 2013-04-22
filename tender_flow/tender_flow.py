@@ -166,8 +166,6 @@ class tender(osv.osv):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
 
         res = super(tender, self).create(cr, uid, vals, context=context)
-
-        self._check_restriction_line(cr, uid, res, context=context)
         
         return res
 
