@@ -40,6 +40,9 @@ class stock_move(osv.osv):
             search_args.append((matching_fields.get(arg[0], arg[0]), arg[1], arg[2]))
 
         sale_ids = sale_obj.search(cr, uid, search_args, limit=0)
+        # the fields procurement_request is not present in the purchase_order object
+        if ('procurement_request', '=', False) in search_args:
+            search_args.remove(('procurement_request', '=', False))
         purch_ids = purch_obj.search(cr, uid, search_args, limit=0)
 
         newrgs = []
