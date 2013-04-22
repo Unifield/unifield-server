@@ -317,7 +317,7 @@ class initial_stock_inventory_line(osv.osv):
                  ['product_id', 'average_cost'])
                 ]
     
-    def product_change(self, cr, uid, ids, product_id, location_id, change_price=False, prodlot_id=False):
+    def product_change(self, cr, uid, ids, product_id, location_id, field_change, change_price=False, prodlot_id=False):
         '''
         Set the UoM with the default UoM of the product
         '''
@@ -326,12 +326,17 @@ class initial_stock_inventory_line(osv.osv):
                  'hidden_batch_management_mandatory': False,}
         
         if product_id:
+            product_obj = self.pool.get('product.product')
             context = {}
             if location_id:
                 context = {'location': location_id, 'compute_child': False}
+                # Test the compatibility of the product with the location
+                value, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name=field_change, values=value, vals={'location_id': location_id})
+                if test:
+                    return value
             if prodlot_id:
                 context.update({'prodlot_id': prodlot_id})
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            product = product_obj.browse(cr, uid, product_id, context=context)
             value.update({'product_uom': product.uom_id.id,
                           'hidden_perishable_mandatory': product.perishable,
                           'hidden_batch_management_mandatory': product.batch_management})

@@ -287,6 +287,13 @@ class product_attributes(osv.osv):
         for arg in args:
             print arg
             if arg[0] == 'available_for_restriction' and arg[1] == '=' and arg[2]:
+                if isinstance(arg[2], dict) and arg[2].get('location_id'):
+                    # Compute the constraint if a location is passed in vals
+                    location = self.pool.get('stock.location').browse(cr, uid, arg[2].get('location_id'), context=context)
+                    bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+                    if location.usage != 'inventory' or not location.destruction_location or (bef_scrap_id and location.id != bef_scrap_id):
+                        return [('no_storage', '=', False)]
+
                 if arg[2] == 'external':
                     return [('no_external', '=', False)]
                 elif arg[2] == 'esc':
@@ -436,7 +443,10 @@ class product_attributes(osv.osv):
             state_index = root.index(fields[0])
             new_separator = """<separator orientation="vertical" />"""
             sep_form = etree.fromstring(new_separator)
-            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="[('available_for_restriction','=','%s')]" />""" % context.get('available_for_restriction')
+            arg = context.get('available_for_restriction')
+            if isinstance(arg, str):
+                arg = '\'%s\'' % arg
+            new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="[('available_for_restriction','=',%s)]" />""" % arg
             #generate new xml form$
             new_form = etree.fromstring(new_filter)
             # instert new form just after state index position
@@ -471,6 +481,13 @@ class product_attributes(osv.osv):
                 constraints.append('esc')
             elif partner_type in ('internal', 'intermission', 'section'):
                 constraints.append('internal')
+
+        # Compute the constraint if a location is passed in vals
+        if vals.get('location_id'):
+            location = self.pool.get('stock.location').browse(cr, uid, vals.get('location_id'), context=context)
+            bef_scrap_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_quarantine_scrap')[1]
+            if location.usage != 'inventory' or not location.destruction_location or (bef_scrap_id and location.id != bef_scrap_id):
+                constraints.append('storage')
 
         # Compute constraints if constraints is passed in vals
         if vals.get('constraints'):
