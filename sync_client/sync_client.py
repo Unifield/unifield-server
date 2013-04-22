@@ -238,6 +238,8 @@ class Entity(osv.osv):
                                     raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                                 elif 'last' not in up_to_date[1].lower():
                                     logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
+                        else:
+                            kwargs['offline_synchronization'] = True
 
                         # more information
                         add_information(logger)
@@ -337,24 +339,27 @@ class Entity(osv.osv):
 
     
     def create_update(self, cr, uid, context=None):
+        context = context or {}
+
         def set_rules(identifier):
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_model_to_sync(identifier)
             if not res[0]:
                 raise Exception, res[1]
-            self.pool.get('sync.client.rule').save(cr, uid, res[2], context=context)
-            return res[1]
+            self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
         
         def prepare_update(session):
             updates_count = 0
             ids = self.pool.get('sync.client.rule').search(cr, uid, [], context=context)
             for rule_id in ids:
-                updates_count += sum(self.pool.get('sync.client.update_to_send').create_update(
+                updates_count += sum(self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send')).create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
-        session = set_rules(entity.identifier)
+        session = uuid.uuid4().hex
+        if context.get('offline_synchronization'):
+            set_rules(entity.identifier)
         updates_count = prepare_update(session)
         if updates_count > 0:
             self.write(cr, uid, [entity.id], {'session_id' : session})
@@ -480,7 +485,8 @@ class Entity(osv.osv):
         return updates_count
 
     def execute_updates(self, cr, uid, logger=None, context=None):
-        updates = self.pool.get('sync.client.update_received')
+        context = context or {}
+        updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
         update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
         update_count = len(update_ids)

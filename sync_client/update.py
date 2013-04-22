@@ -124,7 +124,7 @@ class update_to_send(osv.osv):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
-    def create_update(self, cr, uid, rule_id, session_id, context={}):
+    def create_update(self, cr, uid, rule_id, session_id, sync_field='sync_date', context={}):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
 
@@ -136,7 +136,7 @@ class update_to_send(osv.osv):
 
             ids_to_compute = self.need_to_push(cr, uid,
                 self.search_ext(cr, uid, domain, context=context),
-                included_fields, context=context)
+                included_fields, sync_field=sync_field, context=context)
             if not ids_to_compute:
                 return 0
 
@@ -166,8 +166,8 @@ class update_to_send(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context), [],
-                context=context)
+                self.search_deleted(cr, uid, [('module','=','sd')], context=context),
+                [], sync_field=sync_field, context=context)
 
             if not ids_to_delete:
                 return 0
@@ -223,9 +223,9 @@ class update_to_send(osv.osv):
         self._logger.debug("package created for update ids=%s" % ids_in_package)
         return (ids_in_package, data)
 
-    def sync_finished(self, cr, uid, update_ids, context=None):
+    def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
         self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-            dict((update.sdref, {'version':update.version,'sync_date':update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
+            dict((update.sdref, {'version':update.version,sync_field:update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
             context=context)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
