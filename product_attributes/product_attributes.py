@@ -297,6 +297,8 @@ class product_attributes(osv.osv):
                     return [('no_consumption', '=', False)]
                 elif arg[2] == 'storage':
                     return [('no_storage', '=', False)]
+                elif arg[2] == 'picking':
+                    return [('no_external', '=', False), ('no_internal', '=', False), ('no_esc', '=', False)]
         
         return []
     
