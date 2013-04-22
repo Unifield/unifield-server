@@ -1446,6 +1446,11 @@ class stock_inventory_line(osv.osv):
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prod_lot_id'] = False
         result.setdefault('value', {})['expiry_date'] = False
+        result.setdefault('value', {})['lot_check'] = False
+        result.setdefault('value', {})['exp_check'] = False
+        result.setdefault('value', {})['dg_check'] = False
+        result.setdefault('value', {})['kc_check'] = False
+        result.setdefault('value', {})['np_check'] = False
         # reset the hidden flags
         result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
