@@ -176,13 +176,9 @@ class update_to_send(osv.osv):
             if not rule.can_delete:
                 return 0
             
-            included_fields = eval(rule.included_fields or '[]') 
-            if not 'id' in included_fields: 
-                included_fields.append('id')
-
             ids_to_delete = self.need_to_push(cr, uid,
                 self.search_deleted(cr, uid, [('module','=','sd')], context=context),
-                included_fields, context=context)
+                context=context)
 
             if not ids_to_delete:
                 return 0
