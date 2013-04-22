@@ -134,10 +134,11 @@ class tender(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        line_obj = self.pool.get('tender.line')
+
         res = True
         for tender in self.browse(cr, uid, ids, context=context):
-            if tender.state not in ('draft', 'done', 'cancel'):
-                res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.tender_line_ids], context=context)
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in tender.tender_line_ids], context=context)
 
         return res
 
@@ -166,22 +167,10 @@ class tender(osv.osv):
 
         res = super(tender, self).create(cr, uid, vals, context=context)
 
-        # Add restrictions check
         self._check_restriction_line(cr, uid, res, context=context)
         
         return res
 
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        Add a restriction check
-        '''
-        res = super(tender, self).write(cr, uid, ids, vals, context=context)
-
-        # Add restriction check
-        self._check_restriction_line(cr, uid, ids, context=context)
-
-        return res
-    
     def onchange_warehouse(self, cr, uid, ids, warehouse_id, context=None):
         '''
         on_change function for the warehouse
@@ -204,6 +193,10 @@ class tender(osv.osv):
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
         obj_data = self.pool.get('ir.model.data')
+
+        # Check restriction on lines
+        self._check_restriction_line(cr, uid, ids, context=context)
+
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
             # check some supplier have been selected
@@ -650,31 +643,11 @@ class tender_line(osv.osv):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.tender_id and line.tender_id.state != 'done':
+            if line.tender_id:
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'constraints': ['external']}, context=context):
                     return False
 
         return True
-
-    def create(self, cr, uid, vals, context=None):
-        '''
-        Add a constraint on product
-        '''
-        res = super(tender_line, self).create(cr, uid, vals, context=context)
-        # Add restriction check
-        self._check_restriction_line(cr, uid, res, context=context)
-        
-        return res
-
-    def write(self, cr, uid, ids, vals, context=None):
-        '''
-        Add a constraint on product
-        '''
-        res = super(tender_line, self).write(cr, uid, ids, vals, context=context)
-        # Add restriction check
-        self._check_restriction_line(cr, uid, ids, context=context)
-
-        return res
 
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
@@ -950,10 +923,13 @@ class purchase_order(osv.osv):
         '''
         res = True
         return res
+
+    
         
         
     def rfq_sent(self, cr, uid, ids, context=None):
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
+        self._check_restriction_line(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
