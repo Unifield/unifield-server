@@ -21,7 +21,6 @@
 
 from osv import osv, fields
 import time
-import logging
 
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
