@@ -68,7 +68,7 @@ class stock_move(osv.osv):
     def copy_data(self, cr, uid, id, defaults=None, context=None):
         '''
         If the line_number is not in the defaults, we set it to False.
-        If we are on an Incoming Shipment: we reset the m2o fields that are not required for the stock_move
+        If we are on an Incoming Shipment: we reset purchase_line_id field
         and we set the location_dest_id to INPUT.
         '''
         if defaults is None:
@@ -79,13 +79,10 @@ class stock_move(osv.osv):
         # we set line_number, so it will not be copied in copy_data - keepLineNumber - the original Line Number will be kept
         if 'line_number' not in defaults and not context.get('keepLineNumber', False):
             defaults.update({'line_number': False})
-        picking_type = context.get('picking_type')
-        if picking_type and picking_type == 'incoming_shipment':
-            list_of_fields = []
+        # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
+        if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
             defaults.update(purchase_line_id=False)
-            if list_of_fields:
-                logging.getLogger('init').info('The many2one fields reset to False during the copy are: %s' % ', '.join(list_of_fields))
             # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
             input_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
             defaults.update(location_dest_id=input_loc)
@@ -275,6 +272,8 @@ class stock_picking(osv.osv):
         '''
         create the sequence for the numbering of the lines
         '''
+        if not vals:
+            vals = {}
         # object
         seq_pool = self.pool.get('ir.sequence')
         po_obj = self.pool.get('purchase.order')
