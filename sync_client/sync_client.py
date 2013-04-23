@@ -89,6 +89,119 @@ class BackgroundProcess(Thread):
         finally:
             cr.close()
 
+def sync_process(step='status', need_connection=True, defaults_logger={}):
+    is_step = not (step == 'status')
+
+    def decorator(fn):
+
+        @functools.wraps(fn)
+        def wrapper(self, cr, uid, context=None, *args, **kwargs):
+
+            # First, check if we can acquire the lock or return False
+            sync_lock = self.sync_lock
+            if not sync_lock.acquire(blocking=False):
+                raise already_syncing_error
+
+            # Lock is acquired, so don't put any code outside the try...catch!!
+            self.sync_cursor = cr
+            res = False
+            try:
+                # more information to the logger
+                def add_information(logger):
+                    entity = self.get_entity(cr, uid, context=context)
+                    if entity.session_id:
+                        logger.append(_("Update session: %s") % entity.session_id)
+
+                # get the logger
+                logger = kwargs.get('logger')
+                make_log = logger is None
+                
+                # we have to make the log
+                if make_log:
+                    # get a whole new logger from sync.monitor object
+                    kwargs['logger'] = logger = \
+                        self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
+
+                    if need_connection:
+                        # Check if connection is up
+                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                        # Check for update (if connection is up)
+                        if hasattr(self, 'upgrade'):
+                            # TODO: replace the return value of upgrade to a status and raise an error on required update
+                            up_to_date = self.upgrade(cr, uid, context=context)
+                            cr.commit()
+                            if not up_to_date[0]:
+                                raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
+                            elif 'last' not in up_to_date[1].lower():
+                                logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
+                    else:
+                        kwargs['offline_synchronization'] = True
+
+                    # more information
+                    add_information(logger)
+
+                # ah... we can now call the function!
+                logger.switch(step, 'in-progress')
+                logger.write()
+                res = fn(self, cr, uid, *args, **kwargs)
+                cr.commit()
+
+                # is the synchronization finished?
+                if make_log:
+                    entity = self.get_entity(cr, uid, context=context)
+                    proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+                    proxy.end_synchronization(entity.identifier, context)
+            except SkipStep:
+                # res failed but without exception
+                assert is_step, "Cannot have a SkipTest error outside a sync step process!"
+                logger.switch(step, 'null')
+                logger.append(_("ok, skipped."), step)
+                if make_log:
+                    raise osv.except_osv(_('Error!'), _("You cannot perform this action now."))
+            except osv.except_osv, e:
+                logger.switch(step, 'failed')
+                if make_log:
+                    logger.append( e.value )
+                    add_information(logger)
+                raise
+            except BaseException, e:
+                # Handle aborting of synchronization
+                if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
+                    logger.switch(step, 'aborted')
+                    if make_log:
+                        error = "Synchronization aborted"
+                        logger.append(error, 'status')
+                        # force re-open of the cursor before raising
+                        cr.__getattr__ = lambda self, name: getattr(self, name)
+                        cr.__init__(cr._pool, cr.dbname)
+                        del cr.__getattr__
+                        raise osv.except_osv(_('Error!'), error)
+                    else:
+                        raise
+                logger.switch(step, 'failed')
+                error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
+                if is_step:
+                    self._logger.exception('Error in sync_process at step %s' % step)
+                    logger.append(error, step)
+                if make_log:
+                    self._logger.exception('Error in sync_process at step %s' % step)
+                    add_information(logger)
+                    raise osv.except_osv(_('Error!'), error)
+                raise
+            else:
+                logger.switch(step, 'ok')
+                if isinstance(res, (str, unicode)) and res:
+                    logger.append(res, step)
+            finally:
+                logger.write()
+                # gotcha!
+                sync_lock.release()
+            return res
+
+        return wrapper
+    return decorator
+
 already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
 
 class Entity(osv.osv):
@@ -191,119 +304,6 @@ class Entity(osv.osv):
             self.sync_lock = RLock()
         finally:
             self.renew_lock.release()
-
-    def sync_process(step='status', need_connection=True, defaults_logger={}):
-        is_step = not (step == 'status')
-
-        def decorator(fn):
-
-            @functools.wraps(fn)
-            def wrapper(self, cr, uid, context=None, *args, **kwargs):
-
-                # First, check if we can acquire the lock or return False
-                sync_lock = self.sync_lock
-                if not sync_lock.acquire(blocking=False):
-                    raise already_syncing_error
-
-                # Lock is acquired, so don't put any code outside the try...catch!!
-                self.sync_cursor = cr
-                res = False
-                try:
-                    # more information to the logger
-                    def add_information(logger):
-                        entity = self.get_entity(cr, uid, context=context)
-                        if entity.session_id:
-                            logger.append(_("Update session: %s") % entity.session_id)
-
-                    # get the logger
-                    logger = kwargs.get('logger')
-                    make_log = logger is None
-                    
-                    # we have to make the log
-                    if make_log:
-                        # get a whole new logger from sync.monitor object
-                        kwargs['logger'] = logger = \
-                            self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
-
-                        if need_connection:
-                            # Check if connection is up
-                            if not self.pool.get('sync.client.sync_server_connection').is_connected:
-                                raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
-                            # Check for update (if connection is up)
-                            if hasattr(self, 'upgrade'):
-                                # TODO: replace the return value of upgrade to a status and raise an error on required update
-                                up_to_date = self.upgrade(cr, uid, context=context)
-                                cr.commit()
-                                if not up_to_date[0]:
-                                    raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
-                                elif 'last' not in up_to_date[1].lower():
-                                    logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
-                        else:
-                            kwargs['offline_synchronization'] = True
-
-                        # more information
-                        add_information(logger)
-
-                    # ah... we can now call the function!
-                    logger.switch(step, 'in-progress')
-                    logger.write()
-                    res = fn(self, cr, uid, *args, **kwargs)
-                    cr.commit()
-
-                    # is the synchronization finished?
-                    if make_log:
-                        entity = self.get_entity(cr, uid, context=context)
-                        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-                        proxy.end_synchronization(entity.identifier, context)
-                except SkipStep:
-                    # res failed but without exception
-                    assert is_step, "Cannot have a SkipTest error outside a sync step process!"
-                    logger.switch(step, 'null')
-                    logger.append(_("ok, skipped."), step)
-                    if make_log:
-                        raise osv.except_osv(_('Error!'), _("You cannot perform this action now."))
-                except osv.except_osv, e:
-                    logger.switch(step, 'failed')
-                    if make_log:
-                        logger.append( e.value )
-                        add_information(logger)
-                    raise
-                except BaseException, e:
-                    # Handle aborting of synchronization
-                    if isinstance(e, OperationalError) and e.message == 'Unable to use the cursor after having closed it':
-                        logger.switch(step, 'aborted')
-                        if make_log:
-                            error = "Synchronization aborted"
-                            logger.append(error, 'status')
-                            # force re-open of the cursor before raising
-                            cr.__getattr__ = lambda self, name: getattr(self, name)
-                            cr.__init__(cr._pool, cr.dbname)
-                            del cr.__getattr__
-                            raise osv.except_osv(_('Error!'), error)
-                        else:
-                            raise
-                    logger.switch(step, 'failed')
-                    error = "%s: %s" % (e.__class__.__name__, getattr(e, 'message', tools.ustr(e)))
-                    if is_step:
-                        self._logger.exception('Error in sync_process at step %s' % step)
-                        logger.append(error, step)
-                    if make_log:
-                        self._logger.exception('Error in sync_process at step %s' % step)
-                        add_information(logger)
-                        raise osv.except_osv(_('Error!'), error)
-                    raise
-                else:
-                    logger.switch(step, 'ok')
-                    if isinstance(res, (str, unicode)) and res:
-                        logger.append(res, step)
-                finally:
-                    logger.write()
-                    # gotcha!
-                    sync_lock.release()
-                return res
-
-            return wrapper
-        return decorator
 
     """
         Push Update
