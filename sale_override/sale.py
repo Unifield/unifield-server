@@ -290,6 +290,15 @@ class sale_order(osv.osv):
                     res['value'].update(res2['value'])
                 else:
                     res.update({'value': res2['value']})
+        
+            # Check the restrction of product in lines
+            if ids:
+                product_obj = self.pool.get('product.product')
+                for order in self.browse(cr, uid, ids):
+                    for line in order.order_line:
+                        res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
+                        if test:
+                            return res
 
         return res
 
