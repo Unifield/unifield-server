@@ -287,7 +287,7 @@ class Entity(osv.osv):
         return self.browse(cr, uid, ids, context=context)[0]
     
     def generate_uuid(self):
-        return uuid.uuid1().hex
+        return str(uuid.uuid1())
         
     def get_uuid(self, cr, uid, context=None):
         return self.get_entity(cr, uid, context=context).identifier
@@ -358,7 +358,7 @@ class Entity(osv.osv):
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
-        session = uuid.uuid4().hex
+        session = str(uuid.uuid1())
         if not context.get('offline_synchronization'):
             set_rules(entity.identifier)
         updates_count = prepare_update(session)
