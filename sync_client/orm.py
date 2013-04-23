@@ -157,20 +157,20 @@ extended_orm()
 
 
 
-class extended_orm_methods:
+def orm_method_overload(fn):
+    """
+    Wrapper method to override orm.orm classic methods
+    """
+    original_method = getattr(orm.orm, fn.func_name)
+    @functools.wraps(fn)
+    def wrapper(self, *args, **kwargs):
+        if self.pool.get(extended_orm._name) is not None:
+            return fn(self, original_method, *args, **kwargs)
+        else:
+            return original_method(self, *args, **kwargs)
+    return wrapper
 
-    def __methodoverload__(fn):
-        """
-        Wrapper method to override orm.orm classic methods
-        """
-        original_method = getattr(orm.orm, fn.func_name)
-        @functools.wraps(fn)
-        def wrapper(self, *args, **kwargs):
-            if self.pool.get(extended_orm._name) is not None:
-                return fn(self, original_method, *args, **kwargs)
-            else:
-                return original_method(self, *args, **kwargs)
-        return wrapper
+class extended_orm_methods:
 
     def get_model_ids(self, cr, uid, context=None):
         """
@@ -357,7 +357,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, sdrefs=%s. Too late for debugging, sorry!" % (self._name, sdrefs))
         return result if result_iterable else result.get(sdrefs[0], False)
 
-    @__methodoverload__
+    @orm_method_overload
     def create(self, original_create, cr, uid, values, context=None):
         id = original_create(self, cr, uid, values, context=context)
         if self._name not in MODELS_TO_IGNORE and (context is None or \
@@ -367,7 +367,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             modif_o2m(self, cr, uid, id, values, context=context)
         return id
 
-    @__methodoverload__
+    @orm_method_overload
     def write(self,original_write,cr,uid,ids,values,context=None):
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
@@ -417,7 +417,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 if parent:
                     generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name, send_to_parent_instances)
 
-    @__methodoverload__
+    @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         if not ids: return True
 
@@ -682,6 +682,5 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
 for symbol in filter(lambda sym: isinstance(sym, types.MethodType),
                      map(lambda label: getattr(extended_orm_methods, label),
-                         filter(lambda label: not label.startswith('__'),
-                                dir(extended_orm_methods)))):
+                         dir(extended_orm_methods))):
     setattr(orm.orm, symbol.func_name, symbol.im_func)

@@ -491,9 +491,6 @@ class sync_manager(osv.osv):
     """
         Data synchronization
     """
-    def _generate_session_id(self):
-        return uuid.uuid4().hex
-    
     @check_validated
     def get_model_to_sync(self, cr, uid, entity, context=None):
         """
@@ -501,9 +498,7 @@ class sync_manager(osv.osv):
             @param entity: string : uuid of the synchronizing entity
             @return tuple : (a, b, c):
                     a is True is if the call is succesfull, False otherwise
-                    b : if a is False, b is the error message
-                        if a is True b is the synchronization session_id
-                    c : is a list of dictionaries that contains all the rule 
+                    b : is a list of dictionaries that contains all the rule 
                         that apply for the synchronizing instance.
                         The format of the dict that contains a single rule definition
                         {
@@ -519,7 +514,7 @@ class sync_manager(osv.osv):
                     
         """
         res = self.pool.get('sync_server.sync_rule')._get_rule(cr, uid, entity, context=context)
-        return (True, self._generate_session_id(), res[1])
+        return (True, res[1])
         
     @check_validated
     def receive_package(self, cr, uid, entity, packet, context=None):

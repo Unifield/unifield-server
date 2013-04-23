@@ -133,7 +133,7 @@ class update_to_send(osv.osv):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
-    def create_update(self, cr, uid, rule_id, session_id, context={}):
+    def create_update(self, cr, uid, rule_id, session_id, sync_field='sync_date', context=None):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
 
@@ -142,12 +142,10 @@ class update_to_send(osv.osv):
             included_fields = eval(rule.included_fields or '[]') 
             if not 'id' in included_fields: 
                 included_fields.append('id')
-                
-            sync_field = context.get('usb_sync_update_push', False) and 'usb_sync_date' or 'sync_date'
 
             ids_to_compute = self.need_to_push(cr, uid,
                 self.search_ext(cr, uid, domain, context=context),
-                included_fields, context=context, sync_field=sync_field)
+                included_fields, sync_field=sync_field, context=context)
             if not ids_to_compute:
                 return 0
 
@@ -175,10 +173,10 @@ class update_to_send(osv.osv):
         def create_delete_update(self, rule, context):
             if not rule.can_delete:
                 return 0
-            
+
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context), [],
-                context=context)
+                self.search_deleted(cr, uid, [('module','=','sd')], context=context),
+                [], sync_field=sync_field, context=context)
 
             if not ids_to_delete:
                 return 0
@@ -197,8 +195,9 @@ class update_to_send(osv.osv):
             self.purge(cr, uid, ids_to_delete, context=context)
             return len(ids_to_delete)
 
-        update_context = dict(context, sync_update_creation=True)
+        update_context = dict(context or {}, sync_update_creation=True)
         obj = self.pool.get(rule.model)
+        assert obj, "Cannot find model %s of rule id=%d!" % (rule.model, rule.id)
         return (create_normal_update(obj, rule, update_context), create_delete_update(obj, rule, update_context))
 
     def create_package(self, cr, uid, session_id, packet_size, context=None):
@@ -234,17 +233,12 @@ class update_to_send(osv.osv):
         self._logger.debug("package created for update ids=%s" % ids_in_package)
         return (ids_in_package, data)
 
-    def sync_finished(self, cr, uid, update_ids, context=None):
-        
-        context = context or {}
-        sync_date_column = context.get('usb_sync_update_push') and 'usb_sync_date' or 'sync_date'
-        log_prefix = context.get('usb_sync_update_push') and 'USB ' or ''
-        
+    def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
         self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-            dict((update.sdref, {'version':update.version,sync_date_column: update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
+            dict((update.sdref, {'version':update.version,sync_field:update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
             context=context)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
-        self._logger.debug(_("%sPush finished: %d updates") % (log_prefix, len(update_ids)))
+        self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
     _order = 'id asc'
 
