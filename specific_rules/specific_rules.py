@@ -1451,6 +1451,10 @@ class stock_inventory_line(osv.osv):
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
         if product:
             product_obj = self.pool.get('product.product').browse(cr, uid, product)
+            if location_id:
+                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product, field_name='product_id', values=result, vals={'location_id': location_id})
+                if test:
+                    return result
             if product_obj.batch_management:
                 result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
             elif product_obj.perishable:
@@ -1468,10 +1472,6 @@ class stock_inventory_line(osv.osv):
         if vals.get('product_id', False):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
-            if location_id:
-                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product, field_name='product_id', values=result, vals={'location_id': location_id})
-                if test:
-                    return result
             if product.batch_management:
                 vals.update(hidden_batch_management_mandatory=True)
             elif product.perishable:
