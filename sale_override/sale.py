@@ -298,6 +298,7 @@ class sale_order(osv.osv):
                     for line in order.order_line:
                         res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
                         if test:
+                            res.setdefault('value', {}).update({'partner_order_id': False, 'partner_shipping_id': False, 'partner_invoice_id': False})
                             return res
 
         return res

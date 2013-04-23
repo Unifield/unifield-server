@@ -321,7 +321,7 @@ class sourcing_line(osv.osv):
                 if line.supplier and line.supplier.partner_type in ('external', 'esc'):
                     raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
 
-            if line.sale_order_state != 'cancel':
+            if line.state not in ('draft', 'cancel'):
                 # Check product constraints (no external supply, no storage...)
                 check_fnct = self.pool.get('product.product')._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)

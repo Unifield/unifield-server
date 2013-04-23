@@ -477,7 +477,18 @@ class purchase_order(osv.osv):
         
         if part:
             partner_obj = self.pool.get('res.partner')
+            product_obj = self.pool.get('product.product')
             partner = partner_obj.browse(cr, uid, part)
+            if ids:
+                # Check the restrction of product in lines
+                if ids:
+                    product_obj = self.pool.get('product.product')
+                    for order in self.browse(cr, uid, ids):
+                        for line in order.order_line:
+                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part})
+                            if test:
+                                res.setdefault('value', {}).update({'partner_address_id': False})
+                                return res
             if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
             elif ids and partner.partner_type == 'intermission':
