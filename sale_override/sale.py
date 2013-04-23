@@ -273,8 +273,9 @@ class sale_order(osv.osv):
         res = True
 
         for order in self.browse(cr, uid, ids, context=context):
-            if order.state not in ('draft', 'done', 'cancel'):
-                res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+
+        return res
     
     def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, *a, **b):
         '''
@@ -366,8 +367,6 @@ class sale_order(osv.osv):
 
         res = super(sale_order, self).create(cr, uid, vals, context)
         self._check_service(cr, uid, [res], vals, context=context)
-        # Check restrictions on line
-        self._check_restriction_line(cr, uid, res, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -396,9 +395,6 @@ class sale_order(osv.osv):
         self._check_service(cr, uid, ids, vals, context=context)
 
         res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
-
-        # Check restrictions on lines
-        self._check_restriction_line(cr, uid, ids, context=context)
 
         return res
 
@@ -1169,7 +1165,7 @@ class sale_order_line(osv.osv):
             context = {}
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.partner_id and line.order_id.state != 'done':
+            if line.order_id and line.order_id.partner_id:
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
                     return False
 
@@ -1377,9 +1373,6 @@ class sale_order_line(osv.osv):
                 name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
 
-        # Check constraints on lines
-        self._check_restriction_line(cr, uid, so_line_ids, context=context)
-            
         return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1397,8 +1390,6 @@ class sale_order_line(osv.osv):
             vals.update({'cost_price': vals.get('cost_price', False)})
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
-        # Check constraints on lines
-        self._check_restriction_line(cr, uid, ids, context=context)
 
         return res
 

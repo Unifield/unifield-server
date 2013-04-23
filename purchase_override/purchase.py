@@ -673,7 +673,6 @@ class purchase_order(osv.osv):
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
         res = super(purchase_order, self).wkf_confirm_order(cr, uid, ids, context=context)
-        self._check_restriction_line(cr, uid, ids, context=context)
         self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
         # CODE MOVED TO self.check_analytic_distribution()
         self.check_analytic_distribution(cr, uid, ids, context=context)

@@ -192,9 +192,6 @@ class tender(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
         obj_data = self.pool.get('ir.model.data')
 
-        # Check restriction on lines
-        self._check_restriction_line(cr, uid, ids, context=context)
-
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
             # check some supplier have been selected
@@ -927,7 +924,6 @@ class purchase_order(osv.osv):
         
     def rfq_sent(self, cr, uid, ids, context=None):
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
-        self._check_restriction_line(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, context=context):
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)

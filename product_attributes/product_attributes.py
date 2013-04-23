@@ -190,6 +190,14 @@ class product_country_restriction(osv.osv):
     
 product_country_restriction()
 
+class product_template(osv.osv):
+    _inherit = 'product.template'
+
+    _columns = {
+        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
+    }
+
+product_template()
 
 class product_attributes(osv.osv):
     _inherit = "product.product"
@@ -285,7 +293,6 @@ class product_attributes(osv.osv):
             context = {}
             
         for arg in args:
-            print arg
             if arg[0] == 'available_for_restriction' and arg[1] == '=' and arg[2]:
                 if isinstance(arg[2], dict) and arg[2].get('location_id'):
                     # Compute the constraint if a location is passed in vals
@@ -963,15 +970,6 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
-
-class product_template(osv.osv):
-    _inherit = 'product.template'
-
-    _columns = {
-        'state': fields.many2one('product.status', 'Status', help="Tells the user if he can use the product or not."),
-    }
-
-product_template()
 
 class product_deactivation_error(osv.osv_memory):
     _name = 'product.deactivation.error'

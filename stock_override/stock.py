@@ -274,9 +274,6 @@ class stock_picking(osv.osv):
 
         res = super(stock_picking, self).create(cr, uid, vals, context=context)
                 
-        # Check restrictions on lines
-        self._check_restriction_line(cr, uid, res, context=context)
-        
         return res
 
     
@@ -300,9 +297,6 @@ class stock_picking(osv.osv):
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
         
         res = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
-        
-        # Check restrictions on lines
-        self._check_restriction_line(cr, uid, ids, context=context)
         
         return res
     
@@ -842,8 +836,8 @@ class stock_move(osv.osv):
             context = {}
 
         for move in self.browse(cr, uid, ids, context=context):
-            if move.picking_id and move.picking_id.type == 'internal' and move.picking_id.state != 'done':
-                if not self.pool.get('product.product')._get_restriction_error(cr, uid, move.product_id.id, vals={'constraints': ['storage']}, context=context):
+            if move.picking_id and move.picking_id.type == 'internal':
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, move.product_id.id, vals={'constraints': {'location_id': move.location_dest_id}}, context=context):
                     return False
 
         return True
@@ -877,9 +871,6 @@ class stock_move(osv.osv):
         
         res = super(stock_move, self).create(cr, uid, vals, context=context)
         
-        # Check constraints on lines
-        self._check_restriction_line(cr, uid, res, context=context)
-        
         return res
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -907,10 +898,7 @@ class stock_move(osv.osv):
                     vals['date'] = vals.get('date_expected')
         
         res = super(stock_move, self).write(cr, uid, ids, vals, context=context)
-        
-        # Check constraints on lines
-        self._check_restriction_line(cr, uid, ids, context=context)
-        
+
         return res
     
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
