@@ -79,7 +79,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
             # This is to redirect to Employee Tree View
             context.update({'from': 'expat_employee_import'})
             
-            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'})
+            res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'created': created, 'updated': updated, 'total': processed, 'state': 'employee'}, context=context)
             
             return {
                 'name': 'Expat Employee Import Confirmation',

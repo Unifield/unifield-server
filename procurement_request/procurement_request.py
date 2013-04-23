@@ -264,11 +264,11 @@ class procurement_request(osv.osv):
         It is the action called on the activity of the workflow.
         '''
         obj_data = self.pool.get('ir.model.data')
-        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
-        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd3')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        nomen_manda_0 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]
+        nomen_manda_1 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]
+        nomen_manda_2 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]
+        nomen_manda_3 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         nb_lines = 0
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
@@ -490,9 +490,9 @@ class procurement_request_line(osv.osv):
         value = {'comment': comment}
         domain = {}
         obj_data = self.pool.get('ir.model.data')
-        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]
-        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]
-        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]
+        tbd_0 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]
+        tbd_1 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]
+        tbd_2 =  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]
         
         if comment and not product_id:
             value.update({'name': 'To be defined',

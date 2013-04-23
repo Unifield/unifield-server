@@ -1115,6 +1115,12 @@ class procurement_order(osv.osv):
         # Set the origin of the line with the origin of the Procurement order
         if procurement.origin:
             values['order_line'][0][2].update({'origin': procurement.origin})
+            
+        if procurement.tender_id:
+            if values.get('origin'):
+                values['origin'] = '%s;%s' % (values['origin'], procurement.tender_id.name)
+            else:
+                values['origin'] = procurement.tender_id.name
         
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
@@ -1145,11 +1151,12 @@ class procurement_order(osv.osv):
             line_values = values['order_line'][0][2]
             line_values.update({'order_id': purchase_ids[0],'origin': procurement.origin})
             po = self.pool.get('purchase.order').browse(cr, uid, purchase_ids[0], context=context)
-            # Update the origin of the PO with the origin of the procurement
-            if procurement.origin and po.origin and not re.search(procurement.origin, po.origin):
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s;%s' % (po.origin, procurement.origin)}, context=context)
-            elif not po.origin:
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': '%s' % (procurement.origin)}, context=context)
+            # Update the origin of the PO with the origin of the procurement 
+            # and tender name if exist
+            origins = set([po.origin, procurement.origin, procurement.tender_id and procurement.tender_id.name])
+            # Add different origin on 'Source document' field if the origin is nat already listed
+            origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
+            self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': origin}, context=context)
             
             if location_id:
                 self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=context)

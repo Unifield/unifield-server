@@ -148,7 +148,7 @@ class real_average_consumption(osv.osv):
     }
 
     _defaults = {
-        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
+        #'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'consumption.report'),
         'creation_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'activity_id': lambda obj, cr, uid, context: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')[1],
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
@@ -163,6 +163,18 @@ class real_average_consumption(osv.osv):
     _constraints = [
         (_check_active_product, "You cannot confirm this real consumption report because it contains a line with an inactive product", ['line_ids', 'created_ok']),
     ]
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Add name of the report at creation
+        '''
+        if not vals:
+            vals = {}
+
+        if not 'name' in vals:
+            vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
+
+        return super(real_average_consumption, self).create(cr, uid, vals, context=context)
 
     def change_cons_location_id(self, cr, uid, ids, context=None):
         '''
@@ -473,8 +485,8 @@ class real_average_consumption(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
 
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
@@ -683,8 +695,8 @@ class real_average_consumption_line(osv.osv):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             message = ''
             if vals.get('uom_id'):
                 if vals.get('uom_id') == tbd_uom:
@@ -1209,7 +1221,7 @@ class monthly_review_consumption_line(osv.osv):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             if vals.get('name'):
                 if vals.get('name') == tbd_product:
                     raise osv.except_osv(_('Warning !'), _('You have to define a valid product, i.e. not "To be define".'))

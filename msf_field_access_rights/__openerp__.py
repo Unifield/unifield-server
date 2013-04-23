@@ -35,7 +35,6 @@
         'views/view_model_fields_tree.xml',
         'menu/menu.xml',
         'data/groups.xml',
-        'data/users.xml',
         'security/ir.model.access.csv',
     ],
     "test": [
