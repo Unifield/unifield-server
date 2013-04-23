@@ -91,6 +91,8 @@ class account_commitment(osv.osv):
         # Add sequence
         sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        if not instance:
+            raise osv.except_osv(_('Error'), _('No instance found!'))
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance.id)], limit=1, context=context)
         if not journal_ids:
             raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
