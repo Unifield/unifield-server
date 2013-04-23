@@ -105,6 +105,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             # Lock is acquired, so don't put any code outside the try...catch!!
             self.sync_cursor = cr
             res = False
+            context = context or {}
             try:
                 # more information to the logger
                 def add_information(logger):
@@ -144,7 +145,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # ah... we can now call the function!
                 logger.switch(step, 'in-progress')
                 logger.write()
-                res = fn(self, cr, uid, *args, **kwargs)
+                res = fn(self, cr, uid, context=context, *args, **kwargs)
                 cr.commit()
 
                 # is the synchronization finished?
