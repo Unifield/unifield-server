@@ -57505,9 +57505,13 @@ msgstr "Un module qui ajoute des fabricants et des attributs sur la Fiche Produi
 msgid "Don't create stock.move for this line"
 msgstr "Ne créez pas de mvmnt de stock pour cette ligne"
 
-#. modules: account, register_accounting
+#. module: account
 #: model:ir.actions.act_window,name:account.action_bank_statement_tree
 #: model:ir.ui.menu,name:account.menu_bank_statement_tree
+msgid "Bank Registers"
+msgstr "Registres de Banque"
+
+#. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.action_bank_statement_periodic_tree
 msgid "Bank Statements"
 msgstr "Registres de Banque"
