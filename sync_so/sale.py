@@ -78,7 +78,6 @@ class sale_order_sync(osv.osv):
             line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id']})
             order_line.append((0, 0, line[2]))
         header_result['order_line'] = order_line
-        header_result['fo_created_by_po_sync'] = True
         
         default = {}
         default.update(header_result)
@@ -99,6 +98,10 @@ class sale_order_sync(osv.osv):
                     if po_ids:
                         # link the FO loan to this PO loan
                         po_object.write(cr, uid, po_ids, vals , context=context)
+                        
+                        # only here that we consider the FO as counterpart, which will not generate a new counterpart!
+                        self.write(cr, uid, [so_id], {'fo_created_by_po_sync': True} , context=context)
+                        
                 
         # reset confirmed_delivery_date to all lines
         so_line_obj = self.pool.get('sale.order.line')

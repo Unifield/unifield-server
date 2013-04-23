@@ -34,17 +34,27 @@ class so_po_common(osv.osv_memory):
     _description = "Common methods for SO - PO"
     
     def get_partner_id(self, cr, uid, partner_name, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
         ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', partner_name)], context=context)
-        if ids:
-            return ids[0]
-        return self.pool.get('res.partner').create(cr, uid, {'name' : partner_name}, context=context)
+        if not ids:
+            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+        return ids[0]
+    
     def get_partner_address_id(self, cr, uid, partner_id, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
         partner = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
-        if partner.address:
-            return partner.address[0].id
-        else:
-            return self.pool.get('res.partner.address').create(cr, uid, {'name' : partner.name, 'partner_id' : partner.id} ,context=context)
+        if not partner.address:
+            raise Exception("The partner address is not found in the system. The operation is thus interrupted.")
+        return partner.address[0].id
+    
     def get_price_list_id(self, cr, uid, partner_id, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
         part = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
         return part.property_product_pricelist and part.property_product_pricelist.id or False
 
@@ -423,10 +433,13 @@ class so_po_common(osv.osv_memory):
         return line_result 
 
     def get_uom_id(self, cr, uid, uom_name, context=None):
+        if not context:
+            context = {}
+        context.update({'active_test': False})
         ids = self.pool.get('product.uom').search(cr, uid, [('name', '=', uom_name)], context=context)
-        if ids:
-            return ids[0]
-        return self.pool.get('product.uom').create(cr, uid, {'name' : uom_name}, context=context)
+        if not ids:
+            raise Exception("The Unit of Measure %s is not found in the system. The operation is thus interrupted." % uom_name)
+        return ids[0]
 
     def get_location(self, cr, uid, partner_id, context=None):
         '''
