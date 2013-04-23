@@ -124,7 +124,7 @@ class update_to_send(osv.osv):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
-    def create_update(self, cr, uid, rule_id, session_id, sync_field='sync_date', context={}):
+    def create_update(self, cr, uid, rule_id, session_id, sync_field='sync_date', context=None):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
 
@@ -186,8 +186,9 @@ class update_to_send(osv.osv):
             self.purge(cr, uid, ids_to_delete, context=context)
             return len(ids_to_delete)
 
-        update_context = dict(context, sync_update_creation=True)
+        update_context = dict(context or {}, sync_update_creation=True)
         obj = self.pool.get(rule.model)
+        assert obj, "Cannot find model %s of rule id=%d!" % (rule.model, rule.id)
         return (create_normal_update(obj, rule, update_context), create_delete_update(obj, rule, update_context))
 
     def create_package(self, cr, uid, session_id, packet_size, context=None):

@@ -136,7 +136,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
                     else:
-                        kwargs['offline_synchronization'] = True
+                        context['offline_synchronization'] = True
 
                     # more information
                     add_information(logger)
@@ -358,7 +358,7 @@ class Entity(osv.osv):
         
         entity = self.get_entity(cr, uid, context)
         session = uuid.uuid4().hex
-        if context.get('offline_synchronization'):
+        if not context.get('offline_synchronization'):
             set_rules(entity.identifier)
         updates_count = prepare_update(session)
         if updates_count > 0:
