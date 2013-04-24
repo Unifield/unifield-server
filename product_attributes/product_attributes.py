@@ -557,8 +557,6 @@ class product_attributes(osv.osv):
         '''
         res, error_msg = self._test_restriction_error(cr, uid, ids, vals=vals, context=context)
 
-        print res, error_msg, context
-
         if res:
             raise osv.except_osv(_('Error'), error_msg)
             return False
