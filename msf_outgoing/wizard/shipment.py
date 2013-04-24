@@ -37,6 +37,7 @@ class shipment_wizard(osv.osv_memory):
         'product_moves_shipment_create' : fields.one2many('stock.move.memory.shipment.create', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacks' : fields.one2many('stock.move.memory.shipment.returnpacks', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.shipment.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
+        'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.shipment.additionalitems', 'wizard_id', 'Additional Items'),
      }
 #     todo
 #    generic select all deselcted all based on fields_get
@@ -242,8 +243,15 @@ class shipment_wizard(osv.osv_memory):
 
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
-            </group>
-        </form>"""%button
+            </group>"""%button
+        if step == 'create':
+            _moves_fields.update({
+                                'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'}, 
+                                })
+            _moves_arch_lst += """
+            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form" string="Additional Items"></field>
+            """
+        _moves_arch_lst += """</form>"""
         
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
