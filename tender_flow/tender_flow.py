@@ -563,7 +563,7 @@ class tender_line(osv.osv):
         result = {'value': {}}
         if product_id:
             # Test the compatibility of the product with a tender
-            result, test = prod_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values=result, vals={'constraints': ['external']}, context=context)
+            result, test = prod_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values=result, vals={'constraints': ['external', 'esc', 'internal']}, context=context)
             if test:
                 return result
 
