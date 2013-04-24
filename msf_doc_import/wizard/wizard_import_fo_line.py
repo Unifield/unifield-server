@@ -185,6 +185,10 @@ class wizard_import_fo_line(osv.osv_memory):
                     })
                     # we check consistency on the model of on_change functions to call for updating values
                     sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+
+                    # Check product restrictions
+                    product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id}, context=dict(context, noraise=False))
+ 
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
                     if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
