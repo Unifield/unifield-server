@@ -624,6 +624,11 @@ class stock_move(osv.osv):
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                                                              loc_dest_id, address_id)
 
+        if prod_id and parent_type in ('in', 'out'):
+            prod_obj = self.pool.get('product.product')
+            # Test the compatibility of the product with a stock move
+            result, test = prod_obj._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'constraints': ['picking']})
+
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prodlot_id'] = False
         # reset the hidden flag

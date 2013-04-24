@@ -513,7 +513,7 @@ class product_attributes(osv.osv):
 
             if product.no_external and product.no_esc and product.no_internal and 'picking' in constraints:
                 error = True
-                msg = _('any exchanged')
+                msg = _('be exchanged')
                 st_cond = product.state.no_external or product.state.no_esc or product.state.no_internal
             elif product.no_external and 'external' in constraints:
                 error = True
