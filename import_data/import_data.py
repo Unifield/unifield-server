@@ -137,10 +137,8 @@ class import_data(osv.osv_memory):
         while reader and obj['ignore'] > i:
             i += 1
             r = reader.next()
-            print r[0].encode('utf-8')
             if r and r[0].split('.')[0] in fields_def:
                 headers = r[:]
-
 
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
