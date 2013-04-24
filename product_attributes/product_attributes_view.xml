@@ -39,7 +39,8 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//page[@string='Accounting']//group[2]" position="replace" >
-                        <group colspan="2">
+                        <field name="vat_ok" invisible="1" />
+                        <group colspan="2" attrs="{'invisible': [('vat_ok', '=', False)]}" >
                             <separator string="Purchase Taxes" colspan="4"/>
                             <field name="supplier_taxes_id" nolabel="1" colspan="4" attrs="{'readonly':[('purchase_ok','=',0)]}"/>
                         </group>

@@ -240,6 +240,23 @@
             </field>
         </record>
 
+        <record id="partner_vat_management_form_view" model="ir.ui.view">
+            <field name="name">partner.vat.management.form.view</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_partner_property_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//field[@name='property_account_position']" position="before">
+                        <field name="vat_ok" invisible="1" />
+                    </xpath>
+                    <xpath expr="//field[@name='property_account_position']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
     </data>
 </openerp>
 

@@ -139,6 +139,17 @@ class product_attributes(osv.osv):
                 return []
             
         return [('id', 'in', ids)] 
+
+    def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return True if the system configuration VAT management is set to True
+        '''
+        vat_ok = self.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok
+        res = {}
+        for id in ids:
+            res[id] = vat_ok
+
+        return res
     
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -229,6 +240,7 @@ class product_attributes(osv.osv):
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.boolean(string='Controlled substance'),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
     
     _defaults = {
