@@ -1321,6 +1321,10 @@ class stock_inventory(osv.osv):
                     raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
                     raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
+
+                # Check constraints on lines
+                product_obj._get_restriction_error(cr, uid, [line.product_id.id], {'location_id': line.location_id.id}, context=context)
+
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
@@ -1439,6 +1443,13 @@ class stock_inventory_line(osv.osv):
             # do nothing
             result.setdefault('value', {}).update({'product_qty': 0.0,})
             return result
+
+        if product and location_id:
+            product_obj = self.pool.get('product.product')
+            result, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='location_id', values=result, vals={'location_id': location_id})
+            if test:
+                return result
+
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
