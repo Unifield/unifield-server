@@ -150,7 +150,8 @@ class wizard_import_tender_line(osv.osv_memory):
                     tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
 
                     # Check product restrictions
-                    product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['external', 'internal', 'esc']}, context=dict(context, noraise=False))
+                    if p_value.get('default_code'):
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['external', 'internal', 'esc']}, context=dict(context, noraise=False))
 
                     vals['tender_line_ids'].append((0, 0, to_write))
                     tender_line_obj.create(cr, uid, to_write, context)

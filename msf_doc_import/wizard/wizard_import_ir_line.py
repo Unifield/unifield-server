@@ -185,7 +185,8 @@ class wizard_import_ir_line(osv.osv_memory):
                     sale_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
 
                     # Check product restrictions
-                    product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['consumption']}, context=dict(context, noraise=False))
+                    if p_value.get('default_code'):
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['consumption']}, context=dict(context, noraise=False))
 
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))

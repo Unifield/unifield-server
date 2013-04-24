@@ -451,7 +451,7 @@ class procurement_request_line(osv.osv):
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
-            # Test the compatibility of the product with a the partner of the order
+            # Test the compatibility of the product with a consumption report
             res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': value}, vals={'constraints': 'consumption'}, context=context)
             if test:
                 return res
