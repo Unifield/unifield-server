@@ -98,7 +98,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
         def wrapper(self, cr, uid, context=None, *args, **kwargs):
             
             context = context or {}
-                kwargs['context'] = {}
 
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
