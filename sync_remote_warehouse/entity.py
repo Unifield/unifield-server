@@ -277,12 +277,15 @@ class Entity(osv.osv):
         uploaded_file = base64.decodestring(uploaded_file_base64)
         zip_stream = StringIO(uploaded_file)
         zip_file = ZipFile(zip_stream, 'r')
-        
-        # loop through csv files in zip, parse them and add them to import_data dictionary to be processed later
         update_received_model_name = 'sync_remote_warehouse.update_received'
         
         if '%s.csv' % update_received_model_name not in zip_file.namelist():
             raise osv.except_osv(_('USB Synchronisation Data Not Found'), _('The zip file must contain a file called sync_remote_warehouse.update_received.csv which contains the data for the USB Synchronisation. Please check your file...'))
+            
+        # get rules from zip file and import them
+        rules = zip_file.read('rules.txt')
+        rules = eval(rules)
+        self.pool.get('sync.client.rule').save(cr, uid, rules, context=context)
             
         # get CSV object to read data
         csv_file = zip_file.read('%s.csv' % update_received_model_name)
