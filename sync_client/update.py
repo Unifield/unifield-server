@@ -431,7 +431,7 @@ class update_received(osv.osv):
                 versions.append( (xml_id, update.version) )
 
                 #1 conflict detection
-                if self._conflict(cr, uid, update.sdref, context=context):
+                if self._conflict(cr, uid, update.sdref, update.version, context=context):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
                     logs[update.id] = sync_log(self, "Conflict detected!", 'warning', data=(update.id, update.fields, update.values)) + "\n"
                     #TODO manage other conflict rules here (tfr note)
@@ -568,22 +568,17 @@ class update_received(osv.osv):
         
         return (fields, values)
     
-    def _conflict(self, cr, uid, sdref, context=None):
+    def _conflict(self, cr, uid, sdref, next_version, context=None):
         ir_data = self.pool.get('ir.model.data')
-        data_ids = ir_data.find_sd_ref(cr, uid, sdref, context=context)
-        if not data_ids: return False
-        data_rec = ir_data.browse(cr, uid, data_ids, context=context)
-        if not data_rec: #no ir.model.data => no record in db => no conflict
-            return False
-        if not data_rec.sync_date: #never synced => conflict
-            return True
-        if not data_rec.last_modification: #never modified not possible but just in case
-            return False
-        if data_rec.sync_date < data_rec.last_modification: #modify after synchro conflict
-            return True
-        if data_rec.version < data_rec.version: #not a higher version conflict
-            return True
-        return False
+        data_id = ir_data.find_sd_ref(cr, uid, sdref, context=context)
+        # no data => no record => no conflict
+        if not data_id: return False
+        data_rec = ir_data.browse(cr, uid, data_id, context=context)
+        return (not data_rec.is_deleted                                       # record doesn't exists => no conflict
+                and (not data_rec.sync_date                                   # never synced => conflict
+                     or (data_rec.last_modification                           # if last_modification exists, try the next
+                         and data_rec.sync_date < data_rec.last_modification) # modification after synchro => conflict
+                     or next_version < data_rec.version))                     # next version is lower than current version
     
     def _check_and_replace_missing_id(self, cr, uid, values, fields, fallback, message, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')

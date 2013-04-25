@@ -267,11 +267,12 @@ class Entity(osv.osv):
         # run updates
         updates_ran = None
         run_error = ''
-        context_usb = dict(copy.deepcopy(context), update_received_model='sync_remote_warehouse.update_received')
+        context.update({'update_received_model':'sync_remote_warehouse.update_received'})
+        
         if not import_error:
             try:
                 entity_pool = self.pool.get('sync.client.entity')
-                updates_ran = entity_pool.execute_updates(cr, uid, logger=None, context=context_usb)
+                updates_ran = entity_pool.execute_updates(cr, uid, context=context)
                 self._update_usb_sync_step(cr, uid, 'pull_performed')
             except AttributeError, e:
                 run_error = '%s: %s' % (type(e), str(e))

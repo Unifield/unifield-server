@@ -26,7 +26,7 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
         res = proxy.get_model_to_sync(entity.identifier)
         if not res[0]: raise Exception, res[1]
-        newrules = res[2]
+        newrules = res[1]
         rules = self.pool.get('sync.client.rule')
         old_rules_ids = set(rules.search(cr, uid, ['|',('active','=',True),('active','=',False)], context=context))
         rules.save(cr, uid, newrules, context=context)
