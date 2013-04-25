@@ -95,7 +95,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
     def decorator(fn):
 
         @functools.wraps(fn)
-        def wrapper(self, cr, uid, context=None, *args, **kwargs):
+        def wrapper(self, cr, uid, *args, **kwargs):
 
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
@@ -105,7 +105,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             # Lock is acquired, so don't put any code outside the try...catch!!
             self.sync_cursor = cr
             res = False
-            context = context or {}
+            context = kwargs['context'] = dict(kwargs.get('context', {}))
             try:
                 # more information to the logger
                 def add_information(logger):
@@ -120,7 +120,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # we have to make the log
                 if make_log:
                     # get a whole new logger from sync.monitor object
-                    context = dict(context)
                     context['logger'] = logger = \
                         self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
 
@@ -146,11 +145,11 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # ah... we can now call the function!
                 logger.switch(step, 'in-progress')
                 logger.write()
-                res = fn(self, cr, uid, context=context, *args, **kwargs)
+                res = fn(self, cr, uid, *args, **kwargs)
                 cr.commit()
 
                 # is the synchronization finished?
-                if make_log:
+                if need_connection and make_log:
                     entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     proxy.end_synchronization(entity.identifier)
@@ -340,7 +339,6 @@ class Entity(osv.osv):
 
         return True
 
-    
     def create_update(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -355,22 +353,20 @@ class Entity(osv.osv):
         
         def prepare_update(session):
             updates_count = 0
-            ids = self.pool.get('sync.client.rule').search(cr, uid, [], context=context)
-            for rule_id in ids:
+            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [], context=context):
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
         session = str(uuid.uuid1())
-        if not context.get('offline_synchronization'):
-            set_rules(entity.identifier)
+        set_rules(entity.identifier)
         updates_count = prepare_update(session)
         if updates_count > 0:
             self.write(cr, uid, [entity.id], {'session_id' : session})
         return updates_count
         #state init => update_send
-        
+
     def send_update(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')

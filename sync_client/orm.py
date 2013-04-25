@@ -59,9 +59,10 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
 
         #rule_id = rules.search(cr, uid, [('model.model','=',obj._name)], limit=1)[0]
         #rules.write(cr, uid, [rule_id], {'can_delete':True})
+        # TODO broken: the server should know it's personal rule id
         rule_id = rules.create(cr, uid, {
             'model' : obj._name,
-            'server_id' : 0,
+            'server_id' : 0, # wrong!
             'included_fields' : '[]',
             'can_delete' : True,
         })
