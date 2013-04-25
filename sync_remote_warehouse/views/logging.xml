@@ -16,9 +16,7 @@
 		            <field name="sequence"/>
             		<field name="create_date" string="Update Create Date / Time" />
 		            <field name="execution_date"/>
-                    <field name="batch_create_date" />
 		            <field name="run"/>
-            		<field name="usb" />
 		          </group>
 		          <group col="2" colspan="2">
 		            <separator string="Record" colspan="2"/>
@@ -72,7 +70,6 @@
 		          <field name="sequence"/>
 		          <field name="source"/>
 		          <field name="model"/>
-		          <field name="usb" />
 		          <field name="sdref"/>
 		          <field name="is_deleted"/>
 		          <field name="create_date"/>
@@ -93,7 +90,6 @@
 		          <field name="source"/>
 		          <field name="model"/>
 		          <field name="sequence"/>
-            		<filter string="CP &lt;--&gt; RW Sync" context="{'group_by':'usb'}"/>
 		          <newline/>
 		          <field name="create_date"/>
 		          <field name="execution_date"/>
@@ -148,10 +144,8 @@
 		            <field name="rule_id"/>
 		            <field name="session_id"/>
 		            <field name="owner"/>
-                    <field name="batch_create_date" />
 		            <group colspan="2" col="6">
 		              <field name="sent"/>
-            		  <field name="usb" />
 		              <group colspan="4" col="2">
 		                <field name="sent_date"/>
 		              </group>
@@ -183,7 +177,6 @@
 		          <field name="fancy_version"/>
 		          <field name="rule_id"/>
 		          <field name="sent"/>
-            		<field name="usb" />
 		          <field name="sent_date"/>
 		        </tree>
             </field>
@@ -214,8 +207,6 @@
 		                    domain="[]" context="{'group_by':'sync_date'}"/>
 		            <filter string="Record" icon="terp-partner"
 		                    domain="[]" context="{'group_by':'sdref'}"/>
-            		<filter string="CP &lt;--&gt; RW Sync" 
-            				domain="[]" context="{'group_by':'usb'}"/>
 		          </group>
 		        </search>
             </field>
@@ -246,8 +237,6 @@
 		            <field name="identifier"/>
 		            <field name="source"/>
 		            <field name="run"/>
-		            <field name="usb" />
-		            <field name="batch_create_date" />
 		            <field name="create_date"/>
 		            <field name="execution_date"/>
 		          </group>
@@ -284,7 +273,6 @@
 		          <field name="source"/>
 		          <field name="remote_call"/>
 		          <field name="run"/>
-		          <field name="usb" />
 		          <field name="create_date"/>
 		          <field name="execution_date"/>
 		        </tree>
@@ -314,7 +302,6 @@
 		                    domain="[]" context="{'group_by':'remote_call'}"/>
 		            <filter string="Sequence" icon="terp-accessories-archiver"
 		                    domain="[]" context="{'group_by':'sequence'}"/>
-                    <filter string="CP &lt;--&gt; RW Sync" context="{'group_by':'usb'}"/>
 		          </group>
 		        </search>
             
@@ -344,9 +331,7 @@
 		          <field name="identifier"/>
 		          <field name="destination_name"/>
 		          <field name="sent_date"/>
-		          <field name="batch_create_date" />
 		          <field name="sent"/>
-		          <field name="usb" />
 		          <group colspan="2" col="1">
 		            <separator string="Call"/>
 		            <field name="remote_call" nolabel="1"/>
@@ -370,7 +355,6 @@
 		          <field name="destination_name"/>
 		          <field name="remote_call"/>
 		          <field name="sent"/>
-		          <field name="usb" />
 		          <field name="sent_date"/>
 		       </tree>
             </field>
@@ -397,7 +381,6 @@
 		                    domain="[]" context="{'group_by':'destination_name'}"/>
 		            <filter string="Call" icon="terp-personal"
 		                    domain="[]" context="{'group_by':'remote_call'}"/>
-                    <filter string="CP &lt;--&gt; RW Sync" context="{'group_by':'usb'}"/>
 		          </group>
 		        </search>
             </field>
