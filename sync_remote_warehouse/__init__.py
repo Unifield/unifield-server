@@ -1,6 +1,5 @@
 import ir_model_data
 import entity
-import sync_client
 import logging_models
 import sync_monitor
 import wizard

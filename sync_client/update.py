@@ -133,9 +133,12 @@ class update_to_send(osv.osv):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
-    def create_update(self, cr, uid, rule_id, session_id, sync_field='sync_date', context=None):
+    def create_update(self, cr, uid, rule_id, session_id, context=None):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
+        
+        context = context or {}
+        sync_field = context.get('last_sync_date_field', 'sync_date')
 
         def create_normal_update(self, rule, context):
             domain = eval(rule.domain or '[]')
@@ -578,7 +581,7 @@ class update_received(osv.osv):
             return False
         if data_rec.sync_date < data_rec.last_modification: #modify after synchro conflict
             return True
-        if update.version < data_rec.version: #not a higher version conflict
+        if data_rec.version < data_rec.version: #not a higher version conflict
             return True
         return False
     

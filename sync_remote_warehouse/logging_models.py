@@ -26,6 +26,9 @@ class UpdateToSend(osv.osv):
     _defaults = {
         'usb': True,
     }
+    
+    def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
+        return super(UpdateToSend, self).sync_finished(cr, uid, update_ids, sync_field="usb_sync_date", context=context)
 
 UpdateToSend()
 

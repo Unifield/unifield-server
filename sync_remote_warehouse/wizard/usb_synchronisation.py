@@ -42,6 +42,9 @@ class usb_synchronisation(osv.osv_memory):
     
     def pull(self, cr, uid, ids, context=None):
         
+        context = context or {}
+        context.update({'offline_synchronization' : True})
+        
         wizard = self.browse(cr, uid, ids[0])
         
         if not wizard.pull_data:
@@ -75,11 +78,14 @@ class usb_synchronisation(osv.osv_memory):
         
     def validate(self, cr, uid, ids, context=None):
         
+        context = context or {}
+        context.update({'offline_synchronization' : True})
+        
         wizard = self.browse(cr, uid, ids[0])
         if wizard.usb_sync_step != 'pull_performed':
             raise osv.except_osv(_('Cannot Validated'), _('We cannot Validate the last Pull until we have performed a Pull'))
         
-        self.pool.get('sync.client.entity').usb_validate_update(cr, uid, wizard.pull_data, context=context)
+        self.pool.get('sync.client.entity').usb_validate_pull(cr, uid, wizard.pull_data, context=context)
                 
         vals = {
             'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
@@ -89,6 +95,9 @@ class usb_synchronisation(osv.osv_memory):
         return self.write(cr, uid, ids, vals, context=context)
         
     def push(self, cr, uid, ids, context=None):
+        
+        context = context or {}
+        context.update({'offline_synchronization' : True})
         
         wizard = self.browse(cr, uid, ids[0])
         if wizard.usb_sync_step not in ['pull_validated', 'first_sync']:

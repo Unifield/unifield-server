@@ -96,6 +96,8 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
         @functools.wraps(fn)
         def wrapper(self, cr, uid, context=None, *args, **kwargs):
+            
+            context = context or {}
 
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
@@ -148,7 +150,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 cr.commit()
 
                 # is the synchronization finished?
-                if make_log:
+                if need_connection and make_log:
                     entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     proxy.end_synchronization(entity.identifier, context)
@@ -341,7 +343,7 @@ class Entity(osv.osv):
     def create_update(self, cr, uid, context=None):
         context = context or {}
         updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
-
+        rule_search_domain = context.get('create_update_rule_search_domain', [])
         
         def set_rules(identifier):
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
@@ -351,9 +353,8 @@ class Entity(osv.osv):
             self.pool.get('sync.client.rule').save(cr, uid, res[1], context=context)
         
         def prepare_update(session):
-            search_domain = [('usb','=',usb)]
             updates_count = 0
-            ids = self.pool.get('sync.client.rule').search(cr, uid, search_domain, context=context)
+            ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
             for rule_id in ids:
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
@@ -363,9 +364,6 @@ class Entity(osv.osv):
         session = str(uuid.uuid1())
         if not context.get('offline_synchronization'):
             set_rules(entity.identifier)
-        else:
-            import random
-            session = str(random.random()) #self.pool.get("sync.server.sync_manager")._generate_session_id()
             
         updates_count = prepare_update(session)
         if updates_count > 0:
