@@ -23,17 +23,23 @@ from osv import fields, osv
 
 class account_target_costcenter(osv.osv):
     _name = 'account.target.costcenter'
+    _rec_name = 'cost_center_id'
     
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True),
-        'cost_center_id': fields.many2one('account.analytic.account', 'Cost Center', domain=[('category', '=', 'OC')], required=True),
+        'cost_center_id': fields.many2one('account.analytic.account', 'Code', domain=[('category', '=', 'OC')], required=True),
+        'cost_center_name': fields.related('cost_center_id', 'name', string="Name", readonly=True, type="text"),
         'is_target': fields.boolean('Is target'),
+        'is_top_cost_center': fields.boolean('Top cost centre for budget consolidation'),
+        'is_po_fo_cost_center': fields.boolean('Cost centre picked for PO/FO reference'),
         'parent_id': fields.many2one('account.target.costcenter', 'Parent'),
         'child_ids': fields.one2many('account.target.costcenter', 'parent_id', 'Children'),
     }
     
     _defaults = {
         'is_target': False,
+        'is_top_cost_center': False,
+        'is_po_fo_cost_center': False,
         'parent_id': False,
     }
 
@@ -45,9 +51,49 @@ class account_target_costcenter(osv.osv):
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
+
+    def _check_top_cost_center(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('cost_center_id', '=', line.cost_center_id.id),('is_top_cost_center', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    def _check_top_cost_center_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('instance_id', '=', line.instance_id.id),('is_top_cost_center', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    def _check_po_fo_cost_center(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('cost_center_id', '=', line.cost_center_id.id),('is_po_fo_cost_center', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
+
+    def _check_po_fo_cost_center_unicity(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        for line in self.browse(cr, uid, ids, context=context):
+            bad_ids = self.search(cr, uid, [('instance_id', '=', line.instance_id.id),('is_po_fo_cost_center', '=', True)])
+            if len(bad_ids) and len(bad_ids) > 1:
+                return False
+        return True
     
     _constraints = [
         (_check_target, 'This cost centre is already defined as target in another proprietary instance.', ['is_target', 'cost_center_id', 'instance_id']),
+        (_check_top_cost_center, 'This cost centre is already defined as the budget consolidation in another proprietary instance.', ['is_top_cost_center', 'cost_center_id', 'instance_id']),
+        (_check_top_cost_center_unicity, 'Another cost centre is already defined as the budget consolidation in this proprietary instance.', ['is_top_cost_center', 'cost_center_id', 'instance_id']),
+        (_check_po_fo_cost_center, 'This cost centre is already defined as the PO/FO reference in another proprietary instance.', ['is_po_fo_cost_center', 'cost_center_id', 'instance_id']),
+        (_check_po_fo_cost_center_unicity, 'Another cost centre is already defined as the PO/FO reference in this proprietary instance.', ['is_po_fo_cost_center', 'cost_center_id', 'instance_id']),
     ]
     
     def create(self, cr, uid, vals, context={}):

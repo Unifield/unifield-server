@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv, fields
-
 import time
 
 from tools.translate import _
@@ -207,7 +206,7 @@ class stock_move(osv.osv):
                             integrity_check = []
                             for move in self.browse(cr, uid, move_ids, context=context):
                                 # move from draft picking or standard picking
-                                if (move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
+                                if (move.product_qty != 0.00 and not move.processed_stock_move and move.picking_id.subtype == 'picking' and not move.picking_id.backorder_id and move.picking_id.state == 'draft') or (move.picking_id.subtype == 'standard') and move.picking_id.type == 'out':
                                     integrity_check.append(move)
                             # return the first one matching
                             if integrity_check:
@@ -387,7 +386,6 @@ class stock_picking(osv.osv):
         values = kwargs.get('values')
         assert values is not None, 'missing values'
         return values
-
     
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         '''
@@ -524,16 +522,15 @@ class stock_picking(osv.osv):
 
                         # if split happened, we update the corresponding OUT move
                         if out_move_id:
+                            # UF-1690 : Remove the location_dest_id from values
+                            out_values = values.copy()
+                            if out_values.get('location_dest_id', False):
+                                out_values.pop('location_dest_id')
                             second_assign_moves.append(out_move_id)
                             if update_out:
-                                # UF-1690 : Remove the location_dest_id from values
-                                out_values = values.copy()
-                                if out_values.get('location_dest_id', False):
-                                    out_values.pop('location_dest_id')
                                 move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                             elif move.product_id.id != partial['product_id']:
-                                # no split but product changed, we have to update the corresponding out move
-                                move_obj.write(cr, uid, [out_move_id], values, context=context)
+                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
                                 # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
                                 update_out = True
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
@@ -631,7 +628,7 @@ class stock_picking(osv.osv):
                 move_obj.write(cr, uid, done_moves, {'picking_id': backorder_id}, context=context)
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id}, context=context)
+                self.write(cr, uid, [pick.id], {'backorder_id': backorder_id,'cd_from_bo':values.get('cd_from_bo',False)}, context=context)
                 self.action_move(cr, uid, [backorder_id])
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)

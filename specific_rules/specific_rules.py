@@ -483,7 +483,7 @@ class stock_move(osv.osv):
             # complete hidden flags - needed if not created from GUI
             product = prod_obj.browse(cr, uid, vals.get('product_id'), context=context)
 
-            if vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+            if not context.get('non_stock_noupdate') and vals.get('picking_id') and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
                 pick_bro = self.pool.get('stock.picking').browse(cr, uid, vals.get('picking_id'))
                 id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
                 if vals.get('sale_line_id'):
@@ -1352,6 +1352,7 @@ class stock_inventory_line(osv.osv):
     add mandatory or readonly behavior to prodlot
     '''
     _inherit = 'stock.inventory.line'
+    _rec_name = 'product_id'
     
     def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
         '''

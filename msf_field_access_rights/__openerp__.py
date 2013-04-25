@@ -35,7 +35,6 @@
         'views/view_model_fields_tree.xml',
         'menu/menu.xml',
         'data/groups.xml',
-        'data/users.xml',
         'security/ir.model.access.csv',
     ],
     "test": [
@@ -44,8 +43,8 @@
     "depends": [
         'msf_instance',
     ],
+    'active': False,
     'installable': True,
-    'active': True,
 #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

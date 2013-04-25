@@ -242,16 +242,22 @@ class account_move_line_compute_currency(osv.osv):
                     # search other line from same move in order to update its amount
                     other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
                     # Update addendum line
+                    partner_txt = ''
                     sql = """
                         UPDATE account_move_line
-                        SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
+                        SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s, partner_txt=%s
                         WHERE id=%s
                     """
-                    cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
+                    cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, partner_txt or '', tuple([al.id])])
                     # Update partner line
                     if isinstance(other_line_ids, (int, long)):
                         other_line_ids = [other_line_ids]
-                    cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple(other_line_ids)])
+                    for o in self.pool.get('account.move.line').browse(cr, uid, other_line_ids):
+                        if o.reconcile_total_partial_id:
+                            data = self.pool.get('account.move.reconcile').name_get(cr, uid, o.reconcile_total_partial_id.id)
+                            if data and data[0] and data[0][1]:
+                                partner_txt = data[0][1]
+                        cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, partner_txt or '', tuple([o.id])])
                     # Update analytic lines
                     analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
                     al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total,}, context=context)

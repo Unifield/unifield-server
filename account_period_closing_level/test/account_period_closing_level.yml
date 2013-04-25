@@ -61,7 +61,7 @@
     assert res_wizard.get('res_model', False) == 'wizard.confirm.closing.period', "No res_model found! Should be 'wizard.confirm.closing.period'"
     
     wiz_obj = self.pool.get('wizard.confirm.closing.period')
-    wizard = wiz_obj.create(cr, uid, {})
+    wizard = wiz_obj.create(cr, uid, {}, context={})
     if wizard:
         wiz_obj.button_confirm(cr, uid, [wizard], {'period_id': period.id})
     

@@ -325,7 +325,7 @@
 % for o in objects:
 <Worksheet ss:Name="${"%s"%( o.code and o.code.replace('/', '_') +'_'+str(o.id) or 'Sheet1')|x}">
 
-<Table ss:ExpandedColumnCount="15" ss:ExpandedRowCount="29" x:FullColumns="1" x:FullRows="1">
+<Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="0" ss:Width="102.75"/>
 <Column ss:AutoFitWidth="0" ss:Width="92.25"/>
 <Column ss:AutoFitWidth="0" ss:Width="87.75"/>

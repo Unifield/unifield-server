@@ -56,6 +56,7 @@
              'test/delivery_mechanism-process-split-less.yml', #D
              'test/delivery_mechanism-process-split-less-split-more-on-backorder.yml', #E
              'test/delivery_mechanism-process-change-product-same-qty.yml', #F
+             'test/delivery_mechanism-process-change-product-less-qty.yml', #K
              'test/delivery_mechanism-process-split-less-split-more-on-backorder-NO-OUT.yml', # in A
              'test/delivery_mechanism-process-split-less-cancel-backorder-update-out.yml', #G
              'test/delivery_mechanism-process-split-less-cancel-backorder.yml', #H

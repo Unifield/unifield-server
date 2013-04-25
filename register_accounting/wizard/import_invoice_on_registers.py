@@ -164,7 +164,7 @@ class wizard_import_invoice(osv.osv_memory):
                 'amount_currency': total,
                 'currency_id': ordered_lines[key][0].currency_id.id,
             })
-        self.write(cr, uid, [wizard.id], {'state': 'open', 'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]})
+        self.write(cr, uid, [wizard.id], {'state': 'open', 'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]}, context=context)
         return {
          'type': 'ir.actions.act_window',
          'res_model': 'wizard.import.invoice',

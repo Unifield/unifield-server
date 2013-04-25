@@ -61,7 +61,7 @@
                     <field name="hide_column_error_ok" invisible="1" />
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': [('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
-                        <tree string="Products" editable="top" colors="red: consumed_qty>0 and to_correct_ok or (consumed_qty>0 and batch_mandatory and not prodlot_id) or (consumed_qty>0 and date_mandatory and not expiry_date) or consumed_qty>0 and consumed_qty>product_qty or inactive_product;blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok">
+                    <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
                             <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False}"
                                 domain="[('list_ids', '=', parent.sublist_id)]" />
@@ -207,10 +207,10 @@
                 <form string="Monthly consumption">
                     <separator colspan="4" string="General information" />
                     <field name="period_from" on_change="period_change(period_from, period_to)" />
-                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import) -->
+                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_doc_import) -->
                     <button name="import_fmc" string="Import a file" icon="gtk-leave-fullscreen" type="object" colspan="2" />
                     <field name="period_to" on_change="period_change(period_from, period_to)" />
-                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_supply_doc_import) -->
+                    <!-- uf-1344 => we replace the import export of csv by import export of xml file (Excel compatibility). (see msf_doc_import) -->
                     <button name="export_fmc" string="Export lines" icon="terp-mail-forward" type="object" colspan="2" />
                     <field name="cons_location_id" />
                     <newline />

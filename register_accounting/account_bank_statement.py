@@ -1366,6 +1366,8 @@ class account_bank_statement_line(osv.osv):
             move_obj.post(cr, uid, move_ids, context=context)
             
             # STEP 3 : Reconcile
+            # UTP-574 Avoid problem of reconciliation for pending payments
+            context.update({'pending_payment': True})
             if total_payment:
                 move_line_obj.reconcile_partial(cr, uid, move_lines+[x.id for x in st_line.imported_invoice_line_ids], context=context)
             else:
@@ -1673,6 +1675,18 @@ class account_bank_statement_line(osv.osv):
         Write some statement lines into some account move lines in draft state.
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
+
+    def button_delete(self, cr, uid, ids, context=None):
+        """
+        Delete given ids
+        """
+        forbidden = []
+        for absl in self.browse(cr, uid, ids, context=context):
+            if absl.state != 'draft':
+                forbidden.append(absl.id)
+        if forbidden:
+            raise osv.except_osv(_('Warning'), _('You can only delete draft lines!'))
+        return self.unlink(cr, uid, ids, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """

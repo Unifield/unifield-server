@@ -28,7 +28,7 @@
                     <field name="debit" sum="Total Func. Debit"/>
                     <field name="credit" sum="Total Func. Credit"/>
                     <field name="functional_currency_id"/>
-                    <field name="reconcile_total_partial_id"/>
+                    <field name="reconcile_txt"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -123,7 +123,7 @@
                     <field name="debit" sum="Total Functional Debit" readonly="1"/>
                     <field name="credit" sum="Total Functional Credit" readonly="1"/>
                     <field name="functional_currency_id" readonly="1"/>
-                    <field name="reconcile_total_partial_id" readonly="1"/>
+                    <field name="reconcile_txt" readonly="1"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -135,20 +135,6 @@
         <field name="view_id" ref="view_move_line_tree_editable"/>
         <field name="act_window_id" ref="account.action_account_moves_all_a"/>
     </record>
-
-    <!-- Journal Entries Search (filter) -->
-        <record model="ir.ui.view" id="msf_instance_view_account_move_line_filter">
-            <field name="name">inherit.view.account.move.line.filter</field>
-            <field name="model">account.move.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_move_line_filter" />
-            <field name="arch" type="xml">
-                <xpath expr="//field[@name='journal_id']" position="replace">
-                    <field name="journal_id" context="{'journal_id':self, 'visible_id': self, 'normal_view':False}"/>
-                    <field name="journal_type"/>
-                </xpath>
-            </field>
-        </record>
 
     </data>
 </openerp>

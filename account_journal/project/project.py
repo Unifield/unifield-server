@@ -49,6 +49,7 @@ class account_analytic_journal(osv.osv):
             ('purchase','Purchase'),
             ('sale','Sale'),
             ('situation','Situation'),
+            ('migration', 'Migration'),
         ]
 
     _columns = {
