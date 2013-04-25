@@ -3,3 +3,4 @@ import entity
 import logging_models
 import sync_monitor
 import wizard
+import sync_client_rule

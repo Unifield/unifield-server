@@ -2,7 +2,7 @@ from osv import osv, fields
 
 class SyncClientRule(osv.osv):
     _inherit = 'sync.client.rule'
-    _name = 'sync.client.rule'
+
     _columns = {
         # Specifies that this rule is a rule for USB synchronisations
         'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?', required=True),
@@ -15,5 +15,11 @@ class SyncClientRule(osv.osv):
         'usb': False,
         'direction_usb': 'bidirectional',
     }
+    
+    def _where_calc(self, cr, user, domain, active_test=True, context=None):
+        domain = list(domain or [])
+        if not filter(lambda e:hasattr(e, '__iter__') and e[0] == 'usb', domain):
+            domain.insert(0, ('usb','=',False))
+        return super(SyncClientRule, self)._where_calc(cr, user, domain, active_test=active_test, context=context)
     
 SyncClientRule()

@@ -66,7 +66,7 @@ class local_rule(osv.osv):
 
     def save(self, cr, uid, data_list, context=None):
         # Get the whole ids of existing and active rules
-        remaining_ids = set(self.search(cr, uid, [], context=context))
+        remaining_ids = set(self.search(cr, uid, ['|',('usb','=',False),('usb','=',True)], context=context))
 
         for vals in (dict(data) for data in data_list):
             assert 'server_id' in vals, "The following rule doesn't seem to have the required field server_id: %s" % vals
@@ -80,7 +80,7 @@ class local_rule(osv.osv):
             elif 'active' not in vals:
                 vals['active'] = True
 
-            ids = self.search(cr, uid, [('server_id','=',vals['server_id']),'|',('active','=',True),('active','=',False)], context=context)
+            ids = self.search(cr, uid, [('server_id','=',vals['server_id']), '|',('active','=',True),('active','=',False), '|', ('usb','=',True), ('usb','=',False)], context=context)
             if ids:
                 remaining_ids.discard(ids[0])
                 self.write(cr, uid, ids, vals, context=context)
