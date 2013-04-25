@@ -16,7 +16,8 @@
                     <field name="picked_rate" widget="progressbar"/>
                     <!-- Remove invoiced rate because it's always N/A 
                     <field name="invoiced_rate" widget="progressbar"/>-->
-                    <field name="amount_untaxed" sum="Total Tax Excluded"/>
+                    <field name="vat_ok" invisible="1" />
+                    <field name="amount_untaxed" sum="Total Tax Excluded" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="procurement_request" invisible="1"/>
                     <field name="state" string="State" />

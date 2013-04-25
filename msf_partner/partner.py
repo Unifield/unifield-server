@@ -187,6 +187,7 @@ class res_partner(osv.osv):
     _defaults = {
         'manufacturer': lambda *a: False,
         'partner_type': lambda *a: 'external',
+        'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
 
