@@ -5,9 +5,10 @@ from cStringIO import StringIO
 import csv
 import copy
 from tools.translate import _
-from sync_client import sync_client 
+from sync_client import sync_process
 import os
 from datetime import datetime
+import uuid
 
 class Entity(osv.osv):
     _inherit = 'sync.client.entity'
@@ -149,12 +150,32 @@ class Entity(osv.osv):
         
         return (total_updates, total_deletions)
     
-    @sync_client.sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
+    def create_usb_update(self, cr, uid, context=None):
+        context = context or {}
+        logger = context.get('logger')
+        updates = self.pool.get('sync_remote_warehouse.update_to_send')
+        
+        def prepare_update(session):
+            updates_count = 0
+            ids = self.pool.get('sync.client.rule').search(cr, uid, [('usb','=',True)], context=context)
+            for rule_id in ids:
+                updates_count += sum(updates.create_update(
+                    cr, uid, rule_id, session, context=context))
+            return updates_count
+        
+        entity = self.get_entity(cr, uid, context)
+        session = str(uuid.uuid1())
+            
+        updates_count = prepare_update(session)
+        if updates_count > 0:
+            self.write(cr, uid, [entity.id], {'session_id' : session})
+        return updates_count
+    
+    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
     def usb_push_update(self, cr, uid, ids, logger=None, context=None):
         
         context = context or {}
         context.update({
-            'create_update_rule_search_domain': [('usb','=',True)], 
             'update_to_send_model': 'sync_remote_warehouse.update_to_send', 
             'last_sync_date_field': 'usb_sync_date'
         })
@@ -165,7 +186,7 @@ class Entity(osv.osv):
             raise osv.except_osv('Cannot Push', 'We cannot perform a Push until we have Validated the last Pull')
         
         # update rules then create updates_to_send
-        updates_count = entity_pool.create_update(cr, uid, context=context)
+        updates_count = self.create_usb_update(cr, uid, context=context)
         cr.commit() # commit because last thing done in create_update is set the session_id
         
         if not updates_count:
@@ -184,7 +205,7 @@ class Entity(osv.osv):
         
         return updates, deletions
     
-    @sync_client.sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
+    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
     def usb_validate_push(self, cr, uid, ids, logger=None, context=None):
         """
         Update update_to_send records with new usb_sync_date
@@ -205,7 +226,7 @@ class Entity(osv.osv):
         # mark latest updates as sync finished (set usb_sync_date) and clear entity session_id
         update_pool.sync_finished(cr, uid, update_ids, sync_field='usb_sync_date', context=context)
     
-    @sync_client.sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
+    @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
     def usb_pull_update(self, cr, uid, uploaded_file_base64, logger=None, context=None):
         """
         Takes the base64 for the uploaded zip file, unzips the csv files, parses them and inserts them into the database.
@@ -280,7 +301,7 @@ class Entity(osv.osv):
         # increment usb sync step and return results
         return (len(data), import_error, updates_ran, run_error)
     
-    @sync_client.sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
+    @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
     def usb_validate_pull(self, cr, uid, ids, logger=None, context=None):
         """
         Change state to pull_validated to let usb sync process continue

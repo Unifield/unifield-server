@@ -95,9 +95,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
     def decorator(fn):
 
         @functools.wraps(fn)
-        def wrapper(self, cr, uid, context=None, *args, **kwargs):
-            
-            context = context or {}
+        def wrapper(self, cr, uid, *args, **kwargs):
 
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
@@ -107,10 +105,12 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             # Lock is acquired, so don't put any code outside the try...catch!!
             self.sync_cursor = cr
             res = False
+            context = kwargs['context'] = dict(kwargs.get('context', {}))
             try:
                 # more information to the logger
                 def add_information(logger):
                     entity = self.get_entity(cr, uid, context=kwargs['context'])
+                    entity = self.get_entity(cr, uid, context=context)
                     if entity.session_id:
                         logger.append(_("Update session: %s") % entity.session_id)
 
@@ -121,8 +121,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # we have to make the log
                 if make_log:
                     # get a whole new logger from sync.monitor object
-                    kwargs['context']['logger'] = logger = \
-                        self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=kwargs['context'])
+                    context['logger'] = logger = self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=kwargs['context'])
 
                     if need_connection:
                         # Check if connection is up
@@ -340,13 +339,11 @@ class Entity(osv.osv):
 
         return True
 
-    
     def create_update(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
-        rule_search_domain = context.get('create_update_rule_search_domain', [])
-        
+
         def set_rules(identifier):
             proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
             res = proxy.get_model_to_sync(identifier)
@@ -356,23 +353,20 @@ class Entity(osv.osv):
         
         def prepare_update(session):
             updates_count = 0
-            ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
-            for rule_id in ids:
+            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [], context=context):
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
         session = str(uuid.uuid1())
-        if not context.get('offline_synchronization'):
-            set_rules(entity.identifier)
-            
+        set_rules(entity.identifier)
         updates_count = prepare_update(session)
         if updates_count > 0:
             self.write(cr, uid, [entity.id], {'session_id' : session})
         return updates_count
         #state init => update_send
-        
+
     def send_update(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
@@ -385,7 +379,7 @@ class Entity(osv.osv):
         def create_package():
             return updates.create_package(cr, uid, entity.session_id, max_packet_size)
 
-        def add_and_mark_as_done(ids, packet):
+        def send_package(ids, packet):
             res = proxy.receive_package(entity.identifier, packet)
             if not res[0]:
                 raise Exception, res[1]
@@ -401,7 +395,7 @@ class Entity(osv.osv):
         logger_index = None
         res = create_package()
         while res:
-            imported_package, deleted_package = add_and_mark_as_done(*res)
+            imported_package, deleted_package = send_package(*res)
             imported += imported_package
             deleted += deleted_package
             if logger:
