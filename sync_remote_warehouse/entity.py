@@ -41,12 +41,14 @@ class Entity(osv.osv):
         entity = entity_pool.get_entity(cr, uid)
         return entity_pool.write(cr, uid, entity.id, {'usb_sync_step': step})
     
-    def create_update_zip(self, cr, uid, logger=None, context=None):
+    def create_update_zip(self, cr, uid, context=None):
         """
         Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
         """
         
         csv_contents = []
+        context = context or {}
+        logger = context.get('logger', None)
         
         def create_package():
             return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
@@ -88,6 +90,28 @@ class Entity(osv.osv):
             
             self.pool.get('sync_remote_warehouse.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
             return (len(packet['load']), len(packet['unload']))
+        
+        _rules_serialization_mapping = {
+            'id' : 'server_id',
+            'name' : 'name',
+            'owner_field' : 'owner_field',
+            'model' : 'model',
+            'domain' : 'domain',
+            'sequence_number' : 'sequence_number',
+            'included_fields' : 'included_fields',
+            'can_delete' : 'can_delete',
+            'usb' : 'usb',
+            'active': 'active',
+        }
+    
+        def _serialize_rule(rule_pool, cr, uid, ids, context=None):
+            rules_data = []
+            for rule in rule_pool.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in _rules_serialization_mapping.items()
+                ))
+            return rules_data
 
         # get number of update to process
         updates_todo = self.pool.get('sync_remote_warehouse.update_to_send').search(cr, uid, [('sent','=',False)], count=True, context=context)
@@ -130,6 +154,16 @@ class Entity(osv.osv):
             for data_row in csv_contents:
                 csv_writer.writerow(data_row)
                 
+        # create rules file file
+        rule_pool = self.pool.get('sync.client.rule')
+        rule_ids = rule_pool.search(cr, uid, [('usb','=',True)])
+        rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
+        rules_file_name = "rules.txt"
+        
+        rules_file = open(rules_file_name, "w")
+        rules_file.write(str(rules_serialized))
+        rules_file.close()
+                
         # compress csv file into zip
         zip_file_name = 'usb_sync_data.zip'
         
@@ -138,6 +172,7 @@ class Entity(osv.osv):
             
         with ZipFile(zip_file_name, 'w') as zip_file:
             zip_file.write(csv_file_name)
+            zip_file.write(rules_file_name)
                 
         # add to entity object
         zip_base64 = ''
@@ -147,6 +182,7 @@ class Entity(osv.osv):
         # attach file to entity and delete 
         self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
         os.remove(zip_file_name)
+        os.remove(rules_file_name)
         
         return (total_updates, total_deletions)
     
@@ -192,7 +228,7 @@ class Entity(osv.osv):
         if not updates_count:
             return 0
         
-        # convert updates into downloadable zip
+        # add updates and rules to downloadable zip 
         updates, deletions = entity_pool.create_update_zip(cr, uid, context=context)
         cr.commit()
         
