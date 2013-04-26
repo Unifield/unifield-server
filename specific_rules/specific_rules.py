@@ -1368,6 +1368,12 @@ class stock_inventory_line(osv.osv):
     '''
     _inherit = 'stock.inventory.line'
     _rec_name = 'product_id'
+
+    def onchange_uom_qty(self, cr, uid, ids, product_uom, product_qty):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, 'product_qty')
     
     def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
         '''
