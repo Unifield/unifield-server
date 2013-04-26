@@ -605,6 +605,72 @@
         </para>
 
 
+        <section>
+            <blockTable colWidths="306.0,40.0,40.0,306.0, 40.0,40.0" style="LinesTable2" repeatRows="1" >
+
+
+                <tr >
+                    <td>
+                        <para style="TextInformation3" alignment="CENTER">Additional items</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation3" alignment="CENTER">Quantity</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation3" alignment="CENTER">UOM</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation3" alignment="CENTER">Comment</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation3" alignment="CENTER">Volume</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation3" alignment="RIGHT">Weight</para>
+                    </td>
+                </tr>
+
+
+                <tr>
+                    [[ repeatIn(get_additional_items(objects), 'line') ]] 
+
+                    <td>
+                        <para style="LinesBlue">[[ getadditional_items_name(line) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ getadditional_items_qty(line) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ getadditional_items_uom(line) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue">[[ getadditional_items_comment(line) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ getadditional_items_volume(line) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LinesBlue" alignment="RIGHT">[[ getadditional_items_weight(line) ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+            <blockTable colWidths="732.0,40.0" style="ItemsTitle2">
+                <tr>
+                    <td>
+                        <para style="TextInformation3" alignment="CENTER">T O T A L</para>
+                    </td>
+                    <td>
+                        <para style="TextInformation4" alignment="RIGHT">[[ getadditional_items_getTotKg() ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+        </section>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+
         <blockTable colWidths="772.0" style="ItemsTitle4" keepWithNext="1">
             <tr>
                 <td>
@@ -612,7 +678,6 @@
                 </td>
             </tr>
         </blockTable>
-
  
         <blockTable colWidths="388.0,384.0" style="ItemsTitle3" keepWithNext="1">
             <tr>
