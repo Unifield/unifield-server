@@ -40,7 +40,13 @@ class usb_synchronisation(osv.osv_memory):
         'push_file_visible': False,
     }
     
+    def _check_usb_instance_type(self, cr, uid, context):
+        if not self._get_entity(cr, uid, context).usb_instance_type:
+            raise osv.except_osv(_('Set USB Instance Type First'), _('You have not yet set a USB Instance Type for this instance. Please do this first by going to Synchronization > Registration > Setup USB Synchronisation'))
+    
     def pull(self, cr, uid, ids, context=None):
+        
+        self._check_usb_instance_type(cr, uid, context)
         
         context = context or {}
         context.update({'offline_synchronization' : True})
@@ -77,6 +83,8 @@ class usb_synchronisation(osv.osv_memory):
         return self.write(cr, uid, ids, vals, context=context)
         
     def push(self, cr, uid, ids, context=None):
+        
+        self._check_usb_instance_type(cr, uid, context)
         
         context = context or {}
         context.update({'offline_synchronization' : True})
