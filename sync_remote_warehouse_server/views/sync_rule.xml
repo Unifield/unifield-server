@@ -24,5 +24,27 @@
                 </field>
             </field>
         </record>
+        
+        <record model="ir.ui.view" id="sync_server_sync_rule_tree_view_rw">
+            <field name="name">sync_rule.tree.rw</field>
+            <field name="model">sync_server.sync_rule</field>
+            <field name="inherit_id" ref="sd.sync_server_sync_rule_tree_view" />
+            <field name="arch" type="xml">
+                <field name="active" position="after">
+                    <field name="usb" string="USB" />
+                </field>  
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="sync_server_sync_rule_search_view_rw">
+            <field name="name">sync_rule.search.rw</field>
+            <field name="model">sync_server.sync_rule</field>
+            <field name="inherit_id" ref="sd.sync_server_data_rule_search_view" />
+            <field name="arch" type="xml">
+                <filter name="all" position="after">
+                    <field name="usb"  />
+                </filter>  
+            </field>
+        </record>
     </data>
 </openerp>
