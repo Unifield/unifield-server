@@ -584,6 +584,7 @@
 											colspan="2"
 											 />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                         	string="Unit Of Measure"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	colspan="2"/>
@@ -857,6 +858,7 @@
                                         	colspan="2"
                                         	 />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                         	string="Unit Of Measure"
                                         	attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                         	colspan="2"
