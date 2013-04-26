@@ -91,17 +91,17 @@ class sale_order_sync(osv.osv):
                 ref = po_info.origin
                 if ref:
                     name = self.browse(cr, uid, so_id, context).name
-                    vals = {'origin': name}
                     ref = source + "." + ref
                     po_object = self.pool.get('purchase.order')
                     po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
-                    if po_ids:
+                    
+                    # in both case below, the FO become counter part
+                    if po_ids: # IF the PO Loan has already been created, if not, just update the value reference, then when creating the PO loan, this value will be updated 
                         # link the FO loan to this PO loan
-                        po_object.write(cr, uid, po_ids, vals , context=context)
-                        
-                        # only here that we consider the FO as counterpart, which will not generate a new counterpart!
+                        po_object.write(cr, uid, po_ids, {'origin': name}, context=context)
                         self.write(cr, uid, [so_id], {'fo_created_by_po_sync': True} , context=context)
-                        
+                    else:
+                        self.write(cr, uid, [so_id], {'origin': ref, 'fo_created_by_po_sync': True} , context=context)
                 
         # reset confirmed_delivery_date to all lines
         so_line_obj = self.pool.get('sale.order.line')

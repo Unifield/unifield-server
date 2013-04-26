@@ -133,7 +133,21 @@ class purchase_order_sync(osv.osv):
         
         # Set the original PO to "split" state -- cannot do anything with this original PO, and update the partner_ref
         partner_ref = so_po_common.get_full_original_fo_ref(source, so_info.name)
-        res_id = self.write(cr, uid, po_id, {'state' : 'split', 'active': False, 'partner_ref': partner_ref} , context=context)
+        self.write(cr, uid, po_id, {'state' : 'split', 'active': False, 'partner_ref': partner_ref} , context=context)
+        
+        # if it is a loan type, then update the source 
+        if 'order_type' in header_result:
+            if header_result['order_type'] == 'loan':
+                # UTP-392: In the push flow, the FO counterpart could be created first by the sync, then the original PO will be created
+                # so in this case, when creating the PO, the FO counterpart must be linked to the new split PO
+                name = self.browse(cr, uid, res_id, context).partner_ref # get the partner_ref from Coordo
+                so_object = self.pool.get('sale.order')
+                so_ids = so_object.search(cr, uid, [('origin', '=', name)], context=context) # search the existing FO counterpart
+                if so_ids and so_ids[0]: # if exist, then update the link to it with this new split PO
+                    name = so_object.browse(cr, uid, so_ids[0], context).name
+                    self.write(cr, uid, [res_id], {'origin': name}, context=context)
+                    so_object.write(cr, uid, so_ids, {'origin': False} , context=context) # reset this origin value of the FO counterpart back to null
+        
         return res_id
 
     def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
