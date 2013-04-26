@@ -8,8 +8,7 @@
             <field name="arch" type="xml">
                 <form string="Setup Remote Warehouse or Central Platform">
                 	<label colspan="4" string="This wizard lets you mark this OpenERP instance as a Remote Warehouse or Central Platform. It can only be done once and is irreversble! Below, please choose the date and time that the Central Platform database was backed up to provide the seed database for the Remote Warehouse. This is important, as any data before this time will not be synchronized (As it is, in theory, already in the RW database)." />
-                	<field name="rw" attrs="{'readonly': [('cp','=',True)], 'required': [('rw','=',False)]}" />
-                	<field name="cp" attrs="{'readonly': [('rw','=',True)], 'required': [('cp','=',False)]}" />
+                	<field name="usb_instance_type" required="1" />
                     <field name="clone_date" required="1" colspan="4" />
                     <group col="4" colspan="4">
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>

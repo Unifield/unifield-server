@@ -15,8 +15,7 @@ class Entity(osv.osv):
 
     _columns = {
         # used to determine which sync rules to use 
-        'is_remote_warehouse': fields.boolean('Remote Warehouse?'),
-        'is_central_platform': fields.boolean('Central Platform?'),
+        'usb_instance_type': fields.selection((('',''),('central_platform','Central Platform'),('remote_warehouse','Remote Warehouse')), string='USB Instance Type'),
         
         # used to ignore all data older than this date when syncing as it is already in the db
         'clone_date': fields.datetime('Backup Date And Time', help='The date that the Central Platform database was backed up to provide the seed data for the Remote Warehouse'),
@@ -31,6 +30,7 @@ class Entity(osv.osv):
     
     _defaults = {
         'usb_sync_step': 'first_sync',
+        'usb_instance_type': '',
     }
     
     IMPORT_ERROR_NOT_CSV = 'Not a CSV file'
