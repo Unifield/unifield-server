@@ -21,8 +21,8 @@ class Entity(osv.osv):
         # used to ignore all data older than this date when syncing as it is already in the db
         'clone_date': fields.datetime('Backup Date And Time', help='The date that the Central Platform database was backed up to provide the seed data for the Remote Warehouse'),
         
-        # the step of the synchronisation process - first_sync, pull_performed, pull_validated, push_performed
-        'usb_sync_step': fields.selection((('first_sync','First Synchronisation'), ('pull_performed','Pull Performed'), ('pull_validated', 'Pull Validated'), ('push_performed', 'Push Performed')), 'USB Synchronisation Step'), 
+        # the step of the synchronisation process - first_sync, pull_performed, push_performed
+        'usb_sync_step': fields.selection((('first_sync','First Synchronisation'), ('pull_performed','Pull Performed'), ('push_performed', 'Push Performed')), 'USB Synchronisation Step'), 
         
         # used to make sure user does not try to import old data
         'usb_last_push_date': fields.datetime('Last Push Date', help='The date and time of the last Push'),
@@ -218,7 +218,7 @@ class Entity(osv.osv):
         entity_pool = self.pool.get('sync.client.entity')
         entity = entity_pool.get_entity(cr, uid, context)
         
-        if entity.usb_sync_step not in ['pull_validated', 'first_sync']:
+        if entity.usb_sync_step not in ['pull_performed', 'first_sync']:
             raise osv.except_osv('Cannot Push', 'We cannot perform a Push until we have Validated the last Pull')
         
         # update rules then create updates_to_send
@@ -251,7 +251,7 @@ class Entity(osv.osv):
         entity = entity_pool.get_entity(cr, uid, context)
         
         # check step
-        if entity.usb_sync_step != 'pull_validated':
+        if entity.usb_sync_step != 'pull_performed':
             raise osv.except_osv('Cannot Validated', 'We cannot Validate the Push until we have performed one')
         
         # get session id and latest updates
@@ -339,20 +339,5 @@ class Entity(osv.osv):
     
         # increment usb sync step and return results
         return (len(data), import_error, updates_ran, run_error)
-    
-    @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
-    def usb_validate_pull(self, cr, uid, ids, logger=None, context=None):
-        """
-        Change state to pull_validated to let usb sync process continue
-        """
-        entity_pool = self.pool.get('sync.client.entity')
-        entity = entity_pool.get_entity(cr, uid, context)
-        
-        # check step
-        if entity.usb_sync_step != 'pull_performed':
-            raise osv.except_osv('Cannot Validated', 'We cannot Validate the last Pull until we have performed a Pull')
-        
-        # increment usb sync step
-        self._update_usb_sync_step(cr, uid, 'pull_validated')
         
 Entity()
