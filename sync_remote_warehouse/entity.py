@@ -49,6 +49,8 @@ class Entity(osv.osv):
         csv_contents = []
         context = context or {}
         logger = context.get('logger', None)
+        if logger:
+            logger_index = logger.append()
         
         def create_package():
             return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
@@ -88,6 +90,7 @@ class Entity(osv.osv):
                     True,
                 ])
             
+            # mark updates_to_send as sent and return number of records processed
             self.pool.get('sync_remote_warehouse.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
             return (len(packet['load']), len(packet['unload']))
         
@@ -118,12 +121,15 @@ class Entity(osv.osv):
         if updates_todo == 0:
             return 0, 0
         
+        if logger:
+            logger.replace(logger_index, _('Updates to package: %d' % updates_todo))
+            logger.write()
+        
         # prepare some variables and create the first package
         max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
         entity = self.get_entity(cr, uid, context=context)
 
         total_updates, total_deletions = 0, 0
-        logger_id = None
         package = create_package()
         
         while package:
@@ -136,59 +142,69 @@ class Entity(osv.osv):
             
             # update the log entry with the new total
             if logger:
-                if logger_id is None: logger_id = logger.append()
-                logger.replace(logger_id, _("USB Push in progress with %d updates and %d deletions processed out of %d total") % (total_updates, total_deletions, updates_todo))
+                logger.replace(logger_index, _("Updates packaged: %d updates and %d deletions of %d total") % (total_updates, total_deletions, updates_todo))
                 logger.write()
                 
             # create next package
             package = create_package()
 
-        # finished all packages so 
+        # finished all packages so update logger
         if logger and (total_updates or total_deletions):
-            logger.replace(logger_id, _("USB Push prepared with %d updates and %d deletions equating to %d") % (total_updates, total_deletions, (total_updates + total_deletions)))
+            logger.replace(logger_index, _("Update packaging complete: %d updates and %d deletions = total of %d") % (total_updates, total_deletions, (total_updates + total_deletions)))
             
         # create csv file
-        csv_file_name = 'sync_remote_warehouse.update_received.csv'
-        with open(csv_file_name, 'wb') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-            for data_row in csv_contents:
-                csv_writer.writerow(data_row)
-                
-        # create rules file file
-        rule_pool = self.pool.get('sync.client.rule')
-        rule_ids = rule_pool.search(cr, uid, [('usb','=',True)])
-        rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
-        rules_file_name = "rules.txt"
-        
-        rules_file = open(rules_file_name, "w")
-        rules_file.write(str(rules_serialized))
-        rules_file.close()
-                
-        # compress csv file into zip
-        zip_file_name = 'usb_sync_data.zip'
-        
-        if os.path.exists(zip_file_name):
-            os.remove(zip_file_name)
+        try:
+            csv_file_name = 'sync_remote_warehouse.update_received.csv'
+            with open(csv_file_name, 'wb') as csv_file:
+                csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+                for data_row in csv_contents:
+                    csv_writer.writerow(data_row)
+                    
+            # create rules file 
+            rule_pool = self.pool.get('sync.client.rule')
+            rule_ids = rule_pool.search(cr, uid, [('usb','=',True)])
+            rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
+            rules_file_name = "rules.txt"
             
-        with ZipFile(zip_file_name, 'w') as zip_file:
-            zip_file.write(csv_file_name)
-            zip_file.write(rules_file_name)
+            rules_file = open(rules_file_name, "w")
+            rules_file.write(str(rules_serialized))
+            rules_file.close()
+                    
+            # compress csv file into zip
+            zip_file_name = 'usb_sync_data.zip'
+            
+            if os.path.exists(zip_file_name):
+                os.remove(zip_file_name)
                 
-        # add to entity object
-        zip_base64 = ''
-        with open(zip_file_name, "rb") as zip_file:
-            zip_base64 = base64.b64encode(zip_file.read())
-
-        # attach file to entity and delete 
-        self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
-        os.remove(zip_file_name)
-        os.remove(rules_file_name)
+            with ZipFile(zip_file_name, 'w') as zip_file:
+                zip_file.write(csv_file_name)
+                zip_file.write(rules_file_name)
+                    
+            # add to entity object
+            zip_base64 = ''
+            with open(zip_file_name, "rb") as zip_file:
+                zip_base64 = base64.b64encode(zip_file.read())
+    
+            # attach file to entity and delete 
+            self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
+            os.remove(zip_file_name)
+            os.remove(rules_file_name)
+        except Exception, e:
+            if logger:
+                logger.append(_('Error while creating zip file from updates_to_send: %s' % str(e)))
+                logger.switch('data_pull', 'failed')
+                
+        if logger:
+            logger.switch('status', 'ok')
+            logger.write()
         
         return (total_updates, total_deletions)
     
     def create_usb_update(self, cr, uid, context=None):
         context = context or {}
-        logger = context.get('logger')
+        logger = context.get('logger', None)
+        if logger:
+            logger_index = logger.append()
         updates = self.pool.get('sync_remote_warehouse.update_to_send')
         
         def prepare_update(session):
@@ -197,6 +213,12 @@ class Entity(osv.osv):
             for rule_id in ids:
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
+                if logger:
+                    logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
+            if not updates_count and logger:
+                logger.switch('status', 'ok')
+            if logger:
+                logger.write()
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
@@ -208,7 +230,7 @@ class Entity(osv.osv):
         return updates_count
     
     @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
-    def usb_push_update(self, cr, uid, ids, logger=None, context=None):
+    def usb_push_update(self, cr, uid, ids, context=None):
         
         context = context or {}
         context.update({
@@ -233,7 +255,7 @@ class Entity(osv.osv):
         cr.commit()
         
         # successful, so update records represented by updates_to_send with new usb_sync_date then clear session_id 
-        self.usb_validate_push(cr, uid, ids, logger=None, context=context)
+        self.usb_validate_push(cr, uid, ids, context=context)
         entity_pool.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         
         # increment usb sync step
@@ -242,7 +264,7 @@ class Entity(osv.osv):
         return updates, deletions
     
     @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
-    def usb_validate_push(self, cr, uid, ids, logger=None, context=None):
+    def usb_validate_push(self, cr, uid, ids, context=None):
         """
         Update update_to_send records with new usb_sync_date
         """
