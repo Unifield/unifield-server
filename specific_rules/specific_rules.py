@@ -273,8 +273,36 @@ class stock_warehouse_orderpoint(osv.osv):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
+        
+        
+    def onchange_uom_qty(self, cr, uid, ids, product_id=False, product_uom=False, product_min_qty=False, product_max_qty=False, res=None, context=None):
+        '''
+        Check the round of the quantity values according to the UoM
+        '''
+        if not res:
+            res = {}
+
+        if product_min_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_min_qty, 'product_min_qty', result=res)
+            print res
+
+        if product_max_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_max_qty, 'product_max_qty', result=res)
+
+        uom_id = product_uom
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
+
+        return res
     
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, product_uom=False, product_min_qty=False, product_max_qty=False, context=None):
         '''
         Add domain on UoM to have only UoM on the same category of the
         product standard UoM
@@ -301,23 +329,10 @@ class stock_warehouse_orderpoint(osv.osv):
         else:
             res.update({'domain': domain})
             
+        product_uom = res.get('value', {}).get('product_uom', product_uom)
+        res = self.onchange_uom_qty(cr, uid, ids, product_id, product_uom, product_min_qty, product_max_qty, res=res)
+            
         return res
-    
-    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
-        '''
-        Check if the UoM is convertible to product standard UoM
-        '''
-        if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-        
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-        
-            if product.uom_id.category_id.id != uom.category_id.id:
-                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
-        
-        return {}
         
         
 stock_warehouse_orderpoint()
@@ -338,10 +353,11 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_product':
                 product_id = arg[2]
-                if isinstance(product_id, (int, long)):
+                if product_id and isinstance(product_id, (int, long)):
                     product_id = [product_id]
-                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
-                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                if product_id:
+                    product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                    dom.append(('category_id', '=', product.uom_id.category_id.id))
                 
         return dom
     

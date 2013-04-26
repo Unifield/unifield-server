@@ -612,6 +612,7 @@
                     <button special="cancel" string="Close window" icon="gtk-cancel" />
               </form>
            </field>
-        </record>
+       </record>
+
     </data>
 </openerp>
