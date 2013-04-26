@@ -516,12 +516,15 @@ class product_uom(osv.osv):
 
         return float(Decimal(str(qty)).quantize(rounding_value, rounding=ROUND_UP))
 
-    def _change_round_up_qty(self, cr, uid, uom_id, qty, field_name, result=None, context=None):
+    def _change_round_up_qty(self, cr, uid, uom_id, qty, fields=[], result=None, context=None):
         '''
         Returns the error message and the rounded value
         '''
         if not result:
-            result = {}
+            result = {'value': {}, 'warning': {}}
+
+        if isinstance(fields, str):
+            fields = [fields]
 
         message = {'title': _('Bad rounding'),
                    'message': _('The quantity entered is not valid according to the rounding value of the UoM. The product quantity has been rounded to the highest good value.')}
@@ -529,7 +532,8 @@ class product_uom(osv.osv):
         if uom_id and qty:
             new_qty = self._compute_round_up_qty(cr, uid, uom_id, qty, context=context)
             if qty != new_qty:
-                result.setdefault('value', {}).update({field_name: new_qty})
+                for f in fields:
+                    result.setdefault('value', {}).update({f: new_qty})
                 result.setdefault('warning', {}).update(message)
 
         return result

@@ -621,7 +621,7 @@ class stock_move(osv.osv):
         '''
         Check the rounding of the qty according to the UoM
         '''
-        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, 'product_qty')
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'])
 
     def onchange_quantity(self, cr, uid, ids, product_id, product_qty,
                           product_uom, product_uos):
@@ -630,7 +630,7 @@ class stock_move(osv.osv):
         '''
         res = super(stock_move, self).onchange_quantity(cr, uid, ids, product_id, product_qty, product_uom, product_uos)
 
-        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, 'product_qty', res)
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'], res)
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
         '''
