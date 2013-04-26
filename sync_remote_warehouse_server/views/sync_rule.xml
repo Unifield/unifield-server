@@ -11,7 +11,7 @@
                 </field>  
                 <field name="direction" position="replace">
                 	<field name="direction" attrs="{'invisible': [('usb','=',True)]}" />
-                	<field name="direction_remote_warehouse" attrs="{'invisible': [('usb','=',False)]}" />
+                	<field name="direction_usb" attrs="{'invisible': [('usb','=',False)]}" />
                 </field>
                 <field name="applies_to_type" position="attributes">
                 	<attribute name="attrs">{'invisible': [('usb','=',True)]}</attribute>

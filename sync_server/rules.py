@@ -128,15 +128,11 @@ class sync_rule(osv.osv):
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
         'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
-        'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?'),
-        'direction_remote_warehouse': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization', required=True),
     }
 
     _defaults = {
         'active': False,
         'status': 'invalid',
-        'usb': False,
-        'direction_remote_warehouse': 'bidirectional',
     }
 
     _order = 'sequence_number asc,model_id asc'

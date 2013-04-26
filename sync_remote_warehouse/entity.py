@@ -104,6 +104,7 @@ class Entity(osv.osv):
             'can_delete' : 'can_delete',
             'usb' : 'usb',
             'active': 'active',
+            'direction_usb' : 'direction_usb',
         }
     
         def _serialize_rule(rule_pool, cr, uid, ids, context=None):
@@ -159,10 +160,10 @@ class Entity(osv.osv):
                 for data_row in csv_contents:
                     csv_writer.writerow(data_row)
                     
-            # create rules file if instance is central platform
+            # create rules file to send to remote warehouse if instance is central platform
             if entity.usb_instance_type == 'central_platform': 
                 rule_pool = self.pool.get('sync.client.rule')
-                rule_ids = rule_pool.search(cr, uid, [('usb','=',True)])
+                rule_ids = rule_pool.search(cr, uid, [('usb','=',True),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
                 rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
                 rules_file_name = "rules.txt"
                 
@@ -215,16 +216,26 @@ class Entity(osv.osv):
         
         def prepare_update(session):
             updates_count = 0
-            ids = self.pool.get('sync.client.rule').search(cr, uid, [('usb','=',True)], context=context)
+            
+            rule_search_domain = [('usb','=',True)]
+            if entity.usb_instance_type == 'central_platform':
+                rule_search_domain = rule_search_domain + ['|',('direction_usb','=','cp_to_rw'),('direction_usb','=','bidirectional')]
+            else:
+                rule_search_domain = rule_search_domain + ['|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')]
+                 
+            ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
+            
             for rule_id in ids:
                 updates_count += sum(updates.create_update(
                     cr, uid, rule_id, session, context=context))
                 if logger:
                     logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
+                    
             if not updates_count and logger:
                 logger.switch('status', 'ok')
             if logger:
                 logger.write()
+                
             return updates_count
         
         entity = self.get_entity(cr, uid, context)
@@ -277,7 +288,7 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid, context)
         
         # check step
-        if entity.usb_sync_step != 'pull_performed':
+        if entity.usb_sync_step not in ['pull_performed','first_sync']:
             raise osv.except_osv('Cannot Validated', 'We cannot Validate the Push until we have performed one')
         
         # get session id and latest updates
