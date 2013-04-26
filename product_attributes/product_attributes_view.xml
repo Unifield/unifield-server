@@ -195,12 +195,12 @@
                                     <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
                                     <field colspan="4" name="pricelist_ids" nolabel="1" widget="one2many_list" context="{'partner_id': name}">
                                         <tree editable="top" string="Pricelist">
-                                            <field name="min_quantity" />
-                                            <field name="uom_id" />
+                                            <field name="min_quantity" on_change="onchange_uom_qty(uom_id, min_quantity, False)" />
+                                            <field name="uom_id" on_change="onchange_uom_qty(uom_id, min_quantity, min_order_qty)" />
                                             <field name="price" />
                                             <field name="rounding" />
                                             <field name="currency_id" domain="[('partner_currency', '=', parent.name)]" />
-                                            <field name="min_order_qty" />
+                                            <field name="min_order_qty" on_change="onchange_uom_qty(uom_id, False, min_order_qty)" />
                                             <field name="valid_from" />
                                             <field name="valid_till" />
                                             <field name="comment" />

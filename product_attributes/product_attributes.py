@@ -736,4 +736,23 @@ class product_deactivation_error_line(osv.osv_memory):
 
 product_deactivation_error_line()
 
+
+class pricelist_partnerinfo(osv.osv):
+    _inherit = 'pricelist.partnerinfo'
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, min_quantity, min_order_qty):
+        '''
+        Check the rounding of the qty according to the rounding of the UoM
+        '''
+        res = {}
+
+        if uom_id and min_quantity:
+            res = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, min_quantity, 'min_quantity', res, context=context)
+        if uom_id and min_order_qty:
+            res = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, min_quantity, 'min_quantity', res, context=context)
+
+        return res
+
+pricelist_partnerinfo()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
