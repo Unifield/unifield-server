@@ -309,7 +309,7 @@ class account_cash_statement(osv.osv):
         statement = self.browse(cr, uid, cash_id, context=context)
         self.write(cr, uid, [cash_id], {'balance_end_real': statement.balance_end})
         statement.balance_end_real = statement.balance_end
-        if statement.balance_end != statement.balance_end_cash:
+        if abs(statement.balance_end - statement.balance_end_cash) > 10**-4:
             return False
         return True
 
