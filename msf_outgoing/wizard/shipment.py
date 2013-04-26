@@ -393,6 +393,18 @@ class shipment_wizard(osv.osv_memory):
             for memory_move in getattr(wiz, field_name):
                 memory_move.write({'integrity_status': status,}, context=context)
     
+    def create_additionalitems(self, cr, uid, ids, context=None):
+        shipment_ids = context['active_ids']
+        additional_items_dict = {'additional_items_ids': []}
+        for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
+            additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
+            for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
+                additionalitem.pop('wizard_id')
+                additionalitem['shipment_id'] = shipment_ids[0]
+                additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
+        context.update(additional_items_dict)
+        return context
+    
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
         gather data from wizard pass it to the do_create_shipment method of shipment class
@@ -400,6 +412,8 @@ class shipment_wizard(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
+        
+        context.update(self.create_additionalitems(cr, uid, ids, context))
         
         ship_obj = self.pool.get('shipment')
         # name of the wizard field for moves (one2many)
@@ -551,3 +565,24 @@ class shipment_wizard(osv.osv_memory):
     
 
 shipment_wizard()
+
+
+class stock_partial_move_memory_additionalitems(osv.osv_memory):
+    '''
+    view corresponding to additionalitems
+    
+    integrity constraint 
+    '''
+    _name = "stock.move.memory.shipment.additionalitems"
+    _description="Additional Items"
+    
+    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'uom': fields.many2one('product.uom', string='UOM', required=True),
+                'comment': fields.char(string='Comment', size=1024),
+                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
+                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
+                'wizard_id' : fields.many2one('shipment.wizard', string="Wizard"),
+                }
+    
+stock_partial_move_memory_additionalitems()

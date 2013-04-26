@@ -392,28 +392,6 @@ class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
 stock_partial_move_memory_shipment_returnpacks()
 
 
-class stock_partial_move_memory_additionalitems(osv.osv_memory):
-    '''
-    view corresponding to additionalitems
-    
-    integrity constraint 
-    '''
-    _name = "stock.move.memory.shipment.additionalitems"
-    _description="Additional Items"
-    
-    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, required=True, on_delete='cascade'),
-                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
-                'uom': fields.many2one('product.uom', string='UOM', required=True),
-                'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
-                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
-                'wizard_id' : fields.many2one('stock.partial.move', string="Wizard"),
-                }
-    
-stock_partial_move_memory_additionalitems()
-
-
 class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory):
     '''
     view corresponding to pack families for packs return from shipment
