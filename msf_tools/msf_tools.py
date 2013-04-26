@@ -521,10 +521,10 @@ class product_uom(osv.osv):
         Returns the error message and the rounded value
         '''
         message = {'title': _('Bad rounding'),
-                   'message': _('The quantity entered is not valid according to the rounding value of the UoM. The quantity has been rounded to the closest good value.')}
+                   'message': _('The quantity entered is not valid according to the rounding value of the UoM. The product quantity has been rounded to the highest good value.')}
 
         if uom_id and qty:
-            new_qty = self._compute_round_up_qty(cr, uid, uom_id, min_quantity, context=context)
+            new_qty = self._compute_round_up_qty(cr, uid, uom_id, qty, context=context)
             if qty != new_qty:
                 result.setdefault('value', {}).update({field_name: new_qty})
                 result.setdefault('warning', {}).update(message)

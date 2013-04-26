@@ -374,6 +374,7 @@
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                             />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                             string="Unit Of Measure"
                                             colspan="2"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"

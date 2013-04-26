@@ -747,9 +747,10 @@ class pricelist_partnerinfo(osv.osv):
         res = {}
 
         if uom_id and min_quantity:
-            res = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, min_quantity, 'min_quantity', res, context=context)
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, min_quantity, 'min_quantity', res)
+
         if uom_id and min_order_qty:
-            res = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, min_quantity, 'min_quantity', res, context=context)
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, min_order_qty, 'min_order_qty', res)
 
         return res
 
