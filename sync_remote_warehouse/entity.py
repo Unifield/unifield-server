@@ -37,9 +37,8 @@ class Entity(osv.osv):
     IMPORT_ERROR_NOT_OBJECT = 'Could not find object in object pool'
     
     def _update_usb_sync_step(self, cr, uid, step):
-        entity_pool = self.pool.get('sync.client.entity')
-        entity = entity_pool.get_entity(cr, uid)
-        return entity_pool.write(cr, uid, entity.id, {'usb_sync_step': step})
+        entity = self.get_entity(cr, uid)
+        return self.write(cr, uid, entity.id, {'usb_sync_step': step})
     
     def create_update_zip(self, cr, uid, context=None):
         """
@@ -160,15 +159,16 @@ class Entity(osv.osv):
                 for data_row in csv_contents:
                     csv_writer.writerow(data_row)
                     
-            # create rules file 
-            rule_pool = self.pool.get('sync.client.rule')
-            rule_ids = rule_pool.search(cr, uid, [('usb','=',True)])
-            rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
-            rules_file_name = "rules.txt"
-            
-            rules_file = open(rules_file_name, "w")
-            rules_file.write(str(rules_serialized))
-            rules_file.close()
+            # create rules file if instance is central platform
+            if entity.usb_instance_type == 'central_platform': 
+                rule_pool = self.pool.get('sync.client.rule')
+                rule_ids = rule_pool.search(cr, uid, [('usb','=',True)])
+                rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
+                rules_file_name = "rules.txt"
+                
+                rules_file = open(rules_file_name, "w")
+                rules_file.write(str(rules_serialized))
+                rules_file.close()
                     
             # compress csv file into zip
             zip_file_name = 'usb_sync_data.zip'
@@ -178,7 +178,8 @@ class Entity(osv.osv):
                 
             with ZipFile(zip_file_name, 'w') as zip_file:
                 zip_file.write(csv_file_name)
-                zip_file.write(rules_file_name)
+                if entity.usb_instance_type == 'central_platform': 
+                    zip_file.write(rules_file_name)
                     
             # add to entity object
             zip_base64 = ''
@@ -187,8 +188,10 @@ class Entity(osv.osv):
     
             # attach file to entity and delete 
             self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
+            
             os.remove(zip_file_name)
-            os.remove(rules_file_name)
+            if entity.usb_instance_type == 'central_platform': 
+                os.remove(rules_file_name)
             
             if logger:
                 logger.switch('status', 'ok')
@@ -240,8 +243,7 @@ class Entity(osv.osv):
             'update_to_send_model': 'sync_remote_warehouse.update_to_send', 
             'last_sync_date_field': 'usb_sync_date'
         })
-        entity_pool = self.pool.get('sync.client.entity')
-        entity = entity_pool.get_entity(cr, uid, context)
+        entity = self.get_entity(cr, uid, context)
         
         if entity.usb_sync_step not in ['pull_performed', 'first_sync']:
             raise osv.except_osv('Cannot Push', 'We cannot perform a Push until we have Validated the last Pull')
@@ -254,12 +256,12 @@ class Entity(osv.osv):
             return 0
         
         # add updates and rules to downloadable zip 
-        updates, deletions = entity_pool.create_update_zip(cr, uid, context=context)
         cr.commit()
+        updates, deletions = self.create_update_zip(cr, uid, context=context)
         
         # successful, so update records represented by updates_to_send with new usb_sync_date then clear session_id 
         self.usb_validate_push(cr, uid, ids, context=context)
-        entity_pool.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
+        self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         
         # increment usb sync step
         self._update_usb_sync_step(cr, uid, 'push_performed')
@@ -272,8 +274,7 @@ class Entity(osv.osv):
         Update update_to_send records with new usb_sync_date
         """
         # init
-        entity_pool = self.pool.get('sync.client.entity')
-        entity = entity_pool.get_entity(cr, uid, context)
+        entity = self.get_entity(cr, uid, context)
         
         # check step
         if entity.usb_sync_step != 'pull_performed':
@@ -295,9 +296,10 @@ class Entity(osv.osv):
         @return: A dictionary of the CSV files enclosed in the ZIP, with their import status. Refer to STATIC error codes in this file
         """
         
-        if self.pool.get('sync.client.entity').get_entity(cr, uid, context).usb_sync_step not in ['push_performed', 'first_sync']:
+        if self.get_entity(cr, uid, context).usb_sync_step not in ['push_performed', 'first_sync']:
             raise osv.except_osv('Cannot Pull', 'We cannot perform a Pull until we have performed a Pushed')
         
+        entity = self.get_entity(cr, uid)
         context = context or {}
         logger = context.get('logger', None)
         if logger:
@@ -313,13 +315,14 @@ class Entity(osv.osv):
             if '%s.csv' % update_received_model_name not in zip_file.namelist():
                 raise osv.except_osv(_('USB Synchronisation Data Not Found'), _('The zip file must contain a file called sync_remote_warehouse.update_received.csv which contains the data for the USB Synchronisation. Please check your file...'))
                 
-            # get rules from zip file and import them
-            rules = zip_file.read('rules.txt')
-            rules = eval(rules)
-            self.pool.get('sync.client.rule').save(cr, uid, rules, context=context)
+            # get rules from zip file and import them if instance is remote warehouse
+            if entity.usb_instance_type == 'remote_warehouse': 
+                rules = zip_file.read('rules.txt')
+                rules = eval(rules)
+                self.pool.get('sync.client.rule').save(cr, uid, rules, context=context)
             
-            if logger:
-                logger.append(_('Rules imported: %d' % len(rules)))
+                if logger:
+                    logger.append(_('Rules imported: %d' % len(rules)))
                 
             # get CSV object to read data
             csv_file = zip_file.read('%s.csv' % update_received_model_name)
@@ -370,8 +373,7 @@ class Entity(osv.osv):
                 if logger:
                     logger.replace(logger_index, _('Updates imported: %d' % len(data)))
                 try:
-                    entity_pool = self.pool.get('sync.client.entity')
-                    updates_ran = entity_pool.execute_updates(cr, uid, context=context)
+                    updates_ran = self.execute_updates(cr, uid, context=context)
                     self._update_usb_sync_step(cr, uid, 'pull_performed')
                     logger.switch('status','ok')
                 except AttributeError, e:
