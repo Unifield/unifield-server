@@ -57,7 +57,7 @@
                     <field name="quantity_ordered" readonly="True" />
                     <field name="product_uom" readonly="True" string="UOM" />
                     <field name="prodlot_id" readonly="True" domain="[('product_id', '=', product_id)]" />
-                    <field name="qty_to_return" />
+                    <field name="qty_to_return" on_change="onchange_uom_qty(product_uom, qty_to_return)" />
                     <field name="lot_check" />
                    	<field name="exp_check" />
                    	<field name="kc_check" />
