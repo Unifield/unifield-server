@@ -84,6 +84,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         result = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
+            root = etree.fromstring(result['arch'])
+            fields = root.xpath('/tree')
+            for field in fields:
+                root.set('hide_new_button', 'True')
+                root.set('hide_delete_button', 'True')
+            result['arch'] = etree.tostring(root)
             picking_obj = self.pool.get('stock.picking')
             picking_ids = context.get('active_ids')
             if picking_ids:
@@ -102,7 +108,6 @@ class stock_partial_move_memory_out(osv.osv_memory):
                         for field in fields:
                             field.set('invisible', 'True')
                     result['arch'] = etree.tostring(root)
-                    
         return result
     
 #    update code to allow delete lines (or not but must be consistent in all wizards)
