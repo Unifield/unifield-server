@@ -45,5 +45,21 @@ class account_export_mapping(osv.osv):
         (_check_unicity, "A mapping already exists for this account", ['account_id']),
     ]
     
+    def menu_import_wizard(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        wiz_obj = self.pool.get('wizard.import.mapping')
+        wiz_id = wiz_obj.create(cr, uid, {}, context=context)
+        # we open a wizard
+        return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.mapping',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'res_id': [wiz_id],
+                'context': context,
+        }
+    
 account_export_mapping()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

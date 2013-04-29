@@ -61,24 +61,14 @@
             </field>
         </record>
         
-        <record id="action_account_mappings" model="ir.actions.act_window">
-            <field name="name">Import Mappings</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">wizard.import.mapping</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="view_id" ref="import_account_mappings_view"/>
-            <field name="target">new</field>
-        </record>
-
-        <record model="ir.values" id="import_account_mappings_values">
-            <field name="object" eval="1" />
-            <field name="name">Import Mappings</field>
-            <field name="key2">client_action_multi</field>
-            <field name="value" eval="'ir.actions.act_window,' + str(ref('action_account_mappings'))" />
-            <field name="key">action</field>
-            <field name="model">account.export.mapping</field>
-        </record>
+        <act_window name="Import Mappings"
+            res_model="wizard.import.mapping"
+            src_model="account.export.mapping"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            empty_ids="1"
+            id="action_import_account_mappings"/>
         
     </data>
 </openerp>
