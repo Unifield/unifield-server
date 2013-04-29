@@ -88,7 +88,10 @@ class purchase_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
     
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty, uom,
@@ -114,6 +117,10 @@ class purchase_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
+
+        if qty:
+            uom = uom or result.get('value', {}).get('product_uom')
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
         
         return result
     
@@ -316,7 +323,7 @@ class sale_order_line(osv.osv):
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
         return result
     
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,

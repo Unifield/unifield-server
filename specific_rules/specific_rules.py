@@ -284,7 +284,6 @@ class stock_warehouse_orderpoint(osv.osv):
 
         if product_min_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_min_qty, 'product_min_qty', result=res)
-            print res
 
         if product_max_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_max_qty, 'product_max_qty', result=res)
