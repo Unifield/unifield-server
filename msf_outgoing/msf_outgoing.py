@@ -86,6 +86,7 @@ class shipment_additionalitems(osv.osv):
     
     _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
                 'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, required=True, on_delete='cascade'),
+                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, required=True, on_delete='cascade'),
                 'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
@@ -1777,6 +1778,7 @@ class stock_picking(osv.osv):
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
+                'additional_items_ids': fields.one2many('shipment.additionalitems', 'picking_id', string='Additional Items'),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -2685,8 +2687,10 @@ class stock_picking(osv.osv):
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
                                                           'shipment_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
-
-            self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
+            write_values = {'origin': pick.origin}
+            if 'additional_items_ids' in context:
+                write_values.update({'additional_items_ids': context['additional_items_ids']})
+            self.write(cr, uid, [new_packing_id], write_values, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state.
             # if return move have been done in previous ppl step, we remove the corresponding copied move (criteria: qty_per_pack == 0)
             new_packing = self.browse(cr, uid, new_packing_id, context=context)

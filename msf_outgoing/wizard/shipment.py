@@ -583,6 +583,7 @@ class stock_partial_move_memory_additionalitems(osv.osv_memory):
                 'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
                 'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
                 'wizard_id' : fields.many2one('shipment.wizard', string="Wizard"),
+                'create_picking_wizard_id': fields.many2one('create.picking', string="Wizard"),
                 }
     
 stock_partial_move_memory_additionalitems()
