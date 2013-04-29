@@ -440,7 +440,25 @@ class threshold_value_line(osv.osv):
                                                consumption_period_from, consumption_period_to, frequency,
                                                safety_month, lead_time, supplier_lt, prod.uom_id.id, context=context)['threshold_value']
                 res['value'].update({'fake_threshold_value': tv, 'threshold_value': tv})
+
+            if prod.uom_id.id:
+                res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, prod.uom_id.id, ['fixed_threshold_value', 'fixed_product_qty', 'threshold_value', 'fake_threshold_value'], result=res)
             
         return res
-    
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, tv_qty, product_qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+        uom_obj = self.pool.get('product.uom')
+
+        if tv_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, tv_qty, 'fixed_threshold_value', result=res)
+
+        if product_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, 'fixed_product_qty', result=res)
+
+        return res
+
 threshold_value_line()
