@@ -762,22 +762,21 @@ class real_average_consumption_line(osv.osv):
     def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, uom, context=None):
         if context is None:
             context = {}
+
+        res = {'value': {}}
+
         stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location, uom)
         warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
-        if uom:
-            new_qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, uom)
-            if new_qty != qty:
-                warn_msg = {
-                    'title': _('Error'), 
-                    'message': _("The Qty Consumed %s and rounding uom qty %s are not equal !")%(qty, new_qty)
-                }
-                return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+        res.update({'warning': warn_msg})
+        
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'consumed_qty', result=res)
 
         if prodlot_id and qty > stock_qty:
             return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
         if qty > stock_qty:
             return {'warning': warn_msg}
-        return {}
+        return res
 
     def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, remark=False, context=None):
         '''
@@ -806,7 +805,7 @@ class real_average_consumption_line(osv.osv):
 
         return res
    
-    def uom_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
+    def uom_onchange(self, cr, uid, ids, product_id, product_qty, location_id=False, uom=False, lot=False, context=None):
         if context is None:
             context = {}
         qty_available = 0
@@ -818,7 +817,12 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
-        return {'value': {'product_qty': qty_available}, 'domain': d}
+        res = {'value': {'product_qty': qty_available}, 'domain': d}
+
+        if product_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, product_qty, 'consumed_qty', result=res)
+
+        return res
 
     def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
         '''
