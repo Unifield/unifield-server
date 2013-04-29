@@ -290,7 +290,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def onchange_uom(self, cr, uid, ids, product_id, product_uom, context=None):
+    def onchange_uom(self, cr, uid, ids, product_id, product_uom, product_qty, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
@@ -301,9 +301,9 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
             if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': _('Wrong Product UOM !'),
-                           'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
-        return {'warning': warning}
+                return {'warning': {'title': _('Wrong Product UOM !'),
+                                    'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}}
+        return self.onchange_uom_qty(cr, uid, ids, product_uom, product_qty)
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
