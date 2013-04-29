@@ -324,6 +324,10 @@ class sale_order_line(osv.osv):
         if 'comment' in result['value']:
             del result['value']['comment']
 
+        # Round up the quantity
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'product_qty', result=result)
+
         return result
     
     def product_qty_change(self, cr, uid, ids, pricelist, product, qty=0,
@@ -336,20 +340,17 @@ class sale_order_line(osv.osv):
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
 
-        # Round up the quantity
-        res = self.onchange_uom(cr, uid, ids, result.get('value', {}).get('product_id', product),
-                                              result.get('value', {}).get('product_uom', uom),
-                                              result.get('value', {}).get('product_uom_qty', qty))
-
-        result.setdefault('value', {}).update(res.setdefault('value', {}))
-
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
         # drop modification to comment attribute
         if 'comment' in result['value']:
             del result['value']['comment']
-            
+
+        # Round up the quantity
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, ['product_uom_qty', 'product_uos_qty'], result=result)
+
         return result
     
     def product_packaging_change(self, cr, uid, ids, pricelist, product, qty=0,
