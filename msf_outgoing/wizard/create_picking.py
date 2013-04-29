@@ -264,10 +264,13 @@ class create_picking(osv.osv_memory):
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
             </group>"""%button
-        if step in ['ppl1', 'ppl2']:
+        if step  == 'ppl1':
             _moves_arch_lst += """
-            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form"
-            attrs="{'invisible': [('step', '!=', 'ppl2')]}"></field>
+            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form"></field>
+            """
+        elif step  == 'ppl2':
+            _moves_arch_lst += """
+            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form" readonly="1"></field>
             """
         _moves_arch_lst +="""</form>"""
         
