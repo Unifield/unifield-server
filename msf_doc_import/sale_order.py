@@ -540,7 +540,7 @@ class sale_order_line(osv.osv):
 
         # Round-up the quantity
         if uom_id and product_qty:
-            res.setdefault('value', {}).setdefault('product_uom_qty', uom_obj._compute_round_up_qty(cr, uid, uom_id, product_qty, context=context))
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, ['product_uos_qty', 'product_uom_qty'], result=res)
 
         return res
 
