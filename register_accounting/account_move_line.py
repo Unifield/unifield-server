@@ -28,6 +28,7 @@ from operator import itemgetter
 from register_tools import _get_third_parties
 from register_tools import _set_third_parties
 from register_tools import _get_third_parties_name
+from lxml import etree
 
 class account_move_line(osv.osv):
     _name = "account.move.line"
@@ -156,11 +157,10 @@ class account_move_line(osv.osv):
         return r_move.keys()
 
     _columns = {
-        'register_id': fields.many2one("account.bank.statement", "Register", ondelete="restrict"),
         'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee'), ('account.bank.statement', 'Register')], 
+            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], 
             multi="third_parties_key"),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True, 
@@ -206,18 +206,25 @@ class account_move_line(osv.osv):
             context = {}
         if 'from' in context:
             c_from = context.get('from')
+            module = 'register_accounting'
             if c_from == 'wizard_import_invoice' or c_from == 'wizard_import_cheque':
                 view_name = 'invoice_from_registers_tree'
                 if c_from == 'wizard_import_cheque':
                     view_name = 'cheque_from_registers_tree'
                 if view_type == 'search':
-                    view_name = 'invoice_from_registers_search'
-                    if c_from == 'wizard_import_cheque':
-                        view_name = 'cheque_from_registers_search'
-                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', view_name)
+                    module = 'account'
+                    view_name = 'view_account_move_line_filter'
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
                 if view:
                     view_id = view[1]
         result = super(osv.osv, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'search' and 'from' in context:
+            if context.get('from') == 'wizard_import_invoice' or context.get('from') == 'wizard_import_cheque':
+                search = etree.fromstring(result['arch'])
+                tags = search.xpath('/search')
+                for tag in tags:
+                    tag.set('string', _("Account Entry Lines"))
+                result['arch'] = etree.tostring(search)
         return result
 
     def onchange_account_id(self, cr, uid, ids, account_id=False, third_party=False):
@@ -252,7 +259,7 @@ class account_move_line(osv.osv):
 
         # Prepare some values
         acc_obj = self.pool.get('account.account')
-        third_type = [('res.partner', 'Partner')]
+        third_type = [('res.partner', 'Partner'), ('hr.employee', 'Employee')] # UF-1022 By default should display Partner and employee
         third_required = False
         third_selection = 'res.partner,0'
         # if an account is given, then attempting to change third_type and information about the third required
@@ -283,7 +290,7 @@ class account_move_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None, check=True):
         """
-        Add partner_txt to vals regarding partner_id, employee_id and register_id
+        Add partner_txt to vals regarding partner_id, employee_id and transfer_journal_id
         """
         # Some verifications
         if not context:
@@ -292,6 +299,9 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        # If partner_type have been set to False (UF-1789)
+        if 'partner_type' in vals and not vals.get('partner_type'):
+            vals.update({'partner_txt': False})
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -307,6 +317,9 @@ class account_move_line(osv.osv):
         res = _get_third_parties_name(self, cr, uid, vals, context=context)
         if res:
             vals.update({'partner_txt': res})
+        # If partner_type have been set to False (UF-1789)
+        if 'partner_type' in vals and not vals.get('partner_type'):
+            vals.update({'partner_txt': False})
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
 
 account_move_line()

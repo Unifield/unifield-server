@@ -24,6 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from time import strftime
 
 class sale_order(osv.osv):
     _name = 'sale.order'
@@ -56,6 +57,8 @@ class sale_order(osv.osv):
             'sale_order_id': so.id,
             'currency_id': currency or False,
             'state': 'cc',
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -69,7 +72,7 @@ class sale_order(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -188,29 +191,42 @@ class sale_order(osv.osv):
         # Default behaviour
         return super(sale_order, self).wkf_validated(cr, uid, ids, context=context)
 
-    def action_invoice_create(self, cr, uid, ids, *args):
-        """
-        Add analytic distribution from SO to invoice
-        """
-        # Retrieve some data
-        res = super(sale_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
-        # Set analytic distribution from sale order to invoice
-        ana_obj = self.pool.get('analytic.distribution')
-        for so in self.browse(cr, uid, ids):
-            # Code to retrieve DISTRO from SO have been removed because of impossibility to retrieve some DESTINATION AXIS from FO
-            # Copy analytic distribution from sale order line to invoice lines
-            for sol in so.order_line:
-                if sol.analytic_distribution_id and sol.invoice_lines:
-                    sol_distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id or False
-                    if sol_distrib_id:
-                        for invl in sol.invoice_lines:
-                            new_sol_distrib_id = ana_obj.copy(cr, uid, sol_distrib_id, {})
-                            if not new_sol_distrib_id:
-                                raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice line.'))
-                            # create default funding pool lines
-                            ana_obj.create_funding_pool_lines(cr, uid, [new_sol_distrib_id])
-                            self.pool.get('account.invoice.line').write(cr, uid, [invl.id], {'analytic_distribution_id': new_sol_distrib_id,})
-        return res
+    # action_invoice_create have been deleted because of no wizard_sale_invoice since 2.0b2
+#    def action_invoice_create(self, cr, uid, ids, *args):
+#        """
+#        Add analytic distribution from SO to invoice
+#        """
+#        # Retrieve some data
+#        res = super(sale_order, self).action_invoice_create(cr, uid, ids, *args) # invoice_id
+#        # Set analytic distribution from sale order to invoice
+#        ana_obj = self.pool.get('analytic.distribution')
+#        for so in self.browse(cr, uid, ids):
+#            # Create analytic distribution on invoices regarding FO
+#            if so.analytic_distribution_id and so.invoice_ids:
+#                invoice_ids = so.invoice_ids
+#                if isinstance(invoice_ids, (int, long)):
+#                    invoice_ids = [invoice_ids]
+#                distrib_id = so.analytic_distribution_id and so.analytic_distribution_id.id or False
+#                if distrib_id:
+#                    new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
+#                    if not new_distrib_id:
+#                        raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+#                    # create default funding pool lines
+#                    ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
+#                    self.pool.get('account.invoice').write(cr, uid, [invoice_ids], {'analytic_distribution_id': new_distrib_id,})
+#            # Copy analytic distribution from sale order line to invoice lines
+#            for sol in so.order_line:
+#                if sol.analytic_distribution_id and sol.invoice_lines:
+#                    sol_distrib_id = sol.analytic_distribution_id and sol.analytic_distribution_id.id or False
+#                    if sol_distrib_id:
+#                        for invl in sol.invoice_lines:
+#                            new_sol_distrib_id = ana_obj.copy(cr, uid, sol_distrib_id, {})
+#                            if not new_sol_distrib_id:
+#                                raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice line.'))
+#                            # create default funding pool lines
+#                            ana_obj.create_funding_pool_lines(cr, uid, [new_sol_distrib_id])
+#                            self.pool.get('account.invoice.line').write(cr, uid, [invl.id], {'analytic_distribution_id': new_sol_distrib_id,})
+#        return res
 
 sale_order()
 
@@ -266,8 +282,10 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = {}
+        get_sel = self.pool.get('ir.model.fields').get_selection
         for sol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
-            res[sol['id']] = "%s%s"%(sol['analytic_distribution_state'].capitalize(), sol['have_analytic_distribution_from_header'] and " (from header)" or "")
+            d_state = get_sel(cr, uid, self._name, 'analytic_distribution_state', sol['analytic_distribution_state'], context)
+            res[sol['id']] = "%s%s"%(d_state, sol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
         return res
 
     def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
@@ -340,6 +358,8 @@ class sale_order_line(osv.osv):
             'currency_id': currency or False,
             'state': 'cc',
             'account_id': account_id or False,
+            'posting_date': strftime('%Y-%m-%d'),
+            'document_date': strftime('%Y-%m-%d'),
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -353,7 +373,7 @@ class sale_order_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

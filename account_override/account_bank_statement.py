@@ -56,5 +56,9 @@ class account_bank_statement_line(osv.osv):
         (_check_inactive_suppliers, "Partner is inactive!", ['partner_id']),
     ]
 
+    _columns = {
+        'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
+    }
+
 account_bank_statement_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -33,9 +33,12 @@
                         />
                     </xpath>
                     <field name="location_id" position= "replace">
+                        <!-- attrs="{'readonly':['|', ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice', 'confirmed_wait']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"-->
+                        <!-- [UF-1689] we want the user to select only Cross Docking or Input i.e. to tick or clear the checkbox cross docking
+                        so we set the location_id always readonly-->
                         <field name="location_id" 
                         domain="[('usage', '=', 'internal')]"
-                        attrs="{'readonly':['|', ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice', 'confirmed_wait']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"
+                        readonly="1"
                         on_change="onchange_location_id(location_id,categ)"/>
                     </field>
                 </data>

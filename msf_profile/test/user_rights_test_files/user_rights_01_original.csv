@@ -229,7 +229,7 @@ msf_audittrail;menu_action_audittrail_rule_tree;+++;Audit Rules;NO;NO;NO;YES;NO;
 msf_audittrail;menu_action_audittrail_log_line_tree;+++;Audit Logs;NO;NO;NO;YES;NO;YES;YES;YES;YES;YES;YES;NO;NO;NO;NO;NO;NO;YES
 account;menu_finance;;Accounting;YES;YES;YES;YES;YES;YES;YES;YES;YES;YES;NO;NO;NO;NO;NO;NO;NO;NO
 account;menu_finance_bank_and_cash;0;Registers;NO;YES;YES;YES;YES;YES;YES;NO;NO;YES;NO;NO;NO;NO;NO;NO;NO;NO
-account;menu_bank_statement_tree;++;Bank Registers;NO;YES;YES;YES;YES;YES;YES;NO;NO;YES;NO;NO;NO;NO;NO;NO;NO;NO
+account;menu_bank_statement_tree;++;Bank Statements;NO;YES;YES;YES;YES;YES;YES;NO;NO;YES;NO;NO;NO;NO;NO;NO;NO;NO
 register_accounting;menu_cash_register;++;Cheque Registers;NO;YES;YES;YES;YES;YES;YES;NO;NO;YES;NO;NO;NO;NO;NO;NO;NO;NO
 account;journal_cash_move_lines;++;Cash Registers;NO;YES;YES;YES;YES;YES;YES;NO;NO;YES;NO;NO;NO;NO;NO;NO;NO;NO
 register_accounting;menu_register_creation;++;Register Creation;NO;NO;NO;YES;NO;YES;YES;NO;NO;YES;NO;NO;NO;NO;NO;NO;NO;NO

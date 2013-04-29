@@ -77,8 +77,6 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         'impact_so_split_po_line_wizard': fields.boolean('Impact Field Order', help='Impact corresponding Field Order by creating a corresponding Field Order line.'),
         'corresponding_so_line_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo line', multi='get_vals_split_po_line', store=False, readonly=True),
         'corresponding_so_id_split_po_line_wizard': fields.function(_vals_get, method=True, type='many2one', relation='sale.order', string='Corresponding Fo', multi='get_vals_split_po_line', store=False, readonly=True),
-        'data': fields.binary('Test'),
-        'filename': fields.char('Test', size=256),
     }
 
     _defaults = {

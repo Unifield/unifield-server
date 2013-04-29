@@ -62,11 +62,23 @@ class account_invoice(osv.osv):
         This is a method to redefine the journal_id domain with the current_instance taken into account
         """
         res = super(account_invoice, self).onchange_company_id(cr, uid, ids, company_id, part_id, type, invoice_line, currency_id)
-        if 'domain' in res and 'journal_id' in res['domain']:
-            journal_domain = res['domain']['journal_id']
-            journal_domain.append(('is_current_instance','=',True))
-            new_journal_ids = self.pool.get('account.journal').search(cr, uid, journal_domain)
-            res['domain']['journal_id'] = [('id','in',new_journal_ids)]
+        if company_id and type:
+            res.setdefault('domain', {})
+            res.setdefault('value', {})
+            ass = {
+                'out_invoice': 'sale',
+                'in_invoice': 'purchase',
+                'out_refund': 'sale_refund',
+                'in_refund': 'purchase_refund',
+            }
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [
+                ('company_id','=',company_id), ('type', '=', ass.get(type, 'purchase')), ('is_current_instance', '=', True)
+            ])
+            if not journal_ids:
+                raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
+            res['value']['journal_id'] = journal_ids[0]
+            # TODO: it's very bad to set a domain by onchange method, no time to rewrite UniField !
+            res['domain']['journal_id'] = [('id', 'in', journal_ids)]
         return res
 
     _columns = {

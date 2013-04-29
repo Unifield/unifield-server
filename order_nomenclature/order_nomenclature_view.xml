@@ -185,6 +185,7 @@
 				<data>
 					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='name']" position="replace">
 						<field name="default_name" />
+						<field name="inactive_error" invisible="1" />
 						<field name="comment" />
 					</xpath>
 					

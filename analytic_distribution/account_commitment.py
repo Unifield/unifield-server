@@ -205,6 +205,8 @@ class account_commitment(osv.osv):
             'commitment_id': commitment.id,
             'currency_id': currency or False,
             'state': 'dispatch',
+            'posting_date': commitment.date,
+            'document_date': commitment.date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -218,7 +220,7 @@ class account_commitment(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Global analytic distribution',
+                'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -575,6 +577,8 @@ class account_commitment_line(osv.osv):
             'currency_id': currency or False,
             'state': 'dispatch',
             'account_id': commitment_voucher_line.account_id and commitment_voucher_line.account_id.id or False,
+            'posting_date': commitment_voucher_line.commit_id.date,
+            'document_date': commitment_voucher_line.commit_id.date,
         }
         if distrib_id:
             vals.update({'distribution_id': distrib_id,})
@@ -588,7 +592,7 @@ class account_commitment_line(osv.osv):
         })
         # Open it!
         return {
-                'name': 'Analytic distribution',
+                'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

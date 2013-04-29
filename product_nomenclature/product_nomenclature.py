@@ -43,10 +43,17 @@ class product_nomenclature(osv.osv):
             return []
         if context is None:
             context = {}
+        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if not context.get('yml_test', False):
+            if lang_dict.get('context_lang'):
+                context['lang'] = lang_dict.get('context_lang')
+            
         fields = ['name', 'parent_id']
         if context.get('withnum') == 1:
             fields.append('number_of_products')
         reads = self.read(cr, uid, ids, fields, context=context)
+        
         res = []
         for record in reads:
             name = record['name']
@@ -79,7 +86,6 @@ class product_nomenclature(osv.osv):
         
         #test = self._columns.get('parent_id')
         #test = self._columns['name']
-        #print test
         
         # get the parent object's level + 1
         #result = self.browse(cr, uid, self.parent_id, context).level + 1
@@ -251,13 +257,162 @@ class product_nomenclature(osv.osv):
             return [('id', args[0][1], categ.family_id.id)]
         
         return res
+
+    def _get_nomen_s(self, cr, uid, ids, fields, *a, **b):
+        """
+        With the UF-1853, we display the nomenclature levels in 4 different columns.
+        """
+        ret = {}
+        context = b.get('context')
+        if context is None:
+            context = {}
+        for nomen in self.browse(cr, uid, ids, context):
+            complete_name = nomen.complete_name
+            levels = complete_name.split('|')
+            if len(levels) == 1:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0]}
+            elif len(levels) == 2:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1]}
+            elif len(levels) == 3:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2]}
+            elif len(levels) == 4:
+                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2], 'nomen_manda_3_s': levels[3]}
+        return ret
+
+    def _get_childs(self, cr, uid, narg, ids):
+        ids_p = self.search(cr, uid, [('parent_id','in',ids)])
+        if ids_p:
+            ids_p += self._get_childs(cr, uid, narg, ids_p)
+        narg += ids_p
+        return narg
+
+    def _search_nomen_s(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        narg = []
+        for arg in args:
+            ids_rech = self._get_childs(cr, uid, narg, [arg[2]])
+        ids_rech += [arg[2]]
+        return [('id','in',ids_rech)]
+
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
+        '''
+        the nomenclature selection search changes
+        '''
+        if context is None:
+            context = {}
+        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            context['lang'] = lang_dict.get('context_lang')
+
+        mandaName = 'nomen_manda_%s'
+        # selected value
+        selected = eval('nomen_manda_%s' % position)
+        # if selected value is False, the first False value -1 is used as selected
+        if not selected:
+            mandaVals = [i for i in range(_LEVELS) if not eval('nomen_manda_%s' % i)]
+            if mandaVals[0] == 0:
+                # first drop down, initialization 
+                selected = False
+                position = -1
+            else:
+                # the first drop down with False value -1
+                position = mandaVals[0] - 1
+                selected = eval('nomen_manda_%s' % position)
+        
+        values = {}
+        result = {'value': values}
+        
+        # clear upper levels mandatory
+        for i in range(position + 1, _LEVELS):
+            values[mandaName % (i)] = [()]
+            
+        # nomenclature object
+        nomenObj = self.pool.get('product.nomenclature')
+        # product object
+        prodObj = self.pool.get('product.product')
+        
+        if position == 2 and nomen_manda_2:
+            for n in nomenObj.read(cr, uid, [nomen_manda_2], ['category_id'], context=context):
+                values['categ_id'] = n['category_id'] or False
+        
+        # loop through children nomenclature of mandatory type
+        shownum = num or context.get('withnum') == 1
+        if position < 3:
+            nomenids = nomenObj.search(cr, uid, [('active','in',['t','f']),('type', '=', 'mandatory'), ('parent_id', '=', selected)], order='name', context=context)
+            if nomenids:
+                for n in nomenObj.read(cr, uid, nomenids, ['name'] + (shownum and ['number_of_products'] or []), context=context):
+                    # get the name and product number
+                    id = n['id']
+                    name = n['name']
+                    if shownum:
+                        number = n['number_of_products']
+                        values[mandaName % (position + 1)].append((id, name))
+                    else:
+                        values[mandaName % (position + 1)].append((id, name))
+        
+        if num:
+            newval = {}
+            for x in values:
+                newval['%s_s' % x] = values[x]
+            result['value'] = newval
+        return result
     
+    def _get_fake(self, cr, uid, ids, fields, *a, **b):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        return ret
+
+    def _search_nomen_type_s(self, cr, uid, obj, name, args, context=None):
+        if context is None:
+            context = {}
+        if not args:
+            return []
+        narg = []
+        for arg in args:
+            id_rech = self.search(cr,uid,[('parent_id','=',arg[2])])
+            if arg[2] == 'mandatory':
+                narg += [('type','=',arg[2])]
+            else:
+                narg += [('type','=',arg[2] )]
+        return narg
+
+    def _get_custom_name(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+            ids = [ids]
+        result = {}
+        for id in ids:
+            result[id] = False
+        return result
+
+    def _search_custom_name(self, cr, uid, obj, name, args, context=None):
+        """
+        Enable to search a nomenclature level according all its levels
+        """
+        if not args:
+            return []
+        if args[0][1] != "ilike":
+            raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
+        dom = ['|', ('name', 'ilike', args[0][2]), ('parent_id', 'ilike', args[0][2])]
+        ids = self.search(cr, uid, dom)
+        if not ids:
+            return [('id', '=', 0)]
+        return [('id', 'in', ids)]
+
     _name = "product.nomenclature"
     _description = "Product Nomenclature"
     _columns = {
         'active': fields.boolean('Active', help="If the active field is set to False, it allows to hide the nomenclature without removing it."),
-        'name': fields.char('Name', size=64, required=True, select=True),
+        'name': fields.char('Name', size=64, required=True, select=True, translate=1),
         'complete_name': fields.function(_name_get_fnc, method=True, type="char", string='Name', fnct_search=_search_complete_name),
+        'custom_name': fields.function(_get_custom_name, method=True, type="char", string='Name', fnct_search=_search_custom_name),
         # technic fields - tree management
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
         # TODO try to display child_ids on screen. which result ?
@@ -273,6 +428,14 @@ class product_nomenclature(osv.osv):
                                        relation='product.category', string='Category',
                                        help='If empty, please contact accounting member to create a new product category associated to this family.'),
         'category_ids': fields.one2many('product.category', 'family_id', string='Categories'),
+
+        'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
+
+        'nomen_type_s': fields.function(_get_fake, method=True, type='selection', selection=[('mandatory', 'Mandatory'),('optional', 'Optional')],  string='Nomenclature type', fnct_search=_search_nomen_type_s ),
+
     }
 
     _defaults = {
@@ -500,6 +663,10 @@ class product_product(osv.osv):
         '''
         if context is None:
             context = {}
+        # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
+        lang_dict = self.pool.get('res.users').read(cr,uid,uid,['context_lang'])
+        if lang_dict.get('context_lang'):
+            context['lang'] = lang_dict.get('context_lang')
 
         mandaName = 'nomen_manda_%s'
         optName = 'nomen_sub_%s'

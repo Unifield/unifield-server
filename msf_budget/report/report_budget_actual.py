@@ -148,4 +148,5 @@ class report_budget_actual(report_sxw.report_sxw):
         return (out, 'csv')
     
 report_budget_actual('report.msf.budget.actual', 'msf.budget', False, parser=False)
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
