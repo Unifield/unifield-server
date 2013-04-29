@@ -736,6 +736,17 @@ class substitute_item(osv.osv_memory):
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_substitute_item', result=res)
+
+        return res
     
     def _validate_item_from_stock(self, cr, uid, id, context=None):
         '''
