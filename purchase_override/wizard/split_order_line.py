@@ -172,9 +172,14 @@ class split_purchase_order_line_wizard(osv.osv_memory):
         '''
         Update the old line qty according to the new line qty
         '''
-        res = {'old_line_qty': original_qty - new_line_qty}
+        value = {'old_line_qty': original_qty - new_line_qty}
+        result = {'value': value}
 
-        return {'value': res}
+        if ids:
+            line = self.browse(cr, uid, ids[0], context=context)
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, line.purchase_line_id.product_uom.id, new_line_qty, 'new_line_qty', result=result)
+
+        return result
 
 split_purchase_order_line_wizard()
 
