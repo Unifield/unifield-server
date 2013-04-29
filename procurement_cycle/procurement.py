@@ -423,6 +423,14 @@ class stock_warehouse_order_cycle_line(osv.osv):
     _constraints = [
         (_check_uniqueness, 'You cannot have two times the same product on the same order cycle rule', ['product_id'])
     ]
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'safety_stock', result=res)
+
+        return res
     
     def product_change(self, cr, uid, ids, product_id=False, context=None):
         '''
