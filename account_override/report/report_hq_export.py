@@ -47,7 +47,7 @@ class report_hq_export(report_sxw.report_sxw):
                 mapping = mapping_obj.browse(cr, uid, mapping_ids[0], context=context)
                 return mapping.mapping_value
             else:
-                return browse_account.code + " " + browse_account.name
+                return browse_account.code
         return ""
 
 # Commented for OCG, but can be useful for other OCs
@@ -76,19 +76,34 @@ class report_hq_export(report_sxw.report_sxw):
     def create_subtotal(self, cr, uid, line_key, line_debit, counterpart_date, period_name):
         pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
-        if len(line_key) > 3 and line_debit != 0.0:
-            account = pool.get('account.account').browse(cr, uid, line_key[3])
+        if len(line_key) > 2 and line_debit != 0.0:
             journal = pool.get('account.journal').browse(cr, uid, line_key[1])
             currency = pool.get('res.currency').browse(cr, uid, line_key[2])
+            description = ""
+            # Description for the line
+            if line_key[0] == "1000 0000":
+                description = "Mvts_BANK_" + period_name + "_" + currency.name
+            elif line_key[0] == "1000 0001":
+                description = "Mvts_CASH_" + period_name + "_" + currency.name
+            else:
+                mapping_obj = pool.get('account.export.mapping')
+                account_values = ""
+                mapping_ids = mapping_obj.search(cr, uid, [('mapping_value', '=', line_key[0])], context={})
+                for mapping in mapping_obj.browse(cr, uid, mapping_ids, context={}):
+                    if account_values != "":
+                        account_values += "-"
+                    account_values += mapping.account_id.code
+                description = "Mvts_" + account_values + period_name + journal.code + "_" + currency.name
+            
             return [[journal.instance_id and journal.instance_id.code or "",
                      journal.code,
                      "",
-                     "",
+                     description,
                      "",
                      counterpart_date,
                      counterpart_date,
                      period_name,
-                     self.translate_account(cr, uid, pool, account),
+                     line_key[0],
                      "",
                      "",
                      "",
@@ -124,6 +139,7 @@ class report_hq_export(report_sxw.report_sxw):
                         'Posting Date',
                         'Period',
                         'G/L Account',
+                        'Unifield Account',
                         'Destination',
                         'Cost Centre',
                         'Funding Pool',
@@ -179,6 +195,7 @@ class report_hq_export(report_sxw.report_sxw):
                               datetime.datetime.strptime(move_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               move_line.period_id and move_line.period_id.code or "",
                               self.translate_account(cr, uid, pool, account),
+                              account and account.code + " " + account.name,
                               "",
                               "",
                               "",
@@ -193,13 +210,14 @@ class report_hq_export(report_sxw.report_sxw):
             
             # For second report: add to corresponding sub
             if journal.type in ['correction', 'intermission'] or account.is_settled_at_hq:
-                if (journal.code, journal.id, currency.id, "") not in main_lines:
-                    main_lines[(journal.code, journal.id, currency.id, "")] = []
-                main_lines[(journal.code, journal.id, currency.id, "")].append(formatted_data[:11] + formatted_data[12:16])
+                if (journal.code, journal.id, currency.id) not in main_lines:
+                    main_lines[(journal.code, journal.id, currency.id)] = []
+                main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + formatted_data[10:12] + formatted_data[13:17])
             else:
-                if (account.code, journal.id, currency.id, account.id) not in account_lines_debit:
-                    account_lines_debit[(account.code, journal.id, currency.id, account.id)] = 0.0
-                account_lines_debit[(account.code, journal.id, currency.id, account.id)] += (move_line.debit_currency - move_line.credit_currency)
+                translated_account_code = self.translate_account(cr, uid, pool, account)
+                if (translated_account_code, journal.id, currency.id) not in account_lines_debit:
+                    account_lines_debit[(translated_account_code, journal.id, currency.id)] = 0.0
+                account_lines_debit[(translated_account_code, journal.id, currency.id)] += (move_line.debit_currency - move_line.credit_currency)
                             
                             
                             
@@ -221,11 +239,12 @@ class report_hq_export(report_sxw.report_sxw):
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
                               analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
-                              analytic_line.name,
-                              analytic_line.ref,
+                              analytic_line.name or "",
+                              analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),
                               analytic_line.period_id and analytic_line.period_id.code or "",
+                              account and account.code,
                               account and account.code + " " + account.name or "",
                               analytic_line.destination_id and analytic_line.destination_id.code or "",
                               analytic_line.cost_center_id and analytic_line.cost_center_id.code or "",
@@ -257,7 +276,7 @@ class report_hq_export(report_sxw.report_sxw):
 #                line_name = "Local accrual - Contrepartie compte d'expense"
             if (journal.code, journal.id, currency.id) not in main_lines:
                 main_lines[(journal.code, journal.id, currency.id)] = []
-            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:11] + formatted_data[12:16])
+            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + formatted_data[10:12] + formatted_data[13:17])
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
