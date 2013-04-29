@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
@@ -52,9 +53,40 @@ class account_bank_statement_line(osv.osv):
                 return False
         return True
 
-    _constraints = [
-        (_check_inactive_suppliers, "Partner is inactive!", ['partner_id']),
-    ]
+    def _get_partner_id_from_vals(self, cr, uid, vals, context=None):
+        """
+        Search for partner_id in given vals
+        """
+        # Prepare some values
+        res = False
+        # Do some checks
+        if not vals:
+            return res
+        if not context:
+            context = {}
+        if vals.get('partner_id', False):
+            res = vals.get('partner_id')
+        elif vals.get('partner_type', False):
+            p_type = vals.get('partner_type').split(',')
+            if p_type[0] == 'res.partner' and p_type[1]:
+                if isinstance(p_type[1], str):
+                    p_type[1] = int(p_type[1])
+                res = p_type[1]
+        return res
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        UTP-317: Check if partner is inactive or not. If inactive, raise an execption to the user.
+        """
+        # Some verification
+        if not context:
+            context = {}
+        partner_id = self._get_partner_id_from_vals(cr, uid, vals, context)
+        if partner_id:
+            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        return super(account_bank_statement_line, self).create(cr, uid, vals, context)
 
     _columns = {
         'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
