@@ -940,6 +940,17 @@ class composition_item(osv.osv):
             result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'item_qty', result=res)
+
+        return res
     
     def on_lot_change(self, cr, uid, ids, product_id, prodlot_id, context=None):
         '''
