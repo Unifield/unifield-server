@@ -1,6 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    
+
+        <record id="stock_move_memory_picking_additionalitems_tree" model="ir.ui.view">
+            <field name="name">stock.move.memory.picking.additionalitems.tree</field>
+            <field name="model">stock.move.memory.picking.additionalitems</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                    <tree string="Additional Items" editable="bottom">
+                        <field name="name"/>
+                        <field name="quantity" />
+                        <field name="uom" />
+                        <field name="comment"/>
+                        <field name="volume"/>
+                        <field name="weight" />
+                    </tree>
+            </field>
+        </record>
+
     </data>
 </openerp>

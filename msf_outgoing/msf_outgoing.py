@@ -2930,12 +2930,21 @@ class wizard(osv.osv):
             assert model, 'type "create" and no model defined'
             assert step, 'type "create" and no step defined'
             vals = {}
-            if step == "ppl2":
+            if (name, model, step) == ('PPL Information - step2', 'create.picking', 'ppl2'):
                 for p in self.pool.get('create.picking').read(cr, uid, context['wizard_ids'], ['product_moves_shipment_additionalitems']):
                     additionalitems_ids =  p['product_moves_shipment_additionalitems']
                     vals['product_moves_shipment_additionalitems'] = []
-                    for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
+                    for additionalitem in self.pool.get('stock.move.memory.picking.additionalitems').read(cr, uid, additionalitems_ids):
                         additionalitem.pop('id')
+                        vals['product_moves_shipment_additionalitems'].append((0, 0, additionalitem))
+            elif (name, model, step) == ('Create Shipment', 'shipment.wizard', 'create'):
+                vals['product_moves_shipment_additionalitems'] = []
+                for s in self.pool.get('shipment').read(cr, uid, ids, ['additional_items_ids']):
+                    additionalitems_ids =  s['additional_items_ids']
+                    for additionalitem in self.pool.get('shipment.additionalitems').read(cr, uid, additionalitems_ids):
+                        additionalitem['additional_item_id'] = additionalitem['id']
+                        additionalitem.pop('id')
+                        additionalitem.pop('shipment_id')
                         vals['product_moves_shipment_additionalitems'].append((0, 0, additionalitem))
             # create the memory object - passing the picking id to it through context
             wizard_id = self.pool.get(model).create(

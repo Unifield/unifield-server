@@ -1319,6 +1319,7 @@
                         <field name="comment"/>
                         <field name="volume"/>
                         <field name="weight" />
+                        <field name="picking_id" />
                     </tree>
             </field>
         </record>

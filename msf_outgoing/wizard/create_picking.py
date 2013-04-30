@@ -33,7 +33,7 @@ class create_picking(osv.osv_memory):
         'product_moves_ppl' : fields.one2many('stock.move.memory.ppl', 'wizard_id', 'Moves'),
         'product_moves_families' : fields.one2many('stock.move.memory.families', 'wizard_id', 'Pack Families'),
         'product_moves_returnproducts': fields.one2many('stock.move.memory.returnproducts', 'wizard_id', 'Return Products'),
-        'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.shipment.additionalitems', 'create_picking_wizard_id', 'Additional Items'),
+        'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.picking.additionalitems', 'create_picking_wizard_id', 'Additional Items'),
      }
 
     def copy_all(self, cr, uid, ids, context=None):
@@ -224,7 +224,7 @@ class create_picking(osv.osv_memory):
         # add field related to picking type only
         _moves_fields.update({
                             'product_moves_' + field: {'relation': 'stock.move.memory.' + field, 'type' : 'one2many', 'string' : 'Product Moves'}, 
-                            'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'},
+                            'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.picking.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'},
                             })
 
         # specify the button according to the screen
@@ -952,9 +952,8 @@ class create_picking(osv.osv_memory):
         additional_items_dict = {'additional_items_ids': []}
         for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
             additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
-            for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
+            for additionalitem in self.pool.get('stock.move.memory.picking.additionalitems').read(cr, uid, additionalitems_ids):
                 additionalitem.pop('create_picking_wizard_id')
-                additionalitem.pop('wizard_id')
                 additionalitem['picking_id'] = picking_ids[0]
                 additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
         context.update(additional_items_dict)
