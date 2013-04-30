@@ -66,27 +66,13 @@ class pack_type(osv.osv):
 pack_type()
 
 
-#class additional_item(osv.osv):
-#    _name = 'additional.item'
-#    _description = 'Additional Item'
-#    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-#                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, required=True, on_delete='cascade'),
-#                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
-#                'uom': fields.many2one('product.uom', string='UOM', required=True),
-#                'comment': fields.char(string='Name', size=1024),
-#                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
-#                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
-#                }
-#additional_item()
-
-
 class shipment_additionalitems(osv.osv):
     _name = "shipment.additionalitems"
     _description="Additional Items"
     
     _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, required=True, on_delete='cascade'),
-                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, required=True, on_delete='cascade'),
+                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
+                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, on_delete='cascade'),
                 'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
@@ -1589,6 +1575,13 @@ class stock_picking(osv.osv):
                 
         return True
     
+    def get_additional_item_ids(self, cr, uid, ids, context=None):
+        add_item_obj = self.pool.get('shipment.additionalitems')
+        additional_items_ids = []
+        for pick in self.browse(cr, uid, ids, context):
+            additional_items_ids = add_item_obj.search(cr, uid, [('picking_id', '=', ids[0])], context=context)
+        return additional_items_ids
+    
     def _vals_get_2(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -1596,6 +1589,7 @@ class stock_picking(osv.osv):
         result = {}
         for stock_picking in self.browse(cr, uid, ids, context=context):
             values = {'pack_family_memory_ids':[],
+                      'additional_items_ids': [],
                       }
             result[stock_picking.id] = values
             
@@ -1604,7 +1598,7 @@ class stock_picking(osv.osv):
             # create a memory family - no shipment id
             created_ids = self.create_pack_families_memory_from_data(cr, uid, data, shipment_id=False, context=context)
             values['pack_family_memory_ids'].extend(created_ids)
-                    
+            values['additional_items_ids'] = self.get_additional_item_ids(cr, uid, ids, context)
         return result
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
@@ -1778,7 +1772,8 @@ class stock_picking(osv.osv):
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
-                'additional_items_ids': fields.one2many('shipment.additionalitems', 'picking_id', string='Additional Items'),
+                'additional_items_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='shipment.additionalitems', string='Additional Items', multi='get_vals_2',),
+#                'additional_items_ids': fields.one2many('shipment.additionalitems', 'picking_id', string='Additional Items'),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -2687,13 +2682,12 @@ class stock_picking(osv.osv):
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
                                                           'shipment_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
-            write_values = {'origin': pick.origin}
-            if 'additional_items_ids' in context:
-                write_values.update({'additional_items_ids': context['additional_items_ids']})
-            self.write(cr, uid, [new_packing_id], write_values, context=context)
+            self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state.
             # if return move have been done in previous ppl step, we remove the corresponding copied move (criteria: qty_per_pack == 0)
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
+            if 'additional_items_ids' in context:
+                self.pool.get('shipment').write(cr, uid, new_packing.shipment_id.id, {'additional_items_ids': context['additional_items_ids']}, context)
             for move in new_packing.move_lines:
                 if move.qty_per_pack == 0:
                     move_obj.unlink(cr, uid, [move.id], context=context)

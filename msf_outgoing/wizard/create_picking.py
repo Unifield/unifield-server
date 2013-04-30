@@ -954,6 +954,7 @@ class create_picking(osv.osv_memory):
             additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
             for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
                 additionalitem.pop('create_picking_wizard_id')
+                additionalitem.pop('wizard_id')
                 additionalitem['picking_id'] = picking_ids[0]
                 additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
         context.update(additional_items_dict)
