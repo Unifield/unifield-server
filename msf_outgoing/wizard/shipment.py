@@ -398,7 +398,7 @@ class shipment_wizard(osv.osv_memory):
         additional_items_dict = {'additional_items_ids': []}
         for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
             additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
-            for additionalitem in self.pool.get('stock.move.memory.picking.additionalitems').read(cr, uid, additionalitems_ids):
+            for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
 #                if not additionalitem['picking_id']:
                 additionalitem.pop('create_picking_wizard_id')
                 additionalitem['shipment_id'] = shipment_ids[0]
@@ -600,8 +600,8 @@ class memory_additionalitems(osv.osv_memory):
                 'comment': fields.char(string='Comment', size=1024),
                 'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
                 'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
-                'picking_id': fields.many2one('stock.picking', 'PPL'),
-                'additional_item_id': fields.many2one('shipment.additionalitems', 'Additional item id'),
+                'picking_id': fields.many2one('stock.picking', 'PPL', readonly=True),
+                'additional_item_id': fields.many2one('shipment.additionalitems', 'Additional item id', readonly=True),
                 }
     
 memory_additionalitems()

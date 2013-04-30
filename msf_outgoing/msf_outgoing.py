@@ -66,23 +66,6 @@ class pack_type(osv.osv):
 pack_type()
 
 
-class shipment_additionalitems(osv.osv):
-    _name = "shipment.additionalitems"
-    _description="Additional Items"
-    
-    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
-                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
-                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, on_delete='cascade'),
-                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
-                'uom': fields.many2one('product.uom', string='UOM', required=True),
-                'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
-                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
-                }
-    
-shipment_additionalitems()
-
-
 class shipment(osv.osv):
     '''
     a shipment presents the data from grouped stock moves in a 'sequence' way
@@ -1127,6 +1110,23 @@ class shipment(osv.osv):
         return True
         
 shipment()
+
+
+class shipment_additionalitems(osv.osv):
+    _name = "shipment.additionalitems"
+    _description="Additional Items"
+    
+    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
+                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
+                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, on_delete='cascade'),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'uom': fields.many2one('product.uom', string='UOM', required=True),
+                'comment': fields.char(string='Comment', size=1024),
+                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
+                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
+                }
+    
+shipment_additionalitems()
 
 
 class pack_family_memory(osv.osv_memory):
