@@ -399,27 +399,11 @@ class shipment_wizard(osv.osv_memory):
         for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
             additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
             for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
-#                if not additionalitem['picking_id']:
-                additionalitem.pop('create_picking_wizard_id')
+                additionalitem.pop('wizard_id')
                 additionalitem['shipment_id'] = shipment_ids[0]
                 additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
         context.update(additional_items_dict)
         return context
-    
-#    def update_additionalitems(self, cr, uid, ids, context=None):
-#        shipment_ids = context['active_ids']
-#        additional_items_dict = {'additional_items_ids': context.get('additional_items_ids', [])}
-#        for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
-#            additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
-#            for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
-#                if additionalitem['picking_id']:
-#                    additionalitem.pop('wizard_id')
-#                    additionalitem['shipment_id'] = shipment_ids[0]
-#                    additionalitem['picking_id'] = additionalitem['picking_id'][0]
-#                    additionalitem['uom'] = additionalitem['uom'][0]
-#                    additional_items_dict['additional_items_ids'].append((1, additionalitem['additional_item_id'], additionalitem))
-#        context.update(additional_items_dict)
-#        return context
     
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
