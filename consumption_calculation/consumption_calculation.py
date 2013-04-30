@@ -767,15 +767,16 @@ class real_average_consumption_line(osv.osv):
 
         stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location, uom)
         warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
-        res.update({'warning': warn_msg})
         
         if qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'consumed_qty', result=res)
 
         if prodlot_id and qty > stock_qty:
-            return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+            res.setdefault('warning', {}).update(warn_msg)
+            res.setdefault('value', {}).update({'consumed_qty': 0})
         if qty > stock_qty:
-            return {'warning': warn_msg}
+            res.setdefault('warning', {}).update(warn_msg)
+        
         return res
 
     def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, remark=False, context=None):
