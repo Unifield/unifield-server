@@ -400,6 +400,11 @@ class shipment_wizard(osv.osv_memory):
             additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
             for additionalitem in self.pool.get('stock.move.memory.shipment.additionalitems').read(cr, uid, additionalitems_ids):
                 additionalitem.pop('wizard_id')
+                additionalitem['picking_id'] = additionalitem.get('picking_id', False) and additionalitem.get('picking_id', False)[0]
+                uom = additionalitem.get('uom', False)
+                if isinstance(uom, (int, long)):
+                    uom = [uom]
+                additionalitem['uom'] = uom and uom[0]
                 additionalitem['shipment_id'] = shipment_ids[0]
                 additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
         context.update(additional_items_dict)
