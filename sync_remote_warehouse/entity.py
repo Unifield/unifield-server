@@ -154,45 +154,41 @@ class Entity(osv.osv):
             
         # create csv file
         try:
-            csv_file_name = 'sync_remote_warehouse.update_received.csv'
-            with open(csv_file_name, 'wb') as csv_file:
-                csv_writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-                for data_row in csv_contents:
-                    csv_writer.writerow(data_row)
+            csv_string_io = StringIO()
+            csv_writer = csv.writer(csv_string_io, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            for data_row in csv_contents:
+                csv_writer.writerow(data_row)
                     
             # create rules file to send to remote warehouse if instance is central platform
             if entity.usb_instance_type == 'central_platform': 
                 rule_pool = self.pool.get('sync.client.rule')
                 rule_ids = rule_pool.search(cr, uid, [('usb','=',True),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
                 rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
-                rules_file_name = "rules.txt"
                 
-                rules_file = open(rules_file_name, "w")
-                rules_file.write(str(rules_serialized))
-                rules_file.close()
+                rules_string_io = StringIO()
+                rules_string_io.write(str(rules_serialized))
                     
             # compress csv file into zip
-            zip_file_name = 'usb_sync_data.zip'
+            zip_file_string_io = StringIO()
+            zip_base64_output = StringIO()
+            with ZipFile(zip_file_string_io, 'w') as zip_file:
+                zip_file.writestr('sync_remote_warehouse.update_received.csv', csv_string_io.getvalue())
             
-            if os.path.exists(zip_file_name):
-                os.remove(zip_file_name)
-                
-            with ZipFile(zip_file_name, 'w') as zip_file:
-                zip_file.write(csv_file_name)
                 if entity.usb_instance_type == 'central_platform': 
-                    zip_file.write(rules_file_name)
+                    zip_file.writestr('rules.txt', rules_string_io.getvalue())
                     
-            # add to entity object
-            zip_base64 = ''
-            with open(zip_file_name, "rb") as zip_file:
-                zip_base64 = base64.b64encode(zip_file.read())
+                # add to entity object
+            zip_file_contents = zip_file_string_io.getvalue()
+            zip_base64 = base64.encodestring(zip_file_contents) 
+            zip_base64_output.close()
+    
+            # clean up
+            csv_string_io.close()
+            rules_string_io.close()
+            zip_file_string_io.close()
     
             # attach file to entity and delete 
             self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
-            
-            os.remove(zip_file_name)
-            if entity.usb_instance_type == 'central_platform': 
-                os.remove(rules_file_name)
             
             if logger:
                 logger.switch('status', 'ok')
