@@ -28,6 +28,109 @@ class wizard_confirm_closing_period(osv.osv_memory):
     _name = 'wizard.confirm.closing.period'
     _description = 'Closing period confirmation wizard'
 
+    def button_fx_rate(self, cr, uid, ids, context=None):
+        """
+        Open Currencies in a new tab
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Default buttons
+        context.update({'search_default_active': 1})
+        return {
+            'name': 'Curencies',
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.currency',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('active', 'in', ['t', 'f'])],
+        }
+
+    def button_hr(self, cr, uid, ids, context=None):
+        """
+        Open all HR entries from given period
+        """
+        if not context:
+            context = {}
+        if not context.get('period_id', False):
+            raise osv.except_osv(_('Error'), _('No period found in context. Please contact a system administrator.'))
+        return {
+            'name': 'HR entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('journal_id.type', '=', 'hr'), ('period_id', '=', context.get('period_id'))]
+        }
+
+    def button_accruals(self, cr, uid, ids, context=None):
+        """
+        Open all accruals from given period
+        """
+        if not context:
+            context = {}
+        if not context.get('period_id', False):
+            raise osv.except_osv(_('Error'), _('No period found in context. Please contact a system administrator.'))
+        return {
+            'name': 'Accruals',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('journal_id.type', '=', 'accrual'), ('period_id', '=', context.get('period_id'))]
+        }
+
+    def button_recurring(self, cr, uid, ids, context=None):
+        """
+        Open all recurring models
+        """
+        if not context:
+            context = {}
+        return {
+            'name': 'Reccuring lines',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.model',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def button_open_invoices(self, cr, uid, ids, context=None):
+        """
+        Open all Supplier invoices in given period
+        """
+        if not context:
+            context = {}
+        if not context.get('period_id', False):
+            raise osv.except_osv(_('Error'), _('No period found in context. Please contact a system administrator.'))
+        period = self.pool.get('account.period').browse(cr, uid, [context.get('period_id')])[0]
+        # Update context
+        context.update({'type':'in_invoice', 'journal_type': 'purchase'})
+        return {
+            'name': 'Supplier Invoices',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [
+                ('state', '=', 'draft'),
+                ('type','=','in_invoice'),
+                ('register_line_ids', '=', False),
+                ('is_inkind_donation', '=', False),
+                ('is_debit_note', "=", False),
+                ('is_intermission', '=', False)
+            ],
+            'context': context,
+        }
+
     def button_confirm(self, cr, uid, ids, context=None):
         """
         Confirm that we close the period
