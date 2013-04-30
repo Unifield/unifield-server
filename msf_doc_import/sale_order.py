@@ -571,7 +571,7 @@ class sale_order_line(osv.osv):
                 if vals.get('product_uom') and vals.get('product_id'):
                     product_id = vals.get('product_id')
                     uom_id = vals.get('product_uom')
-                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context)
+                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context=context)
                     if res and res['warning']:
                         message += res['warning']['message']
 
