@@ -24,6 +24,14 @@ from tools.translate import _
 class msf_budget_summary(osv.osv_memory):
     _name = "msf.budget.summary"
     
+    def _get_analytic_domain(self, cr, uid, summary_id, context=None):
+        summary_line = self.browse(cr, uid, summary_id, context=context)
+        cost_center_ids = self.pool.get('msf.budget.tools')._get_cost_center_ids(summary_line.budget_id.cost_center_id)
+            
+        return [('cost_center_id', 'in', cost_center_ids),
+                ('date', '>=', summary_line.budget_id.fiscalyear_id.date_start),
+                ('date', '<=', summary_line.budget_id.fiscalyear_id.date_stop)]
+    
     def _get_amounts(self, cr, uid, ids, field_names=None, arg=None, context=None):
         res = {}
         
