@@ -1841,6 +1841,17 @@ class stock_picking(osv.osv):
                                 uom['lots'][lot.id]['reserved_qty'] = 0.0
                     
         return result
+
+    def action_confirm_moves(self, cr, uid, ids, context=None):
+        '''
+        Confirm all stock moves of the picking
+        '''
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                if move.state == 'draft':
+                    self.pool.get('stock.move').action_confirm(cr, uid, [move.id], context=context)
+
+        return True
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
