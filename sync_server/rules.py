@@ -128,6 +128,7 @@ class sync_rule(osv.osv):
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
         'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
+        'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?', required=True),
     }
 
     _defaults = {
