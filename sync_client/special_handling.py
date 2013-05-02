@@ -28,6 +28,8 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
+
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -108,7 +110,7 @@ class account_move_line(osv.osv):
                     diff_val = vals[f] != to_write_val
                     if typ == 'float' and l[f] and vals[f]:
                         diff_val = abs(vals[f] - l[f]) > 10**-4
-                    if diff_val and l.move_id.state <> 'draft' and (not l.journal_id.entry_posted):
+                    if diff_val and l.move_id.state <> 'draft' and l.state <> 'draft' and (not l.journal_id.entry_posted):
                         raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
                     if diff_val and l.reconcile_id:
                         raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
