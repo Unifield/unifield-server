@@ -74,6 +74,7 @@ class output_currency_for_export(osv.osv_memory):
         choice = wiz and wiz.export_format or False
         if not choice:
             raise osv.except_osv(_('Error'), _('Please choose an export format!'))
+        datas = {}
         # Return CSV export is choosed.
         #if choice == 'csv':
             # Return good view
