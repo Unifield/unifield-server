@@ -619,7 +619,7 @@ class wizard_cash_return(osv.osv_memory):
                             'period_id': period_id,
                             'date': supp_move_date,
                             'document_date': supp_move_date,
-                            'name': supp_move_name,
+                            #'name': supp_move_name, ## Deleted in UF-1959. Was asked since UTP-330 and UF-1542.
                             'partner_id': supplier_id,
                         }
                         # search account_id of the supplier
