@@ -171,13 +171,15 @@ class Entity(osv.osv):
             # compress csv file into zip
             zip_file_string_io = StringIO()
             zip_base64_output = StringIO()
-            with ZipFile(zip_file_string_io, 'w') as zip_file:
-                zip_file.writestr('sync_remote_warehouse.update_received.csv', csv_string_io.getvalue())
+            zip_file = ZipFile(zip_file_string_io, 'w')
+            zip_file.writestr('sync_remote_warehouse.update_received.csv', csv_string_io.getvalue())
             
-                if entity.usb_instance_type == 'central_platform': 
-                    zip_file.writestr('rules.txt', rules_string_io.getvalue())
+            if entity.usb_instance_type == 'central_platform': 
+                zip_file.writestr('rules.txt', rules_string_io.getvalue())
+                
+            zip_file.close()
                     
-                # add to entity object
+            # add to entity object
             zip_file_contents = zip_file_string_io.getvalue()
             zip_base64 = base64.encodestring(zip_file_contents) 
             zip_base64_output.close()
