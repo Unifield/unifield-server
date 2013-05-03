@@ -666,7 +666,7 @@ class supplier_catalogue_line(osv.osv):
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v.update({'line_uom_id': product.uom_id.id})
-            res = self.change_uom_qty(cr, uid, product.uom_id.id, min_qty, min_order_qty)
+            res = self.change_uom_qty(cr, uid, ids, product.uom_id.id, min_qty, min_order_qty)
         else:
             return {}
         
