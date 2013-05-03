@@ -596,21 +596,6 @@ class memory_additionalitems(osv.osv_memory):
 memory_additionalitems()
 
 
-class stock_move_memory_picking_additionalitems(osv.osv_memory):
-    '''
-    view corresponding to additionalitems
-    
-    integrity constraint 
-    '''
-    _inherit = "memory.additionalitems"
-    _name  = 'stock.move.memory.picking.additionalitems'
-    _description="Additional Items"
-    _columns = {
-                'create_picking_wizard_id': fields.many2one('create.picking', string="Wizard"),
-                }
-stock_move_memory_picking_additionalitems()
-
-
 class stock_move_memory_shipment_additionalitems(osv.osv_memory):
     '''
     view corresponding to additionalitems

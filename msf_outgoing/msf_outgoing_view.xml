@@ -689,9 +689,6 @@
 								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
 							</group>
 						</page>
-                        <page string="Additional items">
-                            <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" readonly="True"></field>
-                        </page>
 						<page string="Additional info">
 							<field name="auto_picking" invisible="1" />
 							<field name="date_done" />

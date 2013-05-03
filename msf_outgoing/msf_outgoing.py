@@ -1575,13 +1575,6 @@ class stock_picking(osv.osv):
                 
         return True
     
-    def get_additional_item_ids(self, cr, uid, ids, context=None):
-        add_item_obj = self.pool.get('shipment.additionalitems')
-        additional_items_ids = []
-        for pick in self.browse(cr, uid, ids, context):
-            additional_items_ids = add_item_obj.search(cr, uid, [('picking_id', '=', ids[0])], context=context)
-        return additional_items_ids
-    
     def _vals_get_2(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -1589,7 +1582,6 @@ class stock_picking(osv.osv):
         result = {}
         for stock_picking in self.browse(cr, uid, ids, context=context):
             values = {'pack_family_memory_ids':[],
-                      'additional_items_ids': [],
                       }
             result[stock_picking.id] = values
             
@@ -1598,7 +1590,6 @@ class stock_picking(osv.osv):
             # create a memory family - no shipment id
             created_ids = self.create_pack_families_memory_from_data(cr, uid, data, shipment_id=False, context=context)
             values['pack_family_memory_ids'].extend(created_ids)
-            values['additional_items_ids'] = self.get_additional_item_ids(cr, uid, ids, context)
         return result
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
@@ -1772,8 +1763,6 @@ class stock_picking(osv.osv):
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
-                'additional_items_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='shipment.additionalitems', string='Additional Items', multi='get_vals_2',),
-#                'additional_items_ids': fields.one2many('shipment.additionalitems', 'picking_id', string='Additional Items'),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -2930,14 +2919,7 @@ class wizard(osv.osv):
             assert model, 'type "create" and no model defined'
             assert step, 'type "create" and no step defined'
             vals = {}
-            if (name, model, step) == ('PPL Information - step2', 'create.picking', 'ppl2'):
-                for p in self.pool.get('create.picking').read(cr, uid, context['wizard_ids'], ['product_moves_shipment_additionalitems']):
-                    additionalitems_ids =  p['product_moves_shipment_additionalitems']
-                    vals['product_moves_shipment_additionalitems'] = []
-                    for additionalitem in self.pool.get('stock.move.memory.picking.additionalitems').read(cr, uid, additionalitems_ids):
-                        additionalitem.pop('id')
-                        vals['product_moves_shipment_additionalitems'].append((0, 0, additionalitem))
-            elif (name, model, step) == ('Create Shipment', 'shipment.wizard', 'create'):
+            if (name, model, step) == ('Create Shipment', 'shipment.wizard', 'create'):
                 vals['product_moves_shipment_additionalitems'] = []
                 for s in self.pool.get('shipment').read(cr, uid, ids, ['additional_items_ids']):
                     additionalitems_ids =  s['additional_items_ids']

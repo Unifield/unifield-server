@@ -32,8 +32,7 @@ class create_picking(osv.osv_memory):
         'product_moves_picking' : fields.one2many('stock.move.memory.picking', 'wizard_id', 'Moves'),
         'product_moves_ppl' : fields.one2many('stock.move.memory.ppl', 'wizard_id', 'Moves'),
         'product_moves_families' : fields.one2many('stock.move.memory.families', 'wizard_id', 'Pack Families'),
-        'product_moves_returnproducts': fields.one2many('stock.move.memory.returnproducts', 'wizard_id', 'Return Products'),
-        'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.picking.additionalitems', 'create_picking_wizard_id', 'Additional Items'),
+        'product_moves_returnproducts': fields.one2many('stock.move.memory.returnproducts', 'wizard_id', 'Return Products')
      }
 
     def copy_all(self, cr, uid, ids, context=None):
@@ -224,7 +223,6 @@ class create_picking(osv.osv_memory):
         # add field related to picking type only
         _moves_fields.update({
                             'product_moves_' + field: {'relation': 'stock.move.memory.' + field, 'type' : 'one2many', 'string' : 'Product Moves'}, 
-                            'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.picking.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'},
                             })
 
         # specify the button according to the screen
@@ -263,16 +261,8 @@ class create_picking(osv.osv_memory):
         _moves_arch_lst += """
                 <button name="%s" string="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
-            </group>"""%button
-        if step  == 'ppl1':
-            _moves_arch_lst += """
-            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form"></field>
-            """
-        elif step  == 'ppl2':
-            _moves_arch_lst += """
-            <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form" readonly="1"></field>
-            """
-        _moves_arch_lst +="""</form>"""
+            </group>
+        </form>"""%button
         
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
@@ -947,18 +937,6 @@ class create_picking(osv.osv_memory):
             return False
         return True
 
-    def create_additionalitems(self, cr, uid, ids, context=None):
-        picking_ids = context['active_ids']
-        additional_items_dict = {'additional_items_ids': []}
-        for shipment_wizard in self.read(cr, uid, ids, ['product_moves_shipment_additionalitems'], context):
-            additionalitems_ids = shipment_wizard['product_moves_shipment_additionalitems']
-            for additionalitem in self.pool.get('stock.move.memory.picking.additionalitems').read(cr, uid, additionalitems_ids):
-                additionalitem.pop('create_picking_wizard_id')
-                additionalitem['picking_id'] = additionalitem.get('picking_id', False) and additionalitem.get('picking_id', False)[0]
-                additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
-        context.update(additional_items_dict)
-        return context
-
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
         - update partial_datas_ppl1
@@ -983,8 +961,6 @@ class create_picking(osv.osv_memory):
         if not weight_check:
             # the windows must be updated to trigger tree colors
             return self.pool.get('wizard').open_wizard(cr, uid, picking_ids, type='update', context=context)
-        # put addtional items in context
-        context.update(self.create_additionalitems(cr, uid, ids, context))
         # call stock_picking method which returns action call
         return pick_obj.do_ppl2(cr, uid, picking_ids, context=context)
 
