@@ -62,6 +62,7 @@ class freight_manifest(report_sxw.rml_parse):
             'getadditional_items_volume': self.getadditional_items_volume,
             'getadditional_items_weight': self.getadditional_items_weight,
             'getadditional_items_getTotKg': self.getadditional_items_getTotKg,
+            'getallTotKg': self.getallTotKg,
         })
 
     def getFonCur(self,ligne):
@@ -158,6 +159,9 @@ class freight_manifest(report_sxw.rml_parse):
 
     def getadditional_items_getTotKg(self):
         return self.getadditional_items_kgtot and self.getadditional_items_kgtot or '0.0'
+
+    def getallTotKg(self):
+        return self.getadditional_items_kgtot + self.kgtot or '0.0'
 
 report_sxw.report_sxw('report.msf.freight_manifest', 'shipment', 'addons/msf_printed_documents/report/freight_manifest.rml', parser=freight_manifest, header=False,)
 
