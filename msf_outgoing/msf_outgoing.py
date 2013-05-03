@@ -178,7 +178,10 @@ class shipment(osv.osv):
                     # currency
                     currency_id = memory_family.currency_id and memory_family.currency_id.id or False
                     values['currency_id'] = currency_id
-                
+            weight_add_items = 0.0
+            for item in shipment.additional_items_ids:
+                weight_add_items += item.weight
+            values['total_weight'] += weight_add_items
         return result
     
     def _get_shipment_ids(self, cr, uid, ids, context=None):
