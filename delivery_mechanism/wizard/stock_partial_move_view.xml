@@ -72,9 +72,11 @@
 					
 					<field name="product_uom" position="attributes">
 						<attribute name="readonly">False</attribute>
+                        <attribute name="domain">[('category_id', '=', uom_category)]</attribute>
 					</field>
 
 					<field name="quantity" position="before">
+                        <field name="uom_category" invisible="1" />
                         <field name="quantity_ordered" readonly="1"  />
                         <field name="uom_ordered" readonly="1" />
 					</field>
