@@ -29,7 +29,7 @@ from datetime import datetime
 
 def _get_instance_level(self, cr, uid):
     user = self.pool.get('res.users').browse(cr, 1, uid)
-    if hasattr(user.company_id, 'instance_id'):
+    if self.pool.get('msf.instance'):
         instance_level = user.company_id.instance_id.level
     
         if instance_level:
