@@ -787,7 +787,7 @@ function eval_domain_context_request(options){
     }
 
     var parent_context = openobject.dom.get(prefix.concat('_terp_context').join('/'));
-    var search_domain = openobject.dom.get(prefix.concat('_terp_domain').join('/'));
+    var search_domain = openobject.dom.get(prefix.concat('_terp_search_domain').join('/'));
     if (search_domain) {
         params['_terp_search_domain'] = search_domain.value;
     }
