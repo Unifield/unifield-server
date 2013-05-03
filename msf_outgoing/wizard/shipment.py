@@ -36,7 +36,7 @@ class shipment_wizard(osv.osv_memory):
         'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer'),
         'product_moves_shipment_create' : fields.one2many('stock.move.memory.shipment.create', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacks' : fields.one2many('stock.move.memory.shipment.returnpacks', 'wizard_id', 'Pack Families'),
-        'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.picking.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
+        'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.shipment.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.shipment.additionalitems', 'wizard_id', 'Additional Items'),
      }
 #     todo
