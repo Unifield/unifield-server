@@ -358,6 +358,7 @@
           <font color="white"> </font>
         </para>
     </section>
+    </section>
     <section>
     <section>
       [[ shipment.additional_items_ids or removeParentNode('section') ]]
