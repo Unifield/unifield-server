@@ -2674,12 +2674,11 @@ class stock_picking(osv.osv):
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
                                                           'shipment_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+            
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state.
             # if return move have been done in previous ppl step, we remove the corresponding copied move (criteria: qty_per_pack == 0)
             new_packing = self.browse(cr, uid, new_packing_id, context=context)
-            if 'additional_items_ids' in context:
-                self.pool.get('shipment').write(cr, uid, new_packing.shipment_id.id, {'additional_items_ids': context['additional_items_ids']}, context)
             for move in new_packing.move_lines:
                 if move.qty_per_pack == 0:
                     move_obj.unlink(cr, uid, [move.id], context=context)
