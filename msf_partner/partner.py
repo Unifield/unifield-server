@@ -236,6 +236,7 @@ class res_partner(osv.osv):
         tender_obj = self.pool.get('tender')
         com_vouch_obj = self.pool.get('account.commitment')# for commitment voucher
         ship_obj = self.pool.get('shipment')
+        absl_obj = self.pool.get('account.bank.statement.line') # for register lines
 
         # ids list (the domain are the same as the one used for the action window of the menus)
         purchase_ids = purchase_obj.search(cr, uid,
@@ -313,6 +314,7 @@ class res_partner(osv.osv):
         ship_ids = ship_obj.search(cr, uid,
             [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
             context=context)
+        absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
         
         return ', '.join([
             po['name']+_(' (Purchase)') for po in purchase_obj.read(cr, uid, purchase_ids, ['name'], context) if po['name']]
@@ -336,6 +338,7 @@ class res_partner(osv.osv):
             +[tend['name']+_(' (Tender)') for tend in tender_obj.read(cr, uid, tender_ids, ['name'], context) if tend['name']]
             +[com_vouch['name']+_(' (Commitment Voucher)') for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids, ['name'], context) if com_vouch['name']]
             +[ship['name']+_(' (Shipment)') for ship in ship_obj.read(cr, uid, ship_ids, ['name'], context) if ship['name']]
+            +[absl.name + '(' + absl.statement_id.name + _(' Register)') for absl in absl_obj.browse(cr, uid, absl_ids, context) if absl.name and absl.statement_id and absl.statement_id.name]
         )
 
     def write(self, cr, uid, ids, vals, context=None):
