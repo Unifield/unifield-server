@@ -137,8 +137,8 @@
             <field name="model">warning.import.currencies</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Undefined FX Rates">
-                    <label string="FX rates for this period have not been defined for the following currencies:" align="0.0" colspan="3"/>
+                <form string="Piece of information">
+                    <label string="Nothing" align="0.0" colspan="3"/>
                     <field name="currency_list" colspan="4" nolabel="1" readonly="1"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">

@@ -104,6 +104,7 @@ class import_currencies(osv.osv_memory):
                                                                'currency_id': currency_ids[0]})
         # Return undefined currencies
         if len(undefined_currencies) > 0:
+            context.update({'message': "FX rates have been properly imported for the date XX [date user entered in the wizard]; be aware that no rates have been defined on the 1st of [period corresponding to the date user entered in the wizard] for the following currencies..."})
             wizard_id = self.pool.get('warning.import.currencies').create(cr,
                                                                           uid,
                                                                           {'currency_list': undefined_currencies},
