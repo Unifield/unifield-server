@@ -78,21 +78,6 @@ class account_commitment(osv.osv):
                                                                                                     ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
 
-    def _check_inactive_suppliers(self, cr, uid, ids, context=None):
-        """
-        Check that partner_id is not inactive
-        """
-        if not context:
-            context = {}
-        for cv in self.browse(cr, uid, ids):
-            if cv.partner_id and cv.partner_id.active == False:
-                return False
-        return True
-
-    _constraints = [
-        (_check_inactive_suppliers, "Partner is inactive!", ['partner_id']),
-    ]
-
     def create(self, cr, uid, vals, context=None):
         """
         Update period_id regarding date.
@@ -103,6 +88,12 @@ class account_commitment(osv.osv):
         if not 'period_id' in vals:
             period_ids = get_period_from_date(self, cr, uid, vals.get('date', strftime('%Y-%m-%d')), context=context)
             vals.update({'period_id': period_ids and period_ids[0]})
+        # UTP-317 # Check that no inactive partner have been used to create this commitment
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')])
+            active = True
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
