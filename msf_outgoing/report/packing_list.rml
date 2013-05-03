@@ -358,7 +358,7 @@
           <font color="white"> </font>
         </para>
       </section>
-    </section>
+    <section>
     <section>
       [[ shipment.additional_items_ids or removeParentNode('section') ]]
       <blockTable colWidths="117.0,50.0,60.0,181.0,60.0,50.0" repeatRows="1" style="Table9">
@@ -383,6 +383,9 @@
           </td>
         </tr>
       </blockTable>
+     </section>
+     <section>
+        [[ shipment.additional_items_ids or removeParentNode('section') ]]
         <para style="P14">[[repeatIn(shipment.additional_items_ids,'line')]] </para>
         <blockTable colWidths="117.0,50.0,60.0,181.0,60.0,50.0" style="Table2">
           <tr>
@@ -406,6 +409,8 @@
             </td>
           </tr>
         </blockTable>
+      </section>
+      </section>
       </section>
   </story>
 </document>
