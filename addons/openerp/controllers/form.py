@@ -606,6 +606,7 @@ class Form(SecuredController):
 
         id = params.id
         ctx = params.context
+        ctx['from_button'] = True
         model = params.model
 
         proxy = rpc.RPCProxy(model)
