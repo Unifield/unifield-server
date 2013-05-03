@@ -262,6 +262,9 @@ class stock_picking(osv.osv):
         '''
         Update the partner or the address according to the other
         '''
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        
         if not vals.get('address_id') and vals.get('partner_id2'):
             for pick in self.browse(cr, uid, ids, context=context):
                 if pick.partner_id.id != vals.get('partner_id2'):
@@ -366,6 +369,9 @@ class stock_picking(osv.osv):
                           delivery moves with product_id, product_qty, uom
         @return: Dictionary of values
         """
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        
         if context is None:
             context = {}
         else:
@@ -645,6 +651,11 @@ class stock_picking(osv.osv):
         Prepare intermission voucher IN/OUT
         Change invoice purchase_list field to TRUE if this picking come from a PO which is 'purchase_list'
         """
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
         res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
         intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission'),
                                                                                      ('is_current_instance', '=', True)])
@@ -668,7 +679,7 @@ class stock_picking(osv.osv):
                 company_currency = company.currency_id and company.currency_id.id or False
                 if not company_currency:
                     raise osv.except_osv(_('Warning'), _('No company currency found!'))
-                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency})
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': company_currency}, context=context)
                 self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': inv_id})
         return res
 
@@ -734,6 +745,8 @@ class stock_move(osv.osv):
         Return True if the move has a dpo_id
         '''
         res = {}
+        if isinstance(ids,(int, long)):
+            ids = [ids]
 
         for move in self.browse(cr, uid, ids, context=context):
             res[move.id] = False
@@ -769,6 +782,9 @@ class stock_move(osv.osv):
         Fill the error message if the product of the line is inactive
         '''
         res = {}
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
@@ -835,6 +851,10 @@ class stock_move(osv.osv):
         '''
         Update the partner or the address according to the other
         '''
+        
+        if isinstance(ids, (int, long)):
+            ids = [ids]        
+        
         if not vals.get('address_id') and vals.get('partner_id2'):
             for move in self.browse(cr, uid, ids, context=context):
                 if move.partner_id.id != vals.get('partner_id'):
@@ -1014,6 +1034,9 @@ class stock_move(osv.osv):
         
         -  it erases the batch number associated if any and reset the source location to the original one.
         '''
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+
         for line in self.browse(cr, uid, ids, context):
             if line.prodlot_id:
                 self.write(cr, uid, ids, {'prodlot_id': False, 'expired_date': False})
@@ -1048,6 +1071,10 @@ class stock_move(osv.osv):
                           like partner_id, address_id, delivery_date, delivery
                           moves with product_id, product_qty, uom
         """
+        
+        if isinstance(ids,(int, long)):
+            ids = [ids]
+        
         res = {}
         picking_obj = self.pool.get('stock.picking')
         product_obj = self.pool.get('product.product')
@@ -1173,6 +1200,8 @@ class stock_move(osv.osv):
         """
         if context is None:
             context = {}
+        if isinstance(ids,(int, long)):
+            ids = [ids]
 
         result = []
         for move in self.browse(cr, uid, ids, context=context):

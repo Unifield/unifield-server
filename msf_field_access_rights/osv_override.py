@@ -384,7 +384,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                     domain_value = domains[field_name]
 
                     domain_value_or = copy.deepcopy(domain_value)
-                    if not isinstance(domain_value_or, bool) and len(domain_value_or) > 1:
+                    if isinstance(domain_value_or, (list, tuple)) and len(domain_value_or) > 0:
                         domain_value_or.insert(0, '|')
 
                     # get field from xml using xpath
@@ -400,7 +400,11 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                 
                                 # remove attrs if present
                                 if 'attrs' in field.attrib:
-                                    del field.attrib['attrs']
+                                    attrs_text = field.attrib['attrs']
+                                    if 'readonly' in attrs_text:
+                                        attrs = eval(attrs_text)
+                                        del attrs['readonly']
+                                        field.set('attrs', str(attrs))
                             else:
                                 # find attrs
                                 attrs_text = field.get('attrs', False)
@@ -410,19 +414,21 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                                     attrs = eval(attrs_text)
                                     if attrs.get('readonly', False):
                                         # concatenate domain with existing domains
-                                        attrs['readonly'] = attrs['readonly'].insert(0, domain_value)
-                                        attrs['readonly'].insert(0, '|')
+                                        if isinstance(attrs.get('readonly'), (tuple, list)):
+                                            attrs['readonly'].insert(0, domain_value_or)
+                                        else:
+                                            attrs['readonly'] = str(domain_value)
                                     else:
-                                        attrs['readonly'] = str( domain_value_or )
+                                        attrs['readonly'] = str( domain_value )
 
                                     field.set('attrs', str(attrs))
                                 else:
-                                    field.set('attrs', str( {'readonly': domain_value_or} ))
+                                    field.set('attrs', str( {'readonly': domain_value} ))
 
                         # add 'hidden by field access rules' flag
                         if field_name in self._columns:
                             field.attrib['help'] = '[Field Disabled by Field Access Rights] ' + self._columns[field_name].help
-                                
+                
                 # get the modified xml string and return it
                 fields_view['arch'] = etree.tostring(view_xml)
                 return fields_view

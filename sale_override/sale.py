@@ -778,7 +778,7 @@ class sale_order(osv.osv):
         if line.product_id:
             result = line.product_id.id
         elif line.order_id.procurement_request and not line.product_id and line.comment:
-            result = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            result = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         return result
     
     def _hook_ship_create_uom_id(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -1198,18 +1198,18 @@ class sale_order_line(osv.osv):
         '''
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import','uom_tbd')[1]
+        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
         obj_browse = self.browse(cr, uid, ids, context=context)
         vals={}
         message = ''
         for var in obj_browse:
             if var.product_uom.id == tbd_uom:
                 message += 'You have to define a valid UOM, i.e. not "To be define".'
-            if var.nomen_manda_0.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd0')[1]:
+            if var.nomen_manda_0.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]:
                 message += 'You have to define a valid Main Type (in tab "Nomenclature Selection"), i.e. not "To be define".'
-            if var.nomen_manda_1.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd1')[1]:
+            if var.nomen_manda_1.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]:
                 message += 'You have to define a valid Group (in tab "Nomenclature Selection"), i.e. not "To be define".'
-            if var.nomen_manda_2.id == obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'nomen_tbd2')[1]:
+            if var.nomen_manda_2.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]:
                 message += 'You have to define a valid Family (in tab "Nomenclature Selection"), i.e. not "To be define".'
         # the 3rd level is not mandatory
         if message:

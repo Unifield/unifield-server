@@ -21,6 +21,7 @@
 		                    <field name="move_prefix"/>
 		                    <field name="reconcile_prefix"/>
                             <field name="top_cost_center_id"/>
+                            <field name="po_fo_cost_center_id"/>
                         </page>
                         <page string="Cost Centres">
 		                    <button name="button_cost_center_wizard" string="Add Cost Centres" type="object" icon="terp-document-new" attrs="{'invisible': ['|', '|', ('level', '=', 'section'), ('level', '=', 'project'), ('current_instance_level', '!=', 'section')]}"/>
@@ -31,12 +32,14 @@
 	                                    <field name="cost_center_name"/>
 			                            <field name="is_target"/>
                                         <field name="is_top_cost_center"/>
+                                        <field name="is_po_fo_cost_center"/>
 			                        </tree>
 			                        <form string="Cost Centres">
 			                            <field name="cost_center_id" readonly="1"/>
                                         <field name="cost_center_name"/>
 			                            <field name="is_target"/>
                                         <field name="is_top_cost_center"/>
+                                        <field name="is_po_fo_cost_center"/>
 			                        </form>
 			                    </field>
 		                    </group>

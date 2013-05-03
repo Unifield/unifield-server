@@ -1676,6 +1676,18 @@ class account_bank_statement_line(osv.osv):
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
 
+    def button_delete(self, cr, uid, ids, context=None):
+        """
+        Delete given ids
+        """
+        forbidden = []
+        for absl in self.browse(cr, uid, ids, context=context):
+            if absl.state != 'draft':
+                forbidden.append(absl.id)
+        if forbidden:
+            raise osv.except_osv(_('Warning'), _('You can only delete draft lines!'))
+        return self.unlink(cr, uid, ids, context=context)
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Permit to delete some account_bank_statement_line. But do some treatments on temp posting lines and do nothing for hard posting lines.

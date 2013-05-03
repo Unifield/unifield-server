@@ -485,8 +485,8 @@ class real_average_consumption(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
-        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
-        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
 
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
@@ -695,8 +695,8 @@ class real_average_consumption_line(osv.osv):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'uom_tbd')[1]
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             message = ''
             if vals.get('uom_id'):
                 if vals.get('uom_id') == tbd_uom:
@@ -1221,7 +1221,7 @@ class monthly_review_consumption_line(osv.osv):
             ids = [ids]
         if not context.get('import_in_progress') and not context.get('button'):
             obj_data = self.pool.get('ir.model.data')
-            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_supply_doc_import', 'product_tbd')[1]
+            tbd_product = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
             if vals.get('name'):
                 if vals.get('name') == tbd_product:
                     raise osv.except_osv(_('Warning !'), _('You have to define a valid product, i.e. not "To be define".'))
