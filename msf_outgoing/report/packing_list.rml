@@ -358,6 +358,7 @@
           <font color="white"> </font>
         </para>
     </section>
+    </section>
     <section>
       [[ shipment.additional_items_ids or removeParentNode('section') ]]
       <blockTable colWidths="117.0,50.0,60.0,181.0,60.0,50.0" repeatRows="1" style="Table9">
