@@ -383,8 +383,6 @@
           </td>
         </tr>
       </blockTable>
-     </section>
-        [[ shipment.additional_items_ids or removeParentNode('section') ]]
         <para style="P14">[[repeatIn(shipment.additional_items_ids,'line')]] </para>
         <blockTable colWidths="117.0,50.0,60.0,181.0,60.0,50.0" style="Table2">
           <tr>
