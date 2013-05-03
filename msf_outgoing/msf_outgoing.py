@@ -2920,6 +2920,7 @@ class wizard(osv.osv):
             assert name, 'type "create" and no name defined'
             assert model, 'type "create" and no model defined'
             assert step, 'type "create" and no step defined'
+            vals = {}
             # if there are already additional items on the shipment we show them in the wizard
             if (name, model, step) == ('Create Shipment', 'shipment.wizard', 'create'):
                 vals['product_moves_shipment_additionalitems'] = []
@@ -2933,7 +2934,7 @@ class wizard(osv.osv):
             
             # create the memory object - passing the picking id to it through context
             wizard_id = self.pool.get(model).create(
-                cr, uid, {}, context=dict(context,
+                cr, uid, vals, context=dict(context,
                                           active_ids=ids,
                                           model=model,
                                           step=step,
