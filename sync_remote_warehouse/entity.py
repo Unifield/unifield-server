@@ -186,7 +186,8 @@ class Entity(osv.osv):
     
             # clean up
             csv_string_io.close()
-            rules_string_io.close()
+            if entity.usb_instance_type == 'central_platform':
+                rules_string_io.close()
             zip_file_string_io.close()
     
             # attach file to entity and delete 
