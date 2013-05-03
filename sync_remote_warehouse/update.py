@@ -14,15 +14,3 @@ class UpdateToSend(osv.osv):
         return super(UpdateToSend, self).sync_finished(cr, uid, update_ids, sync_field="usb_sync_date", context=context)
 
 UpdateToSend()
-
-class MessageReceived(osv.osv):
-    _inherit = 'sync.client.message_received'
-    _name = 'sync_remote_warehouse.message_received'
-
-MessageReceived()
-
-class MessageToSend(osv.osv):
-    _inherit = 'sync.client.message_to_send'
-    _name = 'sync_remote_warehouse.message_to_send'
-
-MessageToSend()
