@@ -1,6 +1,7 @@
 import ir_model_data
 import entity
-import logging_models
+import update
+import message
 import sync_monitor
 import wizard
 import sync_client_rule

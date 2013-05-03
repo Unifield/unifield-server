@@ -11,7 +11,8 @@
         'data/usb_synchronisation.xml',
     ],
     'update_xml': [
-        'views/logging.xml',
+        'views/update.xml',
+        'views/message.xml',
         'views/setup_remote_warehouse.xml',
         'views/usb_synchronisation.xml',
         'views/sync_monitor.xml',
