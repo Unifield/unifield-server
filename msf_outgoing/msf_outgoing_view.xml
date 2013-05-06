@@ -329,7 +329,7 @@
 									</group>
 								</form>
 							</field>
-							<group col="12" colspan="4">
+							<group col="13" colspan="4">
 								<field name="state" readonly="1"/>
 								<field name="flow_type" />
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"/>
