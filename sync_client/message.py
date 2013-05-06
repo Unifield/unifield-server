@@ -126,7 +126,7 @@ class message_to_send(osv.osv):
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
-                     for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context) )
+                     for id, name in self.pool.get(model).get_sd_ref(cr, uid, ids, context=context).iteritems() )
 
 
     def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, context=None):
