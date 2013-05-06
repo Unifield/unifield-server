@@ -12,5 +12,11 @@ class local_message_rule_usb(osv.osv):
     _defaults = {
         'usb': False,
     }
+    
+    def _where_calc(self, cr, user, domain, active_test=True, context=None):
+        domain = list(domain or [])
+        if not filter(lambda e:hasattr(e, '__iter__') and e[0] == 'usb', domain):
+            domain.insert(0, ('usb','=',False))
+        return super(local_message_rule_usb, self)._where_calc(cr, user, domain, active_test=active_test, context=context)
 
 local_message_rule_usb()

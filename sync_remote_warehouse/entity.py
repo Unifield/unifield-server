@@ -40,34 +40,39 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid)
         return self.write(cr, uid, entity.id, {'usb_sync_step': step})
     
-    def create_update_zip(self, cr, uid, context=None):
+    @sync_process(step='msg_push', need_connection=False, defaults_logger={'usb':True})
+    def create_usb_zip(self, cr, uid, context=None):
         """
         Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
         """
         
-        csv_contents = []
+        update_csv_contents = []
+        message_csv_contents = []
         context = context or {}
+        total_updates = total_deletions = total_messages = 0 
+        entity = self.get_entity(cr, uid)
+        
         logger = context.get('logger', None)
         if logger:
             logger_index = logger.append()
         
-        def create_package():
-            return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid, entity.session_id, max_packet_size)
+        def update_create_package():
+            return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid, entity.session_id)
 
-        def add_and_mark_as_sent(ids, packet):
+        def update_add_and_mark_as_sent(ids, packet):
             """
-            add the package contents to the csv_contents dictionary and mark the package as sent
+            add the package contents to the update_csv_contents dictionary and mark the package as sent
             @return: (number of total_updates, number of delete_sdref rules)
             """
             
             # create header row if needed
             columns = ['source', 'model', 'version', 'fields', 'values', 'sdref', 'is_deleted']
-            if not csv_contents:
-                csv_contents.append(columns)
+            if not update_csv_contents:
+                update_csv_contents.append(columns)
             
             # insert update data
             for update in packet['load']:
-                csv_contents.append([
+                update_csv_contents.append([
                     entity.name,
                     packet['model'], # model
                     update['version'],
@@ -79,7 +84,7 @@ class Entity(osv.osv):
                 
             # insert delete data
             for delete_sdref in packet['unload']:
-                csv_contents.append([
+                update_csv_contents.append([
                     entity.name,
                     packet['model'],
                     '',
@@ -92,6 +97,25 @@ class Entity(osv.osv):
             # mark updates_to_send as sent and return number of records processed
             self.pool.get('sync_remote_warehouse.update_to_send').write(cr, uid, ids, {'sent' : True}, context=context)
             return (len(packet['load']), len(packet['unload']))
+        
+        def message_add_and_mark_as_sent(packet):
+            columns = ['id','call','dest','args']
+            
+            if not message_csv_contents:
+                message_csv_contents.append(columns)
+            
+            # insert message data
+            for message in packet:
+                message_csv_contents.append([
+                    message['id'], 
+                    message['call'],
+                    message['dest'],
+                    message['args'],
+                ])
+                
+            # mark updates_to_send as sent and return number of records processed
+            messages_pool.packet_sent(cr, uid, packet, context=context) 
+            return len(packet)
         
         _rules_serialization_mapping = {
             'id' : 'server_id',
@@ -116,48 +140,72 @@ class Entity(osv.osv):
                 ))
             return rules_data
 
-        # get number of update to process
-        updates_todo = self.pool.get('sync_remote_warehouse.update_to_send').search(cr, uid, [('sent','=',False)], count=True, context=context)
-        if updates_todo == 0:
-            return 0, 0
+        updates_todo = len(self.pool.get('sync_remote_warehouse.update_to_send').search(cr, uid, [('sent','=',False)], context=context))
+        messages_todo = len(self.pool.get('sync_remote_warehouse.message_to_send').search(cr, uid, [('sent','=',False)], context=context))
+        
+        if not updates_todo and not messages_todo:
+            return 0, 0, 0
+        
+        ################################################### 
+        ################# create updates ##################
+        ###################################################
+
+        if updates_todo:        
+            if logger:
+                logger.replace(logger_index, _('Updates to package: %d' % updates_todo))
+            
+            package = update_create_package()
+            
+            # add the package to the update_csv_contents dictionary and mark it has 'sent'
+            total_updates, total_deletions = update_add_and_mark_as_sent(*package)
+                
+            # finished all packages so update logger
+            if logger and (total_updates or total_deletions):
+                logger.replace(logger_index, _("Update packaging complete: %d updates and %d deletions = total of %d") % (total_updates, total_deletions, (total_updates + total_deletions)))
+        else:
+            if logger:
+                logger.replace(logger_index, _('No updates to package'))
+        
+        ################################################### 
+        ################# create messages #################
+        ###################################################
         
         if logger:
-            logger.replace(logger_index, _('Updates to package: %d' % updates_todo))
-            logger.write()
-        
-        # prepare some variables and create the first package
-        max_packet_size = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context).max_size
-        entity = self.get_entity(cr, uid, context=context)
+            logger_index = logger.append()
 
-        total_updates, total_deletions = 0, 0
-        package = create_package()
-        
-        while package:
-            # add the package to the csv_contents dictionary and mark it has 'sent'
-            new_updates, new_deletions = add_and_mark_as_sent(*package)
-            
-            # add new updates and deletions to total
-            total_updates += new_updates
-            total_deletions += new_deletions
-            
-            # update the log entry with the new total
+        if messages_todo:
             if logger:
-                logger.replace(logger_index, _("Updates packaged: %d updates and %d deletions of %d total") % (total_updates, total_deletions, updates_todo))
-                logger.write()
-                
-            # create next package
-            package = create_package()
-
-        # finished all packages so update logger
-        if logger and (total_updates or total_deletions):
-            logger.replace(logger_index, _("Update packaging complete: %d updates and %d deletions = total of %d") % (total_updates, total_deletions, (total_updates + total_deletions)))
+                logger.replace(logger_index, _('Message(s) to package: %d' % messages_todo))
             
-        # create csv file
+            # prepare packets
+            messages_pool = self.pool.get('sync_remote_warehouse.message_to_send')
+            packet = messages_pool.get_message_packet(cr, uid, context=context)
+            total_messages = len(packet)
+            
+            # add packet to csv data list
+            message_add_and_mark_as_sent(packet)
+            if logger:
+                logger.replace(logger_index, _("Message(s) packaged: %d") % (total_messages))
+        else:
+            if logger:
+                logger.replace(logger_index, _('No messages to package'))
+        
+        ################################################### 
+        ################# create zip ######################
+        ###################################################
+        
         try:
-            csv_string_io = StringIO()
-            csv_writer = csv.writer(csv_string_io, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-            for data_row in csv_contents:
-                csv_writer.writerow(data_row)
+            # create update csv file
+            update_csv_string_io = StringIO()
+            update_csv_writer = csv.writer(update_csv_string_io, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            for data_row in update_csv_contents:
+                update_csv_writer.writerow(data_row)
+                
+            # create message csv file
+            message_csv_string_io = StringIO()
+            message_csv_writer = csv.writer(message_csv_string_io, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            for data_row in message_csv_contents:
+                message_csv_writer.writerow(data_row)
                     
             # create rules file to send to remote warehouse if instance is central platform
             if entity.usb_instance_type == 'central_platform': 
@@ -168,12 +216,15 @@ class Entity(osv.osv):
                 rules_string_io = StringIO()
                 rules_string_io.write(str(rules_serialized))
                     
-            # compress csv file into zip
+            # compress update and message csv file into zip
             zip_file_string_io = StringIO()
             zip_base64_output = StringIO()
             zip_file = ZipFile(zip_file_string_io, 'w')
-            zip_file.writestr('sync_remote_warehouse.update_received.csv', csv_string_io.getvalue())
             
+            zip_file.writestr('sync_remote_warehouse.update_received.csv', update_csv_string_io.getvalue())
+            zip_file.writestr('sync_remote_warehouse.message_received.csv', message_csv_string_io.getvalue())
+            
+            # compress rules into zip file
             if entity.usb_instance_type == 'central_platform': 
                 zip_file.writestr('rules.txt', rules_string_io.getvalue())
                 
@@ -181,11 +232,12 @@ class Entity(osv.osv):
                     
             # add to entity object
             zip_file_contents = zip_file_string_io.getvalue()
-            zip_base64 = base64.encodestring(zip_file_contents) 
-            zip_base64_output.close()
+            zip_base64 = base64.encodestring(zip_file_contents)
     
             # clean up
-            csv_string_io.close()
+            zip_base64_output.close()
+            update_csv_string_io.close()
+            message_csv_string_io.close()
             if entity.usb_instance_type == 'central_platform':
                 rules_string_io.close()
             zip_file_string_io.close()
@@ -197,23 +249,35 @@ class Entity(osv.osv):
                 logger.switch('status', 'ok')
         except Exception, e:
             if logger:
-                logger.append(_('Error while creating zip file from updates_to_send: %s' % str(e)))
+                logger.append(_('Error while creating zip file: %s' % str(e)))
                 logger.switch('data_push', 'failed')
             raise
         finally:
             if logger:
                 logger.write()
         
-        return (total_updates, total_deletions)
+        return (total_updates, total_deletions, total_messages)
     
-    def create_usb_update(self, cr, uid, context=None):
+    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
+    def usb_create_update(self, cr, uid, session, context=None):
+        """
+        Create update_to_send for a USB synchronization and return a browse of all to-send updates
+        """
+        
         context = context or {}
+        context.update({
+            'update_to_send_model': 'sync_remote_warehouse.update_to_send', 
+            'last_sync_date_field': 'usb_sync_date'
+        })
+        
+        entity = self.get_entity(cr, uid, context)
+
         logger = context.get('logger', None)
         if logger:
             logger_index = logger.append()
-        updates = self.pool.get('sync_remote_warehouse.update_to_send')
+        update_pool = self.pool.get('sync_remote_warehouse.update_to_send')
         
-        def prepare_update(session):
+        def create_update(session):
             updates_count = 0
             
             rule_search_domain = [('usb','=',True)]
@@ -225,7 +289,7 @@ class Entity(osv.osv):
             ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
             
             for rule_id in ids:
-                updates_count += sum(updates.create_update(
+                updates_count += sum(update_pool.create_update(
                     cr, uid, rule_id, session, context=context))
                 if logger:
                     logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
@@ -237,49 +301,59 @@ class Entity(osv.osv):
                 
             return updates_count
         
-        entity = self.get_entity(cr, uid, context)
-        session = str(uuid.uuid1())
-            
-        updates_count = prepare_update(session)
-        if updates_count > 0:
-            self.write(cr, uid, [entity.id], {'session_id' : session})
-        return updates_count
+        updates_count = create_update(session)
+        return len(update_pool.search(cr, uid, [('sent','=',False)]))
     
-    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
-    def usb_push_update(self, cr, uid, ids, context=None):
-        
+    @sync_process(step='msg_push', need_connection=False, defaults_logger={'usb':True})
+    def usb_create_message(self, cr, uid, context=None):
         context = context or {}
-        context.update({
-            'update_to_send_model': 'sync_remote_warehouse.update_to_send', 
-            'last_sync_date_field': 'usb_sync_date'
-        })
-        entity = self.get_entity(cr, uid, context)
+        message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
+        rule_pool = self.pool.get("sync.client.message_rule")
+
+        messages_count = 0
+        for rule in rule_pool.browse(cr, uid, rule_pool.search(cr, uid, [('usb','=',True)], context=context), context=context):
+            messages_count += message_pool.create_from_rule(cr, uid, rule, context=context)
         
-        if entity.usb_sync_step not in ['pull_performed', 'first_sync']:
-            raise osv.except_osv('Cannot Push', 'We cannot perform a Push until we have Validated the last Pull')
+        if messages_count:
+            cr.commit()
         
-        # update rules then create updates_to_send
-        updates_count = self.create_usb_update(cr, uid, context=context)
-        cr.commit() # commit because last thing done in create_update is set the session_id
+        # return number of messages to send
+        return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
         
-        if not updates_count:
-            return 0
         
-        # add updates and rules to downloadable zip 
-        cr.commit()
-        updates, deletions = self.create_update_zip(cr, uid, context=context)
+    def usb_push(self, cr, uid, context):
+        """
+        Create updates, create message, package into zip, attach to entity and increment entity usb sync step
+        """
+        context = context or {}
+        context.update({'offline_synchronization' : True})
+        updates_count = deletions_count = messages_count = 0
         
-        # successful, so update records represented by updates_to_send with new usb_sync_date then clear session_id 
-        self.usb_validate_push(cr, uid, ids, context=context)
+        session = str(uuid.uuid1())
+        entity = self.get_entity(cr, uid, context=context)
+        self.write(cr, uid, [entity.id], {'session_id' : session}) 
+        
+        # get update and message data
+        updates = self.usb_create_update(cr, uid, session, context=context)
+        messages = self.usb_create_message(cr, uid, context=context)
+        
+        # compress into zip
+        if updates or messages:
+            updates_count, deletions_count, messages_count = self.create_usb_zip(cr, uid, context=context)
+        
+        # cleanup
+        self.usb_validate_push(cr, uid, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         
-        # increment usb sync step
-        self._update_usb_sync_step(cr, uid, 'push_performed')
+        # advance step if there was something to push
+        if any((updates_count, deletions_count, messages_count)):
+            self._update_usb_sync_step(cr, uid, 'push_performed')
         
-        return updates, deletions
+        # return 
+        return (updates_count, deletions_count, messages_count)
     
     @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
-    def usb_validate_push(self, cr, uid, ids, context=None):
+    def usb_validate_push(self, cr, uid, context=None):
         """
         Update update_to_send records with new usb_sync_date
         """

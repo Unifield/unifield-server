@@ -67,7 +67,7 @@ class usb_synchronisation(osv.osv_memory):
         if not import_error:
             pull_result = 'Successfully Pulled %d update(s) and deletion(s)' % import_count
             if not run_error:
-                pull_result += '\nSuccessfully ran %d update(s) and deletion(s)' % import_count
+                pull_result += '\nSuccessfully ran %d update(s) and deletion(s)' % updates_ran
             else:
                 pull_result += '\nError while executing the updates: %s' % run_error
         else:
@@ -83,26 +83,33 @@ class usb_synchronisation(osv.osv_memory):
         return self.write(cr, uid, ids, vals, context=context)
         
     def push(self, cr, uid, ids, context=None):
-        
+        """
+        Triggered from the usb sync wizard.
+        Checks usb_sync_step has correct status then triggers sync on entity, which in turn
+        creates updates, messages, packages into zip and attaches to entity
+        Then returns new values for wizard
+        """
+        # validation
         self._check_usb_instance_type(cr, uid, context)
-        
-        context = context or {}
-        context.update({'offline_synchronization' : True})
-        
         wizard = self.browse(cr, uid, ids[0])
         if wizard.usb_sync_step not in ['pull_performed', 'first_sync']:
             raise osv.except_osv(_('Cannot Push'), _('We cannot perform a Push until we have Validated the last Pull'))
         
-        push_result = self.pool.get('sync.client.entity').usb_push_update(cr, uid, wizard.pull_data, context=context)
+        # start push
+        updates, deletions, messages = self.pool.get('sync.client.entity').usb_push(cr, uid, context=context)
         
+        # send results to wizard
         vals = {
             'usb_sync_step': self._get_usb_sync_step(cr, uid, context=context),
         }
         
-        if push_result == 0:
-            vals['push_result'] = _('No changes that need to be synchronized have been made so there is nothing to Push')
-        else:
-            vals['push_result'] = _('Push successfully exported %s update(s) and %s deletion(s)' % (push_result[0], push_result[1]))
+        # update wizard to show results of push to user
+        updates_result = updates and 'Successfully exported %s updates\n' % updates or 'No updates that need to be synchronised have been made so there were no updates to push\n'
+        deletions_result = deletions and 'Successfully exported %s deletions\n' % deletions or 'No deletions that need to be synchronised have been made so there were no deletions to push\n'
+        messages_result = messages and 'Successfully exported %s messages\n' % messages or 'No messages that need to be synchronised have been made so there were no messages to push\n'
+        
+        vals['push_result'] = updates_result + deletions_result + messages_result
+        if updates or deletions or messages:
             vals['push_file_visible'] = True,
          
         return self.write(cr, uid, ids, vals, context=context)
