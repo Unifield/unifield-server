@@ -7,7 +7,6 @@ import types
 
 from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
 
-
 ## Debug method for development #############################################
 
 ## To use this, simply start the server in log_level DEBUG or lower
@@ -607,7 +606,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
                     def get_name(row):
                         name_relation = self.pool.get(row._table_name)._rec_name
-                        if isinstance(row[name_relation], browse_record):
+                        if isinstance(row[name_relation], orm.browse_record):
                             row = row[name_relation]
                         row_name = self.pool.get(row._table_name).name_get(cr, uid, [row.id], context=context)
                         return row_name and row_name[0] and row_name[0][1] or ''
@@ -649,9 +648,9 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                             json_data[field[0]] = row.id
                         else: #TODO manage more case maybe selection or reference
                             r = row[field[0]]
-                            if isinstance(r, (browse_record_list, list)):
+                            if isinstance(r, (orm.browse_record_list, list)):
                                 json_data[field[0]] = export_list(field, r, json_data.get(field[0]))
-                            elif isinstance(r, (browse_record)):
+                            elif isinstance(r, (orm.browse_record)):
                                 json_data[field[0]] = export_relation(field, r, json_data.get(field[0]))
                             elif not r:
                                 json_data[field[0]] = False
