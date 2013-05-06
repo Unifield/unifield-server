@@ -219,7 +219,7 @@ class procurement_order(osv.osv):
         '''
         When you run the scheduler and you have a sale order line with type = make_to_order,
         we modify the location_id to set 'cross docking' of the purchase order created in mirror
-        But if the sale_order is an Internal Request we do want "Cross docking" but "Input" as location_id (i.e. the location of the warehouse_id)
+        But if the sale_order is an Internal Request we don't want "Cross docking" but "Input" as location_id (i.e. the location of the warehouse_id)
         '''
         if context is None:
             context = {}
