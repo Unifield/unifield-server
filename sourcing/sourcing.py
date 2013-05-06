@@ -1128,9 +1128,9 @@ class procurement_order(osv.osv):
             write_values = {'origin': origin}
             purchase_read = self.pool.get('purchase.order').read(cr, uid, purchase_ids[0], ['categ', 'priority'])
             # update categ and prio if they are different from the existing po one's.
-            if values['categ'] != purchase_read['categ']:
+            if values.get('categ') and values['categ'] != purchase_read['categ']:
                 write_values['categ'] = 'other'
-            if values['priority'] in priority_sorted.keys() and values['priority']!= purchase_read['priority']:
+            if values.get('priority') and values['priority'] in priority_sorted.keys() and values['priority']!= purchase_read['priority']:
                 if priority_sorted[values['priority']] < priority_sorted[purchase_read['priority']]:
                     write_values['priority'] = values['priority']
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=context)
