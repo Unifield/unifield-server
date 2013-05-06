@@ -1,4 +1,5 @@
 from osv import osv, fields, orm
+from osv.orm import browse_record
 import tools
 from tools.safe_eval import safe_eval as eval
 import logging
