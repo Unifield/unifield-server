@@ -1045,6 +1045,7 @@ class procurement_order(osv.osv):
         po_obj = self.pool.get('purchase.order')
         procurement = kwargs['procurement']
         values = kwargs['values']
+        priority_sorted = {'emergency': 1, 'priority': 2, 'normal': 3}
         # Make the line as price changed manually to do not raise an error on purchase order line creation
 #        if 'order_line' in values and len(values['order_line']) > 0 and len(values['order_line'][0]) > 2 and 'price_unit' in values['order_line'][0][2]:
 #            values['order_line'][0][2].update({'change_price_manually': True})
@@ -1125,8 +1126,13 @@ class procurement_order(osv.osv):
             # Add different origin on 'Source document' field if the origin is nat already listed
             origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
             write_values = {'origin': origin}
-            if values['categ'] != self.pool.get('purchase.order').read(cr, uid, purchase_ids[0], ['categ'])['categ']:
+            purchase_read = self.pool.get('purchase.order').read(cr, uid, purchase_ids[0], ['categ', 'priority'])
+            # update categ and prio if they are different from the existing po one's.
+            if values['categ'] != purchase_read['categ']:
                 write_values['categ'] = 'other'
+            if values['priority'] in priority_sorted.keys() and values['priority']!= purchase_read['priority']:
+                if priority_sorted[values['priority']] < priority_sorted[purchase_read['priority']]:
+                    write_values['priority'] = values['priority']
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=context)
             
             if location_id:
