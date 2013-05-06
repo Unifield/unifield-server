@@ -554,26 +554,33 @@ class message_rule(osv.osv):
             ids = self.search(cr, uid, domain, context=context)
             if ids:
                 rules_ids.extend(ids)
-        
-        return rules_ids
     
+    _rules_serialization_mapping = {            
+        'name' : 'name',
+        'id': 'server_id',
+        'model_id': 'model',
+        'domain': 'domain',
+        'sequence_number': 'sequence_number',
+        'remote_call': 'remote_call',
+        'arguments': 'arguments',
+        'destination_name': 'destination_name',
+        'active': 'active',
+    }
+
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []
+        rules_serialization_mapping = dict(
+            sum((c._rules_serialization_mapping.items()
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
+        )
         for rule in self.browse(cr, uid, ids, context=context):
-            data = {
-                    'name' : rule.name,
-                    'server_id' : rule.id,
-                    'model' : rule.model_id,
-                    'domain' : rule.domain,
-                    'sequence_number' : rule.sequence_number,
-                    'remote_call' : rule.remote_call,
-                    'arguments' : rule.arguments,
-                    'destination_name' : rule.destination_name,
-                    'active' : rule.active,
-            }
-            rules_data.append(data)
+            rules_data.append(dict(
+                (data, rule[column]) for column, data
+                    in rules_serialization_mapping.items()
+            ))
         return rules_data
-
+    
     def invalidate(self, cr, uid, ids, model_ref, context=None):
         model = ''
         if model_ref:
