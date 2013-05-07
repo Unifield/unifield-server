@@ -138,7 +138,7 @@ class product_attributes(osv.osv):
             else:
                 return []
             
-        return [('id', 'in', ids)] 
+        return [('id', 'in', ids)]
     
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
@@ -244,7 +244,29 @@ class product_attributes(osv.osv):
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
-    
+
+    def _check_uom_category(self, cr, uid, ids, context=None):
+        '''
+        Check the consistency of UoM category on product form
+        '''
+        move_obj = self.pool.get('stock.move')
+        for product in self.browse(cr, uid, ids, context=context):
+            uom_categ_id = product.uom_id.category_id.id
+            uom_categ_name = product.uom_id.category_id.name
+            move_ids = move_obj.search(cr, uid, [('product_id', '=', product.id)], context=context)
+            if move_ids:
+                uom_categ_id = move_obj.browse(cr, uid, move_ids[0], context=context).product_uom.category_id.id
+                uom_categ_name = move_obj.browse(cr, uid, move_ids[0], context=context).product_uom.category_id.name
+
+            if uom_categ_id != product.uom_id.category_id.id:
+                raise osv.except_osv(_('Error'), _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves. UoM category used in stock moves : %s') % uom_categ_name)
+
+        return True
+
+    _constraints = [
+        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
+    ]
+
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
         for product in self.browse(cr, uid, ids, context=context):
