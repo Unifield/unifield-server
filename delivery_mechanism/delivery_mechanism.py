@@ -540,19 +540,19 @@ class stock_picking(osv.osv):
                         # average computation - empty if not average
                         values.update(average_values)
                         
-                        # if split happened, we update the corresponding OUT move
-                        if out_move_id:
-                            # UF-1690 : Remove the location_dest_id from values
-                            out_values = values.copy()
-                            if out_values.get('location_dest_id', False):
-                                out_values.pop('location_dest_id')
-                            second_assign_moves.append(out_move_id)
-                            if update_out:
-                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
-                            elif move.product_id.id != partial['product_id']:
-                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
-                                # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
-                                update_out = True
+#                        # if split happened, we update the corresponding OUT move
+#                        if out_move_id:
+#                            # UF-1690 : Remove the location_dest_id from values
+#                            out_values = values.copy()
+#                            if out_values.get('location_dest_id', False):
+#                                out_values.pop('location_dest_id')
+#                            second_assign_moves.append(out_move_id)
+#                            if update_out:
+#                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
+#                            elif move.product_id.id != partial['product_id']:
+#                                move_obj.write(cr, uid, [out_move_id], out_values, context=context)
+#                                # we force update flag - out will be updated if qty is missing - possibly with the creation of a new move
+#                                update_out = True
                         # we update the values with the _do_incoming_shipment_first_hook only if we are on an 'IN'
                         values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                         # mark the done IN stock as processed
