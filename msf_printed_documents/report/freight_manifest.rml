@@ -600,8 +600,7 @@
             </tr>
         </blockTable>
 
-        <para style="Standard">
-            [[ get_additional_items(objects) or removeParentNode('para') ]]
+        <para style="Standard" >
             <font color="white"> </font>
         </para>
 
