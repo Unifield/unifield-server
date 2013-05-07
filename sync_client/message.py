@@ -50,16 +50,26 @@ class dict_to_obj(object):
 class local_message_rule(osv.osv):
 
     _name = 'sync.client.message_rule'
+    
+    def _get_model_id(self, cr, uid, ids, field, args, context=None):
+        res = {}
+        for rec in self.read(cr, uid, ids, ['model'], context=context):
+            if not rec['model']: continue
+            model = self.pool.get('ir.model').read(cr, uid, [rec['model'][0]], ['model'])[0]
+            res[rec['id']] = model['model']
+        return res
 
     _columns = {
         'name' : fields.char('Rule name', size=64, readonly=True),
         'server_id' : fields.integer('Server ID'),
         'model' : fields.many2one('ir.model','Model', readonly=True),
+        'model_name': fields.function(_get_model_id, string='Model', type='char', size=64, method=True),
         'domain' : fields.text('Domain', required=False, readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'remote_call': fields.text('Method to call', required=True),
         'arguments': fields.text('Arguments of the method', required=True),
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
+        'active' : fields.boolean('Active', select=True),
     }
 
     _logger = logging.getLogger('sync.client')
@@ -73,12 +83,20 @@ class local_message_rule(osv.osv):
                 sync_log(self, "Model %s does not exist" % model_name, data=data)
                 continue #we do not save this rule
             data['model'] = model_id[0]
-
-            self.create(cr, uid, data, context=context)
+            
+            # if rule already exists, activate it, otherwise create it
+            existing_rule_ids = self.search(cr, uid, [('server_id','=',data['server_id']), '|',('active','=',True),('active','=',False), '|', ('usb','=',True), ('usb','=',False)], context=context)
+            if existing_rule_ids:
+                self.write(cr, uid, existing_rule_ids, data, context=context)
+            else:
+                self.create(cr, uid, data, context=context)
 
     def _delete_old_rules(self, cr, uid, context=None):
         ids_to_unlink = self.search(cr, uid, [], context=context)
         self.unlink(cr, uid, ids_to_unlink, context=context)
+        
+    def unlink(self, cr, uid, ids, context=None):
+        return self.write(cr, uid, ids, {'active':False}, context=context)
 
     _order = 'sequence_number asc'
 local_message_rule()

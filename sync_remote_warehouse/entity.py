@@ -36,12 +36,12 @@ class Entity(osv.osv):
     IMPORT_ERROR_NOT_CSV = 'Not a CSV file'
     IMPORT_ERROR_NOT_OBJECT = 'Could not find object in object pool'
     
-    def _update_usb_sync_step(self, cr, uid, step):
+    def _usb_update_sync_step(self, cr, uid, step):
         entity = self.get_entity(cr, uid)
         return self.write(cr, uid, entity.id, {'usb_sync_step': step})
     
     @sync_process(step='msg_push', need_connection=False, defaults_logger={'usb':True})
-    def create_usb_zip(self, cr, uid, context=None):
+    def usb_create_zip(self, cr, uid, context=None):
         """
         Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
         """
@@ -117,7 +117,7 @@ class Entity(osv.osv):
             messages_pool.packet_sent(cr, uid, packet, context=context) 
             return len(packet)
         
-        _rules_serialization_mapping = {
+        _update_rules_serialization_mapping = {
             'id' : 'server_id',
             'name' : 'name',
             'owner_field' : 'owner_field',
@@ -131,12 +131,34 @@ class Entity(osv.osv):
             'direction_usb' : 'direction_usb',
         }
     
-        def _serialize_rule(rule_pool, cr, uid, ids, context=None):
+        def _serialize_update_rule(update_rule_pool, cr, uid, ids, context=None):
             rules_data = []
-            for rule in rule_pool.browse(cr, uid, ids, context=context):
+            for rule in update_rule_pool.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                        in _rules_serialization_mapping.items()
+                        in _update_rules_serialization_mapping.items()
+                ))
+            return rules_data
+        
+        _message_rules_serialization_mapping = {            
+            'name': 'name' ,
+            'server_id': 'id',
+            'model_name': 'model_id',
+            'domain': 'domain',
+            'sequence_number': 'sequence_number',
+            'remote_call': 'remote_call',
+            'arguments': 'arguments',
+            'destination_name': 'destination_name',
+            'active': 'active',
+            'usb': 'usb'
+        }
+        
+        def _serialize_message_rule(self, cr, uid, ids, context=None):
+            rules_data = []
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in _message_rules_serialization_mapping.items()
                 ))
             return rules_data
 
@@ -191,6 +213,32 @@ class Entity(osv.osv):
                 logger.replace(logger_index, _('No messages to package'))
         
         ################################################### 
+        ################# update rules ####################
+        ###################################################
+                
+        # create update rules file to send to remote warehouse if instance is central platform
+        if entity.usb_instance_type == 'central_platform': 
+            update_rule_pool = self.pool.get('sync.client.rule')
+            update_rule_ids = update_rule_pool.search(cr, uid, [('usb','=',True),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
+            update_rules_serialized = _serialize_update_rule(update_rule_pool, cr, uid, update_rule_ids, context=context)
+            
+            update_rules_string_io = StringIO()
+            update_rules_string_io.write(str(update_rules_serialized))
+                
+        ################################################### 
+        ################# message rules ###################
+        ###################################################
+        
+        # create message update rules file to send to remote warehouse if instance is central platform
+        if entity.usb_instance_type == 'central_platform': 
+            message_rule_pool = self.pool.get('sync.client.message_rule')
+            message_rule_ids = message_rule_pool.search(cr, uid, [('usb','=',True)])
+            message_rules_serialized = _serialize_message_rule(message_rule_pool, cr, uid, message_rule_ids, context=context)
+            
+            message_rules_string_io = StringIO()
+            message_rules_string_io.write(str(message_rules_serialized))
+        
+        ################################################### 
         ################# create zip ######################
         ###################################################
         
@@ -207,15 +255,6 @@ class Entity(osv.osv):
             for data_row in message_csv_contents:
                 message_csv_writer.writerow(data_row)
                     
-            # create rules file to send to remote warehouse if instance is central platform
-            if entity.usb_instance_type == 'central_platform': 
-                rule_pool = self.pool.get('sync.client.rule')
-                rule_ids = rule_pool.search(cr, uid, [('usb','=',True),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
-                rules_serialized = _serialize_rule(rule_pool, cr, uid, rule_ids, context=context)
-                
-                rules_string_io = StringIO()
-                rules_string_io.write(str(rules_serialized))
-                    
             # compress update and message csv file into zip
             zip_file_string_io = StringIO()
             zip_base64_output = StringIO()
@@ -224,9 +263,10 @@ class Entity(osv.osv):
             zip_file.writestr('sync_remote_warehouse.update_received.csv', update_csv_string_io.getvalue())
             zip_file.writestr('sync_remote_warehouse.message_received.csv', message_csv_string_io.getvalue())
             
-            # compress rules into zip file
+            # compress update and message rules into zip file
             if entity.usb_instance_type == 'central_platform': 
-                zip_file.writestr('rules.txt', rules_string_io.getvalue())
+                zip_file.writestr('update_rules.txt', update_rules_string_io.getvalue())
+                zip_file.writestr('message_rules.txt', message_rules_string_io.getvalue())
                 
             zip_file.close()
                     
@@ -239,7 +279,8 @@ class Entity(osv.osv):
             update_csv_string_io.close()
             message_csv_string_io.close()
             if entity.usb_instance_type == 'central_platform':
-                rules_string_io.close()
+                update_rules_string_io.close()
+                message_rules_string_io.close()
             zip_file_string_io.close()
     
             # attach file to entity and delete 
@@ -339,7 +380,7 @@ class Entity(osv.osv):
         
         # compress into zip
         if updates or messages:
-            updates_count, deletions_count, messages_count = self.create_usb_zip(cr, uid, context=context)
+            updates_count, deletions_count, messages_count = self.usb_create_zip(cr, uid, context=context)
         
         # cleanup
         self.usb_validate_push(cr, uid, context=context)
@@ -347,7 +388,7 @@ class Entity(osv.osv):
         
         # advance step if there was something to push
         if any((updates_count, deletions_count, messages_count)):
-            self._update_usb_sync_step(cr, uid, 'push_performed')
+            self._usb_update_sync_step(cr, uid, 'push_performed')
         
         # return 
         return (updates_count, deletions_count, messages_count)
@@ -458,7 +499,7 @@ class Entity(osv.osv):
                     logger.replace(logger_index, _('Updates imported: %d' % len(data)))
                 try:
                     updates_ran = self.execute_updates(cr, uid, context=context)
-                    self._update_usb_sync_step(cr, uid, 'pull_performed')
+                    self._usb_update_sync_step(cr, uid, 'pull_performed')
                     logger.switch('status','ok')
                 except AttributeError, e:
                     run_error = '%s: %s' % (type(e), str(e))

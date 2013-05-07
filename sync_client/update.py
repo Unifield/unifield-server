@@ -203,7 +203,7 @@ class update_to_send(osv.osv):
         assert obj, "Cannot find model %s of rule id=%d!" % (rule.model, rule.id)
         return (create_normal_update(obj, rule, update_context), create_delete_update(obj, rule, update_context))
 
-    def create_package(self, cr, uid, session_id, packet_size=9999999, context=None):
+    def create_package(self, cr, uid, session_id, packet_size=None, context=None):
         ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, context=context)
         if not ids:
             return False
