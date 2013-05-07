@@ -140,10 +140,10 @@ class Entity(osv.osv):
                 ))
             return rules_data
         
-        _message_rules_serialization_mapping = {            
+        _message_rules_serialization_mapping = {
+            'server_id': 'server_id',      
             'name': 'name' ,
-            'server_id': 'id',
-            'model_name': 'model_id',
+            'model_name': 'model',
             'domain': 'domain',
             'sequence_number': 'sequence_number',
             'remote_call': 'remote_call',
@@ -433,21 +433,41 @@ class Entity(osv.osv):
         # decode base64 and unzip
         try:
             uploaded_file = base64.decodestring(uploaded_file_base64)
+            
             zip_stream = StringIO(uploaded_file)
             zip_file = ZipFile(zip_stream, 'r')
+            
             update_received_model_name = 'sync_remote_warehouse.update_received'
-        
-            if '%s.csv' % update_received_model_name not in zip_file.namelist():
-                raise osv.except_osv(_('USB Synchronisation Data Not Found'), _('The zip file must contain a file called sync_remote_warehouse.update_received.csv which contains the data for the USB Synchronisation. Please check your file...'))
+            message_received_model_name = 'sync_remote_warehouse.update_received'
+            
+            update_rule_file = 'update_rules.txt'
+            message_rule_file = 'message_rules.txt'
+            
+            files = [
+                '%s.csv' % update_received_model_name,
+                '%s.csv' % message_received_model_name,
+                update_rule_file,
+                message_rule_file,
+            ]
+            
+            if not all([(file in zip_file.namelist()) for file in files]):
+                raise osv.except_osv(_('Invalid USB Synchronisation Data'), _('The zip file you uploaded does not have all the data required for a pull. You must re-download the data from the other server.'))
                 
-            # get rules from zip file and import them if instance is remote warehouse
+            # if instance is remote warehouse, get update and message update_rules from zip file and import them 
             if entity.usb_instance_type == 'remote_warehouse': 
-                rules = zip_file.read('rules.txt')
-                rules = eval(rules)
-                self.pool.get('sync.client.rule').save(cr, uid, rules, context=context)
+                update_rules = zip_file.read(update_rule_file)
+                update_rules = eval(update_rules)
+                self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
             
                 if logger:
-                    logger.append(_('Rules imported: %d' % len(rules)))
+                    logger.append(_('Update Rules imported: %d' % len(update_rules)))
+                
+                message_rules = zip_file.read(message_rule_file)
+                message_rules = eval(message_rules)
+                self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
+            
+                if logger:
+                    logger.append(_('Message Rules imported: %d' % len(message_rules)))
                 
             # get CSV object to read data
             csv_file = zip_file.read('%s.csv' % update_received_model_name)
@@ -509,11 +529,18 @@ class Entity(osv.osv):
                     logger.replace(logger_index, _('Error occured during import: %s' % import_error))
                     
             logger.switch('status', 'ok')
+        except osv.except_osv, e:
+            if logger:
+                logger_index = logger_index or logger.append()
+                logger.replace(logger_index, _(e.name + ': ' + e.value))
+                logger.switch('status','failed')
+            raise e
         except Exception, e:
             if logger:
-                logger.append(logger_index, _('Error while reading uploaded zip file: %s' % str(e)))
-                logger.switch('data_pull', 'failure')
-            raise
+                logger_index = logger_index or logger.append()
+                logger.replace(logger_index, _('Error while reading uploaded zip file: %s' % str(e)))
+                logger.switch('status', 'failed')
+            raise e
         finally:
             if logger:
                 logger.write()
