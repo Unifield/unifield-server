@@ -162,12 +162,16 @@ class shipment(osv.osv):
             
             for memory_family in shipment.pack_family_memory_ids:
                 # taken only into account if not done (done means returned packs)
-                if shipment.state in ('delivered',) or memory_family.state not in ('done',) :
+                if shipment.state in ('delivered', 'done') or memory_family.state not in ('done',) :
                     # num of packs
                     num_of_packs = memory_family.num_of_packs
                     values['num_of_packs'] += int(num_of_packs)
                     # total weight
                     total_weight = memory_family.total_weight
+                    weight_add_items = 0.0
+                    for item in shipment.additional_items_ids:
+                        weight_add_items += item.weight
+                    total_weight += weight_add_items
                     values['total_weight'] += int(total_weight)
                     # total volume
                     total_volume = memory_family.total_volume
@@ -178,10 +182,6 @@ class shipment(osv.osv):
                     # currency
                     currency_id = memory_family.currency_id and memory_family.currency_id.id or False
                     values['currency_id'] = currency_id
-            weight_add_items = 0.0
-            for item in shipment.additional_items_ids:
-                weight_add_items += item.weight
-            values['total_weight'] += weight_add_items
         return result
     
     def _get_shipment_ids(self, cr, uid, ids, context=None):
