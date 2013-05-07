@@ -33,8 +33,20 @@ class Entity(osv.osv):
         'usb_instance_type': '',
     }
     
-    IMPORT_ERROR_NOT_CSV = 'Not a CSV file'
-    IMPORT_ERROR_NOT_OBJECT = 'Could not find object in object pool'
+    def __init__(self, pool, cr):
+        super(Entity, self).__init__(pool, cr)
+        self.usb_pull_update_received_model_name = 'sync_remote_warehouse.update_received'
+        self.usb_pull_message_received_model_name = 'sync_remote_warehouse.update_received'
+        
+        self.usb_pull_update_rule_file = 'update_rules.txt'
+        self.usb_pull_message_rule_file = 'message_rules.txt'
+    
+        self.usb_pull_files = [
+            '%s.csv' % self.usb_pull_update_received_model_name,
+            '%s.csv' % self.usb_pull_message_received_model_name,
+            self.usb_pull_update_rule_file,
+            self.usb_pull_message_rule_file,
+        ]
     
     def _usb_update_sync_step(self, cr, uid, step):
         entity = self.get_entity(cr, uid)
@@ -410,96 +422,59 @@ class Entity(osv.osv):
         
         # mark latest updates as sync finished (set usb_sync_date) and clear entity session_id
         update_pool.sync_finished(cr, uid, update_ids, sync_field='usb_sync_date', context=context)
+        
+    def usb_import_rules(self, cr, uid, zip_file, context):
+        logger = context.get('logger')
+        update_rules = zip_file.read(self.usb_pull_update_rule_file)
+        update_rules = eval(update_rules)
+        self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
     
-    @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
-    def usb_pull(self, cr, uid, uploaded_file_base64, context=None):
-        """
-        Takes the base64 for the uploaded zip file, unzips the csv files, parses them and inserts them into the database.
-        @param uploaded_file_base64: The Base64 representation of a file - direct from the OpenERP api, i.e. wizard_object.pull_data
-        @return: A dictionary of the CSV files enclosed in the ZIP, with their import status. Refer to STATIC error codes in this file
-        """
-        
-        if self.get_entity(cr, uid, context).usb_sync_step not in ['push_performed', 'first_sync']:
-            raise osv.except_osv('Cannot Pull', 'We cannot perform a Pull until we have performed a Pushed')
-        
-        entity = self.get_entity(cr, uid)
-        context = context or {}
-        logger = context.get('logger', None)
         if logger:
-            logger_index = logger.append()
+            logger.append(_('Update Rules imported: %d' % len(update_rules)))
         
-        # decode base64 and unzip
-        try:
-            uploaded_file = base64.decodestring(uploaded_file_base64)
+        message_rules = zip_file.read(self.usb_pull_message_rule_file)
+        message_rules = eval(message_rules)
+        self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
+    
+        if logger:
+            logger.append(_('Message Rules imported: %d' % len(message_rules)))
             
-            zip_stream = StringIO(uploaded_file)
-            zip_file = ZipFile(zip_stream, 'r')
-            
-            update_received_model_name = 'sync_remote_warehouse.update_received'
-            message_received_model_name = 'sync_remote_warehouse.update_received'
-            
-            update_rule_file = 'update_rules.txt'
-            message_rule_file = 'message_rules.txt'
-            
-            files = [
-                '%s.csv' % update_received_model_name,
-                '%s.csv' % message_received_model_name,
-                update_rule_file,
-                message_rule_file,
-            ]
-            
-            if not all([(file in zip_file.namelist()) for file in files]):
-                raise osv.except_osv(_('Invalid USB Synchronisation Data'), _('The zip file you uploaded does not have all the data required for a pull. You must re-download the data from the other server.'))
-                
-            # if instance is remote warehouse, get update and message update_rules from zip file and import them 
-            if entity.usb_instance_type == 'remote_warehouse': 
-                update_rules = zip_file.read(update_rule_file)
-                update_rules = eval(update_rules)
-                self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
-            
-                if logger:
-                    logger.append(_('Update Rules imported: %d' % len(update_rules)))
-                
-                message_rules = zip_file.read(message_rule_file)
-                message_rules = eval(message_rules)
-                self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
-            
-                if logger:
-                    logger.append(_('Message Rules imported: %d' % len(message_rules)))
-                
-            # get CSV object to read data
-            csv_file = zip_file.read('%s.csv' % update_received_model_name)
+    def usb_import_updates(self, cr, uid, zip_file, context):
+        logger = context.get('logger')
+        logger_index = logger.append()
+        
+        is_first_csv_row = True
+        
+        data_to_import = {}
+        data_to_import_fields = []
+        data_to_import_data = []
+        
+        number_of_updates_ran = 0
+        import_error = None
+        run_error = None
+        
+        # get CSV object to read data_to_import_data
+        csv_file = zip_file.read('%s.csv' % self.usb_pull_update_received_model_name)
+        
+        if csv_file:
             csv_reader = csv.reader(StringIO(csv_file))
             
-            import_data = {}
-            results = {}
-            first = True
-            fields = []
-            data = []
-            
-            # loop through csv rows and insert into fields or data array
+            # loop through csv rows and insert into data_to_import_fields or data_to_import_data array
             for row in csv_reader:
-                if first:
-                    fields = row
-                    first = False
+                if is_first_csv_row:
+                    data_to_import_fields = row
+                    is_first_csv_row = False
                 else:
-                    data.append(row)
+                    data_to_import_data.append(row)
                     
             zip_file.close()
-            
-            if logger:
-                logger.replace(logger_index, _('Updates to import: %d' % len(data)))
-            
-            # insert into import_data
-            import_data['fields'] = fields
-            import_data['data'] = data
+            logger.replace(logger_index, _('Updates to import: %d' % len(data_to_import_data)))
             
             # do importation and set result[model] = [True/False, [any error messages,...]]
-            model_pool = self.pool.get(update_received_model_name)
-            import_error = None
+            model_pool = self.pool.get(self.usb_pull_update_received_model_name)
             
             try:
-                model_pool.import_data(cr, uid, fields, data, context=context)
+                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)
             except Exception as e:
                 import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
             except KeyError as e:
@@ -508,42 +483,71 @@ class Entity(osv.osv):
                 import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
             
             # run updates
-            updates_ran = None
-            run_error = ''
             context.update({'update_received_model':'sync_remote_warehouse.update_received'})
             
             if not import_error:
-                if logger:
-                    logger.replace(logger_index, _('Updates imported: %d' % len(data)))
+                logger.replace(logger_index, _('Updates imported: %d' % len(data_to_import_data)))
                 try:
-                    updates_ran = self.execute_updates(cr, uid, context=context)
+                    number_of_updates_ran = self.execute_updates(cr, uid, context=context)
                     self._usb_update_sync_step(cr, uid, 'pull_performed')
-                    logger.switch('status','ok')
+                    logger.append(_('Updates ran: %d' % number_of_updates_ran))
+                    logger.switch('data_pull','ok')
                 except AttributeError, e:
                     run_error = '%s: %s' % (type(e), str(e))
                     logger.append(_('Error while executing updates: %s' % run_error))
             else:
-                if logger:
-                    logger.replace(logger_index, _('Error occured during import: %s' % import_error))
+                logger.replace(logger_index, _('Error occured during import: %s' % import_error))
+                
+        else:
+            logger.replace(logger_index, _('No updates to import'))
+            
+        return (data_to_import_data, import_error, number_of_updates_ran, run_error)
+
+    @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
+    def usb_pull(self, cr, uid, uploaded_file_base64, context):
+        """
+        Takes the base64 for the uploaded zip file, unzips the csv files, parses them and inserts them into the database.
+        @param uploaded_file_base64: The Base64 representation of a file - direct from the OpenERP api, i.e. wizard_object.pull_data
+        @return: A dictionary of the CSV files enclosed in the ZIP, with their import status. Refer to STATIC error codes in this file
+        """
+        
+        # check usb sync step
+        if self.get_entity(cr, uid, context).usb_sync_step not in ['push_performed', 'first_sync']:
+            raise osv.except_osv('Cannot Pull', 'We cannot perform a Pull until we have performed a Pushed')
+        
+        # init
+        entity = self.get_entity(cr, uid)
+        logger = context.get('logger', None)
+        
+        # prepare uploaded file
+        try:
+            uploaded_file = base64.decodestring(uploaded_file_base64)
+            
+            zip_stream = StringIO(uploaded_file)
+            zip_file = ZipFile(zip_stream, 'r')
+            
+            # check file validity
+            if not all([(file_name in zip_file.namelist()) for file_name in self.usb_pull_files]):
+                raise osv.except_osv(_('Invalid USB Synchronisation Data'), _('The zip file you uploaded does not have all the data required for a pull. You must re-download the data from the other server.'))
+                
+            # import rules if RW 
+            if entity.usb_instance_type == 'remote_warehouse':
+                self.usb_import_rules(cr, uid, zip_file, context)
+            
+            # import updates
+            data, import_error, updates_ran, run_error = self.usb_import_updates(cr, uid, zip_file, context)
                     
             logger.switch('status', 'ok')
         except osv.except_osv, e:
-            if logger:
-                logger_index = logger_index or logger.append()
-                logger.replace(logger_index, _(e.name + ': ' + e.value))
-                logger.switch('status','failed')
+            logger.append(_(e.name + ': ' + e.value))
+            logger.switch('status','failed')
             raise e
         except Exception, e:
-            if logger:
-                logger_index = logger_index or logger.append()
-                logger.replace(logger_index, _('Error while reading uploaded zip file: %s' % str(e)))
-                logger.switch('status', 'failed')
+            logger.append(_('Error while reading uploaded zip file: %s' % str(e)))
+            logger.switch('status', 'failed')
             raise e
-        finally:
-            if logger:
-                logger.write()
     
-        # increment usb sync step and return results
+        # return results
         return (len(data), import_error, updates_ran, run_error)
         
 Entity()
