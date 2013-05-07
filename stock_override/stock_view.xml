@@ -441,7 +441,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -638,7 +637,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="in_action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -913,7 +911,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
