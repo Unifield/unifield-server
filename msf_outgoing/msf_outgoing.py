@@ -168,10 +168,8 @@ class shipment(osv.osv):
                     values['num_of_packs'] += int(num_of_packs)
                     # total weight
                     total_weight = memory_family.total_weight
-                    weight_add_items = 0.0
                     for item in shipment.additional_items_ids:
-                        weight_add_items += item.weight
-                    total_weight += weight_add_items
+                        total_weight += item.weight
                     values['total_weight'] += total_weight
                     # total volume
                     total_volume = memory_family.total_volume
