@@ -58,7 +58,7 @@ class usb_synchronisation(osv.osv_memory):
         
         import_count, import_error = 0, False
         try:
-            import_count, import_error, updates_ran, run_error = self.pool.get('sync.client.entity').usb_pull_update(cr, uid, wizard.pull_data, context=context)
+            import_count, import_error, updates_ran, run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
         except zipfile.BadZipfile:
             raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a .zip file'))
         

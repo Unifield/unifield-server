@@ -40,7 +40,6 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid)
         return self.write(cr, uid, entity.id, {'usb_sync_step': step})
     
-    @sync_process(step='msg_push', need_connection=False, defaults_logger={'usb':True})
     def usb_create_zip(self, cr, uid, context=None):
         """
         Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
@@ -299,7 +298,6 @@ class Entity(osv.osv):
         
         return (total_updates, total_deletions, total_messages)
     
-    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
     def usb_create_update(self, cr, uid, session, context=None):
         """
         Create update_to_send for a USB synchronization and return a browse of all to-send updates
@@ -336,7 +334,7 @@ class Entity(osv.osv):
                     logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
                     
             if not updates_count and logger:
-                logger.switch('status', 'ok')
+                logger.switch('data_push', 'ok')
             if logger:
                 logger.write()
                 
@@ -345,7 +343,6 @@ class Entity(osv.osv):
         updates_count = create_update(session)
         return len(update_pool.search(cr, uid, [('sent','=',False)]))
     
-    @sync_process(step='msg_push', need_connection=False, defaults_logger={'usb':True})
     def usb_create_message(self, cr, uid, context=None):
         context = context or {}
         message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
@@ -361,13 +358,14 @@ class Entity(osv.osv):
         # return number of messages to send
         return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
         
-        
+    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
     def usb_push(self, cr, uid, context):
         """
         Create updates, create message, package into zip, attach to entity and increment entity usb sync step
         """
         context = context or {}
         context.update({'offline_synchronization' : True})
+        logger = context.get('logger')
         updates_count = deletions_count = messages_count = 0
         
         session = str(uuid.uuid1())
@@ -376,6 +374,7 @@ class Entity(osv.osv):
         
         # get update and message data
         updates = self.usb_create_update(cr, uid, session, context=context)
+        logger.switch('msg_push', 'in-progress')
         messages = self.usb_create_message(cr, uid, context=context)
         
         # compress into zip
@@ -393,7 +392,6 @@ class Entity(osv.osv):
         # return 
         return (updates_count, deletions_count, messages_count)
     
-    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
     def usb_validate_push(self, cr, uid, context=None):
         """
         Update update_to_send records with new usb_sync_date
@@ -414,7 +412,7 @@ class Entity(osv.osv):
         update_pool.sync_finished(cr, uid, update_ids, sync_field='usb_sync_date', context=context)
     
     @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
-    def usb_pull_update(self, cr, uid, uploaded_file_base64, context=None):
+    def usb_pull(self, cr, uid, uploaded_file_base64, context=None):
         """
         Takes the base64 for the uploaded zip file, unzips the csv files, parses them and inserts them into the database.
         @param uploaded_file_base64: The Base64 representation of a file - direct from the OpenERP api, i.e. wizard_object.pull_data
