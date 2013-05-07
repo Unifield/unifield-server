@@ -36,7 +36,7 @@ class Entity(osv.osv):
     def __init__(self, pool, cr):
         super(Entity, self).__init__(pool, cr)
         self.usb_pull_update_received_model_name = 'sync_remote_warehouse.update_received'
-        self.usb_pull_message_received_model_name = 'sync_remote_warehouse.update_received'
+        self.usb_pull_message_received_model_name = 'sync_remote_warehouse.message_received'
         
         self.usb_pull_update_rule_file = 'update_rules.txt'
         self.usb_pull_message_rule_file = 'message_rules.txt'
@@ -44,13 +44,49 @@ class Entity(osv.osv):
         self.usb_pull_files = [
             '%s.csv' % self.usb_pull_update_received_model_name,
             '%s.csv' % self.usb_pull_message_received_model_name,
+        ]
+        self.usb_pull_files_rw = [
             self.usb_pull_update_rule_file,
             self.usb_pull_message_rule_file,
         ]
     
-    def _usb_update_sync_step(self, cr, uid, step):
+    def _usb_change_sync_step(self, cr, uid, step):
         entity = self.get_entity(cr, uid)
         return self.write(cr, uid, entity.id, {'usb_sync_step': step})
+        
+    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
+    def usb_push(self, cr, uid, context):
+        """
+        Create updates, create message, package into zip, attach to entity and increment entity usb sync step
+        """
+        context = context or {}
+        context.update({'offline_synchronization' : True})
+        logger = context.get('logger')
+        updates_count = deletions_count = messages_count = 0
+        
+        session = str(uuid.uuid1())
+        entity = self.get_entity(cr, uid, context=context)
+        self.write(cr, uid, [entity.id], {'session_id' : session}) 
+        
+        # get update and message data
+        updates = self.usb_create_update(cr, uid, session, context=context)
+        logger.switch('msg_push', 'in-progress')
+        messages = self.usb_create_message(cr, uid, context=context)
+        
+        # compress into zip
+        if updates or messages:
+            updates_count, deletions_count, messages_count = self.usb_create_zip(cr, uid, context=context)
+        
+        # cleanup
+        self.usb_validate_push(cr, uid, context=context)
+        self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
+        
+        # advance step if there was something to push
+        if any((updates_count, deletions_count, messages_count)):
+            self._usb_change_sync_step(cr, uid, 'push_performed')
+        
+        # return 
+        return (updates_count, deletions_count, messages_count)
     
     def usb_create_zip(self, cr, uid, context=None):
         """
@@ -68,7 +104,7 @@ class Entity(osv.osv):
             logger_index = logger.append()
         
         def update_create_package():
-            return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid, entity.session_id)
+            return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid)
 
         def update_add_and_mark_as_sent(ids, packet):
             """
@@ -110,7 +146,7 @@ class Entity(osv.osv):
             return (len(packet['load']), len(packet['unload']))
         
         def message_add_and_mark_as_sent(packet):
-            columns = ['id','call','dest','args']
+            columns = ['source','remote_call','identifier','arguments']
             
             if not message_csv_contents:
                 message_csv_contents.append(columns)
@@ -118,10 +154,10 @@ class Entity(osv.osv):
             # insert message data
             for message in packet:
                 message_csv_contents.append([
-                    message['id'], 
-                    message['call'],
-                    message['dest'],
-                    message['args'],
+                    message['source'],
+                    message['remote_call'],
+                    message['id'],
+                    message['arguments'],
                 ])
                 
             # mark updates_to_send as sent and return number of records processed
@@ -369,40 +405,6 @@ class Entity(osv.osv):
         
         # return number of messages to send
         return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
-        
-    @sync_process(step='data_push', need_connection=False, defaults_logger={'usb':True})
-    def usb_push(self, cr, uid, context):
-        """
-        Create updates, create message, package into zip, attach to entity and increment entity usb sync step
-        """
-        context = context or {}
-        context.update({'offline_synchronization' : True})
-        logger = context.get('logger')
-        updates_count = deletions_count = messages_count = 0
-        
-        session = str(uuid.uuid1())
-        entity = self.get_entity(cr, uid, context=context)
-        self.write(cr, uid, [entity.id], {'session_id' : session}) 
-        
-        # get update and message data
-        updates = self.usb_create_update(cr, uid, session, context=context)
-        logger.switch('msg_push', 'in-progress')
-        messages = self.usb_create_message(cr, uid, context=context)
-        
-        # compress into zip
-        if updates or messages:
-            updates_count, deletions_count, messages_count = self.usb_create_zip(cr, uid, context=context)
-        
-        # cleanup
-        self.usb_validate_push(cr, uid, context=context)
-        self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
-        
-        # advance step if there was something to push
-        if any((updates_count, deletions_count, messages_count)):
-            self._usb_update_sync_step(cr, uid, 'push_performed')
-        
-        # return 
-        return (updates_count, deletions_count, messages_count)
     
     def usb_validate_push(self, cr, uid, context=None):
         """
@@ -416,93 +418,12 @@ class Entity(osv.osv):
             raise osv.except_osv('Cannot Validated', 'We cannot Validate the Push until we have performed one')
         
         # get session id and latest updates
-        session_id = entity.session_id
         update_pool = self.pool.get('sync_remote_warehouse.update_to_send')
-        update_ids = update_pool.search(cr, uid, [('session_id', '=', session_id)], context=context)
+        update_ids = update_pool.search(cr, uid, [], context=context)
         
         # mark latest updates as sync finished (set usb_sync_date) and clear entity session_id
         update_pool.sync_finished(cr, uid, update_ids, sync_field='usb_sync_date', context=context)
-        
-    def usb_import_rules(self, cr, uid, zip_file, context):
-        logger = context.get('logger')
-        update_rules = zip_file.read(self.usb_pull_update_rule_file)
-        update_rules = eval(update_rules)
-        self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
     
-        if logger:
-            logger.append(_('Update Rules imported: %d' % len(update_rules)))
-        
-        message_rules = zip_file.read(self.usb_pull_message_rule_file)
-        message_rules = eval(message_rules)
-        self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
-    
-        if logger:
-            logger.append(_('Message Rules imported: %d' % len(message_rules)))
-            
-    def usb_import_updates(self, cr, uid, zip_file, context):
-        logger = context.get('logger')
-        logger_index = logger.append()
-        
-        is_first_csv_row = True
-        
-        data_to_import = {}
-        data_to_import_fields = []
-        data_to_import_data = []
-        
-        number_of_updates_ran = 0
-        import_error = None
-        run_error = None
-        
-        # get CSV object to read data_to_import_data
-        csv_file = zip_file.read('%s.csv' % self.usb_pull_update_received_model_name)
-        
-        if csv_file:
-            csv_reader = csv.reader(StringIO(csv_file))
-            
-            # loop through csv rows and insert into data_to_import_fields or data_to_import_data array
-            for row in csv_reader:
-                if is_first_csv_row:
-                    data_to_import_fields = row
-                    is_first_csv_row = False
-                else:
-                    data_to_import_data.append(row)
-                    
-            zip_file.close()
-            logger.replace(logger_index, _('Updates to import: %d' % len(data_to_import_data)))
-            
-            # do importation and set result[model] = [True/False, [any error messages,...]]
-            model_pool = self.pool.get(self.usb_pull_update_received_model_name)
-            
-            try:
-                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)
-            except Exception as e:
-                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
-            except KeyError as e:
-                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e)) 
-            except ValueError as e:
-                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
-            
-            # run updates
-            context.update({'update_received_model':'sync_remote_warehouse.update_received'})
-            
-            if not import_error:
-                logger.replace(logger_index, _('Updates imported: %d' % len(data_to_import_data)))
-                try:
-                    number_of_updates_ran = self.execute_updates(cr, uid, context=context)
-                    self._usb_update_sync_step(cr, uid, 'pull_performed')
-                    logger.append(_('Updates ran: %d' % number_of_updates_ran))
-                    logger.switch('data_pull','ok')
-                except AttributeError, e:
-                    run_error = '%s: %s' % (type(e), str(e))
-                    logger.append(_('Error while executing updates: %s' % run_error))
-            else:
-                logger.replace(logger_index, _('Error occured during import: %s' % import_error))
-                
-        else:
-            logger.replace(logger_index, _('No updates to import'))
-            
-        return (data_to_import_data, import_error, number_of_updates_ran, run_error)
-
     @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
     def usb_pull(self, cr, uid, uploaded_file_base64, context):
         """
@@ -527,8 +448,11 @@ class Entity(osv.osv):
             zip_file = ZipFile(zip_stream, 'r')
             
             # check file validity
+            file_names = self.usb_pull_files
+            if entity.usb_instance_type == 'remote_warehouse':
+                file_names = file_names + self.usb_pull_files_rw
             if not all([(file_name in zip_file.namelist()) for file_name in self.usb_pull_files]):
-                raise osv.except_osv(_('Invalid USB Synchronisation Data'), _('The zip file you uploaded does not have all the data required for a pull. You must re-download the data from the other server.'))
+                raise osv.except_osv(_('Invalid USB Synchronisation Data'), _('The zip file you uploaded does not have all the data required for a pull. Please re-download the data from the other server.'))
                 
             # import rules if RW 
             if entity.usb_instance_type == 'remote_warehouse':
@@ -536,6 +460,11 @@ class Entity(osv.osv):
             
             # import updates
             data, import_error, updates_ran, run_error = self.usb_import_updates(cr, uid, zip_file, context)
+            
+            logger.switch('msg_pull','in-progress')
+            data, import_error, updates_ran, run_error = self.usb_import_messages(cr, uid, zip_file, context)
+            
+            zip_file.close()
                     
             logger.switch('status', 'ok')
         except osv.except_osv, e:
@@ -549,5 +478,137 @@ class Entity(osv.osv):
     
         # return results
         return (len(data), import_error, updates_ran, run_error)
+    
+    def usb_import_rules(self, cr, uid, zip_file, context):
+        logger = context.get('logger')
+        update_rules = zip_file.read(self.usb_pull_update_rule_file)
+        update_rules = eval(update_rules)
+        self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
+    
+        if logger:
+            logger.append(_('Update Rules imported: %d' % len(update_rules)))
+        
+        message_rules = zip_file.read(self.usb_pull_message_rule_file)
+        message_rules = eval(message_rules)
+        self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
+    
+        if logger:
+            logger.append(_('Message Rules imported: %d' % len(message_rules)))
+            
+    def usb_import_updates(self, cr, uid, zip_file, context):
+        logger = context.get('logger')
+        logger_index = logger.append()
+        
+        is_first_csv_row = True
+        
+        data_to_import_fields = []
+        data_to_import_data = []
+        
+        number_of_updates_ran = 0
+        import_error = None
+        run_error = None
+        
+        # get CSV object to read data_to_import_data
+        csv_file = zip_file.read('%s.csv' % self.usb_pull_update_received_model_name)
+        
+        if csv_file:
+            csv_reader = csv.reader(StringIO(csv_file))
+            
+            # loop through csv rows and insert into data_to_import_fields or data_to_import_data array
+            for row in csv_reader:
+                if is_first_csv_row:
+                    data_to_import_fields = row
+                    is_first_csv_row = False
+                else:
+                    data_to_import_data.append(row)
+                    
+            logger.replace(logger_index, _('Updates to import: %d' % len(data_to_import_data)))
+            
+            # do importation and set result[model] = [True/False, [any error messages,...]]
+            model_pool = self.pool.get(self.usb_pull_update_received_model_name)
+            
+            try:
+                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)
+            except Exception as e:
+                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
+            
+            # run updates
+            context.update({'update_received_model':'sync_remote_warehouse.update_received'})
+            
+            if not import_error:
+                logger.replace(logger_index, _('Updates imported: %d' % len(data_to_import_data)))
+                try:
+                    number_of_updates_ran = self.execute_updates(cr, uid, context=context)
+                    self._usb_change_sync_step(cr, uid, 'pull_performed')
+                    logger.append(_('Updates ran: %d' % number_of_updates_ran))
+                    logger.switch('data_pull','ok')
+                except AttributeError, e:
+                    run_error = '%s: %s' % (type(e), str(e))
+                    logger.append(_('Error while executing updates: %s' % run_error))
+            else:
+                logger.replace(logger_index, _('Error occurred during import: %s' % import_error))
+                
+        else:
+            logger.replace(logger_index, _('No updates to import'))
+            
+        return (data_to_import_data, import_error, number_of_updates_ran, run_error)
+    
+    def usb_import_messages(self, cr, uid, zip_file, context):
+        logger = context.get('logger')
+        logger_index = logger.append()
+        
+        is_first_csv_row = True
+        
+        data_to_import_fields = []
+        data_to_import_data = []
+        
+        number_of_messages_ran = 0
+        import_error = None
+        run_error = None
+        
+        # get CSV object to read data_to_import_data
+        csv_file = zip_file.read('%s.csv' % self.usb_pull_message_received_model_name)
+        
+        if csv_file:
+            csv_reader = csv.reader(StringIO(csv_file))
+            
+            # loop through csv rows and insert into data_to_import_fields or data_to_import_data array
+            for row in csv_reader:
+                if is_first_csv_row:
+                    data_to_import_fields = row
+                    is_first_csv_row = False
+                else:
+                    data_to_import_data.append(row)
+                    
+            logger.replace(logger_index, _('Messages to import: %d' % len(data_to_import_data)))
+            
+            # do importation and set result[model] = [True/False, [any error messages,...]]
+            model_pool = self.pool.get(self.usb_pull_message_received_model_name)
+            
+            try:
+                model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)
+            except Exception as e:
+                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
+            
+            # run updates
+            context.update({'message_received_model':'sync_remote_warehouse.message_received'})
+            
+            if not import_error:
+                logger.replace(logger_index, _('Messages imported: %d' % len(data_to_import_data)))
+                try:
+                    number_of_messages_ran = self.execute_message(cr, uid, context=context)
+                    self._usb_change_sync_step(cr, uid, 'pull_performed')
+                    logger.append(_('Messages ran: %d' % number_of_messages_ran))
+                    logger.switch('msg_pull','ok')
+                except AttributeError, e:
+                    run_error = '%s: %s' % (type(e), str(e))
+                    logger.append(_('Error while executing messages: %s' % run_error))
+            else:
+                logger.replace(logger_index, _('Error occurred during import: %s' % import_error))
+                
+        else:
+            logger.replace(logger_index, _('No messages to import'))
+            
+        return (data_to_import_data, import_error, number_of_messages_ran, run_error)
         
 Entity()

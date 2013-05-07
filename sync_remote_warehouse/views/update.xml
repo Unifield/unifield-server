@@ -142,7 +142,6 @@
 		          <group colspan="2" col="2">
 		            <separator string="Synchronization" colspan="6"/>
 		            <field name="rule_id"/>
-		            <field name="session_id"/>
 		            <field name="owner"/>
 		            <group colspan="2" col="6">
 		              <field name="sent"/>
@@ -170,7 +169,6 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
 	            <tree colors="red:sent == False">
-		          <field name="session_id"/>
 		          <field name="model"/>
 		          <field name="sdref"/>
 		          <field name="is_deleted"/>
@@ -201,8 +199,6 @@
 		                    domain="[]" context="{'group_by':'model'}"/>
 		            <filter string="Rule" icon="terp-personal"
 		                    domain="[]" context="{'group_by':'rule_id'}"/>
-		            <filter string="Session" icon="terp-accessories-archiver"
-		                    domain="[]" context="{'group_by':'session_id'}"/>
 		            <filter string="Date" icon="terp-partner"
 		                    domain="[]" context="{'group_by':'sync_date'}"/>
 		            <filter string="Record" icon="terp-partner"
