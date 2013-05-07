@@ -179,7 +179,7 @@ class report_hq_export(report_sxw.report_sxw):
         # Get department info code: 3 first characters of main instance's code
         department_info = ""
         if len(data['form']['instance_ids']) > 0:
-            parent_instance = self.pool.get('msf.instance').browse(cr, uid, data['form']['instance_ids'][0], context=context)
+            parent_instance = pool.get('msf.instance').browse(cr, uid, data['form']['instance_ids'][0], context=context)
             if parent_instance:
                 department_info = parent_instance.code[:3]
         
