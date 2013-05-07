@@ -69,16 +69,16 @@ class Entity(osv.osv):
         self.write(cr, uid, [entity.id], {'session_id' : session}) 
         
         # get update and message data
-        updates = self.usb_create_update(cr, uid, session, context=context)
+        updates = self.usb_push_create_update(cr, uid, session, context=context)
         logger.switch('msg_push', 'in-progress')
-        messages = self.usb_create_message(cr, uid, context=context)
+        messages = self.usb_push_create_message(cr, uid, context=context)
         
         # compress into zip
         if updates or messages:
-            updates_count, deletions_count, messages_count = self.usb_create_zip(cr, uid, context=context)
+            updates_count, deletions_count, messages_count = self.usb_push_create_zip(cr, uid, context=context)
         
         # cleanup
-        self.usb_validate_push(cr, uid, context=context)
+        self.usb_push_validate(cr, uid, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         
         # advance step if there was something to push
@@ -88,7 +88,7 @@ class Entity(osv.osv):
         # return 
         return (updates_count, deletions_count, messages_count)
     
-    def usb_create_zip(self, cr, uid, context=None):
+    def usb_push_create_zip(self, cr, uid, context=None):
         """
         Create packages out of all total_updates marked as "to send", format as CSV, zip and attach to entity record 
         """
@@ -346,7 +346,7 @@ class Entity(osv.osv):
         
         return (total_updates, total_deletions, total_messages)
     
-    def usb_create_update(self, cr, uid, session, context=None):
+    def usb_push_create_update(self, cr, uid, session, context=None):
         """
         Create update_to_send for a USB synchronization and return a browse of all to-send updates
         """
@@ -391,7 +391,7 @@ class Entity(osv.osv):
         updates_count = create_update(session)
         return len(update_pool.search(cr, uid, [('sent','=',False)]))
     
-    def usb_create_message(self, cr, uid, context=None):
+    def usb_push_create_message(self, cr, uid, context=None):
         context = context or {}
         message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
         rule_pool = self.pool.get("sync.client.message_rule")
@@ -406,7 +406,7 @@ class Entity(osv.osv):
         # return number of messages to send
         return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
     
-    def usb_validate_push(self, cr, uid, context=None):
+    def usb_push_validate(self, cr, uid, context=None):
         """
         Update update_to_send records with new usb_sync_date
         """
@@ -456,13 +456,13 @@ class Entity(osv.osv):
                 
             # import rules if RW 
             if entity.usb_instance_type == 'remote_warehouse':
-                self.usb_import_rules(cr, uid, zip_file, context)
+                self.usb_pull_import_rules(cr, uid, zip_file, context)
             
             # import updates
-            data, import_error, updates_ran, run_error = self.usb_import_updates(cr, uid, zip_file, context)
+            data, import_error, updates_ran, run_error = self.usb_pull_import_updates(cr, uid, zip_file, context)
             
             logger.switch('msg_pull','in-progress')
-            data, import_error, updates_ran, run_error = self.usb_import_messages(cr, uid, zip_file, context)
+            data, import_error, updates_ran, run_error = self.usb_pull_import_messages(cr, uid, zip_file, context)
             
             zip_file.close()
                     
@@ -479,7 +479,7 @@ class Entity(osv.osv):
         # return results
         return (len(data), import_error, updates_ran, run_error)
     
-    def usb_import_rules(self, cr, uid, zip_file, context):
+    def usb_pull_import_rules(self, cr, uid, zip_file, context):
         logger = context.get('logger')
         update_rules = zip_file.read(self.usb_pull_update_rule_file)
         update_rules = eval(update_rules)
@@ -495,7 +495,7 @@ class Entity(osv.osv):
         if logger:
             logger.append(_('Message Rules imported: %d' % len(message_rules)))
             
-    def usb_import_updates(self, cr, uid, zip_file, context):
+    def usb_pull_import_updates(self, cr, uid, zip_file, context):
         logger = context.get('logger')
         logger_index = logger.append()
         
@@ -553,7 +553,7 @@ class Entity(osv.osv):
             
         return (data_to_import_data, import_error, number_of_updates_ran, run_error)
     
-    def usb_import_messages(self, cr, uid, zip_file, context):
+    def usb_pull_import_messages(self, cr, uid, zip_file, context):
         logger = context.get('logger')
         logger_index = logger.append()
         
