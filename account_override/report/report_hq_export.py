@@ -220,7 +220,7 @@ class report_hq_export(report_sxw.report_sxw):
             if journal.type in ['correction', 'intermission'] or account.is_settled_at_hq:
                 if (journal.code, journal.id, currency.id) not in main_lines:
                     main_lines[(journal.code, journal.id, currency.id)] = []
-                main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + formatted_data[10] + department_info + formatted_data[11:12] + formatted_data[13:17])
+                main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
             else:
                 translated_account_code = self.translate_account(cr, uid, pool, account)
                 if (translated_account_code, journal.id, currency.id) not in account_lines_debit:
@@ -284,7 +284,7 @@ class report_hq_export(report_sxw.report_sxw):
 #                line_name = "Local accrual - Contrepartie compte d'expense"
             if (journal.code, journal.id, currency.id) not in main_lines:
                 main_lines[(journal.code, journal.id, currency.id)] = []
-            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + formatted_data[10] + department_info + formatted_data[11:12] + formatted_data[13:17])
+            main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
         
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
