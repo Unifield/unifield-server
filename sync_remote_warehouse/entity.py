@@ -100,8 +100,7 @@ class Entity(osv.osv):
         entity = self.get_entity(cr, uid)
         
         logger = context.get('logger', None)
-        if logger:
-            logger_index = logger.append()
+        logger_index = logger.append()
         
         def update_create_package():
             return self.pool.get('sync_remote_warehouse.update_to_send').create_package(cr, uid)
@@ -212,6 +211,12 @@ class Entity(osv.osv):
         updates_todo = len(self.pool.get('sync_remote_warehouse.update_to_send').search(cr, uid, [('sent','=',False)], context=context))
         messages_todo = len(self.pool.get('sync_remote_warehouse.message_to_send').search(cr, uid, [('sent','=',False)], context=context))
         
+        if not updates_todo:
+            logger.switch('data_push', 'ok')
+            
+        if not messages_todo:
+            logger.switch('msg_push', 'ok')
+        
         if not updates_todo and not messages_todo:
             return 0, 0, 0
         
@@ -219,33 +224,25 @@ class Entity(osv.osv):
         ################# create updates ##################
         ###################################################
 
+        logger.replace(logger_index, _('Update(s) to package: %d' % updates_todo))
+        
         if updates_todo:        
-            if logger:
-                logger.replace(logger_index, _('Updates to package: %d' % updates_todo))
-            
             package = update_create_package()
             
             # add the package to the update_csv_contents dictionary and mark it has 'sent'
             total_updates, total_deletions = update_add_and_mark_as_sent(*package)
                 
             # finished all packages so update logger
-            if logger and (total_updates or total_deletions):
-                logger.replace(logger_index, _("Update packaging complete: %d updates and %d deletions = total of %d") % (total_updates, total_deletions, (total_updates + total_deletions)))
-        else:
-            if logger:
-                logger.replace(logger_index, _('No updates to package'))
+            if total_updates or total_deletions:
+                logger.replace(logger_index, _("Update(s) packaged: %d updates and %d deletions = %d in total") % (total_updates, total_deletions, (total_updates + total_deletions)))
         
         ################################################### 
         ################# create messages #################
         ###################################################
         
-        if logger:
-            logger_index = logger.append()
+        logger_index = logger.append(_('Message(s) to package: %d' % messages_todo))
 
         if messages_todo:
-            if logger:
-                logger.replace(logger_index, _('Message(s) to package: %d' % messages_todo))
-            
             # prepare packets
             messages_pool = self.pool.get('sync_remote_warehouse.message_to_send')
             packet = messages_pool.get_message_packet(cr, uid, context=context)
@@ -253,25 +250,22 @@ class Entity(osv.osv):
             
             # add packet to csv data list
             message_add_and_mark_as_sent(packet)
-            if logger:
-                logger.replace(logger_index, _("Message(s) packaged: %d") % (total_messages))
-        else:
-            if logger:
-                logger.replace(logger_index, _('No messages to package'))
+            logger.replace(logger_index, _("Message(s) packaged: %d") % (total_messages))
         
         ################################################### 
         ################# update rules ####################
         ###################################################
-                
+        
         # create update rules file to send to remote warehouse if instance is central platform
-        if entity.usb_instance_type == 'central_platform': 
+        if entity.usb_instance_type == 'central_platform':
+             
             update_rule_pool = self.pool.get('sync.client.rule')
             update_rule_ids = update_rule_pool.search(cr, uid, [('usb','=',True),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
             update_rules_serialized = _serialize_update_rule(update_rule_pool, cr, uid, update_rule_ids, context=context)
             
             update_rules_string_io = StringIO()
             update_rules_string_io.write(str(update_rules_serialized))
-                
+        
         ################################################### 
         ################# message rules ###################
         ###################################################
@@ -332,17 +326,16 @@ class Entity(osv.osv):
     
             # attach file to entity and delete 
             self.write(cr, uid, entity.id, {'usb_last_push_file': zip_base64, 'usb_last_push_date': datetime.now()})
-            
-            if logger:
-                logger.switch('status', 'ok')
+
+            logger.switch('data_push', 'ok')
+            logger.switch('msg_push', 'ok')            
+            logger.switch('status', 'ok')
         except Exception, e:
-            if logger:
-                logger.append(_('Error while creating zip file: %s' % str(e)))
-                logger.switch('data_push', 'failed')
+            logger.append(_('Error while creating zip file: %s' % str(e)))
+            logger.switch('data_push', 'failed')
+            logger.switch('msg_push', 'failed')
+            logger.switch('status', 'failed')
             raise
-        finally:
-            if logger:
-                logger.write()
         
         return (total_updates, total_deletions, total_messages)
     
@@ -351,57 +344,61 @@ class Entity(osv.osv):
         Create update_to_send for a USB synchronization and return a browse of all to-send updates
         """
         
+        # init
         context = context or {}
         context.update({
             'update_to_send_model': 'sync_remote_warehouse.update_to_send', 
             'last_sync_date_field': 'usb_sync_date'
         })
         
-        entity = self.get_entity(cr, uid, context)
-
         logger = context.get('logger', None)
-        if logger:
-            logger_index = logger.append()
+        logger_index = logger.append()
+        
+        entity = self.get_entity(cr, uid, context)
         update_pool = self.pool.get('sync_remote_warehouse.update_to_send')
+        updates_count = 0
         
-        def create_update(session):
-            updates_count = 0
-            
-            rule_search_domain = [('usb','=',True)]
-            if entity.usb_instance_type == 'central_platform':
-                rule_search_domain = rule_search_domain + ['|',('direction_usb','=','cp_to_rw'),('direction_usb','=','bidirectional')]
-            else:
-                rule_search_domain = rule_search_domain + ['|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')]
-                 
-            ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
-            
-            for rule_id in ids:
-                updates_count += sum(update_pool.create_update(
-                    cr, uid, rule_id, session, context=context))
-                if logger:
-                    logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
+        # search for rules         
+        rule_search_domain = [('usb','=',True)]
+        if entity.usb_instance_type == 'central_platform':
+            rule_search_domain = rule_search_domain + ['|',('direction_usb','=','cp_to_rw'),('direction_usb','=','bidirectional')]
+        else:
+            rule_search_domain = rule_search_domain + ['|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')]
+             
+        rule_ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
+        
+        # create updates for rules found
+        if rule_ids:
+            for rule_id in rule_ids:
+                updates_count += sum(update_pool.create_update(cr, uid, rule_id, session, context=context))
+                logger.replace(logger_index, _('Update(s) created: %d' % updates_count))
                     
-            if not updates_count and logger:
-                logger.switch('data_push', 'ok')
-            if logger:
-                logger.write()
-                
-            return updates_count
-        
-        updates_count = create_update(session)
+            if updates_count:
+                cr.commit()
+        else:
+            logger.replace(logger_index, _('No applicable update rules found'))
+            
         return len(update_pool.search(cr, uid, [('sent','=',False)]))
     
     def usb_push_create_message(self, cr, uid, context=None):
         context = context or {}
         message_pool = self.pool.get('sync_remote_warehouse.message_to_send')
         rule_pool = self.pool.get("sync.client.message_rule")
+        logger = context.get('logger')
+        logger_index = logger.append()
 
         messages_count = 0
-        for rule in rule_pool.browse(cr, uid, rule_pool.search(cr, uid, [('usb','=',True)], context=context), context=context):
-            messages_count += message_pool.create_from_rule(cr, uid, rule, context=context)
+        rule_ids = rule_pool.search(cr, uid, [('usb','=',True)], context=context)
         
-        if messages_count:
-            cr.commit()
+        if rule_ids:
+            for rule in rule_pool.browse(cr, uid, rule_ids, context=context):
+                messages_count += message_pool.create_from_rule(cr, uid, rule, context=context)
+                logger.replace(logger_index, _('Message(s) created: %s' % messages_count))
+        
+            if messages_count:
+                cr.commit()
+        else:
+            logger.replace(logger_index, _('No applicable message rules found'))
         
         # return number of messages to send
         return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
