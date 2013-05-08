@@ -236,6 +236,7 @@ class sale_order(osv.osv):
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
+        'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
     }
     
     _defaults = {
@@ -590,7 +591,7 @@ class sale_order(osv.osv):
             
         for order in self.browse(cr, uid, ids):
             # UTP-392: don't create a PO if it is created by sync ofr the loan
-            if order.order_type == 'loan' and order.fo_created_by_po_sync:
+            if order.is_a_counterpart or order.order_type == 'loan' and order.fo_created_by_po_sync:
                 return
 
             two_months = today() + RelativeDateTime(months=+2)
@@ -607,6 +608,7 @@ class sale_order(osv.osv):
                       'location_id': order.shop_id.warehouse_id.lot_input_id.id,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
+                      'is_a_counterpart': True,
                       }
             order_id = purchase_obj.create(cr, uid, values, context=context)
             for line in order.order_line:

@@ -268,6 +268,7 @@ class purchase_order(osv.osv):
         'active': fields.boolean('Active', readonly=True),
         'po_from_ir': fields.function(_is_po_from_ir, method=True, type='boolean', string='Is PO from IR ?',),
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
+        'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
     }
     
     _defaults = {
@@ -1219,9 +1220,9 @@ stock moves which are already processed : '''
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
-            if order.sended_by_supplier and order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission'):
+            if order.is_a_counterpart or order.sended_by_supplier and order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission'):
                 # UTP-392: This PO is created by the synchro from a Loan FO of internal/intermission partner, so do not generate the counterpart FO
-                return None 
+                return 
             
             loan_duration = Parser.DateFromString(order.minimum_planned_date) + RelativeDateTime(months=+order.loan_duration)
             # from yml test is updated according to order value
@@ -1239,6 +1240,7 @@ stock moves which are already processed : '''
                       'categ': order.categ,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
+                      'is_a_counterpart': True,
                       }
             order_id = sale_obj.create(cr, uid, values, context=context)
             for line in order.order_line:
