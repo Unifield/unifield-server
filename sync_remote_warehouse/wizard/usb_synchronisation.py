@@ -69,7 +69,7 @@ class usb_synchronisation(osv.osv_memory):
             if not run_error:
                 pull_result += '\nSuccessfully ran %d update(s) and deletion(s)' % updates_ran
             else:
-                pull_result += '\nError while executing the updates: %s' % run_error
+                pull_result += '\nError while executing the update(s): %s' % run_error
         else:
             pull_result = 'Got an error while pulling %d update(s) and deletion(s): %s' % (import_count, import_error)
         
@@ -104,9 +104,9 @@ class usb_synchronisation(osv.osv_memory):
         }
         
         # update wizard to show results of push to user
-        updates_result = updates and 'Successfully exported %s updates\n' % updates or 'No updates that need to be synchronised have been made so there were no updates to push\n'
-        deletions_result = deletions and 'Successfully exported %s deletions\n' % deletions or 'No deletions that need to be synchronised have been made so there were no deletions to push\n'
-        messages_result = messages and 'Successfully exported %s messages\n' % messages or 'No messages that need to be synchronised have been made so there were no messages to push\n'
+        updates_result = updates and 'Successfully exported %s update(s)\n' % updates or 'No updates that need to be synchronised have been made so there were no updates to push\n'
+        deletions_result = deletions and 'Successfully exported %s deletion(s)\n' % deletions or 'No deletions that need to be synchronised have been made so there were no deletions to push\n'
+        messages_result = messages and 'Successfully exported %s message(s)\n' % messages or 'No messages that need to be synchronised have been made so there were no messages to push\n'
         
         vals['push_result'] = updates_result + deletions_result + messages_result
         if updates or deletions or messages:

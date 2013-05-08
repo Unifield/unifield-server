@@ -234,7 +234,7 @@ class Entity(osv.osv):
                 
             # finished all packages so update logger
             if total_updates or total_deletions:
-                logger.replace(logger_index, _("Update(s) packaged: %d updates and %d deletions = %d in total") % (total_updates, total_deletions, (total_updates + total_deletions)))
+                logger.replace(logger_index, _("Update(s) packaged: %d update(s) and %d deletion(s) = %d in total") % (total_updates, total_deletions, (total_updates + total_deletions)))
         
         ################################################### 
         ################# create messages #################
@@ -457,7 +457,7 @@ class Entity(osv.osv):
             
             # import updates
             data, import_error, updates_ran, run_error = self.usb_pull_import_updates(cr, uid, zip_file, context)
-            
+            logger.switch('data_pull','ok')
             logger.switch('msg_pull','in-progress')
             data, import_error, updates_ran, run_error = self.usb_pull_import_messages(cr, uid, zip_file, context)
             
@@ -477,20 +477,13 @@ class Entity(osv.osv):
         return (len(data), import_error, updates_ran, run_error)
     
     def usb_pull_import_rules(self, cr, uid, zip_file, context):
-        logger = context.get('logger')
         update_rules = zip_file.read(self.usb_pull_update_rule_file)
         update_rules = eval(update_rules)
         self.pool.get('sync.client.rule').save(cr, uid, update_rules, context=context)
-    
-        if logger:
-            logger.append(_('Update Rules imported: %d' % len(update_rules)))
         
         message_rules = zip_file.read(self.usb_pull_message_rule_file)
         message_rules = eval(message_rules)
         self.pool.get('sync.client.message_rule').save(cr, uid, message_rules, context=context)
-    
-        if logger:
-            logger.append(_('Message Rules imported: %d' % len(message_rules)))
             
     def usb_pull_import_updates(self, cr, uid, zip_file, context):
         logger = context.get('logger')
@@ -519,7 +512,7 @@ class Entity(osv.osv):
                 else:
                     data_to_import_data.append(row)
                     
-            logger.replace(logger_index, _('Updates to import: %d' % len(data_to_import_data)))
+            logger.replace(logger_index, _('Update(s) to import: %d' % len(data_to_import_data)))
             
             # do importation and set result[model] = [True/False, [any error messages,...]]
             model_pool = self.pool.get(self.usb_pull_update_received_model_name)
@@ -527,26 +520,27 @@ class Entity(osv.osv):
             try:
                 model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)
             except Exception as e:
-                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
+                import_error =  '%s %s: %s' % (_('Error while importing: '), type(e), str(e))
             
             # run updates
             context.update({'update_received_model':'sync_remote_warehouse.update_received'})
             
             if not import_error:
-                logger.replace(logger_index, _('Updates imported: %d' % len(data_to_import_data)))
+                logger.replace(logger_index, _('Update(s) imported: %d' % len(data_to_import_data)))
                 try:
                     number_of_updates_ran = self.execute_updates(cr, uid, context=context)
                     self._usb_change_sync_step(cr, uid, 'pull_performed')
-                    logger.append(_('Updates ran: %d' % number_of_updates_ran))
                     logger.switch('data_pull','ok')
                 except AttributeError, e:
                     run_error = '%s: %s' % (type(e), str(e))
-                    logger.append(_('Error while executing updates: %s' % run_error))
+                    logger.append(_('Error while processing update(s): %s' % run_error))
+                    logger.switch('data_pull','failed')
             else:
-                logger.replace(logger_index, _('Error occurred during import: %s' % import_error))
+                logger.replace(logger_index, _('Error while importing update(s): %s' % import_error))
+                logger.switch('data_pull','failed')
                 
         else:
-            logger.replace(logger_index, _('No updates to import'))
+            logger.replace(logger_index, _('Update(s) to import: 0'))
             
         return (data_to_import_data, import_error, number_of_updates_ran, run_error)
     
@@ -577,34 +571,32 @@ class Entity(osv.osv):
                 else:
                     data_to_import_data.append(row)
                     
-            logger.replace(logger_index, _('Messages to import: %d' % len(data_to_import_data)))
-            
-            # do importation and set result[model] = [True/False, [any error messages,...]]
+            logger.replace(logger_index, _('Message(s) to import: %d' % len(data_to_import_data)))
             model_pool = self.pool.get(self.usb_pull_message_received_model_name)
             
             try:
                 model_pool.import_data(cr, uid, data_to_import_fields, data_to_import_data, context=context)
             except Exception as e:
-                import_error =  '%s %s: %s' % (_('Import Error: '), type(e), str(e))
+                import_error =  '%s %s: %s' % (_('Error while importing: '), type(e), str(e))
             
             # run updates
             context.update({'message_received_model':'sync_remote_warehouse.message_received'})
             
             if not import_error:
-                logger.replace(logger_index, _('Messages imported: %d' % len(data_to_import_data)))
+                logger.replace(logger_index, _('Message(s) imported: %d' % len(data_to_import_data)))
                 try:
                     number_of_messages_ran = self.execute_message(cr, uid, context=context)
                     self._usb_change_sync_step(cr, uid, 'pull_performed')
-                    logger.append(_('Messages ran: %d' % number_of_messages_ran))
                     logger.switch('msg_pull','ok')
                 except AttributeError, e:
                     run_error = '%s: %s' % (type(e), str(e))
-                    logger.append(_('Error while executing messages: %s' % run_error))
+                    logger.append(_('Error while processing message(s): %s' % run_error))
+                    logger.switch('msg_pull','failed')
             else:
-                logger.replace(logger_index, _('Error occurred during import: %s' % import_error))
-                
+                logger.replace(logger_index, _('Error while importing: %s' % import_error))
+                logger.switch('msg_pull','failed')
         else:
-            logger.replace(logger_index, _('No messages to import'))
+            logger.replace(logger_index, _('Message(s) to import: 0'))
             
         return (data_to_import_data, import_error, number_of_messages_ran, run_error)
         
