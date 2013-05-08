@@ -221,16 +221,17 @@ class sync_rule(osv.osv):
 
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []
-        rules_serialization_mapping = dict(
-            sum((c._rules_serialization_mapping.items()
-                     for c in reversed(self.__class__.mro())
-                     if hasattr(c, '_rules_serialization_mapping')), [])
-        )
-        for rule in self.browse(cr, uid, ids, context=context):
-            rules_data.append(dict(
-                (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
-            ))
+        if ids:
+            rules_serialization_mapping = dict(
+                sum((c._rules_serialization_mapping.items()
+                         for c in reversed(self.__class__.mro())
+                         if hasattr(c, '_rules_serialization_mapping')), [])
+            )
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in rules_serialization_mapping.items()
+                ))
         return rules_data
 
     
@@ -569,16 +570,17 @@ class message_rule(osv.osv):
 
     def _serialize_rule(self, cr, uid, ids, context=None):
         rules_data = []
-        rules_serialization_mapping = dict(
-            sum((c._rules_serialization_mapping.items()
-                     for c in reversed(self.__class__.mro())
-                     if hasattr(c, '_rules_serialization_mapping')), [])
-        )
-        for rule in self.browse(cr, uid, ids, context=context):
-            rules_data.append(dict(
-                (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
-            ))
+        if ids:
+            rules_serialization_mapping = dict(
+                sum((c._rules_serialization_mapping.items()
+                         for c in reversed(self.__class__.mro())
+                         if hasattr(c, '_rules_serialization_mapping')), [])
+            )
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in rules_serialization_mapping.items()
+                ))
         return rules_data
     
     def invalidate(self, cr, uid, ids, model_ref, context=None):
