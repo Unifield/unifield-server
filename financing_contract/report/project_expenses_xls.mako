@@ -495,10 +495,10 @@
 <Data ss:Type="String">${( line[0] and line[0].name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
-<Data ss:Type="String">${( line[1] and line[1].code or '')|x}</Data>
+<Data ss:Type="String">${( line[1] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
-<Data ss:Type="String">${( line[1] and line[1].name or '')|x}</Data>
+<Data ss:Type="String">${( line[2] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( getAccountName(line[0]) or '')|x}</Data>
