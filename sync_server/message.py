@@ -73,6 +73,16 @@ class message(osv.osv):
             ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
             if ids: 
                 sync_log(self, 'Message %s already in the server database' % data['id'])
+                #SP-135/UF-1617: Overwrite the message and set the sent to False
+                self.write(cr, uid, ids, {
+                    'identifier': data['id'],
+                    'remote_call': data['call'],
+                    'arguments': data['args'],
+                    'destination': destination,
+                    'sent': False, # SP-135: Set the sent flag to become "not sent"
+                    'source': entity.id,
+                }, context=context)
+                
                 continue
             self.create(cr, uid, {
                 'identifier': data['id'],

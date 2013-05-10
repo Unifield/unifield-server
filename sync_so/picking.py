@@ -58,6 +58,16 @@ class stock_picking(osv.osv):
             raise Exception, "The corresponding uom does not exist here. Uom name: %s"%uom_name
         uom_id = uom_ids[0]
         
+        batch_ids = False
+        so_po_common = self.pool.get('so.po.common')
+        if data['prodlot_id']:
+            batch_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=', data['prodlot_id'])], context=context)
+            if not batch_ids:
+                raise Exception, "Batch Number %s not found for this sync data record" %batch_name
+            batch_ids = batch_ids[0]
+        
+        expired_date = data['expired_date']
+
         # build a dic which can be used directly to update the stock move
         result = {'line_number': data['line_number'],
                   'product_id': product_id,
@@ -65,6 +75,10 @@ class stock_picking(osv.osv):
                   'product_uos': uom_id,
                   'date': data['date'],
                   'date_expected': data['date_expected'],
+
+                  'prodlot_id': batch_ids,
+                  'expired_date': expired_date,
+
                   'name': data['name'],
                   'product_qty': data['product_qty'],
                   'product_uos_qty': data['product_qty'],
@@ -161,8 +175,13 @@ class stock_picking(osv.osv):
                     # some lines have already been processed
                     continue
                 # we check that all stock moves for a given line number have not been processed yet at OUT side
-                if line_data['out_processed']:
-                    continue
+                
+                ################################################################3
+                # SP-135/UF-1617: TO BE CHECKed why it stops the update of the IN lines
+                # So just remove it and perform tests to see the result
+                ################################################################3
+#                if line_data['out_processed']:
+#                    continue
                 
                 completed_ids = []
                 # we loop through the lines from OUT, updating if lines exists, or creating copies
@@ -188,5 +207,62 @@ class stock_picking(osv.osv):
             pick_tools.check_assign(cr, uid, [in_id], context=context)
             
         return res_id
+
+    def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
+        # Check if the given object is valid for the rule
+        model_obj = self.pool.get(rule.model.model)
+        domain = rule.domain and eval(rule.domain) or []
+        domain.insert(0, '&')
+        domain.append(('id', '=', ids[0])) # add also this id to short-list only the given object 
+        return model_obj.search(cr, uid, domain, context=context)
+
+    def create_manual_message(self, cr, uid, ids, context):
+        rule_obj = self.pool.get("sync.client.message_rule")
+        
+        ##############################################################################
+        # Define the message rule to be fixed, or by given a name for it
+        #
+        ##############################################################################
+        rule = rule_obj.get_rule_by_sequence(cr, uid, 1000, context)
+        
+        if not rule or not ids or not ids[0]:
+            return
+
+        valid_ids = self.check_valid_to_generate_message(cr, uid, ids, rule, context)
+        if not valid_ids:
+            return # the current object is not valid for creating message
+        valid_id = valid_ids[0] 
+        
+        model_obj = self.pool.get(rule.model.model)
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+        
+        arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
+        call = rule.remote_call
+        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, model_obj, ids, rule.server_id, context=context)
+        if not identifiers or not update_destinations:
+            return
+        
+        xml_id = identifiers[valid_id]
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], context=context)
+        if not existing_message_id: # if similar message does not exist in the system, then do nothing
+            return
+        
+        # make a change on the message only now
+        self.pool.get("sync.client.message_to_send").modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations[0], context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+                    
+        ret = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+        ##############################################################################
+        # SP-135: call the method to create manually a message for the relevant object, if needed
+        #
+        ##############################################################################
+        self.create_manual_message(cr, uid, ids, context)
+        return  ret
 
 stock_picking()
