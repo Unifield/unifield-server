@@ -857,6 +857,8 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
+        if context.get('is_a_counterpart'):
+            return
         order_obj= self.pool.get('purchase.order')
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
        

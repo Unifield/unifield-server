@@ -610,6 +610,7 @@ class sale_order(osv.osv):
                       'from_yml_test': order.from_yml_test,
                       'is_a_counterpart': True,
                       }
+            context['is_a_counterpart'] = True
             order_id = purchase_obj.create(cr, uid, values, context=context)
             for line in order.order_line:
                 purchase_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
@@ -618,7 +619,7 @@ class sale_order(osv.osv):
                                                    'price_unit': line.price_unit,
                                                    'product_qty': line.product_uom_qty,
                                                    'date_planned': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                                                   'name': line.name,})
+                                                   'name': line.name,}, context)
             self.write(cr, uid, [order.id], {'loan_id': order_id})
             
             purchase = purchase_obj.browse(cr, uid, order_id)
