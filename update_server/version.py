@@ -9,12 +9,11 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import tools
-#import pprint
 import sync_server
-#pp = pprint.PrettyPrinter(indent=4)
-import logging
 from updater import *
 
+import logging
+import time
 
 class version(osv.osv):
     
@@ -35,6 +34,28 @@ class version(osv.osv):
     }
 
     _sql_constraints = [('unique_sum', 'unique(sum)', 'Patches must be unique!')]
+
+    _logger = logging.getLogger('update_server')
+
+    def init(self, cr):
+        try:
+            now = fields.datetime.now()
+            current_versions = self.read(cr, 1, self.search(cr, 1, []), ['id','sum','state'])
+            versions_id = dict([(x['sum'], x['id']) for x in current_versions])
+            current_versions.append( {'sum':base_version,'state':'confirmed'} )
+            # Create non-existing versions in db
+            for rev in set(server_version) - set([x['sum'] for x in current_versions]):
+                versions_id[rev] = self.create(cr, 1, {'sum':rev, 'state':'confirmed', 'date':now})
+            # Update existing ones
+            self.write(cr, 1, [x['id'] for x in current_versions \
+                               if x['sum'] in server_version and not x['state'] == 'confirmed'], \
+                              {'state':'confirmed','date':now})
+            # Set last revision (assure last update has the last applied date)
+            time.sleep(1)
+            if len(server_version) > 1:
+                self.write(cr, 1, [versions_id[server_version[-1]]], {'date':fields.datetime.now()})
+        except BaseException, e:
+            self._logger.exception("version init failure!")
 
     def _get_last_revision(self, cr, uid, context=None):
         rev_ids = self.search(cr, uid, [('state','=','confirmed')], limit=1, context=context)
