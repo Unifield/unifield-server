@@ -63,7 +63,7 @@ class stock_picking(osv.osv):
         if data['prodlot_id']:
             batch_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=', data['prodlot_id'])], context=context)
             if not batch_ids:
-                raise Exception, "Batch Number %s not found for this sync data record" %batch_name
+                raise Exception, "Batch Number %s not found for this sync data record" %data['prodlot_id']
             batch_ids = batch_ids[0]
         
         expired_date = data['expired_date']
