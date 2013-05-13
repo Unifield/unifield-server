@@ -215,7 +215,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 self.write(cr, uid, sd_ids, args, context=context)
             else:
                 self.create(cr, uid, args, context=context)
-    
+
         return id
 
     # TODO replace this deprecated method with get_sd_ref(field='id') in your call
