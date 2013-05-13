@@ -1258,7 +1258,7 @@
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
-						<page string="Additional Items">
+						<page string="Additional Items" invisible="1">
 						    <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" >
 						    </field>
 						</page>
