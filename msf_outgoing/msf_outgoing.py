@@ -874,6 +874,10 @@ class shipment(osv.osv):
                     # ask for draft picking validation, depending on picking completion
                     # if picking ticket is not completed, the validation will not complete
                     draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
+                    
+                    # UF-1617: set the flag to PPL to indicate that the SHIP has been done, for synchronisation purpose
+                    if draft_packing.previous_step_id and draft_packing.previous_step_id.id: 
+                        cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' %draft_packing.previous_step_id.id)
             
             # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
         return True
@@ -1746,6 +1750,7 @@ class stock_picking(osv.osv):
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
+                'already_shipped': fields.boolean(string='The shipment is done'), #UF-1617: only for indicating the PPL that the relevant Ship has been closed
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -1753,6 +1758,7 @@ class stock_picking(osv.osv):
                  'first_shipment_packing_id': False,
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'converted_to_standard': False,
+                 'already_shipped': False,
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
