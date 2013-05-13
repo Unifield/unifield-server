@@ -1256,8 +1256,11 @@ stock moves which are already processed : '''
             self.write(cr, uid, [order.id], {'loan_id': order_id})
             
             sale = sale_obj.browse(cr, uid, order_id)
-            
-            message = _("Loan counterpart '%s' has been created.") % (sale.name,)
+            #utp-392 : On loan process, please always validate the FO counterpart when confirming (sourcing) the first PO loan
+            # for the other instance to get, by synchronization, the associated counterpart. And ask them the confirm also the FO they'd get.
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'sale.order', order_id, 'order_validated', cr)
+            message = _("Loan counterpart '%s' has been created and validated. Please confirm it.") % (sale.name,)
             
             sale_obj.log(cr, uid, order_id, message)
         
