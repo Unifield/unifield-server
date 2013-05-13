@@ -59,9 +59,9 @@
                                     <field name="name" invisible="1" />
                                     <field name="product_ok" invisible="1" />
                                     <field name="comment_ok" invisible="1" />
-                                    <field name="product_uom"·
+                                    <field name="product_uom" 
                                            on_change="onchange_uom(product_id, product_uom, product_uom_qty)" 
-                                           domain="[('uom_by_product', '=', product_id)]"/>
+                                           domain="[('uom_by_product', '=', product_id)]" />
                                     <field name="nomen_manda_0" invisible="1" />
                                     <field name="nomen_manda_1" invisible="1" />
                                     <field name="nomen_manda_2" invisible="1" />
