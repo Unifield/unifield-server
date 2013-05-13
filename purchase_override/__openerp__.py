@@ -45,6 +45,7 @@
         "wizard/order_change_currency_view.xml",
         "security/ir.model.access.csv",
         "purchase_sequence.xml",
+        "wizard/purchase_order_group_view.xml",
     ],
     "demo_xml": [
     ],
