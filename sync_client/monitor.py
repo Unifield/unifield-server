@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 import pooler
+import tools
 
 
 class MonitorLogger(object):
@@ -45,7 +46,7 @@ class MonitorLogger(object):
     def write(self):
         if not hasattr(self, 'cr'):
             raise Exception("Cannot write into a closed sync.monitor logger!")
-        self.info['error'] = "\n".join(self.messages)
+        self.info['error'] = "\n".join(map(tools.ustr, self.messages))
         self.monitor.write(self.cr, self.uid, [self.row_id], self.info, context=self.context)
 
     def __format_message(self, message, step):
