@@ -428,7 +428,7 @@ class product_pricelist(osv.osv):
         ids = []
         if name:
             currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', operator, name)], context=context)
-            ids = self.search(cr, uid, [('currency_id', 'in', currency_ids)] + args)
+            ids = self.search(cr, uid, [('currency_id', 'in', currency_ids)] + (args or []))
             
         return self.name_get(cr, uid, ids)          
         

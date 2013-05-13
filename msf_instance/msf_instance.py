@@ -27,7 +27,7 @@ class msf_instance(osv.osv):
     def _get_current_instance_level(self, cr, uid, ids, fields, arg, context=None):
         if not context:
             context = {}
-        res = {}
+        res = dict.fromkeys(ids, False)
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         if user.company_id and user.company_id.instance_id:
             for id in ids:
@@ -40,7 +40,7 @@ class msf_instance(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        res = {}
+        res = dict.fromkeys(ids, False)
         for instance in self.browse(cr, uid, ids, context=context):
             if instance.target_cost_center_ids:
                 for target in instance.target_cost_center_ids:
@@ -59,7 +59,7 @@ class msf_instance(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
             
-        res = {}
+        res = dict.fromkeys(ids, False)
         for instance in self.browse(cr, uid, ids, context=context):
             if instance.target_cost_center_ids:
                 for target in instance.target_cost_center_ids:
