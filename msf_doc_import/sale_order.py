@@ -538,6 +538,8 @@ class sale_order_line(osv.osv):
                 domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
                 res['domain'] = domain
 
+            res.setdefault('value', {}).update({'price_unit': self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.list_price, uom_id)})
+
         # Round-up the quantity
         if uom_id and product_qty:
             res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, ['product_uos_qty', 'product_uom_qty'], result=res)
