@@ -106,6 +106,10 @@ class product_supplierinfo(osv.osv):
 
     }
 
+    _defaults = {
+        'product_uom': lambda *a: False,
+    }
+
     def onchange_supplier(self, cr, uid, ids, supplier_id):
         '''
         Set the Indicative delivery LT
