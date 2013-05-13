@@ -42,7 +42,7 @@ class wizard_local_expenses(osv.osv_memory):
         'breakdown': 'year',
         'granularity': 'parent',
         'output_currency_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.currency_id.id,
-        'cost_center_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.cost_center_id.id,
+        'cost_center_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.top_cost_center_id.id,
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
@@ -68,4 +68,4 @@ class wizard_local_expenses(osv.osv_memory):
         return {'type': 'ir.actions.report.xml', 'report_name': 'local.expenses', 'datas': data}
 
 wizard_local_expenses()
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftw
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4

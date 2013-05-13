@@ -62,7 +62,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             'user_validated': False,
         }
         try:
-            description, reference, date, document_date, account_description, third_party, booking_amount, booking_currency, \
+            description, reference, document_date, date, account_description, third_party, booking_amount, booking_currency, \
                 destination, cost_center, funding_pool, free1, free2 = line
         except ValueError, e:
             raise osv.except_osv(_('Error'), _('Unknown format.'))

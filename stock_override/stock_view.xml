@@ -801,6 +801,7 @@
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>
+                            <field name="subtype" invisible="True"/>
                             <field name="move_lines"
                                 colspan="4"
                                 nolabel="1"
@@ -925,7 +926,6 @@
                             </field>
                             <group col="12" colspan="4">
                                 <field name="state" invisible="True"/>
-                                <field name="subtype" invisible="True"/>
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>

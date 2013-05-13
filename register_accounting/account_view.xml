@@ -397,7 +397,7 @@
                     <field name="amount" invisible="1" readonly="1"/>
                     <field name="document_date" readonly="1"/>
                     <field name="date" readonly="1"/>
-                    <field name="sequence" readonly="1"/>
+                    <field name="sequence_for_reference" readonly="1"/>
                     <field name="name" string="Description" readonly="1"/>
                     <field name="ref" readonly="1"/>
                     <field name="account_id" readonly="1"/>
@@ -432,12 +432,13 @@
                         <field name="document_date" select='1'/>
                         <field name="date" select='1'/>
                         <newline/>
-                        <field name="sequence" select='1'/>
+                        <field name="sequence_for_reference" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
-                        <field name="amount" select='1'/>
+                        <field name="amount_in" select='1'/>
+                        <field name="amount_out" select='1'/>
                         <newline/>
                         <field name="partner_id" select='1'/>
                         <field name="transfer_journal_id" select='1'/>
@@ -563,7 +564,7 @@
     <!--Bank Statement modification to change "Bank Statement" into "Bank Statement" -->
 
         <record id="account.action_bank_statement_tree" model="ir.actions.act_window">
-            <field name="name">Bank Statements</field>
+            <field name="name">Bank Registers</field>
             <field name="res_model">account.bank.statement</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,graph</field>
@@ -630,7 +631,7 @@
             <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
         </record>
 
-        <menuitem string="Bank Statements" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" sequence="7"/>
+        <menuitem string="Bank Registers" action="account.action_bank_statement_tree" id="account.menu_bank_statement_tree" parent="account.menu_finance_bank_and_cash" sequence="7"/>
 
     <!-- Cheque Register View -->
         <record id="view_cheque_register_form" model="ir.ui.view">
