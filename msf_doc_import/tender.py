@@ -290,7 +290,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def onchange_uom(self, cr, uid, ids, product_id, product_uom, product_qty, context=None):
+    def onchange_uom(self, cr, uid, ids, product_id, product_uom, product_qty=0.00, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
