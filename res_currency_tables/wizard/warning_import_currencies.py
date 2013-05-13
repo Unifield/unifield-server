@@ -19,6 +19,7 @@
 #
 ##############################################################################
 from osv import osv, fields
+from lxml import etree
 
 class warning_import_currencies(osv.osv_memory):
     _name = 'warning.import.currencies'
@@ -26,6 +27,22 @@ class warning_import_currencies(osv.osv_memory):
     _columns = {
         'currency_list': fields.text("Currency list"),
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change message field
+        """
+        if not context:
+            context = {}
+        view = super(warning_import_currencies, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='form' and context.get('message', False):
+            message = context.get('message')
+            tree = etree.fromstring(view['arch'])
+            labels = tree.xpath('/form/label[@string="Nothing"]')
+            for label in labels:
+                label.set('string', "%s" % message)
+            view['arch'] = etree.tostring(tree)
+        return view
 
     def button_ok(self, cr, uid, ids, context=None):
         return {'type' : 'ir.actions.act_window_close'}

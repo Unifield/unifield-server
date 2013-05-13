@@ -61,6 +61,7 @@ class import_currencies(osv.osv_memory):
         currency_obj = self.pool.get('res.currency')
         currency_rate_obj = self.pool.get('res.currency.rate')
         undefined_currencies = ""
+        existing_currencies = ""
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
@@ -91,24 +92,36 @@ class import_currencies(osv.osv_memory):
                             if not cr.rowcount:
                                 # add currency in warning list
                                 undefined_currencies += "%s\n" % line[0]
+                                wizard_date = wizard.rate_date
                         # Now, creating/updating the rate
                         currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', currency_ids[0]), ('name', '=', wizard.rate_date)], context=context)
                         if len(currency_rates) > 0:
                             # A rate exists for this date; we update it
                             currency_rate_obj.write(cr, uid, currency_rates, {'name': wizard.rate_date,
                                                                               'rate': float(line[1])}, context=context)
+                            existing_currencies += "%s\n" % line[0]
+                            wizard_date = wizard.rate_date
                         else:
                             # No rate for this date: create it
                             currency_rate_obj.create(cr, uid, {'name': wizard.rate_date,
                                                                'rate': float(line[1]),
                                                                'currency_id': currency_ids[0]})
         # Return undefined currencies
-        if len(undefined_currencies) > 0:
-            context.update({'message': "FX rates have been properly imported for the date XX [date user entered in the wizard]; be aware that no rates have been defined on the 1st of [period corresponding to the date user entered in the wizard] for the following currencies..."})
-            wizard_id = self.pool.get('warning.import.currencies').create(cr,
-                                                                          uid,
-                                                                          {'currency_list': undefined_currencies},
-                                                                          context=context)
+        if len(undefined_currencies) > 0 or len(existing_currencies) > 0:
+            period_name = ''
+            w_vals = {'currency_list': undefined_currencies}
+            periods = self.pool.get('account.period').get_period_from_date(cr, uid, wizard_date)
+            if periods:
+                period_name = self.pool.get('account.period').browse(cr, uid, periods)[0].name
+            message = ""
+            if not len(existing_currencies) > 0:
+                message = 
+                context.update({'message': "FX rates have been properly imported for the date %s; be aware that no rates have been defined on the 1st of %s for the following currencies..." % (wizard_date, period_name)})
+            else:
+                w_vals = {'currency_list': existing_currencies, 'state': 'yes/no'}
+                message = "You are trying to import FX rates already defined in the system at the date specified; do you want to proceed?"
+            context.update({'message': message})
+            wizard_id = self.pool.get('warning.import.currencies').create(cr, uid, w_vals, context=context)
             return {
                     'type': 'ir.actions.act_window',
                     'res_model': 'warning.import.currencies',
