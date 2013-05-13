@@ -1137,9 +1137,15 @@ class composition_item(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
                 
         return True
-    
-    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),]
-    
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.item_product_id.id, obj.item_uom_id.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),
+                    (_uom_constraint, 'Constraint error on Uom', [])]
     
 composition_item()
 

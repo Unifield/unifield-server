@@ -308,13 +308,7 @@ class stock_warehouse_orderpoint(osv.osv):
         Check if the UoM is convertible to product standard UoM
         '''
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-        
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-        
-            if product.uom_id.category_id.id != uom.category_id.id:
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
                 raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
         
         return {}
@@ -328,7 +322,16 @@ class product_uom(osv.osv):
     _inherit = 'product.uom'
     
     def _get_uom_by_product(self, cr, uid, ids, field_name, args, context=None):
-        return {}
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
     
     def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
         dom = []
@@ -338,15 +341,46 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_product':
                 product_id = arg[2]
-                if isinstance(product_id, (int, long)):
-                    product_id = [product_id]
-                product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
-                dom.append(('category_id', '=', product.uom_id.category_id.id))
+                if product_id:
+                    if isinstance(product_id, (int, long)):
+                        product_id = [product_id]
+                    product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
+                    dom.append(('category_id', '=', product.uom_id.category_id.id))
                 
         return dom
-    
+
+    def _get_uom_by_parent(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return false for each id
+        '''
+        if isinstance(ids,(long, int)):
+           ids = [ids]
+        
+        result = {}
+        for id in ids:
+          result[id] = False
+        return result
+
+    def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
+        dom = []
+        
+        for arg in args:
+            if arg[0] == 'uom_by_parent' and arg[1] != '=':
+                raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
+            elif arg[0] == 'uom_by_parent':
+                product_uom = arg[2]
+                if product_uom:
+                    if isinstance(product_uom, (int, long)):
+                        product_uom = [product_uom]
+                    product_uom_obj = self.browse(cr, uid, product_uom[0], context=context)
+                    dom.append(('category_id', '=', product_uom_obj.category_id.id))
+                
+        return dom
+
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
+                                          help='Field used to filter the UoM for a specific product'),
+        'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent', 
                                           help='Field used to filter the UoM for a specific product'),
     }
     
@@ -1363,14 +1397,19 @@ class stock_inventory_line(osv.osv):
         if not product:
             return result
         product_obj = self.pool.get('product.product').browse(cr, uid, product)
-        uom = uom or product_obj.uom_id.id
-        stock_context = {'uom': uom, 'to_date': to_date,
+        product_uom = product_obj.uom_id.id
+        if uom:
+            uom_obj = self.pool.get('product.uom').browse(cr, uid, uom)
+            if uom_obj.category_id.id == product_obj.uom_id.category_id.id:
+                product_uom = uom
+        #uom = uom or product_obj.uom_id.id
+        stock_context = {'uom': product_uom, 'to_date': to_date,
                          'prodlot_id':prod_lot_id,}
         if location_id:
             # if a location is specified, we do not list the children locations, otherwise yes
             stock_context.update({'compute_child': False,})
         amount = self.pool.get('stock.location')._product_get(cr, uid, location_id, [product], stock_context)[product]
-        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': uom})
+        result.setdefault('value', {}).update({'product_qty': amount, 'product_uom': product_uom})
         return result
     
     def change_lot(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
@@ -1622,7 +1661,13 @@ class stock_inventory_line(osv.osv):
                  'type_check': 'in',
                  'dont_move': lambda *a: False,
                  }
-    
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
     _constraints = [(_check_batch_management,
                      'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
                      ['prod_lot_id']),
@@ -1632,6 +1677,7 @@ class stock_inventory_line(osv.osv):
                     (_check_prodlot_need,
                      'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
                      ['prod_lot_id']),
+                    (_uom_constraint, 'Constraint error on Uom', [])
                     ]
 
 stock_inventory_line()

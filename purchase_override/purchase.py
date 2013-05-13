@@ -1660,7 +1660,7 @@ class purchase_order_line(osv.osv):
     _inherit = 'purchase.order.line'
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
                 }
-    
+
 purchase_order_line()
 
 

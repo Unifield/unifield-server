@@ -296,11 +296,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
         '''
         warning = {}
         if product_uom and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
                 warning = {'title': _('Wrong Product UOM !'),
                            'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
         return {'warning': warning}
@@ -333,5 +329,20 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
                 vals['to_correct_ok'] = False
                 vals['text_error'] = False
         return super(tender_line, self).write(cr, uid, ids, vals, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        message = ''
+        if not context.get('import_in_progress'):
+            if vals.get('product_uom') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context)
+                if res and res['warning']:
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+        return super(tender_line, self).create(cr, uid, vals, context=context)
 
 tender_line()

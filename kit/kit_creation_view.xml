@@ -12,7 +12,7 @@
             			<group col="4" colspan="4">
             				<field name="product_id_kit_creation" colspan="4" on_change="on_change_product_id(product_id_kit_creation)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
             				<field name="qty_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" />
-                        	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" string="UoM" />
+                        	<field name="uom_id_kit_creation" attrs="{'readonly': [('state', '!=', 'draft')]}" colspan="2" string="UoM" domain="[('uom_by_product', '=', product_id_kit_creation)]"/>
             			</group>
                         <group col="4" colspan="2">
                         	<field name="name" colspan="2" attrs="{'readonly': [('state', '!=', 'draft')]}" />

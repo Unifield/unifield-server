@@ -44,7 +44,7 @@
 				           						<field name="item_module" />
 				           						<field name="item_product_id" />
 						                        <field name="item_qty" />
-						                        <field name="item_uom_id" />
+						                        <field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
 					                        </page>
 					                        <page string="Notes">
 					                        	<field name="item_description" nolabel="True" />
@@ -56,7 +56,7 @@
 				            		<field name="item_module" />
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
 				            		<field name="item_qty" />
-				            		<field name="item_uom_id" />
+				            		<field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 				            		<field name="item_lot"
