@@ -219,6 +219,8 @@ class sync_rule(osv.osv):
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
         rules_data = []
         rules_serialization_mapping = dict(
             sum((c._rules_serialization_mapping.items()
