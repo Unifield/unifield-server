@@ -167,10 +167,7 @@ class shipment(osv.osv):
                     num_of_packs = memory_family.num_of_packs
                     values['num_of_packs'] += int(num_of_packs)
                     # total weight
-                    total_weight = memory_family.total_weight
-                    for item in shipment.additional_items_ids:
-                        total_weight += item.weight
-                    values['total_weight'] += total_weight
+                    values['total_weight'] += memory_family.total_weight
                     # total volume
                     total_volume = memory_family.total_volume
                     values['total_volume'] += float(total_volume)
@@ -180,6 +177,8 @@ class shipment(osv.osv):
                     # currency
                     currency_id = memory_family.currency_id and memory_family.currency_id.id or False
                     values['currency_id'] = currency_id
+            for item in shipment.additional_items_ids:
+                values['total_weight'] += item.weight
         return result
     
     def _get_shipment_ids(self, cr, uid, ids, context=None):
