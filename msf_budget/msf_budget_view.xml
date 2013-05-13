@@ -310,5 +310,22 @@
 
         <menuitem action="action_account_analytic_account_budget_form" id="menu_action_account_analytic_account_budget_form" parent="next_id_31" />
 
+        <record id="action_open_analytic_lines_budget_button" model="ir.actions.act_window">
+            <field name="name">Analytic Items</field>
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
+            <field name="context">{'search_budget': 1, 'summary_id': active_id}</field>
+        </record>
+
+        <record id="ir_open_budget_summary_line" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">msf.budget.summary</field>
+            <field name="name">Open Analytic Lines</field>
+            <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_budget_button" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+        
     </data>
 </openerp>
