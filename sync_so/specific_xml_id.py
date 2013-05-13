@@ -216,6 +216,10 @@ class account_analytic_account(osv.osv):
         
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        account = self.browse(cr, uid, res_id)
+        return get_valid_xml_name(account.category, account.code, account.name)
+ 
 account_analytic_account()
 
 class msf_instance(osv.osv):
