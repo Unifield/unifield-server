@@ -384,6 +384,9 @@ class threshold_value_line(osv.osv):
         '''
         if not context:
             context = {}
+
+        if line_id and isinstance(line_id, list):
+            line_id = line_id[0]
         
         cons = 0.00
         threshold_value = 0.00
@@ -420,7 +423,8 @@ class threshold_value_line(osv.osv):
 
     def onchange_product_id(self, cr, uid, ids, product_id, compute_method=False, consumption_method=False,
                                 consumption_period_from=False, consumption_period_to=False, frequency=False,
-                                safety_month=False, lead_time=False, supplier_lt=False, context=None):
+                                safety_month=False, lead_time=False, supplier_lt=False, fixed_tv=0.00, 
+                                fixed_qty=0.00, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
@@ -440,7 +444,29 @@ class threshold_value_line(osv.osv):
                                                consumption_period_from, consumption_period_to, frequency,
                                                safety_month, lead_time, supplier_lt, prod.uom_id.id, context=context)['threshold_value']
                 res['value'].update({'fake_threshold_value': tv, 'threshold_value': tv})
-            
+
+                if prod.uom_id.id:
+                    res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, prod.uom_id.id, tv, ['fixed_threshold_value', 'fixed_product_qty', 'threshold_value', 'fake_threshold_value'], result=res)
+                if prod.uom_id.id and fixed_tv:
+                    res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, prod.uom_id.id, fixed_tv, ['fixed_threshold_value'], result=res)
+                if prod.uom_id.id and fixed_qty:
+                    res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, prod.uom_id.id, fixed_tv, ['fixed_product_qty'], result=res)
+
         return res
-    
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, tv_qty, product_qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+        uom_obj = self.pool.get('product.uom')
+
+        if tv_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, tv_qty, 'fixed_threshold_value', result=res)
+
+        if product_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, 'fixed_product_qty', result=res)
+
+        return res
+
 threshold_value_line()

@@ -2216,8 +2216,10 @@ class purchase_order_line(osv.osv):
                                  'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False, 
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
+            st_uom = self.pool.get('product.product').browse(cr, uid, product).uom_id.id
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
             st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False, context=context)
+            st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
         
             if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
                 res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})

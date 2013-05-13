@@ -9199,6 +9199,24 @@ msgstr "Produit - Filtres"
 msgid "You need to correct the following line%s: %s"
 msgstr "Vous devez corriger les lignes suivantes%s: %s"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:163
+#, python-format
+msgid "Line %s in the Excel file: %s\n"
+msgstr "Ligne %s du fichier Excel : %s\n"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:529
+#, python-format
+msgid "Bad rounding"
+msgstr "Mauvais arrondi"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:530
+#, python-format
+msgid "The quantity entered is not valid according to the rounding value of the UoM. The product quantity has been rounded to the highest good value."
+msgstr "La quantité indiquée n'est pas valide par rapport à l'unité de mesure. La quantité a été arrondie à la plus proche valeur correcte."
+
 #. module: account_voucher
 #: selection:account.voucher,payment_option:0
 msgid "Reconcile with Write-Off"

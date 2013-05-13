@@ -85,8 +85,14 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 result[obj.id]['exp_check'] = True
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, product_uom, quantity):
+        '''
+        Check the round of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, quantity, 'quantity')
     
-    def change_lot(self, cr, uid, id, prodlot_id, qty=0.00, location_id=False, context=None):
+    def change_lot(self, cr, uid, id, prodlot_id, qty=0.00, location_id=False, product_uom=False, context=None):
         '''
         prod lot changes, update the expiry date
         '''
@@ -95,7 +101,11 @@ class stock_partial_move_memory_out(osv.osv_memory):
 
         prodlot_obj = self.pool.get('stock.production.lot')
         result = {'value':{}, 'warning': {}}
-        
+
+        result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, qty, 'quantity')
+
+        qty = result.get('value', {}).get('quantity', 0.00)
+
         if prodlot_id:
             c = context.copy()
             if location_id:

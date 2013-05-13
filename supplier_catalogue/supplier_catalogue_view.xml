@@ -168,12 +168,13 @@
 			<field name="arch" type="xml">
 				<tree string="Supplier catalogue lines" min_rows="20" editable="top" colors="red: to_correct_ok == True">
                     <field name="line_number" readonly="1"/>
-					<field name="product_id" on_change="product_change(product_id)" />
-					<field name="line_uom_id" domain="[('uom_by_product', '=', product_id)]"/>
-					<field name="min_qty" />
+					<field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty)" />
+                    <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" 
+                           domain="[('uom_by_product', '=', product_id)]" />
+					<field name="min_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" />
 					<field name="unit_price" />
 					<field name="rounding" />
-					<field name="min_order_qty" />
+					<field name="min_order_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" />
 					<field name="comment" />
 					<field name="to_correct_ok" invisible="1"/>
 				</tree>

@@ -378,16 +378,34 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         (_check_uniqueness, 'You cannot have two times the same product on the same automatic supply rule', ['product_id'])
     ]
     
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, uom_id, product_qty, context=None):
         """ Finds UoM for changed product.
         @param product_id: Changed id of product.
         @return: Dictionary of values.
         """
+        res = {}
+
         if product_id:
             prod = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v = {'product_uom_id': prod.uom_id.id}
-            return {'value': v}
-        return {}
+            res.update({'value': v})
+
+        if product_qty:
+            uom_id = res.get('value', {}).get('product_uom_id', uom_id)
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, product_qty, 'product_qty', result=res)
+
+        return res
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, product_qty, context=None):
+        '''
+        Check the round of qty according to UoM
+        '''
+        res = {}
+
+        if product_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, product_qty, 'product_qty', result=res)
+
+        return res
     
 stock_warehouse_automatic_supply_line()
 

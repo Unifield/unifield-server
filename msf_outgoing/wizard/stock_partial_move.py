@@ -196,6 +196,17 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
         'qty_to_return': 0.0,
     }
 
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_to_return', result=res)
+
+        return res
+
 stock_partial_move_memory_returnproducts()
 
 

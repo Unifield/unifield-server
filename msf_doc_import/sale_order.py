@@ -512,15 +512,18 @@ class sale_order_line(osv.osv):
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
+    def onchange_uom(self, cr, uid, ids, product_id, uom_id, product_qty=0.00, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
         res = {'domain':{}, 'warning':{}}
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        uom = False
+        
         if product_id:
             product = product_obj.browse(cr, uid, product_id, context=context)
+            
             domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
             res['domain'] = domain
             if uom_id:
@@ -528,6 +531,13 @@ class sale_order_line(osv.osv):
                     warning = {'title': _('Wrong Product UOM !'),
                                'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
                     res['warning'] = warning
+
+                res.setdefault('value', {}).update({'price_unit': self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.list_price, uom_id)})
+
+        # Round-up the quantity
+        if uom_id and product_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, ['product_uos_qty', 'product_uom_qty'], result=res)
+
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -557,7 +567,7 @@ class sale_order_line(osv.osv):
                 if vals.get('product_uom') and vals.get('product_id'):
                     product_id = vals.get('product_id')
                     uom_id = vals.get('product_uom')
-                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context)
+                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context=context)
                     if res and res.get('warning', False):
                         message += res['warning']['message']
 

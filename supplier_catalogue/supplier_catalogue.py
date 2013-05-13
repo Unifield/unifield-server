@@ -714,21 +714,38 @@ class supplier_catalogue_line(osv.osv):
         (_check_min_quantity, 'You cannot have a line with a negative or zero quantity!', ['min_qty']),
     ]
     
-    def product_change(self, cr, uid, ids, product_id, context=None):
+    def product_change(self, cr, uid, ids, product_id, min_qty, min_order_qty, context=None):
         '''
         When the product change, fill automatically the line_uom_id field of the
         catalogue line.
         @param product_id: ID of the selected product or False
         '''
         v = {'line_uom_id': False}
+        res = {}
         
         if product_id:
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             v.update({'line_uom_id': product.uom_id.id})
+            res = self.change_uom_qty(cr, uid, ids, product.uom_id.id, min_qty, min_order_qty)
         else:
             return {}
         
-        return {'value': v}
+        return res.setdefault('value', {}).update(v)
+
+    def change_uom_qty(self, cr, uid, ids, uom_id, min_qty, min_order_qty):
+        '''
+        Check round qty according to UoM
+        '''
+        res = {}
+        uom_obj = self.pool.get('product.uom')
+
+        if min_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, min_qty, 'min_qty', result=res)
+
+        if min_order_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, min_order_qty, 'min_order_qty', result=res)
+
+        return res
     
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''

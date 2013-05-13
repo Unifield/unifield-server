@@ -273,8 +273,35 @@ class stock_warehouse_orderpoint(osv.osv):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
         
         return result
+        
+        
+    def onchange_uom_qty(self, cr, uid, ids, product_id=False, product_uom=False, product_min_qty=False, product_max_qty=False, res=None, context=None):
+        '''
+        Check the round of the quantity values according to the UoM
+        '''
+        if not res:
+            res = {}
+
+        if product_min_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_min_qty, 'product_min_qty', result=res)
+
+        if product_max_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_max_qty, 'product_max_qty', result=res)
+
+        uom_id = product_uom
+        if uom_id and product_id:
+            product_obj = self.pool.get('product.product')
+            uom_obj = self.pool.get('product.uom')
+        
+            product = product_obj.browse(cr, uid, product_id, context=context)
+            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+        
+            if product.uom_id.category_id.id != uom.category_id.id:
+                raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
+
+        return res
     
-    def onchange_product_id(self, cr, uid, ids, product_id, context=None):
+    def onchange_product_id(self, cr, uid, ids, product_id, product_uom=False, product_min_qty=False, product_max_qty=False, context=None):
         '''
         Add domain on UoM to have only UoM on the same category of the
         product standard UoM
@@ -300,6 +327,9 @@ class stock_warehouse_orderpoint(osv.osv):
             res['domain'].update(domain)
         else:
             res.update({'domain': domain})
+            
+        product_uom = res.get('value', {}).get('product_uom', product_uom)
+        res = self.onchange_uom_qty(cr, uid, ids, product_id, product_uom, product_min_qty, product_max_qty, res=res)
             
         return res
     
@@ -341,9 +371,10 @@ class product_uom(osv.osv):
                 raise osv.except_osv(_('Error'), _('Bad comparison operator in domain'))
             elif arg[0] == 'uom_by_product':
                 product_id = arg[2]
+                if product_id and isinstance(product_id, (int, long)):
+                    product_id = [product_id]
+                
                 if product_id:
-                    if isinstance(product_id, (int, long)):
-                        product_id = [product_id]
                     product = self.pool.get('product.product').browse(cr, uid, product_id[0], context=context)
                     dom.append(('category_id', '=', product.uom_id.category_id.id))
                 
@@ -650,6 +681,21 @@ class stock_move(osv.osv):
                 if move.prodlot_id.type == 'standard' and not move.product_id.batch_management and move.product_id.perishable:
                     raise osv.except_osv(_('Error!'),  _('The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.'))
         return True
+
+    def onchange_uom(self, cr, uid, ids, product_uom, product_qty):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'])
+
+    def onchange_quantity(self, cr, uid, ids, product_id, product_qty,
+                          product_uom, product_uos):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        res = super(stock_move, self).onchange_quantity(cr, uid, ids, product_id, product_qty, product_uom, product_uos)
+
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, ['product_qty', 'product_uos_qty'], res)
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
         '''
@@ -1387,6 +1433,12 @@ class stock_inventory_line(osv.osv):
     '''
     _inherit = 'stock.inventory.line'
     _rec_name = 'product_id'
+
+    def onchange_uom_qty(self, cr, uid, ids, product_uom, product_qty):
+        '''
+        Check the rounding of the qty according to the UoM
+        '''
+        return self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, product_qty, 'product_qty')
     
     def common_on_change(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False, result=None):
         '''
