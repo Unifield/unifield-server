@@ -100,7 +100,7 @@ class message_to_send(osv.osv):
     }
     
     _defaults = {
-        'generate_message' : False,
+        'generate_message' : True,
     }
 
 
@@ -136,6 +136,7 @@ class message_to_send(osv.osv):
                 'arguments': arguments,
                 'destination_name': destination_name,
                 'sent' : False,
+                'generate_message' : False,
         }
         ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
         if not ids:
