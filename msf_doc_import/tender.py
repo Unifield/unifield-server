@@ -300,7 +300,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             uom_obj = self.pool.get('product.uom')
             product = product_obj.browse(cr, uid, product_id, context=context)
             uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
                 return {'warning': {'title': _('Wrong Product UOM !'),
                                     'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}}
         return self.onchange_uom_qty(cr, uid, ids, product_uom, product_qty)
