@@ -338,7 +338,7 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
             if vals.get('product_uom') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('product_uom')
-                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context)
+                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context=context)
                 if res and res['warning']:
                     message += res['warning']['message']
             if message:
