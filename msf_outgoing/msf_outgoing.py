@@ -2374,6 +2374,7 @@ class stock_picking(osv.osv):
         
         # stock move object
         move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         
         for pick in self.browse(cr, uid, ids, context=context):
             # create the new picking object
@@ -2395,13 +2396,17 @@ class stock_picking(osv.osv):
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
                     assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    # UTP-289 : Remove the check of the consistency of UoM
+                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
-                    count = count + partial['product_qty']
+                    count = count + total_qty
                     # copy the stock move and set the quantity
                     values = {'picking_id': new_pick_id,
                               'product_qty': partial['product_qty'],
+                              'product_uom': partial['product_uom'],
                               'product_uos_qty': partial['product_qty'],
+                              'product_uos': partial['product_uom'],
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
@@ -2420,11 +2425,16 @@ class stock_picking(osv.osv):
             # we force availability
             self.force_assign(cr, uid, [new_pick_id])
         
-        # TODO which behavior
-        #return {'type': 'ir.actions.act_window_close'}
-        data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
-        view_id = view_id and view_id[1] or False
+        # Just to avoid an error on kit test because view_picking_ticket_form is not still loaded when test is ran
+        msf_outgoing = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
+        if not msf_outgoing:
+            view_id = False
+        else:
+            # TODO which behavior
+            #return {'type': 'ir.actions.act_window_close'}
+            data_obj = self.pool.get('ir.model.data')
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+            view_id = view_id and view_id[1] or False
         context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
@@ -2482,6 +2492,7 @@ class stock_picking(osv.osv):
         
         # stock move object
         move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         # create picking object
         create_picking_obj = self.pool.get('create.picking')
         
@@ -2499,14 +2510,19 @@ class stock_picking(osv.osv):
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
                     assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    # UTP-289 : Remove the check on UoM
+                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+
+                    total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
-                    count = count + partial['product_qty']
+                    count = count + total_qty
                     if first:
                         first = False
                         # update existing move
                         values = {'product_qty': partial['product_qty'],
                                   'product_uos_qty': partial['product_qty'],
+                                  'product_uom': partial['product_uom'],
+                                  'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2518,6 +2534,8 @@ class stock_picking(osv.osv):
                         values = {'state': 'assigned',
                                   'product_qty': partial['product_qty'],
                                   'product_uos_qty': partial['product_qty'],
+                                  'product_uom': partial['product_uom'],
+                                  'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2532,7 +2550,10 @@ class stock_picking(osv.osv):
                 if diff_qty != 0:
                     # original move from the draft picking ticket which will be updated
                     original_move = move.backmove_id
-                    backorder_qty = move_obj.read(cr, uid, [original_move.id], ['product_qty'], context=context)[0]['product_qty']
+                    original_vals = move_obj.read(cr, uid, [original_move.id], ['product_qty', 'product_uom'], context=context)[0]
+                    backorder_qty = original_vals['product_qty']
+                    original_uom = original_vals['product_uom'][0]
+                    diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, diff_qty, original_uom)
                     backorder_qty = max(backorder_qty + diff_qty, 0)
                     move_obj.write(cr, uid, [original_move.id], {'product_qty': backorder_qty}, context=context)
 

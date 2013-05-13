@@ -71,11 +71,15 @@ class stock_partial_move_memory_out(osv.osv_memory):
         data = self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context)[0]
         product_id = data['product_id']
         uom_id = data['product_uom']
+        uom_category_id = False
+        if uom_id:
+            uom_category_id = self.pool.get('product.uom').browse(cr, uid, data['product_uom'], context=context).category_id.id
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model,
                                    type='create', context=dict(context,
                                                                memory_move_ids=ids,
                                                                class_name=self._name,
                                                                product_id=product_id,
+                                                               uom_category_id=uom_category_id,
                                                                uom_id=uom_id))
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
