@@ -451,20 +451,22 @@ class user_access_configurator(osv.osv_memory):
             for db_menu_id in db_menu_ids:
                 # group ids to be linked to
                 group_ids = []
-                if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
+                # UF-1996 : If the items found in the import file, then modify accordingly (do not delete and re create).
+                #if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
                     # we modify the groups to admin only if the menu is not linked to one of the group of DNCGL
-                    skip_update = False
-                    db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
-                    dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
-                    for group in db_menu.groups_id:
-                        if group.id in dncgl_ids:
-                            skip_update = True
+                #    skip_update = False
+                #    db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
+                #    dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
+                #    for group in db_menu.groups_id:
+                #        if group.id in dncgl_ids:
+                #            skip_update = True
                     # the menu does not exist in the file OR the menu does not belong to any group
                     # link (6,0,[id]) to administration / access rights
-                    if not skip_update:
-                        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
-                        group_ids = [admin_group_id]
-                else:
+                    #if not skip_update:
+                    #    admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
+                    #    group_ids = [admin_group_id]
+                #else:
+                if data_structure[obj.id]['menus_groups'].get(db_menu_id, []):
                     # find the id of corresponding groups, and write (6,0, ids) in groups_id
                     group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
                 # link the menu to selected group ids
@@ -492,7 +494,7 @@ class user_access_configurator(osv.osv_memory):
         # Some verifications
         if context is None:
             context = {}
-            
+
         # objects
         model_obj = self.pool.get('ir.model')
         access_obj = self.pool.get('ir.model.access')
@@ -581,7 +583,8 @@ class user_access_configurator(osv.osv_memory):
         # process menus - groups relation
         self._process_menus_uac(cr, uid, ids, context=dict(context, data_structure=data_structure))
         # process ACL
-        self._process_objects_uac(cr, uid, context=context)
+        # UF-1996 : Don't reset the Object ACL at reloading of Menu Access from file
+        # self._process_objects_uac(cr, uid, context=context)
         # process rules
         self._process_record_rules_uac(cr, uid, context=context)
         return data_structure
