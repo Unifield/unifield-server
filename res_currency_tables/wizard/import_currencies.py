@@ -49,7 +49,40 @@ class import_currencies(osv.osv_memory):
             if period.state not in ['created', 'draft']:
                 raise osv.except_osv(_('Error !'), _('Period %s is closed !\nNo rates can be set for it.')%period.name)
         return
-                
+
+    def check_currency(self, cr, uid, line, date, context=None):
+        """
+        Do some check on data
+        """
+        if not context:
+            context = {}
+        if not line or not date:
+            raise osv.except_osv(_('Error'), _('Missing argument'))
+            return False, 'missing_argument', _('Missing argument')
+        # Prepare some values
+        currency_obj = self.pool.get('res.currency')
+        currency_rate_obj = self.pool.get('res.currency.rate')
+        # we have a currency ISO code; search it and its rates
+        currency_ids = currency_obj.search(cr, uid, [('name', '=', line[0])], context=context)
+        if len(currency_ids) == 0:
+            raise osv.except_osv(_('Error'), _('The currency %s is not defined!') % line[0])
+            return False, 'undefined', _('Undefined')
+        # check for date. 2 checks done:
+        # - if the rate date is the 1st of the month, no check.
+        # - all other dates: check if the 1st day of the month has a rate;
+        #   otherwise, raise a warning
+        rate_datetime = datetime.datetime.strptime(date, '%Y-%m-%d')
+        if rate_datetime.day != 1:
+            rate_date_start = '%s-%s-01' % (rate_datetime.year, rate_datetime.month)
+            cr.execute("SELECT name FROM res_currency_rate WHERE currency_id = %s AND name = %s" ,(currency_ids[0], rate_date_start))
+            if not cr.rowcount:
+                return False, 'no_first_rate', _('No date at the first day of this month.')
+        # Now, creating/updating the rate (if all is ok)
+        currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', currency_ids[0]), ('name', '=', date)], context=context)
+        if len(currency_rates) > 0:
+            return False, 'exist', _('Already exists at this date.')
+        return True, '', ''
+
     def import_rates(self, cr, uid, ids, context=None):
         """
         Read wizard and import currencies even if they already exists.
@@ -61,7 +94,8 @@ class import_currencies(osv.osv_memory):
         # Prepare some values
         currency_obj = self.pool.get('res.currency')
         currency_rate_obj = self.pool.get('res.currency.rate')
-        currency_list = ""
+        currency_list = []
+        date = None
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
@@ -70,50 +104,23 @@ class import_currencies(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('File is empty.'))
         
             self._check_periods(cr, uid, wizard.rate_date, context=context)
-        
+            date = wizard.rate_date
             for line in import_data:
-                problem = False
                 if len(line) > 0 and len(line[0]) == 3:
-                    # we have a currency ISO code; search it and its rates
                     # update context with active_test = False; otherwise, non-set currencies
                     context.update({'active_test': False})
+                    line_res, line_problem, line_problem_description = self.check_currency(cr, uid, line, wizard.rate_date, context)
                     currency_ids = currency_obj.search(cr, uid, [('name', '=', line[0])], context=context)
-                    if len(currency_ids) == 0:
-                        raise osv.except_osv(_('Error'), _('The currency %s is not defined!') % line[0])
-                        break
-                    else:
-                        # check for date. 2 checks done:
-                        # - if the rate date is the 1st of the month, no check.
-                        # - all other dates: check if the 1st day of the month has a rate;
-                        #   otherwise, raise a warning
-                        rate_datetime = datetime.datetime.strptime(wizard.rate_date, '%Y-%m-%d')
-                        if rate_datetime.day != 1:
-                            rate_date_start = '%s-%s-01' % (rate_datetime.year, rate_datetime.month)
-                            cr.execute("SELECT name FROM res_currency_rate WHERE currency_id = %s AND name = %s" ,(currency_ids[0], rate_date_start))
-                            if not cr.rowcount:
-                                # add currency in warning list
-                                wizard_date = wizard.rate_date
-                                period_name = ''
-                                periods = self.pool.get('account.period').get_period_from_date(cr, uid, wizard_date)
-                                if periods:
-                                    period_name = self.pool.get('account.period').browse(cr, uid, periods)[0].name
-                                currency_list += _("%s (no rate the 1st %s)\n") % (line[0], period_name)
-                                problem = True
-                        # Now, creating/updating the rate
-                        currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', currency_ids[0]), ('name', '=', wizard.rate_date)], context=context)
-                        if len(currency_rates) > 0:
-                            # A rate exists for this date; we update it
-                            currency_rate_obj.write(cr, uid, currency_rates, {'name': wizard.rate_date,
-                                                                              'rate': float(line[1])}, context=context)
-                            wizard_date = wizard.rate_date
-                            if not problem:
-                                currency_list += _("%s (already exists)\n") % line[0]
-                                problem = True
-                        else:
-                            # No rate for this date: create it
-                            currency_rate_obj.create(cr, uid, {'name': wizard.rate_date,
-                                                               'rate': float(line[1]),
-                                                               'currency_id': currency_ids[0]})
+                    if line_res:
+                        # No rate for this date: create it
+                        currency_rate_obj.create(cr, uid, {
+                            'name': wizard.rate_date,
+                            'rate': float(line[1]),
+                            'currency_id': currency_ids[0]
+                        })
+                    if not line_res:
+                        currency_list.append([line, "%s (%s)" % (line[0], line_problem_description)])
+
         # Prepare some info
         model = 'confirm.import.currencies'
         message = ''
@@ -121,8 +128,10 @@ class import_currencies(osv.osv_memory):
         # Give currencies list if any problem occured
         if currency_list and len(currency_list) > 0:
             model = 'warning.import.currencies'
-            context.update({'message': _('FX rates import is successfully done. Here is some extra infos:')})
-            wizard_id = self.pool.get(model).create(cr, uid, {'currency_list': currency_list}, context=context)
+            wizard_id = self.pool.get(model).create(cr, uid, {'currency_list': '\n'.join([x and x and x[1] for x in currency_list]), 'date': date}, context=context)
+            # create lines regarding currency_list content
+            for currency in currency_list:
+                self.pool.get('warning.import.currencies.lines').create(cr, uid, {'code': currency[0][0], 'rate': float(currency[0][1]), 'wizard_id': wizard_id,}, context=context)
             complementary_data.update({'res_id': wizard_id})
         # Prepare result
         res = {

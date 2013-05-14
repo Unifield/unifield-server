@@ -20,31 +20,49 @@
 ##############################################################################
 from osv import osv, fields
 from lxml import etree
+from tools.translate import _
+
+class warning_import_currencies_lines(osv.osv_memory):
+    _name = 'warning.import.currencies.lines'
+
+    _columns = {
+        'code': fields.char("Code", size='3', required=True),
+        'rate': fields.float('Rate', digits=(12,6), required=True),
+        'wizard_id': fields.many2one('warning.import.currencies', 'Wizard', required=True),
+    }
+
+warning_import_currencies_lines()
 
 class warning_import_currencies(osv.osv_memory):
     _name = 'warning.import.currencies'
     
     _columns = {
         'currency_list': fields.text("Currency list"),
+        'date': fields.date("Date", required=True),
     }
 
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Change message field
-        """
-        if not context:
-            context = {}
-        view = super(warning_import_currencies, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        if view_type=='form' and context.get('message', False):
-            message = context.get('message')
-            tree = etree.fromstring(view['arch'])
-            labels = tree.xpath('/form/label[@string="Nothing"]')
-            for label in labels:
-                label.set('string', "%s" % message)
-            view['arch'] = etree.tostring(tree)
-        return view
-
     def button_ok(self, cr, uid, ids, context=None):
+        """
+        Search attached lines and write new rates
+        """
+        for w_id in ids:
+            line_ids = self.pool.get('warning.import.currencies.lines').search(cr, uid, [('wizard_id', '=', w_id)])
+            for line in self.pool.get('warning.import.currencies.lines').browse(cr, uid, line_ids, context=context):
+                c_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line.code), ('active', 'in', ['t', 'f'])])
+                if isinstance(c_ids, (int, long)):
+                    c_ids = [c_ids]
+                if not c_ids:
+                    raise osv.except_osv(_('Warning'), _('Currency %s not found!') % line.code or '')
+                c_rate_ids = self.pool.get('res.currency.rate').search(cr, uid, [('currency_id', 'in', c_ids), ('name', '=', line.wizard_id.date)], context=context)
+                if isinstance(c_rate_ids, (int, long)):
+                    c_rate_ids = [c_rate_ids]
+                # Prepare some values
+                rate_vals = {'name': line.wizard_id.date, 'rate': line.rate}
+                if c_rate_ids:
+                    self.pool.get('res.currency.rate').write(cr, uid, c_rate_ids, rate_vals, context=context)
+                else:
+                    rate_vals.update({'currency_id': c_ids[0]})
+                    self.pool.get('res.currency.rate').create(cr, uid, rate_vals, context=context)
         return {'type' : 'ir.actions.act_window_close'}
 
 warning_import_currencies()
