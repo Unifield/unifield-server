@@ -4,7 +4,7 @@
   We create a new UoM
 -
   !record {model: product.uom, id: split_uom}:
-    category_id: product.cat0
+    category_id: product.product_uom_categ_unit
     name: Split
     factor: 1.0
     rounding: 0.01
