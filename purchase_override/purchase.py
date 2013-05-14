@@ -615,7 +615,7 @@ class purchase_order(osv.osv):
                     continue
                 distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
                 # Raise an error if no analytic distribution found
-                if not distrib:
+                if not distrib and not po.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
                 for cc_line in distrib.cost_center_lines:
                     if is_intermission and cc_line.analytic_id.id != intermission_cc:
@@ -624,7 +624,7 @@ class purchase_order(osv.osv):
                         raise osv.except_osv(_('Warning'), _("The PO partner type is not intermission, so you can not use the Cost Center Intermission in line: %s!") % (pol.name or '',))
 
                 # Change distribution to be valid if needed by using those from header
-                if pol.analytic_distribution_state != 'valid':
+                if distrib and pol.analytic_distribution_state != 'valid':
                     id_ad = self.pool.get('analytic.distribution').create(cr, uid, {})
                     for line in pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines:
                         # fetch compatible destinations then use on of them:
