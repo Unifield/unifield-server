@@ -120,6 +120,10 @@ def execute_cr(self, cr, uid, obj, method, *args, **kw):
     if uid == 1:
         return super_execute_cr(self, cr, uid, obj, method, *args, **kw)
     
+    # add uid to context as res_log_button_access_rights_uid for res_log
+    if 'context' in kw:
+        kw['context']['res_log_button_access_rights_uid'] = uid
+    
     if '.' in method:
         module_name = obj.split('.')[0]
     else:
@@ -183,7 +187,7 @@ def exec_workflow_cr(self, cr, uid, obj, method, *args):
 
     if uid == 1:
         return super_execute_workflow_cr(self, cr, uid, obj, method, *args)
-
+    
     if '.' in method:
         module_name = obj.split('.')[0]
     else:
