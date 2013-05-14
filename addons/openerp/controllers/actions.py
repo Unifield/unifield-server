@@ -120,6 +120,7 @@ PRINT_FORMATS = {
      'csv' : 'text/csv',
      'rtf' : 'application/rtf',
      'txt' : 'text/plain',
+     'zip' : 'application/zip',
 }
 
 def _print_data(data):
