@@ -30,7 +30,7 @@ class confirm_import_currencies(osv.osv_memory):
         """
         if not context:
             context = {}
-        view = super(hr_payroll_import_confirmation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        view = super(confirm_import_currencies, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type=='form' and context.get('message', False):
             message = context.get('message')
             tree = etree.fromstring(view['arch'])

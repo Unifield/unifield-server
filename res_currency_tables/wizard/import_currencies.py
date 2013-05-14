@@ -52,7 +52,8 @@ class import_currencies(osv.osv_memory):
                 
     def import_rates(self, cr, uid, ids, context=None):
         """
-        
+        Read wizard and import currencies even if they already exists.
+        Create a list of what problem have been encounted during process.
         """
         # Some checks
         if context is None:
@@ -60,8 +61,7 @@ class import_currencies(osv.osv_memory):
         # Prepare some values
         currency_obj = self.pool.get('res.currency')
         currency_rate_obj = self.pool.get('res.currency.rate')
-        undefined_currencies = ""
-        existing_currencies = ""
+        currency_list = ""
         for wizard in self.browse(cr, uid, ids, context=context):
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
@@ -72,6 +72,7 @@ class import_currencies(osv.osv_memory):
             self._check_periods(cr, uid, wizard.rate_date, context=context)
         
             for line in import_data:
+                problem = False
                 if len(line) > 0 and len(line[0]) == 3:
                     # we have a currency ISO code; search it and its rates
                     # update context with active_test = False; otherwise, non-set currencies
@@ -91,55 +92,52 @@ class import_currencies(osv.osv_memory):
                             cr.execute("SELECT name FROM res_currency_rate WHERE currency_id = %s AND name = %s" ,(currency_ids[0], rate_date_start))
                             if not cr.rowcount:
                                 # add currency in warning list
-                                undefined_currencies += "%s\n" % line[0]
                                 wizard_date = wizard.rate_date
+                                period_name = ''
+                                periods = self.pool.get('account.period').get_period_from_date(cr, uid, wizard_date)
+                                if periods:
+                                    period_name = self.pool.get('account.period').browse(cr, uid, periods)[0].name
+                                currency_list += _("%s (no rate the 1st %s)\n") % (line[0], period_name)
+                                problem = True
                         # Now, creating/updating the rate
                         currency_rates = currency_rate_obj.search(cr, uid, [('currency_id', '=', currency_ids[0]), ('name', '=', wizard.rate_date)], context=context)
                         if len(currency_rates) > 0:
                             # A rate exists for this date; we update it
                             currency_rate_obj.write(cr, uid, currency_rates, {'name': wizard.rate_date,
                                                                               'rate': float(line[1])}, context=context)
-                            existing_currencies += "%s\n" % line[0]
                             wizard_date = wizard.rate_date
+                            if not problem:
+                                currency_list += _("%s (already exists)\n") % line[0]
+                                problem = True
                         else:
                             # No rate for this date: create it
                             currency_rate_obj.create(cr, uid, {'name': wizard.rate_date,
                                                                'rate': float(line[1]),
                                                                'currency_id': currency_ids[0]})
-        # Return undefined currencies
-        if len(undefined_currencies) > 0 or len(existing_currencies) > 0:
-            period_name = ''
-            w_vals = {'currency_list': undefined_currencies}
-            periods = self.pool.get('account.period').get_period_from_date(cr, uid, wizard_date)
-            if periods:
-                period_name = self.pool.get('account.period').browse(cr, uid, periods)[0].name
-            message = ""
-            if not len(existing_currencies) > 0:
-                message = 
-                context.update({'message': "FX rates have been properly imported for the date %s; be aware that no rates have been defined on the 1st of %s for the following currencies..." % (wizard_date, period_name)})
-            else:
-                w_vals = {'currency_list': existing_currencies, 'state': 'yes/no'}
-                message = "You are trying to import FX rates already defined in the system at the date specified; do you want to proceed?"
-            context.update({'message': message})
-            wizard_id = self.pool.get('warning.import.currencies').create(cr, uid, w_vals, context=context)
-            return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'warning.import.currencies',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'res_id': wizard_id,
-                    'context': context
-            }
-        else:
-            return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'confirm.import.currencies',
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'target': 'new',
-                    'context': context
-            }
+        # Prepare some info
+        model = 'confirm.import.currencies'
+        message = ''
+        complementary_data = {}
+        # Give currencies list if any problem occured
+        if currency_list and len(currency_list) > 0:
+            model = 'warning.import.currencies'
+            context.update({'message': _('FX rates import is successfully done. Here is some extra infos:')})
+            wizard_id = self.pool.get(model).create(cr, uid, {'currency_list': currency_list}, context=context)
+            complementary_data.update({'res_id': wizard_id})
+        # Prepare result
+        res = {
+                'type': 'ir.actions.act_window',
+                'res_model': model,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context
+        }
+        # Add complementary data if necessary
+        if complementary_data:
+            res.update(complementary_data)
+        # return right wizard
+        return res
     
 import_currencies()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
