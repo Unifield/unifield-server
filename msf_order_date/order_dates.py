@@ -857,6 +857,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
+        #The PO counterpart created should get for all line a delivery confirmed date blank
         if context.get('is_a_counterpart'):
             return
         order_obj= self.pool.get('purchase.order')

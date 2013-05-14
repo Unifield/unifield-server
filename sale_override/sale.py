@@ -50,6 +50,10 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
 
+        # if the copy comes from the button duplicate
+        if context.get('from_button'):
+            default.update({'is_a_counterpart': False})
+        
         default.update({'loan_id': False,
                         'order_policy': 'picking',
                         'active': True})
@@ -591,7 +595,7 @@ class sale_order(osv.osv):
             
         for order in self.browse(cr, uid, ids):
             # UTP-392: don't create a PO if it is created by sync ofr the loan
-            if order.is_a_counterpart or order.order_type == 'loan' and order.fo_created_by_po_sync:
+            if order.is_a_counterpart or (order.order_type == 'loan' and order.fo_created_by_po_sync):
                 return
 
             two_months = today() + RelativeDateTime(months=+2)

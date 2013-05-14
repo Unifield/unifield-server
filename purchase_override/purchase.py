@@ -137,8 +137,11 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-            
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, })
+        
+        # if the copy comes from the button duplicate
+        if context.get('from_button'):
+            default.update({'is_a_counterpart': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
             
@@ -283,6 +286,7 @@ class purchase_order(osv.osv):
         'no_line': lambda *a: True,
         'active': True,
         'name': lambda *a: False,
+        'is_a_counterpart': False,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -1220,7 +1224,7 @@ stock moves which are already processed : '''
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
-            if order.is_a_counterpart or order.sended_by_supplier and order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission'):
+            if order.is_a_counterpart or (order.sended_by_supplier and order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission')):
                 # UTP-392: This PO is created by the synchro from a Loan FO of internal/intermission partner, so do not generate the counterpart FO
                 return 
             
@@ -1256,10 +1260,6 @@ stock moves which are already processed : '''
             self.write(cr, uid, [order.id], {'loan_id': order_id})
             
             sale = sale_obj.browse(cr, uid, order_id)
-            #utp-392 : On loan process, please always validate the FO counterpart when confirming (sourcing) the first PO loan
-            # for the other instance to get, by synchronization, the associated counterpart. And ask them the confirm also the FO they'd get.
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'sale.order', order_id, 'order_validated', cr)
             message = _("Loan counterpart '%s' has been created and validated. Please confirm it.") % (sale.name,)
             
             sale_obj.log(cr, uid, order_id, message)
