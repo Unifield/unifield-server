@@ -202,7 +202,7 @@ SELECT fields_modif
             row = cr.fetchone()
         return list(result)
 
-    def need_to_push(self, cr, uid, ids, included_fields, sync_field='sync_date', context=None):
+    def need_to_push(self, cr, uid, ids, included_fields, are_ids_deleted=False, context=None):
         """
         Check if records need to be pushed to the next synchronization process
         or not.
@@ -213,7 +213,8 @@ SELECT fields_modif
             - record is deleted
             - watched fields are present in modified fields
 
-        Note: sync_date field can be changed to other field using parameter sync_field
+        Note: sync_date field can be changed to other field using parameter
+        sync_field
 
         Return type:
             - If a list of ids is given, it returns a list of filtered ids.
@@ -224,6 +225,8 @@ SELECT fields_modif
         :param uid: current user id
         :param ids: id or list of the ids of the records to read
         :param included_field: fields list that have been modified
+        :param are_ids_deleted (default False): if True, disable the
+            pre-filtering optimization (needed for deleted records)
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
         :return: list of ids that need to be pushed (or False for per record call)
@@ -240,28 +243,26 @@ SELECT fields_modif
         ids = filter(None, ids)
         if not ids: return ids if result_iterable else False
         # Pre-filter data where sync_date < last_modification OR sync_date IS NULL
-        cr.execute("""\
+        query_prefilter = """\
 SELECT id
     FROM ir_model_data
     WHERE module = 'sd' AND
-          model = %%s AND
-          res_id IN %%s AND
-          (%(sync_date)s < last_modification OR %(sync_date)s IS NULL)""" \
-% {'sync_date':sync_field},
-[self._name, tuple(ids)])
+          model = %s AND
+          res_id IN %s"""
+        if not are_ids_deleted:
+            query_prefilter += """ AND (sync_date < last_modification OR sync_date IS NULL)"""
+        cr.execute(query_prefilter, [self._name, tuple(ids)])
         data_ids = [row[0] for row in cr.fetchall()]
         if not data_ids: return [] if result_iterable else False
         # More accurate check: keep only the records that does not exists OR
         # there is no sync_date OR watch fields match
         watch_fields = set(clean_included_fields(included_fields))
         result = filter(
-            lambda rec: (rec.is_deleted or not rec[sync_field] or \
-                         watch_fields & set(self.get_last_modified_fields(cr, uid, rec.res_id, rec[sync_field], context=context))), \
+            lambda rec: (rec.is_deleted or not rec.sync_date or \
+                         watch_fields & set(self.get_last_modified_fields(cr, uid, rec.res_id, rec.sync_date, context=context))), \
             self.pool.get('ir.model.data').browse(cr, uid, data_ids, context=context) )
-        if result_iterable:
-            return map(lambda rec:rec.res_id, result)
-        else:
-            return bool(result)
+        
+        return map(lambda rec:rec.res_id, result) if result_iterable else bool(result)
 
     def get_sd_ref(self, cr, uid, ids, field='name', synchronize=False, context=None):
         """

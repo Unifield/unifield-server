@@ -124,7 +124,7 @@ class update_to_send(osv.osv):
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
 
-    def create_update(self, cr, uid, rule_id, session_id, sync_field='sync_date', context=None):
+    def create_update(self, cr, uid, rule_id, session_id, context=None):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
 
@@ -136,7 +136,7 @@ class update_to_send(osv.osv):
 
             ids_to_compute = self.need_to_push(cr, uid,
                 self.search_ext(cr, uid, domain, context=context),
-                included_fields, sync_field=sync_field, context=context)
+                included_fields, context=context)
             if not ids_to_compute:
                 return 0
 
@@ -167,7 +167,7 @@ class update_to_send(osv.osv):
 
             ids_to_delete = self.need_to_push(cr, uid,
                 self.search_deleted(cr, uid, [('module','=','sd')], context=context),
-                [], sync_field=sync_field, context=context)
+                [], are_ids_deleted=True, context=context)
 
             if not ids_to_delete:
                 return 0
