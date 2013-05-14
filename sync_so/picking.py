@@ -208,6 +208,29 @@ class stock_picking(osv.osv):
             
         return res_id
 
+    def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
+        if not context:
+            context = {}
+        print "Cancel the relevant IN due to the cancel of OUT at Coordo"
+        wf_service = netsvc.LocalService("workflow")
+        so_po_common = self.pool.get('so.po.common')
+        po_obj = self.pool.get('purchase.order')
+        pick_dict = out_info.to_dict()
+
+        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
+        so_ref = source + "." + pick_dict['origin']
+        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        if po_id:
+            po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
+            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+            in_id = so_po_common.get_in_id(cr, uid, po_name, context)
+            if in_id:
+                # Cancel the IN object
+                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
+                return True
+        
+        raise Exception("There is a problem when cancel of the IN at project")
+
     def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
         # Check if the given object is valid for the rule
         model_obj = self.pool.get(rule.model.model)
@@ -264,5 +287,5 @@ class stock_picking(osv.osv):
         ##############################################################################
         self.create_manual_message(cr, uid, ids, context)
         return  ret
-
+    
 stock_picking()
