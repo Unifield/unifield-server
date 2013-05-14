@@ -82,7 +82,7 @@ class BackgroundProcess(Thread):
     def run(self):
         cr = self.db.cursor()
         try:
-            self.call_method(cr, self.uid, self.context)
+            self.call_method(cr, self.uid, context=self.context)
             cr.commit()
         except:
             pass
