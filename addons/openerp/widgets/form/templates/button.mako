@@ -3,6 +3,7 @@
         name="${name}"
         type="button"
         href="javascript: void(0)"
+        title="${help}"
         onclick="buttonClicked('${name}', '${btype}', '${model}', '${id}', getNodeAttribute(this, 'confirm'), '${target}', getNodeAttribute(this, 'context'));"
         style="height: 20px;"
         ${py.attrs(attrs, confirm=confirm, context=ctx)}>
@@ -14,6 +15,9 @@
         % endif
     %else:
         <img align="middle" src="${icon}" width="16" height="16" alt="">
+    % endif
+    % if help:
+        <span class="help" title="${help}">?</span>
     % endif
 </button>
 
