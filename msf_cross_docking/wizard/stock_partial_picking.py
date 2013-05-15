@@ -174,17 +174,6 @@ class stock_partial_picking(osv.osv_memory):
                 group_field.insert(cancel_index, new_field)
                 result['arch'] = etree.tostring(root)
 
-            if picking_type == 'out':
-                # load the xml tree
-                root = etree.fromstring(result['arch'])
-                # xpath of button to be modified
-                buttons = root.xpath('//button[@name="do_partial"]')
-                if buttons:
-                    for button in buttons:
-                        button.set('help', _('Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available)'))
-
-                result['arch'] = etree.tostring(root)
-
         return result
 
     def do_partial_hook(self, cr, uid, context=None, *args, **kwargs):
