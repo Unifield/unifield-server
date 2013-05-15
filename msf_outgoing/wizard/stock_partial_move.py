@@ -336,6 +336,8 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
         '''
         get functional values
         '''
+        if context is None:
+            context = {}
         result = {}
         for memory_move in self.browse(cr, uid, ids, context=context):
             values = {'num_of_packs': 0,
@@ -345,7 +347,15 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             # number of packs with from/to values
             num_of_packs = memory_move.to_pack - memory_move.from_pack + 1
             values['num_of_packs'] = num_of_packs
-            selected_weight = memory_move.weight * memory_move.selected_number
+            if not context.get('step') == 'returnpacksfromshipment':
+                selected_weight = memory_move.weight * memory_move.selected_number
+            if context.get('step') == 'returnpacksfromshipment':
+                num_returned = memory_move.return_to > 0 \
+                and memory_move.return_from > 0 \
+                and memory_move.return_to >= memory_move.return_from \
+                and memory_move.return_to - memory_move.return_from + 1 \
+                or 0.0
+                selected_weight = memory_move.weight * num_returned
             values['selected_weight'] = selected_weight
                     
         return result
