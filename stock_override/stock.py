@@ -941,7 +941,8 @@ class stock_move(osv.osv):
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
                                                                         'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
-                                            needed_qty = 0.0
+                                        needed_qty = 0.0
+                                        break
                                     elif needed_qty:
                                         # we take all available
                                         selected_qty = loc['qty']
