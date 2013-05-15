@@ -224,11 +224,11 @@ class user_access_configurator(osv.osv_memory):
                     
                     # skip information rows - find related groups
                     for i in range(obj.number_of_non_group_columns_uac, len(row)):
+                        # name of group
+                        menu_group_list = data_structure[obj.id]['menus_groups'].setdefault(menu_id, [])
                         # group is true for this menu
                         if self._cell_is_true(cr, uid, ids, context=context, cell=row.cells[i]):
-                            # name of group
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
-                            menu_group_list = data_structure[obj.id]['menus_groups'].setdefault(menu_id, [])
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
                             if group_name not in menu_group_list:
                                 menu_group_list.append(group_name)
@@ -452,21 +452,21 @@ class user_access_configurator(osv.osv_memory):
                 # group ids to be linked to
                 group_ids = []
                 # UF-1996 : If the items found in the import file, then modify accordingly (do not delete and re create).
-                #if db_menu_id not in data_structure[obj.id]['menus_groups'] or not data_structure[obj.id]['menus_groups'][db_menu_id]:
+                # If the menu entry is in file but with no groups, set the Admin rights on it
+                if db_menu_id in data_structure[obj.id]['menus_groups'] and not data_structure[obj.id]['menus_groups'].get(db_menu_id):
                     # we modify the groups to admin only if the menu is not linked to one of the group of DNCGL
-                #    skip_update = False
-                #    db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
-                #    dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
-                #    for group in db_menu.groups_id:
-                #        if group.id in dncgl_ids:
-                #            skip_update = True
+                    skip_update = False
+                    db_menu = menu_obj.browse(cr, uid, db_menu_id, context=context)
+                    dncgl_ids = self._get_DNCGL_ids(cr, uid, ids, context=context)
+                    for group in db_menu.groups_id:
+                        if group.id in dncgl_ids:
+                            skip_update = True
                     # the menu does not exist in the file OR the menu does not belong to any group
                     # link (6,0,[id]) to administration / access rights
-                    #if not skip_update:
-                    #    admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
-                    #    group_ids = [admin_group_id]
-                #else:
-                if data_structure[obj.id]['menus_groups'].get(db_menu_id, []):
+                    if not skip_update:
+                        admin_group_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
+                        group_ids = [admin_group_id]
+                elif data_structure[obj.id]['menus_groups'].get(db_menu_id, []):
                     # find the id of corresponding groups, and write (6,0, ids) in groups_id
                     group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=data_structure[obj.id]['menus_groups'][db_menu_id])
                 # link the menu to selected group ids
