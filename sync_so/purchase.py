@@ -50,6 +50,7 @@ class purchase_order_sync(osv.osv):
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
+        'from_sync': fields.boolean('Updated by synchronization', readonly=False),
     }
 
     _defaults = {
@@ -256,7 +257,7 @@ class purchase_order_sync(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
-        context['from_sync'] = True
+        self.write(cr, uid, po_id, {'from_sync': True}, context)
         # Cancel the PO
         wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_cancel', cr)
         return True
