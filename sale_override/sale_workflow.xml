@@ -29,7 +29,7 @@
 
         <record id="trans_draft_cancel" model="workflow.transition">
             <field name="act_from" ref="act_sale_order_validated"/>
-            <field name="act_to" ref="act_cancel"/>
+            <field name="act_to" ref="sale.act_cancel"/>
             <field name="signal">cancel</field>
         </record>
 
