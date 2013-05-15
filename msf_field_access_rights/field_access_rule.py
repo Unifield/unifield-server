@@ -170,7 +170,6 @@ class field_access_rule(osv.osv):
         """
         Generate and return field_access_rule_lines for each field of the model and all inherited models, with Write Access checked
         """
-        
         if ids:
             fields_pool = self.pool.get('ir.model.fields')
             
@@ -179,7 +178,7 @@ class field_access_rule(osv.osv):
                 if record.field_access_rule_line_ids:
                     raise osv.except_osv('Remove Field Access Rule Lines First From %s' % id, 'Please remove all existing Field Access Rule Lines before generating new ones')
         
-                fields_search = fields_pool.search(cr, uid, [('model_id', '=', record.model_id.id)], context=context)
+                fields_search = fields_pool.search(cr, uid, [('model_id', 'in', [f.id for f in record.family_model_ids])], context=context)
                 fields = fields_pool.browse(cr, uid, fields_search, context=context)
         
                 res = [(0, 0, {'field': i.id, 'field_name': i.name}) for i in fields]

@@ -40,7 +40,7 @@ class output_currency_for_export(osv.osv_memory):
     _defaults = {
         'export_format': lambda *a: 'xls',
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
-        'export_selected': lambda *a: True,
+        'export_selected': lambda *a: False,
     }
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
