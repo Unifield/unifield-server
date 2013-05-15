@@ -204,17 +204,17 @@ class stock_picking(osv.osv):
                     for move in pick.move_lines:
                         if move.state == 'confirmed':
                             not_avail_id = self.pool.get("stock.picking.not.available").create(cr, uid, {'move_id': move.id, 'picking_id': pick.id, }, context=context)
-                            return {'name':_("Warning"),
-                                    'view_mode': 'form',
-                                    'view_id': False,
-                                    'view_type': 'form',
-                                    'res_model': 'stock.picking.not.available',
-                                    'res_id': not_avail_id,
-                                    'type': 'ir.actions.act_window',
-                                    'nodestroy': True,
-                                    'target': 'new',
-                                    'domain': '[]',
-                                    'context': dict(context, active_ids=ids)}
+                            #return {'name':_("Warning"),
+                            #        'view_mode': 'form',
+                            #        'view_id': False,
+                            #        'view_type': 'form',
+                            #        'res_model': 'stock.picking.not.available',
+                            #        'res_id': not_avail_id,
+                            #        'type': 'ir.actions.act_window',
+                            #        'nodestroy': True,
+                            #        'target': 'new',
+                            #        'domain': '[]',
+                            #        'context': dict(context, active_ids=ids)}
                     if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                         certif = True
                         break

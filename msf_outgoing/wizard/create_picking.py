@@ -230,20 +230,20 @@ class create_picking(osv.osv_memory):
         # refactoring is needed here !
         if picking_subtype == 'picking':
             if step == 'create':
-                button = ('do_create_picking', _('Create Picking'))
+                button = ('do_create_picking', _('Create Picking'), _('Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available)'))
             elif step == 'validate':
-                button = ('do_validate_picking', _('Validate Picking'))
+                button = ('do_validate_picking', _('Validate Picking'), '')
         # ppl, two wizard steps
         elif picking_subtype == 'ppl':
             if step == 'ppl1':
-                button = ('do_ppl1', _('Next'))
+                button = ('do_ppl1', _('Next'), '')
             if step == 'ppl2':
-                button = ('do_ppl2', _('Validate PPL'))
+                button = ('do_ppl2', _('Validate PPL'), '')
             if step == 'returnproducts':
-                button = ('do_return_products', _('Return'))
+                button = ('do_return_products', _('Return'), '')
                     
         else:
-            button = ('undefined', 'Undefined')
+            button = ('undefined', 'Undefined', '')
                 
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
@@ -259,7 +259,7 @@ class create_picking(osv.osv_memory):
                     
                     
         _moves_arch_lst += """
-                <button name="%s" string="%s"
+                <button name="%s" string="%s" help="%s"
                     colspan="1" type="object" icon="gtk-go-forward" />
             </group>
         </form>"""%button
