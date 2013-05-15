@@ -48,7 +48,6 @@ MODELS_TO_IGNORE = [
                     'sync.client.message_to_send',
                     'sync.client.message_received',
                     'sync.client.message_sync',
-                    'sync.client.write_info',
                     'sync.client.orm_extended',
 
                     'sync.server.test',

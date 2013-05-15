@@ -24,50 +24,6 @@ import tools
 import logging
 from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE
 
-class write_info(osv.osv):
-
-    _logger = logging.getLogger('sync.client')
-
-    _name = 'sync.client.write_info'
-
-    _rec_name = 'fields_modif'
-
-    _columns= {
-        'create_date' :fields.datetime('Create Date', select=1),
-        'model' : fields.char('model', size=64, select=1),
-        'res_id' : fields.integer('Ressource Id', select=1),
-        'fields_modif' : fields.text('Fields Modified'),
-    }
-
-    def purge(self, cr, uid, context=None):
-        self._logger.info("Start purging write_info....")
-        cr.execute("DELETE FROM sync_client_write_info WHERE NOT id IN (SELECT MAX(id) FROM sync_client_write_info GROUP BY model, res_id, fields_modif)")
-        self._logger.info("Number of purged rows: %d" % cr.rowcount)
-        return True
-
-    def log_write(self, cr, uid, model_name, res_id, values, context=None):
-        field = [key for key in values.keys()]
-        read_res = self.pool.get(model_name).read(cr, uid, res_id, field, context=context)
-        if not read_res:
-            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id))
-            return
-        real_modif_field = []
-        for k, val in read_res.items():
-            #TODO
-            #if k in field and (not isinstance(values[k], list) or values[k]):
-            #    print "####", val, '!=', values[k], type(val), type(values[k])
-            if k in field and (not isinstance(values[k], list) or values[k]) and val != tools.ustr(values[k]):
-                real_modif_field.append(k)
-        if real_modif_field:
-            self.create(cr, uid, {'model' : model_name, 'res_id' : res_id, 'fields_modif' : str(real_modif_field)}, context=context )
-
-    def delete_old_log(self, cr, uid, model_name, res_id, sync_date, context=None):
-        ids = self.search(cr, uid, [('res_id', '=', res_id), ('model', '=', model_name), ('create_date', '<', sync_date)], context=context)
-        if ids:
-            self.unlink(cr, uid, ids, context=context)
-
-write_info()
-
 class ir_model_data_sync(osv.osv):
     """ ir_model_data with sync date """
 
@@ -116,6 +72,11 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
 
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
+        # Drop old sync.client.write_info table
+        cr.execute("""SELECT relname FROM pg_class WHERE relname='sync_client_write_info'""")
+        if cr.fetchone():
+            self._logger.info("Dropping deprecated table sync_client_write_info...")
+            cr.execute("""DROP TABLE sync_client_write_info""")
         # Check existence of unique_sdref_constraint
         cr.execute("""\
 SELECT i.relname

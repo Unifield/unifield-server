@@ -129,13 +129,6 @@ class RejectingDict(dict):
 
 def modif_o2m(self, cr, uid, ids, values, context=None):
     """record modification of m2o if the corresponding o2m is modified"""
-
-    def log_o2m_write(self, cr, uid, id, relation, parent_id, context=None):
-        fields_ref = self.fields_get(cr, uid, context=context)
-        for key, val in fields_ref.items():
-            if val['type'] == "many2one" and val['relation'] == relation:
-                self.pool.get('sync.client.write_info').log_write(cr, uid, self._name, id, {key : parent_id}, context=context)
-
     if not hasattr(ids, '__iter__'): ids = [ids]
     fields_ref = self.fields_get(cr, uid, context=context)
     for key in values.keys():
@@ -144,8 +137,6 @@ def modif_o2m(self, cr, uid, ids, values, context=None):
             for rec in self.browse(cr, uid, ids, context=context):
                 sub_ids = [obj.id for obj in getattr(rec, key)]
                 self.pool.get(sub_model).synchronize(cr, uid, sub_ids, context=context)
-                for sub_id in sub_ids:
-                    log_o2m_write(self.pool.get(sub_model), cr, uid, sub_id, self._name, rec.id, context=context)
 
 
 
@@ -186,22 +177,6 @@ class extended_orm_methods:
             return res
         return recur_get_model(self, [])
 
-    def get_last_modified_fields(self, cr, uid, id, last_sync, context=None):
-        """
-        Return a list of fields that has been modified since last_sync date of the record id given
-        """
-        cr.execute("""\
-SELECT fields_modif
-    FROM sync_client_write_info
-    WHERE model = %s AND res_id = %s AND create_date > %s""",
-            [self._name, id, last_sync])
-        result = set()
-        row = cr.fetchone()
-        while row:
-            result.update(eval(row[0]))
-            row = cr.fetchone()
-        return list(result)
-
     def need_to_push(self, cr, uid, ids, included_fields, are_ids_deleted=False, context=None):
         """
         Check if records need to be pushed to the next synchronization process
@@ -232,12 +207,6 @@ SELECT fields_modif
         :return: list of ids that need to be pushed (or False for per record call)
 
         """
-        def clean_included_fields(included_fields):
-            if not included_fields: return []
-            result = [field.split('/')[0] for field in included_fields]
-            result.pop(result.index('id'))
-            return result
-
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable: ids = [ids]
         ids = filter(None, ids)
@@ -256,12 +225,9 @@ SELECT id
         if not data_ids: return [] if result_iterable else False
         # More accurate check: keep only the records that does not exists OR
         # there is no sync_date OR watch fields match
-        watch_fields = set(clean_included_fields(included_fields))
         result = filter(
-            lambda rec: (rec.is_deleted or not rec.sync_date or \
-                         watch_fields & set(self.get_last_modified_fields(cr, uid, rec.res_id, rec.sync_date, context=context))), \
+            lambda rec: (rec.is_deleted or not rec.sync_date or rec.sync_date < rec.last_modification), \
             self.pool.get('ir.model.data').browse(cr, uid, data_ids, context=context) )
-        
         return map(lambda rec:rec.res_id, result) if result_iterable else bool(result)
 
     def get_sd_ref(self, cr, uid, ids, field='name', synchronize=False, context=None):
@@ -366,8 +332,8 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
             global modif_o2m
-            self.synchronize(cr, uid, id, context=context)
             modif_o2m(self, cr, uid, id, values, context=context)
+            self.synchronize(cr, uid, id, context=context)
         return id
 
     @orm_method_overload
@@ -375,12 +341,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
             global modif_o2m
-            if not isinstance(ids, (list, tuple)):
-                ids = [ids]
+            if not isinstance(ids, (list, tuple)): ids = [ids]
+            modif_o2m(self, cr, uid, ids, values, context=context)
             self.synchronize(cr, uid, ids, context=context)
-            for id in ids:
-                self.pool.get('sync.client.write_info').log_write(cr, uid, self._name, id, values, context=context)
-                modif_o2m(self, cr, uid, id, values, context=context)
         return original_write(self, cr, uid, ids, values,context=context)
 
     def message_unlink(self, cr, uid, source, unlink_info, context=None):
