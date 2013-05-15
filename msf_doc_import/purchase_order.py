@@ -244,12 +244,8 @@ class purchase_order(osv.osv):
     def check_condition(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if context.get('from_sync'):
-            print 'coming from sync'
-            return
-        print 'context is %s'% context
         for var in self.browse(cr, uid, ids, context=context):
-            if var.partner_type != 'external':
+            if not var.from_sync and var.partner_type != 'external':
                 raise osv.except_osv(_('Warning !'), _("""You can\'t cancel the PO because it may have already been synchronized, 
                 the cancellation should then come from the supplier instance (and synchronize down to the requestor instance)."""))
         return True
