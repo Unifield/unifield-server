@@ -46,7 +46,8 @@ class product_nomenclature(osv.osv):
         if not context:
             context = {}
 
-        context.update({'nolevel': True})
+        if not context.get('sync_context'):
+            context.update({'nolevel': True})
         return super(product_nomenclature, self).export_data(cr, uid, ids, fields_to_export, context=context)
 
     def name_get(self, cr, uid, ids, context=None):
