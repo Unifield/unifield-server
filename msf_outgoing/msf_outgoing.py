@@ -2420,11 +2420,16 @@ class stock_picking(osv.osv):
             # we force availability
             self.force_assign(cr, uid, [new_pick_id])
         
-        # TODO which behavior
-        #return {'type': 'ir.actions.act_window_close'}
-        data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
-        view_id = view_id and view_id[1] or False
+        # Just to avoid an error on kit test because view_picking_ticket_form is not still loaded when test is ran
+        msf_outgoing = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_outgoing'), ('state', '=', 'installed')], context=context)
+        if not msf_outgoing:
+            view_id = False
+        else:
+            # TODO which behavior
+            #return {'type': 'ir.actions.act_window_close'}
+            data_obj = self.pool.get('ir.model.data')
+            view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
+            view_id = view_id and view_id[1] or False
         context.update({'picking_type': 'picking_ticket', 'picking_screen': True})
         return {'name':_("Picking Ticket"),
                 'view_mode': 'form,tree',
