@@ -279,7 +279,7 @@ class product_nomenclature(osv.osv):
         With the UF-1853, we display the nomenclature levels in 4 different columns.
         """
         ret = {}
-        context = b.get('context')
+        context = len(a) > 1 and a[1] or b.get('context')
         if context is None:
             context = {}
         for nomen in self.browse(cr, uid, ids, context):
