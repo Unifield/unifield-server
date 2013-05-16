@@ -162,7 +162,7 @@ class shipment(osv.osv):
             
             for memory_family in shipment.pack_family_memory_ids:
                 # taken only into account if not done (done means returned packs)
-                if shipment.state in ('delivered',) or memory_family.state not in ('done',) :
+                if shipment.state in ('delivered', 'done') or memory_family.state not in ('done',) :
                     # num of packs
                     num_of_packs = memory_family.num_of_packs
                     values['num_of_packs'] += int(num_of_packs)
