@@ -321,7 +321,8 @@ class user_access_configurator(osv.osv_memory):
                 data_structure[obj.id]['group']['created'].append(missing_group_name)
                 
             # deactivate the groups not present in the file
-            self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
+            # UF-1996 : Don't deactivate groups not present in the file
+            #self._set_active_group_name(cr, uid, ids, context=context, group_names=deactivate_group_names, active_value=False)
         
         return True
     
@@ -414,8 +415,9 @@ class user_access_configurator(osv.osv_memory):
             # get all users
             all_user_ids = user_obj.search(cr, uid, [], context=context)
             # deactivate user not present in the file and not ADMIN
-            deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
-            self._set_active_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids, active_value=False)
+            # UF-1996 : Don't deactivate user not present in the file
+            #deactivate_user_ids = [x for x in all_user_ids if x not in user_ids_list]
+            #self._set_active_user_ids(cr, uid, ids, context=context, user_ids=deactivate_user_ids, active_value=False)
             # activate user from the file (could have been deactivate previously)
             self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
