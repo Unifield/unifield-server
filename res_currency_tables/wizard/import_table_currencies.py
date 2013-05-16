@@ -50,9 +50,11 @@ class import_table_currencies(osv.osv_memory):
                 import_file = base64.decodestring(wizard.import_file)
                 import_string = StringIO.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-            
+                if not import_data:
+                    raise osv.except_osv(_('Warning'), _('File is empty.'))
+
                 for line in import_data:
-                    if len(line[0]) == 3:
+                    if len(line) > 0 and len(line[0]) == 3:
                         # we have a currency ISO code; search it and its rates in the table first
                         # update context with active_test = False; otherwise, non-set currencies
                         context.update({'active_test': False})
