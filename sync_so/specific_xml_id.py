@@ -168,10 +168,7 @@ class account_target_costcenter(osv.osv):
             current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
             if instance.state == 'active' and current_instance.level == 'section':
                 # "touch" cost center if instance is active (to sync to new targets)
-                self.pool.get('account.analytic.account').write(cr, uid, [vals['cost_center_id']], {'category': 'OC'}, context=context)
-                self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
-                                                                         'res_id' : vals['cost_center_id'],
-                                                                         'fields_modif' : "['category']"}, context=context)
+                self.pool.get('account.analytic.account').synchronize(cr, uid, [vals['cost_center_id']], context=context)
         return res_id
 
 account_target_costcenter()
@@ -218,19 +215,15 @@ class msf_instance(osv.osv):
             instance = self.browse(cr, uid, res_id, context=context)
             # touch cost centers and account_Target_cc lines in order to sync them
             target_ids = [x.id for x in instance.target_cost_center_ids]
-            self.pool.get('account.target.costcenter').write(cr, uid, target_ids, {'instance_id': instance.id}, context=context)
+            self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
             
             cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
-            for cost_center_id in cost_center_ids:
-                self.pool.get('account.analytic.account').write(cr, uid, [cost_center_id], {'category': 'OC'}, context=context)
-                self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
-                                                                         'res_id' : cost_center_id,
-                                                                         'fields_modif' : "['category']"}, context=context)
+            self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
                 
             # also touch parent instance and lines from parent, since those were already sent to other instances
             if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
                 parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
-                self.pool.get('account.target.costcenter').write(cr, uid, parent_target_ids, {'instance_id': instance.parent_id.id}, context=context)
+                self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -243,19 +236,15 @@ class msf_instance(osv.osv):
                     # only for now-activated instances (first push)
                     # touch cost centers and account_Target_cc lines in order to sync them
                     target_ids = [x.id for x in instance.target_cost_center_ids]
-                    self.pool.get('account.target.costcenter').write(cr, uid, target_ids, {'instance_id': instance.id}, context=context)
+                    self.pool.get('account.target.costcenter').synchronize(cr, uid, target_ids, context=context)
                     
                     cost_center_ids = [x.cost_center_id.id for x in instance.target_cost_center_ids]
-                    for cost_center_id in cost_center_ids:
-                        self.pool.get('account.analytic.account').write(cr, uid, [cost_center_id], {'category': 'OC'}, context=context)
-                        self.pool.get('sync.client.write_info').create(cr, uid, {'model' : 'account.analytic.account',
-                                                                                 'res_id' : cost_center_id,
-                                                                                 'fields_modif' : "['category']"}, context=context)
+                    self.pool.get('account.analytic.account').synchronize(cr, uid, cost_center_ids, context=context)
                         
                     # also touch parent instance and lines from parent, since those were already sent to other instances
                     if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
                         parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
-                        self.pool.get('account.target.costcenter').write(cr, uid, parent_target_ids, {'instance_id': instance.parent_id.id}, context=context)
+                        self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
                         
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
 
