@@ -38,6 +38,17 @@ _SUB_LEVELS = 6
 #----------------------------------------------------------
 class product_nomenclature(osv.osv):
 
+    def export_data(self, cr, uid, ids, fields_to_export, context=None):
+        '''
+        UF-1952 : Don't display complete name of each level when exporting
+        the product nomenclatures
+        '''
+        if not context:
+            context = {}
+
+        context.update({'nolevel': True})
+        return super(product_nomenclature, self).export_data(cr, uid, ids, fields_to_export, context=context)
+
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
@@ -271,16 +282,13 @@ class product_nomenclature(osv.osv):
         if context is None:
             context = {}
         for nomen in self.browse(cr, uid, ids, context):
-            complete_name = nomen.complete_name
-            levels = complete_name.split('|')
-            if len(levels) == 1:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0]}
-            elif len(levels) == 2:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1]}
-            elif len(levels) == 3:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2]}
-            elif len(levels) == 4:
-                ret[nomen.id] = {'nomen_manda_0_s': levels[0], 'nomen_manda_1_s': levels[1], 'nomen_manda_2_s': levels[2], 'nomen_manda_3_s': levels[3]}
+            ret[nomen.id] = {}
+            level = nomen.level or 0
+            record = nomen
+            while level >= 0:
+                ret[nomen.id]['nomen_manda_%s_s' % level] = record and (record.id, record.name) or False
+                record = record.parent_id
+                level -= 1
         return ret
 
     def _get_childs(self, cr, uid, narg, ids):
