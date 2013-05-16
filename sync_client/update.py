@@ -136,7 +136,7 @@ class update_to_send(osv.osv):
 
             ids_to_compute = self.need_to_push(cr, uid,
                 self.search_ext(cr, uid, domain, context=context),
-                included_fields, context=context)
+                context=context)
             if not ids_to_compute:
                 return 0
 
@@ -165,9 +165,7 @@ class update_to_send(osv.osv):
             if not rule.can_delete:
                 return 0
 
-            ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context),
-                [], are_ids_deleted=True, context=context)
+            ids_to_delete = self.search_deleted(cr, uid, [('module','=','sd')], context=context)
 
             if not ids_to_delete:
                 return 0
