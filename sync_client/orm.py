@@ -345,10 +345,11 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not res_id:
             return "Object %s %s does not exist in destination" % (model_name, xml_id)
 
-        return old_unlink(self, cr, uid, [res_id], context=context)
+        return self.unlink(cr, uid, [res_id], context=context)
 
-    def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name, send_to_parent_instances):
+    def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
         instance_obj = self.pool.get('msf.instance')
+        xml_id = 'sd.%s' % sdref
 
         if not destination_name:
             return
@@ -370,29 +371,33 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 instance_record = instance_obj.browse(cr, uid, instance_ids[0])
                 parent = instance_record.parent_id and instance_record.parent_id.instance or False
                 if parent:
-                    generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name, send_to_parent_instances)
+                    self.generate_message_for_destination(cr, uid, parent, sdref, instance_name, send_to_parent_instances)
 
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         if not ids: return True
+        context = context or {}
+
+        if context.get('sync_message_execution'):
+            return original_unlink(self, cr, uid, ids, context=context)
 
         if hasattr(self, '_delete_owner_field'):
             if not hasattr(ids, '__iter__'): ids = [ids]
             instance_name = self.pool.get("sync.client.entity").get_entity(cr, 1, context=context).name
-            xml_ids = self.pool.get('ir.model.data').get(cr, 1, self, ids, context=context)
-            destination_names = self.get_destination_name(cr, 1, ids, self._delete_owner_field, context=context)
-            for id, xml_id_record in zip(ids, self.pool.get('ir.model.data').browse(cr, 1, xml_ids, context=context)):
-                xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-                self.generate_message_for_destination(cr, 1, destination_names[id], xml_id, instance_name, send_to_parent_instances=True)
+            for destination_name, sdref in zip(
+                    	self.get_destination_name(cr, 1, ids, self._delete_owner_field, context=context).values(),
+                        self.get_sd_ref(cr, 1, ids, context=context).values()
+                    ):
+                self.generate_message_for_destination(cr, 1, destination_name, sdref, instance_name, send_to_parent_instances=True)
 
         if self._name == 'ir.model.data' and (context is None or context.get('avoid_ir_data_deletion')):
             return True
 
-        if self._name not in MODELS_TO_IGNORE and \
-           (context is None or not context.get('sync_update_creation')):
-            context = dict(context or {}, avoid_ir_data_deletion=True)
-            if not context.get('sync_update_execution'):
-                self.synchronize(cr, uid, ids, context=context)
+        if self._name not in MODELS_TO_IGNORE \
+           and not context.get('sync_update_creation') \
+           and not context.get('sync_update_execution'):
+            context = dict(context, avoid_ir_data_deletion=True)
+            self.synchronize(cr, uid, ids, context=context)
 
         return original_unlink(self, cr, uid, ids, context=context)
 
@@ -416,7 +421,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not ids: return True
         already_deleted = self.search_deleted(cr, uid, [('res_id','in',ids)], context=context)
         to_delete = list(set(ids) - set(already_deleted))
-        self.unlink(cr, uid, to_delete, context=None)
+        self.unlink(cr, uid, to_delete, context=context)
         cr.execute("""\
 DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 """, [self._name, ids])

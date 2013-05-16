@@ -279,9 +279,9 @@ class account_analytic_line(osv.osv):
         
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         res = dict.fromkeys(ids, False)
-        for line_id in self.browse(cr, uid, line_id, context=context):
+        for line_data in self.browse(cr, uid, ids, context=context):
             if line_data.cost_center_id:
-                res.append(self.get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
+                res[line_data.id] = self.get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
                 res[line_data.id] = current_instance.parent_id.instance

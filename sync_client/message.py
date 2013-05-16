@@ -231,13 +231,14 @@ class message_received(osv.osv):
         if not ids: return 0
         execution_date = fields.datetime.now()
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
+        sync_context = dict(context or {}, sync_message_execution=True)
         for message in self.browse(cr, uid, ids, context=context):
             cr.execute("SAVEPOINT exec_message")
             model, method = self.get_model_and_method(message.remote_call)
             arg = self.get_arg(message.arguments)
             try:
                 fn = getattr(self.pool.get(model), method)
-                res = fn(cr, uid, message.source, *arg)
+                res = fn(cr, uid, message.source, *arg, context=sync_context)
             except BaseException, e:
                 cr.execute("ROLLBACK TO SAVEPOINT exec_message")
                 log = "Something go wrong with the call %s \n" % message.remote_call
