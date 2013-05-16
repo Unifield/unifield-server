@@ -191,6 +191,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Fetch all XML row values
                 line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                 # Bypass this line if NO debit AND NO credit
+                try:
+                    bd = line[cols['Booking Debit']]
+                except IndexError, e:
+                    continue
+                try:
+                    bc = line[cols['Booking Credit']]
+                except IndexError, e:
+                    continue
                 if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
                     continue
                 processed += 1
