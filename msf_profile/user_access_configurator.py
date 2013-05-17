@@ -623,10 +623,9 @@ class user_access_configurator(osv.osv_memory):
         # process rules
         self._process_record_rules_uac(cr, uid, context=context)
         # deactivate all default groups (except Admin)
-        admin_group_user_rights_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
-        useability_group_id = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View'])
-        no_group_ids = useability_group_id.append(admin_group_user_rights_id)
-        group_ids = self.pool.get('res.groups').search(cr, uid, [('id', 'in', no_group_ids)], context=context)
+        no_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View'])
+        no_group_ids.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('id', 'not in', no_group_ids)], context=context)
         self.pool.get('res.groups').write(cr, uid, group_ids, {'visible_res_groups': False}, context=context)
         
         return True
@@ -791,12 +790,13 @@ class res_groups(osv.osv):
                 menu_context = context.copy()
                 menu_context.update({'ir.ui.menu.full_list': True})
                 menu_ids = menu_obj.search(cr, uid, [('groups_id', '=', id)], context=menu_context)
-                menu_obj.write(cr, uid, menu_ids, {'groups_id': [(3, id)]}, context=context)
                 # If the removing of group in menus give back public access of 
                 # the menu, add Admin groups on menus accesses
                 for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
+                    menu_vals = {'groups_id': [(3, id)]}
                     if not menu.groups_id:
-                        menu_obj.write(cr, uid, [menu.id], {'groups_id': [(6, 0, [admin_group_id])]}, context=context)
+                        menu_vals['groups_id'].append((6, 0, [admin_group_id]))
+                    menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
 
                 # Remove the field access rules associated to this group
                 far_ids = far_obj.search(cr, uid, [('group_ids', '=', id), ('active', 'in', ('t', 'f'))], context=context)
