@@ -196,9 +196,8 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         """Update SD refs information. sdrefs should be dict of where values are update values of the sdref"""
         assert hasattr(sdrefs, 'items'), "Argument sdrefs should be a dictionary"
         for sdref, values in sdrefs.items():
-            cr.execute("""\
-UPDATE %s SET %s WHERE module = 'sd' AND name = %%s
-""" % (self._table, ", ".join("%s = %%s" % k for k in values.keys())), values.values() + [sdref])
+            ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
+            self.write(cr, uid, ids, values, context=context)
 
     def is_deleted(self, cr, uid, module, xml_id, context=None):
         """

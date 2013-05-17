@@ -108,7 +108,7 @@ class update_to_send(osv.osv):
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
-        'sdref' : fields.char('SD ref', size=128, readonly=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'fields':fields.text('Fields', size=128, readonly=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
     }
@@ -244,7 +244,7 @@ class update_received(osv.osv):
         'source': fields.char('Source Instance', size=128, readonly=True), 
         'owner': fields.char('Owner Instance', size=128, readonly=True), 
         'model' : fields.char('Model', size=64, readonly=True, select=True),
-        'sdref' : fields.char('SD ref', size=128, readonly=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'sequence' : fields.integer('Sequence', readonly=True),
         'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
@@ -291,6 +291,7 @@ class update_received(osv.osv):
                     'version' : load_item['version'],
                     'values' : load_item['values'],
                     'owner' : load_item['owner_name'],
+                    'sdref' : load_item['sdref'],
                 })
                 self.create(cr, uid, data, context=context)
             return len(packet['load'])
@@ -525,7 +526,7 @@ class update_received(osv.osv):
             self.write(cr, uid, deleted_update_ids, {
                 'editable' : False,
                 'run' : True,
-                'log' : "This record has been marked as deleted and has not been imported.",
+                'log' : "This update has been ignored because the record is marked as deleted.",
             }, context=context)
             updates = filter(lambda update: update.id not in deleted_update_ids, updates)
             if not updates: continue
