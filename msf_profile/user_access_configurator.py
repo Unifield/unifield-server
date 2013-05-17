@@ -817,7 +817,7 @@ class res_groups(osv.osv):
         Call the inactive function if the group is inactive
         '''
         res = super(res_groups, self).create(cr, uid, vals, context=context)
-        self._update_inactive(cr, uid, ids, vals, context=context)
+        self._update_inactive(cr, uid, res, vals, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
