@@ -31,7 +31,7 @@ import logging
 from tools.safe_eval import safe_eval as eval
 import threading
 
-from sync_common import add_sdref_column, fancy_integer
+from sync_common import add_sdref_column, translate_column, fancy_integer
 
 class SavePullerCache(object):
     def __init__(self, model):
@@ -153,6 +153,7 @@ class update(osv.osv):
         ('detect_duplicated_updates','UNIQUE(session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
     ]
 
+    @translate_column('model', 'ir_model', 'model', 'character varying(64)')
     @add_sdref_column
     def _auto_init(self, cr, context=None):
         cr.execute("""SELECT table_name FROM information_schema.tables WHERE table_name IN %s""",

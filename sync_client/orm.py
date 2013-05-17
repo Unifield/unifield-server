@@ -21,6 +21,7 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         context = dict(context or {})
         logger = logging.getLogger('debugger')
         logger.debug("Welcome to ipdb!")
+        ipdb.set_trace()
 
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         self.pool.get("sync.client.sync_server_connection").connect(cr, uid, context=context)
@@ -89,6 +90,7 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         context = dict(context or {})
         logger = logging.getLogger('debugger')
         logger.debug("Welcome to ipdb!")
+        ipdb.set_trace()
 
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         self.pool.get("sync.client.sync_server_connection").connect(cr, uid, context=context)
@@ -257,7 +259,7 @@ SELECT res_id
             result[res_id] = new_record.get(field)
         if synchronize and data_ids:
             model_data_obj.write(cr, uid, data_ids, {'last_modification' : now})
-        return result if result_iterable else result.get(ids[0], False)
+        return result if result_iterable else result[ids[0]]
 
     def version(self, cr, uid, ids, context=None):
         """
@@ -286,7 +288,7 @@ SELECT res_id
         """
         return self.get_sd_ref(cr, uid, ids, synchronize=True, context=context)
 
-    def find_sd_ref(self, cr, uid, sdrefs, field='res_id', context=None):
+    def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
         Find the ids of records based on their SD reference. If called on a model, search SD refs for this model only. Otherwise, search any record.
 
@@ -302,9 +304,12 @@ SELECT res_id
         elif not isinstance(sdrefs, tuple): sdrefs = tuple(sdrefs)
         sdrefs = filter(None, sdrefs)
         if not sdrefs: return {} if result_iterable else False
+        if field is None:
+            field = 'id' if self._name == 'ir.model.data' else 'res_id'
+        field, real_field = ('id' if field == 'is_deleted' else field), field
         if self._name == "ir.model.data":
             cr.execute("""\
-SELECT name, id FROM ir_model_data WHERE module = 'sd' AND name IN %s""", [sdrefs])
+SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s""" % field, [sdrefs])
         else:
             cr.execute("""\
 SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s""" \
@@ -313,6 +318,10 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             result = RejectingDict(cr.fetchall())
         except DuplicateKey:
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, sdrefs=%s. Too late for debugging, sorry!" % (self._name, sdrefs))
+        if field != real_field:
+            read_result = self.pool.get('ir.model.data').read(cr, uid, result.values(), [real_field], context=context)
+            read_result = dict((x['id'], x) for x in read_result)
+            result = dict((sdref, read_result[id][real_field]) for sdref, id in result.items())
         return result if result_iterable else result.get(sdrefs[0], False)
 
     @orm_method_overload
@@ -393,11 +402,15 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name == 'ir.model.data' and (context is None or context.get('avoid_ir_data_deletion')):
             return True
 
+        # In an update creation context, references are deleted normally
+        # In an update execution context, references are kept, but no synchronization is made
+        # Otherwise, references are kept and synchronization is triggered
+        # ...see?
         if self._name not in MODELS_TO_IGNORE \
-           and not context.get('sync_update_creation') \
-           and not context.get('sync_update_execution'):
+           and not context.get('sync_update_creation'):
             context = dict(context, avoid_ir_data_deletion=True)
-            self.synchronize(cr, uid, ids, context=context)
+            if not context.get('sync_update_execution'):
+                self.synchronize(cr, uid, ids, context=context)
 
         return original_unlink(self, cr, uid, ids, context=context)
 

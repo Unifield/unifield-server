@@ -140,6 +140,44 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=Fa
 
 
 
+def translate_column(column, rel_table, rel_column, rel_column_type):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(self, cr, context=None):
+            cr.execute("""\
+SELECT
+    tc.constraint_name, tc.table_name, kcu.column_name, 
+    ccu.table_name AS foreign_table_name,
+    ccu.column_name AS foreign_column_name 
+FROM 
+    information_schema.table_constraints AS tc 
+    JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
+    JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
+WHERE constraint_type = 'FOREIGN KEY' AND tc.table_name=%s AND ccu.table_name=%s AND kcu.column_name=%s""", [self._table, rel_table, column])
+            foreign_key_exists = bool( cr.fetchone() )
+            if foreign_key_exists:
+                format_keys = {
+                    'table' : self._table,
+                    'rel_table' : rel_table,
+                    'rel_column' : rel_column,
+                    'column' : column,
+                    'column_type' : rel_column_type,
+                }
+                cr.execute("""\
+ALTER TABLE %(table)s ADD COLUMN new_%(column)s %(column_type)s;
+UPDATE %(table)s
+    SET new_%(column)s = %(rel_table)s.%(rel_column)s
+    FROM %(rel_table)s
+    WHERE %(table)s.%(column)s = %(rel_table)s.id;
+ALTER TABLE %(table)s DROP COLUMN %(column)s;
+ALTER TABLE %(table)s RENAME COLUMN new_%(column)s TO %(column)s;
+COMMIT;""" % format_keys)
+            return fn(self, cr, context=context)
+        return wrapper
+    return decorator
+
+
+
 def add_sdref_column(fn):
     @functools.wraps(fn)
     def wrapper(self, cr, context=None):
@@ -148,7 +186,7 @@ SELECT column_name
   FROM information_schema.columns 
   WHERE table_name=%s AND column_name='sdref';""", [self._table])
         column_sdref_exists = bool( cr.fetchone() )
-        fn(self, cr, context=context)
+        result = fn(self, cr, context=context)
         if not column_sdref_exists:
             cr.execute("SELECT COUNT(*) FROM %s" % self._table)
             count = cr.fetchone()[0]
@@ -180,6 +218,7 @@ SELECT column_name
                     i, row = i + 1, cr_read.fetchone()
                 cr_read.close()
                 cr.commit()
+        return result
     return wrapper
 
 
