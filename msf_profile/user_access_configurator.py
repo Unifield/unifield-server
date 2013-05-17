@@ -743,12 +743,84 @@ class res_groups(osv.osv):
     add an active column
     '''
     _inherit = 'res.groups'
-    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=True),
+    _columns = {'visible_res_groups': fields.boolean('Visible', readonly=False),
                 'from_file_import_res_groups': fields.boolean('From file Import', readonly=True),
                 }
     _defaults = {'visible_res_groups': True,
                  'from_file_import_res_groups': False,
                  }
+
+    def _update_inactive(self, cr, uid, ids, vals, context=None):
+        '''
+        If the group becomes inactive, remove :
+            * the inactive group should be removed from all users who got it
+            * the access control list line for the inactive group should be removed
+            * the associated button control list should be removed for the inactive group
+            * associated field access rule (lines) should be removed for the inactive group
+        '''
+        conf_obj = self.pool.get('user.access.configurator')
+        user_obj = self.pool.get('res.users')
+        menu_obj = self.pool.get('ir.ui.menu')
+        far_obj = self.pool.get('msf_field_access_rights.field_access_rule')
+        bar_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+        acl_obj = self.pool.get('ir.model.access')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'visible_res_groups' in vals and not vals['visible_res_groups']:
+            admin_group_id = conf_obj._get_admin_user_rights_group_id(cr, uid, context=context)
+
+            for id in ids:
+                # Remove the link between groups and users
+                user_ids = user_obj.search(cr, uid, [('groups_id', '=', id)], context=context)
+                user_obj.write(cr, uid, user_ids, {'groups_id': [(3, id)]}, context=context)
+
+                # Remove the link between groups and menu
+                # Change the context because of the filtering of top menus
+                # in base module (i.e. : addons/base/ir/ir_ui_menu.py:115)
+                menu_context = context.copy()
+                menu_context.update({'ir.ui.menu.full_list': True})
+                menu_ids = menu_obj.search(cr, uid, [('groups_id', '=', id)], context=menu_context)
+                menu_obj.write(cr, uid, menu_ids, {'groups_id': [(3, id)]}, context=context)
+                # If the removing of group in menus give back public access of 
+                # the menu, add Admin groups on menus accesses
+                for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
+                    if not menu.groups_id:
+                        menu_obj.write(cr, uid, [menu.id], {'groups_id': [(6, 0, [admin_group_id])]}, context=context)
+
+                # Remove the field access rules associated to this group
+                far_ids = far_obj.search(cr, uid, [('group_ids', '=', id), ('active', 'in', ('t', 'f'))], context=context)
+                far_obj.write(cr, uid, far_ids, {'group_ids': [(3, id)]}, context=context)
+
+                # Remove the button access rules associated to this group
+                bar_ids = bar_obj.search(cr, uid, [('group_ids', '=', id)], context=context)
+                bar_obj.write(cr, uid, bar_ids, {'group_ids': [(3, id)]}, context=context)
+
+            # Remove the control list lines associated to this group
+            acl_ids = acl_obj.search(cr, uid, [('group_id', 'in', ids)], context=context)
+            acl_obj.unlink(cr, uid, acl_ids, context=context)
+
+        return True
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        Call the inactive function if the group is inactive
+        '''
+        res = super(res_groups, self).create(cr, uid, vals, context=context)
+        self._update_inactive(cr, uid, ids, vals, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Call the inactive function if the group is inactive
+        '''
+        res = super(res_groups, self).write(cr, uid, ids, vals, context=context)
+        self._update_inactive(cr, uid, ids, vals, context=context)
+        return res
 
 res_groups()
 

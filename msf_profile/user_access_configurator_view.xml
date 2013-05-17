@@ -334,13 +334,53 @@
                 </data>
             </field>
         </record>
+
+        <record id="view_groups_form" model="ir.ui.view">
+            <field name="name">view.groups.form</field>
+            <field name="model">res.groups</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_groups_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='name']" position="after">
+                        <field name="visible_res_groups" string="Active" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="res_groups_default_search_view" model="ir.ui.view">
+            <field name="name">res.groups.default.search.view</field>
+            <field name="model">res.groups</field>
+            <field name="type">search</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <search string="Groups">
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
+
+        <record id="res_groups_search_view" model="ir.ui.view">
+            <field name="name">res.groups.search.view</field>
+            <field name="model">res.groups</field>
+            <field name="type">search</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <search string="Groups">
+                    <filter name="show_active" string="Only active" icon="gtk-ok" domain="[('visible_res_groups', '=', True)]" />
+                    <field name="name" />
+                </search>
+            </field>
+        </record>
        	
        	<record id="base.action_res_groups" model="ir.actions.act_window">
             <field name="name">Groups</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">res.groups</field>
             <field name="view_type">form</field>
-            <field name="domain">[('visible_res_groups', '=', True)]</field>
+            <field name="context">{'search_default_show_active': True}</field>
+            <field name="search_view_id" ref="res_groups_search_view" />
             <field name="help">A group is a set of functional areas that will be assigned to the user in order to give them access and rights to specific applications and tasks in the system. You can create custom groups or edit the ones existing by default in order to customize the view of the menu that users will be able to see. Whether they can have a read, write, create and delete access right can be managed from here.</field>
         </record>
 
