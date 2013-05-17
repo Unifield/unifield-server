@@ -794,7 +794,7 @@ class res_groups(osv.osv):
                 # the menu, add Admin groups on menus accesses
                 for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
                     menu_vals = {'groups_id': [(3, id)]}
-                    if not menu.groups_id:
+                    if len(menu.groups_id) == 1:
                         menu_vals['groups_id'].append((6, 0, [admin_group_id]))
                     menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
 
