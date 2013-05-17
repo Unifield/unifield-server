@@ -622,6 +622,10 @@ class user_access_configurator(osv.osv_memory):
         self._process_objects_uac(cr, uid, context=context)
         # process rules
         self._process_record_rules_uac(cr, uid, context=context)
+        # deactivate all default groups (except Admin)
+        admin_group_user_rights_id = self._get_admin_user_rights_group_id(cr, uid, context=context)
+        group_ids = self.pool.get('res.groups').search(cr, uid, [('id', '!=', admin_group_user_rights_id)], context=context)
+        self.pool.get('res.groups').write(cr, uid, group_ids, {'visible_res_groups': False}, context=context)
         
         return True
 
