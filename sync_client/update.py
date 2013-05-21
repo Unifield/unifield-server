@@ -225,9 +225,13 @@ class update_to_send(osv.osv):
         return (ids_in_package, data)
 
     def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
-        self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-            dict((update.sdref, {'version':update.version,sync_field:update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
-            context=context)
+        for update in self.browse(cr, uid, update_ids, context=context):
+            try:
+                self.pool.get('ir.model.data').update_sd_ref(cr, uid,
+                    update.sdref, {'version':update.version,sync_field:update.create_date},
+                    context=context)
+            except ValueError:
+                self.warning("Cannot find record %s during pushing update process!" % update.sdref)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
@@ -391,9 +395,13 @@ class update_received(osv.osv):
                         'log' : log,
                     }, context=context)
                 logs.clear()
-                self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                    dict((sdref, {'version':version,'sync_date':fields.datetime.now()}) for sdref, version in versions.items()),
-                    context=context)
+                for sdref, version in versions.items():
+                    try:
+                        self.pool.get('ir.model.data').update_sd_ref(cr, uid,
+                            sdref, {'version':version,'sync_date':fields.datetime.now()},
+                            context=context)
+                    except ValueError:
+                        self.warning("Cannot find record %s during update execution process!" % update.sdref)
 
             #3 check for missing field : report missing fields
             bad_fields = self._check_fields(cr, uid, obj._name, import_fields, context=context)
@@ -517,7 +525,10 @@ class update_received(osv.osv):
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
             # Remove updates about deleted records in the list
             sdref_update_ids = dict((update.sdref, update.id) for update in updates)
-            sdref_are_deleted = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context)
+            # For bi-private rules, it is possible that the sdref doesn't exists /!\
+            sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), True)
+            sdref_are_deleted.update(
+                obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
             update_id_are_deleted = dict(zip(
                 sdref_update_ids.values(),
                 sdref_are_deleted.values()

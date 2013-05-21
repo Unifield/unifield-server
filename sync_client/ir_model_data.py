@@ -192,12 +192,13 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             result.append(data_ids[0] if data_ids else False)
         return result if isinstance(ids, (list, tuple)) else result[0]
 
-    def update_sd_ref(self, cr, uid, sdrefs, context=None):
-        """Update SD refs information. sdrefs should be dict of where values are update values of the sdref"""
-        assert hasattr(sdrefs, 'items'), "Argument sdrefs should be a dictionary"
-        for sdref, values in sdrefs.items():
-            ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
-            self.write(cr, uid, ids, values, context=context)
+    def update_sd_ref(self, cr, uid, sdref, vals, context=None):
+        """Update a SD ref information. Raise ValueError if sdref doesn't exists."""
+        ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
+        if not ids:
+            raise ValueError("Cannot find sdref %s!" % sdref)
+        self.write(cr, uid, ids, vals, context=context)
+        return True
 
     def is_deleted(self, cr, uid, module, xml_id, context=None):
         """
