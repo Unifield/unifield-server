@@ -623,7 +623,7 @@ class user_access_configurator(osv.osv_memory):
         # process rules
         self._process_record_rules_uac(cr, uid, context=context)
         # deactivate all default groups (except Admin)
-        no_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View'])
+        no_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View', 'Useability / No One'])
         no_group_ids.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
         group_ids = self.pool.get('res.groups').search(cr, uid, [('id', 'not in', no_group_ids)], context=context)
         self.pool.get('res.groups').write(cr, uid, group_ids, {'visible_res_groups': False}, context=context)
@@ -779,7 +779,18 @@ class res_groups(osv.osv):
 
         if 'visible_res_groups' in vals and not vals['visible_res_groups']:
             admin_group_id = conf_obj._get_admin_user_rights_group_id(cr, uid, context=context)
+            no_one_id = conf_obj._get_DNCGL_ids(cr, uid, ids, context=context)
+            extended_ids = conf_obj._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View'])
             hidden_menu_id = data_obj.get_object_reference(cr, uid, 'useability_dashboard_and_menu', 'menu_hidden')[1]
+
+            if admin_group_id in ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Administration / Access Rights group'))
+
+            if no_one_id in ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Useability / No One group'))
+
+            if extended_ids and extended_ids[0] in ids:
+                raise osv.except_osv(_('Error'), _('You cannot remove or inactive the Useability / Extended View group'))
 
             for id in ids:
                 # Remove the link between groups and users
@@ -796,6 +807,8 @@ class res_groups(osv.osv):
                 # the menu, add Admin groups on menus accesses
                 for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
                     menu_vals = {'groups_id': [(3, id)]}
+                    if menu.id == hidden_menu_id:
+                        menu_vals['groups_id'].append((6, 0, no_one_id))
                     if menu.id != hidden_menu_id and len(menu.groups_id) == 1:
                         menu_vals['groups_id'].append((6, 0, [admin_group_id]))
                     menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
@@ -811,6 +824,9 @@ class res_groups(osv.osv):
             # Remove the control list lines associated to this group
             acl_ids = acl_obj.search(cr, uid, [('group_id', 'in', ids)], context=context)
             acl_obj.unlink(cr, uid, acl_ids, context=context)
+
+            # Add Useability / Extended View group to Admin user
+            user_obj.write(cr, uid, [1], {'view': 'extended'}, context=context)
 
         return True
 
@@ -829,6 +845,13 @@ class res_groups(osv.osv):
         res = super(res_groups, self).write(cr, uid, ids, vals, context=context)
         self._update_inactive(cr, uid, ids, vals, context=context)
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the inactive function if the group is deleted
+        '''
+        self._update_inactive(cr, uid, ids, dict(visible_res_groups=False), context=context)
+        return super(res_groups, self).unlink(cr, uid, ids, context=context)
 
 res_groups()
 
