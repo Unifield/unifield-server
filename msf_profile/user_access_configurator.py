@@ -764,6 +764,7 @@ class res_groups(osv.osv):
             * associated field access rule (lines) should be removed for the inactive group
         '''
         conf_obj = self.pool.get('user.access.configurator')
+        data_obj = self.pool.get('ir.model.data')
         user_obj = self.pool.get('res.users')
         menu_obj = self.pool.get('ir.ui.menu')
         far_obj = self.pool.get('msf_field_access_rights.field_access_rule')
