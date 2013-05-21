@@ -253,7 +253,6 @@ msf_instance()
 class account_analytic_line(osv.osv):
     
     _inherit = 'account.analytic.line'
-    _delete_owner_field = 'cost_center_id'
         
     def get_instance_name_from_cost_center(self, cr, uid, cost_center_id, context=None):
         if cost_center_id:

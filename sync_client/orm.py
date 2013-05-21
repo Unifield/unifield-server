@@ -390,15 +390,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if context.get('sync_message_execution'):
             return original_unlink(self, cr, uid, ids, context=context)
 
-        if hasattr(self, '_delete_owner_field'):
-            if not hasattr(ids, '__iter__'): ids = [ids]
-            instance_name = self.pool.get("sync.client.entity").get_entity(cr, 1, context=context).name
-            for destination_name, sdref in zip(
-                    	self.get_destination_name(cr, 1, ids, self._delete_owner_field, context=context).values(),
-                        self.get_sd_ref(cr, 1, ids, context=context).values()
-                    ):
-                self.generate_message_for_destination(cr, 1, destination_name, sdref, instance_name, send_to_parent_instances=True)
-
         if self._name == 'ir.model.data' and (context is None or context.get('avoid_ir_data_deletion')):
             return True
 
