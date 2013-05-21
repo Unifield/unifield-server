@@ -155,7 +155,7 @@ class update_to_send(osv.osv):
         if not ids_to_compute:
             return 0
 
-        sync_context = dict(context, sync_context=True)
+        sync_context = dict(context or {}, sync_context=True)
         fields_ref = obj.fields_get(cr, uid, [], context=sync_context)
         fields_ref['id'] = dict()
         ustr_included_fields = tools.ustr(included_fields)
@@ -216,7 +216,8 @@ class update_to_send(osv.osv):
         model_data_pool = self.pool.get('ir.model.data')
 
         for update in self.browse(cr, uid, update_ids, context=context):
-            model_data_pool._sync(cr, uid, update.xml_id, date=update.sync_date, version=update.version, context=context)
+            if update.xml_id:
+                model_data_pool._sync(cr, uid, update.xml_id, date=update.sync_date, version=update.version, context=context)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)    
         self._logger.debug("Pushed finished")
         
