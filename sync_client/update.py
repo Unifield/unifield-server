@@ -231,7 +231,7 @@ class update_to_send(osv.osv):
                     update.sdref, {'version':update.version,sync_field:update.create_date},
                     context=context)
             except ValueError:
-                self.warning("Cannot find record %s during pushing update process!" % update.sdref)
+                self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
@@ -401,7 +401,7 @@ class update_received(osv.osv):
                             sdref, {'version':version,'sync_date':fields.datetime.now()},
                             context=context)
                     except ValueError:
-                        self.warning("Cannot find record %s during update execution process!" % update.sdref)
+                        self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
 
             #3 check for missing field : report missing fields
             bad_fields = self._check_fields(cr, uid, obj._name, import_fields, context=context)

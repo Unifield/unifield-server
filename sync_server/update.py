@@ -153,7 +153,6 @@ class update(osv.osv):
         ('detect_duplicated_updates','UNIQUE(session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
     ]
 
-    @translate_column('model', 'ir_model', 'model', 'character varying(64)')
     @add_sdref_column
     def _auto_init(self, cr, context=None):
         cr.execute("""SELECT table_name FROM information_schema.tables WHERE table_name IN %s""",
@@ -367,7 +366,7 @@ class update(osv.osv):
             return None
 
         base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE""",
-                               "(sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ") OR sync_server_update.rule_id IS NULL)",
+                               "sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ")",
                                "AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""" % (last_seq, max_seq)))
 
         ## Recover add own client updates to the list
