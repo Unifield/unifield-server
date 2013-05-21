@@ -778,6 +778,7 @@ class res_groups(osv.osv):
 
         if 'visible_res_groups' in vals and not vals['visible_res_groups']:
             admin_group_id = conf_obj._get_admin_user_rights_group_id(cr, uid, context=context)
+            hidden_menu_id = data_obj.get_object_reference(cr, uid, 'useability_dashboard_and_menu', 'menu_hidden')[1]
 
             for id in ids:
                 # Remove the link between groups and users
@@ -794,7 +795,7 @@ class res_groups(osv.osv):
                 # the menu, add Admin groups on menus accesses
                 for menu in menu_obj.browse(cr, uid, menu_ids, context=context):
                     menu_vals = {'groups_id': [(3, id)]}
-                    if len(menu.groups_id) == 1:
+                    if menu.id != hidden_menu_id and len(menu.groups_id) == 1:
                         menu_vals['groups_id'].append((6, 0, [admin_group_id]))
                     menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
 
