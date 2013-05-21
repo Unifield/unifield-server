@@ -543,8 +543,11 @@ class Entity(osv.osv):
             cr.commit()
 
             if logger:
-                logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates = %d total updates") % \
-                                             (imported, deleted, update_count))
+                if imported or deleted:
+                    logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates = %d total updates") % \
+                                                 (imported, deleted, imported+deleted))
+                else:
+                    logger.pop(logger_index)
                 notrun_count = updates.search(cr, uid, [('run','=',False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Update(s) not run left: %d") % notrun_count)
                 logger.write()

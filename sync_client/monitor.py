@@ -61,6 +61,9 @@ class MonitorLogger(object):
     def replace(self, index, message, step=None):
         self.messages[index] = self.__format_message(message, step)
 
+    def pop(self, index):
+        return self.messages.pop(index)
+
     def switch(self, step, status):
         if status in ('failed', 'aborted'):
             self.final_status = status
