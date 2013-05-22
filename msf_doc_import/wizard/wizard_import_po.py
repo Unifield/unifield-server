@@ -478,6 +478,11 @@ The columns should be in this values:
                 except ValueError, e:
                     to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
                     to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+                except TypeError, e:
+                    if str(e) == 'expected string or buffer':
+                        e = _('expected a date with \'dd/mm/YYYY\' format')
+                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
+                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         #  Comment
         cell_nb = header_index.get('Comment', False)
