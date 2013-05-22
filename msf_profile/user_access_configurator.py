@@ -809,7 +809,7 @@ class res_groups(osv.osv):
                     menu_vals = {'groups_id': [(3, id)]}
                     if menu.id == hidden_menu_id:
                         menu_vals['groups_id'].append((6, 0, no_one_id))
-                    if menu.id != hidden_menu_id and len(menu.groups_id) == 1:
+                    elif len(menu.groups_id) == 1:
                         menu_vals['groups_id'].append((6, 0, [admin_group_id]))
                     menu_obj.write(cr, uid, [menu.id], menu_vals, context=context)
 
