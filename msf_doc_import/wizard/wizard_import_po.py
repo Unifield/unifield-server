@@ -221,7 +221,7 @@ The columns should be in this values:
                 vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s') 
                                                    % (k, ', \n'.join(columns_for_po_integration))}
                 return self.write(cr, uid, ids, vals, context), False
-        list_of_required_values = ['Line*', 'Product Code*']
+        list_of_required_values = ['Line', 'Product Code']
         for required_value in list_of_required_values:
             if required_value not in header_index.keys():
                 vals = {'message': _('The following columns are required for the import (case sensitive): %s.\n Please add the missing one.'
@@ -238,7 +238,7 @@ The columns should be in this values:
         incoterm_obj = self.pool.get('stock.incoterms')
         to_write_po = {'error_list': [],}
         # Delivery Confirmed Date (PO)*
-        cell_nb = header_index.get('Delivery Confirmed Date (PO)*', False)
+        cell_nb = header_index.get('Delivery Confirmed Date (PO)', False)
         delivery_confirmed_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
@@ -247,14 +247,14 @@ The columns should be in this values:
                     to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
-                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)*" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
+                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
                 try:
                     delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
                     to_write_po.update({'delivery_confirmed_date': str(delivery_confirmed_date)})
                 except ValueError, e:
-                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)*" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
+                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             
         # Supplier Reference
@@ -372,7 +372,7 @@ The columns should be in this values:
         }
 
         # Order Reference*
-        cell_nb = header_index.get('Order Reference*', False)
+        cell_nb = header_index.get('Order Reference', False)
         order_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if order_name:
             order_ids = purchase_obj.search(cr, uid, [('name', '=', order_name)], context=context)
@@ -388,7 +388,7 @@ The columns should be in this values:
         else:
             to_write.update({'order_id': po_browse.id})
         # Line
-        cell_nb = header_index['Line*']
+        cell_nb = header_index['Line']
         cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             try:
@@ -413,7 +413,7 @@ The columns should be in this values:
             to_write.update({'notes': notes})
 
         # Quantity
-        cell_nb = header_index.get('Quantity*', False)
+        cell_nb = header_index.get('Quantity', False)
         cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             try:
@@ -424,7 +424,7 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
     
         # Product Code
-        cell_nb = header_index.get('Product Code*', False)
+        cell_nb = header_index.get('Product Code', False)
         product_code = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if product_code:
             p_ids = product_obj.search(cr, uid, [('default_code', '=', product_code)], context=context)
@@ -438,7 +438,7 @@ The columns should be in this values:
             to_write.update({'product_id': False})
 
         # UOM
-        cell_nb = header_index.get('UoM*', False)
+        cell_nb = header_index.get('UoM', False)
         cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             product_uom = uom_obj.search(cr, uid, [('name', '=', cell_data)], context=context)
@@ -449,7 +449,7 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Price
-        cell_nb = header_index.get('Price*', False)
+        cell_nb = header_index.get('Price', False)
         cell_data = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if cell_data:
             try:
@@ -460,7 +460,7 @@ The columns should be in this values:
                 to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
 
         # Delivery Confirmed Date
-        cell_nb = header_index.get('Delivery Confirmed Date*', False)
+        cell_nb = header_index.get('Delivery Confirmed Date', False)
         confirmed_delivery_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
@@ -691,7 +691,7 @@ The columns should be in this values:
                                 error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
                                                                                         count_same_pol_line_nb, line_number,
-                                                                                        file_values[line.get('file_line_number', False)] and file_values[line.get('file_line_number', False)][header_index['Product Code*']])
+                                                                                        file_values[line.get('file_line_number', False)] and file_values[line.get('file_line_number', False)][header_index['Product Code']])
                                 data = file_values[line['file_line_number']].items()
                                 line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                 ignore_lines += 1
@@ -784,7 +784,7 @@ The columns should be in this values:
                                     error_log += _("""Line %s in the Excel file was added to the file of the lines with errors: for the %s several POs with the line number %s, we can't find any to update with the product %s\n""") % (
                                                                                         line['file_line_number']+1,
                                                                                         count_same_pol_line_nb, line_number,
-                                                                                        file_values[line['file_line_number']][header_index['Product Code*']])
+                                                                                        file_values[line['file_line_number']][header_index['Product Code']])
                                     data = file_values[line.get('file_line_number', False)].items()
                                     line_with_error.append([v for k,v in sorted(data, key=lambda tup: tup[0])])
                                     ignore_lines += 1
