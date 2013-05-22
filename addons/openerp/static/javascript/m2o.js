@@ -64,7 +64,8 @@ ManyToOne.prototype.__init__ = function(name) {
     this.relation = jQuery(this.field).attr('relation');
     jQuery(this.text).attr('autocomplete', 'OFF');
 
-    if(this.editable) {
+    // test on this.text: if it doesn't exist the field is hidden (ie: composition_list_id when processing an Incoming Shipment
+    if(this.editable && this.text) {
         jQuery(this.text).bind({
             keydown: jQuery.proxy(this, 'on_keydown'),
             keypress: jQuery.proxy(this, 'on_keypress'),
@@ -72,7 +73,6 @@ ManyToOne.prototype.__init__ = function(name) {
             focus: jQuery.proxy(this, 'gotFocus'),
             blur: jQuery.proxy(this, 'lostFocus')
         }).removeAttr('callback');
-
         this.lastTextResult = this.text.value;
 
         if(this.select_img)
@@ -294,6 +294,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
 
                 this.setCompletionText($selectedRow);
 
+                $(this.field).change();
                 this.change_icon();
                 this.clearResults();
                 break;
