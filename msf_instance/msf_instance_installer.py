@@ -25,6 +25,7 @@ class msf_instance_setup(osv.osv_memory):
     def execute(self, cr, uid, ids, context=None):
         res = self.read(cr, uid, ids)
         self.pool.get('res.company').write(cr, uid, [self.pool.get('res.users').browse(cr, uid, uid).company_id.id], {'instance_id': res[0]['instance_id']})
+        self.pool.get('stock.location')._initial_configuration(cr, uid, context=context)
         return {}
 
 msf_instance_setup()
