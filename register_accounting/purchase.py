@@ -23,6 +23,8 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
+
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
