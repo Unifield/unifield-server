@@ -217,6 +217,7 @@ class sync_rule(osv.osv):
         'sequence_number' : 'sequence_number',
         'included_fields' : 'included_fields',
         'can_delete' : 'can_delete',
+        'active' : 'active',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):

@@ -335,16 +335,16 @@ class funding_pool_distribution_line(osv.osv):
             return super(funding_pool_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
         
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        res = []
+        res = dict.fromkeys(ids, False)
         for line_id in ids:
             line_data = self.browse(cr, uid, line_id, context=context)
             if line_data.cost_center_id:
-                res.append(self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context))
+                res[line_id] = self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.cost_center_id.id, context)
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
-                res.append(current_instance.parent_id.instance)
+                res[line_id] = current_instance.parent_id.instance
             else:
-                res.append(False)
+                res[line_id] = False
         return res
     
 funding_pool_distribution_line()
@@ -357,16 +357,17 @@ class cost_center_distribution_line(osv.osv):
             return super(cost_center_distribution_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
         
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        res = []
+        res = dict.fromkeys(ids, False)
         for line_id in ids:
             line_data = self.browse(cr, uid, line_id, context=context)
             if line_data.analytic_id:
-                res.append(self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.analytic_id.id, context))
+                res[line_id] = self.pool.get('account.analytic.line').get_instance_name_from_cost_center(cr, uid, line_data.analytic_id.id, context)
             elif current_instance.parent_id and current_instance.parent_id.instance:
                 # Instance has a parent
-                res.append(current_instance.parent_id.instance)
+                res[line_id] = current_instance.parent_id.instance
             else:
-                res.append(False)
+                res[line_id] = False
+                
         return res
     
 cost_center_distribution_line()
