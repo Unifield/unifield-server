@@ -755,6 +755,23 @@ class res_groups(osv.osv):
                  'from_file_import_res_groups': False,
                  }
 
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        If 'show_invisible' is in context, return only not Visible groups
+        '''
+        if context is None:
+            context = {}
+
+        if context.get('show_invisible'):
+            new_args = [('visible_res_groups', '=', False)]
+            for arg in args:
+                if arg[0] != 'visible_res_groups':
+                    new_args.append(arg)
+
+            args = new_args
+
+        return super(res_groups, self).search(cr, uid, args, offset, limit, order, context=context, count=count)
+
     def _update_inactive(self, cr, uid, ids, vals, context=None):
         '''
         If the group becomes inactive, remove :
