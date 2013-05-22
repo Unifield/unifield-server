@@ -65,7 +65,6 @@ ManyToOne.prototype.__init__ = function(name) {
     jQuery(this.text).attr('autocomplete', 'OFF');
 
     if(this.editable) {
-        jQuery(this.field).change(jQuery.proxy(this, 'on_change'));
         jQuery(this.text).bind({
             keydown: jQuery.proxy(this, 'on_keydown'),
             keypress: jQuery.proxy(this, 'on_keypress'),
@@ -295,9 +294,6 @@ ManyToOne.prototype.on_keydown = function(evt) {
 
                 this.setCompletionText($selectedRow);
 
-                if(this.callback) {
-                    onChange(this.name);
-                }
                 this.change_icon();
                 this.clearResults();
                 break;
@@ -336,7 +332,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
     if((evt.which == 8 || evt.which == 46) && this.field.value) {
         this.text.value = '';
         this.field.value = '';
-        this.on_change(evt);
+        $(this.field).change();
     }
 
     //Tab
