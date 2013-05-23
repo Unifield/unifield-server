@@ -218,6 +218,7 @@ class sync_rule(osv.osv):
         'included_fields' : 'included_fields',
         'can_delete' : 'can_delete',
         'active' : 'active',
+        'usb' : 'usb'
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):

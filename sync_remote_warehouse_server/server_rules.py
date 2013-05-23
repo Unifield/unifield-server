@@ -42,6 +42,17 @@ class sync_rule(osv.osv):
         'usb' : 'usb',
         'direction_usb' : 'direction_usb',
     }
+    
+    def _get_rules(self, cr, uid, entity, context=None):
+        rules_ids = []
+        for group in entity.group_ids:
+            domain = ['|','|',
+                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
+                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True),
+                    ('usb','=',True)]
+            ids = self.search(cr, uid, domain, context=context)
+            if ids:
+                rules_ids.extend(ids)
 
 sync_rule()
 
