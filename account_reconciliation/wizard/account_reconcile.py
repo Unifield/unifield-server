@@ -188,7 +188,6 @@ class account_move_line_reconcile(osv.osv_memory):
                 state = 'total'
             else:
                 state = 'partial'
-        print "STATE: ", state
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
 
     def total_reconcile(self, cr, uid, ids, context=None):
