@@ -180,6 +180,16 @@ class project_addresses(osv.osv_memory):
             self.pool.get('res.partner').write(cr, uid, [company.partner_id.id], {'name': company.instance_id.instance,
                                                                                   'partner_type': 'internal'}, context=c)
 
+        data_obj = self.pool.get('ir.model.data')
+        warehouse_obj = self.pool.get('stock.warehouse')
+        user_obj = self.pool.get('res.users')
+
+        instance_name = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.name
+
+        # Rename the warehouse with the name of the company
+        warehouse_id = data_obj.get_object_reference(cr, uid, 'stock', 'warehouse0')[1]
+        warehouse_obj.write(cr, uid, [warehouse_id], {'name': 'MSF %s' % instance_name}, context=context)
+
         return res
     
 project_addresses()

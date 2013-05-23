@@ -40,24 +40,6 @@ class stock_location(osv.osv):
     _order = 'location_id, posz'
 
 
-    def _initial_configuration(self, cr, uid, context=None):
-        '''
-        special method called after module install
-
-        change the name of the warehouse and remove configurable locations
-        '''
-        data_obj = self.pool.get('ir.model.data')
-        warehouse_obj = self.pool.get('stock.warehouse')
-        user_obj = self.pool.get('res.users')
-
-        instance_name = user_obj.browse(cr, uid, uid, context=context).company_id.instance_id.instance
-
-        # Rename the warehouse with the name of the instance
-        warehouse_id = data_obj.get_object_reference(cr, uid, 'stock', 'warehouse0')[1]
-        warehouse_obj.write(cr, uid, [warehouse_id], {'name': 'MSF %s' % instance_name}, context=context)
-
-        return True
-
     def _get_input_output(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the location is the input/output location of a warehouse or a children of it
