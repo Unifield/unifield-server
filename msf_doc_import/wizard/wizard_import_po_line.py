@@ -182,6 +182,13 @@ class wizard_import_po_line(osv.osv_memory):
                     # we check consistency on the model of on_change functions to call for updating values
                     purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
 
+                    if to_write.get('product_qty', 0.00) <= 0.00:
+                        message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
+                        ignore_lines += 1
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        cr.rollback()
+                        continue
+
                     # write order line on PO
                     if purchase_obj._check_service(cr, uid, po_id, vals, context=context):
                         purchase_line_obj.create(cr, uid, to_write, context=context)
