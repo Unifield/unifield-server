@@ -247,9 +247,9 @@ class import_data(osv.osv_memory):
                             new_fields_def = self.pool.get(fields_def[newo2m]['relation']).fields_get(cr, uid, context=context)
                             o2mdatas[points[1]] = process_data('.'.join(points[1:]), row[n], new_fields_def)
                         elif fields_def[points[0]]['type'] in 'many2one':
-                            if not row[n]:
+                            if import_mode == 'update' and not row[n]:
                                 data[points[0]] = False
-                            else:
+                            elif row[n]:
                                 data[points[0]] = _get_obj(h, row[n], fields_def) or False
                         elif fields_def[points[0]]['type'] in 'many2many' and row[n]:
                             data.setdefault(points[0], []).append((4, _get_obj(h, row[n], fields_def)))
