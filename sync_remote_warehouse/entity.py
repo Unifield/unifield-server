@@ -229,8 +229,10 @@ class Entity(osv.osv):
         if updates_todo:        
             package = update_create_package()
             
-            # add the package to the update_csv_contents dictionary and mark it has 'sent'
-            total_updates, total_deletions = update_add_and_mark_as_sent(*package)
+            while package:
+                # add the package to the update_csv_contents dictionary and mark it has 'sent'
+                total_updates, total_deletions = update_add_and_mark_as_sent(*package)
+                package = update_create_package()
                 
             # finished all packages so update logger
             if total_updates or total_deletions:
