@@ -791,7 +791,8 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
 
             package.state = 'installed'
             # execute the selected functions
-            load_function(cr, m, idref, mode)
+            if mode == 'init':
+                load_function(cr, m, idref, mode)
             
             for kind in ('init', 'demo', 'update'):
                 if hasattr(package, kind):
