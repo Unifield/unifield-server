@@ -48,7 +48,6 @@ class stock_location(osv.osv):
         '''
         data_obj = self.pool.get('ir.model.data')
         warehouse_obj = self.pool.get('stock.warehouse')
-        location_obj = self.pool.get('stock.location')
         user_obj = self.pool.get('res.users')
 
         instance_name = user_obj.browse(cr, uid, uid, context=context).company_id.instance_id.instance
@@ -56,18 +55,6 @@ class stock_location(osv.osv):
         # Rename the warehouse with the name of the instance
         warehouse_id = data_obj.get_object_reference(cr, uid, 'stock', 'warehouse0')[1]
         warehouse_obj.write(cr, uid, [warehouse_id], {'name': 'MSF %s' % instance_name}, context=context)
-
-        # Get all configurable locations
-        configurable_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_internal_client_view')[1]
-        intermediate_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_intermediate_client_view')[1]
-        internal_cu_loc_id = data_obj.get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_consumption_units_view')[1]
-
-        for loc_id in (configurable_loc_id, intermediate_loc_id, internal_cu_loc_id):
-            # Remove all configurable locations
-            location_ids = location_obj.search(cr, uid, [('location_id', 'child_of' , loc_id), ('id', 'not in', (configurable_loc_id, intermediate_loc_id, internal_cu_loc_id))], context=context)
-            location_obj.unlink(cr, uid, location_ids, context=context)
-            # Deactivate the parent of configurable locations
-            location_obj.write(cr, uid, loc_id, {'active': False}, context=context)
 
         return True
 
