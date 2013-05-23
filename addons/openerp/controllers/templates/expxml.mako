@@ -72,7 +72,7 @@ x:FullRows="1">
      % elif d and re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$', d):
        <Cell ss:StyleID="sDate">
         <Data ss:Type="DateTime">${d.replace(' ','T')}.000</Data>
-     % elif d and re.match('^[0-9]+\.?[0-9]*$', d):
+     % elif d and re.match('^-?[0-9]+\.?[0-9]*$', d):
        <Cell ss:StyleID="ssBorder">
         <Data ss:Type="Number">${d}</Data>
      % else:
