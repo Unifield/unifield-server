@@ -133,7 +133,7 @@ class object_proxy(netsvc.Service):
                         raise
                     if tries >= MAX_TRIES_ON_CONCURRENCY_FAILURE:
                         self.logger.warning("%s, maximum number of tries reached" % e.pgcode)
-                        raise
+                        raise except_osv(_("Error!"), _("Sorry, the process has been aborted because it ran into a conflict with another previous process."))
                     wait_time = random.uniform(0.0, 2 ** tries)
                     tries += 1
                     self.logger.info("%s, retrying %d/%d in %.04f sec..." % (e.pgcode, tries, MAX_TRIES_ON_CONCURRENCY_FAILURE, wait_time))
