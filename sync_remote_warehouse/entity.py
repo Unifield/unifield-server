@@ -110,9 +110,13 @@ class Entity(osv.osv):
             add the package contents to the update_csv_contents dictionary and mark the package as sent
             @return: (number of total_updates, number of delete_sdref rules)
             """
+            rule_id = self.pool.get('sync.client.rule').search(cr, uid, [('server_id','=',packet['rule_id']),'|',('usb','=',True),('usb','=',False)])
+            if not rule_id:
+                raise osv.except_osv('Cannot find rule', 'Cannot find rule with server_id %s' % packet['rule_id'])
+            rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id[0])
             
             # create header row if needed
-            columns = ['source', 'model', 'version', 'fields', 'values', 'sdref', 'is_deleted']
+            columns = ['source', 'model', 'version', 'sequence', 'fields', 'values', 'sdref', 'is_deleted']
             if not update_csv_contents:
                 update_csv_contents.append(columns)
             
@@ -122,6 +126,7 @@ class Entity(osv.osv):
                     entity.name,
                     packet['model'], # model
                     update['version'],
+                    rule.sequence_number,
                     packet['fields'],
                     update['values'],
                     update['sdref'],
