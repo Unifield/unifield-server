@@ -104,13 +104,12 @@ class usb_synchronisation(osv.osv_memory):
         }
         
         # update wizard to show results of push to user
-        updates_result = updates and 'Successfully exported %s update(s)\n' % updates or 'No updates that need to be synchronised have been made so there were no updates to push\n'
-        deletions_result = deletions and 'Successfully exported %s deletion(s)\n' % deletions or 'No deletions that need to be synchronised have been made so there were no deletions to push\n'
-        messages_result = messages and 'Successfully exported %s message(s)\n' % messages or 'No messages that need to be synchronised have been made so there were no messages to push\n'
+        updates_result = 'Exported %s update(s)\n' % updates
+        deletions_result = 'Exported %s deletion(s)\n' % deletions
+        messages_result = 'Exported %s message(s)\n' % messages
         
         vals['push_result'] = updates_result + deletions_result + messages_result
-        if updates or deletions or messages:
-            vals['push_file_visible'] = True,
+        vals['push_file_visible'] = True,
          
         return self.write(cr, uid, ids, vals, context=context)
 

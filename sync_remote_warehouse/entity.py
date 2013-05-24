@@ -74,16 +74,14 @@ class Entity(osv.osv):
         messages = self.usb_push_create_message(cr, uid, context=context)
         
         # compress into zip
-        if updates or messages:
-            updates_count, deletions_count, messages_count = self.usb_push_create_zip(cr, uid, context=context)
+        updates_count, deletions_count, messages_count = self.usb_push_create_zip(cr, uid, context=context)
         
         # cleanup
         self.usb_push_validate(cr, uid, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         
         # advance step if there was something to push
-        if any((updates_count, deletions_count, messages_count)):
-            self._usb_change_sync_step(cr, uid, 'push_performed')
+        self._usb_change_sync_step(cr, uid, 'push_performed')
         
         # return 
         return (updates_count, deletions_count, messages_count)
@@ -224,9 +222,6 @@ class Entity(osv.osv):
             
         if not messages_todo:
             logger.switch('msg_push', 'ok')
-        
-        if not updates_todo and not messages_todo:
-            return 0, 0, 0
         
         ################################################### 
         ################# create updates ##################
@@ -551,6 +546,7 @@ class Entity(osv.osv):
                 
         else:
             logger.replace(logger_index, _('Update(s) to import: 0'))
+            self._usb_change_sync_step(cr, uid, 'pull_performed')
             
         return (data_to_import_data, import_error, number_of_updates_ran, run_error)
     
@@ -607,6 +603,7 @@ class Entity(osv.osv):
                 logger.switch('msg_pull','failed')
         else:
             logger.replace(logger_index, _('Message(s) to import: 0'))
+            logger.switch('msg_pull','ok')
             
         return (data_to_import_data, import_error, number_of_messages_ran, run_error)
         
