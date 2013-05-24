@@ -526,7 +526,11 @@ class update_received(osv.osv):
             # Remove updates about deleted records in the list
             sdref_update_ids = dict((update.sdref, update.id) for update in updates)
             # For bi-private rules, it is possible that the sdref doesn't exists /!\
-            sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), True)
+            # - In case of import update, if sdref doesn't exists, the initial
+            #   value is False in order to keep it for group execution
+            # - For delete updates, if sdref doesn't exists, the initial value
+            #   is True in order to keep ignore it from group deletion
+            sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), do_deletion)
             sdref_are_deleted.update(
                 obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
             update_id_are_deleted = dict(zip(
@@ -537,7 +541,7 @@ class update_received(osv.osv):
             self.write(cr, uid, deleted_update_ids, {
                 'editable' : False,
                 'run' : True,
-                'log' : "This update has been ignored because the record is marked as deleted.",
+                'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
             }, context=context)
             updates = filter(lambda update: update.id not in deleted_update_ids, updates)
             if not updates: continue
