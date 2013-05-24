@@ -25,7 +25,7 @@ import tools
 
 
 class MonitorLogger(object):
-    def __init__(self, cr, uid, context=None):
+    def __init__(self, cr, uid, defaults={}, context=None):
         db, pool = pooler.get_db_and_pool(cr.dbname)
         self.monitor = pool.get('sync.monitor')
         self.cr = db.cursor()
@@ -39,6 +39,7 @@ class MonitorLogger(object):
             'data_push' : 'null',
             'msg_push' : 'null',
         }
+        self.info.update(defaults)
         self.final_status = 'ok'
         self.messages = []
         self.row_id = self.monitor.create(self.cr, self.uid, self.info, context=self.context)
@@ -60,6 +61,9 @@ class MonitorLogger(object):
 
     def replace(self, index, message, step=None):
         self.messages[index] = self.__format_message(message, step)
+
+    def pop(self, index):
+        return self.messages.pop(index)
 
     def switch(self, step, status):
         if status in ('failed', 'aborted'):
@@ -108,8 +112,8 @@ class sync_monitor(osv.osv):
     def _get_default_sequence_number(self, cr, uid, context=None):
         return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.monitor'))
 
-    def get_logger(self, cr, uid, context=None):
-        return MonitorLogger(cr, uid, context=context)
+    def get_logger(self, cr, uid, defaults={}, context=None):
+        return MonitorLogger(cr, uid, defaults=defaults, context=context)
 
     _columns = {
         #TODO: auto increment

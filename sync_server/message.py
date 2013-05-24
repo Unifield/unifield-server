@@ -24,7 +24,7 @@ from osv import fields
 from tools.translate import _
 
 import logging
-from sync_common.common import sync_log
+from sync_common import sync_log
 
 class message(osv.osv):
     _name = "sync.server.message"

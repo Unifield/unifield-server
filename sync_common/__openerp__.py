@@ -33,7 +33,6 @@
     'init_xml': [],
     'data': [
         'security/group.xml',
-        'security/ir.model.access.csv',
     ],
     'installable': True,
 }
