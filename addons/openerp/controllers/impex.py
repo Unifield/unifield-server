@@ -32,6 +32,8 @@ from openobject.tools import expose, redirect, ast
 import simplejson
 import time
 from openobject.i18n import format
+import re
+
 
 product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
 def datas_read(ids, model, flds, context=None):
@@ -373,7 +375,7 @@ class ImpEx(SecuredController):
     def export_html(self, fields, result, view_name):
         cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
-        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format()))}
+        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format())), 're': re}
 
 
     @expose(content_type="application/octet-stream")
@@ -419,7 +421,6 @@ class ImpEx(SecuredController):
         else:
             ids = params.ids or []
         result = datas_read(ids, params.model, flds, context=ctx)
-
         if result.get('warning'):
             common.warning(unicode(result.get('warning', False)), _('Export Error'))
             return False
