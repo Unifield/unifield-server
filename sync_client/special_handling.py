@@ -97,7 +97,7 @@ class account_move_line(osv.osv):
             context = {}
             
         sync_check = check
-        if context.get('sync_data', False):
+        if context.get('sync_update_execution', False):
             sync_check = False
                 
         return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=update_check)
