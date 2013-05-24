@@ -1087,11 +1087,28 @@ class account_move_line(osv.osv):
             obj_move_rec.unlink(cr, uid, unlink_ids)
         return True
 
+    def check_unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context.get('sync_update_execution'):
+            return self._update_check(cr, uid, ids, context)
+        # When coming from sync, deletion should be less restrictive.
+        for l in self.browse(cr, uid, ids):
+            if l.move_id.state <> 'draft' and l.state <> 'draft' and (not l.journal_id.entry_posted):
+                raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
+            if l.reconcile_id:
+                raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
+
     def unlink(self, cr, uid, ids, context=None, check=True):
         if context is None:
             context = {}
         move_obj = self.pool.get('account.move')
-        self._update_check(cr, uid, ids, context)
+        #self._update_check(cr, uid, ids, context)
+        self.check_unlink(cr, uid, ids, context)
         result = False
         for line in self.browse(cr, uid, ids, context=context):
             context['journal_id'] = line.journal_id.id
