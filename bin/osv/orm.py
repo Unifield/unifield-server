@@ -555,10 +555,7 @@ class orm_template(object):
             return browse_null()
 
     def __export_row(self, cr, uid, row, fields, context=None):
-        if context is None:
-            context = {}
-            
-        sync_context = context.get('sync_context')
+        sync_context = isinstance(context, dict) and context.get('sync_update_creation')
 
         def check_type(field_type):
             if field_type == 'float':
