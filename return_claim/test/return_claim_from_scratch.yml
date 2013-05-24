@@ -125,13 +125,13 @@
     assert not a_qty, 'Quantity for product A is not empty - %s'%a_qty
     assert not b_qty, 'Quantity for product B is not empty - %s'%b_qty
     # check the moves in OUT
-    a_qty = [10.0]
-    b_qty = [5.0]
+    a_qty = [10.0, 0.0]
+    b_qty = [5.0, 0.0]
     out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_001_claim"))], context=context)
     # save out into the context
     context.update({'out_id_claim': out_ids[0]})
     # only one OUT for the sale order
-    assert len(out_ids) == 1, 'number of out objects is wrong - 1 - %s'%len(out_ids)
+    assert len(out_ids) == 2, 'number of out objects is wrong - 2 - %s'%len(out_ids)
     for obj in self.browse(cr, uid, out_ids, context=context):
       for move in obj.move_lines:
         if move.product_id.id == ref("claim_product_A"):
