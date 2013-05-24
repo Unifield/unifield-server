@@ -63,7 +63,7 @@ x:FullRows="1">
 <Row>
   % for index, h in enumerate(headers):
     <% result=row[index] %>
-    % if h[1] == 'date':
+    % if h[1] == 'date' and result and result != 'False':
         <Cell ss:StyleID="sShortDate">
             <Data ss:Type="DateTime">${result|n}T00:00:00.000</Data>
         </Cell>

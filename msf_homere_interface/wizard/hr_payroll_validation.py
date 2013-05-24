@@ -41,7 +41,7 @@ class hr_payroll_validation(osv.osv_memory):
             context = {}
         res = super(hr_payroll_validation, self).fields_get(cr, uid, fields, context)
         hrp = self.pool.get('hr.payroll.msf')
-        search_lines_ids = hrp.search(cr, uid, [('account_id.user_type.code', '!=', 'expense')])
+        search_lines_ids = hrp.search(cr, uid, [('account_id.user_type.code', '!=', 'expense'), ('state', '=', 'draft')])
         for line in hrp.read(cr, uid, search_lines_ids, ['account_id']):
             # Add line description
             field_name = 'entry%s' % line.get('id')
@@ -58,7 +58,6 @@ class hr_payroll_validation(osv.osv_memory):
             # Add fifth party field
             fifth_name = 'fifth%s' % line.get('id')
             res.update({fifth_name: {'selectable': True, 'type': 'float', 'string': 'Amount'}})
-
         return res
 
     def default_get(self, cr, uid, fields, context=None):

@@ -1652,7 +1652,7 @@ stock moves which are already processed : '''
 purchase_order()
 
 
-class purchase_order_line(osv.osv):
+class purchase_order_line1(osv.osv):
     '''
     this modification is placed before merged, because unit price of merged should be Computation as well
     '''
@@ -1661,7 +1661,7 @@ class purchase_order_line(osv.osv):
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
                 }
     
-purchase_order_line()
+purchase_order_line1()
 
 
 class purchase_order_merged_line(osv.osv):

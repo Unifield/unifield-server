@@ -234,6 +234,8 @@ class account_line_csv_export(osv.osv_memory):
             ids = [ids]
         if not writer:
             raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+
+        field_sel = self.pool.get('ir.model.fields').get_browse_selection
         # Prepare some value
         currency_name = ""
         if currency_id:
