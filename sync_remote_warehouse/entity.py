@@ -116,7 +116,7 @@ class Entity(osv.osv):
             rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id[0])
             
             # create header row if needed
-            columns = ['source', 'model', 'version', 'sequence', 'fields', 'values', 'sdref', 'is_deleted']
+            columns = ['source', 'model', 'version', 'sequence', 'rule_sequence', 'fields', 'values', 'sdref', 'is_deleted']
             if not update_csv_contents:
                 update_csv_contents.append(columns)
             
@@ -127,6 +127,7 @@ class Entity(osv.osv):
                     packet['model'], # model
                     update['version'],
                     rule.sequence_number,
+                    rule.server_id,
                     packet['fields'],
                     update['values'],
                     update['sdref'],
@@ -138,6 +139,8 @@ class Entity(osv.osv):
                 update_csv_contents.append([
                     entity.name,
                     packet['model'],
+                    '',
+                    '',
                     '',
                     '',
                     '',
