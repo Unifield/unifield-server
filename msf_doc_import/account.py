@@ -124,7 +124,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'partner_id': l.partner_id and l.partner_id.id or False,
                             'employee_id': l.employee_id and l.employee_id.id or False,
                         }
-                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context)
+                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
