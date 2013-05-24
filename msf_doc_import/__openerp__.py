@@ -25,7 +25,7 @@
     "description": "This module enables to import file in xls format",
     "author": "MSF - TeMPO Consulting",
     "category": "Sale",
-    "depends": ["sale", "purchase", "tender_flow", "msf_supply_doc_export", "spreadsheet_xml", "account_override", "register_accounting", "msf_homere_interface"],
+    "depends": ["sale", "purchase", "tender_flow", "msf_supply_doc_export", "spreadsheet_xml", "account_override", "register_accounting"],
     "init_xml": [],
     "update_xml": [
         'view/sale_order_import_lines_view.xml',

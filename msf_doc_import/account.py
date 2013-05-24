@@ -29,6 +29,8 @@ from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from csv import DictReader
+import threading
+import pooler
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -37,10 +39,17 @@ class msf_doc_import_accounting(osv.osv_memory):
         'date': fields.date(string="Migration date", required=True),
         'file': fields.binary(string="File", filters='*.xml, *.xls', required=True),
         'filename': fields.char(string="Imported filename", size=256),
+        'progression': fields.float(string="Progression", readonly=True),
+        'message': fields.char(string="Message", size=256, readonly=True),
+        'state': fields.selection([('draft', 'Created'), ('inprogress', 'In Progress'), ('error', 'Error'), ('done', 'Done')], string="State", readonly=True, required=True),
+        'error_ids': fields.one2many('msf.doc.import.accounting.errors', 'wizard_id', "Errors", readonly=True),
     }
 
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
+        'progression': lambda *a: 0.0,
+        'state': lambda *a: 'draft',
+        'message': lambda *a: _('Initialisation…'),
     }
 
     def create_entries(self, cr, uid, ids, context=None):
@@ -66,9 +75,13 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Search lines
             entries = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [('wizard_id', '=', w.id)])
             if not entries:
+                # Update wizard
+                self.write(cr, uid, [w.id], {'message': _('No lines…'), 'progression': 100.0})
                 return res
             # Browse result
             b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
+            # Update wizard
+            self.write(cr, uid, [w.id], {'message': _('Grouping by currencies…'), 'progression': 10.0})
             # Search all currencies (to create moves)
             available_currencies = []
             for entry in b_entries:
@@ -77,6 +90,13 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Delete duplicates
             if available_currencies and len(available_currencies) > 1:
                 available_currencies = list(set(available_currencies))
+            # Update wizard
+            self.write(cr, uid, ids, {'message': _('Writing a move for each currency…'), 'progression': 20.0})
+            num = 1
+            nb_currencies = float(len(available_currencies))
+            current_percent = 20.0
+            remaining_percent = 80.0
+            step = float(remaining_percent / nb_currencies)
             for c_id, p_id in available_currencies:
                 # Create a move
                 move_vals = {
@@ -89,7 +109,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                     'status': 'manu',
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, move_vals, context)
-                for l in b_entries:
+                for l_num, l in enumerate(b_entries):
+                    # Update wizard
+                    progression = 20.0 + ((float(l_num) / float(len(b_entries))) * step) + (float(num - 1) * step)
+                    self.write(cr, uid, [w.id], {'progression': progression})
                     if l.currency_id.id == c_id and l.period_id.id == p_id:
                         distrib_id = False
                         # Create analytic distribution
@@ -124,10 +147,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'partner_id': l.partner_id and l.partner_id.id or False,
                             'employee_id': l.employee_id and l.employee_id.id or False,
                         }
-                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context)
+                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
+                # Update wizard
+                progression = 20.0 + (float(num) * step)
+                self.write(cr, uid, [w.id], {'progression': progression})
+                num += 1
         return res
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def _import(self, dbname, uid, ids, context=None):
         """
         Do treatment before validation:
         - check data from wizard
@@ -138,26 +165,39 @@ class msf_doc_import_accounting(osv.osv_memory):
         if not context:
             context = {}
         # Prepare some values
+        cr = pooler.get_db(dbname).cursor()
         created = 0
         processed = 0
         errors = []
 
+        # Update wizard
+        self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00})
         # Clean up old temporary imported lines
         old_lines_ids = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [])
         self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
 
         # Check wizard data
         for wiz in self.browse(cr, uid, ids):
+            # Update wizard
+            self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00})
+
             # Check that a file was given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
+            # Update wizard
+            self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00})
             fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
             fileobj.close()
             content = SpreadsheetXML(xmlfile=fileobj.name)
             if not content:
                 raise osv.except_osv(_('Warning'), _('No content.'))
+            # Update wizard
+            self.write(cr, uid, [wiz.id], {'message': _('Processing line number…'), 'progression': 4.00})
             rows = content.getRows()
+            nb_rows = len([x for x in content.getRows()])
+            # Update wizard
+            self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
             # Use the first row to find which column to use
             cols = {}
             col_names = ['Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
@@ -174,8 +214,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el,))
             # All lines
             money = {}
+            # Update wizard
+            self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
             # Check file's content
             for num, r in enumerate(rows):
+                # Update wizard
+                percent = (float(num+1) / float(nb_rows+1)) * 100.0
+                progression = ((float(num+1) * 94) / float(nb_rows)) + 6
+                self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression})
                 # Prepare some values
                 r_debit = 0
                 r_credit = 0
@@ -320,41 +366,56 @@ class msf_doc_import_accounting(osv.osv_memory):
                 if (money[c]['debit'] - money[c]['credit']) >= 10**-2:
                     raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s' ) % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
 
+        # Update wizard
+        self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
+
+        wiz_state = 'done'
         # If errors, cancel probable modifications
         if errors:
-            cr.rollback()
+            #cr.rollback()
             created = 0
             message = 'Import FAILED.'
             # Delete old errors
-            error_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [])
+            error_ids = self.pool.get('msf.doc.import.accounting.errors').search(cr, uid, [], context)
             if error_ids:
-                self.pool.get('hr.payroll.employee.import.errors').unlink(cr, uid, error_ids)
+                self.pool.get('msf.doc.import.accounting.errors').unlink(cr, uid, error_ids ,context)
             # create errors lines
             for e in errors:
-                self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': e})
-            context.update({'employee_import_wizard_ids': ids})
+                self.pool.get('msf.doc.import.accounting.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': e}, context)
+            wiz_state = 'error'
         else:
+            # Update wizard
+            self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0})
             # Create all journal entries
             self.create_entries(cr, uid, ids, context)
             message = 'Import successful.'
 
-        # Display result
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
-        view_id = view_id and view_id[1] or False
-        context.update({'from': 'msf_doc_import_accounting', 'message': message})
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': wiz.filename, 'created': created, 'total': processed, 'state': 'migration', 'nberrors': len(errors)}, context)
+        # Update wizard
+        self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+
+        # Close cursor
+        cr.commit()
+        cr.close()
+        return True
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Launch process in a thread and return a wizard
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Launch a thread
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
         
-        return {
-            'name': 'Import Migration Entries Confirmation',
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.payroll.import.confirmation',
-            'view_mode': 'form',
-            'view_type': 'form',
-            'view_id': [view_id],
-            'res_id': res_id,
-            'target': 'new',
-            'context': context,
-        }
+        return self.write(cr, uid, ids, {'state': 'inprogress'}, context)
+
+    def button_update(self, cr, uid, ids, context=None):
+        """
+        Update view
+        """
+        return False
 
 msf_doc_import_accounting()
 
@@ -388,4 +449,14 @@ class msf_doc_import_accounting_lines(osv.osv):
     }
 
 msf_doc_import_accounting_lines()
+
+class msf_doc_import_accounting_errors(osv.osv_memory):
+    _name = 'msf.doc.import.accounting.errors'
+
+    _columns = {
+        'msg': fields.text("Description", readonly=True, required=True),
+        'wizard_id': fields.many2one('msf.doc.import.accounting', "Wizard", required=True, readonly=True),
+    }
+
+msf_doc_import_accounting_errors()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
