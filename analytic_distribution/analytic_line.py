@@ -180,7 +180,7 @@ class analytic_line(osv.osv):
             vals2 = vals.copy()
             for el in ['account_id', 'cost_center_id', 'destination_id']:
                 if not el in vals:
-                    vals2.update({el: getattr(l, el, False),})
+                    vals2.update({el: l[el] and l[el]['id'] or False})
             self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 
