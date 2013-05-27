@@ -223,8 +223,10 @@ function list_hookAttrChange(list_name) {
                 if (typeof(n) == "number") { // {'invisible': [1]}
                     return form_onAttrChange(container, widget, attr, n, $this);
                 }
+                var name = prefix + n[0];
+                var field = openobject.dom.get(name);
                 if (row_is_editable) {
-                    var $field = jQuery(this).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
                     $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
                 }
                 return form_onAttrChange(container, widget, attr, attrs[attr], $this);
