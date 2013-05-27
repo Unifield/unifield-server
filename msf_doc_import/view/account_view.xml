@@ -2,6 +2,17 @@
 <openerp>
     <data>
 
+        <record id="migration_accounting_import_error" model="ir.ui.view">
+            <field name="name">migration.accounting.import.errors</field>
+            <field name="model">msf.doc.import.accoutnting.error</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Information">
+                    <field name="msg" />
+                </tree>
+            </field>
+        </record>
+
     <!--
         Wizard
     -->
@@ -21,11 +32,7 @@
                     <newline/>
                     <button name="button_update" type="object" string="Update" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
                     <newline />
-                    <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}">
-                        <tree string="Information">
-                            <field name="msg"/>
-                        </tree>
-                    </field>
+                    <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
                         <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
