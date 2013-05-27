@@ -87,7 +87,7 @@ class account_move_line_reconcile(osv.osv_memory):
         # Browse all lines and check currencies, journals, and transfers state
         currencies = defaultdict(list)
         journals = defaultdict(list)
-        transfers = defaultdict(list)
+        transfers = []
         transfer_with_change = False
         transfer = False
         debits = 0
@@ -98,7 +98,8 @@ class account_move_line_reconcile(osv.osv_memory):
                 # Prepare some infos needed for transfers with/without change
                 currencies[(line.currency_id, line.transfer_journal_id and line.transfer_journal_id.currency or None)].append(line.id)
                 journals[(line.journal_id.id, line.transfer_journal_id and line.transfer_journal_id.id or None)].append(line.id)
-                transfers[line.is_transfer_with_change or None].append(line.id)
+                if line.is_transfer_with_change:
+                    transfers.append(line.id)
                 debits += line.debit
                 credits += line.credit
                 statements.append(line.statement_id)
@@ -110,11 +111,7 @@ class account_move_line_reconcile(osv.osv_memory):
             # Cross check on: "third parties" × "journals" (if YES, this is a transfer)
             if keys[0][1] == keys[1][0] and keys[0][0] == keys[1][1]:
                 transfer = True
-        nb_transfers = 0
-        for t in transfers:
-            if t:
-                nb_transfers = 0
-        if len(transfers) == nb_transfers:
+        if len(transfers) == len(context['active_ids']):
             transfer_with_change = True
         # Cross check on: "journal currency" × "transfer_journal currency" (should check all error cases to avoid transfer_with_change problems)
         if transfer_with_change:
