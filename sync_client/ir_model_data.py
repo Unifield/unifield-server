@@ -135,7 +135,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         ids = self.search(cr, 1, [('model', 'not in', MODELS_TO_IGNORE), ('module', '!=', 'sd'), ('name', 'not in', XML_ID_TO_IGNORE)], context=context)
         for rec in self.browse(cr, 1, ids):
             name = "%s_%s" % (rec.module, rec.name)
-            res_ids = self.search(cr, 1, [('module','=','sd'),('res_id','=',rec.res_id)])
+            res_ids = self.search(cr, 1, [('module','=','sd'),('model','=',rec.model),('res_id','=',rec.res_id)])
             if res_ids:
                 continue
             args = {
