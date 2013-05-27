@@ -128,7 +128,7 @@ class Entity(osv.osv):
                     rule.server_id,
                     packet['fields'],
                     update['values'],
-                    update['sdref'],
+                    'sd.%s' % update['sdref'],
                     False,
                 ])
                 
@@ -142,7 +142,7 @@ class Entity(osv.osv):
                     '',
                     '',
                     '',
-                    delete_sdref,
+                    'sd.%s' % delete_sdref,
                     True,
                 ])
             
