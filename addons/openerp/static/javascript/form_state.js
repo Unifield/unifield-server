@@ -307,6 +307,9 @@ function form_evalExpr(prefix, expr, ref_elem) {
             stack.push(ex[0]);
             continue;
         }
+        if (!elem || !elem.length) {
+            continue
+        }
         var val = ex[2];
 
         var elem_value;
