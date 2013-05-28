@@ -294,8 +294,9 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for inv in self.browse(cr, uid, ids):
-            if inv.is_direct_invoice:
-                raise osv.except_osv(_('Error'), _('You cannot delete a direct supplier invoice!'))
+            if inv.is_direct_invoice and inv.register_line_ids:
+                if not context.get('from_register', False):
+                    self.pool.get('account.bank.statement.line').unlink(cr, uid, [x.id for x in inv.register_line_ids], {'from_direct_invoice': True})
         return super(account_invoice, self).unlink(cr, uid, ids, context)
 
 account_invoice()
