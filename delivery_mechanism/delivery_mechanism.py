@@ -726,7 +726,7 @@ class stock_picking(osv.osv):
                         # We delete the lines which is not from the IN
                         for line in moves_picking:
                             if line.move_id.id not in pick_moves:
-                                self.pool.get('stock.move.memory.picking').unlink(cr, uid, [line.id])
+                                self.pool.get('stock.move.memory.picking').unlink(cr, uid, [line.id], context=context)
                         # We copy all data in lines
                         wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
                         # We process the creation of the picking
