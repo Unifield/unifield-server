@@ -293,7 +293,6 @@ ManyToOne.prototype.on_keydown = function(evt) {
                 var $selectedRow = jQuery(idSelector("autoComplete" + this.name + "_" + this.selectedResultRow));
 
                 this.setCompletionText($selectedRow);
-
                 $(this.field).change();
                 this.change_icon();
                 this.clearResults();
@@ -333,7 +332,8 @@ ManyToOne.prototype.on_keydown = function(evt) {
     if((evt.which == 8 || evt.which == 46) && this.field.value) {
         this.text.value = '';
         this.field.value = '';
-        $(this.field).change();
+        this.on_change(evt);
+        //$(this.field).change();
     }
 
     //Tab
