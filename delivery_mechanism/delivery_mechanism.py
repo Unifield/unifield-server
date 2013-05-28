@@ -722,11 +722,11 @@ class stock_picking(osv.osv):
                     wiz = self.create_picking(cr, uid, [picking.id], context=context)
                     wiz_obj = self.pool.get(wiz['res_model'])
                     moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking
-                    if moves_picking:
-                        # We delete the lines which is not from the IN
-                        for line in moves_picking:
-                            if line.move_id.id not in pick_moves:
-                                self.pool.get('stock.move.memory.picking').unlink(cr, uid, [line.id], context=context)
+                    # We delete the lines which is not from the IN
+                    for line in moves_picking:
+                        if line.move_id.id not in pick_moves:
+                            self.pool.get('stock.move.memory.picking').unlink(cr, uid, [line.id], context=context)
+                    if wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking:
                         # We copy all data in lines
                         wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
                         # We process the creation of the picking
