@@ -152,10 +152,16 @@ class account_target_costcenter(osv.osv):
                     instance = target_line.instance_id
                     if instance.state == 'active':
                         res_data = [instance.instance]
-                        # if it is a coordo instance, send it to its projects as well
+                        # if it is a coordo instance, send it to its active projects as well
                         if instance.level == 'coordo':
                             for project in instance.child_ids:
-                                res_data.append(project.instance)
+                                if project.state == 'active':
+                                    res_data.append(project.instance)
+                        # if it is a project instance, send it to its active siblings as well
+                        elif instance.level == 'project' and instance.parent_id:
+                            for project in instance.parent_id.child_ids:
+                                if project != instance and project.state == 'active':
+                                    res_data.append(project.instance)
                         res[target_line.id] = res_data
             return res
         return super(account_target_costcenter, self).get_destination_name(cr, uid, ids, dest_field, context=context)
@@ -224,6 +230,14 @@ class msf_instance(osv.osv):
             if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
                 parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
                 self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
+                # also also, re-send other projects' lines
+                if instance.parent_id.child_ids:
+                    sibling_target_ids = []
+                    for sibling in instance.parent_id.child_ids:
+                        if sibling != instance and sibling.state == 'active':
+                            sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
+                    self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
+        
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -245,6 +259,13 @@ class msf_instance(osv.osv):
                     if instance.parent_id and instance.parent_id.target_cost_center_ids and instance.level == 'project':
                         parent_target_ids = [x.id for x in instance.parent_id.target_cost_center_ids]
                         self.pool.get('account.target.costcenter').synchronize(cr, uid, parent_target_ids, context=context)
+                        # also also, re-send other projects' lines
+                        if instance.parent_id.child_ids:
+                            sibling_target_ids = []
+                            for sibling in instance.parent_id.child_ids:
+                                if sibling != instance and sibling.state == 'active':
+                                    sibling_target_ids += [x.id for x in sibling.target_cost_center_ids]
+                            self.pool.get('account.target.costcenter').synchronize(cr, uid, sibling_target_ids, context=context)
                         
         return super(msf_instance, self).write(cr, uid, ids, vals, context=context)
 
