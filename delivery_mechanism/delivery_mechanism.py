@@ -721,14 +721,16 @@ class stock_picking(osv.osv):
                 if picking.type == 'out' and picking.subtype == 'picking' and picking.state == 'draft':
                     wiz = self.create_picking(cr, uid, [picking.id], context=context)
                     wiz_obj = self.pool.get(wiz['res_model'])
-                    # We delete the lines which is not from the IN
-                    for line in wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking:
-                        if line.move_id.id not in pick_moves:
-                            line.unlink(cr, uid)
-                    # We copy all data in lines
-                    wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
-                    # We process the creation of the picking
-                    wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz['context'])
+                    moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz['context']).product_moves_picking
+                    if moves_picking:
+                        # We delete the lines which is not from the IN
+                        for line in moves_picking:
+                            if line.move_id.id not in pick_moves:
+                                line.unlink(cr, uid)
+                        # We copy all data in lines
+                        wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz['context'])
+                        # We process the creation of the picking
+                        wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz['context'])
 
             # Assign all updated out moves
 #            for move in move_obj.browse(cr, uid, to_assign_moves):
