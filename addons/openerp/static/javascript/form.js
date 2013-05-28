@@ -646,6 +646,7 @@ function onChange(caller){
                         fld.value = value[0] || '';
                         try {
                             openobject.dom.get(prefix + k + '_text').value = value[1] || '';
+                            fld._m2o.change_icon();
                         }
                         catch (e) {
                         }
