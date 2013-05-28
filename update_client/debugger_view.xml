@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+
+    <record id="debugger_form" model="ir.ui.view">
+      <field name="name">sync.client.debugger.form</field>
+      <field name="model">sync.client.debugger</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form col="1">
+          <group col="4">
+            <field name="release_version"/>
+            <field name="database_revision"/>
+          </group>
+          <separator string="Log files available"/>
+          <field name="log_ids" nolabel="1">
+            <tree string="Select a file to download">
+              <field name="name"/>
+              <field name="mtime"/>
+            </tree>
+          </field>
+          <button name="action_populate" type="object" string="Populate"/>
+        </form>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="debugger_action">
+        <field name="name">Get log files</field>
+        <field name="res_model">sync.client.debugger</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="debugger_menu" name="Get log files"
+              parent="sync_client.mon_menu" sequence="30"
+              action="debugger_action"/>
+
+    <record id="logs_form" model="ir.ui.view">
+      <field name="name">sync.client.logs.form</field>
+      <field name="model">sync.client.logs</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form col="1">
+          <field name="path" nolabel="1"/>
+          <field name="content" nolabel="1"/>
+        </form>
+      </field>
+    </record>
+
+  </data>
+</openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=2:softtabstop=2:shiftwidth=2:
+-->

@@ -32,6 +32,7 @@
     'depends': ['sync_client'],
     'data': [
         'wizard_view.xml',
+        'debugger_view.xml',
         'security/ir.model.access.csv',
     ],
     'installable': True,
