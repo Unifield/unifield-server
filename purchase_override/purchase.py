@@ -617,6 +617,11 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib and not po.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                
+                # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
+                if not distrib:
+                    return True
+                
                 for cc_line in distrib.cost_center_lines:
                     if is_intermission and cc_line.analytic_id.id != intermission_cc:
                         cc_line.write({'analytic_id': intermission_cc})
