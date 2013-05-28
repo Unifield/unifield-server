@@ -112,6 +112,15 @@ class res_currency_sync(osv.osv):
     
 res_currency_sync()
 
+class product_pricelist(osv.osv):
+    
+    _inherit = 'product.pricelist'
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        pricelist = self.browse(cr, uid, res_id)
+        return get_valid_xml_name(pricelist.name, pricelist.type)
+    
+product_pricelist()
 
 class hq_entries(osv.osv):
     
