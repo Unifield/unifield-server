@@ -200,7 +200,7 @@ The columns should be in this values:
         list_of_values = []
         for cell_nb in range(len(row)):
             cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-            list_of_values.append(cell_data)
+            list_of_values.append
         return list_of_values
 
     def get_header_index(self, cr, uid, ids, row, error_list, line_num, context):
@@ -369,6 +369,7 @@ The columns should be in this values:
             'comment': '',
             'confirmed_delivery_date': False,
             'text_error': '',
+            'price_unit_defined': False,
         }
 
         # Order Reference*
@@ -526,6 +527,7 @@ The columns should be in this values:
         rows = fileobj.getRows()
         # take all the lines of the file in a list of dict
         file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list=[], line_num=False, context=context)
+
         
         rows = fileobj.getRows()
         rows.next()
