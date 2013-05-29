@@ -358,17 +358,16 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
     def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
         instance_obj = self.pool.get('msf.instance')
-        xml_id = 'sd.%s' % sdref
 
         if not destination_name:
             return
         if destination_name != instance_name:
             message_data = {
-                    'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
+                    'identifier' : 'delete_%s_to_%s' % (sdref, destination_name),
                     'sent' : False,
                     'generate_message' : True,
                     'remote_call': self._name + ".message_unlink",
-                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
+                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, sdref),
                     'destination_name': destination_name
             }
             self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
