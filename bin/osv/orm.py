@@ -613,7 +613,7 @@ class orm_template(object):
                         r = r['id']
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
-                        data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+                        data_ids = model_data.search(cr, uid, [('module', '=', 'sd'), ('model', '=', r._table_name), ('res_id', '=', r['id'])])
                         if len(data_ids):
                             d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
                             if d['module']:
