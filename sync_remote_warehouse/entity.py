@@ -11,6 +11,9 @@ from datetime import datetime
 import uuid
 
 class Entity(osv.osv):
+
+    _DEBUG = True
+
     _inherit = 'sync.client.entity'
 
     _columns = {
@@ -51,6 +54,9 @@ class Entity(osv.osv):
         ]
     
     def _usb_change_sync_step(self, cr, uid, step):
+        if self._DEBUG:
+            return True
+
         entity = self.get_entity(cr, uid)
         return self.write(cr, uid, entity.id, {'usb_sync_step': step})
         
