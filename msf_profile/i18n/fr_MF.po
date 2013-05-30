@@ -7106,7 +7106,7 @@ msgstr "Serbe (Latin) / srpski"
 #: report:invoice:0
 #: report:packing.list:0
 msgid "PPL ref:"
-msgstr "Liste de Pré-Colisage - réf:"
+msgstr "PCL réf:"
 
 #. module: purchase_allocation_report
 #: model:ir.module.module,description:purchase_allocation_report.module_meta_information
@@ -25038,14 +25038,14 @@ msgstr "Nombre"
 
 #. module: msf_outgoing
 #: report:cargo.manifest:0
-#: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 msgid "SO ref:"
 msgstr "CdT Réf:"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:certificate.donation:0
+#: report:certificate.free.gift:0
 msgid "FO ref:"
 msgstr "CdT Réf:"
 
@@ -25588,11 +25588,15 @@ msgstr "Pas de ligne créée!"
 #. module: msf_outgoing
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 #: report:pre.packing.list:0
 msgid "Pack Value:"
 msgstr "Colis - Valeur"
+
+#. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "P. Value:"
+msgstr "C. Valeur"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -37402,10 +37406,14 @@ msgstr "Listes des Avances Ouvertes"
 #. module: msf_outgoing
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 msgid "Total Weight [kg]:"
 msgstr "Poids Total (kg)"
+
+#. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "∑ Weight [kg]:"
+msgstr "∑ Poids (kg)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -48199,6 +48207,11 @@ msgid "Chile"
 msgstr "Chili"
 
 #. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "∑ Value:"
+msgstr "∑ Valeur:"
+
+#. module: msf_outgoing
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
@@ -52822,8 +52835,8 @@ msgstr "Produit Actuel"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-msgid "Pack Weight [kg]:"
-msgstr "Colis - Poids (kg)"
+msgid "P. Weight [kg]:"
+msgstr "C. Poids (kg)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
