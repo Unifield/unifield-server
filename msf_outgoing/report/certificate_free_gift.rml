@@ -289,11 +289,11 @@
             <para style="Parcel">[[ pack_family.total_weight ]]</para>
           </td>
           <td>
-            <para style="Parcel">Pack Value [[ '[%s]' % pack_family.currency_id.name ]]:</para>
+            <para style="Parcel">Pack Value [[ pack_family.currency_id and '[%s]' % pack_family.currency_id.name or '' ]]:</para>
             <para style="Parcel">[[ pack_family.amount ]] [[ pack_family.currency_id.name ]]</para>
           </td>
           <td>
-            <para style="Parcel">∑ Value [[ '[%s]' % pack_family.currency_id.name ]]:</para>
+            <para style="Parcel">∑ Value [[ pack_family.currency_id and '[%s]' % pack_family.currency_id.name or '' ]]:</para>
             <para style="Parcel">[[ pack_family.total_amount ]] [[ pack_family.currency_id.name ]]</para>
           </td>
         </tr>
@@ -347,6 +347,9 @@
             </td>
           </tr>
         </blockTable>
+          <para style="P16">
+            <font color="white"> </font>
+          </para>
       </section>
     </section>
   </story>
