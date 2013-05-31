@@ -150,6 +150,13 @@ class msf_doc_import_accounting(osv.osv_memory):
 
         # Check wizard data
         for wiz in self.browse(cr, uid, ids):
+            # UF-2045: Check that the given date is in an open period
+            wiz_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wiz.date, context)
+            if not period_ids:
+                raise osv.except_osv(_('Warning'), _('No period found!'))
+            period = self.pool.get('account.period').browse(cr, uid, wiz_period_ids[0], context)
+            if not period or period.state in ['creted', 'done']:
+                raise osv.except_osv(_('Warning'), _('Period for migration is not open!'))
             # Check that a file was given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
