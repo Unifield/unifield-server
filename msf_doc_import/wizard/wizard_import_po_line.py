@@ -251,7 +251,7 @@ Importation completed in %s!
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)
-        purchase_obj.write(cr, uid, po_id, {'state': 'draft'}, context)
+        purchase_obj.write(cr, uid, po_id, {'state': 'draft', 'import_in_progress': False}, context)
         if not context.get('yml_test', False):
             cr.commit()
             cr.close()
@@ -287,7 +287,7 @@ Importation completed in %s!
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            purchase_obj.write(cr, uid, po_id, {'state': 'done'}, context)
+            purchase_obj.write(cr, uid, po_id, {'state': 'done', 'import_in_progress': True}, context)
         if not context.get('yml_test'):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
             thread.start()
