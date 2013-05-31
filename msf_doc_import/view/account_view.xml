@@ -4,11 +4,11 @@
 
         <record id="migration_accounting_import_error" model="ir.ui.view">
             <field name="name">migration.accounting.import.errors</field>
-            <field name="model">msf.doc.import.accoutnting.error</field>
+            <field name="model">msf.doc.import.accoutnting.errors</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Information">
-                    <field name="msg" />
+                    <field name="name" />
                 </tree>
             </field>
         </record>

@@ -381,7 +381,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.pool.get('msf.doc.import.accounting.errors').unlink(cr, uid, error_ids ,context)
             # create errors lines
             for e in errors:
-                self.pool.get('msf.doc.import.accounting.errors').create(cr, uid, {'wizard_id': wiz.id, 'msg': e}, context)
+                self.pool.get('msf.doc.import.accounting.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
             wiz_state = 'error'
         else:
             # Update wizard
@@ -454,7 +454,7 @@ class msf_doc_import_accounting_errors(osv.osv_memory):
     _name = 'msf.doc.import.accounting.errors'
 
     _columns = {
-        'msg': fields.text("Description", readonly=True, required=True),
+        'name': fields.text("Description", readonly=True, required=True),
         'wizard_id': fields.many2one('msf.doc.import.accounting', "Wizard", required=True, readonly=True),
     }
 
