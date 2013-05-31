@@ -199,7 +199,7 @@ class account_move_line(osv.osv):
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
         # Revalidate move
         self.pool.get('account.move').validate(cr, uid, move_ids)
-        return super(account_move_line, self).unlink(cr, uid, ids, context, check)
+        return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """

@@ -22,6 +22,7 @@ from osv import osv, fields
 
 import datetime
 from dateutil.relativedelta import relativedelta
+from tools.translate import _
 
 class wizard_report_currency_table(osv.osv_memory):
     _name = "wizard.report.currency.table"
