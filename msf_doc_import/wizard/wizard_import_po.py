@@ -200,7 +200,7 @@ The columns should be in this values:
         list_of_values = []
         for cell_nb in range(len(row)):
             cell_data = row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
-            list_of_values.append
+            list_of_values.append(cell_data)
         return list_of_values
 
     def get_header_index(self, cr, uid, ids, row, error_list, line_num, context):
