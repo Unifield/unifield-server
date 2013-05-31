@@ -125,6 +125,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'employee_id': l.employee_id and l.employee_id.id or False,
                         }
                         self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
+                # UF-2045: Validate the move to check lines
+                self.pool.get('account.move').validate(cr, uid, [move_id], context=context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
