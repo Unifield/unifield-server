@@ -92,7 +92,7 @@ class sale_order(osv.osv):
 
     _columns = {
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
-        'import_in_progress': fields.boolean(string='Import in progress'),
+        'import_in_progress': fields.boolean(string='Importing'),
     }
 
     _defaults = {

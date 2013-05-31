@@ -73,7 +73,7 @@ class purchase_order(osv.osv):
 #    }
 
     _columns = {
-        'import_in_progress': fields.boolean(string='Import in progress'),
+        'import_in_progress': fields.boolean(string='Importing'),
     }
 
     _defaults = {
