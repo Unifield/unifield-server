@@ -71,6 +71,26 @@ class purchase_order(osv.osv):
 #                           ....
 #        'import_error_ok': fields.function(_get_import_error, method=True, type="boolean", string="Error in Import", store=True),
 #    }
+
+    _columns = {
+        'import_in_progress': fields.boolean(string='Importing'),
+    }
+
+    _defaults = {
+        'import_in_progress': lambda *a: False,
+    }
+
+    def copy(self, cr, uid, id, defaults, context=None):
+        '''
+        Remove the import_in_progress flag
+        '''
+        if not defaults:
+            defaults = {}
+
+        if 'import_in_progress' not in defaults:
+            defaults.update({'import_in_progress': False})
+
+        return super(purchase_order, self).copy(cr, uid, id, defaults, context=context)
     
     def _check_active_product(self, cr, uid, ids, context=None):
         '''

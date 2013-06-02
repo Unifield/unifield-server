@@ -68,6 +68,18 @@ class sale_order(osv.osv):
 #                                                """ % MAX_LINES_NB),
 #    }
 
+    def copy(self, cr, uid, id, defaults, context=None):
+        '''
+        Remove the flag import_in_progress when duplicate a field order
+        '''
+        if not defaults:
+            defaults = {}
+
+        if not 'import_in_progress' in defaults:
+            defaults.update({'import_in_progress': False})
+
+        return super(sale_order, self).copy(cr, uid, id, defaults, context=context)
+
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
         if isinstance(ids, (int, long)):
@@ -80,8 +92,13 @@ class sale_order(osv.osv):
 
     _columns = {
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
+        'import_in_progress': fields.boolean(string='Importing'),
     }
-    
+
+    _defaults = {
+        'import_in_progress': lambda *a: False,
+    }
+
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
         Check if the Purchase order contains a line with an inactive products
