@@ -80,7 +80,7 @@ class purchase_order(osv.osv):
         'import_in_progress': lambda *a: False,
     }
 
-    def copy(self, cr, uid, id, defaults, context=None):
+    def copy(self, cr, uid, id, defaults=None, context=None):
         '''
         Remove the import_in_progress flag
         '''

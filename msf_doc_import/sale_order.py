@@ -68,7 +68,7 @@ class sale_order(osv.osv):
 #                                                """ % MAX_LINES_NB),
 #    }
 
-    def copy(self, cr, uid, id, defaults, context=None):
+    def copy(self, cr, uid, id, defaults=None, context=None):
         '''
         Remove the flag import_in_progress when duplicate a field order
         '''
