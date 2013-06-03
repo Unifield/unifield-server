@@ -369,6 +369,7 @@ The columns should be in this values:
             'comment': '',
             'confirmed_delivery_date': False,
             'text_error': '',
+            'price_unit_defined': False,
         }
 
         # Order Reference*
@@ -531,6 +532,7 @@ The columns should be in this values:
         rows = fileobj.getRows()
         # take all the lines of the file in a list of dict
         file_values = self.get_file_values(cr, uid, ids, rows, header_index, error_list=[], line_num=False, context=context)
+
         
         rows = fileobj.getRows()
         rows.next()
@@ -828,7 +830,7 @@ The columns should be in this values:
         import_po_obj_ids = import_po_obj.search(cr, uid, [], context=context)
         import_po_obj.unlink(cr, uid, import_po_obj_ids, context=context)
         # we reset the PO to its original state ('confirmed')
-        po_obj.write(cr, uid, po_id, {'state': 'confirmed'}, context)
+        po_obj.write(cr, uid, po_id, {'state': 'confirmed', 'import_in_progress': False}, context)
         cr.commit()
         cr.close()
 
@@ -859,7 +861,7 @@ The columns should be in this values:
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message}, context=context)
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            po_obj.write(cr, uid, po_id, {'state': 'done'}, context)
+            po_obj.write(cr, uid, po_id, {'state': 'done', 'import_in_progress': True}, context)
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         msg_to_return = _("""
