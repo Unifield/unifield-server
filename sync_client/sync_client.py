@@ -109,19 +109,19 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             try:
                 # more information to the logger
                 def add_information(logger):
-                    entity = self.get_entity(cr, uid, context=kwargs['context'])
                     entity = self.get_entity(cr, uid, context=context)
                     if entity.session_id:
                         logger.append(_("Update session: %s") % entity.session_id)
 
                 # get the logger
-                logger = kwargs['context'].get('logger')
+                logger = context.get('logger')
                 make_log = logger is None
                 
                 # we have to make the log
                 if make_log:
                     # get a whole new logger from sync.monitor object
-                    context['logger'] = logger = self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=kwargs['context'])
+                    context['logger'] = logger = \
+                        self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
 
                     if need_connection:
                         # Check if connection is up
@@ -130,14 +130,14 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
-                            up_to_date = self.upgrade(cr, uid, context=kwargs['context'])
+                            up_to_date = self.upgrade(cr, uid, context=context)
                             cr.commit()
                             if not up_to_date[0]:
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
                     else:
-                        kwargs['context']['offline_synchronization'] = True
+                        context['offline_synchronization'] = True
 
                     # more information
                     add_information(logger)
@@ -150,7 +150,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
                 # is the synchronization finished?
                 if need_connection and make_log:
-                    entity = self.get_entity(cr, uid, context=kwargs['context'])
+                    entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     proxy.end_synchronization(entity.identifier)
             except SkipStep:
@@ -543,8 +543,11 @@ class Entity(osv.osv):
             cr.commit()
 
             if logger:
-                logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates = %d total updates") % \
-                                             (imported, deleted, update_count))
+                if imported or deleted:
+                    logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates = %d total updates") % \
+                                                 (imported, deleted, imported+deleted))
+                else:
+                    logger.pop(logger_index)
                 notrun_count = updates.search(cr, uid, [('run','=',False)], count=True, context=context)
                 if notrun_count > 0: logger.append(_("Update(s) not run left: %d") % notrun_count)
                 logger.write()
