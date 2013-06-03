@@ -109,6 +109,7 @@ class sync_rule(osv.osv):
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group', select=True),
         'type_id': fields.many2one('sync.server.group_type','Group Type', select=True),
+        'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'direction': fields.selection([
                     ('up', 'Up'),
                     ('down', 'Down'),
@@ -128,7 +129,6 @@ class sync_rule(osv.osv):
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
         'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
-        'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?', required=True),
     }
 
     _defaults = {
@@ -217,23 +217,23 @@ class sync_rule(osv.osv):
         'sequence_number' : 'sequence_number',
         'included_fields' : 'included_fields',
         'can_delete' : 'can_delete',
-        'active' : 'active',
-        'usb' : 'usb'
+        'type_name' : 'type',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
         rules_data = []
-        if ids:
-            rules_serialization_mapping = dict(
-                sum((c._rules_serialization_mapping.items()
-                         for c in reversed(self.__class__.mro())
-                         if hasattr(c, '_rules_serialization_mapping')), [])
-            )
-            for rule in self.browse(cr, uid, ids, context=context):
-                rules_data.append(dict(
-                    (data, rule[column]) for column, data
-                        in rules_serialization_mapping.items()
-                ))
+        rules_serialization_mapping = dict(
+            sum((c._rules_serialization_mapping.items()
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
+        )
+        for rule in self.browse(cr, uid, ids, context=context):
+            rules_data.append(dict(
+                (data, rule[column]) for column, data
+                    in rules_serialization_mapping.items()
+            ))
         return rules_data
 
     
@@ -571,20 +571,21 @@ class message_rule(osv.osv):
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
         rules_data = []
-        if ids:
-            rules_serialization_mapping = dict(
-                sum((c._rules_serialization_mapping.items()
-                         for c in reversed(self.__class__.mro())
-                         if hasattr(c, '_rules_serialization_mapping')), [])
-            )
-            for rule in self.browse(cr, uid, ids, context=context):
-                rules_data.append(dict(
-                    (data, rule[column]) for column, data
-                        in rules_serialization_mapping.items()
-                ))
+        rules_serialization_mapping = dict(
+            sum((c._rules_serialization_mapping.items()
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
+        )
+        for rule in self.browse(cr, uid, ids, context=context):
+            rules_data.append(dict(
+                (data, rule[column]) for column, data
+                    in rules_serialization_mapping.items()
+            ))
         return rules_data
-    
+
     def invalidate(self, cr, uid, ids, model_ref, context=None):
         model = ''
         if model_ref:

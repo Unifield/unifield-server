@@ -509,7 +509,6 @@ class sync_manager(osv.osv):
                             'domain' : string : The domain to filter the record to synchronize, format : standard domain [(),()]
                             'sequence_number' : integer : Sequence number of the rule,
                             'included_fields' : string : list of fields to include, same format as the one needed for export data
-                            'active': boolean : Whether or not the rule is active
                         }
                     
         """
