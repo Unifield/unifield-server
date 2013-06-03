@@ -8,6 +8,7 @@
     'developer': 'Max Mumford',
     'data': [
         'views/sync_rule.xml',
+        'data/rule_group_type.xml',
     ],
     'depends': ['sync_client', 'sync_server'],
     'installable': True,
