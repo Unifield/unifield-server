@@ -557,6 +557,8 @@ class message_rule(osv.osv):
             ids = self.search(cr, uid, domain, context=context)
             if ids:
                 rules_ids.extend(ids)
+
+        return rules_ids
     
     _rules_serialization_mapping = {            
         'name' : 'name',

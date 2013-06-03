@@ -1,4 +1,5 @@
 from osv import osv, fields, orm
+from osv.orm import browse_record, browse_record_list
 import tools
 from tools.safe_eval import safe_eval as eval
 import logging
@@ -6,6 +7,7 @@ import functools
 import types
 
 from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
+
 
 ## Debug method for development #############################################
 
@@ -19,6 +21,7 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         context = dict(context or {})
         logger = logging.getLogger('debugger')
         logger.debug("Welcome to ipdb!")
+        ipdb.set_trace()
 
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         self.pool.get("sync.client.sync_server_connection").connect(cr, uid, context=context)
@@ -87,6 +90,7 @@ if not tools.config.options['logfile'] and tools.config.options['log_level'] <= 
         context = dict(context or {})
         logger = logging.getLogger('debugger')
         logger.debug("Welcome to ipdb!")
+        ipdb.set_trace()
 
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         self.pool.get("sync.client.sync_server_connection").connect(cr, uid, context=context)
@@ -127,13 +131,6 @@ class RejectingDict(dict):
 
 def modif_o2m(self, cr, uid, ids, values, context=None):
     """record modification of m2o if the corresponding o2m is modified"""
-
-    def log_o2m_write(self, cr, uid, id, relation, parent_id, context=None):
-        fields_ref = self.fields_get(cr, uid, context=context)
-        for key, val in fields_ref.items():
-            if val['type'] == "many2one" and val['relation'] == relation:
-                self.pool.get('sync.client.write_info').log_write(cr, uid, self._name, id, {key : parent_id}, context=context)
-
     if not hasattr(ids, '__iter__'): ids = [ids]
     fields_ref = self.fields_get(cr, uid, context=context)
     for key in values.keys():
@@ -142,8 +139,6 @@ def modif_o2m(self, cr, uid, ids, values, context=None):
             for rec in self.browse(cr, uid, ids, context=context):
                 sub_ids = [obj.id for obj in getattr(rec, key)]
                 self.pool.get(sub_model).synchronize(cr, uid, sub_ids, context=context)
-                for sub_id in sub_ids:
-                    log_o2m_write(self.pool.get(sub_model), cr, uid, sub_id, self._name, rec.id, context=context)
 
 
 
@@ -184,23 +179,7 @@ class extended_orm_methods:
             return res
         return recur_get_model(self, [])
 
-    def get_last_modified_fields(self, cr, uid, id, last_sync, context=None):
-        """
-        Return a list of fields that has been modified since last_sync date of the record id given
-        """
-        cr.execute("""\
-SELECT fields_modif
-    FROM sync_client_write_info
-    WHERE model = %s AND res_id = %s AND create_date > %s""",
-            [self._name, id, last_sync])
-        result = set()
-        row = cr.fetchone()
-        while row:
-            result.update(eval(row[0]))
-            row = cr.fetchone()
-        return list(result)
-
-    def need_to_push(self, cr, uid, ids, included_fields, sync_field='sync_date', context=None):
+    def need_to_push(self, cr, uid, ids, context=None):
         """
         Check if records need to be pushed to the next synchronization process
         or not.
@@ -208,10 +187,9 @@ SELECT fields_modif
         One of those conditions needs to match: 
             - sync_date < last_modification
             - sync_date is not set
-            - record is deleted
-            - watched fields are present in modified fields
 
-        Note: sync_date field can be changed to other field using parameter sync_field
+        Note: sync_date field can be changed to other field using parameter
+        sync_field
 
         Return type:
             - If a list of ids is given, it returns a list of filtered ids.
@@ -221,45 +199,27 @@ SELECT fields_modif
         :param cr: database cursor
         :param uid: current user id
         :param ids: id or list of the ids of the records to read
-        :param included_field: fields list that have been modified
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
         :return: list of ids that need to be pushed (or False for per record call)
 
         """
-        def clean_included_fields(included_fields):
-            if not included_fields: return []
-            result = [field.split('/')[0] for field in included_fields]
-            result.pop(result.index('id'))
-            return result
-
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable: ids = [ids]
         ids = filter(None, ids)
         if not ids: return ids if result_iterable else False
-        # Pre-filter data where sync_date < last_modification OR sync_date IS NULL
+        # Optimization for not deleted records:
+        # Filter data where sync_date < last_modification OR sync_date IS NULL
         cr.execute("""\
-SELECT id
+SELECT res_id
     FROM ir_model_data
     WHERE module = 'sd' AND
-          model = %%s AND
-          res_id IN %%s AND
-          (%(sync_date)s < last_modification OR %(sync_date)s IS NULL)""" \
-% {'sync_date':sync_field},
+          model = %s AND
+          res_id IN %s AND
+          (sync_date < last_modification OR sync_date IS NULL)""",
 [self._name, tuple(ids)])
-        data_ids = [row[0] for row in cr.fetchall()]
-        if not data_ids: return [] if result_iterable else False
-        # More accurate check: keep only the records that does not exists OR
-        # there is no sync_date OR watch fields match
-        watch_fields = set(clean_included_fields(included_fields))
-        result = filter(
-            lambda rec: (rec.is_deleted or not rec[sync_field] or \
-                         watch_fields & set(self.get_last_modified_fields(cr, uid, rec.res_id, rec[sync_field], context=context))), \
-            self.pool.get('ir.model.data').browse(cr, uid, data_ids, context=context) )
-        if result_iterable:
-            return map(lambda rec:rec.res_id, result)
-        else:
-            return bool(result)
+        result = [row[0] for row in cr.fetchall()]
+        return result if result_iterable else len(result) > 0
 
     def get_sd_ref(self, cr, uid, ids, field='name', synchronize=False, context=None):
         """
@@ -299,7 +259,7 @@ SELECT id
             result[res_id] = new_record.get(field)
         if synchronize and data_ids:
             model_data_obj.write(cr, uid, data_ids, {'last_modification' : now})
-        return result if result_iterable else result.get(ids[0], False)
+        return result if result_iterable else result[ids[0]]
 
     def version(self, cr, uid, ids, context=None):
         """
@@ -328,7 +288,7 @@ SELECT id
         """
         return self.get_sd_ref(cr, uid, ids, synchronize=True, context=context)
 
-    def find_sd_ref(self, cr, uid, sdrefs, field='res_id', context=None):
+    def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
         Find the ids of records based on their SD reference. If called on a model, search SD refs for this model only. Otherwise, search any record.
 
@@ -344,9 +304,12 @@ SELECT id
         elif not isinstance(sdrefs, tuple): sdrefs = tuple(sdrefs)
         sdrefs = filter(None, sdrefs)
         if not sdrefs: return {} if result_iterable else False
+        if field is None:
+            field = 'id' if self._name == 'ir.model.data' else 'res_id'
+        field, real_field = ('id' if field == 'is_deleted' else field), field
         if self._name == "ir.model.data":
             cr.execute("""\
-SELECT name, id FROM ir_model_data WHERE module = 'sd' AND name IN %s""", [sdrefs])
+SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND name IN %%s""" % field, [sdrefs])
         else:
             cr.execute("""\
 SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name IN %%s""" \
@@ -355,6 +318,10 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             result = RejectingDict(cr.fetchall())
         except DuplicateKey:
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, sdrefs=%s. Too late for debugging, sorry!" % (self._name, sdrefs))
+        if field != real_field:
+            read_result = self.pool.get('ir.model.data').read(cr, uid, result.values(), [real_field], context=context)
+            read_result = dict((x['id'], x) for x in read_result)
+            result = dict((sdref, read_result[id][real_field]) for sdref, id in result.items())
         return result if result_iterable else result.get(sdrefs[0], False)
 
     @orm_method_overload
@@ -363,8 +330,8 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
             global modif_o2m
-            self.synchronize(cr, uid, id, context=context)
             modif_o2m(self, cr, uid, id, values, context=context)
+            self.synchronize(cr, uid, id, context=context)
         return id
 
     @orm_method_overload
@@ -372,12 +339,9 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
             global modif_o2m
-            if not isinstance(ids, (list, tuple)):
-                ids = [ids]
+            if not isinstance(ids, (list, tuple)): ids = [ids]
+            modif_o2m(self, cr, uid, ids, values, context=context)
             self.synchronize(cr, uid, ids, context=context)
-            for id in ids:
-                self.pool.get('sync.client.write_info').log_write(cr, uid, self._name, id, values, context=context)
-                modif_o2m(self, cr, uid, id, values, context=context)
         return original_write(self, cr, uid, ids, values,context=context)
 
     def message_unlink(self, cr, uid, source, unlink_info, context=None):
@@ -390,20 +354,20 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not res_id:
             return "Object %s %s does not exist in destination" % (model_name, xml_id)
 
-        return old_unlink(self, cr, uid, [res_id], context=context)
+        return self.unlink(cr, uid, [res_id], context=context)
 
-    def generate_message_for_destination(self, cr, uid, destination_name, xml_id, instance_name, send_to_parent_instances):
+    def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
         instance_obj = self.pool.get('msf.instance')
 
         if not destination_name:
             return
         if destination_name != instance_name:
             message_data = {
-                    'identifier' : 'delete_%s_to_%s' % (xml_id, destination_name),
+                    'identifier' : 'delete_%s_to_%s' % (sdref, destination_name),
                     'sent' : False,
                     'generate_message' : True,
                     'remote_call': self._name + ".message_unlink",
-                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, xml_id),
+                    'arguments': "[{'model' :  '%s', 'xml_id' : '%s'}]" % (self._name, sdref),
                     'destination_name': destination_name
             }
             self.pool.get("sync.client.message_to_send").create(cr, uid, message_data)
@@ -415,27 +379,26 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
                 instance_record = instance_obj.browse(cr, uid, instance_ids[0])
                 parent = instance_record.parent_id and instance_record.parent_id.instance or False
                 if parent:
-                    generate_message_for_destination(self, cr, uid, parent, xml_id, instance_name, send_to_parent_instances)
+                    self.generate_message_for_destination(cr, uid, parent, sdref, instance_name, send_to_parent_instances)
 
     @orm_method_overload
     def unlink(self, original_unlink, cr, uid, ids, context=None):
         if not ids: return True
+        context = context or {}
 
-        if hasattr(self, '_delete_owner_field'):
-            if not hasattr(ids, '__iter__'): ids = [ids]
-            instance_name = self.pool.get("sync.client.entity").get_entity(cr, 1, context=context).name
-            xml_ids = self.pool.get('ir.model.data').get(cr, 1, self, ids, context=context)
-            destination_names = self.get_destination_name(cr, 1, ids, self._delete_owner_field, context=context)
-            for id, xml_id_record in zip(ids, self.pool.get('ir.model.data').browse(cr, 1, xml_ids, context=context)):
-                xml_id = '%s.%s' % (xml_id_record.module, xml_id_record.name)
-                self.generate_message_for_destination(cr, 1, destination_names[id], xml_id, instance_name, send_to_parent_instances=True)
+        if context.get('sync_message_execution'):
+            return original_unlink(self, cr, uid, ids, context=context)
 
         if self._name == 'ir.model.data' and (context is None or context.get('avoid_ir_data_deletion')):
             return True
 
-        if self._name not in MODELS_TO_IGNORE and \
-           (context is None or not context.get('sync_update_creation')):
-            context = dict(context or {}, avoid_ir_data_deletion=True)
+        # In an update creation context, references are deleted normally
+        # In an update execution context, references are kept, but no synchronization is made
+        # Otherwise, references are kept and synchronization is triggered
+        # ...see?
+        if self._name not in MODELS_TO_IGNORE \
+           and not context.get('sync_update_creation'):
+            context = dict(context, avoid_ir_data_deletion=True)
             if not context.get('sync_update_execution'):
                 self.synchronize(cr, uid, ids, context=context)
 
@@ -461,7 +424,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if not ids: return True
         already_deleted = self.search_deleted(cr, uid, [('res_id','in',ids)], context=context)
         to_delete = list(set(ids) - set(already_deleted))
-        self.unlink(cr, uid, to_delete, context=None)
+        self.unlink(cr, uid, to_delete, context=context)
         cr.execute("""\
 DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 """, [self._name, ids])
@@ -606,7 +569,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
                     def get_name(row):
                         name_relation = self.pool.get(row._table_name)._rec_name
-                        if isinstance(row[name_relation], orm.browse_record):
+                        if isinstance(row[name_relation], browse_record):
                             row = row[name_relation]
                         row_name = self.pool.get(row._table_name).name_get(cr, uid, [row.id], context=context)
                         return row_name and row_name[0] and row_name[0][1] or ''
@@ -648,9 +611,9 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                             json_data[field[0]] = row.id
                         else: #TODO manage more case maybe selection or reference
                             r = row[field[0]]
-                            if isinstance(r, (orm.browse_record_list, list)):
+                            if isinstance(r, (browse_record_list, list)):
                                 json_data[field[0]] = export_list(field, r, json_data.get(field[0]))
-                            elif isinstance(r, (orm.browse_record)):
+                            elif isinstance(r, (browse_record)):
                                 json_data[field[0]] = export_relation(field, r, json_data.get(field[0]))
                             elif not r:
                                 json_data[field[0]] = False
