@@ -96,8 +96,22 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         model_ids = ir_model.search(cr, 1, MODELS_TO_IGNORE_DOMAIN)
 
         for model in ir_model.browse(cr, 1, model_ids):
+            
+            # ignore ir model data object
+            if model.model == 'ir.model.data':
+                continue
 
             obj = self.pool.get(model.model)
+            
+            if obj is None:
+                print 'Could not get object %s' % model.model
+                continue
+            
+            # ignore objects who inherit another object, and use their table too, but a different name (would lead to attempted sd ref duplication)
+            if hasattr(obj, '_inherit') \
+            and obj._name != obj._inherit \
+            and self.pool.get(obj._inherit)._table == obj._table:
+                continue
 
             # ignore wizard objects
             if isinstance(obj, osv.osv_memory):
