@@ -114,7 +114,7 @@ class Entity(osv.osv):
             add the package contents to the update_csv_contents dictionary and mark the package as sent
             @return: (number of total_updates, number of delete_sdref rules)
             """
-            rule_id = self.pool.get('sync.client.rule').search(cr, uid, [('server_id','=',packet['rule_id']),'|',('usb','=',True),('usb','=',False)])
+            rule_id = self.pool.get('sync.client.rule').search(cr, uid, [('server_id','=',packet['rule_id'])])
             if not rule_id:
                 raise osv.except_osv('Cannot find rule', 'Cannot find rule with server_id %s' % packet['rule_id'])
             rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id[0])
@@ -184,7 +184,6 @@ class Entity(osv.osv):
             'sequence_number' : 'sequence_number',
             'included_fields' : 'included_fields',
             'can_delete' : 'can_delete',
-            'usb' : 'usb',
             'active': 'active',
             'direction_usb' : 'direction_usb',
         }
@@ -208,7 +207,6 @@ class Entity(osv.osv):
             'arguments': 'arguments',
             'destination_name': 'destination_name',
             'active': 'active',
-            'usb': 'usb'
         }
         
         def _serialize_message_rule(self, cr, uid, ids, context=None):
@@ -271,7 +269,7 @@ class Entity(osv.osv):
         if entity.usb_instance_type == 'central_platform':
              
             update_rule_pool = self.pool.get('sync.client.rule')
-            update_rule_ids = update_rule_pool.search(cr, uid, [('usb','=',True),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
+            update_rule_ids = update_rule_pool.search(cr, uid, [('type_id.name','=','USB'),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
             update_rules_serialized = _serialize_update_rule(update_rule_pool, cr, uid, update_rule_ids, context=context)
             
             update_rules_string_io = StringIO()
@@ -284,7 +282,7 @@ class Entity(osv.osv):
         # create message update rules file to send to remote warehouse if instance is central platform
         if entity.usb_instance_type == 'central_platform': 
             message_rule_pool = self.pool.get('sync.client.message_rule')
-            message_rule_ids = message_rule_pool.search(cr, uid, [('usb','=',True)])
+            message_rule_ids = message_rule_pool.search(cr, uid, [('type_id.name','=','USB')])
             message_rules_serialized = _serialize_message_rule(message_rule_pool, cr, uid, message_rule_ids, context=context)
             
             message_rules_string_io = StringIO()
@@ -370,11 +368,11 @@ class Entity(osv.osv):
         updates_count = 0
         
         # search for rules         
-        rule_search_domain = [('usb','=',True)]
+        rule_search_domain = [('type_id.name','=','USB')]
         if entity.usb_instance_type == 'central_platform':
-            rule_search_domain = rule_search_domain + ['|',('direction_usb','=','cp_to_rw'),('direction_usb','=','bidirectional')]
+            rule_search_domain += ['|',('direction_usb','=','cp_to_rw'),('direction_usb','=','bidirectional')]
         else:
-            rule_search_domain = rule_search_domain + ['|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')]
+            rule_search_domain += ['|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')]
              
         rule_ids = self.pool.get('sync.client.rule').search(cr, uid, rule_search_domain, context=context)
         
@@ -399,7 +397,7 @@ class Entity(osv.osv):
         logger_index = logger.append()
 
         messages_count = 0
-        rule_ids = rule_pool.search(cr, uid, [('usb','=',True)], context=context)
+        rule_ids = rule_pool.search(cr, uid, [('type_id.name','=','USB')], context=context)
         
         if rule_ids:
             for rule in rule_pool.browse(cr, uid, rule_ids, context=context):

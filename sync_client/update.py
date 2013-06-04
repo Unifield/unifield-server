@@ -42,20 +42,11 @@ class local_rule(osv.osv):
         'owner_field' : fields.char('Owner Field', size=128, readonly=True),
         'can_delete': fields.boolean('Can delete record?', readonly=True, help='Propagate the delete of old unused records'),
         'active' : fields.boolean('Active', select=True),
-        
-        # Specifies that this rule is a rule for USB synchronisations
-        'usb': fields.boolean('Remote Warehouse Rule', help='Should this rule be used when using the USB Synchronization engine?', required=True),
-        
-        # specifies the direction of the USB synchronisation - like the 'direction' field
-        'direction_usb': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization', required=True),
     }
 
     _defaults = {
         'included_fields' : '[]',
         'active' : True,
-        
-        'usb': False,
-        'direction_usb': 'bidirectional',
     }
 
     _sql_constraints = [
@@ -66,7 +57,7 @@ class local_rule(osv.osv):
 
     def save(self, cr, uid, data_list, context=None):
         # Get the whole ids of existing and active rules
-        remaining_ids = set(self.search(cr, uid, ['|',('usb','=',False),('usb','=',True)], context=context))
+        remaining_ids = set(self.search(cr, uid, [], context=context))
 
         for vals in (dict(data) for data in data_list):
             assert 'server_id' in vals, "The following rule doesn't seem to have the required field server_id: %s" % vals
@@ -80,7 +71,7 @@ class local_rule(osv.osv):
             elif 'active' not in vals:
                 vals['active'] = True
 
-            ids = self.search(cr, uid, [('server_id','=',vals['server_id']), '|',('active','=',True),('active','=',False), '|', ('usb','=',True), ('usb','=',False)], context=context)
+            ids = self.search(cr, uid, [('server_id','=',vals['server_id']),'|',('active','=',True),('active','=',False)], context=context)
             if ids:
                 remaining_ids.discard(ids[0])
                 self.write(cr, uid, ids, vals, context=context)

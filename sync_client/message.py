@@ -85,7 +85,7 @@ class local_message_rule(osv.osv):
             data['model'] = model_id[0]
             
             # if rule already exists, activate it, otherwise create it
-            existing_rule_ids = self.search(cr, uid, [('server_id','=',data['server_id']), '|',('active','=',True),('active','=',False), '|', ('usb','=',True), ('usb','=',False)], context=context)
+            existing_rule_ids = self.search(cr, uid, [('server_id','=',data['server_id']), '|',('active','=',True),('active','=',False)], context=context)
             if existing_rule_ids:
                 self.write(cr, uid, existing_rule_ids, data, context=context)
             else:

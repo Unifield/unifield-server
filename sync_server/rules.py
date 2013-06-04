@@ -128,7 +128,7 @@ class sync_rule(osv.osv):
         'can_delete': fields.boolean('Can delete record?', help='Propagate the delete of old unused records'),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True),
         'active': fields.boolean('Active'),
-        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True),
+        'model_ids' : fields.function(_get_all_model, string="Parents Model", type="many2many", relation="ir.model", method=True)
     }
 
     _defaults = {
@@ -224,16 +224,17 @@ class sync_rule(osv.osv):
         if not ids:
             return []
         rules_data = []
-        rules_serialization_mapping = dict(
-            sum((c._rules_serialization_mapping.items()
-                     for c in reversed(self.__class__.mro())
-                     if hasattr(c, '_rules_serialization_mapping')), [])
-        )
-        for rule in self.browse(cr, uid, ids, context=context):
-            rules_data.append(dict(
-                (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
-            ))
+        if ids:
+            rules_serialization_mapping = dict(
+                sum((c._rules_serialization_mapping.items()
+                         for c in reversed(self.__class__.mro())
+                         if hasattr(c, '_rules_serialization_mapping')), [])
+            )
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in rules_serialization_mapping.items()
+                ))
         return rules_data
 
     
@@ -557,8 +558,6 @@ class message_rule(osv.osv):
             ids = self.search(cr, uid, domain, context=context)
             if ids:
                 rules_ids.extend(ids)
-
-        return rules_ids
     
     _rules_serialization_mapping = {            
         'name' : 'name',
@@ -576,16 +575,17 @@ class message_rule(osv.osv):
         if not ids:
             return []
         rules_data = []
-        rules_serialization_mapping = dict(
-            sum((c._rules_serialization_mapping.items()
-                     for c in reversed(self.__class__.mro())
-                     if hasattr(c, '_rules_serialization_mapping')), [])
-        )
-        for rule in self.browse(cr, uid, ids, context=context):
-            rules_data.append(dict(
-                (data, rule[column]) for column, data
-                    in rules_serialization_mapping.items()
-            ))
+        if ids:
+            rules_serialization_mapping = dict(
+                sum((c._rules_serialization_mapping.items()
+                         for c in reversed(self.__class__.mro())
+                         if hasattr(c, '_rules_serialization_mapping')), [])
+            )
+            for rule in self.browse(cr, uid, ids, context=context):
+                rules_data.append(dict(
+                    (data, rule[column]) for column, data
+                        in rules_serialization_mapping.items()
+                ))
         return rules_data
 
     def invalidate(self, cr, uid, ids, model_ref, context=None):
