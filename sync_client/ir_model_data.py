@@ -118,7 +118,11 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                 continue
 
             # get all records for the object
-            cr.execute('select id from %s' % obj._table)
+            cr.execute("""
+                SELECT r.id
+                FROM %s r
+                    LEFT JOIN ir_model_data data ON data.module = 'sd' AND data.model = %%s AND r.id = data.res_id
+                WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
             record_ids = map(lambda x: x[0], cr.fetchall())
 
             # if we have some records
