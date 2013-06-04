@@ -302,10 +302,7 @@ class account_move_reconcile(osv.osv):
             ids = [ids]
         res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
         if res:
-            tmp_res = res
-            if isinstance(res, (int, long)):
-                tmp_res = [tmp_res]
-            for r in self.browse(cr, uid, tmp_res):
+            for r in self.browse(cr, uid, ids):
                 t = [x.id for x in r.line_id]
                 p = [x.id for x in r.line_partial_ids]
                 d = self.name_get(cr, uid, [r.id])
