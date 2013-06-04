@@ -4271,13 +4271,19 @@ class orm(orm_template):
         context_wo_lang = context.copy()
         if 'lang' in context:
             del context_wo_lang['lang']
-        data = self.read(cr, uid, [id,], context=context_wo_lang)
+
+        fields = self.fields_get(cr, uid, context=context)
+        to_read = []
+        for f in fields:
+            if 'function' not in fields[f]:
+                to_read.append(f)
+
+        data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
             data = data[0]
         else:
             raise IndexError( _("Record #%d of %s not found, cannot copy!") %( id, self._name))
 
-        fields = self.fields_get(cr, uid, context=context)
         for f in fields:
             ftype = fields[f]['type']
 
@@ -4286,7 +4292,7 @@ class orm(orm_template):
 
             if f in default:
                 data[f] = default[f]
-            elif 'function' in fields[f]:
+            elif f in data and 'function' in fields[f]:
                 del data[f]
             elif ftype == 'many2one':
                 try:
