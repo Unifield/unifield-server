@@ -1580,7 +1580,7 @@ class stock_picking(osv.osv):
         get functional values
         '''
         result = {}
-        for stock_picking in self.browse(cr, uid, ids, context=context):
+        for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
             values = {'total_amount': 0.0,
                       'currency_id': False,
                       'is_dangerous_good': False,
@@ -1592,32 +1592,34 @@ class stock_picking(osv.osv):
                       #'is_completed': False,
                       'overall_qty': 0.0,
                       }
-            result[stock_picking.id] = values
+            result[stock_picking['id']] = values
             
-            for family in stock_picking.pack_family_memory_ids:
-                # number of packs from pack_family
-                num_of_packs = family.num_of_packs
-                values['num_of_packs'] += int(num_of_packs)
-                # total_weight
-                total_weight = family.total_weight
-                values['total_weight'] += total_weight
-                total_volume = family.total_volume
-                values['total_volume'] += total_volume
-                
-            for move in stock_picking.move_lines:
-                # total amount (float)
-                total_amount = move.total_amount
-                values['total_amount'] = total_amount
-                # currency
-                values['currency_id'] = move.currency_id and move.currency_id.id or False
-                # dangerous good
-                values['is_dangerous_good'] = move.is_dangerous_good
-                # keep cool - if heat_sensitive_item is True
-                values['is_keep_cool'] = move.is_keep_cool
-                # narcotic
-                values['is_narcotic'] = move.is_narcotic
-                # overall qty of products in all corresponding stock moves
-                values['overall_qty'] += move.product_qty
+            if stock_picking['pack_family_memory_ids']:
+                for family in self.pool.get('pack.family.memory').read(cr, uid, stock_picking['pack_family_memory_ids'], ['num_of_packs', 'total_weight', 'total_volume'], context=context):
+                    # number of packs from pack_family
+                    num_of_packs = family['num_of_packs']
+                    values['num_of_packs'] += int(num_of_packs)
+                    # total_weight
+                    total_weight = family['total_weight']
+                    values['total_weight'] += total_weight
+                    total_volume = family['total_volume']
+                    values['total_volume'] += total_volume
+
+            if stock_picking['move_lines']:
+                for move in self.pool.get('pack.family.memory').read(cr, uid, stock_picking['move_lines'], ['total_amount', 'currency_id', 'is_dangerous_good', 'is_keep_cool', 'is_narcotic', 'product_qty'], context=context):
+                    # total amount (float)
+                    total_amount = move['total_amount']
+                    values['total_amount'] = total_amount
+                    # currency
+                    values['currency_id'] = move['currency_id'] and move['currency_id'][0] or False
+                    # dangerous good
+                    values['is_dangerous_good'] = move['is_dangerous_good']
+                    # keep cool - if heat_sensitive_item is True
+                    values['is_keep_cool'] = move['is_keep_cool']
+                    # narcotic
+                    values['is_narcotic'] = move['is_narcotic']
+                    # overall qty of products in all corresponding stock moves
+                    values['overall_qty'] += move['product_qty']
                 
             # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
             # - picking checks that the corresponding ppl is completed
@@ -1756,8 +1758,7 @@ class stock_picking(osv.osv):
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
-                'overall_qty': fields.function(_vals_get, method=True, fnct_search=_qty_search, type='float', string='Overall Qty', multi='get_vals',
-                                               store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}),
+                'overall_qty': fields.function(_vals_get, method=True, fnct_search=_qty_search, type='float', string='Overall Qty', multi='get_vals'),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
