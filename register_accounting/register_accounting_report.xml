@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        
+
         <report id="cash_inventory"
         string="Cash Inventory"
         model="account.bank.statement"
@@ -10,7 +10,7 @@
         auto="False"
         menu="True"
         header="False"/>
-        
+
         <report id="bank_reconciliation"
         string="Bank Reconciliation"
         model="account.bank.statement"
@@ -19,9 +19,9 @@
         auto="False"
         menu="True"
         header="False"/>
-        
+
         <report
-       	id="cheque_inventory_2"
+        id="cheque_inventory_2"
         string="Cheque Inventory"
         model="account.bank.statement"
         name="cheque.inventory.2"
@@ -31,18 +31,18 @@
         auto="False"
         menu="True"
          />
-        
-	<report
-	id="open_advances_2"
-	string="Open Advances"
-	model="account.bank.statement"
-	name="open.advances.2"
-	file="register_accounting/report/open_advances_xls.mako"
-	report_type="webkit"
-	header="False"
-	auto="False"
-	menu="True"
-	 />
+
+        <report
+        id="open_advances_2"
+        string="Open Advances"
+        model="account.bank.statement"
+        name="open.advances.2"
+        file="register_accounting/report/open_advances_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"
+         />
 
         <report id="liquidity_position"
         string="Liquidity Position"
@@ -53,7 +53,17 @@
         header="False"
         auto="False"
         menu="True"/>
-        
+
+        <report id="fully_report"
+        string="Full Report"
+        model="account.bank.statement"
+        name="fully.report"
+        file="register_accounting/report/fully_report_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
+
     </data>
 </openerp>
 
