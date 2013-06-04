@@ -3884,7 +3884,7 @@ class orm(orm_template):
             result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
         self._validate(cr, user, [id_new], context)
 
-        if not context.get('no_store_function', False):
+        if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
             result += self._store_get_values(cr, user, [id_new], vals.keys(), context)
             result.sort()
             done = []
