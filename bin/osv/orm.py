@@ -3548,7 +3548,8 @@ class orm(orm_template):
         self._check_concurrency(cr, ids, context)
         self.pool.get('ir.model.access').check(cr, user, self._name, 'write', context=context)
 
-        result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
+        #result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
+        result = []
 
         # No direct update of parent_left/right
         vals.pop('parent_left', None)
