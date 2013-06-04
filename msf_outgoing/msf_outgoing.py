@@ -3245,10 +3245,10 @@ class sale_order(osv.osv):
         if order.procurement_request:
             move_obj.action_confirm(cr, uid, [move_id], context=context)
             # we Validate the picking "Confirms picking directly from draft state."
-            pick_obj.draft_force_assign(cr, uid , [pick_id], context)
+            #pick_obj.draft_force_assign(cr, uid , [pick_id], context)
             # We also do a first 'check availability': cancel then check
-            pick_obj.cancel_assign(cr, uid, [pick_id], context)
-            pick_obj.action_assign(cr, uid, [pick_id], context)
+            #pick_obj.cancel_assign(cr, uid, [pick_id], context)
+            #pick_obj.action_assign(cr, uid, [pick_id], context)
             
         return super(sale_order, self)._hook_ship_create_execute_specific_code_02(cr, uid, ids, context, *args, **kwargs)
     
