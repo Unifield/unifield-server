@@ -67,6 +67,17 @@
       <Font ss:Bold="1" ss:Italic="1" ss:Size="11"/>
       <Interior ss:Color="#ffff66" ss:Pattern="Solid"/>
     </Style>
+    <Style ss:ID="analytic_header">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Bold="1" ss:Size="11"/>
+      <Interior ss:Color="#b2b2b2" ss:Pattern="Solid"/>
+    </Style>
     <Style ss:ID="ce4">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
     </Style>
@@ -126,25 +137,25 @@
     <WorksheetOptions/>
   </Worksheet>
 % for o in objects:
-  <Worksheet ss:Name="${o.period_id.name}, ${o.journal_id.code}">
+  <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Table ss:StyleID="ta1">
-      <Column ss:Width="95.9527"/>
-      <Column ss:Width="78.2079"/>
-      <Column ss:Width="64.2898"/>
-      <Column ss:Width="103.663"/>
-      <Column ss:Width="95.9527"/>
-      <Column ss:Width="71.263"/>
-      <Column ss:Width="166.9606"/>
-      <Column ss:Width="115.9937"/>
-      <Column ss:Width="66.6142"/>
-      <Column ss:Width="79.7386"/>
-      <Column ss:Width="58.9039"/>
-      <Column ss:Width="97.5118"/>
-      <Column ss:Width="43.4551"/>
-      <Column ss:Span="1010" ss:Width="64.0063"/>
+      <Column ss:Width="95.9527" ss:AutoFitWidth="1"/>
+      <Column ss:Width="78.2079" ss:AutoFitWidth="1"/>
+      <Column ss:Width="64.2898" ss:AutoFitWidth="1"/>
+      <Column ss:Width="103.663" ss:AutoFitWidth="1"/>
+      <Column ss:Width="95.9527" ss:AutoFitWidth="1"/>
+      <Column ss:Width="71.263" ss:AutoFitWidth="1"/>
+      <Column ss:Width="166.9606" ss:AutoFitWidth="1"/>
+      <Column ss:Width="115.9937" ss:AutoFitWidth="1"/>
+      <Column ss:Width="66.6142" ss:AutoFitWidth="1"/>
+      <Column ss:Width="79.7386" ss:AutoFitWidth="1"/>
+      <Column ss:Width="58.9039" ss:AutoFitWidth="1"/>
+      <Column ss:Width="97.5118" ss:AutoFitWidth="1"/>
+      <Column ss:Width="43.4551" ss:AutoFitWidth="1"/>
+      <Column ss:Span="1010" ss:Width="64.0063" ss:AutoFitWidth="1"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
-          <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''} REPORT</Data>
+          <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''|x} REPORT</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
@@ -193,28 +204,28 @@
 % for line in o.line_ids:
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="ce4">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Direct Payment') or _('Normal')}</Data>
+          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Direct Payment') or _('Normal')|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce6">
-          <Data ss:Type="DateTime">${line.document_date}</Data>
+          <Data ss:Type="DateTime">${line.document_date|n}</Data>
         </Cell>
         <Cell ss:StyleID="ce6">
-          <Data ss:Type="DateTime">${line.date}</Data>
+          <Data ss:Type="DateTime">${line.date|n}</Data>
         </Cell>
         <Cell ss:StyleID="ce4">
-          <Data ss:Type="String">${line.sequence_for_reference or ''}</Data>
+          <Data ss:Type="String">${line.sequence_for_reference or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce4">
-          <Data ss:Type="String">${line.name or ''}</Data>
+          <Data ss:Type="String">${line.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce5">
-          <Data ss:Type="String">${line.ref or ''}</Data>
+          <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce4">
-          <Data ss:Type="String">${line.account_id.code}</Data>
+          <Data ss:Type="String">${line.account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce4">
-          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')}</Data>
+          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce8">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>
@@ -223,15 +234,58 @@
           <Data ss:Type="Number">${line.amount_out or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ce5">
-          <Data ss:Type="String">${line.currency_id and line.currency_id.name or ''}</Data>
+          <Data ss:Type="String">${line.currency_id and line.currency_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce5">
-          <Data ss:Type="String">${line.reconciled and 'X' or ''}</Data>
+          <Data ss:Type="String">${line.reconciled and 'X' or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce5">
-          <Data ss:Type="String">${line.state and getSel(line, 'state') or ''}</Data>
+          <Data ss:Type="String">${line.state and getSel(line, 'state') or ''|x}</Data>
         </Cell>
       </Row>
+% if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
+      <Row ss:Height="14.5134">
+        <Cell ss:StyleID="analytic_header" ss:MergeAcross="12">
+          <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
+        </Cell>
+      </Row>
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Destination')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Cost Center')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('FP')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Percentage')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Amount')}</Data>
+        </Cell>
+      </Row>
+% for ana_line in line.analytic_distribution_id.funding_pool_lines:
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="ce4">
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${ana_line.analytic_id and ana_line.analytic_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${ana_line.percentage or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+      </Row>
+% endfor
+% endif
 % endfor
     </Table>
     <WorksheetOptions/>
