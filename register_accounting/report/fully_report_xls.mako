@@ -78,6 +78,17 @@
       <Font ss:Bold="1" ss:Size="11"/>
       <Interior ss:Color="#b2b2b2" ss:Pattern="Solid"/>
     </Style>
+    <Style ss:ID="direct_invoice_header">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Bold="1" ss:Size="11"/>
+      <Interior ss:Color="#8cbb3c" ss:Pattern="Solid"/>
+    </Style>
     <Style ss:ID="ce4">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
     </Style>
@@ -245,8 +256,8 @@
       </Row>
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
       <Row ss:Height="14.5134">
-        <Cell ss:StyleID="analytic_header" ss:MergeAcross="12">
-          <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
+        <Cell ss:Index="2" ss:StyleID="analytic_header" ss:MergeAcross="11">
+          <Data ss:Type="String">     ${_('ANALYTIC DISTRIBUTION')}</Data>
         </Cell>
       </Row>
       <Row>
@@ -282,6 +293,55 @@
         </Cell>
         <Cell ss:StyleID="ce8">
           <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+      </Row>
+% endfor
+% endif
+% if line.direct_invoice and line.invoice_id:
+      <Row ss:Height="14.5134">
+        <Cell ss:Index="2" ss:StyleID="direct_invoice_header" ss:MergeAcross="11">
+          <Data ss:Type="String">     ${_('INVOICE LINES')}</Data>
+        </Cell>
+      </Row>
+      <Row>
+        <Cell ss:Index="3">
+          <Data ss:Type="String">${_('Product')}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${_('Account')}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${_('Qty')}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${_('Price')}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${_('Subtotal')}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${_('Description')}</Data>
+        </Cell>
+      </Row>
+% for inv_line in line.invoice_id.invoice_line:
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${inv_line.quantity or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${inv_line.price_unit or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
       </Row>
 % endfor
