@@ -250,13 +250,8 @@ The columns should be in this values:
                     to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
-                try:
-                    delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
-                    to_write_po.update({'delivery_confirmed_date': str(delivery_confirmed_date)})
-                except ValueError, e:
-                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
-                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-            
+                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Please format the cell in Excel as date.') % (delivery_confirmed_date, ))
+
         # Supplier Reference
         cell_nb = header_index.get('Supplier Reference', False)
         partner_ref = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -329,13 +324,8 @@ The columns should be in this values:
                     to_write_po['error_list'].append(_('"Arrival Date in the country" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
-                try:
-                    arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
-                    to_write_po.update({'arrival_date': str(arrival_date)})
-                except ValueError, e:
-                    to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Details: %s.') % (arrival_date, e))
-                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-            
+                to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Please format the cell in Excel as date.') % (arrival_date,))
+
         # Incoterm
         cell_nb = header_index.get('Incoterm', False)
         incoterm_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -473,17 +463,7 @@ The columns should be in this values:
                     to_write['error_list'].append(_('"The Delivery Confirmed Date" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             else:
-                try:
-                    confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
-                    to_write.update({'confirmed_delivery_date': str(confirmed_delivery_date)})
-                except ValueError, e:
-                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
-                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
-                except TypeError, e:
-                    if str(e) == 'expected string or buffer':
-                        e = _('expected a date with \'dd/mm/YYYY\' format')
-                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
-                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Please format the cell in Excel as date.') % (confirmed_delivery_date,))
 
         #  Comment
         cell_nb = header_index.get('Comment', False)
