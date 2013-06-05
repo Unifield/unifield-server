@@ -28,6 +28,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
@@ -85,10 +86,21 @@ class account_move_line(osv.osv):
 #        context['do_not_create_analytic_line'] = True
 
         sync_check = check
-        if context.get('sync_update_execution'):
+        if context.get('sync_update_execution', False):
             sync_check = False
 
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=sync_check)
+
+    def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        # UTP-632: re-add write(), but only for the check variable
+        if not context:
+            context = {}
+            
+        sync_check = check
+        if context.get('sync_update_execution', False):
+            sync_check = False
+                
+        return super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=sync_check, update_check=update_check)
     
     def _hook_call_update_check(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -108,7 +120,7 @@ class account_move_line(osv.osv):
                     diff_val = vals[f] != to_write_val
                     if typ == 'float' and l[f] and vals[f]:
                         diff_val = abs(vals[f] - l[f]) > 10**-4
-                    if diff_val and l.move_id.state <> 'draft' and (not l.journal_id.entry_posted):
+                    if diff_val and l.move_id.state <> 'draft' and l.state <> 'draft' and (not l.journal_id.entry_posted):
                         raise osv.except_osv(_('Error !'), _('You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !'))
                     if diff_val and l.reconcile_id:
                         raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
@@ -116,9 +128,6 @@ class account_move_line(osv.osv):
                 if t not in done:
                     self._update_journal_check(cr, uid, l.journal_id.id, l.period_id.id, context)
                     done[t] = True
-
-
-    #def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
 
 account_move_line()
 

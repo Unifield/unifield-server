@@ -27,7 +27,7 @@ from tools.safe_eval import safe_eval as eval
 import re
 import logging
 
-from sync_common import sync_log, add_sdref_column, fancy_integer
+from sync_common import sync_log, add_sdref_column, translate_column, fancy_integer
 
 class local_rule(osv.osv):
     _name = "sync.client.rule"
@@ -109,7 +109,7 @@ class update_to_send(osv.osv):
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
-        'sdref' : fields.char('SD ref', size=128, readonly=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'fields':fields.text('Fields', size=128, readonly=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
     }
@@ -121,6 +121,7 @@ class update_to_send(osv.osv):
 
     _logger = logging.getLogger('sync.client')
 
+    @translate_column('model', 'ir_model', 'model', 'character varying(64)')
     @add_sdref_column
     def _auto_init(self, cr, context=None):
         super(update_to_send, self)._auto_init(cr, context=context)
@@ -167,7 +168,6 @@ class update_to_send(osv.osv):
 
             ids_to_delete = self.need_to_push(cr, uid,
                 self.search_deleted(cr, uid, [('module','=','sd')], context=context), context=context)
-
             if not ids_to_delete:
                 return 0
 
@@ -225,9 +225,13 @@ class update_to_send(osv.osv):
         return (ids_in_package, data)
 
     def sync_finished(self, cr, uid, update_ids, sync_field='sync_date', context=None):
-        self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-            dict((update.sdref, {'version':update.version,sync_field:update.create_date}) for update in self.browse(cr, uid, update_ids, context=context)),
-            context=context)
+        for update in self.browse(cr, uid, update_ids, context=context):
+            try:
+                self.pool.get('ir.model.data').update_sd_ref(cr, uid,
+                    update.sdref, {'version':update.version,sync_field:update.create_date},
+                    context=context)
+            except ValueError:
+                self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
@@ -244,7 +248,7 @@ class update_received(osv.osv):
         'source': fields.char('Source Instance', size=128, readonly=True), 
         'owner': fields.char('Owner Instance', size=128, readonly=True), 
         'model' : fields.char('Model', size=64, readonly=True, select=True),
-        'sdref' : fields.char('SD ref', size=128, readonly=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'sequence' : fields.integer('Sequence', readonly=True),
         'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
@@ -265,6 +269,7 @@ class update_received(osv.osv):
     
     _logger = logging.getLogger('sync.client')
 
+    @translate_column('model', 'ir_model', 'model', 'character varying(64)')
     @add_sdref_column
     def _auto_init(self, cr, context=None):
         super(update_received, self)._auto_init(cr, context=context)
@@ -290,6 +295,7 @@ class update_received(osv.osv):
                     'version' : load_item['version'],
                     'values' : load_item['values'],
                     'owner' : load_item['owner_name'],
+                    'sdref' : load_item['sdref'],
                 })
                 self.create(cr, uid, data, context=context)
             return len(packet['load'])
@@ -327,7 +333,6 @@ class update_received(osv.osv):
         # Sort updates by rule_sequence
         whole = self.browse(cr, uid, update_ids, context=context)
         update_groups = {}
-        
         for update in whole:
             if update.is_deleted:
                 group_key = (update.sequence, 1, -update.rule_sequence)
@@ -359,19 +364,18 @@ class update_received(osv.osv):
                 cr.commit = cr.commit_org
             return res
 
-        def secure_purge_data(obj, ids):
+        def secure_unlink_data(obj, ids):
             try:
                 cr.execute("SAVEPOINT unlink_update")
-                # Don't try to purge, we never know if there
-                obj.purge(cr, uid, ids, context=context)
+                # Keep a trace of the deletion
+                obj.unlink(cr, uid, ids, context=context)
             except:
                 cr.execute("ROLLBACK TO SAVEPOINT unlink_update")
                 raise
             else:
                 cr.execute("RELEASE SAVEPOINT unlink_update")
 
-        def group_import_update_execution(updates):
-            obj = self.pool.get(updates[0].model)
+        def group_import_update_execution(obj, updates):
             import_fields = eval(updates[0].fields)
             fallback = eval(updates[0].fallback_values or '{}')
             message = ""
@@ -391,9 +395,13 @@ class update_received(osv.osv):
                         'log' : log,
                     }, context=context)
                 logs.clear()
-                self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                    dict((sdref, {'version':version,'sync_date':fields.datetime.now()}) for sdref, version in versions.items()),
-                    context=context)
+                for sdref, version in versions.items():
+                    try:
+                        self.pool.get('ir.model.data').update_sd_ref(cr, uid,
+                            sdref, {'version':version,'sync_date':fields.datetime.now()},
+                            context=context)
+                    except ValueError:
+                        self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
 
             #3 check for missing field : report missing fields
             bad_fields = self._check_fields(cr, uid, obj._name, import_fields, context=context)
@@ -401,22 +409,19 @@ class update_received(osv.osv):
                 message += "Missing or unauthorized fields found : %s\n" % ", ".join(bad_fields)
                 bad_fields = [import_fields.index(x) for x in bad_fields]
 
-            i_id = import_fields.index('id')
-
             for update in updates:
                        
                 row = eval(update.values)
 
                 #4 check for fallback value : report missing fallback_value
                 row = self._check_and_replace_missing_id(cr, uid, row, import_fields, fallback, message, context=context)
-                xml_id = row[i_id]
 
                 if bad_fields : 
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
                 values.append(row)
                 update_ids.append(update.id)
-                versions.append( (xml_id, update.version) )
+                versions.append( (update.sdref, update.version) )
 
                 #1 conflict detection
                 if self._conflict(cr, uid, update.sdref, update.version, context=context):
@@ -487,32 +492,28 @@ class update_received(osv.osv):
 
             return message
 
-        def group_unlink_update_execution(updates):
-            obj = self.pool.get(updates[0].model)
-            assert obj is not None, "Cannot find object model=%s" % updates[0].model
-
-            for update in updates:
+        def group_unlink_update_execution(obj, sdref_update_ids):
+            obj_ids = obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), context=context)
+            for id, update_id in zip(
+                        obj_ids.values(),
+                        sdref_update_ids.values()
+                    ):
                 try:
-                    update_vals = {
-                        'editable' : False,
-                        'run' : True,
-                        'log' : '',
-                    }
-                    id = obj.find_sd_ref(cr, uid, update.sdref, context=context)
-                    if not id:
-                        update_vals['log'] = "Cannot find SD ref %s, skipped...\n\nReason: The record could be already deleted by another update." % update.sdref
-                    else:
-                        secure_purge_data(obj, [id])
+                    secure_unlink_data(obj, [id])
                 except BaseException, e:
                     e = "Error during unlink on model %s!\nUpdate ids: %s\nReason: %s\nSD ref:\n%s\n" \
                         % (obj._name, update_ids, tools.ustr(e), update.sdref)
-                    self.write(cr, uid, [update.id], {
+                    self.write(cr, uid, [update_id], {
                         'run' : False,
                         'log' : tools.ustr(e)
                     }, context=context)
                     raise
                 else:
-                    self.write(cr, uid, update.id, update_vals, context=context)
+                    self.write(cr, uid, [update_id], {
+                        'editable' : False,
+                        'run' : True,
+                        'log' : '',
+                    }, context=context)
 
             return
 
@@ -520,11 +521,36 @@ class update_received(osv.osv):
         imported, deleted = 0, 0
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
-            if updates[0].is_deleted:
-                group_unlink_update_execution(updates)
+            obj, do_deletion = self.pool.get(updates[0].model), updates[0].is_deleted
+            assert obj is not None, "Cannot find object model=%s" % updates[0].model
+            # Remove updates about deleted records in the list
+            sdref_update_ids = dict((update.sdref, update.id) for update in updates)
+            # For bi-private rules, it is possible that the sdref doesn't exists /!\
+            # - In case of import update, if sdref doesn't exists, the initial
+            #   value is False in order to keep it for group execution
+            # - For delete updates, if sdref doesn't exists, the initial value
+            #   is True in order to keep ignore it from group deletion
+            sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), do_deletion)
+            sdref_are_deleted.update(
+                obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
+            update_id_are_deleted = dict(zip(
+                sdref_update_ids.values(),
+                sdref_are_deleted.values()
+            ))
+            deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+            self.write(cr, uid, deleted_update_ids, {
+                'editable' : False,
+                'run' : True,
+                'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
+            }, context=context)
+            updates = filter(lambda update: update.id not in deleted_update_ids, updates)
+            if not updates: continue
+            # Proceed
+            if do_deletion:
+                group_unlink_update_execution(obj, sdref_update_ids)
                 deleted += len(updates)
             else:
-                error_message += group_import_update_execution(updates)
+                error_message += group_import_update_execution(obj, updates)
                 imported += len(updates)
         
         return (error_message.strip(), imported, deleted)

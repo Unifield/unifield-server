@@ -66,10 +66,15 @@ class setup_remote_warehouse(osv.osv_memory):
         
         entity_pool.write(cr, uid, entity.id, new_vals, context=context)
         
-        # remote sync server connection line to stop RW from ever connecting
+        # deactivate sync server connection line to stop RW from connecting
         server_connection_pool = self.pool.get('sync.client.sync_server_connection')
-        server_connection_ids = server_connection_pool.search(cr, uid, [('active','=',False)])
-        server_connection_pool.write(cr, uid, server_connection_ids, {'active': True})
+        active_server_connection_ids = server_connection_pool.search(cr, uid, [('active','=',True)])
+        inactive_server_connection_ids = server_connection_pool.search(cr, uid, [('active','=',False)])
+        
+        if active_server_connection_ids:
+            server_connection_pool.unlink(cr, uid, inactive_server_connection_ids)
+        else:
+            server_connection_pool.write(cr, uid, inactive_server_connection_ids, {'active': True})
         
         return {
                 'type': 'ir.actions.act_window_close',

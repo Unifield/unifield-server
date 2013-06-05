@@ -31,7 +31,7 @@ import logging
 from tools.safe_eval import safe_eval as eval
 import threading
 
-from sync_common import add_sdref_column, fancy_integer
+from sync_common import add_sdref_column, translate_column, fancy_integer
 
 class SavePullerCache(object):
     def __init__(self, model):
@@ -312,7 +312,9 @@ class update(osv.osv):
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
-                if not update.owner:
+                if update.is_deleted:
+                    privates = [entity.id]
+                elif not update.owner:
                     privates = []
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
@@ -364,7 +366,7 @@ class update(osv.osv):
             return None
 
         base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE""",
-                               "(sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ") OR sync_server_update.rule_id IS NULL)",
+                               "sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ")",
                                "AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""" % (last_seq, max_seq)))
 
         ## Recover add own client updates to the list

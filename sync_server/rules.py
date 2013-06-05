@@ -527,6 +527,7 @@ class message_rule(osv.osv):
         'applies_to_type': fields.boolean('Applies to type', help='Applies to a group type instead of a specific group'),
         'group_id': fields.many2one('sync.server.entity_group','Group', select=True),
         'type_id': fields.many2one('sync.server.group_type','Group Type', select=True),
+        'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'domain': fields.text('Domain', required = False),
         'sequence_number': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
@@ -552,12 +553,14 @@ class message_rule(osv.osv):
     def _get_rules(self, cr, uid, entity, context=None):
         rules_ids = []
         for group in entity.group_ids:
-            domain = ['|',
+            domain = ['|', '|',
                     '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
-                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True)]
+                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True),
+                    ('type_name', '=', 'USB')]
             ids = self.search(cr, uid, domain, context=context)
             if ids:
                 rules_ids.extend(ids)
+        return list(set(rules_ids))
     
     _rules_serialization_mapping = {            
         'name' : 'name',
@@ -569,6 +572,7 @@ class message_rule(osv.osv):
         'arguments': 'arguments',
         'destination_name': 'destination_name',
         'active': 'active',
+        'type_name' : 'type',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):

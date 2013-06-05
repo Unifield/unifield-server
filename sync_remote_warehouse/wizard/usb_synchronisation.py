@@ -56,22 +56,33 @@ class usb_synchronisation(osv.osv_memory):
         if not wizard.pull_data:
             raise osv.except_osv(_('No Data to Pull'), _('You have not specified a file that contains the data you want to Pull'))
         
-        import_count, import_error = 0, False
+        updates_pulled = update_pull_error = updates_ran = update_run_error = \
+        messages_pulled = message_pull_error = messages_ran = message_run_error = 0
         try:
-            import_count, import_error, updates_ran, run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
+            updates_pulled, update_pull_error, updates_ran, update_run_error, \
+            messages_pulled, message_pull_error, messages_ran, message_run_error = self.pool.get('sync.client.entity').usb_pull(cr, uid, wizard.pull_data, context=context)
         except zipfile.BadZipfile:
             raise osv.except_osv(_('Not a Zip File'), _('The file you uploaded was not a .zip file'))
         
         # handle returned values
         pull_result = ''
-        if not import_error:
-            pull_result = 'Successfully Pulled %d update(s) and deletion(s)' % import_count
-            if not run_error:
-                pull_result += '\nSuccessfully ran %d update(s) and deletion(s)' % updates_ran
+        if not update_pull_error:
+            pull_result += 'Pulled %d update(s)' % updates_pulled 
+            if not update_run_error:
+                pull_result += '\nRan %s update(s)' % updates_ran
             else:
-                pull_result += '\nError while executing the update(s): %s' % run_error
+                pull_result += '\nError while executing %s update(s): %s' % (updates_ran, update_run_error)
         else:
-            pull_result = 'Got an error while pulling %d update(s) and deletion(s): %s' % (import_count, import_error)
+            pull_result += 'Got an error while pulling %d update(s): %s' % (updates_pulled, update_pull_error)
+            
+        if not message_pull_error:
+            pull_result += '\nPulled %d message(s)' % messages_pulled 
+            if not message_run_error:
+                pull_result += '\nRan %s message(s)' % messages_ran
+            else:
+                pull_result += '\nError while executing %s message(s): %s' % (messages_ran, message_run_error)
+        else:
+            pull_result += '\nGot an error while pulling %d message(s): %s' % (messages_pulled, message_pull_error)
         
         # write results to wizard object to update ui
         vals = {

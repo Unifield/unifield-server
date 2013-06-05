@@ -45,11 +45,10 @@
 <!-- =========================MENUS and ACTIONS=============================== -->
 
         <record model="ir.actions.act_window" id="connection_manager_action">
-
-        <field name="name">Connection Manager</field>
+            <field name="name">Connection Manager</field>
             <field name="res_model">sync.client.sync_server_connection</field>
             <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">form,tree</field>
             <field name="context">{}</field>
         </record>
 
@@ -60,7 +59,8 @@
                  web_icon_hover="images/sync-hover.jpg"
         		/>
 
-        <menuitem id="sync_menu" name="Synchronization" parent="main_menu" sequence="20"/>
+        <menuitem id="sync_menu" name="Synchronization" action="connection_manager_action"
+                  parent="main_menu" sequence="20"/>
 
         <menuitem id="reg_menu" name="Registration" parent="main_menu" sequence="10"/>
 

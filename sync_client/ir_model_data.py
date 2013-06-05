@@ -22,57 +22,29 @@
 from osv import osv, fields
 import tools
 import logging
-from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE
-
-class write_info(osv.osv):
-
-    _logger = logging.getLogger('sync.client')
-
-    _name = 'sync.client.write_info'
-
-    _rec_name = 'fields_modif'
-
-    _columns= {
-        'create_date' :fields.datetime('Create Date', select=1),
-        'model' : fields.char('model', size=64, select=1),
-        'res_id' : fields.integer('Ressource Id', select=1),
-        'fields_modif' : fields.text('Fields Modified'),
-    }
-
-    def purge(self, cr, uid, context=None):
-        self._logger.info("Start purging write_info....")
-        cr.execute("DELETE FROM sync_client_write_info WHERE NOT id IN (SELECT MAX(id) FROM sync_client_write_info GROUP BY model, res_id, fields_modif)")
-        self._logger.info("Number of purged rows: %d" % cr.rowcount)
-        return True
-
-    def log_write(self, cr, uid, model_name, res_id, values, context=None):
-        field = [key for key in values.keys()]
-        read_res = self.pool.get(model_name).read(cr, uid, res_id, field, context=context)
-        if not read_res:
-            self._logger.warning("No read res found for model %s id %s" % (model_name, res_id))
-            return
-        real_modif_field = []
-        for k, val in read_res.items():
-            #TODO
-            #if k in field and (not isinstance(values[k], list) or values[k]):
-            #    print "####", val, '!=', values[k], type(val), type(values[k])
-            if k in field and (not isinstance(values[k], list) or values[k]) and val != tools.ustr(values[k]):
-                real_modif_field.append(k)
-        if real_modif_field:
-            self.create(cr, uid, {'model' : model_name, 'res_id' : res_id, 'fields_modif' : str(real_modif_field)}, context=context )
-
-    def delete_old_log(self, cr, uid, model_name, res_id, sync_date, context=None):
-        ids = self.search(cr, uid, [('res_id', '=', res_id), ('model', '=', model_name), ('create_date', '<', sync_date)], context=context)
-        if ids:
-            self.unlink(cr, uid, ids, context=context)
-
-write_info()
+from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN
 
 class ir_model_data_sync(osv.osv):
     """ ir_model_data with sync date """
 
     _inherit = "ir.model.data"
     _logger = logging.getLogger('ir.model.data')
+
+    def __init__(self, pool, cr):
+        module_obj = pool.get('ir.module.module')
+        original_check = module_obj.check
+
+        def new_check(self, cr, uid, ids, context=None):
+            for module in self.browse(cr, uid, ids, context=context):
+                if module.name == 'sync_client':
+                    self.check = original_check
+                    if module.state in ('to install', 'to upgrade'):
+                        self.pool.get('ir.model.data').create_all_sdrefs(cr)
+            res = original_check(cr, uid, ids, context=None)
+            return res
+
+        setattr(module_obj.__class__, 'check', new_check)
+        super(ir_model_data_sync, self).__init__(pool, cr)
 
     def _get_is_deleted(self, cr, uid, ids, field, args, context=None):
         datas = {}
@@ -114,8 +86,62 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         'is_deleted' : False,
     }
 
+    def create_all_sdrefs(self, cr):
+        """
+        Gets all records for all not ignored models and calls get_sd_ref, thereby creating sdrefs that dont exist
+        """
+        # loop on objects that don't match the models to ignore domain in sync common
+        result = set()
+        ir_model = self.pool.get('ir.model')
+        model_ids = ir_model.search(cr, 1, MODELS_TO_IGNORE_DOMAIN)
+
+        for model in ir_model.browse(cr, 1, model_ids):
+            
+            # ignore ir model data object
+            if model.model == 'ir.model.data':
+                continue
+
+            obj = self.pool.get(model.model)
+            
+            if obj is None:
+                print 'Could not get object %s' % model.model
+                continue
+            
+            # ignore objects who inherit another object, and use their table too, but a different name (would lead to attempted sd ref duplication)
+            if hasattr(obj, '_inherit') \
+            and obj._name != obj._inherit \
+            and self.pool.get(obj._inherit)._table == obj._table:
+                continue
+
+            # ignore wizard objects
+            if isinstance(obj, osv.osv_memory):
+                continue
+
+            # get all records for the object
+            cr.execute("""
+                SELECT r.id
+                FROM %s r
+                    LEFT JOIN ir_model_data data ON data.module = 'sd' AND data.model = %%s AND r.id = data.res_id
+                WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
+            record_ids = map(lambda x: x[0], cr.fetchall())
+
+            # if we have some records
+            if not record_ids:
+                continue
+
+            # call get_sd_ref with their ids, therefore creating sdref's that don't exist
+            sdref = obj.get_sd_ref(cr, 1, record_ids)
+            result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
+
+        return result
+
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
+        # Drop old sync.client.write_info table
+        cr.execute("""SELECT relname FROM pg_class WHERE relname='sync_client_write_info'""")
+        if cr.fetchone():
+            self._logger.info("Dropping deprecated table sync_client_write_info...")
+            cr.execute("""DROP TABLE sync_client_write_info""")
         # Check existence of unique_sdref_constraint
         cr.execute("""\
 SELECT i.relname
@@ -170,21 +196,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             except:
                 cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
                 raise
-        # Make sd reference to every object
-        ids = self.search(cr, 1, [('model', 'not in', MODELS_TO_IGNORE), ('module', '!=', 'sd'), ('name', 'not in', XML_ID_TO_IGNORE)], context=context)
-        for rec in self.browse(cr, 1, ids):
-            name = "%s_%s" % (rec.module, rec.name)
-            res_ids = self.search(cr, 1, [('module','=','sd'),('res_id','=',rec.res_id)])
-            if res_ids:
-                continue
-            args = {
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'model' :rec.model,
-                    'module' : 'sd',#model._module,
-                    'name' : name,
-                    'res_id' : rec.res_id,
-                    }
-            self.create(cr, 1, args)
+
         return res
 
     def create(self,cr,uid,values,context=None):
@@ -215,7 +227,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 self.write(cr, uid, sd_ids, args, context=context)
             else:
                 self.create(cr, uid, args, context=context)
-    
+
         return id
 
     # TODO replace this deprecated method with get_sd_ref(field='id') in your call
@@ -231,13 +243,13 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             result.append(data_ids[0] if data_ids else False)
         return result if isinstance(ids, (list, tuple)) else result[0]
 
-    def update_sd_ref(self, cr, uid, sdrefs, context=None):
-        """Update SD refs information. sdrefs should be dict of where values are update values of the sdref"""
-        assert hasattr(sdrefs, 'items'), "Argument sdrefs should be a dictionary"
-        for sdref, values in sdrefs.items():
-            cr.execute("""\
-UPDATE %s SET %s WHERE module = 'sd' AND name = %%s
-""" % (self._table, ", ".join("%s = %%s" % k for k in values.keys())), values.values() + [sdref])
+    def update_sd_ref(self, cr, uid, sdref, vals, context=None):
+        """Update a SD ref information. Raise ValueError if sdref doesn't exists."""
+        ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)], context=context)
+        if not ids:
+            raise ValueError("Cannot find sdref %s!" % sdref)
+        self.write(cr, uid, ids, vals, context=context)
+        return True
 
     def is_deleted(self, cr, uid, module, xml_id, context=None):
         """

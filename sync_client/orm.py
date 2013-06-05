@@ -358,6 +358,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
     def generate_message_for_destination(self, cr, uid, destination_name, sdref, instance_name, send_to_parent_instances):
         instance_obj = self.pool.get('msf.instance')
+        xml_id = 'sd.%s' % sdref
 
         if not destination_name:
             return

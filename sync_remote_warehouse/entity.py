@@ -184,7 +184,6 @@ class Entity(osv.osv):
             'sequence_number' : 'sequence_number',
             'included_fields' : 'included_fields',
             'can_delete' : 'can_delete',
-            'active': 'active',
             'direction_usb' : 'direction_usb',
         }
     
@@ -200,7 +199,7 @@ class Entity(osv.osv):
         _message_rules_serialization_mapping = {
             'server_id': 'server_id',      
             'name': 'name' ,
-            'model_name': 'model',
+            'model': 'model',
             'domain': 'domain',
             'sequence_number': 'sequence_number',
             'remote_call': 'remote_call',
@@ -269,7 +268,7 @@ class Entity(osv.osv):
         if entity.usb_instance_type == 'central_platform':
              
             update_rule_pool = self.pool.get('sync.client.rule')
-            update_rule_ids = update_rule_pool.search(cr, uid, [('type_id.name','=','USB'),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
+            update_rule_ids = update_rule_pool.search(cr, uid, [('type','=','USB'),'|',('direction_usb','=','rw_to_cp'),('direction_usb','=','bidirectional')])
             update_rules_serialized = _serialize_update_rule(update_rule_pool, cr, uid, update_rule_ids, context=context)
             
             update_rules_string_io = StringIO()
@@ -282,7 +281,7 @@ class Entity(osv.osv):
         # create message update rules file to send to remote warehouse if instance is central platform
         if entity.usb_instance_type == 'central_platform': 
             message_rule_pool = self.pool.get('sync.client.message_rule')
-            message_rule_ids = message_rule_pool.search(cr, uid, [('type_id.name','=','USB')])
+            message_rule_ids = message_rule_pool.search(cr, uid, [('type','=','USB')])
             message_rules_serialized = _serialize_message_rule(message_rule_pool, cr, uid, message_rule_ids, context=context)
             
             message_rules_string_io = StringIO()
@@ -465,10 +464,10 @@ class Entity(osv.osv):
                 self.usb_pull_import_rules(cr, uid, zip_file, context)
             
             # import updates
-            data, import_error, updates_ran, run_error = self.usb_pull_import_updates(cr, uid, zip_file, context)
+            data, updates_import_error, updates_ran, updates_run_error = self.usb_pull_import_updates(cr, uid, zip_file, context)
             logger.switch('data_pull','ok')
             logger.switch('msg_pull','in-progress')
-            data, import_error, updates_ran, run_error = self.usb_pull_import_messages(cr, uid, zip_file, context)
+            messages, messages_import_error, messages_ran, messages_run_error = self.usb_pull_import_messages(cr, uid, zip_file, context)
             
             zip_file.close()
                     
@@ -483,7 +482,8 @@ class Entity(osv.osv):
             raise e
     
         # return results
-        return (len(data), import_error, updates_ran, run_error)
+        return (len(data), updates_import_error, updates_ran, updates_run_error, 
+                len(messages), messages_import_error, messages_ran, messages_run_error)
     
     def usb_pull_import_rules(self, cr, uid, zip_file, context):
         update_rules = zip_file.read(self.usb_pull_update_rule_file)
