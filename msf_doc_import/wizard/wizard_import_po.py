@@ -242,8 +242,8 @@ The columns should be in this values:
         delivery_confirmed_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
-                delivery_confirmed_date = delivery_confirmed_date.strftime('%d-%m-%Y')
-                if delivery_confirmed_date != '30-12-1899':
+                delivery_confirmed_date = delivery_confirmed_date.strftime('%Y-%m-%d')
+                if delivery_confirmed_date != '1899-12-30':
                     to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
@@ -321,8 +321,8 @@ The columns should be in this values:
         arrival_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
-                arrival_date = arrival_date.strftime('%d-%m-%Y')
-                if arrival_date != '30-12-1899':
+                arrival_date = arrival_date.strftime('%Y-%m-%d')
+                if arrival_date != '1899-12-30':
                     to_write_po.update({'arrival_date': arrival_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
@@ -465,8 +465,8 @@ The columns should be in this values:
         confirmed_delivery_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
-                confirmed_delivery_date = confirmed_delivery_date.strftime('%d-%m-%Y')
-                if confirmed_delivery_date != '30-12-1899':
+                confirmed_delivery_date = confirmed_delivery_date.strftime('%Y-%m-%d')
+                if confirmed_delivery_date != '1899-12-30':
                     to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
