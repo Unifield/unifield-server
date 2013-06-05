@@ -8,7 +8,7 @@
  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
   <Author>MSFUser</Author>
   <LastAuthor>MSFUser</LastAuthor>
-  <Created>2012-06-18T15:46:09Z</Created>
+  <Created>${time.strftime('%Y-%m-%dT%H:%M:%SZ')|n}</Created>
   <Company>Medecins Sans Frontieres</Company>
   <Version>11.9999</Version>
  </DocumentProperties>
@@ -20,463 +20,221 @@
   <ProtectStructure>False</ProtectStructure>
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
-
-
-<Styles>
-
-<Style ss:ID="Default" ss:Name="Normal">
-<Alignment ss:Vertical="Bottom"/>
-<Borders/>
-<Font/>
-<NumberFormat/>
-<Protection/>
-</Style>
-
-<Style ss:ID="s16" ss:Name="Comma">
-</Style>
-
-
-<Style ss:ID="header">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
-
-<Style ss:ID="line">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
-
-<Style ss:ID="title">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-</Style>
-
-<Style ss:ID="s22">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-<Style ss:ID="s23">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<NumberFormat ss:Format="Short Date"/>
-</Style>
-<Style ss:ID="s24">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<NumberFormat ss:Format="mmm\-yy"/>
-</Style>
-
-<Style ss:ID="short_date">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<NumberFormat ss:Format="Short Date"/>
-</Style>
-
-<Style ss:ID="short_date2">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-<NumberFormat ss:Format="Short Date"/>
-</Style>
-
-<Style ss:ID="pop">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-</Style>
-
-<Style ss:ID="s25">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<Interior ss:Pattern="Solid"/>
-</Style>
-
-
-<Style ss:ID="s25c">
-</Style>
-
-<Style ss:ID="s25b">
-<Font ss:Bold="1"/>
-</Style>
-
-<!-- <Style ss:ID="s25">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-
-<Style ss:ID="s26" ss:Parent="s16">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<NumberFormat />
-<NumberFormat ss:Format="Fixed"/>
-</Style> -->
-
-<Style ss:ID="s26" >
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<NumberFormat ss:Format="Fixed"/>
-</Style>
-
-
-
-<Style ss:ID="s32">
-<Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<Font x:Family="Swiss" ss:Bold="1"/>
-</Style>
-
-<Style ss:ID="s34">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<Font ss:Bold="1"/>
-</Style>
-
-
-<Style ss:ID="s35">
-<Alignment ss:Vertical="Center" ss:WrapText="1"/>
-</Style>
-
-
-<Style ss:ID="s38">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-
-
-<Style ss:ID="s39" >
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-
-<Style ss:ID="s40">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-
-<Style ss:ID="s41">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<Font x:Family="Swiss" ss:Bold="1"/>
-</Style>
-
-<Style ss:ID="s42">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-
-<Style ss:ID="s43" >
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-</Style>
-
-<Style ss:ID="s44" >
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-</Borders>
-<Font x:Family="Swiss" ss:Bold="1"/>
-<NumberFormat ss:Format="Fixed"/>
-</Style>
-
-
-<Style ss:ID="s49">
-<Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-</Borders>
-<Font x:Family="Swiss" ss:Bold="1"/>
-</Style>
-
-<Style ss:ID="s50" >
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-</Borders>
-<Font x:Family="Swiss" ss:Bold="1"/>
-<NumberFormat ss:Format="Fixed"/>
-</Style>
-
-<Style ss:ID="s51">
-<Borders>
-<Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
-<Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-<Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
-<Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
-</Borders>
-<Font x:Family="Swiss" ss:Bold="1"/>
-</Style>
-</Styles>
-
-
-<Worksheet ss:Name="Liquidity position">
-<Table >
-<Column ss:AutoFitWidth="0" ss:Width="110.5"/>
-<Column ss:AutoFitWidth="0" ss:Width="102.75" ss:Span="1"/>
-<Column  ss:AutoFitWidth="0" ss:Width="103.5" ss:Span="1"/>
-<Column  ss:AutoFitWidth="0" ss:Width="75.75"/>
-<Column ss:AutoFitWidth="0" ss:Width="103.5" ss:Span="1"/>
-<Column  ss:AutoFitWidth="0" ss:Width="70.75"/>
-
-<Row>
-<Cell ss:StyleID="s25b" >
-<Data ss:Type="String">${_('REGISTER REPORT')}</Data>
-</Cell>
-</Row>
-<Row ss:Height="13.5"/>
-<Row >
-<Cell>
-<Data ss:Type="String">${_('Report Date:')}</Data>
-</Cell>
-<Cell ss:StyleID="short_date2" >
-<Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
-</Cell>
-</Row>
-<Row>
-<Cell>
-<Data ss:Type="String">${_('Prop Instance: ')}</Data>
-</Cell>
-<Cell ss:StyleID="pop">
-<Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
-</Cell>
-</Row>
-<Row ss:Height="13.5"/>
-
-<Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Proprietary instance')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Journal Code')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Journal Name')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Register Balance in register currency')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Register Currency')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Calculated Balance in functional currency')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Register Balance in functional currency')}</Data>
-</Cell>
-		<Cell ss:StyleID="s34" >
-<Data ss:Type="String">${_('Functional Currency')}</Data>
-</Cell>
-</Row>
-
-% for reg in getRegister():
-	% for o in getRegister2()[reg]:
-	<Row>
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.instance_id and o.instance_id.code or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${(o.journal_id and o.journal_id.name or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.msf_calculated_balance or 0.0)|x}</Data>
-</Cell>
-        % if o.journal_id.type == 'cash' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.balance_end_cash or 0.0)|x}</Data>
-</Cell>
-	% endif
-        % if o.journal_id.type == 'bank' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${(o.balance_end_real or 0.0)|x}</Data>
-</Cell>
-	% endif
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${( o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data>
-</Cell>
-        <Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.msf_calculated_balance, 'cal') or 0.0 )|x}</Data>
-</Cell>
-
-        % if o.journal_id.type == 'cash' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_cash,'reg') or 0.0 )|x}</Data>
-</Cell>
-	% endif
-        % if o.journal_id.type == 'bank' :
-        	<Cell ss:StyleID="s26" >
-<Data ss:Type="Number">${( getConvert(o.journal_id.currency,o.journal_id.company_id.currency_id,o.balance_end_real,'reg') or 0.0 )|x}</Data>
-</Cell>
-	% endif
-        <Cell ss:StyleID="s25" >
-<Data ss:Type="String">${( getFuncCur(o) or '')|x}</Data>
-</Cell>
-	</Row>
-
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Default"/>
+    <Style ss:ID="Result" ss:Name="Result">
+      <Font ss:Bold="1" ss:Italic="1" ss:Underline="Single"/>
+    </Style>
+    <Style ss:ID="Result2" ss:Name="Result2">
+      <Font ss:Bold="1" ss:Italic="1" ss:Underline="Single"/>
+    </Style>
+    <Style ss:ID="Heading" ss:Name="Heading">
+      <Font ss:Bold="1" ss:Italic="1" ss:Size="16"/>
+    </Style>
+    <Style ss:ID="Heading1" ss:Name="Heading1">
+      <Font ss:Bold="1" ss:Italic="1" ss:Size="16"/>
+    </Style>
+    <Style ss:ID="co1"/>
+    <Style ss:ID="co2"/>
+    <Style ss:ID="co3"/>
+    <Style ss:ID="co4"/>
+    <Style ss:ID="co5"/>
+    <Style ss:ID="co6"/>
+    <Style ss:ID="co7"/>
+    <Style ss:ID="co8"/>
+    <Style ss:ID="co9"/>
+    <Style ss:ID="co10"/>
+    <Style ss:ID="co11"/>
+    <Style ss:ID="co12"/>
+    <Style ss:ID="co13"/>
+    <Style ss:ID="co14"/>
+    <Style ss:ID="ta1"/>
+    <Style ss:ID="title">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:Indent="0"/>
+    </Style>
+    <Style ss:ID="pop">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+    </Style>
+    <Style ss:ID="ce2"/>
+    <Style ss:ID="column_headers">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Bold="1" ss:Italic="1" ss:Size="11"/>
+      <Interior ss:Color="#ffff66" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="ce4">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+    </Style>
+    <Style ss:ID="ce5">
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+    </Style>
+    <Style ss:ID="ce6">
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+      <NumberFormat ss:Format="Short Date"/>
+    </Style>
+    <Style ss:ID="ce7">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+    </Style>
+    <Style ss:ID="ce8">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Fixed"/>
+    </Style>
+    <Style ss:ID="ce9">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Font ss:Bold="1" ss:Italic="1" ss:Size="11"/>
+    </Style>
+    <Style ss:ID="short_date2">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+      <NumberFormat ss:Format="Short Date"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Info">
+    <Table ss:StyleID="ta1">
+      <Column ss:Width="105.1937"/>
+      <Column ss:Width="64.0063"/>
+      <Row ss:Height="12.1039">
+        <Cell ss:MergeAcross="3" ss:StyleID="title">
+          <Data ss:Type="String">REGISTER REPORT</Data>
+        </Cell>
+        <Cell ss:Index="2"/>
+      </Row>
+      <Row ss:Height="12.8126">
+        <Cell ss:Index="2"/>
+      </Row>
+      <Row ss:Height="12.1039">
+        <Cell>
+          <Data ss:Type="String">Report Date:</Data>
+        </Cell>
+        <Cell ss:StyleID="short_date2" >
+          <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="12.6425">
+        <Cell>
+          <Data ss:Type="String">Prop. Instance</Data>
+        </Cell>
+        <Cell ss:StyleID="pop">
+          <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
+        </Cell>
+      </Row>
+    </Table>
+    <WorksheetOptions/>
+  </Worksheet>
+% for o in objects:
+  <Worksheet ss:Name="${o.period_id.name}, ${o.journal_id.code}">
+    <Table ss:StyleID="ta1">
+      <Column ss:Width="95.9527"/>
+      <Column ss:Width="78.2079"/>
+      <Column ss:Width="64.2898"/>
+      <Column ss:Width="103.663"/>
+      <Column ss:Width="95.9527"/>
+      <Column ss:Width="71.263"/>
+      <Column ss:Width="166.9606"/>
+      <Column ss:Width="115.9937"/>
+      <Column ss:Width="66.6142"/>
+      <Column ss:Width="79.7386"/>
+      <Column ss:Width="58.9039"/>
+      <Column ss:Width="97.5118"/>
+      <Column ss:Width="43.4551"/>
+      <Column ss:Span="1010" ss:Width="64.0063"/>
+      <Row ss:Height="19.3039">
+        <Cell ss:MergeAcross="3" ss:StyleID="title">
+          <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''} REPORT</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+      </Row>
+      <Row ss:AutoFitHeight="0" ss:Height="29.1118">
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Specific type</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Doc. Date</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Post. Date</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Sequence</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Desc</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Ref</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Account</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Third Parties</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Amount IN</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Amount OUT</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Currency</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Amt. Reconciled</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Status</Data>
+        </Cell>
+      </Row>
+% for line in o.line_ids:
+      <Row ss:Height="14.5134">
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Direct Payment') or _('Normal')}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce6">
+          <Data ss:Type="DateTime">${line.document_date}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce6">
+          <Data ss:Type="DateTime">${line.date}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${line.sequence_for_reference or ''}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${line.name or ''}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce5">
+          <Data ss:Type="String">${line.ref or ''}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${line.account_id.code}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${line.amount_in or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${line.amount_out or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce5">
+          <Data ss:Type="String">${line.currency_id and line.currency_id.name or ''}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce5">
+          <Data ss:Type="String">${line.reconciled and 'X' or ''}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce5">
+          <Data ss:Type="String">${line.state and getSel(line, 'state') or ''}</Data>
+        </Cell>
+      </Row>
 % endfor
-
-<Row>
-	<Cell ss:StyleID="s42"/>
-	<Cell ss:StyleID="s38">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s38">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s39">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s43">
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s32">
-	<Data ss:Type="String">${_('Sub-Total =')}</Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getCal()}]C:R[-1]C)" >
-	<Data ss:Type="Number"></Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s44" ss:Formula="=SUM(R[-${getRes()}]C:R[-1]C)" >
-	<Data ss:Type="Number"></Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s41">
-	<Data ss:Type="String">${( getCurTot() or '')|x}</Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-</Row>
-<Row ss:Height="13.5"/>
+    </Table>
+    <WorksheetOptions/>
+  </Worksheet>
 % endfor
-
-
-<Row ss:Height="13.5">
-	<Cell ss:StyleID="s25c"/>
-	<Cell ss:StyleID="s25c"/>
-	<Cell ss:StyleID="s25c"/>
-	<Cell ss:StyleID="s25c"/>
-	<Cell ss:StyleID="s25c"/>
-
-	<Cell  ss:StyleID="s49">
-	<Data ss:Type="String">${_('Grand Total =')}</Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
-	<Data ss:Type="Number"></Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s50" ss:Formula="=${getFormula()}+R[-2]C">
-	<Data ss:Type="Number"></Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-	<Cell ss:StyleID="s51">
-	<Data ss:Type="String">${( getCurTot() or '')|x}</Data>
-	<NamedCell ss:Name="Print_Area"/>
-	</Cell>
-</Row>
-
-
-</Table>
-
-
-<WorksheetOptions>
-<FitToPage/>
-<Print>
-<ValidPrinterInfo/>
-<PaperSizeIndex>9</PaperSizeIndex>
-<Scale>63</Scale>
-<HorizontalResolution>600</HorizontalResolution>
-<VerticalResolution>0</VerticalResolution>
-</Print>
-<PageBreakZoom>60</PageBreakZoom>
-<Selected/>
-<DoNotDisplayGridlines/>
-<Panes>
-<Pane>
-<Number>3</Number>
-<ActiveRow>24</ActiveRow>
-<ActiveCol>3</ActiveCol>
-</Pane>
-</Panes>
-<ProtectObjects>False</ProtectObjects>
-<ProtectScenarios>False</ProtectScenarios>
-</WorksheetOptions>
-
-</Worksheet>
-
-
-
 </Workbook>
