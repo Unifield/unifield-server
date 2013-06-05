@@ -42,6 +42,7 @@ class local_rule(osv.osv):
         'owner_field' : fields.char('Owner Field', size=128, readonly=True),
         'can_delete': fields.boolean('Can delete record?', readonly=True, help='Propagate the delete of old unused records'),
         'active' : fields.boolean('Active', select=True),
+        'type' : fields.char('Group Type', size=256),
     }
 
     _defaults = {
@@ -128,9 +129,6 @@ class update_to_send(osv.osv):
         rule = self.pool.get('sync.client.rule').browse(cr, uid, rule_id, context=context)
         update = self
         
-        context = context or {}
-        sync_field = context.get('last_sync_date_field', 'sync_date')
-
         def create_normal_update(self, rule, context):
             domain = eval(rule.domain or '[]')
             included_fields = eval(rule.included_fields or '[]') 
@@ -138,8 +136,7 @@ class update_to_send(osv.osv):
                 included_fields.append('id')
 
             ids_to_compute = self.need_to_push(cr, uid,
-                self.search_ext(cr, uid, domain, context=context),
-                included_fields, sync_field=sync_field, context=context)
+                self.search_ext(cr, uid, domain, context=context), context=context)
             if not ids_to_compute:
                 return 0
 
@@ -169,8 +166,7 @@ class update_to_send(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, [('module','=','sd')], context=context),
-                [], sync_field=sync_field, context=context)
+                self.search_deleted(cr, uid, [('module','=','sd')], context=context), context=context)
 
             if not ids_to_delete:
                 return 0

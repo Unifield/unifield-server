@@ -368,7 +368,7 @@ class Entity(osv.osv):
         updates_count = 0
         
         # search for rules         
-        rule_search_domain = [('type_id.name','=','USB')]
+        rule_search_domain = [('type','=','USB')]
         if entity.usb_instance_type == 'central_platform':
             rule_search_domain += ['|',('direction_usb','=','cp_to_rw'),('direction_usb','=','bidirectional')]
         else:
@@ -397,7 +397,7 @@ class Entity(osv.osv):
         logger_index = logger.append()
 
         messages_count = 0
-        rule_ids = rule_pool.search(cr, uid, [('type_id.name','=','USB')], context=context)
+        rule_ids = rule_pool.search(cr, uid, [('type','=','USB')], context=context)
         
         if rule_ids:
             for rule in rule_pool.browse(cr, uid, rule_ids, context=context):

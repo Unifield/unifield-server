@@ -70,6 +70,7 @@ class local_message_rule(osv.osv):
         'arguments': fields.text('Arguments of the method', required=True),
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
         'active' : fields.boolean('Active', select=True),
+        'type' : fields.char('Group Type', size=256),
     }
 
     _logger = logging.getLogger('sync.client')

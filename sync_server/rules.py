@@ -160,12 +160,12 @@ class sync_rule(osv.osv):
     def _get_rules_per_group(self, cr, uid, entity, context=None):
         cr.execute("""SELECT g.id, array_agg(r.id)
                       FROM sync_server_entity_group g 
-                           JOIN sync_server_group_type t ON (g.type_id=t.id) 
+                           JOIN sync_server_group_type t ON (g.type_id=t.id or t.name = 'USB') 
                            JOIN sync_server_sync_rule r
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
                                      OR (r.type_id = t.id AND r.applies_to_type))
                                     AND r.active)
-                      WHERE g.id IN %s
+                      WHERE g.id = 1                  
                       GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
         return dict(cr.fetchall())
 
