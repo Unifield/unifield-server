@@ -70,8 +70,32 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         'is_deleted' : False,
     }
 
+    def _normalize_sdref(self, cr, context=None):
+        """
+        Migrate and add sdref constraint to prevent commas in the xmlid name
+        """
+        cr.execute("""\
+SELECT 1 FROM pg_constraint WHERE conname = 'normalized_sdref_constraint';""")
+        # If there is not, we will migrate and create it after
+        if not cr.fetchone():
+            self._logger.info("Replace commas in sdrefs and create a constraint...")
+            cr.execute("SAVEPOINT make_sdref_constraint")
+            try:
+                cr.execute("""\
+UPDATE ir_model_data SET name = replace(name, ',', '_') WHERE name LIKE '%,%';""")
+                records_updated = cr._obj.rowcount
+                cr.commit()
+                self._logger.info("%d sdref(s) have been updated" % records_updated)
+            except:
+                cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
+                raise
+            else:
+                cr.execute("""
+ALTER TABLE ir_model_data ADD CONSTRAINT normalized_sdref_constraint CHECK(module = 'sd' AND name ~ '^[^,]*$' OR true);""")
+
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
+        self._normalize_sdref(cr, context=context)
         # Drop old sync.client.write_info table
         cr.execute("""SELECT relname FROM pg_class WHERE relname='sync_client_write_info'""")
         if cr.fetchone():
