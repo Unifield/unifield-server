@@ -257,7 +257,7 @@
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
       <Row ss:Height="14.5134">
         <Cell ss:Index="2" ss:StyleID="analytic_header" ss:MergeAcross="11">
-          <Data ss:Type="String">     ${_('ANALYTIC DISTRIBUTION')}</Data>
+          <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
         </Cell>
       </Row>
       <Row>
@@ -296,11 +296,16 @@
         </Cell>
       </Row>
 % endfor
+      <Row>
+        <Cell ss:Index="2" ss:StyleID="analytic_header" ss:MergeAcross="11">
+          <Data ss:Type="String"> </Data>
+        </Cell>
+      </Row>
 % endif
 % if line.direct_invoice and line.invoice_id:
       <Row ss:Height="14.5134">
         <Cell ss:Index="2" ss:StyleID="direct_invoice_header" ss:MergeAcross="11">
-          <Data ss:Type="String">     ${_('INVOICE LINES')}</Data>
+          <Data ss:Type="String">          ${_('INVOICE LINES')}</Data>
         </Cell>
       </Row>
       <Row>
@@ -325,7 +330,10 @@
       </Row>
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="ce4">
+        <Cell ss:Index="2" ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
           <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ce4">
@@ -344,6 +352,56 @@
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
       </Row>
+      
+
+% if inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines:
+      <Row ss:Height="14.5134">
+        <Cell ss:Index="2" ss:StyleID="analytic_header" ss:MergeAcross="11">
+          <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
+        </Cell>
+      </Row>
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Destination')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Cost Center')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('FP')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Percentage')}</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">${_('Amount')}</Data>
+        </Cell>
+      </Row>
+% for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce4">
+          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="ce8">
+          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+      </Row>
+% endfor
+      <Row>
+        <Cell ss:Index="2" ss:StyleID="analytic_header" ss:MergeAcross="11">
+          <Data ss:Type="String"> </Data>
+        </Cell>
+      </Row>
+% endif
 % endfor
 % endif
 % endfor
