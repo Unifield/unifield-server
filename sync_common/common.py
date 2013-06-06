@@ -106,8 +106,11 @@ __compile_models_to_ignore()
 def xmlid_to_sdref(xmlid):
     if not xmlid: return None
     head, sep, tail = xmlid.partition('.')
-    assert sep and head == 'sd', "The xmlid seems to not be owned by module sd, which is wrong"
-    return tail if sep else head
+    if sep:
+        assert head == 'sd', "The xmlid %s is not owned by module sd, which is wrong"% xmlid
+        return tail
+    else:
+        return head
 
 
 
@@ -234,3 +237,31 @@ def fancy_integer(self, cr, uid, ids, name, arg, context=None):
             (rec['id'] for rec in res),
             (rec[target_field] or '' for rec in res),
         ))
+
+
+
+re_xml_id = re.compile(r"(?:,|^)([^.,]+\.[^.]+)$")
+def split_xml_ids_list(string):
+    """
+    Split xml_ids string list and return a list.
+
+    Limitations:
+    - modules must not have . nor , in its name
+    - names must not have . in its name
+    """
+    result = []
+    matches = re_xml_id.search(string)
+    while matches:
+        result.insert(0, matches.group(1))
+        string = string[:-len(matches.group(0))]
+        matches = re_xml_id.search(string)
+    assert not string, "Still have a string in the list: \"%s\" remains" % string
+    return result
+
+
+
+def normalize_xmlid(string):
+    """
+    Try to normalize xmlid given by removing any comma.
+    """
+    return string.replace(',', '_')

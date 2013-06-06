@@ -27,7 +27,7 @@ from tools.safe_eval import safe_eval as eval
 import re
 import logging
 
-from sync_common import sync_log, add_sdref_column, translate_column, fancy_integer
+from sync_common import sync_log, add_sdref_column, translate_column, fancy_integer, split_xml_ids_list, normalize_xmlid
 
 class local_rule(osv.osv):
     _name = "sync.client.rule"
@@ -409,12 +409,14 @@ class update_received(osv.osv):
                 message += "Missing or unauthorized fields found : %s\n" % ", ".join(bad_fields)
                 bad_fields = [import_fields.index(x) for x in bad_fields]
 
+            # Prepare updates
+            # TODO: skip updates not preparable
             for update in updates:
                        
                 row = eval(update.values)
 
                 #4 check for fallback value : report missing fallback_value
-                row = self._check_and_replace_missing_id(cr, uid, row, import_fields, fallback, message, context=context)
+                self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
 
                 if bad_fields : 
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -594,37 +596,40 @@ class update_received(osv.osv):
                          and data_rec.sync_date < data_rec.last_modification) # modification after synchro => conflict
                      or next_version < data_rec.version))                     # next version is lower than current version
     
-    def _check_and_replace_missing_id(self, cr, uid, values, fields, fallback, message, context=None):
+    def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback, message, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
-        for i in xrange(0, len(fields)):
-            if '/id' in fields[i] and values[i]:
-                res_val = []
-                for full_xmlid in values[i].split(','):
-                    if full_xmlid:
-                        try:
-                            module, sep, xmlid = full_xmlid.partition('.')
-                            assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % full_xmlid
-                            if ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context):
-                                raise ValueError
-                        except ValueError:
-                            try:
-                                fb = fallback.get(fields[i])
-                                if not fb: raise ValueError
-                                module, sep, xmlid = fb.partition('.')
-                                assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % fb
-                                if ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context): raise ValueError
-                            except ValueError:
-                                message += 'Missing record %s and no fallback value defined or missing fallback value, set to False\n' % full_xmlid
-                            else:
-                                message += 'Missing record %s replace by %s\n' % (full_xmlid, fb)
-                                res_val.append(fb)
-                        else:
-                            res_val.append(full_xmlid)
-                if not res_val:
-                    values[i] = False
+
+        def check_xmlid(xmlid):
+            module, sep, xmlid = xmlid.partition('.')
+            assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % full_xmlid
+            return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
+
+        for i, field, value in zip(range(len(fields)), fields, values):
+            if '/id' not in field: continue
+            if not value: continue
+            res_val = []
+            for xmlid in map(normalize_xmlid, split_xml_ids_list(value)):
+                try:
+                    if not check_xmlid(xmlid):
+                        raise ValueError
+                except ValueError:
+                    try:
+                        fb = fallback.get(field, False)
+                        if not fb:
+                            raise ValueError("no fallback value defined")
+                        elif check_xmlid(fb):
+                            raise ValueError("fallback value %s has been deleted" \
+                                             % fb)
+                    except ValueError, e:
+                        message += 'Missing record %s and %s, set to False\n' \
+                                   % (xmlid, e.message)
+                    else:
+                        message += 'Missing record %s replaced by %s\n' \
+                                   % (xmlid, fb)
+                        res_val.append(fb)
                 else:
-                    values[i] = ','.join(res_val)
-        return values
+                    res_val.append(xmlid)
+            values[i] = ','.join(res_val) if res_val else False
 
     _order = 'id asc'
 
