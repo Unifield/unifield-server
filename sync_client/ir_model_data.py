@@ -91,7 +91,7 @@ UPDATE ir_model_data SET name = replace(name, ',', '_') WHERE name LIKE '%,%';""
                 raise
             else:
                 cr.execute("""
-ALTER TABLE ir_model_data ADD CONSTRAINT normalized_sdref_constraint CHECK(module = 'sd' AND name ~ '^[^,]*$' OR true);""")
+ALTER TABLE ir_model_data ADD CONSTRAINT normalized_sdref_constraint CHECK(module != 'sd' OR name ~ '^[^,]*$');""")
 
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
