@@ -11,7 +11,7 @@
       <field name="type">tree</field>
       <field name="arch" type="xml">
         <tree colors="red:run == False" string="Instance Tree">
-          <field name="sequence"/>
+          <field name="sequence_number"/>
           <field name="source"/>
           <field name="model"/>
           <field name="sdref"/>
@@ -34,7 +34,7 @@
           <group col="4" colspan="2">
             <separator string="Synchronization" colspan="4"/>
             <field name="source" colspan="4"/>
-            <field name="sequence"/>
+            <field name="sequence_number"/>
             <field name="create_date"/>
             <field name="execution_date"/>
             <field name="run"/>
@@ -89,7 +89,7 @@
         <search string="Search update Received">
           <field name="source"/>
           <field name="model"/>
-          <field name="sequence"/>
+          <field name="sequence_number"/>
           <newline/>
           <field name="create_date"/>
           <field name="execution_date"/>
@@ -103,7 +103,7 @@
             <filter string="Model" icon="terp-personal"
                     domain="[]" context="{'group_by':'model'}"/>
             <filter string="Sequence" icon="terp-accessories-archiver"
-                    domain="[]" context="{'group_by':'sequence'}"/>
+                    domain="[]" context="{'group_by':'sequence_number'}"/>
           </group>
         </search>
       </field>

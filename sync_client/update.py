@@ -27,7 +27,7 @@ from tools.safe_eval import safe_eval as eval
 import re
 import logging
 
-from sync_common import sync_log, add_sdref_column, translate_column, fancy_integer, split_xml_ids_list, normalize_xmlid
+from sync_common import sync_log, add_sdref_column, translate_column, migrate_sequence_to_sequence_number, fancy_integer, split_xml_ids_list, normalize_xmlid
 
 class local_rule(osv.osv):
     _name = "sync.client.rule"
@@ -250,7 +250,7 @@ class update_received(osv.osv):
         'model' : fields.char('Model', size=64, readonly=True, select=True),
         'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
-        'sequence' : fields.integer('Sequence', readonly=True),
+        'sequence_number' : fields.integer('Sequence', readonly=True),
         'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
@@ -271,6 +271,7 @@ class update_received(osv.osv):
 
     @translate_column('model', 'ir_model', 'model', 'character varying(64)')
     @add_sdref_column
+    @migrate_sequence_to_sequence_number
     def _auto_init(self, cr, context=None):
         super(update_received, self)._auto_init(cr, context=context)
 
@@ -286,7 +287,7 @@ class update_received(osv.osv):
                 'source' : packet['source_name'],
                 'model' : packet['model'],
                 'fields' : packet['fields'],
-                'sequence' : packet['sequence'],
+                'sequence_number' : packet['sequence'],
                 'fallback_values' : packet['fallback_values'],
                 'rule_sequence' : packet['rule'],
             }
@@ -303,7 +304,7 @@ class update_received(osv.osv):
             data = {
                 'source' : packet['source_name'],
                 'model' : packet['model'],
-                'sequence' : packet['sequence'],
+                'sequence_number' : packet['sequence'],
                 'rule_sequence' : packet['rule'],
                 'is_deleted' : True,
             }
@@ -335,9 +336,9 @@ class update_received(osv.osv):
         update_groups = {}
         for update in whole:
             if update.is_deleted:
-                group_key = (update.sequence, 1, -update.rule_sequence)
+                group_key = (update.sequence_number, 1, -update.rule_sequence)
             else:
-                group_key = (update.sequence, 0,  update.rule_sequence)
+                group_key = (update.sequence_number, 0,  update.rule_sequence)
             try:
                 update_groups[group_key].append(update)
             except KeyError:

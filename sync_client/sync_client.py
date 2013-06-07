@@ -512,7 +512,7 @@ class Entity(osv.osv):
         update_groups = dict()
         
         for update in whole:
-            group_key = (update.sequence, update.rule_sequence)
+            group_key = (update.sequence_number, update.rule_sequence)
             try:
                 update_groups[group_key].append(update.id)
             except KeyError:
