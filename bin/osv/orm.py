@@ -4277,7 +4277,6 @@ class orm(orm_template):
         for f in fields:
             if 'function' not in fields[f]:
                 to_read.append(f)
-
         data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
             data = data[0]
@@ -4292,8 +4291,9 @@ class orm(orm_template):
 
             if f in default:
                 data[f] = default[f]
-            elif f in data and 'function' in fields[f]:
-                del data[f]
+            elif 'function' in fields[f]:
+                if f in data:
+                    del data[f]
             elif ftype == 'many2one':
                 try:
                     data[f] = data[f] and data[f][0]
