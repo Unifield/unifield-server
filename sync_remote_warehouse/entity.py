@@ -237,7 +237,9 @@ class Entity(osv.osv):
             
             while package:
                 # add the package to the update_csv_contents dictionary and mark it has 'sent'
-                total_updates, total_deletions = update_add_and_mark_as_sent(*package)
+                updates, deletions = update_add_and_mark_as_sent(*package)
+                total_updates += updates
+                total_deletions += deletions
                 package = update_create_package()
                 
             # finished all packages so update logger
