@@ -867,7 +867,7 @@ class sale_order(osv.osv):
                                             move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
                                             proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
             
-            if picking_id:
+            if picking_id and order.procurement_request:
                 pick_obj = self.pool.get('stock.picking')
                 pick_obj.draft_force_assign(cr, uid , [picking_id], context)
                 pick_obj.cancel_assign(cr, uid, [picking_id], context)
