@@ -80,10 +80,10 @@ class Entity(osv.osv):
         messages = self.usb_push_create_message(cr, uid, context=context)
         
         # compress into zip
-        updates_count, deletions_count, messages_count = self.usb_push_create_zip(cr, uid, context=context)
+        updates_count, deletions_count, messages_count, update_ids, message_ids = self.usb_push_create_zip(cr, uid, context=context)
         
         # cleanup
-        self.usb_push_validate(cr, uid, context=context)
+        self.usb_push_validate(cr, uid, update_ids, context=context)
         self.write(cr, uid, entity.id, {'session_id' : ''}, context=context)
         
         # advance step if there was something to push
@@ -101,6 +101,8 @@ class Entity(osv.osv):
         message_csv_contents = []
         context = context or {}
         total_updates = total_deletions = total_messages = 0 
+        update_ids = []
+        message_ids = []
         entity = self.get_entity(cr, uid)
         
         logger = context.get('logger', None)
@@ -240,6 +242,7 @@ class Entity(osv.osv):
                 updates, deletions = update_add_and_mark_as_sent(*package)
                 total_updates += updates
                 total_deletions += deletions
+                update_ids += package[0]
                 package = update_create_package()
                 
             # finished all packages so update logger
@@ -255,11 +258,12 @@ class Entity(osv.osv):
         if messages_todo:
             # prepare packets
             messages_pool = self.pool.get('sync_remote_warehouse.message_to_send')
-            packet = messages_pool.get_message_packet(cr, uid, context=context)
-            total_messages = len(packet)
+            package = messages_pool.get_message_packet(cr, uid, context=context)
+            total_messages = len(package)
+            message_ids += package[0]
             
             # add packet to csv data list
-            message_add_and_mark_as_sent(packet)
+            message_add_and_mark_as_sent(package)
             logger.replace(logger_index, _("Message(s) packaged: %d") % (total_messages))
         
         ################################################### 
@@ -347,7 +351,7 @@ class Entity(osv.osv):
             logger.switch('status', 'failed')
             raise
         
-        return (total_updates, total_deletions, total_messages)
+        return (total_updates, total_deletions, total_messages, update_ids, message_ids)
     
     def usb_push_create_update(self, cr, uid, session, context=None):
         """
@@ -413,7 +417,7 @@ class Entity(osv.osv):
         # return number of messages to send
         return len(message_pool.search(cr, uid, [('sent','=',False)], context=context))
     
-    def usb_push_validate(self, cr, uid, context=None):
+    def usb_push_validate(self, cr, uid, ids, context=None):
         """
         Update update_to_send records with new usb_sync_date
         """
@@ -424,12 +428,9 @@ class Entity(osv.osv):
         if entity.usb_sync_step not in ['pull_performed','first_sync']:
             raise osv.except_osv('Cannot Validated', 'We cannot Validate the Push until we have performed one')
         
-        # get session id and latest updates
-        update_pool = self.pool.get('sync_remote_warehouse.update_to_send')
-        update_ids = update_pool.search(cr, uid, [], context=context)
-        
         # mark latest updates as sync finished (set usb_sync_date) and clear entity session_id
-        update_pool.sync_finished(cr, uid, update_ids, sync_field='usb_sync_date', context=context)
+        update_pool = self.pool.get('sync_remote_warehouse.update_to_send')
+        update_pool.sync_finished(cr, uid, ids, sync_field='usb_sync_date', context=context)
     
     @sync_process(step='data_pull', need_connection=False, defaults_logger={'usb':True})
     def usb_pull(self, cr, uid, uploaded_file_base64, context):
