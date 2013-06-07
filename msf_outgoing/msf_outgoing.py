@@ -3210,7 +3210,7 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         proc_id = kwargs['proc_id']
         order = kwargs['order']
-        if order.procurement_request :
+        if order.procurement_request:
             proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
             pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:

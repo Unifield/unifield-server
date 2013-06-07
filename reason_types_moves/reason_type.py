@@ -496,11 +496,12 @@ class stock_move(osv.osv):
         except ValueError:
             rt_return_unit_id = 0
 
+         
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
                 if sm['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
-                    pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'], ['purchase_id', 'sale_id', 'type'], context=context)
-                    if pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
+                    pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
+                    if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
                         return False
         return res
 
