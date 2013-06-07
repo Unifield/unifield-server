@@ -265,7 +265,7 @@ class update_received(osv.osv):
         'editable' : fields.boolean("Set editable"),
     }
 
-    line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)")
+    line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
     
     _logger = logging.getLogger('sync.client')
 
