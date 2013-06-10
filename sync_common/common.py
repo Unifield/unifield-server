@@ -1,10 +1,9 @@
 import re
-import tools
 import sys
 import traceback
-import functools
 import pprint
 
+import tools
 
 
 MODELS_TO_IGNORE = [
@@ -106,8 +105,11 @@ __compile_models_to_ignore()
 def xmlid_to_sdref(xmlid):
     if not xmlid: return None
     head, sep, tail = xmlid.partition('.')
-    assert sep and head == 'sd', "The xmlid seems to not be owned by module sd, which is wrong"
-    return tail if sep else head
+    if sep:
+        assert head == 'sd', "The xmlid %s is not owned by module sd, which is wrong"% xmlid
+        return tail
+    else:
+        return head
 
 
 
@@ -122,9 +124,9 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=Fa
         output += "%s.%s()" % (previous_frame.f_globals['__package__'], previous_frame.f_code.co_name)
     elif isinstance(message, BaseException):
         if hasattr(message, 'value'):
-            output += message.value
+            output += tools.ustr(message.value)
         elif hasattr(message, 'message'):
-            output += message.message
+            output += tools.ustr(message.message)
         else:
             output += tools.ustr(message)
         if output[-1] != "\n": output += "\n"
@@ -140,89 +142,6 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=Fa
 
 
 
-def translate_column(column, rel_table, rel_column, rel_column_type):
-    def decorator(fn):
-        @functools.wraps(fn)
-        def wrapper(self, cr, context=None):
-            cr.execute("""\
-SELECT
-    tc.constraint_name, tc.table_name, kcu.column_name, 
-    ccu.table_name AS foreign_table_name,
-    ccu.column_name AS foreign_column_name 
-FROM 
-    information_schema.table_constraints AS tc 
-    JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name
-    JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name
-WHERE constraint_type = 'FOREIGN KEY' AND tc.table_name=%s AND ccu.table_name=%s AND kcu.column_name=%s""", [self._table, rel_table, column])
-            foreign_key_exists = bool( cr.fetchone() )
-            if foreign_key_exists:
-                format_keys = {
-                    'table' : self._table,
-                    'rel_table' : rel_table,
-                    'rel_column' : rel_column,
-                    'column' : column,
-                    'column_type' : rel_column_type,
-                }
-                cr.execute("""\
-ALTER TABLE %(table)s ADD COLUMN new_%(column)s %(column_type)s;
-UPDATE %(table)s
-    SET new_%(column)s = %(rel_table)s.%(rel_column)s
-    FROM %(rel_table)s
-    WHERE %(table)s.%(column)s = %(rel_table)s.id;
-ALTER TABLE %(table)s DROP COLUMN %(column)s;
-ALTER TABLE %(table)s RENAME COLUMN new_%(column)s TO %(column)s;
-COMMIT;""" % format_keys)
-            return fn(self, cr, context=context)
-        return wrapper
-    return decorator
-
-
-
-def add_sdref_column(fn):
-    @functools.wraps(fn)
-    def wrapper(self, cr, context=None):
-        cr.execute("""\
-SELECT column_name 
-  FROM information_schema.columns 
-  WHERE table_name=%s AND column_name='sdref';""", [self._table])
-        column_sdref_exists = bool( cr.fetchone() )
-        result = fn(self, cr, context=context)
-        if not column_sdref_exists:
-            cr.execute("SELECT COUNT(*) FROM %s" % self._table)
-            count = cr.fetchone()[0]
-            if count > 0:
-                cr.commit()
-                cr_read = cr._cnx.cursor()
-                self._logger.info("Populating column sdref for model %s, %d records to update... This operation can take a lot of time, please wait..." % (self._name, count))
-                cr_read.execute("SELECT id, fields, values FROM %s" % self._table)
-                i, row = 1, cr_read.fetchone()
-                while row:
-                    id, fields, values = row
-                    cr.execute("SAVEPOINT make_sdref")
-                    try:
-                        data = dict(zip(eval(fields), eval(values)))
-                        assert 'id' in data, "Cannot find column 'id' on model=%s id=%d" % (self._name, id)
-                        sdref = xmlid_to_sdref(data['id'])
-                        cr.execute("UPDATE %s SET sdref = %%s WHERE id = %%s" % self._table, [sdref, id])
-                    except AssertionError, e:
-                        self._logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e.message))
-                        cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
-                    except:
-                        self._logger.exception("Cannot find SD ref on model=%s id=%d" % (self._name, id))
-                        cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
-                    else:
-                        cr.execute("RELEASE SAVEPOINT make_sdref")
-                    if i % 20000 == 0:
-                        self._logger.info("Intermittent commit, %d/%d (%d%%) SD refs created" % (i, count, int(100.0 * i / count)))
-                        cr.commit()
-                    i, row = i + 1, cr_read.fetchone()
-                cr_read.close()
-                cr.commit()
-        return result
-    return wrapper
-
-
-
 __re_fancy_integer_field_name = re.compile(r'^fancy_(.+)')
 def fancy_integer(self, cr, uid, ids, name, arg, context=None):
     global __re_fancy_integer_field_name
@@ -234,3 +153,31 @@ def fancy_integer(self, cr, uid, ids, name, arg, context=None):
             (rec['id'] for rec in res),
             (rec[target_field] or '' for rec in res),
         ))
+
+
+
+re_xml_id = re.compile(r"(?:,|^)([^.,]+\.[^.]+)$")
+def split_xml_ids_list(string):
+    """
+    Split xml_ids string list and return a list.
+
+    Limitations:
+    - modules must not have . nor , in its name
+    - names must not have . in its name
+    """
+    result = []
+    matches = re_xml_id.search(string)
+    while matches:
+        result.insert(0, matches.group(1))
+        string = string[:-len(matches.group(0))]
+        matches = re_xml_id.search(string)
+    assert not string, "Still have a string in the list: \"%s\" remains" % string
+    return result
+
+
+
+def normalize_xmlid(string):
+    """
+    Try to normalize xmlid given by removing any comma.
+    """
+    return string.replace(',', '_')

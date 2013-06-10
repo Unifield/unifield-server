@@ -317,6 +317,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         try:
             result = RejectingDict(cr.fetchall())
         except DuplicateKey:
+            # Should never happen if called on other object than ir.model.data
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, sdrefs=%s. Too late for debugging, sorry!" % (self._name, sdrefs))
         if field != real_field:
             read_result = self.pool.get('ir.model.data').read(cr, uid, result.values(), [real_field], context=context)

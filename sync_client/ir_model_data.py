@@ -22,7 +22,7 @@
 from osv import osv, fields
 import tools
 import logging
-from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN
+from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
 
 class ir_model_data_sync(osv.osv):
     """ ir_model_data with sync date """
@@ -135,6 +135,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
 
         return result
 
+    @normalize_sdref
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
         # Drop old sync.client.write_info table
