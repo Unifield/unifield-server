@@ -1607,7 +1607,6 @@ class stock_picking(osv.osv):
                     values['total_volume'] += float(total_volume)
 
             if stock_picking['move_lines']:
-                print self.pool.get('stock.move').read(cr, uid, stock_picking['move_lines'], ['location_id', 'currency_id'], context=context)
                 
                 for move in self.pool.get('stock.move').read(cr, uid, stock_picking['move_lines'], ['total_amount', 'currency_id', 'is_dangerous_good', 'is_keep_cool', 'is_narcotic', 'product_qty'], context=context):
                     # total amount (float)
@@ -1693,7 +1692,6 @@ class stock_picking(osv.osv):
         """
         if context is None:
             context = {}
-            
         stock_pickings = self.pool.get('stock.picking').search(cr, uid, [], context=context)
         # result dic
         result = {}
@@ -1761,7 +1759,9 @@ class stock_picking(osv.osv):
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
-                'overall_qty': fields.function(_vals_get, method=True, fnct_search=_qty_search, type='float', string='Overall Qty', multi='get_vals'),
+                'overall_qty': fields.function(_vals_get, method=True, fnct_search=_qty_search, type='float', string='Overall Qty', multi='get_vals',
+                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}
+                ),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
