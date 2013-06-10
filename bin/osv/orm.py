@@ -614,8 +614,9 @@ class orm_template(object):
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
                         data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
+                        data_ids = map(lambda ref_id: ref_id.id, filter(lambda ref: ref.module == 'sd', model_data.browse(cr, uid, data_ids))) or data_ids
                         if len(data_ids):
-                            d = model_data.read(cr, uid, data_ids, ['name', 'module'])[0]
+                            d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
                             if d['module']:
                                 r = '%s.%s' % (d['module'], d['name'])
                             else:
