@@ -3889,6 +3889,8 @@ class orm(orm_template):
             result.sort()
             done = []
             for order, object, ids, fields2 in result:
+                if context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
+                    continue
                 if not (object, ids, fields2) in done:
                     self.pool.get(object)._store_set_values(cr, user, ids, fields2, context)
                     done.append((object, ids, fields2))
