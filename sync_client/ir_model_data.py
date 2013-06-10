@@ -22,13 +22,29 @@
 from osv import osv, fields
 import tools
 import logging
-from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE
+from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
 
 class ir_model_data_sync(osv.osv):
     """ ir_model_data with sync date """
 
     _inherit = "ir.model.data"
     _logger = logging.getLogger('ir.model.data')
+
+    def __init__(self, pool, cr):
+        module_obj = pool.get('ir.module.module')
+        original_check = module_obj.check
+
+        def new_check(self, cr, uid, ids, context=None):
+            for module in self.browse(cr, uid, ids, context=context):
+                if module.name == 'sync_client':
+                    self.check = original_check
+                    if module.state in ('to install', 'to upgrade'):
+                        self.pool.get('ir.model.data').create_all_sdrefs(cr)
+            res = original_check(cr, uid, ids, context=None)
+            return res
+
+        setattr(module_obj.__class__, 'check', new_check)
+        super(ir_model_data_sync, self).__init__(pool, cr)
 
     def _get_is_deleted(self, cr, uid, ids, field, args, context=None):
         datas = {}
@@ -70,32 +86,58 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         'is_deleted' : False,
     }
 
-    def _normalize_sdref(self, cr, context=None):
+    def create_all_sdrefs(self, cr):
         """
-        Migrate and add sdref constraint to prevent commas in the xmlid name
+        Gets all records for all not ignored models and calls get_sd_ref, thereby creating sdrefs that dont exist
         """
-        cr.execute("""\
-SELECT 1 FROM pg_constraint WHERE conname = 'normalized_sdref_constraint';""")
-        # If there is not, we will migrate and create it after
-        if not cr.fetchone():
-            self._logger.info("Replace commas in sdrefs and create a constraint...")
-            cr.execute("SAVEPOINT make_sdref_constraint")
-            try:
-                cr.execute("""\
-UPDATE ir_model_data SET name = replace(name, ',', '_') WHERE name LIKE '%,%';""")
-                records_updated = cr._obj.rowcount
-                cr.commit()
-                self._logger.info("%d sdref(s) have been updated" % records_updated)
-            except:
-                cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
-                raise
-            else:
-                cr.execute("""
-ALTER TABLE ir_model_data ADD CONSTRAINT normalized_sdref_constraint CHECK(module != 'sd' OR name ~ '^[^,]*$');""")
+        # loop on objects that don't match the models to ignore domain in sync common
+        result = set()
+        ir_model = self.pool.get('ir.model')
+        model_ids = ir_model.search(cr, 1, MODELS_TO_IGNORE_DOMAIN)
 
+        for model in ir_model.browse(cr, 1, model_ids):
+            
+            # ignore ir model data object
+            if model.model == 'ir.model.data':
+                continue
+
+            obj = self.pool.get(model.model)
+            
+            if obj is None:
+                print 'Could not get object %s' % model.model
+                continue
+            
+            # ignore objects who inherit another object, and use their table too, but a different name (would lead to attempted sd ref duplication)
+            if hasattr(obj, '_inherit') \
+            and obj._name != obj._inherit \
+            and self.pool.get(obj._inherit)._table == obj._table:
+                continue
+
+            # ignore wizard objects
+            if isinstance(obj, osv.osv_memory):
+                continue
+
+            # get all records for the object
+            cr.execute("""
+                SELECT r.id
+                FROM %s r
+                    LEFT JOIN ir_model_data data ON data.module = 'sd' AND data.model = %%s AND r.id = data.res_id
+                WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
+            record_ids = map(lambda x: x[0], cr.fetchall())
+
+            # if we have some records
+            if not record_ids:
+                continue
+
+            # call get_sd_ref with their ids, therefore creating sdref's that don't exist
+            sdref = obj.get_sd_ref(cr, 1, record_ids)
+            result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
+
+        return result
+
+    @normalize_sdref
     def _auto_init(self,cr,context=None):
         res = super(ir_model_data_sync, self)._auto_init(cr,context=context)
-        self._normalize_sdref(cr, context=context)
         # Drop old sync.client.write_info table
         cr.execute("""SELECT relname FROM pg_class WHERE relname='sync_client_write_info'""")
         if cr.fetchone():
@@ -155,21 +197,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             except:
                 cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
                 raise
-        # Make sd reference to every object
-        ids = self.search(cr, 1, [('model', 'not in', MODELS_TO_IGNORE), ('module', '!=', 'sd'), ('name', 'not in', XML_ID_TO_IGNORE)], context=context)
-        for rec in self.browse(cr, 1, ids):
-            name = "%s_%s" % (rec.module, rec.name)
-            res_ids = self.search(cr, 1, [('module','=','sd'),('res_id','=',rec.res_id)])
-            if res_ids:
-                continue
-            args = {
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'model' :rec.model,
-                    'module' : 'sd',#model._module,
-                    'name' : name,
-                    'res_id' : rec.res_id,
-                    }
-            self.create(cr, 1, args)
+
         return res
 
     def create(self,cr,uid,values,context=None):

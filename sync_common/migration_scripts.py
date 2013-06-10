@@ -1,4 +1,7 @@
 import functools
+import logging
+
+_logger = logging.getLogger('sync_migration_script')
 
 
 
@@ -55,7 +58,7 @@ SELECT column_name
             if count > 0:
                 cr.commit()
                 cr_read = cr._cnx.cursor()
-                self._logger.info("Populating column sdref for model %s, %d records to update... This operation can take a lot of time, please wait..." % (self._name, count))
+                _logger.info("Populating column sdref for model %s, %d records to update... This operation can take a lot of time, please wait..." % (self._name, count))
                 cr_read.execute("SELECT id, fields, values FROM %s" % self._table)
                 i, row = 1, cr_read.fetchone()
                 while row:
@@ -67,15 +70,15 @@ SELECT column_name
                         sdref = xmlid_to_sdref(data['id'])
                         cr.execute("UPDATE %s SET sdref = %%s WHERE id = %%s" % self._table, [sdref, id])
                     except AssertionError, e:
-                        self._logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e.message))
+                        _logger.error("Cannot find SD ref on model=%s id=%d: %s" % (self._name, id, e.message))
                         cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
                     except:
-                        self._logger.exception("Cannot find SD ref on model=%s id=%d" % (self._name, id))
+                        _logger.exception("Cannot find SD ref on model=%s id=%d" % (self._name, id))
                         cr.execute("ROLLBACK TO SAVEPOINT make_sdref")
                     else:
                         cr.execute("RELEASE SAVEPOINT make_sdref")
                     if i % 20000 == 0:
-                        self._logger.info("Intermittent commit, %d/%d (%d%%) SD refs created" % (i, count, int(100.0 * i / count)))
+                        _logger.info("Intermittent commit, %d/%d (%d%%) SD refs created" % (i, count, int(100.0 * i / count)))
                         cr.commit()
                     i, row = i + 1, cr_read.fetchone()
                 cr_read.close()
@@ -95,11 +98,41 @@ FROM information_schema.columns c1
     ON c2.table_name = c1.table_name AND c2.column_name = 'sequence_number'
 WHERE c1.table_name = '%s' AND c1.column_name = 'sequence' AND c2.column_name IS NULL;""" % self._table)
         if cr.fetchone():
-            self._logger.info("Replacing column sequence by sequence_number for table %s..." % self._table)
+            _logger.info("Replacing column sequence by sequence_number for table %s..." % self._table)
             cr.execute("""\
 ALTER TABLE %(table)s ADD COLUMN "sequence_number" INTEGER;
 UPDATE %(table)s SET sequence_number = sequence;
 ALTER TABLE %(table)s DROP COLUMN "sequence";
 """ % {'table':self._table})
         return fn(self, cr, context=context)
+    return wrapper
+
+
+
+def normalize_sdref(fn):
+    """
+    Migrate and add sdref constraint to prevent commas in the xmlid name
+    """
+    @functools.wraps(fn)
+    def wrapper(self, cr, context=None):
+        result = fn(self, cr, context=context)
+        cr.execute("""\
+SELECT 1 FROM pg_constraint WHERE conname = 'normalized_sdref_constraint';""")
+        # If there is not, we will migrate and create it after
+        if not cr.fetchone():
+            _logger.info("Replace commas in sdrefs and create a constraint...")
+            cr.execute("SAVEPOINT make_sdref_constraint")
+            try:
+                cr.execute("""\
+UPDATE ir_model_data SET name = replace(name, ',', '_') WHERE name LIKE '%,%';""")
+                records_updated = cr._obj.rowcount
+                cr.commit()
+                _logger.info("%d sdref(s) have been updated" % records_updated)
+            except:
+                cr.execute("ROLLBACK TO SAVEPOINT make_sdref_constraint")
+                raise
+            else:
+                cr.execute("""
+ALTER TABLE ir_model_data ADD CONSTRAINT normalized_sdref_constraint CHECK(module != 'sd' OR name ~ '^[^,]*$');""")
+        return result
     return wrapper
