@@ -187,10 +187,10 @@
           <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Direct Payment') or _('Normal')|x}</Data>
         </Cell>
         <Cell ss:StyleID="date">
-          <Data ss:Type="DateTime">${line.document_date|n}</Data>
+          <Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data>
         </Cell>
         <Cell ss:StyleID="date">
-          <Data ss:Type="DateTime">${line.date|n}</Data>
+          <Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${line.sequence_for_reference or ''|x}</Data>
