@@ -22,6 +22,8 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+
+from psycopg2 import IntegrityError
 from datetime import datetime
 
 import logging
@@ -345,7 +347,13 @@ class sync_rule(osv.osv):
         return super(sync_rule, self).write(cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
-        return self.write(cr, uid, ids, {'active':False}, context=context)
+        cr.execute("""SAVEPOINT unlink_rule""")
+        try:
+            return super(sync_rule, self).unlink(cr, uid, ids, context=context)
+        except IntegrityError:
+            cr.execute("""ROLLBACK TO SAVEPOINT unlink_rule""")
+            self._logger.warn("Cannot delete rule(s) %s, disable them" % ids)
+            return self.write(cr, uid, ids, {'active':False}, context=context)
 
     ## Checkers & Validator ##################################################
 
