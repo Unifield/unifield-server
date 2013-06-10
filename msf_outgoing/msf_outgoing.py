@@ -1575,6 +1575,20 @@ class stock_picking(osv.osv):
                     
         return result
     
+    def _get_overall_qty(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        if not ids:
+            return result
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute('''select p.id, sum(m.product_qty)
+            from stock_picking p, stock_move m
+            where m.picking_id = p.id
+            group by p.id''')
+        for i in cr.fetchall():
+            result[i[0]] = i[1] or 0
+        return result
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -1591,7 +1605,6 @@ class stock_picking(osv.osv):
                       'total_volume': 0.0,
                       'total_weight': 0.0,
                       #'is_completed': False,
-                      'overall_qty': 0.0,
                       }
             result[stock_picking['id']] = values
             
@@ -1620,8 +1633,6 @@ class stock_picking(osv.osv):
                     values['is_keep_cool'] = move['is_keep_cool']
                     # narcotic
                     values['is_narcotic'] = move['is_narcotic']
-                    # overall qty of products in all corresponding stock moves
-                    values['overall_qty'] += move['product_qty']
                 
             # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
             # - picking checks that the corresponding ppl is completed
@@ -1759,7 +1770,7 @@ class stock_picking(osv.osv):
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
-                'overall_qty': fields.function(_vals_get, method=True, fnct_search=_qty_search, type='float', string='Overall Qty', multi='get_vals',
+                'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
                                     store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}
                 ),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
