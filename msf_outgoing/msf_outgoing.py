@@ -1580,6 +1580,7 @@ class stock_picking(osv.osv):
         get functional values
         '''
         result = {}
+
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
             values = {'total_amount': 0.0,
                       'currency_id': False,
@@ -1601,17 +1602,19 @@ class stock_picking(osv.osv):
                     values['num_of_packs'] += int(num_of_packs)
                     # total_weight
                     total_weight = family['total_weight']
-                    values['total_weight'] += total_weight
+                    values['total_weight'] += float(total_weight)
                     total_volume = family['total_volume']
-                    values['total_volume'] += total_volume
+                    values['total_volume'] += float(total_volume)
 
             if stock_picking['move_lines']:
-                for move in self.pool.get('pack.family.memory').read(cr, uid, stock_picking['move_lines'], ['total_amount', 'currency_id', 'is_dangerous_good', 'is_keep_cool', 'is_narcotic', 'product_qty'], context=context):
+                print self.pool.get('stock.move').read(cr, uid, stock_picking['move_lines'], ['location_id', 'currency_id'], context=context)
+                
+                for move in self.pool.get('stock.move').read(cr, uid, stock_picking['move_lines'], ['total_amount', 'currency_id', 'is_dangerous_good', 'is_keep_cool', 'is_narcotic', 'product_qty'], context=context):
                     # total amount (float)
                     total_amount = move['total_amount']
                     values['total_amount'] = total_amount
                     # currency
-                    values['currency_id'] = move['currency_id'] and move['currency_id'][0] or False
+                    values['currency_id'] = move['currency_id'] or False
                     # dangerous good
                     values['is_dangerous_good'] = move['is_dangerous_good']
                     # keep cool - if heat_sensitive_item is True
