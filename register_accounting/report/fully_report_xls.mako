@@ -333,7 +333,7 @@
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
       </Row>
-% if inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines:
+% if (inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines) or (inv_line.invoice_id and inv_line.invoice_id.analytic_distribution_id and inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
       <Row ss:Height="14.5134">
         <Cell ss:Index="2" ss:StyleID="distribution_header" ss:MergeAcross="11">
           <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
@@ -362,6 +362,7 @@
           <Data ss:Type="String"> </Data>
         </Cell>
       </Row>
+% if inv_line.analytic_distribution_id:
 % for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
       <Row>
         <Cell ss:Index="2" ss:StyleID="distribution_header">
@@ -387,6 +388,33 @@
         </Cell>
       </Row>
 % endfor
+% elif inv_line.invoice_id.analytic_distribution_id:
+% for inv_ana_line in inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
+      <Row>
+        <Cell ss:Index="2" ss:StyleID="distribution_header">
+          <Data ss:Type="String"> </Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="distribution_header" ss:MergeAcross="5">
+          <Data ss:Type="String"> </Data>
+        </Cell>
+      </Row>
+% endfor
+% endif
       <Row>
         <Cell ss:Index="2" ss:StyleID="distribution_header" ss:MergeAcross="11">
           <Data ss:Type="String"> </Data>
