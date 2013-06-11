@@ -202,7 +202,7 @@
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${line.account_id.name|x}</Data>
+          <Data ss:Type="String">${line.account_id.code|x} ${line.account_id.name|x}</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
           <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
