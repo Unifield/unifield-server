@@ -502,18 +502,20 @@ class account_bank_statement(osv.osv):
         """
         if not context:
             context = {}
+        res_id = self.pool.get('wizard.register.import').create(cr, uid, {'register_id': ids[0]}, context=context)
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
         return {
             'name': 'Import register lines wizard',
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.register.import',
             'target': 'new',
+            'res_id': [res_id],
             'view_mode': 'form,tree',
             'view_type': 'form',
-            'context':
-            {
-                'active_id': ids[0],
-                'active_ids': ids,
-            }
+            'context': context,
         }
 
     def get_register_lines(self, cr, uid, ids, context=None):
