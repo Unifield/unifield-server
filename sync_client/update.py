@@ -550,7 +550,7 @@ class update_received(osv.osv):
             if not updates: continue
             # Proceed
             if do_deletion:
-                group_unlink_update_execution(obj, sdref_update_ids)
+                group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates))
                 deleted += len(updates)
             else:
                 error_message += group_import_update_execution(obj, updates)
