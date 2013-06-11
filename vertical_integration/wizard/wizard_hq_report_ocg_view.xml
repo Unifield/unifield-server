@@ -2,9 +2,9 @@
 <openerp>
     <data>
     
-        <record id="hq_export_view" model="ir.ui.view">
-            <field name="name">Export to HQ system</field>
-            <field name="model">wizard.hq.report</field>
+        <record id="hq_export_ocg_view" model="ir.ui.view">
+            <field name="name">Export to HQ system (OCG)</field>
+            <field name="model">wizard.hq.report.ocg</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
@@ -17,19 +17,19 @@
             </field>
         </record>
         
-        <record id="action_hq_export" model="ir.actions.act_window">
-            <field name="name">Export to HQ system</field>
+        <record id="action_hq_export_ocg" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCG)</field>
             <field name="type">ir.actions.act_window</field>
-            <field name="res_model">wizard.hq.report</field>
+            <field name="res_model">wizard.hq.report.ocg</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
-            <field name="view_id" ref="hq_export_view"/>
+            <field name="view_id" ref="hq_export_ocg_view"/>
             <field name="target">new</field>
         </record>
 
         <menuitem parent="account.menu_finance_generic_reporting"
-            action="action_hq_export"
-            id="menu_action_hq_export"  sequence="10"/>
+            action="action_hq_export_ocg"
+            id="menu_action_hq_export_ocg"  sequence="10"/>
 
     </data>
 </openerp>

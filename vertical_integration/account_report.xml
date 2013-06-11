@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report id="hq_ocg"
+        string="Export to HQ system"
+        model="account.move.line"
+        name="hq.ocg"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
+    </data>
+    <data>
+        <report id="hq_oca"
+        string="Export to HQ system"
+        model="account.move.line"
+        name="hq.oca"
+        report_type="txt"
+        auto="False"
+        menu="False"/>
+    </data>
+</openerp>
+

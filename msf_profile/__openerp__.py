@@ -114,6 +114,7 @@
         "export_import_lang",
         "msf_button_access_rights",
         "msf_field_access_rights",
+        "vertical_integration",
     ],
     "update_xml": [
         "report.xml",
