@@ -496,6 +496,26 @@ class account_bank_statement(osv.osv):
             'target': 'current',
         }
 
+    def button_import(self, cr, uid, ids, context=None):
+        """
+        Launch wizard for importing register lines
+        """
+        if not context:
+            context = {}
+        return {
+            'name': 'Import register lines wizard',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.register.import',
+            'target': 'new',
+            'view_mode': 'form,tree',
+            'view_type': 'form',
+            'context':
+            {
+                'active_id': ids[0],
+                'active_ids': ids,
+            }
+        }
+
     def get_register_lines(self, cr, uid, ids, context=None):
         """
         Return all register lines from first given register

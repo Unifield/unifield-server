@@ -37,6 +37,7 @@
                             <field name="virtual_id" invisible="1" readonly="1"/>
                             <field name="closing_balance_frozen" invisible="1"/>
                         </group>
+                        <button name="button_import" states="open" string="Import register lines" type="object" icon="gtk-cancel" colspan="4" help="Use this button in order to import register lines from an external file"/>
                         <group col="4" colspan="4">
                             <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr" 
                                 context="context"/>

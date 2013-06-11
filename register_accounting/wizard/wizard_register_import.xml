@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Import register lines wizard -->
+        <record model="ir.ui.view" id="wizard_register_import_form">
+            <field name='name'>wizard.register.import.form</field>
+            <field name='model'>wizard.register.import</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Import register lines">
+                    <label string="This will import Register Lines from a XML file." colspan="4" align="0.0"/>
+                    <newline/>
+                    <group col="4" colspan="4">
+                        <field name="file" filename="filename" colspan="4"/>
+                        <field name="filename" invisible="1"/>
+                    </group>
+                    <newline />
+                    <label string="Your template should looks like this:"/>
+                    <newline />
+                    <html>
+                      <br />
+                      <table style="margin: 0 auto;">
+                        <thead>
+                          <tr style='background-color: #ccc;'>
+                            <th style="border: thin solid black;">Document date</th>
+                            <th style='border: thin solid black;'>Posting date</th>
+                            <th style='border: thin solid black;'>Description</th>
+                            <th style='border: thin solid black;'>Reference</th>
+                            <th style='border: thin solid black;'>Account</th>
+                            <th style='border: thin solid black;'>Third party</th>
+                            <th style='border: thin solid black;'>Amount IN</th>
+                            <th style='border: thin solid black;'>Amount ON</th>
+                            <th style='border: thin solid black;'>Destination</th>
+                            <th style='border: thin solid black;'>Cost Centre</th>
+                            <th style='border: thin solid black;'>Funding Pool</th>
+                          </tr>
+                        </thead>
+                      </table>
+                      <br />
+                    </html>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>
