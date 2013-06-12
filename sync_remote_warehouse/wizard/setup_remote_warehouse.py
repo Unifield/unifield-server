@@ -28,6 +28,17 @@ class setup_remote_warehouse(osv.osv_memory):
         ir_model_data_id = ir_model_data_object._get_id(cr, 1, module, model)
         return ir_model_data_object.read(cr, 1, [ir_model_data_id], ['res_id'])[0]['res_id']
     
+    def _set_sync_menu_active(self, cr, uid, active):
+        sync_menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'sd', 'sync_client_connection_manager_menu');
+        sync_menu_id = self.pool.get('ir.model.data').read(cr, uid, sync_menu_xml_id_id, ['res_id'])['res_id'];
+        self.pool.get('ir.ui.menu').write(cr, uid, sync_menu_id, {'active': active})
+    
+    def _sync_connection_manager_remove_password(self, cr, uid):
+        server_connection_pool = self.pool.get('sync.client.sync_server_connection')
+        connection_manager_ids = server_connection_pool.search(cr, uid, [])
+        if connection_manager_ids:
+            server_connection_pool.browse(cr, uid, connection_manager_ids[0]).disconnect()
+    
     def setup(self, cr, uid, ids, context=None):
         
         # init
@@ -43,10 +54,11 @@ class setup_remote_warehouse(osv.osv_memory):
             raise osv.except_osv('Please Choose an Instance Type', 'Please specify the type of instance that this is')
         
         if not wizard.usb_instance_type == 'central_platform':
-            # set inactive sync server connection line to stop RW from ever connecting
-            server_connection_pool = self.pool.get('sync.client.sync_server_connection')
-            server_connection_ids = server_connection_pool.search(cr, uid, [])
-            server_connection_pool.write(cr, uid, server_connection_ids, {'active': False})
+            # set inactive Connection Manager menu to stop RW from synchronising normally
+            self._set_sync_menu_active(cr, uid, False)
+            
+            # reset connection on connection manager
+            self._sync_connection_manager_remove_password(cr, uid)
             
             # add "/RW" prefix to sequences in _sequences_to_prefix
             ir_sequence_object = self.pool.get('ir.sequence')
@@ -75,7 +87,6 @@ class setup_remote_warehouse(osv.osv_memory):
     def revert(self, cr, uid, ids, context=None):
 
         # init
-        wizard = self.browse(cr, uid, ids[0])
         entity_pool = self.pool.get('sync.client.entity')
         entity = entity_pool.get_entity(cr, uid, context=context)
         
@@ -86,14 +97,7 @@ class setup_remote_warehouse(osv.osv_memory):
         if entity.usb_instance_type != 'central_platform':
             
             # reactive sync server connection line to let remote warehouse perform normal sync again
-            server_connection_pool = self.pool.get('sync.client.sync_server_connection')
-            active_server_connection_ids = server_connection_pool.search(cr, uid, [('active','=',True)])
-            inactive_server_connection_ids = server_connection_pool.search(cr, uid, [('active','=',False)])
-            
-            if active_server_connection_ids:
-                server_connection_pool.unlink(cr, uid, inactive_server_connection_ids)
-            else:
-                server_connection_pool.write(cr, uid, inactive_server_connection_ids, {'active': True})
+            self._set_sync_menu_active(cr, uid, True)
             
             # remove /RW from ir.sequence prefixes 
             ir_sequence_object = self.pool.get('ir.sequence')
