@@ -399,11 +399,22 @@ class wizard_register_import(osv.osv_memory):
         thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
         thread.start()
         
-        return self.write(cr, uid, ids, {'state': 'inprogress'}, context)
+        # Write changes
+        self.write(cr, uid, ids, {'state': 'inprogress'}, context)
+        # Return a dict to avoid problem of panel bar to the right
+        return {
+         'type': 'ir.actions.act_window',
+         'res_model': 'wizard.register.import',
+         'view_type': 'form',
+         'view_mode': 'form',
+         'res_id': ids[0],
+         'context': context,
+         'target': 'new',
+        }
 
     def button_update(self, cr, uid, ids, context=None):
         """
-        Update view
+        Update view to see progress bar
         """
         return False
 
