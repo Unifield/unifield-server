@@ -54,7 +54,9 @@ class wizard_register_import(osv.osv_memory):
 
     def create_entries(self, cr, uid, ids, context=None):
         """
-        Create register lines
+        Create register lines with/without analytic distribution.
+        If all neeeded info for analytic distribution are present: attempt to create analytic distribution.
+        If this one is invalid, delete it!
         """
         # Checks
         if not context:
@@ -81,16 +83,28 @@ class wizard_register_import(osv.osv_memory):
             entries_number = len(b_entries)
             # Create a register line for each entry
             for nb, l in enumerate(b_entries):
-                # Do changes
-                # FIXME: do changes!!!
+                # Prepare values
+                vals = {
+                    'name':                l.description,
+                    'reference':           l.ref,
+                    'document_date':       l.document_date,
+                    'date':                l.date,
+                    'account_id':          l.account_id.id,
+                    'amount':              (l.debit or 0.0) - (l.credit or 0.0),
+                    'partner_id':          l.partner_id and l.partner_id.id or False,
+                    'employee_id':         l.employee_id and l.employee_id.id or False,
+                    'transfer_journal_id': l.transfer_journal_id and l.transfer_journal_id.id or False,
+                    'statement_id':        w.register_id.id,
+                }
+                absl_id = self.pool.get('account.bank.statement.line').create(cr, uid, vals, context)
                 # Analytic distribution
                 distrib_id = False
                 # Create analytic distribution
-                if l.account_id.user_type_code == 'expense':
+                if l.account_id.user_type_code == 'expense' and l.destination_id and l.cost_center_id and l.funding_pool_id:
                     distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
                     common_vals = {
                         'distribution_id': distrib_id,
-                        'currency_id': c_id,
+                        'currency_id': w.register_id.currency.id,
                         'percentage': 100.0,
                         'date': l.date,
                         'source_date': l.date,
@@ -98,13 +112,22 @@ class wizard_register_import(osv.osv_memory):
                     }
                     common_vals.update({'analytic_id': l.cost_center_id.id,})
                     cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                    common_vals.update({'analytic_id': msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
+                    common_vals.update({'analytic_id': l.funding_pool_id and l.funding_pool_id.id or msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
                     fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    # Check analytic distribution
+                    self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': distrib_id,})
+                    absl_data = self.pool.get('account.bank.statement.line').read(cr, uid, [absl_id], ['analytic_distribution_state'], context)
+                    delete_distribution = True
+                    if absl_data and absl_data[0]:
+                        if absl_data[0].get('analytic_distribution_state', False) == 'valid':
+                            delete_distribution = False
+                    if delete_distribution:
+                        self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': False}, context)
+                        self.pool.get('analytic.distribution').unlink(cr, uid, [distrib_id], context)
                 # Update wizard
                 progression = 20.0 + (entries_number / 80 * nb)
                 self.write(cr, uid, [w.id], {'progression': progression})
         return res
-
 
     def _import(self, dbname, uid, ids, context=None):
         """
@@ -124,24 +147,24 @@ class wizard_register_import(osv.osv_memory):
         errors = []
 
         # Update wizard
-        self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00})
+        self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00}, context)
         # Clean up old temporary imported lines
         old_lines_ids = self.pool.get('wizard.register.import.lines').search(cr, uid, [])
         self.pool.get('wizard.register.import.lines').unlink(cr, uid, old_lines_ids)
 
         # Check wizard data
-        for wiz in self.browse(cr, uid, ids):
+        for wiz in self.browse(cr, uid, ids, context):
             # Check that currency is active
             if not wiz.register_id.currency.active:
                 raise osv.except_osv(_('Error'), _('Currency %s is not active !') % (wiz.register_id.currency.name))
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00})
+            self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00}, context)
 
             # Check that a file was given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00})
+            self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00}, context)
             fileobj = NamedTemporaryFile('w+b', delete=False)
             fileobj.write(decodestring(wiz.file))
             fileobj.close()
@@ -149,11 +172,11 @@ class wizard_register_import(osv.osv_memory):
             if not content:
                 raise osv.except_osv(_('Warning'), _('No content.'))
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Processing line number…'), 'progression': 4.00})
+            self.write(cr, uid, [wiz.id], {'message': _('Processing line number…'), 'progression': 4.00}, context)
             rows = content.getRows()
             nb_rows = len([x for x in content.getRows()])
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
+            self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00}, context)
             # cols variable describe each column and its expected number
             cols = {
                 'document_date': 0,
@@ -173,13 +196,13 @@ class wizard_register_import(osv.osv_memory):
             # Don't read the first line
             rows.next()
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
+            self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00}, context)
             # Check file's content
             for num, r in enumerate(rows):
                 # Update wizard
                 percent = (float(num+1) / float(nb_rows+1)) * 100.0
                 progression = ((float(num+1) * 94) / float(nb_rows)) + 6
-                self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression})
+                self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression}, context)
                 # Prepare some values
                 r_debit = 0
                 r_credit = 0
@@ -250,13 +273,16 @@ class wizard_register_import(osv.osv_memory):
                     errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
                     continue
                 r_account = account_ids[0]
-                account = self.pool.get('account.account').browse(cr, uid, r_account)
+                account = self.pool.get('account.account').browse(cr, uid, r_account, context)
                 # Check that Third party exists (if not empty)
                 tp_label = 'Partner'
                 if line[cols['third_party']]:
                     if account.type_for_register == 'advance':
                         tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
                         tp_label = 'Employee'
+                    elif account.type_for_register in ['transfer', 'transfer_same']:
+                        tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
+                        tp_label = 'Journal'
                     else:
                         tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
                     if not tp_ids:
@@ -314,6 +340,8 @@ class wizard_register_import(osv.osv_memory):
                 }
                 if account.type_for_register == 'advance':
                     vals.update({'employee_id': r_partner,})
+                elif account.type_for_register in ['transfer', 'transfer_same']:
+                    vals.update({'transfer_journal_id': r_partner})
                 else:
                     vals.update({'partner_id': r_partner,})
                 line_res = self.pool.get('wizard.register.import.lines').create(cr, uid, vals, context)
@@ -323,7 +351,7 @@ class wizard_register_import(osv.osv_memory):
                 created += 1
 
         # Update wizard
-        self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
+        self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0}, context)
 
         wiz_state = 'done'
         # If errors, cancel probable modifications
@@ -341,13 +369,13 @@ class wizard_register_import(osv.osv_memory):
             wiz_state = 'error'
         else:
             # Update wizard
-            self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0})
+            self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0}, context)
             # Create all journal entries
             self.create_entries(cr, uid, ids, context)
             message = 'Import successful.'
 
         # Update wizard
-        self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+        self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0}, context)
 
         # Close cursor
         cr.commit()
@@ -393,6 +421,7 @@ class wizard_register_import_lines(osv.osv):
         'employee_id': fields.many2one('hr.employee', "Employee", required=False, readonly=True),
         'period_id': fields.many2one('account.period', "Period", required=True, readonly=True),
         'wizard_id': fields.integer("Wizard", required=True, readonly=True),
+        'transfer_journal_id': fields.many2one('account.bank.statement', 'Transfer Journal', required=False, readonly=True,)
     }
 
     _defaults = {
