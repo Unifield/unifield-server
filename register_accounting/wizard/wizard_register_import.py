@@ -52,7 +52,7 @@ class wizard_register_import(osv.osv_memory):
         'state': lambda *a: 'draft',
     }
 
-    def create_entries(self, cr, uid, ids, context=None):
+    def create_entries(self, cr, uid, ids, remaining_percent=50.0, context=None):
         """
         Create register lines with/without analytic distribution.
         If all neeeded info for analytic distribution are present: attempt to create analytic distribution.
@@ -78,8 +78,7 @@ class wizard_register_import(osv.osv_memory):
                 return res
             # Browse result
             b_entries = self.pool.get('wizard.register.import.lines').browse(cr, uid, entries)
-            current_percent = 20.0
-            remaining_percent = 80.0
+            current_percent = 100.0 - remaining_percent
             entries_number = len(b_entries)
             # Create a register line for each entry
             for nb, l in enumerate(b_entries):
@@ -124,8 +123,8 @@ class wizard_register_import(osv.osv_memory):
                     if delete_distribution:
                         self.pool.get('account.bank.statement.line').write(cr, uid, [absl_id], {'analytic_distribution_id': False}, context)
                         self.pool.get('analytic.distribution').unlink(cr, uid, [distrib_id], context)
-                # Update wizard
-                progression = 20.0 + (entries_number / 80 * nb)
+                # Update wizard with current progression
+                progression = current_percent + (nb + 1.0) / entries_number * remaining_percent
                 self.write(cr, uid, [w.id], {'progression': progression})
         return res
 
@@ -197,11 +196,18 @@ class wizard_register_import(osv.osv_memory):
             rows.next()
             # Update wizard
             self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00}, context)
+            # Remaining percent
+            # 100 - 6 (94) is the remaining for:
+            # - checking lines
+            # - writing them
+            # - validate the wizard and finish it
+            # So we have 2% for miscellaneous transactions, 92% remaining with 46% checking lines and 46% to write them.
+            remaining = (100.0 - 6.0 - 2.0) / 2.0
             # Check file's content
             for num, r in enumerate(rows):
                 # Update wizard
                 percent = (float(num+1) / float(nb_rows+1)) * 100.0
-                progression = ((float(num+1) * 94) / float(nb_rows)) + 6
+                progression = ((float(num+1) * remaining) / float(nb_rows)) + 6
                 self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression}, context)
                 # Prepare some values
                 r_debit = 0
@@ -351,7 +357,7 @@ class wizard_register_import(osv.osv_memory):
                 created += 1
 
         # Update wizard
-        self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0}, context)
+        self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 53.0}, context)
 
         wiz_state = 'done'
         # If errors, cancel probable modifications
@@ -369,9 +375,9 @@ class wizard_register_import(osv.osv_memory):
             wiz_state = 'error'
         else:
             # Update wizard
-            self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0}, context)
+            self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 54.0}, context)
             # Create all journal entries
-            self.create_entries(cr, uid, ids, context)
+            self.create_entries(cr, uid, ids, 46.0, context)
             message = 'Import successful.'
 
         # Update wizard
