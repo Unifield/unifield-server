@@ -32,6 +32,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from csv import DictReader
 import threading
 import pooler
+from ..register_tools import open_register_view
 
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
@@ -405,6 +406,18 @@ class wizard_register_import(osv.osv_memory):
         Update view
         """
         return False
+
+    def button_return(self, cr, uid, ids, context=None):
+        """
+        Return to the register
+        """
+        if not context:
+            context = {}
+        res = {'type': 'ir.actions.act_window_close'}
+        wiz = self.browse(cr, uid, ids, context)
+        if wiz and wiz[0].register_id:
+            res = open_register_view(self, cr, uid, wiz[0].register_id.id, context)
+        return res
 
 wizard_register_import()
 
