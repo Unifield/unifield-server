@@ -41,17 +41,17 @@
                           <table style="margin: 0 auto;">
                             <thead>
                               <tr style='background-color: #ccc;'>
-                                <th style="border: thin solid black;">Document date</th>
-                                <th style='border: thin solid black;'>Posting date</th>
-                                <th style='border: thin solid black;'>Description</th>
-                                <th style='border: thin solid black;'>Reference</th>
-                                <th style='border: thin solid black;'>Account</th>
-                                <th style='border: thin solid black;'>Third party</th>
-                                <th style='border: thin solid black;'>Amount IN</th>
-                                <th style='border: thin solid black;'>Amount ON</th>
-                                <th style='border: thin solid black;'>Destination</th>
-                                <th style='border: thin solid black;'>Cost Centre</th>
-                                <th style='border: thin solid black;'>Funding Pool</th>
+                                <th class='document_date' style="border: thin solid black;">Document date</th>
+                                <th class='posting_date' style='border: thin solid black;'>Posting date</th>
+                                <th class='description' style='border: thin solid black;'>Description</th>
+                                <th class='reference' style='border: thin solid black;'>Reference</th>
+                                <th class='account' style='border: thin solid black;'>Account</th>
+                                <th class='third_party' style='border: thin solid black;'>Third party</th>
+                                <th class='amount_in' style='border: thin solid black;'>Amount IN</th>
+                                <th class='amount_out' style='border: thin solid black;'>Amount ON</th>
+                                <th class='destination' style='border: thin solid black;'>Destination</th>
+                                <th class='cost_center' style='border: thin solid black;'>Cost Centre</th>
+                                <th class='funding_pool' style='border: thin solid black;'>Funding Pool</th>
                               </tr>
                             </thead>
                           </table>

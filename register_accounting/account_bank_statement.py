@@ -508,7 +508,7 @@ class account_bank_statement(osv.osv):
             'active_ids': ids,
         })
         return {
-            'name': 'Import register lines wizard',
+            'name': _('Import register lines wizard'),
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.register.import',
             'target': 'new',

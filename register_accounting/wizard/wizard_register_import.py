@@ -33,6 +33,7 @@ from csv import DictReader
 import threading
 import pooler
 from ..register_tools import open_register_view
+from lxml import etree
 
 class wizard_register_import(osv.osv_memory):
     _name = 'wizard.register.import'
@@ -52,6 +53,24 @@ class wizard_register_import(osv.osv_memory):
         'progression': lambda *a: 0.0,
         'state': lambda *a: 'draft',
     }
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change table's headers name (to be well translated)
+        """
+        if not context:
+            context = {}
+        view = super(wizard_register_import, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if view_type=='form':
+            form = etree.fromstring(view['arch'])
+            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool')]:
+                fields = form.xpath('/form//th[@class="' + el[0] + '"]')
+                for field in fields:
+                    field.text = _(el[1])
+            fields = form.xpath
+            view['arch'] = etree.tostring(form)
+        return view
+
 
     def create_entries(self, cr, uid, ids, remaining_percent=50.0, context=None):
         """

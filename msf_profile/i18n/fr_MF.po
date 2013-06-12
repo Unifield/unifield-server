@@ -67339,4 +67339,19 @@ msgstr "Vous ne pouvez pas confirmer cet inventaire car il contient des lignes a
 msgid "You cannot confirm this kit because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas confirmer ce kit car il contient des lignes avec un produit inactif"
 
+#. module: register_accounting
+#: view:account.bank.statement:0
+#: view:wizard.register.import:0
+msgid "Import register lines"
+msgstr "Importer des lignes"
+
+#. module: register_accounting
+#: view:wizard.register.import:0
+msgid "This will import Register Lines from a XML file."
+msgstr "Cela va importer des lignes de registre depuis un fichier XML."
+
+#. module: register_accounting
+#: view:wizard.register.import:0
+msgid "Your template should looks like this:"
+msgstr "Votre template devrait ressembler à :"
 
