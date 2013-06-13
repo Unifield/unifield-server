@@ -670,7 +670,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
             module = pool.get(call_module_name)
             # call function with uid 1 ?!? -> uid is not passed to restart_pool from upgrade_module...
             logger.notifyChannel('init', netsvc.LOG_INFO, 'module %s: calling function %s.%s()' % (module_name, call_module_name, call_function_name))
-            getattr(module, call_function_name)(cr, 1, context={})
+            getattr(module, call_function_name)(cr, 1, mode, context={})
         
         return True
 
@@ -791,8 +791,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
 
             package.state = 'installed'
             # execute the selected functions
-            if mode == 'init':
-                load_function(cr, m, idref, mode)
+            load_function(cr, m, idref, mode)
             
             for kind in ('init', 'demo', 'update'):
                 if hasattr(package, kind):
