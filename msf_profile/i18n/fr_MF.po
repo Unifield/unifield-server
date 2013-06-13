@@ -67562,3 +67562,14 @@ msgstr "Import réussi avec succès."
 msgid "Import FAILED."
 msgstr "ÉCHEC de l'import."
 
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:1656
+#, python-format
+msgid "Please give a transfer journal!"
+msgstr "SVP renseignez le journal de transfert !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:1659
+#, python-format
+msgid "Please give an employee!"
+msgstr "SVP renseignez l'employé !"
