@@ -933,6 +933,9 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
             # {'lang': ..., 'type': ..., 'name': ..., 'res_id': ...,
             #  'src': ..., 'value': ...}
             dic = {'lang': lang}
+            if len(f) > len(row):
+                continue
+
             for i in range(len(f)):
                 if f[i] in ('module',):
                     continue
