@@ -188,5 +188,16 @@ class stock_picking(osv.osv):
             pick_tools.check_assign(cr, uid, [in_id], context=context)
             
         return res_id
+    
+    def msg_close(self, cr, uid, source, stock_picking, context=None):
+        """
+        Trigger a close on a stock.stock_picking
+        """
+        stock_picking_id = self.search(cr, uid, [('name','=',stock_picking.name)])
+        if stock_picking_id:
+            stock_picking.name, self.write(cr, uid, stock_picking_id[0], {'state' : 'done'})
+            return 'Stock picking %s closed' % stock_picking.name
+        else:
+            return 'Could not find stock picking %s' % stock_picking.name
 
 stock_picking()
