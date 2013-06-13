@@ -191,7 +191,7 @@ class wizard_register_import(osv.osv_memory):
             if not content:
                 raise osv.except_osv(_('Warning'), _('No content.'))
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Processing line number…'), 'progression': 4.00}, context)
+            self.write(cr, uid, [wiz.id], {'message': _('Processing line…'), 'progression': 4.00}, context)
             rows = content.getRows()
             nb_rows = len([x for x in content.getRows()])
             # Update wizard
@@ -384,7 +384,7 @@ class wizard_register_import(osv.osv_memory):
         if errors:
             #cr.rollback()
             created = 0
-            message = 'Import FAILED.'
+            message = _('Import FAILED.')
             # Delete old errors
             error_ids = self.pool.get('wizard.register.import.errors').search(cr, uid, [], context)
             if error_ids:
@@ -398,7 +398,7 @@ class wizard_register_import(osv.osv_memory):
             self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 54.0}, context)
             # Create all journal entries
             self.create_entries(cr, uid, ids, 46.0, context)
-            message = 'Import successful.'
+            message = _('Import successful.')
 
         # Update wizard
         self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0}, context)

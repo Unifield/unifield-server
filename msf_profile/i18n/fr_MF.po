@@ -16106,6 +16106,7 @@ msgstr "Domaine Analytique"
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:163
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:180
 #: code:addons/analytic_distribution/wizard/mass_reallocation_wizard.py:182
+#: code:addons/register_accounting/wizard/wizard_register_import.py:192
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -57285,6 +57286,9 @@ msgstr "Tiers (pays)"
 #: code:addons/msf_doc_import/composition_kit.py:107
 #: code:addons/sale_override/res_partner.py:55
 #: selection:wizard.register.import,state:0
+#: code:addons/register_accounting/wizard/wizard_register_import.py:178
+#: code:addons/register_accounting/wizard/wizard_register_import.py:184
+#: selection:wizard.register.import,state:0
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -67412,4 +67416,149 @@ msgstr "wizard.register.import"
 #: field:wizard.register.import,progression:0
 msgid "Progression"
 msgstr "Progression"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:267
+#, python-format
+msgid "Line %s: Posting date is missing."
+msgstr "Ligne %s : Date de comptabilisation manquante."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:280
+#, python-format
+msgid "Line %s. Document date '%s' should be inferior or equal to Posting date '%s'."
+msgstr "Ligne %s. La date du document '%s' devrait être antérieure ou égale à celle de la date de comptabilisation '%s'."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:180
+#: code:addons/register_accounting/wizard/wizard_register_import.py:231
+#, python-format
+msgid "Checking file…"
+msgstr "Vérification du fichier…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:194
+#, python-format
+msgid "Processing line…"
+msgstr "Traitement de la ligne…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:198
+#, python-format
+msgid "Reading headers…"
+msgstr "Lecture des entêtes…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:184
+#, python-format
+msgid "Nothing to import."
+msgstr "Rien à importer."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:315
+#, python-format
+msgid "Line %s. %s not found: %s"
+msgstr "Ligne %s. %s non trouvé : %s"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:192
+#, python-format
+msgid "No content."
+msgstr "Aucun contenu."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:380
+#, python-format
+msgid "Check complete. Reading potential errors or write needed changes."
+msgstr "Vérification terminée. Lecture des erreurs potentielles ou écriture des modifications nécessaires."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:186
+#, python-format
+msgid "Copying file…"
+msgstr "Copie du fichier…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:293
+#, python-format
+msgid "Line %s: Posting date '%s' is not in the same period as given register."
+msgstr "Ligne %s : La date de comptabilisation '%s' n'est pas dans la même période que celle du Registre."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:169
+#, python-format
+msgid "Cleaning up old imports…"
+msgstr "Nettoyage des anciens imports…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:270
+#, python-format
+msgid "Line %s: Description is missing."
+msgstr "Ligne %s : Description manquante."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:375
+#, python-format
+msgid "Line %s. A problem occured for line registration. Please contact an Administrator."
+msgstr "Ligne %s. Un problème apparaît sur la ligne d'enregistrement. SVP contactez un Administrateur."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:264
+#, python-format
+msgid "Line %s: Document date is missing."
+msgstr "Ligne %s : La date du document est manquante."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:97
+#, python-format
+msgid "No lines."
+msgstr "Aucune ligne."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:299
+#, python-format
+msgid "Line %s. G/L account %s not found!"
+msgstr "Ligne %s. Compte de Grand Livre %s non trouvé !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:398
+#, python-format
+msgid "Writing changes…"
+msgstr "Écriture des modifications…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:178
+#, python-format
+msgid "Currency %s is not active !"
+msgstr "La monnaie %s n'est pas active !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:288
+#, python-format
+msgid "Line %s. No period found for given date: %s"
+msgstr "Ligne %s. Aucune période trouvée pour la date suivante : %s"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:273
+#, python-format
+msgid "Line %s: Account is missing."
+msgstr "Ligne %s : Compte manquant."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:218
+#, python-format
+msgid "Reading lines…"
+msgstr "Lecture des lignes…"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:401
+#, python-format
+msgid "Import successful."
+msgstr "Import réussi avec succès."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:387
+#, python-format
+msgid "Import FAILED."
+msgstr "Import FAILED."
 
