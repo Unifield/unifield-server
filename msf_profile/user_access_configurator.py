@@ -38,6 +38,7 @@ class user_access_configurator(osv.osv_memory):
                 'number_of_non_group_columns_uac': fields.integer(string='Number of columns not containing group name')}
     _defaults = {'number_of_non_group_columns_uac': 4}
     
+
     def _row_is_empty(self, cr, uid, ids, context=None, *args, **kwargs):
         """
         return True if row is empty
@@ -612,22 +613,39 @@ class user_access_configurator(osv.osv_memory):
                                                                                                 data_structure=data_structure))
         return res
     
-    def do_update_after_module_install(self, cr, uid, context=None):
+    def do_update_after_module_install(self, cr, uid, mode, context=None):
         '''
         special method called after module install
         
         reset data potentially reset to default values
         '''
-        # process ACL
-        self._process_objects_uac(cr, uid, context=context)
-        # process rules
-        self._process_record_rules_uac(cr, uid, context=context)
-        # deactivate all default groups (except Admin)
-        no_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View', 'Useability / No One'])
-        no_group_ids.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
-        group_ids = self.pool.get('res.groups').search(cr, uid, [('id', 'not in', no_group_ids)], context=context)
-        self.pool.get('res.groups').write(cr, uid, group_ids, {'visible_res_groups': False}, context=context)
-        
+        if mode == 'init':
+            # process ACL
+            self._process_objects_uac(cr, uid, context=context)
+            # process rules
+            self._process_record_rules_uac(cr, uid, context=context)
+            # deactivate all default groups (except Admin)
+            no_group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=['Useability / Extended View', 'Useability / No One', 'Sync / User'])
+            no_group_ids.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
+            group_ids = self.pool.get('res.groups').search(cr, uid, [('id', 'not in', no_group_ids)], context=context)
+            self.pool.get('res.groups').write(cr, uid, group_ids, {'visible_res_groups': False}, context=context)
+        else:
+            """
+                if addons modules updated we have to clean default OpenERP user access defined in data.xml
+                OpenERP data records have a xmlid with a specific module name (!= sd)
+
+            """
+            models_to_clean = ['ir.model.access', 'ir.rule']
+            for model in models_to_clean:
+                m_obj = self.pool.get(model)
+                cr.execute('''select m.id from '''+ m_obj._table+''' m
+                    left join ir_model_data d on d.res_id = m.id and d.model = %s
+                    where module not in ('sd', 'sync_client')
+                ''', (model,))
+                ids_to_del = [x[0] for x in cr.fetchall()]
+                if ids_to_del:
+                    m_obj.unlink(cr, 1, ids_to_del)
+
         return True
 
 user_access_configurator()
