@@ -7,7 +7,8 @@
     'author': 'OpenERP SA',
     'developer': 'Max Mumford',
     'data': [
-        'views/sync_rule.xml',
+        'views/sync_update_rule.xml',
+        'views/sync_message_rule.xml',
         'data/rule_group_type.xml',
     ],
     'depends': ['sync_client', 'sync_server'],

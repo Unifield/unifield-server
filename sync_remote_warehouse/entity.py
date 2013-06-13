@@ -400,9 +400,13 @@ class Entity(osv.osv):
         rule_pool = self.pool.get("sync.client.message_rule")
         logger = context.get('logger')
         logger_index = logger.append()
+        entity = self.get_entity(cr, uid, context)
 
         messages_count = 0
-        rule_ids = rule_pool.search(cr, uid, [('type','=','USB')], context=context)
+        message_direction = entity.usb_instance_type == 'central_platform' and \
+            ['|', ('direction_usb', '=', 'cp_to_rw'), ('direction_usb', '=', 'bidirectional')] or \
+            ['|', ('direction_usb', '=', 'rw_to_cp'), ('direction_usb', '=', 'bidirectional')]
+        rule_ids = rule_pool.search(cr, uid, [('type','=','USB')] + message_direction, context=context)
         
         if rule_ids:
             for rule in rule_pool.browse(cr, uid, rule_ids, context=context):

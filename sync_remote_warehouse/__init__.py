@@ -4,5 +4,6 @@ import update
 import message
 import sync_monitor
 import wizard
-import sync_client_rule
+import sync_client_update_rule
+import sync_client_message_rule
 import orm

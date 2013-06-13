@@ -27,7 +27,7 @@ class sync_rule(osv.osv):
     
     _columns = {
         # specifies the direction of the USB synchronisation - like the 'direction' field
-        'direction_usb': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization', required=True),
+        'direction_usb': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization'),
     }
     
     _defaults = {
@@ -43,5 +43,18 @@ sync_rule()
 class sync_rule_message(osv.osv):
 
     _inherit = "sync_server.message_rule"
+    
+    _columns = {
+        # specifies the direction of the USB synchronisation
+        'direction_usb': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization'),
+    }
+    
+    _defaults = {
+        'direction_usb': 'bidirectional',
+    }
+
+    _rules_serialization_mapping = {
+        'direction_usb' : 'direction_usb',
+    }
     
 sync_rule_message()
