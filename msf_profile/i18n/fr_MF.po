@@ -67560,5 +67560,5 @@ msgstr "Import réussi avec succès."
 #: code:addons/register_accounting/wizard/wizard_register_import.py:387
 #, python-format
 msgid "Import FAILED."
-msgstr "Import FAILED."
+msgstr "ÉCHEC de l'import."
 

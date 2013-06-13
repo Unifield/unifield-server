@@ -301,14 +301,14 @@ class wizard_register_import(osv.osv_memory):
                 r_account = account_ids[0]
                 account = self.pool.get('account.account').browse(cr, uid, r_account, context)
                 # Check that Third party exists (if not empty)
-                tp_label = 'Partner'
+                tp_label = _('Partner')
                 if line[cols['third_party']]:
                     if account.type_for_register == 'advance':
                         tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
-                        tp_label = 'Employee'
+                        tp_label = _('Employee')
                     elif account.type_for_register in ['transfer', 'transfer_same']:
                         tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
-                        tp_label = 'Journal'
+                        tp_label = _('Journal')
                     else:
                         tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
                     if not tp_ids:
