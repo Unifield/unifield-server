@@ -3278,7 +3278,7 @@ msgstr "Le champ contient des informations relatives à  la numérotation des b
 msgid "From assigned to closed."
 msgstr "De attribué à fermé."
 
-#. modules: msf_budget, purchase, sync_client, account_mcdb, msf_homere_interface, account_hq_entries, purchase_allocation_report, base, stock, sd, analytic_distribution
+#. modules: msf_budget, purchase, sync_client, account_mcdb, msf_homere_interface, account_hq_entries, purchase_allocation_report, base, stock, sd, analytic_distribution, register_accounting
 #: field:hq.analytic.reallocation,destination_id:0
 #: field:hq.entries,destination_id:0
 #: view:account.analytic.line:0
@@ -3307,6 +3307,7 @@ msgstr "De attribué à fermé."
 #: view:sync.client.message_to_send:0
 #: view:stock.move:0
 #: view:sync.client.message_to_send:0
+#: field:wizard.register.import.lines,destination_id:0
 msgid "Destination"
 msgstr "Destination"
 
@@ -3779,7 +3780,7 @@ msgstr "6*0 chaîne froid *0 - Problème si une fenêtre est bleue"
 msgid "This line has no incoming shipment !"
 msgstr "Cette ligne ne compte pas d'envoi entrant !"
 
-#. modules: msf_budget, purchase, tender_flow, account_mcdb, msf_homere_interface, msf_instance, account_hq_entries, analytic_distribution
+#. modules: msf_budget, purchase, tender_flow, account_mcdb, msf_homere_interface, msf_instance, account_hq_entries, analytic_distribution, register_accounting
 #: field:hq.analytic.reallocation,cost_center_id:0
 #: field:hq.entries,cost_center_id:0
 #: view:account.analytic.line:0
@@ -3800,6 +3801,7 @@ msgstr "Cette ligne ne compte pas d'envoi entrant !"
 #: view:purchase.report:0
 #: field:purchase.report,cost_center_id:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:166
+#: field:wizard.register.import.lines,cost_center_id:0
 #, python-format
 msgid "Cost Center"
 msgstr "Centre de Coût"
@@ -7761,6 +7763,7 @@ msgstr "Seulement Réservé"
 #: view:sync.client.register_entity:0
 #: field:sync.client.register_entity,message:0
 #: selection:sync.client.register_entity,state:0
+#: field:wizard.register.import,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -10316,6 +10319,7 @@ msgstr "Lettrage Partiel d'Ecritures"
 #: view:wizard.import.ir.line:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
+#: view:wizard.register.import:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -11820,6 +11824,7 @@ msgstr "Société actuelle"
 #: selection:sync.monitor,msg_pull:0
 #: selection:sync.monitor,msg_push:0
 #: selection:sync.monitor,status:0
+#: view:wizard.register.import:0
 msgid "Ok"
 msgstr "Ok"
 
@@ -13820,6 +13825,7 @@ msgstr "Les taux de change de cette période n'ont pas été définis pour les m
 #: model:ir.ui.menu,name:sync_client.reg_wiz_menu
 #: view:sync.client.register_entity:0
 #: selection:sync.client.register_entity,state:0
+#: field:wizard.register.import,register_id:0
 msgid "Register"
 msgstr "Registre"
 
@@ -14252,8 +14258,9 @@ msgstr "Qté. Max."
 msgid "Unallocated LOG"
 msgstr "LOG - non affecté"
 
-#. module: account_mcdb
+#. module: account_mcdb, register_accounting
 #: view:account.mcdb:0
+#: field:wizard.register.import.lines,document_date:0
 msgid "Document date"
 msgstr "Date du document"
 
@@ -14737,7 +14744,7 @@ msgstr "Choisissez une période puis cliquez sur 'Confirmer la période' pour af
 msgid "Modify"
 msgstr "Modifier"
 
-#. modules: sales_followup, sync_client, import_data, base, purchase_followup, sd, stock, msf_doc_import
+#. modules: sales_followup, sync_client, import_data, base, purchase_followup, sd, stock, msf_doc_import, register_accounting
 #: view:base.module.update:0
 #: view:base.update.translations:0
 #: selection:import_data,import_mode:0
@@ -14754,6 +14761,7 @@ msgstr "Modifier"
 #: view:wizard.import.ir.line:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
+#: view:wizard.register.import:0
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -21343,10 +21351,11 @@ msgid "Check this box if you don't want new journal entries to pass through the 
 msgstr "Cochez cette case si vous voulez que les nouvelles écritures saisies dans le journal ne passent pas par le statut \"brouillon\" et qu'elles soient directement enregistrées sous statut 'comptabilisé'. \n"
 "Notez que les écritures de journal générées automatiquement par le système sautent toujours ce statut."
 
-#. modules: account_mcdb, analytic_distribution
+#. modules: account_mcdb, analytic_distribution, register_accounting
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:53
 #: field:account.destination.link,account_id:0
 #: field:account.destination.summary,account_id:0
+#: field:wizard.register.import.lines,account_id:0
 msgid "G/L Account"
 msgstr "Compte Grand Livre"
 
@@ -24762,6 +24771,7 @@ msgstr "Vous ne pouvez pas effecter de mouvements de/vers des zones de Transbord
 #: field:hr.analytic.reallocation,funding_pool_id:0
 #: field:hr.employee,funding_pool_id:0
 #: field:hr.payroll.msf,funding_pool_id:0
+#: field:wizard.register.import.lines,funding_pool_id:0
 #, python-format
 msgid "Funding Pool"
 msgstr "Funding pool"
@@ -25631,7 +25641,7 @@ msgstr "Méthode de calcul du montant de taxe"
 msgid "Attachment Name"
 msgstr "Nom de la Pièce Jointe"
 
-#. modules: data_finance, msf_homere_interface, base, account_hq_entries, import_data, export_import_lang
+#. modules: data_finance, msf_homere_interface, base, account_hq_entries, import_data, export_import_lang, register_accounting
 #: field:hq.entries.import,file:0
 #: field:base.language.export,data:0
 #: field:base.language.import,data:0
@@ -25644,6 +25654,7 @@ msgstr "Nom de la Pièce Jointe"
 #: field:hr.payroll.employee.import,file:0
 #: field:hr.payroll.import,file:0
 #: field:msf.language.import,data:0
+#: field:wizard.register.import,file:0
 msgid "File"
 msgstr "Dossier"
 
@@ -27455,7 +27466,7 @@ msgstr "Produit disponible"
 msgid "FO - draft"
 msgstr "Commande de Terrain - brouillon"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, out_step, base, stock, return_claim, analytic_distribution, msf_doc_import, sourcing
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, out_step, base, stock, return_claim, analytic_distribution, msf_doc_import, sourcing, register_accounting
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -27489,6 +27500,7 @@ msgstr "Commande de Terrain - brouillon"
 #: selection:wizard.import.tender.line,state:0
 #: selection:sourcing.line,sale_order_line_state:0
 #: selection:sourcing.line,state:0
+#: selection:wizard.register.import,state:0
 msgid "Done"
 msgstr "Terminé"
 
@@ -29303,6 +29315,7 @@ msgstr "Analyse des Commandes de Projet"
 #: model:ir.model,name:supplier_catalogue.model_res_partner
 #: field:pricelist.partnerinfo,partner_id:0
 #: field:supplier.catalogue,partner_id:0
+#: field:wizard.register.import.lines,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -29441,7 +29454,7 @@ msgstr "Ceci EFFACERA d'abord tous les registres correspondants à ce journal et
 msgid "Compute POs Creation"
 msgstr "Calcul la création du Bon de Commande"
 
-#. modules: msf_profile, account_msf, base, account_payment, msf_homere_interface
+#. modules: msf_profile, account_msf, base, account_payment, msf_homere_interface, register_accounting
 #: view:ir.attachment:0
 #: field:payment.line,create_date:0
 #: view:ir.attachment:0
@@ -29449,6 +29462,7 @@ msgstr "Calcul la création du Bon de Commande"
 #: selection:user.access.results.groups.line,type_user_access_results_line:0
 #: selection:user.access.results.menus.line,type_user_access_results_line:0
 #: selection:user.access.results.users.line,type_user_access_results_line:0
+#: selection:wizard.register.import,state:0
 msgid "Created"
 msgstr "Créé"
 
@@ -30747,7 +30761,7 @@ msgstr "Opération non autorisée d'après les règles d'accès, ou réalisée s
 msgid "Consider Child Locations"
 msgstr "Considérer les Localisations Enfant"
 
-#. modules: account, account_payment, account_mcdb, procurement_request, consumption_calculation, product, base, stock, product_nomenclature
+#. modules: account, account_payment, account_mcdb, procurement_request, consumption_calculation, product, base, stock, product_nomenclature, register_accounting
 #: view:account.move:0
 #: view:account.move.line:0
 #: view:account.payment.term:0
@@ -30763,6 +30777,7 @@ msgstr "Considérer les Localisations Enfant"
 #: view:product.template:0
 #: view:product.product:0
 #: view:product.template:0
+#: view:wizard.register.import.errors:0
 msgid "Information"
 msgstr "Information"
 
@@ -34018,6 +34033,8 @@ msgstr "Une erreur est survenue lors de la copie de l'allocation analytique pour
 #: field:stock.move.memory.out,wizard_pick_id:0
 #: field:stock.forecast.line,wizard_id:0
 #: field:res.country.restriction.memory,wizard_id:0
+#: field:wizard.register.import.errors,wizard_id:0
+#: field:wizard.register.import.lines,wizard_id:0
 msgid "Wizard"
 msgstr "Assistant"
 
@@ -36086,7 +36103,7 @@ msgstr "Type des Séquences"
 msgid "Linked loan"
 msgstr "Prêt Lié"
 
-#. modules: msf_homere_interface, documents_done, msf_doc_import, analytic_distribution, consumption_calculation
+#. modules: msf_homere_interface, documents_done, msf_doc_import, analytic_distribution, consumption_calculation, register_accounting
 #: field:mass.reallocation.verification.wizard,error_ids:0
 #: field:documents.done.problem,errors:0
 #: field:hr.payroll.import.confirmation,errors:0
@@ -36095,6 +36112,7 @@ msgstr "Prêt Lié"
 #: field:monthly.review.consumption.line,text_error:0
 #: field:real.average.consumption.line,text_error:0
 #: field:composition.item,text_error:0
+#: field:wizard.register.import,error_ids:0
 msgid "Errors"
 msgstr "Erreurs"
 
@@ -36947,6 +36965,8 @@ msgstr "Le plan de comptes par défaut correspond au pays sélectionné. Si aucu
 #: report:msf.report_reception_in:0
 #: view:stock.production.lot.revision:0
 #: field:stock.production.lot.revision,description:0
+#: field:wizard.register.import.errors,name:0
+#: field:wizard.register.import.lines,description:0
 msgid "Description"
 msgstr "Description"
 
@@ -39141,6 +39161,7 @@ msgstr "11*BF chaîne froid *BF - Problème si C et/ou D totalement bleus ou ét
 #: view:sync.client.child_entity:0
 #: view:shipment:0
 #: view:stock.cost.reevaluation:0
+#: view:wizard.register.import:0
 msgid "Validate"
 msgstr "Valider"
 
@@ -45403,6 +45424,7 @@ msgstr "Transitions de Processus"
 #: field:wizard.register.creation.lines,period_id:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:60
 #: code:addons/account_mcdb/report/account_mcdb_export.py:164
+#: field:wizard.register.import.lines,period_id:0
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -48998,6 +49020,7 @@ msgstr "Livraisons Entrantes"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:60
 #: code:addons/account_mcdb/report/account_mcdb_export.py:164
 #: code:addons/account_mcdb/report/account_mcdb_export.py:242
+#: field:wizard.register.import.lines,ref:0
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -49588,7 +49611,7 @@ msgstr "Budget vs. Exportations réelles"
 msgid "Ana. Name"
 msgstr "Nom Analytique"
 
-#. modules: return_claim, reason_types_moves, order_types, procurement_request, msf_doc_import, sales_followup
+#. modules: return_claim, reason_types_moves, order_types, procurement_request, msf_doc_import, sales_followup, register_accounting
 #: view:stock.move:0
 #: view:sale.order:0
 #: view:stock.move:0
@@ -49603,6 +49626,7 @@ msgstr "Nom Analytique"
 #: selection:wizard.import.po.line,state:0
 #: selection:wizard.import.tender.line,state:0
 #: code:addons/sales_followup/sale_followup.py:387
+#: selection:wizard.register.import,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En Cours"
@@ -55937,13 +55961,14 @@ msgstr "Signal (Nom du bouton)"
 msgid "Banks"
 msgstr "Banques"
 
-#. modules: account_corrections, account, account_mcdb, analytic_distribution
+#. modules: account_corrections, account, account_mcdb, analytic_distribution, register_accounting
 #: field:account.invoice.refund,date:0
 #: field:account.move.line,date:0
 #: field:wizard.journal.items.corrections.lines,date:0
 #: view:account.mcdb:0
 #: field:mass.reallocation.verification.wizard,date:0
 #: field:mass.reallocation.wizard,date:0
+#: field:wizard.register.import.lines,date:0
 msgid "Posting date"
 msgstr "Date de Comptabilisation"
 
@@ -56338,6 +56363,7 @@ msgstr "Solde de clôture"
 #: model:ir.model,name:register_accounting.model_hr_employee
 #: model:process.node,name:sd.hr_process_node_employee0
 #: field:wizard.import.cheque.lines,employee_id:0
+#: field:wizard.register.import.lines,employee_id:0
 msgid "Employee"
 msgstr "Employé"
 
@@ -57258,6 +57284,7 @@ msgstr "Tiers (pays)"
 #: code:addons/msf_doc_import/composition_kit.py:82
 #: code:addons/msf_doc_import/composition_kit.py:107
 #: code:addons/sale_override/res_partner.py:55
+#: selection:wizard.register.import,state:0
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -61937,12 +61964,13 @@ msgstr "Import Analytic Lines Result"
 msgid "Location usage"
 msgstr "Zone - Utilisation"
 
-#. modules: account_hq_entries, msf_homere_interface
+#. modules: account_hq_entries, msf_homere_interface, register_accounting
 #: field:hq.entries.import,filename:0
 #: field:hr.expat.employee.import,filename:0
 #: field:hr.nat.staff.import,filename:0
 #: field:hr.payroll.employee.import,filename:0
 #: field:hr.payroll.import,filename:0
+#: field:wizard.register.import,filename:0
 msgid "Imported filename"
 msgstr "Nom du fichier importé"
 
@@ -62207,6 +62235,7 @@ msgstr "Type de Rapport"
 #: field:wizard.import.ir.line,state:0
 #: field:wizard.import.po.line,state:0
 #: field:wizard.import.tender.line,state:0
+#: field:wizard.register.import,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -63469,6 +63498,7 @@ msgstr "g"
 #: field:local.transport.cost.report,func_currency_id:0
 #: field:local.transport.cost.report,transport_currency_id:0
 #: field:purchase.order,transport_currency_id:0
+#: field:wizard.register.import.lines,currency_id:0
 #: report:account.bank.statement.line:0
 #: report:account.bank.statement.line_csv:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:242
@@ -64951,7 +64981,7 @@ msgstr "\n"
 "\n"
 "    "
 
-#. modules: analytic, account, account_voucher
+#. modules: analytic, account, account_voucher, register_accounting
 #: field:account.account,credit:0
 #: report:account.account.balance:0
 #: report:account.account.balance.landscape:0
@@ -64973,6 +65003,7 @@ msgstr "\n"
 #: field:report.account.receivable,credit:0
 #: selection:account.voucher.line,type:0
 #: field:account.analytic.account,credit:0
+#: field:wizard.register.import.lines,credit:0
 msgid "Credit"
 msgstr "Crédit"
 
@@ -65705,7 +65736,7 @@ msgstr "Rwanda"
 msgid "Search Items"
 msgstr "Rechercher des Articles"
 
-#. modules: analytic, account, account_voucher
+#. modules: analytic, account, account_voucher, register_accounting
 #: field:account.account,debit:0
 #: report:account.account.balance:0
 #: report:account.account.balance.landscape:0
@@ -65727,6 +65758,7 @@ msgstr "Rechercher des Articles"
 #: field:report.account.receivable,debit:0
 #: selection:account.voucher.line,type:0
 #: field:account.analytic.account,debit:0
+#: field:wizard.register.import,filename:0
 msgid "Debit"
 msgstr "Débit"
 
@@ -67343,7 +67375,7 @@ msgstr "Vous ne pouvez pas confirmer ce kit car il contient des lignes avec un p
 #: view:account.bank.statement:0
 #: view:wizard.register.import:0
 msgid "Import register lines"
-msgstr "Importer des lignes"
+msgstr "Importer des lignes de registre"
 
 #. module: register_accounting
 #: view:wizard.register.import:0
@@ -67354,4 +67386,30 @@ msgstr "Cela va importer des lignes de registre depuis un fichier XML."
 #: view:wizard.register.import:0
 msgid "Your template should looks like this:"
 msgstr "Votre template devrait ressembler à :"
+
+#. module: register_accounting
+#: field:wizard.import.cheque.lines,transfer_journal_id:0
+#: field:wizard.register.import.lines,transfer_journal_id:0
+msgid "Transfer Journal"
+msgstr "Journal de transfert"
+
+#. module: register_accounting
+#: model:ir.model,name:register_accounting.model_wizard_register_import_lines
+msgid "wizard.register.import.lines"
+msgstr "wizard.register.import.lines"
+
+#. module: register_accounting
+#: model:ir.model,name:register_accounting.model_wizard_register_import_errors
+msgid "wizard.register.import.errors"
+msgstr "wizard.register.import.errors"
+
+#. module: register_accounting
+#: model:ir.model,name:register_accounting.model_wizard_register_import
+msgid "wizard.register.import"
+msgstr "wizard.register.import"
+
+#. module: register_accounting
+#: field:wizard.register.import,progression:0
+msgid "Progression"
+msgstr "Progression"
 
