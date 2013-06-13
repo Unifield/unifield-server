@@ -208,6 +208,7 @@ class Entity(osv.osv):
             'arguments': 'arguments',
             'destination_name': 'destination_name',
             'active': 'active',
+            'type' : 'type'
         }
         
         def _serialize_message_rule(self, cr, uid, ids, context=None):

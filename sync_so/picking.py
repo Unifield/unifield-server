@@ -195,7 +195,8 @@ class stock_picking(osv.osv):
         """
         stock_picking_id = self.search(cr, uid, [('name','=',stock_picking.name)])
         if stock_picking_id:
-            stock_picking.name, self.write(cr, uid, stock_picking_id[0], {'state' : 'done'})
+            self.action_process(cr, uid, stock_picking_id, context=context)
+            self.write(cr, uid, stock_picking_id[0], {'state' : 'done'})
             return 'Stock picking %s closed' % stock_picking.name
         else:
             return 'Could not find stock picking %s' % stock_picking.name
