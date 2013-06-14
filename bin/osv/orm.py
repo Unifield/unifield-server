@@ -3723,6 +3723,26 @@ class orm(orm_template):
             wf_service.trg_write(user, self._name, id, cr)
         return True
 
+    def _call_store_function(self, cr, uid, ids, keys=None, result=None, bypass=True, context=None):
+        if result is None:
+            result = []
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        done = []
+
+        result += self._store_get_values(cr, uid, ids, keys, context)
+        result.sort()
+        for order, object, ids, fields2 in result:
+            if bypass and context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
+                continue
+            if not (object, ids, fields2) in done:
+                self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
+                done.append((object, ids, fields2))
+        return True
     #
     # TODO: Should set perm to user.xxx
     #
@@ -3885,15 +3905,7 @@ class orm(orm_template):
         self._validate(cr, user, [id_new], context)
 
         if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
-            result += self._store_get_values(cr, user, [id_new], vals.keys(), context)
-            result.sort()
-            done = []
-            for order, object, ids, fields2 in result:
-                if context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
-                    continue
-                if not (object, ids, fields2) in done:
-                    self.pool.get(object)._store_set_values(cr, user, ids, fields2, context)
-                    done.append((object, ids, fields2))
+            self._call_store_function(cr, user, id_new, keys=vals.keys(), result=result, context=context)
 
         if self._log_create and not (context and context.get('no_store_function', False)):
             message = self._description + \
