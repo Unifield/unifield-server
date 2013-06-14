@@ -106,33 +106,22 @@ class account_period(osv.osv):
 #                if inv_to_display:
 #                    raise osv.except_osv(_('Warning'), _('Some invoices are not paid and have an overdue date. Please verify this with \
 #"Open overdue invoice" button and fix the problem.'))
-                
-                # Display a wizard to inform user all kind of verifications he have to verify in order to close period
-                return {
-                    'name': "Period closing confirmation wizard",
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'wizard.confirm.closing.period',
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'context':
-                    {
-                        'active_id': ids[0],
-                        'active_ids': ids,
-                        'period_id': period.id,
-                    }
-                }
-                
-        
+###################################################
+
+                # Write changes
+                if not isinstance(ids, (int, long)):
+                    ids = [ids]
+                for id in ids:
+                    self.write(cr, uid, id, {'state':'field-closed', 'field_process': False}, context=context)
+                return True
+
         # check if unposted move lines are linked to this period
         move_line_obj = self.pool.get('account.move.line')
         move_lines = move_line_obj.search(cr, uid, [('period_id', 'in', ids)])
         for move_line in move_line_obj.browse(cr, uid, move_lines):
             if move_line.state != 'valid':
                 raise osv.except_osv(_('Error !'), _('You cannot close a period containing unbalanced move lines!'))
-            
 
-        
         # otherwise, change the period's and journal period's states
         if context['state']:
             state = context['state']
@@ -143,7 +132,7 @@ class account_period(osv.osv):
             for id in ids:
                 cr.execute('update account_journal_period set state=%s where period_id=%s', (journal_state, id))
                 # Change cr.execute for period state by a self.write() because of Document Track Changes on Periods ' states
-                self.write(cr, uid, id, {'state': state}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
+                self.write(cr, uid, id, {'state': state, 'field_process': False}) #cr.execute('update account_period set state=%s where id=%s', (state, id))
         return True
 
     _columns = {
@@ -153,6 +142,7 @@ class account_period(osv.osv):
         'state': fields.selection(_get_state, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
+        'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
     }
 
     _order = 'date_start, number'
@@ -171,6 +161,7 @@ class account_period(osv.osv):
         'state': lambda *a: 'created',
         'number': lambda *a: 16, # Because of 15 period in MSF, no period would use 16 number.
         'special': lambda *a: False,
+        'field_process': lambda *a: False,
     }
 
     def button_overdue_invoice(self, cr, uid, ids, context=None):
@@ -211,6 +202,117 @@ class account_period(osv.osv):
                     'domain': domain,
                     'context': context,
                 }
+
+    def button_close_field_period(self, cr, uid, ids, context=None):
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.write(cr, uid, ids, {'field_process': True}, context)
+
+    def button_fx_rate(self, cr, uid, ids, context=None):
+        """
+        Open Currencies in a new tab
+        """
+        # Some checks
+        if not context:
+            context = {}
+        # Default buttons
+        context.update({'search_default_active': 1})
+        return {
+            'name': 'Curencies',
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.currency',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('active', 'in', ['t', 'f'])],
+        }
+
+    def button_hr(self, cr, uid, ids, context=None):
+        """
+        Open all HR entries from given period
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return {
+            'name': 'HR entries',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('journal_id.type', '=', 'hr'), ('period_id', 'in', ids)]
+        }
+
+    def button_accruals(self, cr, uid, ids, context=None):
+        """
+        Open all accruals from given period
+        """
+        if not context:
+            context = {}
+        if not isinstance(ids, (int, long)):
+            ids = [ids]
+        return {
+            'name': 'Accruals',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('journal_id.type', '=', 'accrual'), ('period_id', 'in', ids)]
+        }
+
+    def button_recurring(self, cr, uid, ids, context=None):
+        """
+        Open all recurring models
+        """
+        if not context:
+            context = {}
+        return {
+            'name': 'Reccuring lines',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.model',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def button_open_invoices(self, cr, uid, ids, context=None):
+        """
+        Open all Supplier invoices in given period
+        """
+        if not context:
+            context = {}
+        if not context.get('period_id', False):
+            raise osv.except_osv(_('Error'), _('No period found in context. Please contact a system administrator.'))
+        period = self.pool.get('account.period').browse(cr, uid, [context.get('period_id')])[0]
+        # Update context
+        context.update({'type':'in_invoice', 'journal_type': 'purchase'})
+        return {
+            'name': 'Supplier Invoices',
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'domain': [
+                ('state', '=', 'draft'),
+                ('type','=','in_invoice'),
+                ('register_line_ids', '=', False),
+                ('is_inkind_donation', '=', False),
+                ('is_debit_note', "=", False),
+                ('is_intermission', '=', False)
+            ],
+            'context': context,
+        }
+
 
 account_period()
 
