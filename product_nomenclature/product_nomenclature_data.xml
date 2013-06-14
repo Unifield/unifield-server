@@ -3,13 +3,13 @@
 		<!-- MANDATORY -->
 		<!--FIRST LEVEL -->
 		<record model="product.nomenclature" id="nomen_med">
-			<field name="name">MED</field>
+			<field name="name">MED PN</field>
 			<field name="type">mandatory</field>
 			<field name="level">0</field>
 		</record>
 
 		<record model="product.nomenclature" id="nomen_log">
-			<field name="name">LOG</field>
+			<field name="name">LOG PN</field>
 			<field name="type">mandatory</field>
 			<field name="level">0</field>
 		</record>

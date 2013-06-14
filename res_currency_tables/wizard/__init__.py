@@ -23,5 +23,7 @@ import import_currencies
 import warning_import_currencies
 import confirm_import_currencies
 import import_table_currencies
+import wizard_report_rates_table
+import wizard_report_currency_table
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

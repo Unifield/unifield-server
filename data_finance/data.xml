@@ -18,6 +18,15 @@
             <field name="parent_id" ref="account_analytic_account_oc___malawi_mission_65"/>
         </record>
 
+        <record model="account.analytic.account" id="account_analytic_account_currency_adj">
+            <field name="category">OC</field>
+            <field name="code">CURADJ</field>
+            <field name="name">Currency Adjustment</field>
+            <field name="type">normal</field>
+            <field name="for_fx_gain_loss">1</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_project"/>
+        </record>
+
         <!--model: account.analytic.account, id: 74-->
         <record model="account.analytic.account" id="account_analytic_account_oc___malawi_mission___malawi_-_thyo_74">
             <field name="category">OC</field>

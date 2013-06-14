@@ -201,6 +201,9 @@ class hq_entries_validation_wizard(osv.osv_memory):
         cc_account_change = []
         current_date = strftime('%Y-%m-%d')
         for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
+            #UF-1956: interupt validation if currency is inactive
+            if line.currency_id.active is False:
+                raise osv.except_osv(_('Warning'), _('Currency %s is not active!') % (line.currency_id and line.currency_id.name or '',))
             if line.analytic_state != 'valid':
                 raise osv.except_osv(_('Warning'), _('Invalid analytic distribution!'))
             if not line.user_validated:

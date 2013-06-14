@@ -242,8 +242,12 @@ class product_nomenclature(osv.osv):
             return []
 
         res = [('level', '=', 2), ('type', '=', 'mandatory')] 
-        if args[0][1] not in ('=', '!='):
-            raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\' and \'!=\' as operator'))
+        if args[0][1] == 'ilike':
+            res.append(('name', 'ilike', args[0][2]))
+            return res
+        
+        if args[0][1] not in ('=', '!=', 'ilike'):
+            raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\', \'!=\' or \'ilike\' as operator'))
         
         if args[0][2] != False and not isinstance(args[0][2], (int, long)):
             raise osv.except_osv(_('Error'), _('Bad operand : You can only give False or the id of a category'))
@@ -401,7 +405,7 @@ class product_nomenclature(osv.osv):
         if args[0][1] != "ilike":
             raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
         dom = ['|', ('name', 'ilike', args[0][2]), ('parent_id', 'ilike', args[0][2])]
-        ids = self.search(cr, uid, dom)
+        ids = self.search(cr, uid, dom, context=context)
         if not ids:
             return [('id', '=', 0)]
         return [('id', 'in', ids)]
@@ -465,9 +469,22 @@ class product_nomenclature(osv.osv):
                 
         return True
 
+    def _check_complete_name_uniq(self, cr, uid, ids, context=None):
+        # UF-2022: Because of this constraint, the initial sync of nomenclature got blocked - as the list of Nomenclature got sync-ed
+        # first, and the link to parent got sync-ed afterward, which violates the uniqueness on name.
+        # Currently we don't have any better solution for this, we will temporarily "disable" it
+        
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        for nomen in self.browse(cr, uid, ids, context=context):
+#            if self.search_count(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context)>1:
+#                return False
+        return True
+
     _constraints = [
         (_check_recursion, 'Error ! You can not create recursive nomenclature.', ['parent_id']),
-        (_check_link, 'Error ! You can not have a category linked to two different family', ['category_ids'])
+        (_check_link, 'Error ! You can not have a category linked to two different family', ['category_ids']),
+        (_check_complete_name_uniq, 'Error! The nomenclature complete name must be unique.', [])
     ]
     def child_get(self, cr, uid, ids):
         return [ids]
