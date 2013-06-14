@@ -9,12 +9,14 @@
     'init_xml': [
         'data/setup_remote_warehouse.xml',
         'data/usb_synchronisation.xml',
+        'data/usb_recovery.xml',
     ],
     'update_xml': [
         'views/update.xml',
         'views/message.xml',
         'views/setup_remote_warehouse.xml',
         'views/usb_synchronisation.xml',
+        'views/usb_recovery.xml',
         'views/sync_monitor.xml',
     ],
     'depends': ['sync_client'],

@@ -47,6 +47,7 @@ class sync_rule_message(osv.osv):
     _columns = {
         # specifies the direction of the USB synchronisation
         'direction_usb': fields.selection((('rw_to_cp', 'Remote Warehouse to Central Platform'), ('cp_to_rw', 'Central Platform to Remote Warehouse'), ('bidirectional','Bidirectional')), 'Direction', help='The direction of the synchronization'),
+        'destination_name': fields.char('Field to extract destination', size=256, required=False),
     }
     
     _defaults = {
@@ -58,3 +59,4 @@ class sync_rule_message(osv.osv):
     }
     
 sync_rule_message()
+
