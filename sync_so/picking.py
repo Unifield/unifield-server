@@ -193,10 +193,26 @@ class stock_picking(osv.osv):
         """
         Trigger a close on a stock.stock_picking
         """
-        stock_picking_id = self.search(cr, uid, [('name','=',stock_picking.name)])
-        if stock_picking_id:
-            self.action_process(cr, uid, stock_picking_id, context=context)
-            self.write(cr, uid, stock_picking_id[0], {'state' : 'done'})
+        # get stock pickings to process using name from message
+        stock_picking_ids = self.search(cr, uid, [('name','=',stock_picking.name)])
+        
+        if stock_picking_ids:
+            # create stock.partial.picking wizard object to perform the close
+            partial_obj = self.pool.get("stock.partial.picking")
+            partial_id = partial_obj.create(cr, uid, {}, context=dict(context, active_ids=stock_picking_ids))
+            
+            if self.pool.get('stock.picking').browse(cr, uid, stock_picking_ids[0]).state == 'done':
+                return 'Stock picking %s was already closed' % stock_picking.name
+            
+            # set quantity to process on lines
+            partial_obj.copy_all(cr, uid, [partial_id], context=dict(context, model='stock.partial.picking'))
+            
+            # process partial and return
+            try:
+                partial_obj.do_partial(cr, uid, partial_id, context=dict(context, active_ids=stock_picking_ids))
+            except KeyError:
+                raise ValueError('Please set a batch number on all move lines')
+            
             return 'Stock picking %s closed' % stock_picking.name
         else:
             return 'Could not find stock picking %s' % stock_picking.name
