@@ -30,18 +30,30 @@
                     <field name="code" position="replace"/>
                     <field name="company_id" position="replace"/>
                     <button name="action_draft" position="replace">
-                        <group>
+                        <newline/>
+                        <group colspan="4" col="2" attrs="{'invisible': [('state', '=', 'done')]}">
+                            <separator string="Actions" colspan="4"/>
+                        </group>
+                        <newline/>
+                        <group colspan="4" col="2">
                             <label string="" colspan="1"/>
-                            <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
-                            <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" context="{'state': 'field-closed'}" colspan="1"/>
                             <button name="action_set_state" states="created" confirm="Are you sure you want to open this period?" string="Open period" type="object" icon="gtk-go-forward" context="{'state': 'draft'}" colspan="1"/>
+                        </group>
+                        <group colspan="4" col="2">
+                            <label string="" colspan="1"/>
                             <button name="button_close_field_period" string="Do closing period (Field) process" type="object" icon="gtk-go-forward" colspan="1" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('field_process', '=', True)]}"/>
+                        </group>
+                        <group colspan="4" col="2">
+                            <button name="action_set_state" states="field-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Field)" type="object" icon="gtk-go-back" context="{'state': 'draft'}" colspan="1"/>
+
                             <button name="action_set_state" states="field-closed" confirm="Are you sure you want to close this period?" string="Close period (Mission)" type="object" icon="gtk-go-forward" context="{'state': 'mission-closed'}" colspan="1"/>
+                        </group>
+                        <group colspan="4" col="2">
+                            <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to re-open this period?" string="Re-open period (Mission)" type="object" icon="gtk-go-back" context="{'state': 'field-closed'}" colspan="1"/>
                             <button name="action_set_state" states="mission-closed" confirm="Are you sure you want to close this period?" string="Close period (HQ)" type="object" icon="gtk-go-forward" context="{'state': 'done'}" colspan="1"/>
                         </group>
                         <newline/>
                         <group attrs="{'invisible': [('field_process', '!=', True)]}" colspan="6" col="2">
-                            <separator string="Checks" colspan="4"/>
                             <label string="You have to verify manually:" colspan="4" align="0.0"/>
                             <group col="4" colspan="4">
                                 <label string="- Check that fx rates have been updated for the period to close" colspan="2" align="0.0"/>
@@ -88,7 +100,8 @@
                             <label string="" colspan="4" align="0.0"/>
                         </group>
                         <newline/>
-                        <group attrs="{'invisible': [('field_process', '!=', True)]}">
+                        <group attrs="{'invisible': [('field_process', '!=', True)]}" colspan="4" col="2">
+                            <label string="" colspan="1"/>
                             <button name="action_set_state" states="draft" confirm="Are you sure you want to close this period?" string="Close period (Field)" type="object" icon="gtk-go-forward" context="{'state': 'field-closed'}" colspan="1"/>
                         </group>
                         <newline/>
