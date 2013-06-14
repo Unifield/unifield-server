@@ -129,14 +129,14 @@ def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=Fa
             output += tools.ustr(message.message)
         else:
             output += tools.ustr(message)
-        if output[-1] != "\n": output += "\n"
+        if output and output[-1] != "\n": output += "\n"
     else:
         output += "%s: %s" % (level.capitalize(), message)
     if ids is not None:
         output += " in model %s, ids %s\n" % (obj._name, ", ".join(ids))
     if data is not None:
         output += " in content: %s\n" % pprint.pformat(data)
-    if output[-1] != "\n": output += "\n"
+    if output and output[-1] != "\n": output += "\n"
     getattr(obj._logger, level)(output[:-1])
     return output
 
