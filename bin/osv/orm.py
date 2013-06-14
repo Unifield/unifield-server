@@ -3703,20 +3703,9 @@ class orm(orm_template):
                         cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
                         cr.execute('update '+self._table+' set parent_left=parent_left-%s, parent_right=parent_right-%s where parent_left>=%s and parent_left<%s', (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
 
-        result += self._store_get_values(cr, user, ids, vals.keys(), context)
-        result.sort()
 
-        done = {}
-        for order, object, ids_to_update, fields_to_recompute in result:
-            key = (object, tuple(fields_to_recompute))
-            done.setdefault(key, {})
-            # avoid to do several times the same computation
-            todo = []
-            for id in ids_to_update:
-                if id not in done[key]:
-                    done[key][id] = True
-                    todo.append(id)
-            self.pool.get(object)._store_set_values(cr, user, todo, fields_to_recompute, context)
+        if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
+            self._call_store_function(cr, user, ids, keys=vals.keys(), result=result, context=context)
 
         wf_service = netsvc.LocalService("workflow")
         for id in ids:
