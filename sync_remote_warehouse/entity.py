@@ -187,6 +187,7 @@ class Entity(osv.osv):
             'included_fields' : 'included_fields',
             'can_delete' : 'can_delete',
             'direction_usb' : 'direction_usb',
+            'type': 'type',
         }
     
         def _serialize_update_rule(update_rule_pool, cr, uid, ids, context=None):

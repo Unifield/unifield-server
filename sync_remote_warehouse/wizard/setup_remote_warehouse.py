@@ -19,6 +19,7 @@ class setup_remote_warehouse(osv.osv_memory):
     
     _sequences_to_prefix = [
         'specific_rules.sequence_production_lots',
+        'stock.seq_picking_internal',
     ]
     
     _logger = logging.getLogger('setup_remote_warehouse')
@@ -71,7 +72,7 @@ class setup_remote_warehouse(osv.osv_memory):
                     continue
                 
                 sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-                ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%s/RW' % sequence_prefix})
+                ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
         
         # mark entity as usb_instance_type and set clone date
         new_vals = {
