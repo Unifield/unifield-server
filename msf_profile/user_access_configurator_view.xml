@@ -393,7 +393,7 @@
             <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <search string="Users">
-                    <filter name="show_inactive" string="Show inactive" icon="gtk-ok" domain="[('active', 'in', ['t', 'f'])]" />
+                    <filter name="show_inactive" string="Show inactive" icon="gtk-ok" domain="[('active', '=', False)]" />
                     <field name="name" />
                     <field name="login" />
                     <field name="address_id" string="Address" />
