@@ -367,6 +367,19 @@ def compute_date_value(**kwargs):
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
 
 
+def compute_batch_number_value(cr, uid, **kwargs):
+    """
+    Retrievs Batch Nunber from Excel file or take the one from the parent
+    """
+    rew = kwargs['row']
+    cell_nb = kwargs['cell_nb']
+    error_list = kwargs['to_write']['error_list']
+    expiry_date = None
+    batch_number = None
+    if row.cells[cell_nb] and row.cells[cell_nb].type == 'string' and row.cells[cell_nb].data:
+        batch_number = row.cells[cell_nb].data
+
+
 def compute_expiry_date_value(**kwargs):
     """
     Retrieves Date from Excel file or take the one from the parent
