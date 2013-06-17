@@ -1473,7 +1473,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels', 'Internal Move Excel Export'],
+                                    'client_print_multi': ['Labels', 'Internal Move Excel Export', 'Internal Move'],
                                     'client_action_relate': [],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
