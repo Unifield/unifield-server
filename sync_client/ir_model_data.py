@@ -108,9 +108,8 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                 continue
             
             # ignore objects who inherit another object, and use their table too, but a different name (would lead to attempted sd ref duplication)
-            if hasattr(obj, '_inherit') \
-            and obj._name != obj._inherit \
-            and self.pool.get(obj._inherit)._table == obj._table:
+            if hasattr(obj, '_inherit') and obj._name != obj._inherit and \
+               (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
                 continue
 
             # ignore wizard objects
