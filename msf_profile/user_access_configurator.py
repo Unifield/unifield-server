@@ -873,6 +873,16 @@ class res_groups(osv.osv):
 res_groups()
 
 
+class res_users(osv.osv):
+    _inherit = 'res.users'
+
+    _defaults = {
+        'groups_id': lambda *a: [],
+    }
+
+res_users()
+
+
 class ir_model_access(osv.osv):
     _inherit = 'ir.model.access'
     
