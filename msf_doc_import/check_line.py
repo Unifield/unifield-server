@@ -127,6 +127,59 @@ def compute_asset_value(cr, uid, **kwargs):
     return {'asset_id': asset_id, 'error_list': error_list}
 
 
+def compute_kit_value(cr, uid, **kwargs):
+    """
+    Retrieves kit_id from Excel file
+    """
+    row = kwargs['row']
+    kit_obj = kwargs['kit_obj']
+    error_list = kwargs['to_write']['error_list']
+    product_id = kwargs['to_write'].get('product_id', False)
+    cell_nb = kwargs['cell_nb']
+    kit_id = None
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            kit_name = row.cells[cell_nb].data.strip()
+            if kit_name and product_id:
+                kit_ids = kit_obj.search(cr, uid, [('name', '=', kit_name), ('product_id', '=', product_id)])
+                if kit_ids:
+                    kit_id = kit_ids[0]
+                else:
+                    error_list.append(_('The Kit "%s" does not exist for this product.' % kit_name))
+        else:
+            msg = _('The Kit Name has to be a string')
+        if not kit_id:
+            error_list.append(msg or _('The kit was not valid.'))
+    return {'kit_id': kit_id, 'error_list': error_list}
+
+
+def compute_location_value(cr, uid, **kwargs):
+    """
+    Retrieves location_id and location_dest_id from Excel file
+    """
+    rew = kwargs['row']
+    loc_obj = kwargs['loc_obj']
+    error_list = kwargs['to_write']['error_list']
+    cell_nb = kwargs['cell_nb']
+    loc_id = None
+    msg = ''
+    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+        if row.cells[cell_nb].type == 'str':
+            loc_name = row.cells[cell_nb].data.strip()
+            if loc_name:
+                loc_ids = loc_obj.search(cr, uid, [('name', '=', loc_name)])
+                if loc_ids:
+                    loc_id = loc_ids[0]
+                else:
+                    error_list.append(_('The Location "%s" does not exist on this instance.'))
+        else:
+            msg = _('The Location Name has to be string.')
+        if not loc_id:
+            error_list.append(msg or _('The location was not valid.'))
+    return {'location_id': kit_id, 'error_list': error_list}
+
+
 def product_value(cr, uid, **kwargs):
     """
     Compute product value according to cell content.
