@@ -162,7 +162,7 @@ class shipment(osv.osv):
             
             for memory_family in shipment.pack_family_memory_ids:
                 # taken only into account if not done (done means returned packs)
-                if shipment.state in ('delivered',) or memory_family.state not in ('done',) :
+                if shipment.state in ('delivered', 'done') or memory_family.state not in ('done',) :
                     # num of packs
                     num_of_packs = memory_family.num_of_packs
                     values['num_of_packs'] += int(num_of_packs)
@@ -680,7 +680,7 @@ class shipment(osv.osv):
                                 new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
                                 
                             # quantities are right - stay + return qty = original qty
-                            assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
+                            assert all([round(updated[m]['initial'], 14) == round(updated[m]['partial_qty'], 14) for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
                             # if packs are returned corresponding move is canceled
                             # cancel move or 0 qty + done ?
                             #move_obj.action_cancel(cr, uid, [move.id], context=context)

@@ -392,6 +392,8 @@
             <field name="arch" type="xml">
             	<data>
 
+            <xpath expr="//field[@name='product_uos']" position="replace">
+            </xpath>
 			<xpath expr="//field[@name='product_id']" position="attributes">
 				<attribute name="context">{'location_id': location_id, 'prodlot_id': prodlot_id, 'compute_child': False}</attribute>
 			</xpath>

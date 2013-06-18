@@ -780,7 +780,11 @@ class procurement_order(osv.osv):
         '''
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         procurement = kwargs['procurement']
-        
+
+        # set tender link in purchase order
+        if procurement.tender_id:
+            values['origin_tender_id'] = procurement.tender_id.id
+
         values['date_planned'] = procurement.date_planned
         
         if procurement.product_id:

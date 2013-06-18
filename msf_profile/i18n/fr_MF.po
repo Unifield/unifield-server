@@ -25059,8 +25059,12 @@ msgstr "Nombre"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 msgid "SO ref:"
+msgstr "CdT Réf:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "FO ref:"
 msgstr "CdT Réf:"
 
 #. module: msf_outgoing
@@ -25604,10 +25608,14 @@ msgstr "Pas de ligne créée!"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "Pack Value:"
 msgstr "Colis - Valeur"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "Pack Val:"
+msgstr "Colis - Val"
 
 #. modules: base, sd
 #: model:res.country,name:base.sy
@@ -37414,9 +37422,13 @@ msgstr "Listes des Avances Ouvertes"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 msgid "Total Weight [kg]:"
 msgstr "Poids Total (kg)"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "Tot Wt [kg]:"
+msgstr "Poids Tot. (kg)"
 
 #. module: account
 #: view:account.tax:0
@@ -48209,10 +48221,14 @@ msgstr "Chili"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 #: report:pre.packing.list:0
 msgid "Total value:"
 msgstr "Valeur Totale:"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "Tot Val:"
+msgstr "Val Tot:"
 
 #. modules: purchase, account, sale, account_voucher, stock_schedule, board, stock
 #: selection:account.entries.report,month:0
@@ -52824,8 +52840,12 @@ msgstr "Produit Actuel"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-#: report:packing.list:0
 msgid "Pack Weight [kg]:"
+msgstr "Colis - Poids (kg)"
+
+#. module: msf_outgoing
+#: report:packing.list:0
+msgid "Pack Wt [kg]:"
 msgstr "Colis - Poids (kg)"
 
 #. module: register_accounting

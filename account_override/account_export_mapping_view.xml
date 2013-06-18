@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="export_mapping_search_view">
+            <field name="name">export.mapping.search</field>
+            <field name="model">account.export.mapping</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="account_id"/>
+                    <field name="mapping_value"/>
+                </search>
+            </field>
+        </record>
+        
+        <record model="ir.ui.view" id="export_mapping_tree_view">
+            <field name="name">export.mapping.tree</field>
+            <field name="model">account.export.mapping</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account Mapping">
+                    <field name="account_id" />
+                    <field name="mapping_value"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="export_mapping_form_view">
+            <field name="name">export.mapping.form</field>
+            <field name="model">account.export.mapping</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Account Mapping">
+                    <field name="account_id" />
+                    <field name="mapping_value"/>
+                </form>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window" id="export_mapping_action">
+            <field name="name">Account Mapping</field>
+            <field name="res_model">account.export.mapping</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="export_mapping_menu" name="Account Mapping" parent="account.account_account_menu"
+                action="export_mapping_action" />
+        
+        <record id="import_account_mappings_view" model="ir.ui.view">
+            <field name="name">Import Mappings</field>
+            <field name="model">wizard.import.mapping</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Import Mappings">
+                <field name="import_file"/>
+                <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                <button icon="terp-camera_test" string="Import" name="import_account_mappings" type="object" default_focus="1"/>
+            </form>
+            </field>
+        </record>
+        
+        <act_window name="Import Mappings"
+            res_model="wizard.import.mapping"
+            src_model="account.export.mapping"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            empty_ids="1"
+            id="action_import_account_mappings"/>
+        
+    </data>
+</openerp>

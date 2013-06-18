@@ -127,7 +127,7 @@ class hr_employee(osv.osv):
             if setup and not setup.payroll_ok:
                 allow_edition = True
             # Raise an error if employee is created manually
-            if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_data', False) and not allow_edition:
+            if (not context.get('from', False) or context.get('from') not in ['yaml', 'import']) and not context.get('sync_update_execution', False) and not allow_edition:
                 raise osv.except_osv(_('Error'), _('You are not allowed to create a local staff! Please use Import to create local staff.'))
 #            # Raise an error if no cost_center
 #            if not vals.get('cost_center_id', False):
@@ -164,7 +164,7 @@ class hr_employee(osv.osv):
                 local = True
             elif vals.get('employee_type') == 'ex':
                 ex = True
-        if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_data', False):
+        if (context.get('from', False) and context.get('from') in ['yaml', 'import']) or context.get('sync_update_execution', False):
             allowed = True
         # Browse all employees
         for emp in self.browse(cr, uid, ids):

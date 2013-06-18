@@ -1203,7 +1203,7 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_asset_check': hidden_asset_check})
             
             hidden_creation_state = False
-            hidden_creation_qty_stock_move = 0.0
+            hidden_creation_qty_stock_move = 0
             if obj.kit_creation_id_stock_move:
                 hidden_creation_state = obj.kit_creation_id_stock_move.state
                 hidden_creation_qty_stock_move = obj.kit_creation_id_stock_move.qty_kit_creation
