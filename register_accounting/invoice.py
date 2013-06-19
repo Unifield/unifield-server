@@ -103,10 +103,9 @@ class account_invoice(osv.osv):
             context = {}
         res = {}
         for inv in self.browse(cr, uid, ids, context):
-            res[inv.id] = 'unknown'
-            if inv.move_lines:
-                ml_ids = [x.id for x in inv.move_lines]
-                absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', ml_ids)])
+            res[inv.id] = 'none'
+            if inv.move_id:
+                absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
                 if absl_ids:
                     res[inv.id] = 'partial'
                     if inv.state == 'paid':
@@ -127,7 +126,7 @@ class account_invoice(osv.osv):
             type='many2one', relation="res.partner", readonly=True),
         'is_direct_invoice': fields.function(_is_direct_invoice, method=True, store=False, type='boolean', readonly=True, string="Is direct invoice?"),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
-        'imported_state': fields.function(_get_imported_state, fnct_search=_search_imported_state, method=True, store=False, type='selection', selection=[('unknown', 'Unknown'), ('imported', 'Imported'), ('not', 'Not Imported'), ('partial', 'Partially Imported')], string='Imported Status')
+        'imported_state': fields.function(_get_imported_state, fnct_search=_search_imported_state, method=True, store=False, type='selection', selection=[('none', 'None'), ('imported', 'Imported'), ('not', 'Not Imported'), ('partial', 'Partially Imported')], string='Imported Status')
     }
 
     def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):
