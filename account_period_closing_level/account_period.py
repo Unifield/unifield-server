@@ -164,44 +164,89 @@ class account_period(osv.osv):
         'field_process': lambda *a: False,
     }
 
-    def button_overdue_invoice(self, cr, uid, ids, context=None):
+    def invoice_view(self, cr, uid, ids, name='Invoices', domain=[], module='account', view_name='invoice_tree', context=None):
         """
-        Open a view that display overdue invoices for this period
+        Open an invoice tree view with the given domain for the period in ids
         """
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
-        # Prepare some values
-        inv_obj = self.pool.get('account.invoice')
-        
+
         # Search invoices
         for period in self.browse(cr, uid, ids, context=context):
-            inv_ids = inv_obj.search(cr, uid, [('state', 'in', ['draft', 'open']), ('period_id', '=', period.id), 
-                ('type', 'in', ['in_invoice', 'in_refund'])], context=context)
-            inv_to_display = []
-            for inv in inv_obj.browse(cr, uid, inv_ids, context=context):
-                if not inv.date_due or inv.date_due <= period.date_stop:
-                    inv_to_display.append(inv.id)
-            if inv_to_display:
-                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_tree')
-                view_id = view_id and view_id[1] or False
-                domain = [('id', 'in', inv_to_display)]
-                # this context cancel default context of account.action_account_period_tree given by account_period_closing_level_view.xml 
-                #+ @line 81 in action_account_period_closing_level_tree
-                context = {'search_default_draft': 0}
-                return {
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'account.invoice',
-                    'view_type': 'form',
-                    'view_mode': 'tree,form',
-                    'view_id': [view_id],
-                    'target': 'new',
-                    'domain': domain,
-                    'context': context,
-                }
+            # prepare view
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+            view_id = view_id and view_id[1] or False
+            domain += [('date_invoice', '>=', period.date_start), ('date_invoice', '<=', period.date_stop), ('state', 'in', ['draft', 'open'])]
+            context.update({'search_default_draft': 0})
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'account.invoice',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'view_id': [view_id],
+                'target': 'current',
+                'domain': domain,
+                'context': context,
+                'name': name,
+            }
+
+    # Stock transfer voucher
+    def button_stock_transfer_vouchers(self, cr, uid, ids, context=None):
+        """
+        Create a new tab with Open stock transfer vouchers from given period.
+        """
+        return self.invoice_view(cr, uid, ids, _('Stock Transfer Vouchers'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)], context={'type':'out_invoice', 'journal_type': 'sale'})
+
+    def button_customer_refunds(self, cr, uid, ids, context=None):
+        """
+        Create a new tab with Customer refunds from given period.
+        """
+        return self.invoice_view(cr, uid, ids, _('Customer Refunds'), [('type', '=', 'out_refund'), ('is_debit_note', '=', False)], context=context)
+
+    # Debit note
+    def button_debit_note(self, cr, uid, ids, context=None):
+        return self.invoice_view(cr, uid, ids, _('Debit Note'), [('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False)], context={'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
+
+    # Intermission voucher OUT
+    def button_intermission_out(self, cr, uid, ids, context=None):
+        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'out_invoice', 'journal_type': 'intermission'})
+
+    def button_supplier_refunds(self, cr, uid, ids, context=None):
+        """
+        Open a view that display Supplier invoices for given period
+        """
+        return self.invoice_view(cr, uid, ids, _('Supplier Refunds'), [('type', '=', 'in_refund')], context={'type':'in_refund', 'journal_type': 'purchase_refund'})
+
+    # Supplier direct invoices
+    def button_supplier_direct_invoices(self, cr, uid, ids, context=None):
+        """
+        Open a view that display Direct invoices for this period
+        """
+        return self.invoice_view(cr, uid, ids, _('Supplier Direct Invoices'), [('type','=','in_invoice'), ('register_line_ids', '!=', False)], context={'type':'in_invoice', 'journal_type': 'purchase'})
+
+    # In-kind donation
+    def button_donation(self, cr, uid, ids, context=None):
+        """
+        Open a view that display Inkind donation for this period
+        """
+        return self.invoice_view(cr, uid, ids, _('Donation'), [('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)], context={'type':'in_invoice', 'journal_type': 'inkind'})
+
+    # Intermission voucher IN
+    def button_intermission_in(self, cr, uid, ids, context=None):
+        """
+        Open a view that display intermission voucher in for this period
+        """
+        return self.invoice_view(cr, uid, ids, _('Intermission Voucher IN'), [('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'in_invoice', 'journal_type': 'intermission'})
+
+    # Supplier invoice
+    def button_supplier_invoices(self, cr, uid, ids, context=None):
+        """
+        Open a view that display supplier invoices for this period
+        """
+        return self.invoice_view(cr, uid, ids, _('Supplier Invoices'), [('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('is_intermission', '=', False)], context={'type':'in_invoice', 'journal_type': 'purchase'})
 
     def button_close_field_period(self, cr, uid, ids, context=None):
         if not context:
