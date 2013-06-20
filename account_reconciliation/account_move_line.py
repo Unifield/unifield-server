@@ -107,6 +107,10 @@ class account_move_line(osv.osv):
             'type': type,
             'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge)
         })
+        
+        # UF-2011: synchronize move lines (not "marked" after reconcile creation)
+        self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
+        
         move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
         # @@@end
         return True
@@ -184,6 +188,10 @@ class account_move_line(osv.osv):
             'line_id': map(lambda x: (4, x, False), ids),
             'line_partial_ids': map(lambda x: (3, x, False), ids)
         })
+        
+        # UF-2011: synchronize move lines (not "marked" after reconcile creation)
+        self.pool.get('account.move.line').synchronize(cr, uid, ids, context=context)
+        
         wf_service = netsvc.LocalService("workflow")
         # the id of the move.reconcile is written in the move.line (self) by the create method above
         # because of the way the line_id are defined: (4, x, False)
