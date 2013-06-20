@@ -208,6 +208,87 @@ class stock_picking(osv.osv):
             
         return res_id
 
+    def ship_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
+        if context is None:
+            context = {}
+        print "call update In in PO from Out in FO", source
+        
+        pick_dict = out_info.to_dict()
+        
+        # objects
+        so_po_common = self.pool.get('so.po.common')
+        po_obj = self.pool.get('purchase.order')
+        move_obj = self.pool.get('stock.move')
+        pick_tools = self.pool.get('picking.tools')
+        
+        # package data
+        pack_data = self.package_data_update_in(cr, uid, source, pick_dict, context=context)
+        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
+        so_ref = source + "." + pick_dict['origin']
+        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
+        # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+        in_id = so_po_common.get_in_id(cr, uid, po_name, context)
+        
+        if in_id:
+            # update header
+            header_result = {}
+            # get the original note
+            orig_note = self.read(cr, uid, in_id, ['note'], context=context)['note']
+            if orig_note and pick_dict['note']:
+                header_result['note'] = orig_note + '\n' + str(source) + ':' + pick_dict['note']
+            elif orig_note:
+                header_result['note'] = orig_note
+            elif pick_dict['note']:
+                header_result['note'] = str(source) + ':' + pick_dict['note']
+            else:
+                header_result['note'] = False
+            
+            header_result['min_date'] = pick_dict['min_date']
+            res_id = self.write(cr, uid, [in_id], header_result, context=context)
+            
+            # update lines
+            for line in pack_data:
+                line_data = pack_data[line]
+                # get the corresponding picking line ids
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', line)], context=context)
+                if not move_ids:
+                    # no stock moves with the corresponding line_number in the picking, could have already been processed
+                    continue
+                # we check that all stock moves for a given line number have not been processed yet at IN side
+                moves_data = move_obj.read(cr, uid, move_ids, ['processed_stock_move'], context=context)
+                if not all([not move_data['processed_stock_move'] for move_data in moves_data]):
+                    # some lines have already been processed
+                    continue
+                # we check that all stock moves for a given line number have not been processed yet at OUT side
+                
+                ################################################################3
+                # SP-135/UF-1617: TO BE CHECKed why it stops the update of the IN lines
+                # So just remove it and perform tests to see the result
+                ################################################################3
+#                if line_data['out_processed']:
+#                    continue
+                
+                completed_ids = []
+                # we loop through the lines from OUT, updating if lines exists, or creating copies
+                for data in line_data['data']:
+                    # store the move id which will be modified
+                    move_id = False
+                    if move_ids:
+                        # search orders by default by id, we therefore take the smallest id first
+                        move_id = move_ids.pop(0)
+                        # update existing line and drop from list
+                        move_obj.write(cr, uid, [move_id], data, context=context)
+                    else:
+                        # copy the first one used
+                        move_id = move_obj.copy(cr, uid, completed_ids[0], dict(data, state='confirmed'), context=context)
+                    # save the used id
+                    completed_ids.append(move_id)
+                    
+        return res_id
+
+
+
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
