@@ -19,15 +19,8 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-from osv import orm
-from tools.translate import _
-from datetime import datetime
-import tools
-import time
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
+from osv import osv, fields
+from sync_common import xmlid_to_sdref
 
 class so_po_common(osv.osv_memory):
     _name = "so.po.common"
@@ -57,15 +50,6 @@ class so_po_common(osv.osv_memory):
         context.update({'active_test': False})
         part = self.pool.get('res.partner').browse(cr, uid, partner_id, context=context)
         return part.property_product_pricelist and part.property_product_pricelist.id or False
-
-    def get_record_id(self, cr, uid, context, entry):
-        if not entry:
-            return False
-        ir_data = self.pool.get('ir.model.data').get_ir_record(cr, uid, entry.id, context=context)
-        if ir_data:
-            return ir_data.res_id
-        return False
-
 
     def get_full_original_fo_ref(self, source, original_fo_name):
         '''
@@ -213,9 +197,7 @@ class so_po_common(osv.osv_memory):
         # --> be careful when modifying the statement below
         analytic_id = data_dict.get('analytic_distribution_id', False)
         if analytic_id:
-            ir_data = self.pool.get('ir.model.data').get_ir_record(cr, uid, analytic_id['id'], context=context)
-            if ir_data:
-                return ir_data.res_id
+            return self.pool.get('analytic.distribution').find_sd_ref(cr, uid, xmlid_to_sdref(analytic_id['id']), context=context)
         return False 
 
     def retrieve_so_header_data(self, cr, uid, source, header_result, header_info, context):
@@ -269,41 +251,41 @@ class so_po_common(osv.osv_memory):
             values = {}
             line_dict = line.to_dict()
 
-            if 'product_uom' in line_dict:
+            if line_dict.get('product_uom'):
                 values['product_uom'] = self.get_uom_id(cr, uid, line.product_uom, context=context)
 
-            if 'have_analytic_distribution_from_header' in line_dict: 
+            if line_dict.get('have_analytic_distribution_from_header'): 
                 values['have_analytic_distribution_from_header'] = line.have_analytic_distribution_from_header
                 
-            if 'line_number' in line_dict:
+            if line_dict.get('line_number'):
                 values['line_number'] = line.line_number
                 
-            if 'notes' in line_dict:
+            if line_dict.get('notes'):
                 values['notes'] = line.notes
 
-            if 'comment' in line_dict:
+            if line_dict.get('comment'):
                 values['comment'] = line.comment
 
-            if 'product_uom_qty' in line_dict: # come from the SO
+            if line_dict.get('product_uom_qty'): # come from the SO
                 values['product_qty'] = line.product_uom_qty
 
-            if 'product_qty' in line_dict: # come from the PO
+            if line_dict.get('product_qty'): # come from the PO
                 values['product_uom_qty'] = line.product_qty
             
-            if 'date_planned' in line_dict:
+            if line_dict.get('date_planned'):
                 values['date_planned'] = line.date_planned 
 
-            if 'confirmed_delivery_date' in line_dict:
+            if line_dict.get('confirmed_delivery_date'):
                 values['confirmed_delivery_date'] = line.confirmed_delivery_date
                  
-            if 'nomenclature_description' in line_dict:
+            if line_dict.get('nomenclature_description'):
                 values['nomenclature_description'] = line.nomenclature_description 
 
-            if 'price_unit' in line_dict:
+            if line_dict.get('price_unit'):
                 values['price_unit'] = line.price_unit
                 
-            if 'product_id' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.product_id)
+            if line_dict.get('product_id'):
+                rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
@@ -321,36 +303,36 @@ class so_po_common(osv.osv_memory):
             else:
                 values['name'] = line.comment
 
-            if 'nomen_manda_0' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_0)
+            if line_dict.get('nomen_manda_0'):
+                rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_0.id), context=context)
                 if rec_id:
                     values['nomen_manda_0'] = rec_id 
                 
-            if 'nomen_manda_1' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_1)
+            if line_dict.get('nomen_manda_1'):
+                rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_1.id), context=context)
                 if rec_id:
                     values['nomen_manda_1'] = rec_id 
 
-            if 'nomen_manda_2' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_2)
+            if line_dict.get('nomen_manda_2'):
+                rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_2.id), context=context)
                 if rec_id:
                     values['nomen_manda_2'] = rec_id 
 
-            if 'nomen_manda_3' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.nomen_manda_3)
+            if line_dict.get('nomen_manda_3'):
+                rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_3.id), context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
                 
-            if 'analytic_distribution_id' in line_dict:
+            if line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
                     
             line_ids = False
             sync_order_line_db_id = False
-            if 'sync_order_line_db_id' in line_dict:
+            if line_dict.get('sync_order_line_db_id'):
                 sync_order_line_db_id = line.sync_order_line_db_id
                 values['sync_order_line_db_id'] = sync_order_line_db_id
                 
-            if 'source_sync_line_id' in line_dict:
+            if line_dict.get('source_sync_line_id'):
                 values['original_purchase_line_id'] = line_dict['source_sync_line_id']
             
             if (po_id or so_id) and not sync_order_line_db_id: # this updates the PO or SO -> the sync_order_line_db_id must exist
@@ -400,26 +382,26 @@ class so_po_common(osv.osv_memory):
             values = {}
             line_dict = line.to_dict()
 
-            if 'product_uom' in line_dict:
+            if line_dict.get('product_uom'):
                 values['product_uom'] = self.get_uom_id(cr, uid, line.product_uom, context=context)
 
-            if 'line_number' in line_dict:
+            if line_dict.get('line_number'):
                 values['line_number'] = line.line_number
                 
-            if 'product_qty' in line_dict: # come from the PO
+            if line_dict.get('product_qty'): # come from the PO
                 values['product_qty'] = line.product_qty
             
-            if 'expired_date' in line_dict:
+            if line_dict.get('expired_date'):
                 values['expired_date'] = line.expired_date 
 
-            if 'asset_id' in line_dict:
+            if line_dict.get('asset_id'):
                 values['asset_id'] = line.asset_id
                  
-            if 'date_expected' in line_dict:
+            if line_dict.get('date_expected'):
                 values['date_expected'] = line.date_expected
                 
-            if 'product_id' in line_dict:
-                rec_id = self.get_record_id(cr, uid, context, line.product_id)
+            if line_dict.get('product_id'):
+                rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name

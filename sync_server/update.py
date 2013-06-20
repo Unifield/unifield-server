@@ -31,6 +31,8 @@ import logging
 from tools.safe_eval import safe_eval as eval
 import threading
 
+from sync_common import add_sdref_column, translate_column, fancy_integer
+
 class SavePullerCache(object):
     def __init__(self, model):
         self.__model__ = model
@@ -131,15 +133,37 @@ class update(osv.osv):
         'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
         'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
         'model': fields.char('Model', size=128, readonly=True),
+        'sdref': fields.char('SD ref', size=128, readonly=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence', select=True),
+        'fancy_sequence' : fields.function(fancy_integer, method=True, string="Sequence", type='char', readonly=True),
         'version': fields.integer('Record Version'),
-        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete="set null", select=True),
+        'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
+        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, required=True, select=True),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
+        'is_deleted' : fields.boolean('Is deleted?', select=True),
     }
+
+    _order = 'sequence, create_date desc'
+
+    _sql_constraints = [
+        ('detect_duplicated_updates','UNIQUE(session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
+    ]
+
+    @add_sdref_column
+    def _auto_init(self, cr, context=None):
+        cr.execute("""SELECT table_name FROM information_schema.tables WHERE table_name IN %s""",
+                   [(puller_ids_rel._table, self._table)]);
+        existing_tables = [row[0] for row in cr.fetchall()]
+        if puller_ids_rel._table in existing_tables:
+            cr.execute("""DELETE FROM %s WHERE update_id IN (SELECT id FROM %s WHERE rule_id IS NULL)""" \
+                       % (puller_ids_rel._table, self._table))
+        if self._table in existing_tables:
+            cr.execute("""DELETE FROM %s WHERE rule_id IS NULL""" % self._table)
+        super(update, self)._auto_init(cr, context=context)
 
     def __init__(self, pool, cr):
         self._cache_pullers = SavePullerCache(self)
@@ -162,38 +186,54 @@ class update(osv.osv):
 
             @return : True or raise an error
         """
+
+        def safe_create(data):
+            cr.execute("SAVEPOINT update_creation")
+            try:
+                return self.create(cr, uid, data, context=context)
+            except:
+                cr.execute("ROLLBACK TO SAVEPOINT update_creation")
+            else:
+                cr.execute("RELEASE SAVEPOINT update_creation")
+            return None
+
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pushing updates...'))
 
-        data = {
-            'source': entity.id,
-            'model': packet['model'],
-            'session_id': packet['session_id'],
-            'rule_id': packet['rule_id'],
-            'fields': packet['fields']
-        }
-
+        normal_updates_count = 0
         for update in packet['load']:
             # Try to detect old packet type and raise an error
-            if 'owner' not in update: raise Exception, "Packet field 'owner' absent"
-            # Otherwise, get the id of the owner or 0 if absent from sync.server.entity list
-            else:
-                owner = self.pool.get('sync.server.entity').search(cr, uid, [('name','=',update['owner'])], limit=1)
-                owner = owner[0] if owner else 0
-            data.update({
-                'version': update['version'],
-                'values': update['values'],
-                'owner': owner,
-            })
-            # Avoid adding two time the same update
-            # by searching packets that have the same values
-            ids = self.search(cr, uid, [('version', '=', data['version']), 
-                                        ('session_id', '=', data['session_id']),
-                                        ('owner','=', data['owner']),
-                                        ('values', '=', data['values'])], context=context)
-            if ids:
-                continue
-            self.create(cr, uid, data,context=context)
+            assert 'owner' in update, "Packet field 'owner' absent"
+            # Get the id of the owner or 0 if absent from sync.server.entity list
+            owner = self.pool.get('sync.server.entity').search(cr, uid, [('name','=',update['owner'])], limit=1)
+            owner = owner[0] if owner else False
 
+            if safe_create({
+                        'source': entity.id,
+                        'model': packet['model'],
+                        'session_id': packet['session_id'],
+                        'rule_id': packet['rule_id'],
+                        'fields': packet['fields'],
+                        'version': update['version'],
+                        'values': update['values'],
+                        'owner': owner,
+                        'sdref' : update['sdref'],
+                    }):
+                normal_updates_count += 1
+
+        delete_updates_count = 0
+        for sdref in packet['unload']:
+            if safe_create({
+                        'source': entity.id,
+                        'model': packet['model'],
+                        'session_id': packet['session_id'],
+                        'rule_id': packet['rule_id'],
+                        'sdref' : sdref,
+                        'is_deleted' : True,
+                    }):
+                delete_updates_count += 1
+
+        self._logger.info("Inserted %d new updates: %d normal(s) and %d delete(s)"
+                          % ((normal_updates_count+delete_updates_count), normal_updates_count, delete_updates_count))
         return True
 
     def confirm_updates(self, cr, uid, entity, session_id, context=None):
@@ -272,14 +312,18 @@ class update(osv.osv):
         children = self.pool.get('sync.server.entity')._get_all_children(cr, uid, entity.id, context=context)
         for update in self.browse(cr, uid, update_ids, context=context):
             if update.rule_id.direction == 'bi-private':
-                if not update.owner:
+                if update.is_deleted:
+                    privates = [entity.id]
+                elif not update.owner:
                     privates = []
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
                                [update.owner.id]
             else:
                 privates = []
-            if (update.rule_id.direction == 'up' and update.source.id in children) or \
+            if not update.rule_id:
+                update_to_send.append(update)
+            elif (update.rule_id.direction == 'up' and update.source.id in children) or \
                (update.rule_id.direction == 'down' and update.source.id in ancestor) or \
                (update.rule_id.direction == 'bidirectional') or \
                (entity.id in privates) or \
@@ -287,9 +331,8 @@ class update(osv.osv):
                 
                 source_rules_ids = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update.source, context)
                 s_group = source_rules_ids.get(update.rule_id.id, [])
-                for group in entity.group_ids:
-                    if group.id in s_group:
-                        update_to_send.append(update)
+                if any(group.id in s_group for group in entity.group_ids):
+                    update_to_send.append(update)
         return update_to_send
 
     def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
@@ -322,7 +365,9 @@ class update(osv.osv):
         if not rules:
             return None
 
-        base_query = ("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE sync_server_update.rule_id in ("""+"%s,"*(len(rules)-1)+"%s"+""") AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""") % (tuple(rules) + (last_seq, max_seq))
+        base_query = " ".join(("""SELECT "sync_server_update".id FROM "sync_server_update" WHERE""",
+                               "sync_server_update.rule_id IN (" + ','.join(map(str, rules)) + ")",
+                               "AND sync_server_update.sequence > %s AND sync_server_update.sequence <= %s""" % (last_seq, max_seq)))
 
         ## Recover add own client updates to the list
         if not recover:
@@ -347,6 +392,7 @@ class update(osv.osv):
                 elif update.model == update_master.model and \
                    update.rule_id.id == update_master.rule_id.id and \
                    update.source.id == update_master.source.id and \
+                   update.is_deleted == update_master.is_deleted and \
                    len(update_to_send) < max_size:
                     update_to_send.append(update)
                 else:
@@ -361,28 +407,36 @@ class update(osv.osv):
         # Point of no return
         self._cache_pullers.add(entity, update_to_send)
 
-        ## Prepare package
-        complete_fields, forced_values = self.get_additional_forced_field(update_master) 
+        ## Package template
         data = {
             'model' : update_master.model,
             'source_name' : update_master.source.name,
-            'fields' : tools.ustr(complete_fields),
             'sequence' : update_master.sequence,
             'rule' : update_master.rule_id.sequence_number,
-            'fallback_values' : update_master.rule_id.fallback_values,
-            'load' : list(),
             'offset' : offset,
         }
 
         ## Process & Push all updates in the packet
-        for update in update_to_send:
-            values = dict(zip(complete_fields[:len(update.values)], eval(update.values)) + \
-                          forced_values.items())
-            data['load'].append({
-                'version' : update.version,
-                'values' : tools.ustr([values[k] for k in complete_fields]),
-                'owner_name' : update.owner.name if update.owner else '',
+        if update_master.is_deleted:
+            data['unload'] = [update.sdref for update in update_to_send]
+            data['type'] = 'delete'
+        else:
+            complete_fields, forced_values = self.get_additional_forced_field(update_master) 
+            data.update({
+                'fields' : tools.ustr(complete_fields),
+                'fallback_values' : update_master.rule_id.fallback_values,
+                'load' : [],
+                'type' : 'import',
             })
+            for update in update_to_send:
+                values = dict(zip(complete_fields[:len(update.values)], eval(update.values)) + \
+                              forced_values.items())
+                data['load'].append({
+                    'sdref' : update.sdref,
+                    'version' : update.version,
+                    'values' : tools.ustr([values[k] for k in complete_fields]),
+                    'owner_name' : update.owner.name if update.owner else '',
+                })
 
         return data
     
@@ -406,4 +460,3 @@ update()
 puller_ids_rel()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
