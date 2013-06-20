@@ -147,7 +147,7 @@ class expiry_quantity_report(osv.osv_memory):
                                                                                   'expiry_date': lot_brw.life_date,
                                                                                   'location_id': location,
                                                                                   'report_id': ids[0],
-                                                                                  })        
+                                                                                  }, context=context)
             
         return {'type': 'ir.actions.act_window',
                 'res_model': 'expiry.quantity.report',

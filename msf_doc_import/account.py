@@ -124,7 +124,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'partner_id': l.partner_id and l.partner_id.id or False,
                             'employee_id': l.employee_id and l.employee_id.id or False,
                         }
-                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context)
+                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -191,6 +191,14 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Fetch all XML row values
                 line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
                 # Bypass this line if NO debit AND NO credit
+                try:
+                    bd = line[cols['Booking Debit']]
+                except IndexError, e:
+                    continue
+                try:
+                    bc = line[cols['Booking Credit']]
+                except IndexError, e:
+                    continue
                 if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
                     continue
                 processed += 1

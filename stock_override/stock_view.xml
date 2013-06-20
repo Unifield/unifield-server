@@ -441,7 +441,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -638,7 +637,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="in_action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -914,7 +912,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -930,7 +927,7 @@
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
