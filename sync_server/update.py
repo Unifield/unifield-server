@@ -232,7 +232,7 @@ class update(osv.osv):
                     }):
                 delete_updates_count += 1
 
-        self._logger.info("Inserted %d new updates: %d normal(s) and %d delete(s)"
+        self._logger.debug("Inserted %d new updates: %d normal(s) and %d delete(s)"
                           % ((normal_updates_count+delete_updates_count), normal_updates_count, delete_updates_count))
         return True
 
