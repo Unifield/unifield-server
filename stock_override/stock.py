@@ -810,6 +810,9 @@ class stock_move(osv.osv):
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
+        'to_correct_ok': fields.boolean('To correct'),
+        'text_error': fields.text('Errors when trying to import file'),
+        'show_msg_ok': fields.boolean('Info on importation of lines'),
     }
     
     _defaults = {

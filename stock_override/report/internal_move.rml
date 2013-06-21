@@ -183,10 +183,10 @@
                     <para style="Line">[[ line.composition_kit.name ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.product_uom_qty ]]</para>
+                    <para style="Line">[[ line.product_qty ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.uom_id.name ]]</para>
+                    <para style="Line">[[ line.product_uom.name ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.asset_id.name ]]</para>

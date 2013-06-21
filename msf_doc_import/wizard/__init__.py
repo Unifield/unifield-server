@@ -71,6 +71,7 @@ import stock_partial_picking
 import wizard_import_po_line
 import wizard_import_fo_line
 import wizard_import_ir_line
+import wizard_import_int_line
 import wiz_common_import
 import wizard_import_tender_line
 

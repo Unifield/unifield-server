@@ -40,6 +40,16 @@
           <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
     </Style>
+    <Style ss:ID="short_date">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <NumberFormat ss:Format="Short Date"/>
+    </Style>
 </Styles>
 ## we loop over the stock_picking sp "objects" == stock_picking
 % for o in objects:
@@ -72,10 +82,14 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(move.product_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.product_uom.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.composition_list_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.composition_list_id.composition_reference or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.asset_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.prodlot_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Date">${(move.expired_date or '')|x}</Data></Cell>
+        % if move.expired_date:
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${move.expired_date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="header" ><Data ss:Type="DateTime"></Data></Cell>
+        % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.location_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.location_dest_id.name or '')|x}</Data></Cell>
     </Row>
