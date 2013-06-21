@@ -99,7 +99,7 @@
                                     attrs="{'readonly': ['|', ('fake_state_return_claim', '=', 'done'), ('type_return_claim', '=', 'transport')]}" />
                             </page>
                             <page string="Products">
-                                <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" />
+                                <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view')]" />
                                 <field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
                                     attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
                                     <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
