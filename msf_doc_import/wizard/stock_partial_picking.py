@@ -407,7 +407,8 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 '''
                 multi_product = []
                 for m in move_obj.browse(cr, uid, move_ids, context=context):
-                    multi_product.append(m.product_id.id)
+                    if m.product_id.id not in multi_product:
+                        multi_product.append(m.product_id.id)
                         
                 # Treat after the lines which not match directly
                 remaining_lines = []
@@ -451,7 +452,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                     
                     # If the moves have more than one product and the line has another product, return an error
                     if len(multi_product) > 1 and l.product_id.id not in multi_product:
-                        error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : The system cannot found a line matching with the line numbert %s, the product [%s] %s and the UoM %s.") % (l.file_line_number, l.line_number, l.product_id.default_code, l.product_id.name, l.uom_id.name))
+                        error_list.append(_("Line %s of the Excel file was added to the file of the lines with errors : The system cannot found a line matching with the line number %s, the product [%s] %s and the UoM %s.") % (l.file_line_number, l.line_number, l.product_id.default_code, l.product_id.name, l.uom_id.name))
                         line_with_error.append(list(l.line_values))
                         ignore_lines += 1
                         continue
