@@ -412,6 +412,7 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                 # Treat after the lines which not match directly
                 remaining_lines = []
                 already_treated = []
+                postponed_lines = []
                 for l in import_obj.browse(cr, uid, line_ids, context=context):
                     match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
                                                           ('id', 'not in', already_treated),
@@ -510,6 +511,36 @@ Line Number*, Product Code*, Product Description*, Quantity, Product UOM, Batch,
                             break
                         # Don't split the move if the quantity ordered is equal to the quantity of the line and the move quantity is not filled
                         elif m.quantity_ordered == l.quantity and m.quantity == 0.00 and m.product_uom.category_id.id == l.uom_id.category_id.id:
+                            ok = True
+                            move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
+                                                             'quantity': l.quantity,
+                                                             'prodlot_id': l.prodlot_id and l.prodlot_id.id or False,
+                                                             'expiry_date': l.expiry_date}, context=context)
+                            if m.product_id.id != l.product_id.id:
+                                # Call the change product wizard
+                                wizard_values = move_obj.change_product(cr, uid, m.id, context)
+                                wiz_context = wizard_values.get('context')
+                                self.pool.get(wizard_values['res_model']).write(cr, uid, [wizard_values['res_id']], {'change_reason': 'Import changed product', 'new_product_id': l.product_id.id}, context=wiz_context)
+                                self.pool.get(wizard_values['res_model']).change_product(cr, uid, [wizard_values['res_id']], context=wiz_context)
+                                info_list.append(_("Line %s of the Excel file: The product did not match with the existing product of the line, so we change the [%s] %s to [%s] %s.") % (l.file_line_number, m.product_id.default_code, m.product_id.name, l.product_id.default_code, l.product_id.name))
+                                
+                            if m.product_uom.id != l.uom_id.id:
+                                info_list.append(_("Line %s of the Excel file: The product UOM did not match with the existing product UoM of the line, so we change the UoM from %s to %s.") % (l.file_line_number, m.product_uom.name, l.uom_id.name))
+                                
+                            complete_lines += 1
+                            break
+                        
+                    if not ok:
+                        postponed_lines.append(l)
+                
+                for l in postponed_lines:
+                    # Search moves which can be split
+                    match_ids = move_obj.search(cr, uid, [('id', 'in', move_ids),
+                                                          ('quantity_ordered', '>', 1), ('quantity', '=', 0.00)], order='quantity_ordered desc', context=context)
+                    
+                    ok = False
+                    for m in move_obj.browse(cr, uid, match_ids, context=context):
+                        if m.product_uom.category_id.id == l.uom_id.category_id.id:
                             ok = True
                             move_obj.write(cr, uid, [m.id], {'product_uom': l.uom_id.id,
                                                              'quantity': l.quantity,
