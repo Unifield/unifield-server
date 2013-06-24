@@ -255,6 +255,9 @@ class wizard_register_import(osv.osv_memory):
                     continue
                 if not line[cols['amount_in']] and not line[cols['amount_out']]:
                     continue
+                if line[cols['amount_in']] and line[cols['amount_out']]:
+                    errors.append(_('Line %s: Double amount, IN and OUT. Use only one!') % (current_line_num,))
+                    continue
                 processed += 1
                 # Get amount
                 r_debit = line[cols['amount_in']]
