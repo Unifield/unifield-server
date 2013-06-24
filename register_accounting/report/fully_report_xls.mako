@@ -31,10 +31,10 @@
     <Style ss:ID="column_headers">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
       <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
-        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
-        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
-        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="O.5" ss:Color="#000000"/>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <Font ss:Bold="1" ss:Size="11"/>
       <Interior ss:Color="#ffff66" ss:Pattern="Solid"/>
@@ -85,14 +85,13 @@
     </Style>
   </Styles>
   <Worksheet ss:Name="Info">
-    <Table ss:StyleID="ta1">
+    <Table>
       <Column ss:Width="105.1937"/>
       <Column ss:Width="64.0063"/>
       <Row ss:Height="12.1039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">REGISTER REPORT</Data>
         </Cell>
-        <Cell ss:Index="2"/>
       </Row>
       <Row ss:Height="12.8126">
         <Cell ss:Index="2"/>
@@ -118,21 +117,21 @@
   </Worksheet>
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
-    <Table ss:StyleID="ta1">
-      <Column ss:Width="95.9527" ss:AutoFitWidth="1"/>
-      <Column ss:Width="78.2079" ss:AutoFitWidth="1"/>
-      <Column ss:Width="64.2898" ss:AutoFitWidth="1"/>
-      <Column ss:Width="103.663" ss:AutoFitWidth="1"/>
-      <Column ss:Width="95.9527" ss:AutoFitWidth="1"/>
-      <Column ss:Width="71.263" ss:AutoFitWidth="1"/>
-      <Column ss:Width="166.9606" ss:AutoFitWidth="1"/>
-      <Column ss:Width="115.9937" ss:AutoFitWidth="1"/>
-      <Column ss:Width="66.6142" ss:AutoFitWidth="1"/>
-      <Column ss:Width="79.7386" ss:AutoFitWidth="1"/>
-      <Column ss:Width="58.9039" ss:AutoFitWidth="1"/>
-      <Column ss:Width="97.5118" ss:AutoFitWidth="1"/>
-      <Column ss:Width="43.4551" ss:AutoFitWidth="1"/>
-      <Column ss:Span="1010" ss:Width="64.0063" ss:AutoFitWidth="1"/>
+    <Table>
+      <Column ss:Width="95.9527"/>
+      <Column ss:Width="78.2079"/>
+      <Column ss:Width="64.2898"/>
+      <Column ss:Width="103.663"/>
+      <Column ss:Width="95.9527"/>
+      <Column ss:Width="71.263"/>
+      <Column ss:Width="166.9606"/>
+      <Column ss:Width="115.9937"/>
+      <Column ss:Width="66.6142"/>
+      <Column ss:Width="79.7386"/>
+      <Column ss:Width="58.9039"/>
+      <Column ss:Width="97.5118"/>
+      <Column ss:Width="43.4551"/>
+      <Column ss:Width="64.0063"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''|x} REPORT</Data>
