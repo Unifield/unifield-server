@@ -284,7 +284,7 @@ class account_move_reconcile(osv.osv):
         if not context:
             context = {}
         res = super(account_move_reconcile, self).create(cr, uid, vals, context)
-        if res and not context.get('sync_update_execution', False):
+        if res:
             tmp_res = res
             if isinstance(res, (int, long)):
                 tmp_res = [tmp_res]
@@ -309,7 +309,7 @@ class account_move_reconcile(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
-        if res and not context.get('sync_update_execution', False):
+        if res:
             for r in self.browse(cr, uid, ids):
                 t = [x.id for x in r.line_id]
                 p = [x.id for x in r.line_partial_ids]
