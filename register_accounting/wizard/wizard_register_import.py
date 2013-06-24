@@ -275,16 +275,19 @@ class wizard_register_import(osv.osv_memory):
                 if not line[cols['account']]:
                     errors.append(_('Line %s: Account is missing.') % (current_line_num,))
                     continue
-                r_document_date = line[cols['document_date']]
-                r_date = line[cols['posting_date']]
+                if r[cols['document_date']].type != 'datetime':
+                    errors.append(_('Line %s: Document date wrong format. Use a date one.') % (current_line_num,))
+                    continue
+                r_document_date = line[cols['document_date']].strftime('%Y-%m-%d')
+                if r[cols['posting_date']].type != 'datetime':
+                    errors.append(_('Line %s: Posting date wrong format. Use a date one.') % (current_line_num))
+                    continue
+                r_date = line[cols['posting_date']].strftime('%Y-%m-%d')
                 r_description = line[cols['description']]
                 # Check document/posting dates
                 if line[cols['document_date']] > line[cols['posting_date']]:
                     errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['document_date']], line[cols['posting_date']],))
                     continue
-                # Fetch document date and posting date
-                r_document_date = line[cols['document_date']].strftime('%Y-%m-%d')
-                r_date = line[cols['posting_date']].strftime('%Y-%m-%d')
                 # Check that a period exist and is open
                 period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
                 if not period_ids:
