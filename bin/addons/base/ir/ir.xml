@@ -166,6 +166,8 @@
                     <group col="6" colspan="4">
                         <field name="name" select="1"/>
                         <field name="code" select="1"/>
+                        <field name="implementation" select="1" />
+                        <newline />
                         <field name="company_id" groups="base.group_multi_company"/>
                         <field name="active" groups="base.group_extended"/>
                     </group>
@@ -175,7 +177,7 @@
                         <field name="suffix"/>
                         <field name="padding"/>
                         <field name="number_increment"/>
-                        <field name="number_next"/>
+                        <field name="number_next" attrs="{'invisible': [('implementation', '=', 'psql')]}"/>
                         <separator colspan="4" string="Legend (for prefix, suffix)"/>
                         <group col="8" colspan="4">
                             <group>
@@ -210,6 +212,7 @@
                 <tree string="Sequences">
                     <field name="code"/>
                     <field name="name"/>
+                    <field name="implementation" />
                     <field name="prefix"/>
                     <field name="padding"/>
                     <field name="company_id" groups="base.group_multi_company"/>
