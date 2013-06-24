@@ -98,8 +98,8 @@ class account_cash_statement(osv.osv):
                 if journal.type == 'bank':
                     vals.update({'balance_start': prev_reg.msf_calculated_balance})
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
-        # take on previous lines if exists
-        if prev_reg_id:
+        # take on previous lines if exists (or discard if they come from sync)
+        if prev_reg_id and not context.get('sync_data', False):
             create_cashbox_lines(self, cr, uid, [prev_reg_id], ending=True, context=context)
         # update balance_end
         self._get_starting_balance(cr, uid, [res_id], context=context)
@@ -335,24 +335,6 @@ class account_cashbox_line(osv.osv):
 
     _inherit = "account.cashbox.line"
     _order = "pieces"
-
-    def create(self, cr, uid, vals, context=None):
-        """
-        Override for the synch module: remove existing cashbox line if it is here
-        """
-        pieces = float(vals['pieces'])
-        existed_ids = False
-        
-        if 'starting_id' in vals:
-            existed_ids = self.search(cr, uid, [('starting_id', '=', vals['starting_id']),('pieces', '=', pieces)], limit=1, context=context)
-
-        if 'ending_id' in vals:
-            existed_ids = self.search(cr, uid, [('ending_id', '=', vals['ending_id']),('pieces', '=', pieces)], limit=1, context=context)
-        
-        if existed_ids:
-            self.unlink(cr, uid, existed_ids, context=context)
-        
-        return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
     
 account_cashbox_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
