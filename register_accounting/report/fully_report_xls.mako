@@ -289,7 +289,7 @@
         </Cell>
       </Row>
       <Row>
-        <Cell ss:Index="3">
+        <Cell ss:Index="4">
           <Data ss:Type="String">${_('Product')}</Data>
         </Cell>
         <Cell>
@@ -310,7 +310,7 @@
       </Row>
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
-        <Cell ss:Index="2" ss:StyleID="left">
+        <Cell ss:Index="3" ss:StyleID="left">
           <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
