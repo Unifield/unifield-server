@@ -149,6 +149,15 @@ class wizard_import_tender_line(osv.osv_memory):
                     # we check consistency of uom and product values
                     tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
                     vals['tender_line_ids'].append((0, 0, to_write))
+
+                    if to_write.get('qty', 0.00) <= 0.00:
+                        message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
+                        ignore_lines += 1
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        cr.rollback()
+                        continue
+
+
                     tender_line_obj.create(cr, uid, to_write, context)
                     if to_write['error_list']:
                         lines_to_correct += 1

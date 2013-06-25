@@ -52,7 +52,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                 bal = st_obj.read(cr, uid, id, ['balance_end_cash']).get('balance_end_cash')
                 
                 # compare the selected balances
-                equivalent = balcal == bal
+                equivalent = abs(balcal - bal) < 10**-4
                 if not equivalent:
                     # verify that no other lines should be created
                     res_id = st_obj.write(cr, uid, [id], {'state' : 'partial_close'})

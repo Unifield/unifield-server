@@ -40,7 +40,7 @@ class output_currency_for_export(osv.osv_memory):
     _defaults = {
         'export_format': lambda *a: 'xls',
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
-        'export_selected': lambda *a: True,
+        'export_selected': lambda *a: False,
     }
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
@@ -88,7 +88,7 @@ class output_currency_for_export(osv.osv_memory):
         context.update({'output_currency_id': currency_id})
         if wiz.currency_id:
             # seems that there is a bug on context, so using datas permit to transmit info
-            datas.update({'output_currency_id': currency_id})
+            datas.update({'output_currency_id': currency_id, 'context': context})
         # Update report name if come from analytic
         report_name = 'account.move.line'
         if model == 'account.analytic.line':

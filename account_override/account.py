@@ -76,11 +76,13 @@ class account_account(osv.osv):
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
             when he add a new register line.
             """),
+        'is_settled_at_hq': fields.boolean("Settled at HQ"),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
     }
 
     _defaults = {
         'type_for_register': lambda *a: 'none',
+        'is_settled_at_hq': lambda *a: False,
     }
 
 account_account()
@@ -214,7 +216,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('from_web_menu', False) or context.get('sync_data', False):
+        if context.get('from_web_menu', False) or context.get('sync_update_execution', False):
             # by default, from synchro, we just need to update period_id and journal_id
             fields = ['journal_id', 'period_id']
             # from web menu, we also update document_date and date

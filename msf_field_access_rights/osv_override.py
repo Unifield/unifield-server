@@ -29,7 +29,7 @@ from datetime import datetime
 
 def _get_instance_level(self, cr, uid):
     user = self.pool.get('res.users').browse(cr, 1, uid)
-    if hasattr(user.company_id, 'instance_id'):
+    if self.pool.get('msf.instance'):
         instance_level = user.company_id.instance_id.level
     
         if instance_level:
@@ -73,7 +73,7 @@ def create(self, cr, uid, vals, context=None):
     context = context or {}
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
-    if context.get('sync_data'):
+    if context.get('sync_update_execution'):
         
         # create the record. we will sanitize it later based on domain search check
         create_result = super_create(self, cr, uid, vals, context)
@@ -117,9 +117,7 @@ def create(self, cr, uid, vals, context=None):
                                     vals[line.field.name] = new_value
 
                     # Then update the record
-                    new_context = copy.deepcopy(context)
-                    new_context.update({'sync_data':False})
-                    self.write(cr, 1, create_result, vals, context=new_context)
+                    self.write(cr, 1, create_result, vals, context=dict(context, sync_update_execution=False))
 
                 return create_result
             else:
@@ -297,7 +295,7 @@ def write(self, cr, uid, ids, vals, context=None):
                                             raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % line.field.name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
-        if context.get('sync_data'):
+        if context.get('sync_update_execution'):
 
             # iterate over current records 
             for record in current_records:

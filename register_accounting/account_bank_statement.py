@@ -714,7 +714,25 @@ class account_bank_statement_line(osv.osv):
             """
         cr.execute(sql_posted_moves)
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
-    
+
+    def _search_amount(self, cr, uid, obj, name, args, context=None):
+        """
+        Search all lines that have this amount
+        """
+        # Test how many arguments we have
+        if not len(args):
+            return []
+        # Search statement lines that have amount corresponding to what expected
+        operator = args[0][1]
+        args2 = args[0][2]
+        if name == 'amount_out':
+            args2 = "-%s" % (args[0][2])
+            if args[0][1] == '<=':
+                operator = '>='
+            elif args[0][1] == '>=':
+                operator = '<='
+        return [('amount', operator, args2)]
+
     def _get_number_imported_invoice(self, cr, uid, ids, field_name=None, args=None, context=None):
         ret = {}
         for i in self.read(cr, uid, ids, ['imported_invoice_line_ids']):
@@ -791,8 +809,8 @@ class account_bank_statement_line(osv.osv):
         'transfer_journal_id': fields.many2one("account.journal", "Journal", ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_id': fields.many2one('res.partner', 'Partner', ondelete="restrict"),
-        'amount_in': fields.function(_get_amount, method=True, string="Amount In", type='float'),
-        'amount_out': fields.function(_get_amount, method=True, string="Amount Out", type='float'),
+        'amount_in': fields.function(_get_amount, fnct_search=_search_amount, method=True, string="Amount In", type='float'),
+        'amount_out': fields.function(_get_amount, fnct_search=_search_amount, method=True, string="Amount Out", type='float'),
         'state': fields.function(_get_state, fnct_search=_search_state, method=True, string="Status", type='selection', selection=[
             ('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True, 
@@ -1675,18 +1693,6 @@ class account_bank_statement_line(osv.osv):
         Write some statement lines into some account move lines in draft state.
         """
         return self.posting(cr, uid, ids, 'temp', context=context)
-
-    def button_delete(self, cr, uid, ids, context=None):
-        """
-        Delete given ids
-        """
-        forbidden = []
-        for absl in self.browse(cr, uid, ids, context=context):
-            if absl.state != 'draft':
-                forbidden.append(absl.id)
-        if forbidden:
-            raise osv.except_osv(_('Warning'), _('You can only delete draft lines!'))
-        return self.unlink(cr, uid, ids, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """

@@ -34,6 +34,9 @@
         'security/ir.model.access.csv',
         'res_currency_view.xml',
         'res_currency_table_workflow.xml',
+        'res_currency_table_report.xml',
+        'wizard/wizard_report_rates_table_view.xml',
+        'wizard/wizard_report_currency_table_view.xml',
     ],
     'test': [
         'test/currency_pricelist.yml',
