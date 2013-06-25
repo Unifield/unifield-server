@@ -263,7 +263,7 @@ class wizard_register_import(osv.osv_memory):
                 currency_ids = [currency_ids]
             cur = self.pool.get('res.currency').browse(cr, uid, currency_ids, context)
             if not cur or not cur[0] or not cur[0].active:
-                message = _('Currency %s is not active !') % (cur.name)
+                message = _('Currency %s is not active!') % (cur.name)
                 self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
                 cr.close()
                 raise osv.except_osv(_('Error'), message)

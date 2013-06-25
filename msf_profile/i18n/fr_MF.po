@@ -67573,3 +67573,69 @@ msgstr "SVP renseignez le journal de transfert !"
 #, python-format
 msgid "Please give an employee!"
 msgstr "SVP renseignez l'employé !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:341
+#, python-format
+msgid "Line %s: Document date wrong format. Use a date one."
+msgstr "Ligne %s: Mauvais format de la date du document. Utilisez un format date."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:345
+#, python-format
+msgid "Line %s: Posting date wrong format. Use a date one."
+msgstr "Ligne %s: Mauvais format de la date de compatibilisation. Utilisez un format date."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:321
+#, python-format
+msgid "Line %s: Double amount, IN and OUT. Use only one!"
+msgstr "Ligne %s: Montant double, IN et OUT. N'en utilisez qu'un !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:216
+#, python-format
+msgid "Proprietary Instance not found."
+msgstr "Instance Propriétaire non trouvée."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:224
+#, python-format
+msgid "No journal code found."
+msgstr "Aucun code journal trouvé."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:232
+#, python-format
+msgid "No currency code found."
+msgstr "Aucun code monnaie trouvé."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:239
+#, python-format
+msgid "Instance %s not found."
+msgstr "Instance %s non trouvée."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:248
+#, python-format
+msgid "Journal %s not found."
+msgstr "Journal %s non trouvé."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:257
+#, python-format
+msgid "Currency %s not found."
+msgstr "Monnaie %s non trouvée."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:266
+#, python-format
+msgid "Currency %s is not active!"
+msgstr "La monnaie %s n'est pas active !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:273
+#, python-format
+msgid "The given register does not correspond to register's information from the file. Instance code: %s. Journal's code: %s. Currency code: %s."
+msgstr "Le registre utilisé ne correspond pas aux informations de registre du fichier. Code d'instance : %s. Code journal : %s. Code monnaie : %s."
