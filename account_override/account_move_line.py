@@ -155,6 +155,17 @@ class account_move_line(osv.osv):
                 res.append(p.id)
         return res
 
+    def _get_reconciled_move_lines(self, cr, uid, ids, context=None):
+        res = []
+        for line in self.browse(cr, uid, ids):
+            if line.reconcile_id:
+                for t in line.reconcile_id.line_id:
+                    res.append(t.id)
+            elif line.reconcile_partial_id:
+                for p in line.reconcile_partial_id.line_partial_ids:
+                    res.append(p.id)
+        return res
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
@@ -180,13 +191,12 @@ class account_move_line(osv.osv):
             help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
         'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
         help="This indicates the type of the Journal attached to this Journal Item"),
-        'reconcile_txt': fields.text(string="Reconcile", help="Help user to display and sort Reconciliation"),
         'exported': fields.boolean("Exported"),
         'reconcile_txt': fields.function(_get_reconcile_txt, type='text', method=True, string="Reconcile",
             help="Help user to display and sort Reconciliation",
             store = {
                 'account.move.reconcile': (_get_move_lines_for_reconcile, ['name', 'line_id', 'line_partial_ids'], 10),
-                'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['reconcile_id', 'partial_reconcile_id', 'debit', 'credit'], 10),
+                'account.move.line': (_get_reconciled_move_lines, ['reconcile_id', 'reconcile_partial_id', 'debit', 'credit'], 10),
             }
         ),
     }
@@ -196,7 +206,6 @@ class account_move_line(osv.osv):
         'is_write_off': lambda *a: False,
         'document_date': lambda self, cr, uid, c: c.get('document_date', False) or strftime('%Y-%m-%d'),
         'date': lambda self, cr, uid, c: c.get('date', False) or strftime('%Y-%m-%d'),
-        'reconcile_txt': lambda *a: '',
         'exported': lambda *a: False,
     }
 
