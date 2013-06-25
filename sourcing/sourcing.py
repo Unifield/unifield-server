@@ -25,6 +25,7 @@ from osv.orm import browse_record, browse_null
 from tools.translate import _
 
 import decimal_precision as dp
+import threading
 import netsvc
 import pooler
 import time
@@ -553,12 +554,32 @@ class sourcing_line(osv.osv):
             self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
-                if sl.sale_order_id.procurement_request:
-                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
-                else:
-                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                thread = threading.Thread(target=self.confirmOrder, args=(cr.dbname, uid, sl, context))
+                thread.start()
                 
         return result
+
+    def confirmOrder(self, dbname, uid, sourcingLine, context=None):
+        '''
+        Confirm the Order in a Thread
+        '''
+        if not context:
+            context = {}
+
+        wf_service = netsvc.LocalService("workflow")
+
+        cr = pooler.get_db(dbname).cursor()
+
+        if sourcingLine.sale_order_id.procurement_request:
+            wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'procurement_confirm', cr)
+        else:
+            wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'order_confirm', cr)
+
+        cr.commit()
+        cr.close()
+
+        return True
+
     
     def unconfirmLine(self, cr, uid, ids, context=None):
         '''
