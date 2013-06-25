@@ -572,6 +572,18 @@ class stock_picking(osv.osv):
         
         return move_ids
 
+    def draft_force_assign(self, cr, uid, ids, context=None):
+        '''
+        Confirm all stock moves
+        '''
+        res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
+
+        move_obj = self.pool.get('stock.move')
+        move_ids = move_obj.search(cr, uid, [('state', '=', 'draft'), ('picking_id', 'in', ids)], context=context)
+        move_obj.action_confirm(cr, uid, move_ids, context=context)
+
+        return res
+
     def is_invoice_needed(self, cr, uid, sp=None):
         """
         Check if invoice is needed. Cases where we do not need invoice:
@@ -720,6 +732,24 @@ class stock_picking(osv.osv):
         context['already_checked'] = True
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
+    def change_all_location(self, cr, uid, ids, context=None):
+        '''
+        Launch the wizard to change all destination location of stock moves
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'change.dest.location',
+                'view_type': 'form',
+                'view_mode': 'form',
+                'res_id': self.pool.get('change.dest.location').create(cr, uid, {'picking_id': ids[0]}, context=context),
+                'context': context,
+                'target': 'new'}
+
 stock_picking()
 
 # ----------------------------------------------------
@@ -810,9 +840,8 @@ class stock_move(osv.osv):
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
-        'to_correct_ok': fields.boolean('To correct'),
-        'text_error': fields.text('Errors when trying to import file'),
-        'show_msg_ok': fields.boolean('Info on importation of lines'),
+        'to_correct_ok': fields.boolean(string='Line to correct'),
+        'text_error': fields.text(string='Error', readonly=True),
     }
     
     _defaults = {
@@ -1476,7 +1505,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels', 'Internal Move Excel Export', 'Internal Move'],
+                                    'client_print_multi': ['Labels'],
                                     'client_action_relate': [],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
