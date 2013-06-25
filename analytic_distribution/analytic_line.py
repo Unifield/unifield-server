@@ -90,27 +90,6 @@ class analytic_line(osv.osv):
                 res[l.id] = l.commitment_line_id.commit_id.name
         return res
 
-    def _search_entry_sequence(self, cr, uid, obj, name, args, context=None):
-        """
-        Search either move_id.move_id.name or commitment_line_id.commit_id.name.
-        """
-        if not context:
-            context = {}
-        if not args:
-            return []
-        for arg in args:
-            if not arg[1]:
-                raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
-            if arg[1] not in ['=',]:
-                raise osv.except_osv(_('Warning'), _('This filter is not implemented yet!'))
-            if not arg[2]:
-                raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
-            res.append('|')
-            res.append('&')
-            res.append(('move_id.move_id.name', 'ilike', '%%%s%%' % (arg[2],)))
-            res.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % (arg[2],)))
-        return res
-
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -122,7 +101,7 @@ class analytic_line(osv.osv):
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
             help="Indicates the Journal Type of the Analytic journal item"),
-        'entry_sequence': fields.function(_get_entry_sequence, fnct_search=_search_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
+        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
     }
 
     _defaults = {
