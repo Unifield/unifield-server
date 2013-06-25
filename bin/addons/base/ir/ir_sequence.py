@@ -159,22 +159,17 @@ class ir_sequence(osv.osv):
     def _process(self, cr, uid, s):
         return self._interpolate(s, self._interpolation_dict())
 
-    def _next(self, cr, uid, seq_ids, context=None):
-        if not seq_ids:
+    def _next(self, cr, uid, seq, context=None):
+        if not seq:
             return False
         if context is None:
             context = {}
-        force_company = context.get('force_company')
-        if not force_company:
-            force_company = self.pool.get('res.users').browse(cr, uid, uid).company_id.id
-        sequences = self.read(cr, uid, seq_ids, ['name','company_id','implementation','number_next','prefix','suffix','padding'])
-        preferred_sequences = [s for s in sequences if s['company_id'] and s['company_id'][0] == force_company ]
-        seq = preferred_sequences[0] if preferred_sequences else sequences[0]
         if seq['implementation'] == 'psql':
             cr.execute("SELECT nextval('ir_sequence_%03d')" % seq['id'])
             seq['number_next'] = cr.fetchone()
         else:
             cr.execute("SELECT number_next FROM ir_sequence WHERE id=%s FOR UPDATE NOWAIT", (seq['id'],))
+            seq['number_next'] = cr.fetchone()
             cr.execute("UPDATE ir_sequence SET number_next=number_next+number_increment WHERE id=%s ", (seq['id'],))
         #d = self._interpolation_dict()
         try:
@@ -184,28 +179,6 @@ class ir_sequence(osv.osv):
             raise osv.except_osv(_('Warning'), _('Invalid prefix or suffix for sequence \'%s\'') % (seq.get('name')))
         return interpolated_prefix + '%%0%sd' % seq['padding'] % seq['number_next'] + interpolated_suffix
 
-    def next_by_id(self, cr, uid, sequence_id, context=None):
-        """ Draw an interpolated string using the specified sequence."""
-        company_ids = self.pool.get('res.company').search(cr, uid, [], context=context) + [False]
-        ids = self.search(cr, uid, ['&',('id','=', sequence_id),('company_id','in',company_ids)])
-        return self._next(cr, uid, ids, context)
-
-    def next_by_code(self, cr, uid, sequence_code, context=None):
-        """ Draw an interpolated string using a sequence with the requested code.
-            If several sequences with the correct code are available to the user
-            (multi-company cases), the one from the user's current company will
-            be used.
-
-            :param dict context: context dictionary may contain a
-                ``force_company`` key with the ID of the company to
-                use instead of the user's current company for the
-                sequence selection. A matching sequence for that
-                specific company will get higher priority. 
-        """
-        company_ids = self.pool.get('res.company').search(cr, uid, [], context=context) + [False]
-        ids = self.search(cr, uid, ['&', ('code', '=', sequence_code), ('company_id', 'in', company_ids)])
-        return self._next(cr, uid, ids, context)
-
     def get_id(self, cr, uid, sequence_code_or_id, code_or_id='id', context=None):
         """ Draw an interpolated string using the specified sequence.
 
@@ -213,10 +186,16 @@ class ir_sequence(osv.osv):
         argument, which can be a code or an id (as controlled by the
         ``code_or_id`` argument. This method is deprecated.
         """
-        if code_or_id == 'id':
-            return self.next_by_id(cr, uid, sequence_code_or_id, context)
-        else:
-            return self.next_by_code(cr, uid, sequence_code_or_id, context)
+        assert code_or_id in ('code','id')
+        company_ids = self.pool.get('res.company').search(cr, uid, [], context=context)
+        cr.execute('''SELECT id, implementation, prefix, suffix, padding, number_next, name
+            FROM ir_sequence
+            WHERE %s=%%s
+              AND active=true
+              AND (company_id in %%s or company_id is NULL)
+            ORDER BY company_id, id''' % code_or_id, (sequence_code_or_id, tuple(company_ids)))
+        res = cr.dictfetchone()
+        return self._next(cr, uid, res, context=context)
 
     def get(self, cr, uid, code):
         return self.get_id(cr, uid, code, test='code')
