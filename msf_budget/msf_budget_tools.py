@@ -141,7 +141,7 @@ class msf_budget_tools(osv.osv):
                                                                   context=date_context)
             # add the amount to correct month
             month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
-            res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount)
+            res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount, 2)
             
         # after all lines are parsed, absolute of every column
         for line in res.keys():
