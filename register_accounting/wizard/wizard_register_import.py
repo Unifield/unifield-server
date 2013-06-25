@@ -63,7 +63,7 @@ class wizard_register_import(osv.osv_memory):
         view = super(wizard_register_import, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         if view_type=='form':
             form = etree.fromstring(view['arch'])
-            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool')]:
+            for el in [('document_date', 'Document Date'), ('posting_date', 'Posting Date'), ('description', 'Description'), ('reference', 'Reference'), ('account', 'Account'), ('third_party', 'Third Party'), ('amount_in', 'Amount In'), ('amount_out', 'Amount Out'), ('destination', 'Destination'), ('cost_center', 'Cost Centre'), ('funding_pool', 'Funding Pool'), ('proprietary_instance', "Proprietary instance's code"), ('journal', "Journal's code"), ('currency', "Currency's code")]:
                 fields = form.xpath('/form//th[@class="' + el[0] + '"]')
                 for field in fields:
                     field.text = _(el[1])

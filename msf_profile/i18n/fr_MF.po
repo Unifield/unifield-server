@@ -67639,3 +67639,27 @@ msgstr "La monnaie %s n'est pas active !"
 #, python-format
 msgid "The given register does not correspond to register's information from the file. Instance code: %s. Journal's code: %s. Currency code: %s."
 msgstr "Le registre utilisé ne correspond pas aux informations de registre du fichier. Code d'instance : %s. Code journal : %s. Code monnaie : %s."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Account"
+msgstr "Compte"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Proprietary instance's code"
+msgstr "Code de l'instance propriétaire"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Journal's code"
+msgstr "Code du journal"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:66
+#, python-format
+msgid "Currency's code"
+msgstr "Code de la monnaie"
