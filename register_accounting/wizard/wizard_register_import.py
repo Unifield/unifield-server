@@ -173,12 +173,8 @@ class wizard_register_import(osv.osv_memory):
 
         # Check wizard data
         for wiz in self.browse(cr, uid, ids, context):
-            # Check that currency is active
-            if not wiz.register_id.currency.active:
-                raise osv.except_osv(_('Error'), _('Currency %s is not active !') % (wiz.register_id.currency.name))
             # Update wizard
             self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00}, context)
-
             # Check that a file was given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
@@ -211,8 +207,74 @@ class wizard_register_import(osv.osv_memory):
                 'funding_pool': 10,
             }
             # Number of line to bypass in line's count
-            base_num = 2 # because of Python that begins to 0.
-            # Don't read the first line
+            base_num = 5 # because of Python that begins to 0.
+            # Attempt to read 3 first lines
+            first_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+            try:
+                instance_code = first_line[1]
+            except IndexError, e:
+                message = _('Proprietary Instance not found.')
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Warning'), message)
+            second_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+            try:
+                journal_code = second_line[1]
+            except IndexError, e:
+                message = _('No journal code found.')
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Warning'), message)
+            third_line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, rows.next())
+            try:
+                currency_code = third_line[1]
+            except IndexError, e:
+                message = _('No currency code found.')
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Warning'), message)
+            # Check first info: proprietary instance
+            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('code', '=', instance_code)])
+            if not instance_ids or len(instance_ids) > 1:
+                message = _('Instance %s not found.') % (instance_code or '',)
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Warning'), message)
+            if isinstance(instance_ids, (int, long)):
+                instance_ids = [instance_ids]
+            # Check second info: journal's code
+            journal_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', journal_code)])
+            if not journal_ids or len(journal_ids) > 1:
+                message = _('Journal %s not found.') % (journal_code or '',)
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Warning'), message)
+            if isinstance(journal_ids, (int, long)):
+                journal_ids = [journal_ids]
+            # Check third info: currency's code
+            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', currency_code)])
+            if not currency_ids or len(currency_ids) > 1:
+                message = _('Currency %s not found.') % (currency_code or '',)
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Warning'), message)
+            # Check that currency is active
+            if isinstance(currency_ids, (int, long)):
+                currency_ids = [currency_ids]
+            cur = self.pool.get('res.currency').browse(cr, uid, currency_ids, context)
+            if not cur or not cur[0] or not cur[0].active:
+                message = _('Currency %s is not active !') % (cur.name)
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Error'), message)
+            # Search registers that correspond to this instance, journal's code and currency and check that our register is in the list
+            register_ids = self.pool.get('account.bank.statement').search(cr, uid, [('instance_id', 'in', instance_ids), ('journal_id', 'in', journal_ids), ('currency', 'in', currency_ids)])
+            if not register_ids or not wiz.register_id.id in register_ids:
+                message = _("The given register does not correspond to register's information from the file. Instance code: %s. Journal's code: %s. Currency code: %s.") % (wiz.register_id.instance_id.code, wiz.register_id.journal_id.code, wiz.register_id.currency.name)
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'error'})
+                cr.close()
+                raise osv.except_osv(_('Error'), message)
+            # Don't read the fourth line
             rows.next()
             # Update wizard
             self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00}, context)
