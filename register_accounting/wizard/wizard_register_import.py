@@ -310,20 +310,20 @@ class wizard_register_import(osv.osv_memory):
                 try:
                     bd = line[cols['amount_in']]
                 except IndexError, e:
-                    continue
+                    bd = 0.0
                 try:
                     bc = line[cols['amount_out']]
                 except IndexError, e:
+                    bc = 0.0
+                if (not bd and not bc) or (bd == 0.0 and bc == 0.0):
                     continue
-                if not line[cols['amount_in']] and not line[cols['amount_out']]:
-                    continue
-                if line[cols['amount_in']] and line[cols['amount_out']]:
+                if bd and bc and (bc != 0.0 or bd != 0.0):
                     errors.append(_('Line %s: Double amount, IN and OUT. Use only one!') % (current_line_num,))
                     continue
                 processed += 1
                 # Get amount
-                r_debit = line[cols['amount_in']]
-                r_credit = line[cols['amount_out']]
+                r_debit = bd
+                r_credit = bc
                 # Mandatory columns
                 if not line[cols['document_date']]:
                     errors.append(_('Line %s: Document date is missing.') % (current_line_num,))
