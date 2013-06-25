@@ -14,7 +14,16 @@
 					<field name="price_unit" position="after">
 						<field name="supplier" invisible="True" />
 						<field name="po_cft" invisible="True" />
-					</field>
+                    </field>
+
+                    <xpath expr="/form//field[@name='order_type']" position="after">
+                        <field name="sourcing_trace_ok" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form//notebook" position="inside">
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
+                        </page>
+                    </xpath>
 				</data>
 			</field>
 		</record>

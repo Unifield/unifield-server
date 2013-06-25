@@ -570,10 +570,19 @@ class sourcing_line(osv.osv):
 
         cr = pooler.get_db(dbname).cursor()
 
-        if sourcingLine.sale_order_id.procurement_request:
-            wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'procurement_confirm', cr)
-        else:
-            wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'order_confirm', cr)
+        try:
+            if sourcingLine.sale_order_id.procurement_request:
+                wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'procurement_confirm', cr)
+            else:
+                wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'order_confirm', cr)
+        except osv.except_osv, e:
+            self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
+                                              {'sourcing_trace_ok': True,
+                                               'sourcing_trace': e.value}, context=context)
+        except Exception, e:
+            self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
+                                              {'sourcing_trace_ok': True,
+                                               'sourcing_trace': str(e)}, context=context)
 
         cr.commit()
         cr.close()
@@ -600,6 +609,8 @@ class sale_order(osv.osv):
     _inherit = 'sale.order'
     _description = 'Sales Order'
     _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),
+                'sourcing_trace_ok': fields.boolean(string='Display sourcing logs'),
+                'sourcing_trace': fields.text(string='Sourcing logs', readonly=True),
                 }
     
     def create(self, cr, uid, vals, context=None):
@@ -658,6 +669,8 @@ class sale_order(osv.osv):
             default = {}
             
         default['sourcing_line_ids']=[]
+        default['sourcing_trace'] = ''
+        default['sourcing_trace_ok'] = False
         
         return super(sale_order, self).copy(cr, uid, id, default, context)
     
