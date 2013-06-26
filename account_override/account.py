@@ -85,6 +85,22 @@ class account_account(osv.osv):
         'is_settled_at_hq': lambda *a: False,
     }
 
+    # UTP-493: Add a dash between code and account name
+    def name_get(self, cr, uid, ids, context=None):
+        """
+        Use "-" instead of " " between name and code for account's default name
+        """
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
+        res = []
+        for record in reads:
+            name = record['name']
+            if record['code']:
+                name = record['code'] + ' - '+name
+            res.append((record['id'], name))
+        return res
+
 account_account()
 
 class account_journal(osv.osv):
