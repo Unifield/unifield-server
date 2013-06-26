@@ -202,6 +202,7 @@ class stock_picking(osv.osv):
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
         'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
         'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
+        'state_before_import': fields.char(size=64, string='State before import', readonly=True),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -312,6 +313,21 @@ class stock_picking(osv.osv):
         
         return {'value': v,
                 'domain': d}
+
+    def return_to_state(self, cr, uid, ids, context=None):
+        '''
+        Return to initial state if the picking is 'Import in progress'
+        '''
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [pick.id], {'state': pick.state_before_import}, context=context)
+
+        return True
     
     def set_manually_done(self, cr, uid, ids, all_doc=True, context=None):
         '''

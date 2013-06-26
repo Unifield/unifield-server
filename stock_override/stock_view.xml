@@ -450,8 +450,9 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="has_draft_moves" invisible="1" />
+                                <button name="return_to_state" string="Return to initial state" states="import" icon="gtk-execute" type="object" />
                                 <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
-                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
+                                <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                 <button name="change_all_location" string="Change All locations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" />

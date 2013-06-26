@@ -38,10 +38,6 @@ class stock_picking(osv.osv):
     """
     _inherit = 'stock.picking'
 
-    _columns = {
-        'state_before_import': fields.char(size=64, string='State before import', readonly=True),
-    }
-
     def wizard_import_int_line(self, cr, uid, ids, context=None):
         '''
         Launches the wizard to import lines from a file
