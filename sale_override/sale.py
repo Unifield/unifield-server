@@ -36,6 +36,7 @@ from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -434,7 +435,6 @@ class sale_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
         # objects
         line_obj = self.pool.get('sale.order.line')
         fields_tools = self.pool.get('fields.tools')
@@ -453,6 +453,7 @@ class sale_order(osv.osv):
             if so.split_type_sale_order != 'original_sale_order':
                 raise osv.except_osv(_('Error'), _('You cannot split a Fo which has already been split.'))
             # loop through lines
+            created_line = []
             for line in so.order_line:
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
@@ -497,13 +498,21 @@ class sale_order(osv.osv):
                         split_fo_dic[fo_type] = split_id
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
-                line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True))
+                new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=True)
+                new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
+                                                 'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line']))
+                created_line.append(new_line_id)
+            compute_store = line_obj._store_get_values(cr, uid, created_line, None, context)
+            compute_store.sort()
+            done = []
+            for order, object, ids, fields2 in compute_store:
+                if not (object, ids, fields2) in done:
+                    self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
+                    done.append((object, ids, fields2))
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
-        
         return True
 
     def sale_except_correction(self, cr, uid, ids, context=None):

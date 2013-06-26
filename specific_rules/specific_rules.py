@@ -563,7 +563,14 @@ class stock_move(osv.osv):
         
         return result
     
-    def _check_batch_management(self, cr, uid, ids, context=None):
+    def _check_product_lot(self, cr, uid, ids, context=None):
+        """
+        By pass the standard openerp check
+        this one is done in _check_tracking
+        """
+        return True
+
+    def _check_tracking(self, cr, uid, ids, context=None):
         """
         check for batch management
         @return: True or False
@@ -573,48 +580,26 @@ class stock_move(osv.osv):
                 if move.product_id.batch_management:
                     if not move.prodlot_id and move.product_qty:
                         raise osv.except_osv(_('Error!'),  _('You must assign a Batch Number for this product (Batch Number Mandatory).'))
-        return True
-    
-    def _check_perishable(self, cr, uid, ids, context=None):
-        """
-        check for perishable
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.perishable:
                     if not move.prodlot_id and move.product_qty:
                         raise osv.except_osv(_('Error!'),  _('You must assign an Expiry Date for this product (Expiry Date Mandatory).'))
-        return True
-    
-    def _check_prodlot_need(self, cr, uid, ids, context=None):
-        """
-        If the move has a prodlot but does not need one, return False.
-        """
-        for move in self.browse(cr, uid, ids, context=context):
             if move.prodlot_id:
                 if not move.product_id.perishable and not move.product_id.batch_management:
                     raise osv.except_osv(_('Error!'),  _('The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory.'))
-        return True
-    
-    def _check_prodlot_need_batch_management(self, cr, uid, ids, context=None):
-        """
-        If the product is batch management while the selected prodlot is 'internal'.
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.prodlot_id:
                 if move.prodlot_id.type == 'internal' and move.product_id.batch_management:
                     raise osv.except_osv(_('Error!'),  _('The selected product is Batch Number Mandatory while the selected Batch number corresponds to Expiry Date Mandatory.'))
-        return True
-    
-    def _check_prodlot_need_perishable(self, cr, uid, ids, context=None):
-        """
-        If the product is perishable ONLY while the selected prodlot is 'standard'.
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.prodlot_id:
                 if move.prodlot_id.type == 'standard' and not move.product_id.batch_management and move.product_id.perishable:
                     raise osv.except_osv(_('Error!'),  _('The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.'))
+            if not move.prodlot_id and move.product_qty and \
+               (move.state == 'done' and \
+               ( \
+                   (move.product_id.track_production and move.location_id.usage == 'production') or \
+                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
+               )):
+                raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
+
         return True
     
     def onchange_product_id(self, cr, uid, ids, prod_id=False, loc_id=False, loc_dest_id=False, address_id=False, parent_type=False, purchase_line_id=False, out=False,):
@@ -694,22 +679,6 @@ class stock_move(osv.osv):
             
         return result
     
-    def _check_tracking(self, cr, uid, ids, context=None):
-        """ Checks if production lot is assigned to stock move or not.
-        @return: True or False
-        """
-        for move in self.browse(cr, uid, ids, context=context):
-            if not move.prodlot_id and move.product_qty and \
-               (move.state == 'done' and \
-               ( \
-                   (move.product_id.track_production and move.location_id.usage == 'production') or \
-                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
-                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
-                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
-               )):
-                raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
-        return True
-            
     _columns = {
         'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),
         # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
@@ -725,25 +694,9 @@ class stock_move(osv.osv):
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
     }
     
-    _constraints = [(_check_batch_management,
-                     'You must assign a Batch Number for this product (Batch Number Mandatory).',
-                     ['prodlot_id']),
-                    (_check_perishable,
-                     'You must assign an Expiry Date for this product (Expiry Date Mandatory).',
-                     ['prodlot_id']),
-                    (_check_prodlot_need,
-                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory.',
-                     ['prodlot_id']),
-                    (_check_prodlot_need_batch_management,
-                     'The selected product is Batch Number Mandatory while the selected Batch number corresponds to Expiry Date Mandatory.',
-                     ['prodlot_id']),
-                    (_check_prodlot_need_perishable,
-                     'The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.',
-                     ['prodlot_id']),
-                     (_check_tracking,
-                      'You must assign a batch number for this product.',
-                      ['prodlot_id']),
-                    ]
+    _constraints = [
+            (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
+    ]
 
 stock_move()
 

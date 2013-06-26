@@ -413,7 +413,7 @@ class sourcing_line(osv.osv):
                     
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
-        
+
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
         return res
@@ -615,14 +615,15 @@ class sale_order(osv.osv):
 #            values.update({'sale_order_state': vals['state_hidden_sale_order']})
         
         # for each sale order
-        for so in self.browse(cr, uid, ids, context):
-            # for each sale order line
-            for sol in so.order_line:
-                # update the sourcing line
-                for sl in sol.sourcing_line_ids:
-                    self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
-                    if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
-                        self.pool.get('sourcing.line').write(cr, uid, sl.id, {'customer': so.partner_id.id}, context)
+        if values or vals.get('partner_id'):
+            for so in self.browse(cr, uid, ids, context):
+                # for each sale order line
+                for sol in so.order_line:
+                    # update the sourcing line
+                    for sl in sol.sourcing_line_ids:
+                        self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
+                        if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
+                            self.pool.get('sourcing.line').write(cr, uid, sl.id, {'customer': so.partner_id.id}, context)
         
         return super(sale_order, self).write(cr, uid, ids, vals, context)
         
@@ -928,10 +929,11 @@ class sale_order_line(osv.osv):
                 values.update({'line_number': vals['line_number']})
                 
             # for each sale order line
-            for sol in self.browse(cr, uid, ids, context):
-                # for each sourcing line
-                for sourcingLine in sol.sourcing_line_ids:
-                    self.pool.get('sourcing.line').write(cr, uid, sourcingLine.id, values, context)
+            if values:
+                for sol in self.browse(cr, uid, ids, context):
+                    # for each sourcing line
+                    for sourcingLine in sol.sourcing_line_ids:
+                        self.pool.get('sourcing.line').write(cr, uid, sourcingLine.id, values, context)
         
         result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
         return result
