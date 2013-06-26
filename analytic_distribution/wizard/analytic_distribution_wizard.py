@@ -1129,6 +1129,9 @@ class analytic_distribution_wizard(osv.osv_memory):
             elif wiz.model_line_id:
                 pl = wiz.model_line_id
                 distrib = pl.model_id and pl.model_id.analytic_distribution_id or False
+            elif wiz.direct_invoice_line_id:
+                il = wiz.direct_invoice_line_id
+                distrib = il.invoice_id and il.invoice_id.analytic_distribution_id and il.invoice_id.analytic_distribution_id or False
 
             if distrib:
                 # Check if distribution if valid with wizard account
