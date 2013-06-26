@@ -932,6 +932,7 @@ class orm_template(object):
             data = pickle.load(file(config.get('import_partial')))
             original_value = data.get(filename, 0)
 
+        from osv import except_osv
         position = 0
         while position<len(datas):
             res = {}
@@ -946,6 +947,8 @@ class orm_template(object):
                 id = ir_model_data_obj._update(cr, uid, self._name,
                      current_module, res, mode=mode, xml_id=xml_id,
                      noupdate=noupdate, res_id=res_id, context=context)
+            except except_osv, e:
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
 
