@@ -57,6 +57,7 @@
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field invisible="True" name="uos_id"/>
+                                    <field invisible="1" name="inactive_product"/>
                                 </tree>
                             </field>
                             <group col="4" colspan="4">
