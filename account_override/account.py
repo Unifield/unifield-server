@@ -309,7 +309,14 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
-        self.unlink(cr, uid, to_delete, context)
+        # First delete move lines to avoid UF-2018 problem
+        if to_delete:
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            if ml_ids:
+                if isinstance(ml_ids, (int, long)):
+                    ml_ids = [ml_ids]
+                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
+        self.unlink(cr, uid, to_delete, context, check=False)
         return True
 
 account_move()

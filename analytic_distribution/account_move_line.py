@@ -182,7 +182,7 @@ class account_move_line(osv.osv):
                         self.pool.get('account.analytic.line').create(cr, uid, line_vals, context=context)
         return True
 
-    def unlink(self, cr, uid, ids, context=None):
+    def unlink(self, cr, uid, ids, context=None, check=True):
         """
         Delete analytic lines before unlink move lines.
         Update Manual Journal Entries.
@@ -199,7 +199,7 @@ class account_move_line(osv.osv):
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids)
         # Revalidate move
         self.pool.get('account.move').validate(cr, uid, move_ids)
-        return super(account_move_line, self).unlink(cr, uid, ids, context=context)
+        return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check)
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
