@@ -104,7 +104,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
             obj = self.pool.get(model.model)
             
             if obj is None:
-                print 'Could not get object %s' % model.model
+                self._logger.warning('Could not get object %s while creating all missing sdrefs' % model.model)
                 continue
             
             # ignore objects who inherit another object, and use their table too, but a different name (would lead to attempted sd ref duplication)
@@ -127,7 +127,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
             # if we have some records
             if not record_ids:
                 continue
-
+            
             # call get_sd_ref with their ids, therefore creating sdref's that don't exist
             sdref = obj.get_sd_ref(cr, 1, record_ids)
             result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
