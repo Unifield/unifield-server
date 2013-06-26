@@ -13,6 +13,7 @@
             <field name="code">picking.ticket</field>
             <field name="prefix">PICK/</field>
             <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
         
         <!-- Sequence for ppl -->
@@ -26,6 +27,7 @@
             <field name="code">ppl</field>
             <field name="prefix">PPLx/</field>
             <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
 
         <!-- Sequence for shipment -->
@@ -39,6 +41,7 @@
             <field name="code">shipment</field>
             <field name="prefix">SHIP/</field>
             <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
 
 	</data>
