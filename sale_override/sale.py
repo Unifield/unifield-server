@@ -315,6 +315,10 @@ class sale_order(osv.osv):
                  'service': _('Service')}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
+        if context.get('import_in_progress'):
+            return True
 
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
