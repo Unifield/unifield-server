@@ -85,10 +85,10 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.composition_list_id.composition_reference or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.asset_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.prodlot_id.name or '')|x}</Data></Cell>
-        % if move.expired_date:
+        % if move.expired_date not in ('f', False, 'False'):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${move.expired_date|n}T00:00:00.000</Data></Cell>
         % else:
-        <Cell ss:StyleID="header" ><Data ss:Type="DateTime"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.location_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.location_dest_id.name or '')|x}</Data></Cell>

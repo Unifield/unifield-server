@@ -183,6 +183,7 @@ class stock_picking(osv.osv):
             ('assigned', 'Available'),
             ('done', 'Closed'),
             ('cancel', 'Cancelled'),
+            ('import', 'Import in progress'),
             ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
@@ -200,6 +201,7 @@ class stock_picking(osv.osv):
                                                               'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
         'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
+        'move_lines': fields.one2many('stock.move', 'picking_id', 'Internal Moves', states={'done': [('readonly', True)], 'cancel': [('readonly', True)], 'import': [('readonly', True)]}),
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -1505,7 +1507,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         internal_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels'],
+                                    'client_print_multi': ['Labels', 'Internal Move Excel Export', 'Internal Move'],
                                     'client_action_relate': [],
                                     'tree_but_action': [],
                                     'tree_but_open': []}

@@ -280,7 +280,7 @@ Importation completed in %s!
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
             # we reset the state of the FO to draft (initial state)
-            pick_obj.write(cr, uid, int_id, {'state': 'draft', 'import_in_progress': False}, context)
+            pick_obj.write(cr, uid, int_id, {'state': int_browse.state_before_import, 'import_in_progress': False}, context)
             if not context.get('yml_test', False):
                 cr.commit()
                 cr.close()
@@ -292,12 +292,12 @@ Importation completed in %s!
         """
         wiz_common_import = self.pool.get('wiz.common.import')
         pick_obj = self.pool.get('stock.picking')
-        for wiz_read in self.read(cr, uid, ids, ['int_id', 'file']):
-            int_id = wiz_read['int_id']
-            if not wiz_read['file']:
+        for wiz_read in self.browse(cr, uid, ids, context=context):
+            int_id = wiz_read.int_id.id
+            if not wiz_read.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read.file))
                 # iterator on rows
                 reader = fileobj.getRows()
                 reader_iterator = iter(reader)
@@ -314,7 +314,7 @@ Importation completed in %s!
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            pick_obj.write(cr, uid, int_id, {'state': 'done', 'import_in_progress': True}, context)
+            pick_obj.write(cr, uid, int_id, {'state': 'import', 'import_in_progress': True, 'state_before_import': wiz_read.int_id.state}, context)
         if not context.get('yml_test', False):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
             thread.start()

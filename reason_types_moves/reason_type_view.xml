@@ -243,7 +243,8 @@
                     	<field name="date" />
                     </xpath>
                     <xpath expr="/search//field[@name='company_id']" position="replace">
-                    	<field name="min_date" />
+                        <field name="min_date" string="Expected Move Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel', 'import'])]}"
+                            on_change="change_min_date()" required="1"/>
                     </xpath>
                     <xpath expr="/search/group[@string='Group By...']/filter[@string='Journal']" position="replace">
                         <filter string="Reason type" icon="terp-purchase" domain="[]" context="{'group_by': 'reason_type_id'}" />

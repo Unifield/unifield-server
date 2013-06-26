@@ -130,7 +130,7 @@
 
     <!-- INTERNAL MOVE -->
         <report
-           id="report_interanl_move_xls"
+           id="report_internal_move_xls"
            string="Internal Move Excel Export"
            model="stock.picking"
            name="internal.move.xls"
