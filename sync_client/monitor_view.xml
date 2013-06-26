@@ -69,7 +69,6 @@
                     <field name="sequence_number"/>
                     <field name="status"/>
                     <newline/>
-                    <!-- TODO: Make buttons -->
                     <filter string="Status Ok" domain="[('status','=','ok')]"/>
                     <filter string="Data Pull Ok" domain="[('data_pull','=','ok')]"/>
                     <filter string="Msg Pull Ok" domain="[('msg_pull','=','ok')]"/>
