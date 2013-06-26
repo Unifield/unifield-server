@@ -148,7 +148,7 @@ class msf_budget(osv.osv):
                                                                             uid,
                                                                             {'budget_id': budget_id},
                                                                             context=context)
-        
+        context.update({'display_fp': True})
         return {
                'type': 'ir.actions.act_window',
                'res_model': 'msf.budget.summary',
