@@ -39,19 +39,35 @@ def _code_get(self, cr, uid, context={}):
 class ir_sequence(osv.osv):
     _name = 'ir.sequence'
     _order = 'name'
+
+    def _get_number_next_all(self, cr, uid, ids, field, arg, context=None):
+        ret = {}
+        if not ids:
+            return ret
+        for seq in self.read(cr, uid, ids, ['number_next', 'implementation']):
+            if seq['implementation'] == 'no_gap':
+                ret[seq['id']] = seq['number_next']
+            else:
+                # currval can't be used as it returns the value
+                # most recently obtained by nextval for this sequence in the current session
+                cr.execute("select last_value from ir_sequence_%03d" % seq['id'])
+                ret[seq['id']] = cr.fetchone()[0] + 1
+        return ret
+
     _columns = {
         'name': fields.char('Name',size=64, required=True),
         'code': fields.selection(_code_get, 'Code',size=64, required=True),
         'active': fields.boolean('Active'),
         'prefix': fields.char('Prefix',size=64, help="Prefix value of the record for the sequence"),
         'suffix': fields.char('Suffix',size=64, help="Suffix value of the record for the sequence"),
-        'number_next': fields.integer('Next Number', required=True, help="Next number of this sequence"),
+        'number_next': fields.integer('Next Number', required=True, help="Next number of this sequence", readonly=1),
+        'number_next_all': fields.function(_get_number_next_all, method=1, type='integer', string="Next number"),
         'number_increment': fields.integer('Increment Number', required=True, help="The next number of the sequence will be incremented by this number"),
         'padding' : fields.integer('Number padding', required=True, help="OpenERP will automatically adds some '0' on the left of the 'Next Number' to get the required padding size."),
         'company_id': fields.many2one('res.company', 'Company'),
-        'implementation': fields.selection([('no_gap', 'OpenERP Standard (no gap but locks)'), ('psql', 'PostgreSQL sequence (no lock but gaps)')],
+        'implementation': fields.selection([('no_gap', 'OpenERP Standard'), ('psql', 'PostgreSQL sequence')],
             'Implementation', required=True, help="Two sequence object implementations are offered: 'PostgreSQL sequence' "
-            "and 'OpenERP Standard'. The later is slower than the former but forbids any"
+            "and 'OpenERP Standard'. The later is slower than the former and locks the row but forbids any"
             " gap in the sequence (while they are possible in the former)."),
     }
     _defaults = {

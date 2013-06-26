@@ -177,7 +177,7 @@
                         <field name="suffix"/>
                         <field name="padding"/>
                         <field name="number_increment"/>
-                        <field name="number_next" attrs="{'invisible': [('implementation', '=', 'psql')]}"/>
+                        <field name="number_next_all" />
                         <separator colspan="4" string="Legend (for prefix, suffix)"/>
                         <group col="8" colspan="4">
                             <group>
@@ -216,7 +216,7 @@
                     <field name="prefix"/>
                     <field name="padding"/>
                     <field name="company_id" groups="base.group_multi_company"/>
-                    <field name="number_next"/>
+                    <field name="number_next_all"/>
                     <field name="number_increment"/>
                 </tree>
             </field>
