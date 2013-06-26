@@ -252,6 +252,7 @@
             <field name="arch" type="xml">
                 <xpath expr="/tree/button[@name='invoice_open']" position="replace">
                     <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
+                    <field name="imported_state" invisible="1"/>
                 </xpath>
             </field>
         </record>
@@ -313,6 +314,8 @@
                         <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
                         <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
                         <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
+                        <separator orientation="vertical"/>
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
                     </xpath>
                 </data>
             </field>

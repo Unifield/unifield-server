@@ -71,22 +71,32 @@ class account_invoice(osv.osv):
             if args[0][1] != '=':
                 raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
             # Search all imported invoice
-            sql = """SELECT INV, imp.st_line_id
+            sql = """SELECT INV_ID, INV_TOTAL, abs(SUM(absl.amount))
                 FROM (
-                    SELECT inv.id AS INV, aml.id AS AML
+                    SELECT inv.id AS INV_ID, inv.amount_total AS INV_TOTAL, aml.id AS AML
                     FROM account_invoice inv, account_move_line aml, account_move am
                     WHERE inv.move_id = am.id
                     AND aml.move_id = am.id
                     ORDER BY inv.id
-                ) AS move_lines, imported_invoice imp
-                WHERE imp.move_line_id = move_lines.AML;"""
+                ) AS move_lines, imported_invoice imp, account_bank_statement_line absl
+                WHERE imp.move_line_id = move_lines.AML
+                AND imp.st_line_id = absl.id GROUP BY INV_ID, INV_TOTAL ORDER BY INV_ID;"""
             cr.execute(sql)
             sql_res = cr.fetchall()
+            # Sort imported/partial invoices
+            imported = []
+            partial = []
+            for el in sql_res:
+                if el[1] == el[2]:
+                    imported.append(el[0])
+                    continue
+                partial.append(el[0])
+            # Create domain
             s = args[0][2]
             if s == 'imported' and sql_res:
-                res = [('id', 'in', [x and x[0] for x in sql_res]), ('state', '=', 'paid')]
+                res = [('id', 'in', imported)]
             elif s == 'partial' and sql_res:
-                res = [('id', 'in', [x and x[0] for x in sql_res]), ('state', '=', 'open')]
+                res = [('id', 'in', partial)]
             elif s == 'not' and sql_res:
                 res = [('id', 'not in', [x and x[0] for x in sql_res])]
         return res
@@ -107,9 +117,11 @@ class account_invoice(osv.osv):
             if inv.move_id:
                 absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
                 if absl_ids:
-                    res[inv.id] = 'partial'
-                    if inv.state == 'paid':
-                        res[inv.id] = 'imported'
+                    res[inv.id] = 'imported'
+                    if isinstance(absl_ids, (int, long)):
+                        absl_ids = [absl_ids]
+                    if inv.amount_total != sum([x and abs(x.amount) or 0.0 for x in self.pool.get('account.bank.statement.line').browse(cr, uid, absl_ids)]):
+                        res[inv.id] = 'partial'
                     continue
                 res[inv.id] = 'not'
         return res
