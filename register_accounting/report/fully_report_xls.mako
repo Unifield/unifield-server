@@ -162,9 +162,6 @@
           <Data ss:Type="String">Account</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Third Parties</Data>
-        </Cell>
-        <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Amount IN</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
@@ -179,11 +176,14 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Status</Data>
         </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Third Parties</Data>
+        </Cell>
       </Row>
 % for line in o.line_ids:
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Direct Payment') or _('Normal')|x}</Data>
+          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Normal')|x}</Data>
         </Cell>
         <Cell ss:StyleID="date">
           <Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data>
@@ -201,10 +201,7 @@
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${line.account_id.code|x} ${line.account_id.name|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
+          <Data ss:Type="String">${line.account_id.code|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>
@@ -220,6 +217,9 @@
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.state and getSel(line, 'state') or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left_bold">
+          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
         </Cell>
       </Row>
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
@@ -257,13 +257,13 @@
           <Data ss:Type="String"> </Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.name or ''|x}</Data>
+          <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.name or ''|x}</Data>
+          <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${ana_line.analytic_id and ana_line.analytic_id.name or ''|x}</Data>
+          <Data ss:Type="String">${ana_line.analytic_id and ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${ana_line.percentage or 0.0}</Data>
@@ -289,7 +289,7 @@
         </Cell>
       </Row>
       <Row>
-        <Cell ss:Index="4">
+        <Cell ss:Index="3">
           <Data ss:Type="String">${_('Product')}</Data>
         </Cell>
         <Cell>
@@ -310,14 +310,14 @@
       </Row>
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="left">
+        <Cell ss:Index="2" ss:StyleID="left">
           <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_line.quantity or 0.0}</Data>
@@ -368,13 +368,13 @@
           <Data ss:Type="String"> </Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
@@ -394,13 +394,13 @@
           <Data ss:Type="String"> </Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.name or ''|x}</Data>
+          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
