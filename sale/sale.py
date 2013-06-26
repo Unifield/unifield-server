@@ -776,6 +776,7 @@ class sale_order(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         for order in self.browse(cr, uid, ids, context=context):
             proc_ids = []
+            move_ids = []
             output_id = order.shop_id.warehouse_id.lot_output_id.id
             picking_id = False
             for line in order.order_line:
@@ -827,10 +828,15 @@ class sale_order(osv.osv):
                                  }
                     
                     # hook for stock move data modification
-                    move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order,)
-                    move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
+                    move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order)
+                    # defer overall_qty computation at the end of this method
+                    ctx = context.copy()
+                    ctx['bypass_store_function'] = [('stock.picking', ['overall_qty'])]
+                    move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=ctx)
+                    move_ids.append(move_id)
                     # customer code execution position 02
                     self._hook_ship_create_execute_specific_code_02(cr, uid, ids, context=context, order=order, line=line, move_id=move_id)
+
                 # the hook _hook_ship_create_product_id is useful when we make an IR with the type "make_to_order" => we take a 'ghost' product because it is required in procurement and we do not have product
                 product_id = self._hook_ship_create_product_id(cr, uid, ids, context=context, line=line)
                 if product_id \
@@ -867,7 +873,21 @@ class sale_order(osv.osv):
                                             move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
                                             proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
             
-            
+            # compute overall_qty
+            if move_ids:
+                compute_store = self.pool.get('stock.move')._store_get_values(cr, uid, move_ids, None, context)
+                compute_store.sort()
+                done = []
+                for store_order, store_object, store_ids, store_fields2 in compute_store:
+                    if store_fields2 == ['overall_qty'] and not (store_object, store_ids, store_fields2) in done:
+                        self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
+                        done.append((store_object, store_ids, store_fields2))
+            if picking_id and order.procurement_request:
+                pick_obj = self.pool.get('stock.picking')
+                pick_obj.draft_force_assign(cr, uid , [picking_id], context)
+                pick_obj.cancel_assign(cr, uid, [picking_id], context)
+                pick_obj.action_assign(cr, uid, [picking_id], context)
+            # end for each line
             val = {}
 
             if self._hook_ship_create_execute_picking_workflow(cr, uid, ids, context=context, picking_id=picking_id,):
