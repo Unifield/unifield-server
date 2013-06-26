@@ -653,7 +653,7 @@ class stock_picking(osv.osv):
         if move_line.purchase_line_id:
             po_uom_id = move_line.purchase_line_id.product_uom.id
             move_uom_id = move_line.product_uom.id
-            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, po_uom_id, 1, move_uom_id)
+            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
             return res/uom_ratio
         
         return res
