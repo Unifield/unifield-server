@@ -49,7 +49,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         'date': lambda *a: strftime('%Y-%m-%d'),
         'progression': lambda *a: 0.0,
         'state': lambda *a: 'draft',
-        'message': lambda *a: _('Initialisation…'),
+        'message': lambda *a: _('Initialization…'),
     }
 
     def create_entries(self, cr, uid, ids, context=None):
@@ -201,7 +201,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 cr.close()
                 return False
             # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Processing line number…'), 'progression': 4.00})
+            self.write(cr, uid, [wiz.id], {'message': _('Processing line…'), 'progression': 4.00})
             rows = content.getRows()
             nb_rows = len([x for x in content.getRows()])
             # Update wizard
@@ -317,11 +317,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                 r_account = account_ids[0]
                 account = self.pool.get('account.account').browse(cr, uid, r_account)
                 # Check that Third party exists (if not empty)
-                tp_label = 'Partner'
+                tp_label = _('Partner')
                 if line[cols['Third party']]:
                     if account.type_for_register == 'advance':
                         tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                        tp_label = 'Employee'
+                        tp_label = _('Employee')
                     else:
                         tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
                     if not tp_ids:
@@ -341,7 +341,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_destination = destination_ids[0]
                     # Check Cost Center
                     if not line[cols['Cost Centre']]:
-                        errors.append(_('Line %s. No cost center specified:') % (current_line_num,))
+                        errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
                         continue
                     cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
                     if not cc_ids:
@@ -396,7 +396,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         if errors:
             #cr.rollback()
             created = 0
-            message = 'Import FAILED.'
+            message = _('Import FAILED.')
             # Delete old errors
             error_ids = self.pool.get('msf.doc.import.accounting.errors').search(cr, uid, [], context)
             if error_ids:
@@ -410,7 +410,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0})
             # Create all journal entries
             self.create_entries(cr, uid, ids, context)
-            message = 'Import successful.'
+            message = _('Import successful.')
 
         # Update wizard
         self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
