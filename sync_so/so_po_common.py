@@ -115,7 +115,7 @@ class so_po_common(osv.osv_memory):
         if not po_ref:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', po_ref)], context)
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', po_ref)], 0, None, None, context)
         if not in_ids:
             raise Exception, "The IN of the PO not found! " + po_ref
         return in_ids[0]

@@ -343,7 +343,8 @@ class stock_picking(osv.osv):
         arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
         call = rule.remote_call
         update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
-        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, model_obj, ids, rule.server_id, context=context)
+        
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model.model, ids, rule.server_id, context=context)
         if not identifiers or not update_destinations:
             return
         
@@ -353,7 +354,7 @@ class stock_picking(osv.osv):
             return
         
         # make a change on the message only now
-        self.pool.get("sync.client.message_to_send").modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations[0], context)
+        msg_to_send_obj.modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations.values()[0], context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if isinstance(ids, (int, long)):
