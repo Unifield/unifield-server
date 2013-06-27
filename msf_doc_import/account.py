@@ -63,7 +63,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration')])
         if not journal_ids:
             message = _('WARNING: No migration journal found!')
-            self.write(cr, uid, ids, {'message': message, 'progression': 100.0}, context)
+            self.write(cr, uid, ids, {'message': message, 'progression': 100.0, 'state': 'done',}, context)
             cr.close()
             return False
         journal_id = journal_ids[0]
@@ -78,7 +78,8 @@ class msf_doc_import_accounting(osv.osv_memory):
             entries = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [('wizard_id', '=', w.id)])
             if not entries:
                 # Update wizard
-                self.write(cr, uid, [w.id], {'message': _('No lines…'), 'progression': 100.0})
+                self.write(cr, uid, [w.id], {'message': _('No lines…'), 'progression': 100.0, 'state': 'done',})
+                cr.close()
                 return False
             # Browse result
             b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
@@ -185,7 +186,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Check that a file was given
             if not wiz.file:
                 message = _('ERROR: Nothing to import.')
-                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
                 cr.close()
                 return False
             # Update wizard
@@ -196,7 +197,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             content = SpreadsheetXML(xmlfile=fileobj.name)
             if not content:
                 message = _('WARNING: No content.')
-                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
                 cr.close()
                 return False
             # Update wizard
@@ -219,7 +220,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             for el in col_names:
                 if not el in cols:
                     message = _("ERROR: '%s' column not found in file.") % (el,)
-                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
                     cr.close()
                     return False
             # All lines
@@ -383,7 +384,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             for c in money:
                 if (money[c]['debit'] - money[c]['credit']) >= 10**-2:
                     message = _("ERROR: Currency %s is not balanced: %s.") % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),)
-                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
                     cr.close()
                     return False
 
