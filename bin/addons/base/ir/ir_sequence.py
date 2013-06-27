@@ -50,8 +50,11 @@ class ir_sequence(osv.osv):
             else:
                 # currval can't be used as it returns the value
                 # most recently obtained by nextval for this sequence in the current session
-                cr.execute("select last_value from ir_sequence_%03d" % seq['id'])
-                ret[seq['id']] = cr.fetchone()[0] + 1
+                cr.execute("select last_value, is_called, increment_by from ir_sequence_%03d" % seq['id'])
+                data = cr.fetchone()
+                ret[seq['id']] = data[0]
+                if data[1]:
+                    ret[seq['id']] += data[2]
         return ret
 
     _columns = {
@@ -68,7 +71,8 @@ class ir_sequence(osv.osv):
         'implementation': fields.selection([('no_gap', 'OpenERP Standard'), ('psql', 'PostgreSQL sequence')],
             'Implementation', required=True, help="Two sequence object implementations are offered: 'PostgreSQL sequence' "
             "and 'OpenERP Standard'. The later is slower than the former and locks the row but forbids any"
-            " gap in the sequence (while they are possible in the former)."),
+            " gap in the sequence (while they are possible in the former)."
+            "*do not change this value on a highly loaded server*"),
     }
     _defaults = {
         'active': lambda *a: True,
@@ -130,24 +134,25 @@ class ir_sequence(osv.osv):
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
         new_implementation = values.get('implementation')
-        rows = self.read(cr, uid, ids, ['implementation', 'number_increment', 'number_next'], context)
+        rows = self.read(cr, uid, ids, ['implementation', 'number_increment', 'number_next_all'], context)
         super(ir_sequence, self).write(cr, uid, ids, values, context)
 
         for row in rows:
             # 4 cases: we test the previous impl. against the new one.
             i = values.get('number_increment', row['number_increment'])
-            n = values.get('number_next', row['number_next'])
+            n = values.get('number_next', row['number_next_all'])
             if row['implementation'] == 'psql':
                 if new_implementation in ('psql', None):
                     if 'number_increment' in values:
                         self._alter_sequence(cr, row['id'], i)
                 else:
                     self._drop_sequence(cr, row['id'])
+                    cr.execute('update %s set number_next=%%s where id=%%s ' % (self._table, ), (n, row['id']))
             else:
                 if new_implementation in ('no_gap', None):
                     pass
                 else:
-                    self._create_sequence(cr, row['id'], i, n)
+                    self._create_sequence(cr, row['id'], i, int(n))
 
         return True
 
