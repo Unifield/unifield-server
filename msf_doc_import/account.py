@@ -60,10 +60,12 @@ class msf_doc_import_accounting(osv.osv_memory):
         if not context:
             context = {}
         # Prepare some values
-        res = True
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration')])
         if not journal_ids:
-            raise osv.except_osv(_('Warning'), _('No migration journal found!'))
+            message = _('WARNING: No migration journal found!')
+            self.write(cr, uid, ids, {'message': message, 'progression': 100.0}, context)
+            cr.close()
+            return False
         journal_id = journal_ids[0]
         # Fetch default funding pool: MSF Private Fund
         try: 
@@ -77,7 +79,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             if not entries:
                 # Update wizard
                 self.write(cr, uid, [w.id], {'message': _('No lines…'), 'progression': 100.0})
-                return res
+                return False
             # Browse result
             b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
             # Update wizard
@@ -152,7 +154,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 progression = 20.0 + (float(num) * step)
                 self.write(cr, uid, [w.id], {'progression': progression})
                 num += 1
-        return res
+        return True
 
     def _import(self, dbname, uid, ids, context=None):
         """
@@ -183,7 +185,10 @@ class msf_doc_import_accounting(osv.osv_memory):
 
             # Check that a file was given
             if not wiz.file:
-                raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                message = _('ERROR: Nothing to import.')
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                cr.close()
+                return False
             # Update wizard
             self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00})
             fileobj = NamedTemporaryFile('w+b', delete=False)
@@ -191,7 +196,10 @@ class msf_doc_import_accounting(osv.osv_memory):
             fileobj.close()
             content = SpreadsheetXML(xmlfile=fileobj.name)
             if not content:
-                raise osv.except_osv(_('Warning'), _('No content.'))
+                message = _('WARNING: No content.')
+                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                cr.close()
+                return False
             # Update wizard
             self.write(cr, uid, [wiz.id], {'message': _('Processing line number…'), 'progression': 4.00})
             rows = content.getRows()
@@ -211,7 +219,10 @@ class msf_doc_import_accounting(osv.osv_memory):
             base_num = 2
             for el in col_names:
                 if not el in cols:
-                    raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el,))
+                    message = _("ERROR: '%s' column not found in file.") % (el,)
+                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                    cr.close()
+                    return False
             # All lines
             money = {}
             # Update wizard
@@ -372,7 +383,10 @@ class msf_doc_import_accounting(osv.osv_memory):
             ## The lines should be balanced for each currency
             for c in money:
                 if (money[c]['debit'] - money[c]['credit']) >= 10**-2:
-                    raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s' ) % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
+                    message = _("ERROR: Currency %s is not balanced: %s.") % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),)
+                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0})
+                    cr.close()
+                    return False
 
         # Update wizard
         self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
