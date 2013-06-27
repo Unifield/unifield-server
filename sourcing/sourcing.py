@@ -554,6 +554,9 @@ class sourcing_line(osv.osv):
             self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
+                self.pool.get('sale.order').write(cr, uid, [sl.sale_order_id.id], 
+                                                    {'sourcing_trace_ok': True,
+                                                     'sourcing_trace': 'Sourcing in progress'}, context=context)
                 thread = threading.Thread(target=self.confirmOrder, args=(cr.dbname, uid, sl, context))
                 thread.start()
                 
@@ -575,6 +578,9 @@ class sourcing_line(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'procurement_confirm', cr)
             else:
                 wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'order_confirm', cr)
+            self.pool.get('sale.order').write(cr, uid, [sourcingLine.sale_order_id.id],
+                                              {'sourcing_trace_ok': False,
+                                               'sourcing_trace': ''}, context=context)
         except osv.except_osv, e:
             self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
                                               {'sourcing_trace_ok': True,
