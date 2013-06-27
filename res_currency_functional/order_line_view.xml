@@ -70,7 +70,7 @@
 			<field name="model">purchase.order.line</field>
 			<field name="type">form</field>
 			<field name="priority" eval="100" />
-			<field name="inherit_id" ref="purchase.purchase_order_line_form" />
+			<field name="inherit_id" ref="msf_order_date.dates_purchase_order_line_form" />
 			<field name="arch" type="xml">
 				<data>
 					<field name="price_unit" position="after">
