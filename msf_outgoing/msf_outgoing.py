@@ -876,8 +876,8 @@ class shipment(osv.osv):
                     draft_packing.previous_step_id.previous_step_id.backorder_id.validate(context=context)
                     
                     # UF-1617: set the flag to PPL to indicate that the SHIP has been done, for synchronisation purpose
-                    if draft_packing.previous_step_id and draft_packing.previous_step_id.id: 
-                        cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' %draft_packing.previous_step_id.id)
+#                    if draft_packing.previous_step_id and draft_packing.previous_step_id.id: 
+#                        cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' %draft_packing.previous_step_id.id)
             
             # all draft packing are validated (done state) - the state of shipment is automatically updated -> function
         return True
@@ -1084,6 +1084,10 @@ class shipment(osv.osv):
                 # trigger standard workflow
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
+                
+                # UF-1617: set the flag to this packing object to indicate that the SHIP has been done, for synchronisation purpose
+                cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' %packing.id)
+                
             
             # Create automatically the invoice
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
