@@ -67642,3 +67642,8 @@ msgstr "Import réussi."
 #, python-format
 msgid "Writing changes…"
 msgstr "Écriture des modifications…"
+
+#. module: msf_doc_import
+#: field:msf.doc.import.accounting,date:0
+msgid "Migration date"
+msgstr "Date de migration"
