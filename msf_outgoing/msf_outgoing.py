@@ -1724,7 +1724,22 @@ class stock_picking(osv.osv):
             if obj.picking_id and obj.picking_id.id not in result:
                 result.append(obj.picking_id.id)
         return result 
-    
+
+    def _get_draft_moves(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns True if there is draft moves on Picking Ticket
+        '''
+        res = {}
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = False
+            for move in pick.move_lines:
+                if move.state == 'draft':
+                    res[pick.id] = True
+                    continue
+
+        return res
+       
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
@@ -1755,6 +1770,7 @@ class stock_picking(osv.osv):
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
                 'already_shipped': fields.boolean(string='The shipment is done'), #UF-1617: only for indicating the PPL that the relevant Ship has been closed
+                'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -1766,6 +1782,18 @@ class stock_picking(osv.osv):
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
+
+    def onchange_move(self, cr, uid, ids, context=None):
+        '''
+        Display or not the 'Confirm' button on Picking Ticket
+        '''
+        res = super(stock_picking, self).onchange_move(cr, uid, ids, context=context)
+
+        if ids:
+            has_draft_moves = self._get_draft_moves(cr, uid, ids, 'has_draft_moves', False)[ids[0]]
+            res.setdefault('value', {}).update({'has_draft_moves': has_draft_moves})
+
+        return res
     
     def picking_ticket_data(self, cr, uid, ids, context=None):
         '''
@@ -1853,6 +1881,17 @@ class stock_picking(osv.osv):
                                 uom['lots'][lot.id]['reserved_qty'] = 0.0
                     
         return result
+
+    def action_confirm_moves(self, cr, uid, ids, context=None):
+        '''
+        Confirm all stock moves of the picking
+        '''
+        for pick in self.browse(cr, uid, ids, context=context):
+            for move in pick.move_lines:
+                if move.state == 'draft':
+                    self.pool.get('stock.move').action_confirm(cr, uid, [move.id], context=context)
+
+        return True
     
     def create_sequence(self, cr, uid, vals, context=None):
         """
