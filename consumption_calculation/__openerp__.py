@@ -23,7 +23,7 @@
     "name": "Consumption Calculation",
     "version": "1.0",
     "depends": ["product", "stock", "product_nomenclature",
-                "product_list", "reason_types_moves",],
+                "product_list", "reason_types_moves"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Specific Modules",

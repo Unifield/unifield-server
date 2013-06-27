@@ -45,3 +45,13 @@ class real_average_consumption(osv.osv):
 
     
 real_average_consumption()
+
+
+class real_average_consumption_line(osv.osv):
+    _inherit = 'real.average.consumption.line'
+
+    _columns = {
+        'asset_id': fields.many2one('product.asset', string='Asset'),
+    }
+
+real_average_consumption_line()
