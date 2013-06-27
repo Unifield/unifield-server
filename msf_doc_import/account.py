@@ -85,13 +85,11 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Update wizard
             self.write(cr, uid, [w.id], {'message': _('Grouping by currencies…'), 'progression': 10.0})
             # Search all currencies (to create moves)
-            available_currencies = []
+            available_currencies = {}
             for entry in b_entries:
                 if (entry.currency_id.id, entry.period_id.id) not in available_currencies:
-                    available_currencies.append((entry.currency_id.id, entry.period_id.id))
-            # Delete duplicates
-            if available_currencies and len(available_currencies) > 1:
-                available_currencies = list(set(available_currencies))
+                    available_currencies[(entry.currency_id.id, entry.period_id.id)] = []
+                available_currencies[(entry.currency_id.id, entry.period_id.id)].append(entry)
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Writing a move for each currency…'), 'progression': 20.0})
             num = 1
@@ -111,45 +109,44 @@ class msf_doc_import_accounting(osv.osv_memory):
                     'status': 'manu',
                 }
                 move_id = self.pool.get('account.move').create(cr, uid, move_vals, context)
-                for l_num, l in enumerate(b_entries):
+                for l_num, l in enumerate(available_currencies[(c_id, p_id)]):
                     # Update wizard
                     progression = 20.0 + ((float(l_num) / float(len(b_entries))) * step) + (float(num - 1) * step)
                     self.write(cr, uid, [w.id], {'progression': progression})
-                    if l.currency_id.id == c_id and l.period_id.id == p_id:
-                        distrib_id = False
-                        # Create analytic distribution
-                        if l.account_id.user_type_code == 'expense':
-                            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
-                            common_vals = {
-                                'distribution_id': distrib_id,
-                                'currency_id': c_id,
-                                'percentage': 100.0,
-                                'date': l.date,
-                                'source_date': l.date,
-                                'destination_id': l.destination_id.id,
-                            }
-                            common_vals.update({'analytic_id': l.cost_center_id.id,})
-                            cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                            common_vals.update({'analytic_id': msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
-                            fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                        # Create move line
-                        move_line_vals = {
-                            'move_id': move_id,
-                            'name': l.description,
-                            'reference': l.ref,
-                            'account_id': l.account_id.id,
-                            'period_id': p_id,
-                            'document_date': l.document_date,
-                            'date': l.date,
-                            'journal_id': journal_id,
-                            'debit_currency': l.debit,
-                            'credit_currency': l.credit,
+                    distrib_id = False
+                    # Create analytic distribution
+                    if l.account_id.user_type_code == 'expense':
+                        distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                        common_vals = {
+                            'distribution_id': distrib_id,
                             'currency_id': c_id,
-                            'analytic_distribution_id': distrib_id,
-                            'partner_id': l.partner_id and l.partner_id.id or False,
-                            'employee_id': l.employee_id and l.employee_id.id or False,
+                            'percentage': 100.0,
+                            'date': l.date,
+                            'source_date': l.date,
+                            'destination_id': l.destination_id.id,
                         }
-                        self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
+                        common_vals.update({'analytic_id': l.cost_center_id.id,})
+                        cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                        common_vals.update({'analytic_id': msf_fp_id, 'cost_center_id': l.cost_center_id.id,})
+                        fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    # Create move line
+                    move_line_vals = {
+                        'move_id': move_id,
+                        'name': l.description,
+                        'reference': l.ref,
+                        'account_id': l.account_id.id,
+                        'period_id': p_id,
+                        'document_date': l.document_date,
+                        'date': l.date,
+                        'journal_id': journal_id,
+                        'debit_currency': l.debit,
+                        'credit_currency': l.credit,
+                        'currency_id': c_id,
+                        'analytic_distribution_id': distrib_id,
+                        'partner_id': l.partner_id and l.partner_id.id or False,
+                        'employee_id': l.employee_id and l.employee_id.id or False,
+                    }
+                    self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
                 # Update wizard
                 progression = 20.0 + (float(num) * step)
                 self.write(cr, uid, [w.id], {'progression': progression})
