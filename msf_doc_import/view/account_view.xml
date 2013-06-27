@@ -30,7 +30,7 @@
                     <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
                     <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
                     <newline/>
-                    <button name="button_update" type="object" string="Update" icon="terp-camera_test" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
+                    <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
                     <newline />
                     <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
