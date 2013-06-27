@@ -147,6 +147,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'employee_id': l.employee_id and l.employee_id.id or False,
                     }
                     self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
+                # Validate the Journal Entry for lines to be valid (if possible)
+                self.pool.get('account.move').validate(cr, uid, [move_id], context=context)
                 # Update wizard
                 progression = 20.0 + (float(num) * step)
                 self.write(cr, uid, [w.id], {'progression': progression})
