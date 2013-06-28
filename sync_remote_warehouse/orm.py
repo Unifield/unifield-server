@@ -1,5 +1,19 @@
 from osv import osv, fields, orm
 
+super_get_unique_xml_name = orm.orm.get_unique_xml_name
+    
+def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+    print "new SD ref"
+    sd_ref = super_get_unique_xml_name(self, cr, uid, uuid, table_name, res_id)
+    entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
+        
+    # state checks
+    if entity.usb_instance_type == 'remote_warehouse':
+        sd_ref += "/RW"
+    return sd_ref
+    
+orm.orm.get_unique_xml_name = get_unique_xml_name
+
 def usb_need_to_push(self, cr, uid, ids, context=None):
         """
         
