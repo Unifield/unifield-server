@@ -81,9 +81,14 @@ class stock_forecast_line(osv.osv_memory):
         'qty' : fields.float('Quantity', digits=(16,2)),
         'stock_situation' : fields.float('Stock Situation', digits=(16,2)),
         'wizard_id' : fields.many2one('stock.forecast', string="Wizard"),
+        'first': fields.selection([('a', 'first'), ('z', 'end')], string='First'),
+    }
+
+    _defaults = {
+        'first': lambda *a: 'z',
     }
     
-    _order = 'date asc'
+    _order = 'date asc, first asc'
     
 stock_forecast_line()
 
@@ -431,7 +436,7 @@ class stock_forecast(osv.osv_memory):
                 for sol in sol_obj.browse(cr, uid, sol_list, context=context):
                     # create lines corresponding to so
                     values = {'date': sol.order_id.ready_to_ship_date and (len(sol.order_id.ready_to_ship_date.split(' ')) > 1 and sol.order_id.ready_to_ship_date.split(' ')[0] or sol.order_id.ready_to_ship_date) or '',
-                              'doc': 'SO',
+                              'doc': 'FO',
                               'order_type': PREFIXES['sale.order'] + sol.order_id.order_type,
                               'origin': sol.order_id.client_order_ref or sol.order_id.origin,
                               'reference': 'sale.order,%s'%sol.order_id.id,
@@ -535,6 +540,7 @@ class stock_forecast(osv.osv_memory):
                                       'state': False,
                                       'qty': False,
                                       'stock_situation': overall_qty,
+                                      'first': 'a',
                                       'wizard_id': wizard.id,}, context=context)
             
             # create the lines
