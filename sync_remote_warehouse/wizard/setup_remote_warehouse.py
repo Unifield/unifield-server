@@ -24,11 +24,6 @@ class setup_remote_warehouse(osv.osv_memory):
     
     _logger = logging.getLogger('setup_remote_warehouse')
     
-    def _dbid_from_xmlid(self, cr, module, model):
-        ir_model_data_object = self.pool.get('ir.model.data')
-        ir_model_data_id = ir_model_data_object._get_id(cr, 1, module, model)
-        return ir_model_data_object.read(cr, 1, [ir_model_data_id], ['res_id'])[0]['res_id']
-    
     def _set_sync_menu_active(self, cr, uid, active):
         sync_menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'sd', 'sync_client_connection_manager_menu');
         sync_menu_id = self.pool.get('ir.model.data').read(cr, uid, sync_menu_xml_id_id, ['res_id'])['res_id'];
@@ -66,7 +61,7 @@ class setup_remote_warehouse(osv.osv_memory):
             
             for sequence in self._sequences_to_prefix:
                 try:
-                    sequence_id = self._dbid_from_xmlid(cr, *sequence.split('.'))
+                    sequence_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *sequence.split('.', 1))[1]
                 except ValueError:
                     self._logger.warning('Could not find sequence with XML ID: %s' % sequence)
                     continue
@@ -105,7 +100,7 @@ class setup_remote_warehouse(osv.osv_memory):
             
             for sequence in self._sequences_to_prefix:
                 try:
-                    sequence_id = self._dbid_from_xmlid(cr, *sequence.split('.'))
+                    sequence_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, *sequence.split('.', 1))[1]
                 except ValueError, v:
                     self._logger.warning('Could not find sequence with XML ID: %s' % sequence)
                     continue
