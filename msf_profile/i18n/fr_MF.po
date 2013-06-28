@@ -67435,11 +67435,11 @@ msgstr "Initialisation…"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:65
 #, python-format
-msgid "WARNING: No migration journal found!"
-msgstr "Avertissement : Aucun journal de migration trouvé !"
+msgid "No migration journal found!"
+msgstr "Aucun journal de migration trouvé !"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:81
+#: code:addons/msf_doc_import/account.py:77
 #, python-format
 msgid "No lines…"
 msgstr "Pas de lignes…"
@@ -67482,10 +67482,10 @@ msgid "Checking file…"
 msgstr "Vérification du fichier…"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:188
+#: code:addons/msf_doc_import/account.py:183
 #, python-format
-msgid "ERROR: Nothing to import."
-msgstr "ERREUR: Rien à importer."
+msgid "Nothing to import."
+msgstr "Rien à importer."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:193
@@ -67494,10 +67494,10 @@ msgid "Copying file…"
 msgstr "Copie du fichier…"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:199
+#: code:addons/msf_doc_import/account.py:191
 #, python-format
-msgid "WARNING: No content."
-msgstr "Avertissement: Aucun contenu."
+msgid "No content."
+msgstr "Aucun contenu."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:204
@@ -67512,10 +67512,10 @@ msgid "Reading headers…"
 msgstr "Lecture des entêtes…"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:222
+#: code:addons/msf_doc_import/account.py:211
 #, python-format
-msgid "ERROR: '%s' column not found in file."
-msgstr "ERREUR: La colonne '%s' n'a pas été trouvée dans le fichier."
+msgid "'%s' column not found in file."
+msgstr "La colonne '%s' n'a pas été trouvée dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:229
@@ -67614,10 +67614,10 @@ msgid "Line %s. A problem occured for line registration. Please contact an Admin
 msgstr "Ligne %s. Un problème est survenu lors de l'enregistrement de la ligne. Veuillez contacter un administrateur."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:386
+#: code:addons/msf_doc_import/account.py:372
 #, python-format
-msgid "ERROR: Currency %s is not balanced: %s."
-msgstr "ERREUR : La monnaie %s n'est pas balancée : %s."
+msgid "Currency %s is not balanced: %s."
+msgstr "La monnaie %s n'est pas balancée : %s."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:392

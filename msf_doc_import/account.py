@@ -62,10 +62,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Prepare some values
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'migration')])
         if not journal_ids:
-            message = _('WARNING: No migration journal found!')
-            self.write(cr, uid, ids, {'message': message, 'progression': 100.0, 'state': 'done',}, context)
-            cr.close()
-            return False
+            raise osv.except_osv(_('Warning'), _('No migration journal found!'))
         journal_id = journal_ids[0]
         # Fetch default funding pool: MSF Private Fund
         try: 
@@ -77,10 +74,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             # Search lines
             entries = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [('wizard_id', '=', w.id)])
             if not entries:
-                # Update wizard
-                self.write(cr, uid, [w.id], {'message': _('No lines…'), 'progression': 100.0, 'state': 'done',})
-                cr.close()
-                return False
+                raise osv.except_osv(_('Error'), _('No lines…'))
             # Browse result
             b_entries = self.pool.get('msf.doc.import.accounting.lines').browse(cr, uid, entries)
             # Update wizard
@@ -172,252 +166,243 @@ class msf_doc_import_accounting(osv.osv_memory):
         processed = 0
         errors = []
 
-        # Update wizard
-        self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00})
-        # Clean up old temporary imported lines
-        old_lines_ids = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [])
-        self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
+        try:
+            # Update wizard
+            self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00})
+            # Clean up old temporary imported lines
+            old_lines_ids = self.pool.get('msf.doc.import.accounting.lines').search(cr, uid, [])
+            self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
 
-        # Check wizard data
-        for wiz in self.browse(cr, uid, ids):
-            # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00})
-
-            # Check that a file was given
-            if not wiz.file:
-                message = _('ERROR: Nothing to import.')
-                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
-                cr.close()
-                return False
-            # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00})
-            fileobj = NamedTemporaryFile('w+b', delete=False)
-            fileobj.write(decodestring(wiz.file))
-            fileobj.close()
-            content = SpreadsheetXML(xmlfile=fileobj.name)
-            if not content:
-                message = _('WARNING: No content.')
-                self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
-                cr.close()
-                return False
-            # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Processing line…'), 'progression': 4.00})
-            rows = content.getRows()
-            nb_rows = len([x for x in content.getRows()])
-            # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
-            # Use the first row to find which column to use
-            cols = {}
-            col_names = ['Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
-            for num, r in enumerate(rows):
-                header = [x and x.data for x in r.iter_cells()]
-                for el in col_names:
-                    if el in header:
-                        cols[el] = header.index(el)
-                break
-            # Number of line to bypass in line's count
-            base_num = 2
-            for el in col_names:
-                if not el in cols:
-                    message = _("ERROR: '%s' column not found in file.") % (el,)
-                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
-                    cr.close()
-                    return False
-            # All lines
-            money = {}
-            # Update wizard
-            self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
-            # Check file's content
-            for num, r in enumerate(rows):
+            # Check wizard data
+            for wiz in self.browse(cr, uid, ids):
                 # Update wizard
-                percent = (float(num+1) / float(nb_rows+1)) * 100.0
-                progression = ((float(num+1) * 94) / float(nb_rows)) + 6
-                self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression})
-                # Prepare some values
-                r_debit = 0
-                r_credit = 0
-                r_currency = False
-                r_partner = False
-                r_account = False
-                r_destination = False
-                r_cc = False
-                r_document_date = False
-                r_date = False
-                r_period = False
-                current_line_num = num + base_num
-                # Fetch all XML row values
-                line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
-                # Bypass this line if NO debit AND NO credit
-                try:
-                    bd = line[cols['Booking Debit']]
-                except IndexError, e:
-                    continue
-                try:
-                    bc = line[cols['Booking Credit']]
-                except IndexError, e:
-                    continue
-                if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
-                    continue
-                processed += 1
-                # Check that currency is active
-                if not line[cols['Booking Currency']]:
-                    errors.append(_('Line %s. No currency specified!') % (current_line_num,))
-                    continue
-                curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line[cols['Booking Currency']])])
-                if not curr_ids:
-                    errors.append(_('Line %s. Currency not found: %s') % (current_line_num, line[cols['Booking Currency']],))
-                    continue
-                for c in self.pool.get('res.currency').browse(cr, uid, curr_ids):
-                    if not c.active:
-                        errors.append(_('Line %s. Currency is not active: %s') % (current_line_num, line[cols['Booking Currency']],))
+                self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00})
+
+                # Check that a file was given
+                if not wiz.file:
+                    raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Copying file…'), 'progression': 3.00})
+                fileobj = NamedTemporaryFile('w+b', delete=False)
+                fileobj.write(decodestring(wiz.file))
+                fileobj.close()
+                content = SpreadsheetXML(xmlfile=fileobj.name)
+                if not content:
+                    raise osv.except_osv(_('Warning'), _('No content'))
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Processing line…'), 'progression': 4.00})
+                rows = content.getRows()
+                nb_rows = len([x for x in content.getRows()])
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
+                # Use the first row to find which column to use
+                cols = {}
+                col_names = ['Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third party', 'Destination', 'Cost Centre', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                for num, r in enumerate(rows):
+                    header = [x and x.data for x in r.iter_cells()]
+                    for el in col_names:
+                        if el in header:
+                            cols[el] = header.index(el)
+                    break
+                # Number of line to bypass in line's count
+                base_num = 2
+                for el in col_names:
+                    if not el in cols:
+                        raise osv.except_osv(_('Error'), _("'%s' column not found in file."))
+                # All lines
+                money = {}
+                # Update wizard
+                self.write(cr, uid, [wiz.id], {'message': _('Reading lines…'), 'progression': 6.00})
+                # Check file's content
+                for num, r in enumerate(rows):
+                    # Update wizard
+                    percent = (float(num+1) / float(nb_rows+1)) * 100.0
+                    progression = ((float(num+1) * 94) / float(nb_rows)) + 6
+                    self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression})
+                    # Prepare some values
+                    r_debit = 0
+                    r_credit = 0
+                    r_currency = False
+                    r_partner = False
+                    r_account = False
+                    r_destination = False
+                    r_cc = False
+                    r_document_date = False
+                    r_date = False
+                    r_period = False
+                    current_line_num = num + base_num
+                    # Fetch all XML row values
+                    line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    # Bypass this line if NO debit AND NO credit
+                    try:
+                        bd = line[cols['Booking Debit']]
+                    except IndexError, e:
                         continue
-                r_currency = curr_ids[0]
-                if not line[cols['Booking Currency']] in money:
-                    money[line[cols['Booking Currency']]] = {}
-                if not 'debit' in money[line[cols['Booking Currency']]]:
-                    money[line[cols['Booking Currency']]]['debit'] = 0
-                if not 'credit' in money[line[cols['Booking Currency']]]:
-                    money[line[cols['Booking Currency']]]['credit'] = 0
-                if not 'name' in money[line[cols['Booking Currency']]]:
-                    money[line[cols['Booking Currency']]]['name'] = line[cols['Booking Currency']]
-                # Increment global debit/credit
-                if line[cols['Booking Debit']]:
-                    money[line[cols['Booking Currency']]]['debit'] += line[cols['Booking Debit']]
-                    r_debit = line[cols['Booking Debit']]
-                if line[cols['Booking Credit']]:
-                    money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
-                    r_credit = line[cols['Booking Credit']]
-                # Check document/posting dates
-                if not line[cols['Document Date']]:
-                    errors.append(_('Line %s. No document date specified!') % (current_line_num,))
-                    continue
-                if not line[cols['Posting Date']]:
-                    errors.append(_('Line %s. No posting date specified!') % (current_line_num,))
-                    continue
-                if line[cols['Document Date']] > line[cols['Posting Date']]:
-                    errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['Document Date']], line[cols['Posting Date']],))
-                    continue
-                # Fetch document date and posting date
-                r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
-                r_date = line[cols['Posting Date']].strftime('%Y-%m-%d')
-                # Check that a period exist and is open
-                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
-                if not period_ids:
-                    errors.append(_('Line %s. No period found for given date: %s') % (current_line_num, r_date))
-                    continue
-                r_period = period_ids[0]
-                # Check G/L account
-                if not line[cols['G/L Account']]:
-                    errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
-                    continue
-                account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['G/L Account']])])
-                if not account_ids:
-                    errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, line[cols['G/L Account']],))
-                    continue
-                r_account = account_ids[0]
-                account = self.pool.get('account.account').browse(cr, uid, r_account)
-                # Check that Third party exists (if not empty)
-                tp_label = _('Partner')
-                if line[cols['Third party']]:
+                    try:
+                        bc = line[cols['Booking Credit']]
+                    except IndexError, e:
+                        continue
+                    if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
+                        continue
+                    processed += 1
+                    # Check that currency is active
+                    if not line[cols['Booking Currency']]:
+                        errors.append(_('Line %s. No currency specified!') % (current_line_num,))
+                        continue
+                    curr_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', line[cols['Booking Currency']])])
+                    if not curr_ids:
+                        errors.append(_('Line %s. Currency not found: %s') % (current_line_num, line[cols['Booking Currency']],))
+                        continue
+                    for c in self.pool.get('res.currency').browse(cr, uid, curr_ids):
+                        if not c.active:
+                            errors.append(_('Line %s. Currency is not active: %s') % (current_line_num, line[cols['Booking Currency']],))
+                            continue
+                    r_currency = curr_ids[0]
+                    if not line[cols['Booking Currency']] in money:
+                        money[line[cols['Booking Currency']]] = {}
+                    if not 'debit' in money[line[cols['Booking Currency']]]:
+                        money[line[cols['Booking Currency']]]['debit'] = 0
+                    if not 'credit' in money[line[cols['Booking Currency']]]:
+                        money[line[cols['Booking Currency']]]['credit'] = 0
+                    if not 'name' in money[line[cols['Booking Currency']]]:
+                        money[line[cols['Booking Currency']]]['name'] = line[cols['Booking Currency']]
+                    # Increment global debit/credit
+                    if line[cols['Booking Debit']]:
+                        money[line[cols['Booking Currency']]]['debit'] += line[cols['Booking Debit']]
+                        r_debit = line[cols['Booking Debit']]
+                    if line[cols['Booking Credit']]:
+                        money[line[cols['Booking Currency']]]['credit'] += line[cols['Booking Credit']]
+                        r_credit = line[cols['Booking Credit']]
+                    # Check document/posting dates
+                    if not line[cols['Document Date']]:
+                        errors.append(_('Line %s. No document date specified!') % (current_line_num,))
+                        continue
+                    if not line[cols['Posting Date']]:
+                        errors.append(_('Line %s. No posting date specified!') % (current_line_num,))
+                        continue
+                    if line[cols['Document Date']] > line[cols['Posting Date']]:
+                        errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['Document Date']], line[cols['Posting Date']],))
+                        continue
+                    # Fetch document date and posting date
+                    r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
+                    r_date = line[cols['Posting Date']].strftime('%Y-%m-%d')
+                    # Check that a period exist and is open
+                    period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
+                    if not period_ids:
+                        errors.append(_('Line %s. No period found for given date: %s') % (current_line_num, r_date))
+                        continue
+                    r_period = period_ids[0]
+                    # Check G/L account
+                    if not line[cols['G/L Account']]:
+                        errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
+                        continue
+                    account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', line[cols['G/L Account']])])
+                    if not account_ids:
+                        errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, line[cols['G/L Account']],))
+                        continue
+                    r_account = account_ids[0]
+                    account = self.pool.get('account.account').browse(cr, uid, r_account)
+                    # Check that Third party exists (if not empty)
+                    tp_label = _('Partner')
+                    if line[cols['Third party']]:
+                        if account.type_for_register == 'advance':
+                            tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Third party']])])
+                            tp_label = _('Employee')
+                        else:
+                            tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
+                        if not tp_ids:
+                            errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['Third party']],))
+                            continue
+                        r_partner = tp_ids[0]
+                    # Check analytic axis only if G/L account is an expense account
+                    if account.user_type_code == 'expense':
+                        # Check Destination
+                        if not line[cols['Destination']]:
+                            errors.append(_('Line %s. No destination specified!') % (current_line_num,))
+                            continue
+                        destination_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['Destination']]), ('code', '=', line[cols['Destination']])])
+                        if not destination_ids:
+                            errors.append(_('Line %s. Destination %s not found!') % (current_line_num, line[cols['Destination']],))
+                            continue
+                        r_destination = destination_ids[0]
+                        # Check Cost Center
+                        if not line[cols['Cost Centre']]:
+                            errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
+                            continue
+                        cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
+                        if not cc_ids:
+                            errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
+                            continue
+                        r_cc = cc_ids[0]
+                    # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
+
+                    # Registering data regarding these "keys":
+                    # - G/L Account
+                    # - Third Party
+                    # - Destination
+                    # - Cost Centre
+                    # - Booking Currency
+                    vals = {
+                        'description': line[cols['Description']] or '',
+                        'ref': line[cols['Reference']] or '',
+                        'account_id': r_account or False,
+                        'debit': r_debit or 0.0,
+                        'credit': r_credit or 0.0,
+                        'cost_center_id': r_cc or False,
+                        'destination_id': r_destination or False,
+                        'document_date': r_document_date or False,
+                        'date': r_date or False,
+                        'currency_id': r_currency or False,
+                        'wizard_id': wiz.id,
+                        'period_id': r_period or False,
+                    }
                     if account.type_for_register == 'advance':
-                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                        tp_label = _('Employee')
+                        vals.update({'employee_id': r_partner,})
                     else:
-                        tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['Third party']])])
-                    if not tp_ids:
-                        errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['Third party']],))
+                        vals.update({'partner_id': r_partner,})
+                    line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
+                    if not line_res:
+                        errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
                         continue
-                    r_partner = tp_ids[0]
-                # Check analytic axis only if G/L account is an expense account
-                if account.user_type_code == 'expense':
-                    # Check Destination
-                    if not line[cols['Destination']]:
-                        errors.append(_('Line %s. No destination specified!') % (current_line_num,))
-                        continue
-                    destination_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['Destination']]), ('code', '=', line[cols['Destination']])])
-                    if not destination_ids:
-                        errors.append(_('Line %s. Destination %s not found!') % (current_line_num, line[cols['Destination']],))
-                        continue
-                    r_destination = destination_ids[0]
-                    # Check Cost Center
-                    if not line[cols['Cost Centre']]:
-                        errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
-                        continue
-                    cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
-                    if not cc_ids:
-                        errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
-                        continue
-                    r_cc = cc_ids[0]
-                # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
-
-                # Registering data regarding these "keys":
-                # - G/L Account
-                # - Third Party
-                # - Destination
-                # - Cost Centre
-                # - Booking Currency
-                vals = {
-                    'description': line[cols['Description']] or '',
-                    'ref': line[cols['Reference']] or '',
-                    'account_id': r_account or False,
-                    'debit': r_debit or 0.0,
-                    'credit': r_credit or 0.0,
-                    'cost_center_id': r_cc or False,
-                    'destination_id': r_destination or False,
-                    'document_date': r_document_date or False,
-                    'date': r_date or False,
-                    'currency_id': r_currency or False,
-                    'wizard_id': wiz.id,
-                    'period_id': r_period or False,
-                }
-                if account.type_for_register == 'advance':
-                    vals.update({'employee_id': r_partner,})
-                else:
-                    vals.update({'partner_id': r_partner,})
-                line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
-                if not line_res:
-                    errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
-                    continue
-                created += 1
-            # Check if all is ok for the file
-            ## The lines should be balanced for each currency
-            for c in money:
-                if (money[c]['debit'] - money[c]['credit']) >= 10**-2:
-                    message = _("ERROR: Currency %s is not balanced: %s.") % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),)
-                    self.write(cr, uid, [wiz.id], {'message': message, 'progression': 100.0, 'state': 'done',})
-                    cr.close()
-                    return False
-
-        # Update wizard
-        self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
-
-        wiz_state = 'done'
-        # If errors, cancel probable modifications
-        if errors:
-            #cr.rollback()
-            created = 0
-            message = _('Import FAILED.')
-            # Delete old errors
-            error_ids = self.pool.get('msf.doc.import.accounting.errors').search(cr, uid, [], context)
-            if error_ids:
-                self.pool.get('msf.doc.import.accounting.errors').unlink(cr, uid, error_ids ,context)
-            # create errors lines
-            for e in errors:
-                self.pool.get('msf.doc.import.accounting.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
-            wiz_state = 'error'
-        else:
+                    created += 1
+                # Check if all is ok for the file
+                ## The lines should be balanced for each currency
+                for c in money:
+                    if (money[c]['debit'] - money[c]['credit']) >= 10**-2:
+                        raise osv.except_osv(_('Error'), _('Currency %s is not balanced: %s') % (money[c]['name'], (money[c]['debit'] - money[c]['credit']),))
             # Update wizard
-            self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0})
-            # Create all journal entries
-            self.create_entries(cr, uid, ids, context)
-            message = _('Import successful.')
+            self.write(cr, uid, ids, {'message': _('Check complete. Reading potential errors or write needed changes.'), 'progression': 100.0})
 
-        # Update wizard
-        self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+            wiz_state = 'done'
+            # If errors, cancel probable modifications
+            if errors:
+                #cr.rollback()
+                created = 0
+                message = _('Import FAILED.')
+                # Delete old errors
+                error_ids = self.pool.get('msf.doc.import.accounting.errors').search(cr, uid, [], context)
+                if error_ids:
+                    self.pool.get('msf.doc.import.accounting.errors').unlink(cr, uid, error_ids ,context)
+                # create errors lines
+                for e in errors:
+                    self.pool.get('msf.doc.import.accounting.errors').create(cr, uid, {'wizard_id': wiz.id, 'name': e}, context)
+                wiz_state = 'error'
+            else:
+                # Update wizard
+                self.write(cr, uid, ids, {'message': _('Writing changes…'), 'progression': 0.0})
+                # Create all journal entries
+                self.create_entries(cr, uid, ids, context)
+                message = _('Import successful.')
 
-        # Close cursor
-        cr.commit()
-        cr.close()
+            # Update wizard
+            self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
+
+            # Close cursor
+            cr.commit()
+            cr.close()
+        except osv.except_osv as osv_error:
+            self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
+            cr.close()
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
