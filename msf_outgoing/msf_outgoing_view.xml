@@ -1368,15 +1368,16 @@
             <field name="arch" type="xml">
                 <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1">
                     <field name="origin"/>
-                    <field name="picking_id" string="Ship"/>
-                    <field name="partner_id"/>
+                    <field name="picking_id" string="Pack"/>
+                    <field name="line_number"/>
                     <field name="product_id"/>
                     <field name="product_qty" />
                     <field name="product_uom" string="UoM"/>
                     <field name="prodlot_id"/>
+                    <field name="expired_date"/>
+                    <field name="asset_id"/>
+                    <field name="partner_id"/>
                     <field name="date"/>
-                    <field name="date_expected"/>
-                    <field name="state" />
                 </tree>
             </field>
         </record>
@@ -1388,11 +1389,10 @@
 			<field name="arch" type="xml">
 				<search string="Shipment">
                     <field name="name"/>
-                    <field name="picking_id" string="Ship" domain="[('already_shipped','=',True), ('shipment_id','!=',False)]"/>
+                    <field name="picking_id" string="Pack" domain="[('already_shipped','=',True), ('shipment_id','!=',False)]"/>
                     <field name="origin"/>
                     <field name="prodlot_id"/>
-                    <field name="date"/>
-                    <field name="state" />
+                    <field name="asset_id"/>
 				</search>
 			</field>
 		</record>
@@ -1405,7 +1405,7 @@
 			<field name="view_type">form</field>
 			<field name="search_view_id" ref="view_closed_shipment_search"/>
 	        <field name="view_id" ref="view_shipped_closed_tree" />
-	        <field name="domain">[('state', '=', 'done'), ('origin', '!=', False), ('picking_id', '!=', False), ('picking_id.shipment_id','!=',False), ('product_qty','>', 0)]</field>
+	        <field name="domain">[('state', '=', 'done'), ('origin', '!=', False), ('picking_id', '!=', False),('picking_id.already_shipped','=',True), ('picking_id.shipment_id','!=',False), ('product_qty','>', 0), ('location_dest_id.name','!=','Dispatch')]</field>
 			<field name="help">This is the list of all shipment lines with product information</field>
 		</record>
 
