@@ -78,7 +78,7 @@
                         <field name="functional_subtotal" />
                         <field name="functional_currency_id" />
                     </field>
-                    <field name="manufacturer_id" position="before">
+                    <field name="third_manufacturer_id" position="after">
                         <field name="origin" />
 					</field>
 				</data>
