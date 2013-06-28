@@ -367,7 +367,7 @@ class stock_picking(osv.osv):
         # SP-135: call the method to create manually a message for the relevant object, if needed
         #
         ##############################################################################
-        self.create_manual_message(cr, uid, ids, context)
+#        self.create_manual_message(cr, uid, ids, context)
         return  ret
     
 stock_picking()

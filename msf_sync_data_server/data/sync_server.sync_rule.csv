@@ -71,6 +71,9 @@
 "product_category_tree","TRUE","TRUE","Down","[('parent_id', '!=', '')]","['parent_id/id']","OC","product.category","","Product Category Tree","Valid","","156"
 "justification_code","TRUE","TRUE","Down","[]","['code', 'description']","OC","product.justification.code","","Justification Code","Valid","","158"
 "asset_type","TRUE","TRUE","Down","[]","['name']","OC","product.asset.type","","Asset Type","Valid","","160"
+
+"product_asset","TRUE","TRUE","Down","[]","['arrival_date', 'asset_type_id/id', 'brand', 'comment', 'description', 'hq_ref', 'international_po', 'invo_certif_depreciation', 'invo_currency/id', 'invo_date', 'invo_donator_code', 'invo_num', 'invo_supplier', 'invo_value', 'local_ref', 'model', 'name', 'nomenclature_description', 'orig_mission_code', 'prod_int_code', 'prod_int_name', 'product_id/id', 'project_po', 'receipt_place', 'serial_nb', 'type', 'year']","OC","product.asset","","Product Asset","Valid","","161"
+
 "pricelist_type","FALSE","TRUE","Bidirectional","[]","['key', 'name']","MISSION","product.pricelist.type","","Pricelist Type","Valid","","170"
 "price_list","FALSE","TRUE","Bidirectional","[]","['active', 'currency_id/id', 'in_search', 'name', 'type']","MISSION","product.pricelist","","Price List","Valid","","171"
 "price_list_version","FALSE","TRUE","Bidirectional","[]","['active', 'date_end', 'date_start', 'name', 'pricelist_id/id']","MISSION","product.pricelist.version","","Price List Version","Valid","","172"
