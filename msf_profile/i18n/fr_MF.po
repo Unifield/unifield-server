@@ -67647,3 +67647,9 @@ msgstr "Écriture des modifications…"
 #: field:msf.doc.import.accounting,date:0
 msgid "Migration date"
 msgstr "Date de migration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:404
+#, python-format
+msgid "An error occured. %s: %s"
+msgstr "Une erreur est survenue. %s: %s"
