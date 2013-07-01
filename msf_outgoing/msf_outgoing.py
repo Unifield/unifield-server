@@ -2815,118 +2815,6 @@ class stock_picking(osv.osv):
 stock_picking()
 
 
-class pack_family_memory(osv.osv):
-    '''
-    dynamic memory object for pack families
-    '''
-    _name = 'pack.family.memory'
-    _auto = False
-    def init(self, cr):
-        cr.execute('''create or replace view pack_family_memory as (
-            select
-                min(m.id) as id,
-                p.shipment_id as shipment_id,
-                to_pack as to_pack,
-                array_agg(m.id) as move_lines,
-                min(from_pack) as from_pack,
-                case when to_pack=0 then 0 else to_pack-min(from_pack)+1 end as num_of_packs,
-                p.sale_id as sale_order_id,
-                case when p.subtype = 'ppl' then p.id else p.previous_step_id end as ppl_id,
-                min(m.length) as length,
-                min(m.width) as width,
-                min(m.height) as height,
-                min(m.weight) as weight,
-                min(m.state) as state,
-                min(m.location_id) as location_id,
-                min(m.location_dest_id) as location_dest_id,
-                min(m.pack_type) as pack_type,
-                p.id as draft_packing_id,
-                p.description_ppl as description_ppl,
-                '_name'::varchar(5) as name,
-                min(pl.currency_id) as currency_id,
-                sum(sol.price_unit * m.product_qty) as total_amount
-            from stock_picking p
-            inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
-            left join sale_order so on so.id = p.sale_id
-            left join sale_order_line sol on sol.id = m.sale_line_id
-            left join product_pricelist pl on pl.id = so.pricelist_id
-            where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
-    )
-    ''')
-    
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        get functional values
-        '''
-        result = {}
-        compute_moves = not fields or 'move_lines' in fields
-        for pf_memory in self.browse(cr, uid, ids, context=context):
-            values = {
-                'amount': 0.0,
-                'total_weight': 0.0,
-                'total_volume': 0.0,
-            }
-            if compute_moves:
-                values['move_lines'] = []
-            num_of_packs = pf_memory.num_of_packs
-            if num_of_packs:
-                values['amount'] = pf_memory.total_amount / num_of_packs
-            values['total_weight'] = pf_memory.weight * num_of_packs
-            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.0
-
-            result[pf_memory.id] = values
-
-        if compute_moves and ids:
-            if isinstance(ids, (int, long)):
-                ids = [ids]
-
-            cr.execute('select id, move_lines from '+self._table+' where id in %s', (tuple(ids),))
-            for q_result in cr.fetchall():
-                result[q_result[0]]['move_lines'] = q_result[1] or []
-        return result
-
-    _columns = {
-        'name': fields.char(string='Reference', size=1024),
-        'shipment_id': fields.many2one('shipment', string='Shipment'),
-        'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
-        'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
-        'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
-        'from_pack': fields.integer(string='From p.'),
-        'to_pack': fields.integer(string='To p.'),
-        'pack_type': fields.many2one('pack.type', string='Pack Type'),
-        'length' : fields.float(digits=(16,2), string='Length [cm]'),
-        'width' : fields.float(digits=(16,2), string='Width [cm]'),
-        'height' : fields.float(digits=(16,2), string='Height [cm]'),
-        'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
-        # functions
-        'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
-        'state': fields.selection(selection=[
-            ('draft', 'Draft'),
-            ('assigned', 'Available'),
-            ('stock_return', 'Returned to Stock'),
-            ('ship_return', 'Returned from Shipment'),
-            ('cancel', 'Cancelled'),
-            ('done', 'Closed'),], string='State'),
-        'location_id': fields.many2one('stock.location', string='Src Loc.'),
-        'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
-        'total_amount': fields.float('Total Amount'),
-        'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
-        'currency_id': fields.many2one('res.currency', string='Currency'),
-        'num_of_packs': fields.integer('#Packs'),
-        'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
-        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
-        'description_ppl': fields.char('Description', size=256 ),
-    }
-    
-    _defaults = {
-        'shipment_id': False,
-        'draft_packing_id': False,
-    }
-    
-pack_family_memory()
-
-
 class wizard(osv.osv):
     '''
     class offering open_wizard method for wizard control
@@ -3188,6 +3076,118 @@ class stock_move(osv.osv):
         return res
 
 stock_move()
+
+
+class pack_family_memory(osv.osv):
+    '''
+    dynamic memory object for pack families
+    '''
+    _name = 'pack.family.memory'
+    _auto = False
+    def init(self, cr):
+        cr.execute('''create or replace view pack_family_memory as (
+            select
+                min(m.id) as id,
+                p.shipment_id as shipment_id,
+                to_pack as to_pack,
+                array_agg(m.id) as move_lines,
+                min(from_pack) as from_pack,
+                case when to_pack=0 then 0 else to_pack-min(from_pack)+1 end as num_of_packs,
+                p.sale_id as sale_order_id,
+                case when p.subtype = 'ppl' then p.id else p.previous_step_id end as ppl_id,
+                min(m.length) as length,
+                min(m.width) as width,
+                min(m.height) as height,
+                min(m.weight) as weight,
+                min(m.state) as state,
+                min(m.location_id) as location_id,
+                min(m.location_dest_id) as location_dest_id,
+                min(m.pack_type) as pack_type,
+                p.id as draft_packing_id,
+                p.description_ppl as description_ppl,
+                '_name'::varchar(5) as name,
+                min(pl.currency_id) as currency_id,
+                sum(sol.price_unit * m.product_qty) as total_amount
+            from stock_picking p
+            inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
+            left join sale_order so on so.id = p.sale_id
+            left join sale_order_line sol on sol.id = m.sale_line_id
+            left join product_pricelist pl on pl.id = so.pricelist_id
+            where p.shipment_id is not null
+            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
+    )
+    ''')
+    
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get functional values
+        '''
+        result = {}
+        compute_moves = not fields or 'move_lines' in fields
+        for pf_memory in self.browse(cr, uid, ids, context=context):
+            values = {
+                'amount': 0.0,
+                'total_weight': 0.0,
+                'total_volume': 0.0,
+            }
+            if compute_moves:
+                values['move_lines'] = []
+            num_of_packs = pf_memory.num_of_packs
+            if num_of_packs:
+                values['amount'] = pf_memory.total_amount / num_of_packs
+            values['total_weight'] = pf_memory.weight * num_of_packs
+            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.0
+
+            result[pf_memory.id] = values
+
+        if compute_moves and ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+
+            cr.execute('select id, move_lines from '+self._table+' where id in %s', (tuple(ids),))
+            for q_result in cr.fetchall():
+                result[q_result[0]]['move_lines'] = q_result[1] or []
+        return result
+
+    _columns = {
+        'name': fields.char(string='Reference', size=1024),
+        'shipment_id': fields.many2one('shipment', string='Shipment'),
+        'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
+        'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
+        'ppl_id': fields.many2one('stock.picking', string="PPL Ref"),
+        'from_pack': fields.integer(string='From p.'),
+        'to_pack': fields.integer(string='To p.'),
+        'pack_type': fields.many2one('pack.type', string='Pack Type'),
+        'length' : fields.float(digits=(16,2), string='Length [cm]'),
+        'width' : fields.float(digits=(16,2), string='Width [cm]'),
+        'height' : fields.float(digits=(16,2), string='Height [cm]'),
+        'weight' : fields.float(digits=(16,2), string='Weight p.p [kg]'),
+        # functions
+        'move_lines': fields.function(_vals_get, method=True, type='one2many', relation='stock.move', string='Stock Moves', multi='get_vals',),
+        'state': fields.selection(selection=[
+            ('draft', 'Draft'),
+            ('assigned', 'Available'),
+            ('stock_return', 'Returned to Stock'),
+            ('ship_return', 'Returned from Shipment'),
+            ('cancel', 'Cancelled'),
+            ('done', 'Closed'),], string='State'),
+        'location_id': fields.many2one('stock.location', string='Src Loc.'),
+        'location_dest_id': fields.many2one('stock.location', string='Dest. Loc.'),
+        'total_amount': fields.float('Total Amount'),
+        'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', multi='get_vals',),
+        'currency_id': fields.many2one('res.currency', string='Currency'),
+        'num_of_packs': fields.integer('#Packs'),
+        'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
+        'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
+        'description_ppl': fields.char('Description', size=256 ),
+    }
+    
+    _defaults = {
+        'shipment_id': False,
+        'draft_packing_id': False,
+    }
+    
+pack_family_memory()
 
 
 class sale_order(osv.osv):
