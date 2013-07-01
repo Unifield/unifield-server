@@ -20,6 +20,7 @@ class setup_remote_warehouse(osv.osv_memory):
     _sequences_to_prefix = [
         'specific_rules.sequence_production_lots',
         'stock.seq_picking_internal',
+        'stock.seq_picking_in'
         'procurement_request.seq_procurement_request',
     ]
     
@@ -68,7 +69,8 @@ class setup_remote_warehouse(osv.osv_memory):
                     continue
                 
                 sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-                ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
+                if sequence_prefix[-3:] != 'RW/':
+                    ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : '%sRW/' % sequence_prefix})
         
         # mark entity as usb_instance_type and set clone date
         new_vals = {
@@ -93,7 +95,7 @@ class setup_remote_warehouse(osv.osv_memory):
         
         if entity.usb_instance_type != 'central_platform':
             
-            # reactive sync server connection line to let remote warehouse perform normal sync again
+            # reactivate sync server connection line to let remote warehouse perform normal sync again
             self._set_sync_menu_active(cr, uid, True)
             
             # remove /RW from ir.sequence prefixes 
@@ -107,7 +109,7 @@ class setup_remote_warehouse(osv.osv_memory):
                     continue
                 
                 sequence_prefix = ir_sequence_object.read(cr, 1, [sequence_id], ['prefix'])[0]['prefix']
-                if sequence_prefix[-3:] == '/RW':
+                if sequence_prefix[-3:] == 'RW/':
                     ir_sequence_object.write(cr, 1, sequence_id, {'prefix' : sequence_prefix[:-3]})
 
         # mark entity as remote warehouse and set clone date
