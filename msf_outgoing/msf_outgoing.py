@@ -1745,6 +1745,38 @@ class stock_picking(osv.osv):
                     continue
 
         return res
+
+    def _get_lines_state(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the state according to line states
+        '''
+        res = {}
+
+        for pick in self.browse(cr, uid, ids, context=context):
+            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft':
+                res[pick.id] = False
+                break
+
+            res[pick.id] = 'confirmed'
+            available = False
+            confirmed = False
+            for move in pick.move_lines:
+                if move.state != 'assigned':
+                    confirmed = True
+                else:
+                    available = True
+
+                if confirmed and available:
+                    break
+
+            if available and confirmed:
+                res[pick.id] = 'mixed'
+            elif available:
+                res[pick.id] = 'assigned'
+            else:
+                res[pick.id] = 'confirmed'
+
+        return res
     
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
@@ -1771,8 +1803,12 @@ class stock_picking(osv.osv):
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
-                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}
-                ),
+                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}),
+                'line_state': fields.function(_get_lines_state, method=True, type='selection', 
+                                    selection=[('confirmed', 'Not available'),
+                                               ('assigned', 'Available'),
+                                               ('mixed', 'Partially available')], string='Lines state', 
+                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state'], 10)}),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
