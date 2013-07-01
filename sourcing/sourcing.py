@@ -582,10 +582,12 @@ class sourcing_line(osv.osv):
                                               {'sourcing_trace_ok': False,
                                                'sourcing_trace': ''}, context=context)
         except osv.except_osv, e:
+            cr.rollback()
             self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
                                               {'sourcing_trace_ok': True,
                                                'sourcing_trace': e.value}, context=context)
         except Exception, e:
+            cr.rollback()
             self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
                                               {'sourcing_trace_ok': True,
                                                'sourcing_trace': str(e)}, context=context)
