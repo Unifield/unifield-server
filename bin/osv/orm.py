@@ -932,6 +932,7 @@ class orm_template(object):
             data = pickle.load(file(config.get('import_partial')))
             original_value = data.get(filename, 0)
 
+        from osv import except_osv
         position = 0
         while position<len(datas):
             res = {}
@@ -946,6 +947,8 @@ class orm_template(object):
                 id = ir_model_data_obj._update(cr, uid, self._name,
                      current_module, res, mode=mode, xml_id=xml_id,
                      noupdate=noupdate, res_id=res_id, context=context)
+            except except_osv, e:
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
 
@@ -3549,7 +3552,8 @@ class orm(orm_template):
         self._check_concurrency(cr, ids, context)
         self.pool.get('ir.model.access').check(cr, user, self._name, 'write', context=context)
 
-        result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
+        #result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
+        result = []
 
         # No direct update of parent_left/right
         vals.pop('parent_left', None)
@@ -3884,11 +3888,13 @@ class orm(orm_template):
             result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
         self._validate(cr, user, [id_new], context)
 
-        if not context.get('no_store_function', False):
+        if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
             result += self._store_get_values(cr, user, [id_new], vals.keys(), context)
             result.sort()
             done = []
             for order, object, ids, fields2 in result:
+                if context.get('bypass_store_function') and (object, fields2) in context['bypass_store_function']:
+                    continue
                 if not (object, ids, fields2) in done:
                     self.pool.get(object)._store_set_values(cr, user, ids, fields2, context)
                     done.append((object, ids, fields2))
@@ -4271,13 +4277,18 @@ class orm(orm_template):
         context_wo_lang = context.copy()
         if 'lang' in context:
             del context_wo_lang['lang']
-        data = self.read(cr, uid, [id,], context=context_wo_lang)
+
+        fields = self.fields_get(cr, uid, context=context)
+        to_read = []
+        for f in fields:
+            if 'function' not in fields[f]:
+                to_read.append(f)
+        data = self.read(cr, uid, [id,], to_read, context=context_wo_lang)
         if data:
             data = data[0]
         else:
             raise IndexError( _("Record #%d of %s not found, cannot copy!") %( id, self._name))
 
-        fields = self.fields_get(cr, uid, context=context)
         for f in fields:
             ftype = fields[f]['type']
 
@@ -4287,7 +4298,8 @@ class orm(orm_template):
             if f in default:
                 data[f] = default[f]
             elif 'function' in fields[f]:
-                del data[f]
+                if f in data:
+                    del data[f]
             elif ftype == 'many2one':
                 try:
                     data[f] = data[f] and data[f][0]

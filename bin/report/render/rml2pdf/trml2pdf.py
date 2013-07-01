@@ -62,11 +62,20 @@ class ParaWrap(platypus.Paragraph):
             self.blPara = self.breakLines([first_line_width, later_widths])
             new = []
             for line in self.blPara.lines:
-                if line[0] < 0:
-                    for w in  wordSplit(line[1][0], first_line_width, self.blPara.fontName, self.blPara.fontSize):
-                        new.append((w[0], [w[1]]))	
+                if self.blPara.kind == 0 and line[0] < 0 or self.blPara.kind == 1 and line.extraSpace < 0:
+                    if self.blPara.kind == 1:
+                        for txt in line.words:
+                            for w in wordSplit(txt.text, first_line_width, txt.fontName, txt.fontSize):
+                                abag = txt.clone()
+                                abag.text = w[1]
+                                new.append(platypus.ParaLines(extraSpace=w[0], wordCount=1, fontSize=txt.fontSize, fontName=txt.fontName, words=[abag]))
+
+                    else:
+                        for w in wordSplit(line[1][0], first_line_width, self.blPara.fontName, self.blPara.fontSize):
+                            new.append((w[0], [w[1]]))
                 else:
                     new.append(line)
+
             self.blPara.lines = new
         self.height = len(self.blPara.lines) * self.style.leading
         return (self.width, self.height)
@@ -761,7 +770,7 @@ class _rml_flowable(object):
                 if node.tag == 'para':
                     result.append(platypus.Paragraph(i, style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
                 else:
-                    result.append(ParaWrap(self._textual(node), style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
+                    result.append(ParaWrap(i, style, **(utils.attr_get(node, [], {'bulletText':'str'}))))
             return result
         elif node.tag=='barCode':
             try:
