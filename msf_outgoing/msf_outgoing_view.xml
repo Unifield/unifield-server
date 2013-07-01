@@ -330,7 +330,7 @@
 									</group>
 								</form>
 							</field>
-							<group col="13" colspan="4">
+							<group col="14" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
 								<field name="flow_type" />
