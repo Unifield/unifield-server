@@ -125,6 +125,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'employee_id': l.employee_id and l.employee_id.id or False,
                         }
                         self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
+                # UF-2045: Validate the move to check lines
+                self.pool.get('account.move').validate(cr, uid, [move_id], context=context)
         return res
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -148,6 +150,13 @@ class msf_doc_import_accounting(osv.osv_memory):
 
         # Check wizard data
         for wiz in self.browse(cr, uid, ids):
+            # UF-2045: Check that the given date is in an open period
+            wiz_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wiz.date, context)
+            if not wiz_period_ids:
+                raise osv.except_osv(_('Warning'), _('No period found!'))
+            period = self.pool.get('account.period').browse(cr, uid, wiz_period_ids[0], context)
+            if not period or period.state in ['created', 'done']:
+                raise osv.except_osv(_('Warning'), _('Period for migration is not open!'))
             # Check that a file was given
             if not wiz.file:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))

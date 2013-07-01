@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-    <!-- Journal Items -->
+    <!-- Journal Items Lines for correction wizard -->
         <record model="ir.ui.view" id="wizard_journal_items_corrections_lines_tree">
             <field name="name">wizard.journal.items.corrections.lines.tree</field>
             <field name="model">wizard.journal.items.corrections.lines</field>
@@ -25,6 +25,7 @@
             </field>
         </record>
 
+    <!-- Correction wizard -->
         <record model="ir.ui.view" id="wizard_journal_items_corrections_form">
             <field name="name">wizard.journal.items.corrections.form</field>
             <field name="model">wizard.journal.items.corrections</field>
@@ -41,9 +42,10 @@
                     <group colspan="4" col="6">
                         <label string ="" colspan="1"/>
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-                        <button icon="gtk-undo" string="Reverse" name="action_reverse" type="object"/>
+                        <button icon="gtk-undo" string="Reverse" name="action_reverse" type="object" attrs="{'invisible': [('from_register', '=', True)]}"/>
                         <button icon="gtk-redo" string="Correct" name="action_confirm" type="object"/>
                     </group>
+                    <field name="from_register" invisible="1"/>
                     <field name="state" invisible="1"/>
                 </form>
             </field>

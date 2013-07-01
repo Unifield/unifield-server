@@ -305,6 +305,10 @@ class purchase_order(osv.osv):
             ids = [ids]
         categ = {'transport': _('Transport'),
                  'service': _('Service')}
+        if context is None:
+            context = {}
+        if context.get('import_in_progress'):
+            return True
         
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
@@ -1182,14 +1186,22 @@ stock moves which are already processed : '''
                 sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
                 self.pool.get('stock.move').action_confirm(cr, uid, sm_ids, context=context)
                 stock_location_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+                cross_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+                non_stock_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
                 for move in move_obj.browse(cr, uid, sm_ids, context=context):
+                    # Reset the location_id to Stock
+                    location_id = stock_location_id
                     # Search if this move has been processed
                     backmove_ids = self.pool.get('stock.move').search(cr, uid, [('backmove_id', '=', move.id)])
                     if move.state != 'done' and not backmove_ids and not move.backmove_id:
-                        move_obj.write(cr, uid, sm_ids, {'dpo_id': order.id, 'state': 'done',
-                                                         'location_id': stock_location_id,
-                                                         'location_dest_id': stock_location_id, 
-                                                         'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                        if move.product_id.type in ('service', 'service_recep'):
+                            location_id = cross_id
+                        elif move.product_id.type == 'consu':
+                            location_id = non_stock_id
+                        move_obj.write(cr, uid, [move.id], {'dpo_id': order.id, 'state': 'done',
+                                                            'location_id': location_id,
+                                                            'location_dest_id': location_id, 
+                                                            'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                         wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
                         if move.picking_id: 
                             all_move_closed = True

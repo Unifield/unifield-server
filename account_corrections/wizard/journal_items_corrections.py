@@ -157,12 +157,27 @@ class journal_items_corrections(osv.osv_memory):
     _name = 'wizard.journal.items.corrections'
     _description = 'Journal items corrections wizard'
 
+    def _get_from_register(self, cr, uid, ids, field_name, arg, context):
+        """
+        Return true if the line comes from a journal entry that have links to a register line
+        """
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context):
+            res[wiz.id] = False
+            if wiz.move_line_id.move_id and wiz.move_line_id.move_id.line_id:
+                for ml_line in wiz.move_line_id.move_id.line_id:
+                    if ml_line.statement_id:
+                        res[wiz.id] = True
+                        break
+        return res
+
     _columns = {
         'date': fields.date(string="Correction date", states={'open':[('required', True)]}),
         'move_line_id': fields.many2one('account.move.line', string="Move Line", required=True, readonly=True),
         'to_be_corrected_ids': fields.one2many('wizard.journal.items.corrections.lines', 'wizard_id', string='', help='Line to be corrected'),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
         'from_donation': fields.boolean('From Donation account?'),
+        'from_register': fields.function(_get_from_register, type='boolean', string='From register?', method=True, store=False),
     }
 
     _defaults = {
