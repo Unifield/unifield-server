@@ -144,7 +144,6 @@ class shipment(osv.osv):
                 if backshipment_id and backshipment_id != packing.backorder_id.shipment_id.id:
                     assert False, 'all packing of the shipment have not the same draft shipment correspondance - %s - %s'%(backshipment_id, packing.backorder_id.shipment_id.id)
                 backshipment_id = packing.backorder_id and packing.backorder_id.shipment_id.id or False
-            
             # if state is in ('draft', 'done', 'cancel'), the shipment keeps the same state
             if state not in ('draft', 'done', 'cancel',):
                 if first_shipment_packing_id:
@@ -160,25 +159,25 @@ class shipment(osv.osv):
             values['state'] = state
             values['backshipment_id'] = backshipment_id
             
-            for memory_family in shipment.pack_family_memory_ids:
+            pack_fam_ids = [x.id for x in shipment.pack_family_memory_ids]
+            for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_fam_ids, ['state', 'num_of_packs', 'total_weight', 'total_volume', 'total_amount', 'currency_id']):
                 # taken only into account if not done (done means returned packs)
-                if shipment.state in ('delivered', 'done') or memory_family.state not in ('done',) :
+                if shipment.state in ('delivered', 'done') or memory_family['state'] not in ('done',) :
                     # num of packs
-                    num_of_packs = memory_family.num_of_packs
+                    num_of_packs = memory_family['num_of_packs']
                     values['num_of_packs'] += int(num_of_packs)
                     # total weight
-                    total_weight = memory_family.total_weight
+                    total_weight = memory_family['total_weight']
                     values['total_weight'] += int(total_weight)
                     # total volume
-                    total_volume = memory_family.total_volume
+                    total_volume = memory_family['total_volume']
                     values['total_volume'] += float(total_volume)
                     # total amount
-                    total_amount = memory_family.total_amount
+                    total_amount = memory_family['total_amount']
                     values['total_amount'] += total_amount
                     # currency
-                    currency_id = memory_family.currency_id and memory_family.currency_id.id or False
+                    currency_id = memory_family['currency_id'] or False
                     values['currency_id'] = currency_id
-                
         return result
     
     def _get_shipment_ids(self, cr, uid, ids, context=None):
@@ -200,19 +199,22 @@ class shipment(osv.osv):
         """
         if context is None:
             context = {}
-            
-        shipments = self.pool.get('shipment').search(cr, uid, [], context=context)
         # result dic
         result = {}
-        for shipment in self.browse(cr, uid, shipments, context=context):
-            result[shipment.id] = shipment.num_of_packs
         # construct the request
         # adapt the operator
         op = args[0][1]
-        if op == '=':
-            op = '=='
-        ids = [('id', 'in', [x for x in result.keys() if eval("%s %s %s"%(result[x], op, args[0][2]))])]
-        return ids
+        cr.execute('''
+        select t.id, sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) as sumpack from (
+            select p.shipment_id as id, min(to_pack) as tp, min(from_pack) as fp from stock_picking p
+            left join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
+            where p.shipment_id is not null
+            group by p.shipment_id, to_pack, from_pack
+        ) t
+        group by t.id
+        having sum(case when t.tp != 0 then  t.tp - t.fp + 1 else 0 end) %s %s
+''' % (args[0][1], args[0][2]))
+        return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.datetime(string='Creation Date'),
