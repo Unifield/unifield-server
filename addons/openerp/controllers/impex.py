@@ -412,8 +412,9 @@ class ImpEx(SecuredController):
 
         view_name = ctx.get('_terp_view_name', '')
 
-        if not params.ids or all_records:
+        if not params.ids or all_records or ctx.get('group_by_no_leaf'):
             domain = params.search_domain or []
+            ctx.update({'domain': domain})
             if params.model == 'product.product':
                 ids = proxy.search(domain, 0, None, 0, ctx)
             else:
