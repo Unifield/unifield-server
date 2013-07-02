@@ -20,7 +20,7 @@ class setup_remote_warehouse(osv.osv_memory):
     _sequences_to_prefix = [
         'specific_rules.sequence_production_lots',
         'stock.seq_picking_internal',
-        'stock.seq_picking_in'
+        'stock.seq_picking_in',
         'procurement_request.seq_procurement_request',
     ]
     
@@ -120,3 +120,4 @@ class setup_remote_warehouse(osv.osv_memory):
         }
 
 setup_remote_warehouse()
+
