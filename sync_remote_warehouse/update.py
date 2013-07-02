@@ -4,6 +4,20 @@ import tools
 class UpdateReceived(osv.osv):
     _inherit = 'sync.client.update_received'
     _name = 'sync_remote_warehouse.update_received'
+    
+    def _conflict(self, cr, uid, sdref, next_version, context=None):
+        ir_data = self.pool.get('ir.model.data')
+        data_id = ir_data.find_sd_ref(cr, uid, sdref, context=context)
+        # no data => no record => no conflict
+        if not data_id: return False
+        data_rec = ir_data.browse(cr, uid, data_id, context=context)
+        return (not data_rec.is_deleted                                           # record doesn't exists => no conflict
+                and (not data_rec.sync_date and not data_rec.usb_sync_date        # never synced => conflict
+                     or (data_rec.last_modification and data_rec.sync_date        # if last_modification and sync date exist,
+                         and data_rec.sync_date < data_rec.last_modification)     # modification after synchro => conflict
+                     or (data_rec.last_modification and data_rec.usb_sync_date    # if last_modification and usb sync date exist,
+                         and data_rec.usb_sync_date < data_rec.last_modification) # modification after synchro => conflict
+                     or next_version < data_rec.version))                         # next version is lower than current version
 
 UpdateReceived()
 
