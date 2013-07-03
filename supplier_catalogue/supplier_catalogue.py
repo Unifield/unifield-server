@@ -730,7 +730,9 @@ class supplier_catalogue_line(osv.osv):
         else:
             return {}
         
-        return res.setdefault('value', {}).update(v)
+        res.setdefault('value', {}).update(v)
+
+        return res
 
     def change_uom_qty(self, cr, uid, ids, uom_id, min_qty, min_order_qty):
         '''

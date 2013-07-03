@@ -165,7 +165,7 @@ class pricelist_partnerinfo(osv.osv):
             partner = self.pool.get('res.partner').browse(cr, uid, context.get('partner_id'), context=context)
             res['currency_id'] = partner.property_product_pricelist_purchase.currency_id.id
             res['partner_id'] = partner.id
-        if context.get('active_id', False) and isinstance(context['active_id'], (int, long)):
+        if context.get('active_model', False) == 'product.supplierinfo' and context.get('active_id', False) and isinstance(context['active_id'], (int, long)):
             read_partnerinfo = self.pool.get('product.supplierinfo').read(cr, uid, context['active_id'])
             res['uom_id'] = read_partnerinfo['product_uom'][0]
         
