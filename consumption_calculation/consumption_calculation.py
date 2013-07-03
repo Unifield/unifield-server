@@ -780,7 +780,7 @@ class real_average_consumption_line(osv.osv):
         
         return result
 
-    def change_isset(self, cr, uid, id, asset, product_id, location_id, uom, remark=False, context=None):
+    def change_asset(self, cr, uid, id, asset, product_id, location_id, uom, remark=False, context=None):
         '''
         Asset change, remove the remark
         '''
