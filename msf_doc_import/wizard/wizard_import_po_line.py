@@ -157,7 +157,9 @@ class wizard_import_po_line(osv.osv_memory):
                         round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
                         if round_qty.get('warning', {}).get('message'):
                             to_write.update({'product_qty': round_qty['value']['product_qty']})
-                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
+                            warn_list = to_write['warning_list']
+                            warn_list.append(round_qty['warning']['message'])
+#                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     # Cell 4: Price
                     price_value = {}

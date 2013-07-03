@@ -336,7 +336,7 @@ class purchase_order_line(osv.osv):
                                                     nomen_manda_0=False, comment=False, context=context)
                         if not context.get('po_integration'):
                             price_unit = res.get('value', {}).get('price_unit', False)
-                            text_error += _('We use the price mechanism to compute the Price Unit.')
+                            text_error += _('\n We use the price mechanism to compute the Price Unit.')
                         uom = res.get('value', {}).get('product_uom', False)
                         warning_msg = res.get('warning', {}).get('message', '')
                         text_error += '\n %s' % warning_msg
