@@ -942,5 +942,21 @@
             src_model="account.move"
             view_id="view_move_line_tree_from_move"/>
 
+    <!--
+      Add partner_txt to analytic journal entries
+    -->
+        <record id="inherit_view_account_analytic_tree" model="ir.ui.view">
+            <field name="name">inherit.view.account.analytic.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='account_id']" position="after">
+                    <field name="partner_txt"/>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </openerp>
