@@ -934,7 +934,7 @@ class composition_item(osv.osv):
                             }}
         if product_id:
             product = prod_obj.browse(cr, uid, product_id, context=context)
-            result['value']['item_uom_id'] = product.uom_po_id.id
+            result['value']['item_uom_id'] = product.uom_id.id
             result['value']['hidden_perishable_mandatory'] = product.perishable
             result['value']['hidden_batch_management_mandatory'] = product.batch_management
             result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
