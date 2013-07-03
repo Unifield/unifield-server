@@ -3076,6 +3076,7 @@ class stock_move(osv.osv):
         get functional values
         '''
         result = {}
+        uom_obj = self.pool.get('product.uom')
         for move in self.browse(cr, uid, ids, context=context):
             values = {'qty_per_pack': 0.0,
                       'total_amount': 0.0,
@@ -3101,6 +3102,7 @@ class stock_move(osv.osv):
                 values['qty_per_pack'] = 0
             # total amount (float)
             total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
+            total_amount = uom_obj._compute_price(cr, uid, move.product_id.uom_id.id, total_amount, move.product_uom.id)
             values['total_amount'] = total_amount
             # amount for one pack
             if num_of_packs:
