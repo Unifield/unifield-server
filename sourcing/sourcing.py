@@ -1022,7 +1022,7 @@ class procurement_order(osv.osv):
                 if 'procurement' in kwargs and 'partner_id' in context:
                     procurement = kwargs['procurement']
                     pricelist = kwargs['pricelist']
-                    st_price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], procurement.product_id.id, procurement.product_qty, context['partner_id'], {'uom': line.get('product_uom', procurement.product_id.uom_po_id.id)})[pricelist.id]
+                    st_price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], procurement.product_id.id, procurement.product_qty, context['partner_id'], {'uom': line.get('product_uom', procurement.product_id.uom_id.id)})[pricelist.id]
                 cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             if not st_price:

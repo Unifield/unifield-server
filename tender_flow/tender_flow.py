@@ -543,7 +543,7 @@ class tender_line(osv.osv):
         prod_obj = self.pool.get('product.product')
         result = {'value': {}}
         if product_id:
-            uom_id = prod_obj.browse(cr, uid, product_id, context=context).uom_po_id.id
+            uom_id = prod_obj.browse(cr, uid, product_id, context=context).uom_id.id
 
         result = self.onchange_uom_qty(cr, uid, id, uom_id, product_qty)
         
