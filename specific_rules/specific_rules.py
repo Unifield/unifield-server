@@ -1755,12 +1755,12 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(-pt.standard_price * m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(-pt.standard_price * m.product_qty / u.factor)::decimal, 0.0) END as value,
+        coalesce(sum((-pt.standard_price * m.product_qty) / u.factor * pu.factor)::decimal, 0.0) END as value,
         CASE when pt.uom_id = m.product_uom
         THEN
         coalesce(sum(-m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(-m.product_qty / u.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(-m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
@@ -1784,12 +1784,12 @@ CREATE OR REPLACE view report_stock_inventory AS (
         THEN
         coalesce(sum(pt.standard_price * m.product_qty )::decimal, 0.0)
         ELSE
-        coalesce(sum(pt.standard_price * m.product_qty / u.factor )::decimal, 0.0) END as value,
+        coalesce(sum((pt.standard_price * m.product_qty) / u.factor * pu.factor )::decimal, 0.0) END as value,
         CASE when pt.uom_id = m.product_uom
         THEN
         coalesce(sum(m.product_qty)::decimal, 0.0)
         ELSE
-        coalesce(sum(m.product_qty / u.factor)::decimal, 0.0) END as product_qty
+        coalesce(sum(m.product_qty / u.factor * pu.factor)::decimal, 0.0) END as product_qty
     FROM
         stock_move m
             LEFT JOIN stock_picking p ON (m.picking_id=p.id)
