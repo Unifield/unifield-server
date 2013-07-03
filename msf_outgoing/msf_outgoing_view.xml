@@ -380,11 +380,17 @@
 						<field name="name"/>
 						<field name="partner_id2" />
 						<field name="origin"/>
-						<newline />
+                        <newline />
 						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
 						<field name="date" />
 						<field name="min_date" />
-					</group>
+                    </group>
+                    <newline />
+                    <group string="State of lines" col="8" colspan="4">
+                        <filter icon="gtk-no" name="line_not_available" string="Not available" domain="[('line_state', '=', 'confirmed')]" />
+                        <filter icon="gtk-dialog-question" name="line_mixed" string="Partially available" domain="[('line_state', '=', 'mixed')]" />
+                        <filter icon="gtk-yes" name="line_available" string="Available" domain="[('line_state', '=', 'assigned')]" />
+                    </group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
 						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
