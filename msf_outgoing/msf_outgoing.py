@@ -1748,7 +1748,13 @@ class stock_picking(osv.osv):
 
     def _get_lines_state(self, cr, uid, ids, field_name, args, context=None):
         '''
-        Returns the state according to line states
+        Returns the state according to line states and picking state
+        If the Picking Ticket is not draft, don't compute the line state
+        Else, for all moves with quantity, check the state of the move
+        and set the line state with these values :
+        'mixed': 'Partially Available'
+        'assigned': 'Available'
+        'confirmed': 'Not available'
         '''
         res = {}
 
@@ -1761,6 +1767,9 @@ class stock_picking(osv.osv):
             available = False
             confirmed = False
             for move in pick.move_lines:
+                if move.product_qty == 0.00:
+                    continue
+
                 if move.state != 'assigned':
                     confirmed = True
                 else:
