@@ -2144,7 +2144,7 @@ class purchase_order_line(osv.osv):
                 all_qty -= line_id.product_qty
         
         if product and not uom:
-            uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
+            uom = self.pool.get('product.product').browse(cr, uid, product).uom_id.id
         
         if context and context.get('purchase_id') and state == 'draft' and product:    
             domain = [('product_id', '=', product), 
