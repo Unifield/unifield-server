@@ -208,7 +208,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 base_num = 2
                 for el in col_names:
                     if not el in cols:
-                        raise osv.except_osv(_('Error'), _("'%s' column not found in file."))
+                        raise osv.except_osv(_('Error'), _("'%s' column not found in file.") % (el or '',))
                 # All lines
                 money = {}
                 # Update wizard
