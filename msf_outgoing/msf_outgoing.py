@@ -1759,9 +1759,9 @@ class stock_picking(osv.osv):
         res = {}
 
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft':
+            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft' or not pick.move_lines:
                 res[pick.id] = False
-                break
+                continue
 
             res[pick.id] = 'confirmed'
             available = False
@@ -1782,8 +1782,10 @@ class stock_picking(osv.osv):
                 res[pick.id] = 'mixed'
             elif available:
                 res[pick.id] = 'assigned'
-            else:
+            elif confirmed:
                 res[pick.id] = 'confirmed'
+            else:
+                res[pick.id] = False
 
         return res
     
