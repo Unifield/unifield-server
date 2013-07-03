@@ -1817,7 +1817,7 @@ class stock_picking(osv.osv):
                                     selection=[('confirmed', 'Not available'),
                                                ('assigned', 'Available'),
                                                ('mixed', 'Partially available')], string='Lines state', 
-                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state'], 10)}),
+                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10)}),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
