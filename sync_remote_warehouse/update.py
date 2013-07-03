@@ -4,6 +4,7 @@ import tools
 class UpdateReceived(osv.osv):
     _inherit = 'sync.client.update_received'
     _name = 'sync_remote_warehouse.update_received'
+    _sync_field = 'usb_sync_field'
     
     def _conflict(self, cr, uid, sdref, next_version, context=None):
         ir_data = self.pool.get('ir.model.data')

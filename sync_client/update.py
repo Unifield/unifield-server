@@ -243,6 +243,7 @@ class update_received(osv.osv):
 
     _name = "sync.client.update_received"
     _rec_name = 'source'
+    _sync_field = 'sync_field'
 
     _columns = {
         'source': fields.char('Source Instance', size=128, readonly=True), 
@@ -396,10 +397,11 @@ class update_received(osv.osv):
                         'log' : log,
                     }, context=context)
                 logs.clear()
+                
                 for sdref, version in versions.items():
                     try:
                         self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                            sdref, {'version':version,'sync_date':fields.datetime.now()},
+                            sdref, {'version': version, self._sync_field: fields.datetime.now()},
                             context=context)
                     except ValueError:
                         self._logger.warning("Cannot find record %s during update execution process!" % update.sdref)
