@@ -67649,7 +67649,14 @@ msgid "Migration date"
 msgstr "Date de migration"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:404
+#: code:addons/msf_doc_import/account.py:405
 #, python-format
 msgid "An error occured. %s: %s"
 msgstr "Une erreur est survenue. %s: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:409
+#, python-format
+msgid "An error occured: %s"
+msgstr "Une erreur est survenue: %s"
+
