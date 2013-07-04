@@ -692,7 +692,7 @@ class Entity(osv.osv):
             messages_executed = 0
             while message_ids:
                 to_do, message_ids = message_ids[:MAX_EXECUTED_MESSAGES], message_ids[MAX_EXECUTED_MESSAGES:]
-                messages.execute(cr, uid, message_ids, context=context)
+                messages.execute(cr, uid, to_do, context=context)
                 messages_executed += len(to_do)
                 if logger is not None:
                     logger.replace(logger_index, _("Message(s) processed: %d/%d") % (messages_executed, messages_count))
