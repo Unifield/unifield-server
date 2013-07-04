@@ -40,7 +40,19 @@ class stock_card_wizard(osv.osv_memory):
         'to_date': fields.date(string='To date'),
     }
 
+
+    def _get_default_product(self, cr, uid, context=None):
+        '''
+        If a product is passed in the context, set it on wizard form
+        '''
+        if not context:
+            context = {}
+
+        return context.get('product_id', False)
+
+
     _defaults = {
+        'product_id': _get_default_product,
         'to_date': lambda *a: time.strftime('%Y-%m-%d'),
     }
 

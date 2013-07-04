@@ -31,7 +31,6 @@
 
         <record id="action_stock_card" model="ir.actions.act_window">
             <field name="name">Stock card</field>
-            <field name="src_model">stock.move</field>
             <field name="res_model">stock.card.wizard</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -42,6 +41,20 @@
                   action="action_stock_card"
                   sequence="5"
                   parent="stock.menu_traceability" />
+
+
+        <!-- Menu entry at right hand side of product form -->
+        <act_window 
+            id="act_product_stock_card"
+            name="Stock Card"
+            src_model="product.product"
+            res_model="stock.card.wizard"
+            target="new"
+            view_type="form"
+            view_mode="form"
+            context="{'product_id': active_id}"
+            />
+
 
     </data>
 </openerp>
