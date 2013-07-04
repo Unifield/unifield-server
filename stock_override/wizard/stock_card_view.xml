@@ -6,6 +6,7 @@
             <field name="name">stock.card.wizard.form.view</field>
             <field name="model">stock.card.wizard</field>
             <field name="type">form</field>
+            <field name="priority" eval="99" />
             <field name="arch" type="xml">
                 <form string="Stock card parameters">
                     <separator colspan="4" string="Location" />
@@ -25,6 +26,39 @@
                         <button name="print_pdf" icon="gtk-print" type="object" string="Print PDF" />
                         <button name="print_excel" icon="terp-go-today" type="object" string="Print Excel" />
                     </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_card_form_view" model="ir.ui.view">
+            <field name="name">stock.card.form.view</field>
+            <field name="model">stock.card.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock card">
+                    <separator colspan="4" string="Location" />
+                    <field name="location_id" readonly="1" />
+                    <separator colspan="4" string="Product" />
+                    <field name="product_id" readonly="1" />
+                    <newline />
+                    <field name="perishable" invisible="1" />
+                    <field name="prodlot_id" attrs="{'invisible': [('perishable', '=', False)]}" readonly="1" />
+                    <separator colspan="4" string="Period" />
+                    <field name="from_date" readonly="1" />
+                    <field name="to_date" readonly="1" />
+                    <separator colspan="4" string="Moves" />
+                    <field name="card_lines" readonly="1">
+                        <tree string="Lines">
+                            <field name="date" />
+                            <field name="picking_id" />
+                            <field name="origin" />
+                            <field name="qty_in" />
+                            <field name="qty_out" />
+                            <field name="balance" />
+                            <field name="location_id" />
+                            <field name="notes" />
+                        </tree>
+                    </field>
                 </form>
             </field>
         </record>
