@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="stock_card_wizard_form_view" model="ir.ui.view">
+            <field name="name">stock.card.wizard.form.view</field>
+            <field name="model">stock.card.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock card parameters">
+                    <separator colspan="4" string="Location" />
+                    <field name="location_id" />
+                    <separator colspan="4" string="Product" />
+                    <field name="product_id" 
+                           on_change="onchange_product_id(product_id)" />
+                    <newline />
+                    <field name="perishable" invisible="1" />
+                    <field name="prodlot_id" attrs="{'invisible': [('perishable', '=', False)]}" />
+                    <separator colspan="4" string="Period" />
+                    <field name="from_date" />
+                    <field name="to_date" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="3">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="print_pdf" icon="gtk-print" type="object" string="Print PDF" />
+                        <button name="print_excel" icon="terp-go-today" type="object" string="Print Excel" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_stock_card" model="ir.actions.act_window">
+            <field name="name">Stock card</field>
+            <field name="src_model">stock.move</field>
+            <field name="res_model">stock.card.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_stock_card"
+                  action="action_stock_card"
+                  sequence="5"
+                  parent="stock.menu_traceability" />
+
+    </data>
+</openerp>
