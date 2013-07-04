@@ -99,6 +99,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
                     raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
 
+                line_obj._check_line_conditions(cr, uid, [line.id], context=context)
                 line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
                                                     'po_cft': wiz.po_cft, 
                                                     'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)

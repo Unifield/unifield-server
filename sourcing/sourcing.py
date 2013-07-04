@@ -314,6 +314,10 @@ class sourcing_line(osv.osv):
                line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
                 raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product, the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""))
 
+            if line.product_id and line.product_id.type in ('consu', 'service', 'service_recep') and line.type == 'make_to_stock':
+                product_type = line.product_id.type == 'consu' and _('non stockable') or _('service')
+                raise osv.except_osv(_('Warning'), _("""You cannot choose 'from stock' as method to source a %s product !""") % product_type)
+
             if not line.product_id:
                 if line.po_cft == 'cft':
                     raise osv.except_osv(_('Warning'), _("You can't source with 'Tender' if you don't have product."))
