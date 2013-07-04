@@ -73,6 +73,91 @@ class stock_card_wizard(osv.osv_memory):
 
         return {'value': {'perishable': product.perishable}}
 
+    def show_card(self, cr, uid, ids, context=None):
+        '''
+        Create the card lines and display the form view of the card
+        according to parameters.
+
+        First, we will compute the stock qty at the start date
+        Then, for each stock move, we will create a line and update the
+        balance to show the stock qty after the processing of the move
+        '''
+        move_obj = self.pool.get('stock.move')
+        line_obj = self.pool.get('stock.card.wizard.line')
+        product_obj = self.pool.get('product.obj')
+
+        if not context:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        card_id = self.browse(cr, uid, ids[0], context=context)
+        location_id = card.location_id.id
+
+        # Set the context to compute stock qty at the start date
+        context.update({'location': location_id,
+                        'compute_child': False,
+                        'to_date': card.from_date})
+
+        product = product_obj.browse(cr, uid, card.product_id.id, 
+                                                        context=context)
+        initial_stock = product.qty_available
+
+        # Create one line per stock move
+        move_ids = move_obj.search(cr, uid, 
+                                   [('product_id', '=', product_id),
+                                    ('prodlot_id', '=', prodlot_id),
+                                    ('date', '>=', card.from_date),
+                                    ('date', '<=', card.to_date),
+                                    ('state', '=', 'done'),
+                                    '|', 
+                                    ('location_id', '=', location_id),
+                                    ('location_dest_id', '=', location_id),
+                                    ], order='date asc', context=context)
+
+        for move in move_obj.browse(cr, uid, move_ids, context=context):
+            if move.location_dest_id.id == move.location_id.id:
+                continue
+
+            in_qty, out_qty = 0.00, 0.00
+            move_location = False
+            qty = uom_obj._compute_qty(cr, uid, move.product_uom.id,
+                                                move.product_qty,
+                                                move.product_id.uom_id.id,
+                                                context=context)
+
+            if move.location_dest_id.id == location_id:
+                in_qty = qty
+                move_location = move.location_id.id
+            elif move.location_id.id == location_id:
+                out_qty = qty
+                move_location = move.location_dest_id.id
+
+            initial_stock = initial_stock + in_qty - out_qty
+
+            line_values = {
+                'date_done': move.date,
+                'picking_id': move.picking_id and move.picking_id.id or False,
+                'origin': move.picking_id and move.picking_id.origin or '',
+                'qty_in': in_qty,
+                'qty_out': out_qty,
+                'balance': initial_stock,
+                'location_id': move_location,
+                'notes': move.picking_id and move.picking_id.note  or '',
+            }
+
+            line_id = line_obj.create(cr, uid, line_values, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.card.wizard',
+                'view_type': 'form',
+                'view_mode': 'form, tree',
+                'res_id': ids[0],
+                'target': 'current',
+                'context': context}
+
+
     def print_pdf(self, cr, uid, ids, context=None):
         '''
         Print the PDF report according to parameters

@@ -72,6 +72,12 @@
             <field name="context">{}</field>
         </record>
 
+        <record id="action_view_stock_card" model="ir.actions.act_window.view">
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock_card_wizard_form_view" />
+            <field name="act_window_id" ref="action_stock_card" />
+        </record>
+
         <menuitem id="menu_stock_card"
                   action="action_stock_card"
                   sequence="5"
