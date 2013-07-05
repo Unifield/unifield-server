@@ -41,7 +41,7 @@
                     <newline/>
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                    <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+                    <attribute name="on_change">onchange_uom(product_id, product_uom, product_uom_qty)</attribute>
                 </xpath>
                 </data>
             </field>

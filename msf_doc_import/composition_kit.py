@@ -131,7 +131,8 @@ Module, Product Code*, Product Description, Quantity and Product UOM"""))
             # Cell 4: UOM
             uom_value = {}
             uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-            to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+            qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'])
+            to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list'], 'qty': qty})
 
             line_data = {'item_product_id': to_write['product_id'],
                          'item_uom_id': to_write['product_uom'],
@@ -225,7 +226,8 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
             # Cell 4: UOM
             uom_value = {}
             uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
-            to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+            qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'])
+            to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list'], 'qty': qty})
 
             # Cell 5: Asset
             asset_value = {}
@@ -260,10 +262,10 @@ Module*, Product Code*, Product Description*, Quantity*, Product UOM*, Asset, Ba
             except osv.except_osv as osv_error:
                 osv_value = osv_error.value
                 osv_name = osv_error.name
-                error += "Line %s in your Excel file: %s: %s\n" % (line_num, osv_name, osv_value)
+                error += _("Line %s in your Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
 
         if complete_lines or error:
-            self.log(cr, uid, obj.id, _("# lines imported: %s. %s" % (complete_lines, error or '')), context={'view_id': view_id, })
+            self.log(cr, uid, obj.id, _("# lines imported: %s. %s") % (complete_lines, error or ''), context={'view_id': view_id, })
         return True
 
     def button_remove_lines(self, cr, uid, ids, context=None):
@@ -303,13 +305,9 @@ class composition_item(osv.osv):
         '''
         warning = {}
         if product_uom and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': 'Wrong Product UOM !',
-                           'message': "You have to select a product UOM in the same category than the UOM of the product"}
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                warning = {'title': _('Wrong Product UOM !'),
+                           'message': _("You have to select a product UOM in the same category than the UOM of the product")}
         return {'warning': warning}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -324,10 +322,10 @@ class composition_item(osv.osv):
             message = ''
             if vals.get('item_uom_id'):
                 if vals.get('item_uom_id') == tbd_uom:
-                    message += 'You have to define a valid UOM, i.e. not "To be define".'
+                    message += _('You have to define a valid UOM, i.e. not "To be define".')
             if vals.get('item_product_id'):
                 if vals.get('item_product_id') == tbd_product:
-                    message += 'You have to define a valid product, i.e. not "To be define".'
+                    message += _('You have to define a valid product, i.e. not "To be define".')
             if vals.get('item_uom_id') and vals.get('item_product_id'):
                 product_id = vals.get('item_product_id')
                 product_uom = vals.get('item_uom_id')

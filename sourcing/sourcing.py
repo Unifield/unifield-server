@@ -281,6 +281,7 @@ class sourcing_line(osv.osv):
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'stock_uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
         'estimated_delivery_date': fields.function(_get_date, type='date', method=True, store=False, string='Estimated DD', readonly=True, multi='dates'),
@@ -1017,14 +1018,21 @@ class procurement_order(osv.osv):
         if 'procurement' in kwargs:
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
             if order_line_ids:
-                origin = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0]).order_id.name
-                line.update({'origin': origin})
+                origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
+                line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
         if line.get('price_unit', False) == False:
-            st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
             if 'pricelist' in kwargs:
+                if 'procurement' in kwargs and 'partner_id' in context:
+                    procurement = kwargs['procurement']
+                    pricelist = kwargs['pricelist']
+                    st_price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], procurement.product_id.id, procurement.product_qty, context['partner_id'], {'uom': line.get('product_uom', procurement.product_id.uom_id.id)})[pricelist.id]
                 cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
+            if not st_price:
+                product = self.pool.get('product.product').browse(cr, uid, line['product_id'])
+                st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.standard_price, to_uom_id=origin_line.product_uom.id)
             line.update({'price_unit': st_price})
+
         return line
     
     def action_check_finished(self, cr, uid, ids):

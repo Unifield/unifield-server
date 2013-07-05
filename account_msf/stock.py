@@ -34,6 +34,13 @@ class stock_picking(osv.osv):
         BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
+
+        # Modify the product UoM and the quantity of line according to move attributes
+        self.write(cr, uid, [invoice_line_id], {'price_unit': move_line.price_unit,
+                                                'uos_id': move_line.product_uom,
+                                                'price_subtotal': move_line.price_unit * move_line.product_qty,
+                                                'quantity': move_line.product_qty})
+
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
             order_line = move_line.purchase_line_id or False
             account_id = (order_line.product_id and order_line.product_id.donation_expense_account and order_line.product_id.donation_expense_account.id) \

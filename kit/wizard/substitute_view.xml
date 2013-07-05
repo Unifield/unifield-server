@@ -60,8 +60,8 @@
                 				<field name="exp_substitute_item"
                 					on_change="change_expiry(exp_substitute_item,product_id_substitute_item,type_check,location_id_substitute_item,lot_id_substitute_item,uom_id_substitute_item,context)"
                 					attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': ['|', ('hidden_perishable_mandatory', '=', False), ('hidden_batch_management_mandatory', '=', True)]}" />
-                				<field name="qty_substitute_item" />
-                				<field name="uom_id_substitute_item" />
+                				<field name="qty_substitute_item" on_change="onchange_uom_qty(uom_id_substitute_item, qty_substitute_item)" />
+                				<field name="uom_id_substitute_item" on_change="onchange_uom_qty(uom_id_substitute_item, qty_substitute_item)" />
                 				<field name="asset_id_substitute_item"
                 					domain="[('product_id', '=', product_id_substitute_item)]"
 			            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />

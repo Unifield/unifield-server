@@ -53,8 +53,8 @@
                                         attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
                                     <field name="expiry_date"
                                         attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
-                                    <field name="product_qty" required="True" />
-                                    <field name="product_uom" readonly="True" />
+                                    <field name="product_qty" required="True" on_change="onchange_uom_qty(product_uom, product_qty)"/>
+                                    <field name="product_uom" required="True" on_change="onchange_uom_qty(product_uom, product_qty)" />
                                     <field name="hidden_batch_management_mandatory" readonly="True" string="B.Num" />
                                     <field name="hidden_perishable_mandatory" readonly="True" string="Exp" />
                                     <field name="err_msg" readonly="True" invisible="True" />

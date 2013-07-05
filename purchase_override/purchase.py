@@ -1677,7 +1677,7 @@ class purchase_order_line1(osv.osv):
     _inherit = 'purchase.order.line'
     _columns = {'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
                 }
-    
+
 purchase_order_line1()
 
 
@@ -1935,7 +1935,7 @@ class purchase_order_line(osv.osv):
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
             name = self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id'), context=context).name
-            super(purchase_order_line, self).write(cr, uid, po_line_id, {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
+            super(purchase_order_line, self).write(cr, uid, [po_line_id], {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
 
         return po_line_id
     
@@ -2160,7 +2160,7 @@ class purchase_order_line(osv.osv):
                 all_qty -= line_id.product_qty
         
         if product and not uom:
-            uom = self.pool.get('product.product').browse(cr, uid, product).uom_po_id.id
+            uom = self.pool.get('product.product').browse(cr, uid, product).uom_id.id
         
         if context and context.get('purchase_id') and state == 'draft' and product:    
             domain = [('product_id', '=', product), 
@@ -2237,8 +2237,10 @@ class purchase_order_line(osv.osv):
                                  'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False, 
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False, 
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
+            st_uom = self.pool.get('product.product').browse(cr, uid, product).uom_id.id
             st_price = self.pool.get('product.product').browse(cr, uid, product).standard_price
             st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False, context=context)
+            st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
         
             if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
                 res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})
