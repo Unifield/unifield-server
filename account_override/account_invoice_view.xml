@@ -43,6 +43,9 @@
         - Proforma button
         - Invoices button
         - Unpaid button
+        And add some ones:
+        - Open button
+        - Paid button
     -->
         <record id="inherit_view_account_invoice_filter" model="ir.ui.view">
             <field name="name">inherit.view.account.invoice.filter</field>
@@ -56,11 +59,18 @@
                     </xpath>
                     <xpath expr="/search/group[1]/filter[@name='invoices']" position="replace">
                     </xpath>
-                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="replace">
+                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="attributes">
+                      <attribute name="string">Open</attribute>
+                      <attribute name="help">Open Invoices</attribute>
                     </xpath>
                     <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
                     </xpath>
                     <xpath expr="/search/group[3]/filter[@string='Responsible']" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[1]/separator[1]" position="replace">
+                    </xpath>
+                    <xpath expr="/search/group[1]/filter[@name='unpaid']" position="after">
+                        <filter name="paid" icon="terp-dolar" string="Paid" domain="[('state', '=', 'paid')]"/>
                     </xpath>
                 </data>
             </field>
