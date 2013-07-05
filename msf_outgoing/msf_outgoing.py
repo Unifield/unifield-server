@@ -3102,7 +3102,8 @@ class stock_move(osv.osv):
                 values['qty_per_pack'] = 0
             # total amount (float)
             total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
-            total_amount = uom_obj._compute_price(cr, uid, move.product_id.uom_id.id, total_amount, move.product_uom.id)
+            if move.sale_line_id:
+                total_amount = uom_obj._compute_price(cr, uid, move.sale_line_id.product_uom.id, total_amount, move.product_uom.id)
             values['total_amount'] = total_amount
             # amount for one pack
             if num_of_packs:
