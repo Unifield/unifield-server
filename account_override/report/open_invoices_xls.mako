@@ -323,7 +323,7 @@
         % endif
 
         % if o.date_invoice:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
