@@ -241,6 +241,7 @@ class sale_order(osv.osv):
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
+        'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
     }
     
     _defaults = {
