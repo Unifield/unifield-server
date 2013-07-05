@@ -290,7 +290,13 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
+% if type in ['out_invoice', 'out_refund']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
+% elif type in ['in_invoice', 'in_refund']:
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
+% else:
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>
+% endif
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
