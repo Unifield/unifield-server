@@ -416,6 +416,13 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
+            if order.order_type == 'loan':
+                line_ids = []
+                for l in order.order_line:
+                    line_ids.append(l.id)
+                self.pool.get('sale.order.line').write(cr, uid, line_ids, {'type': 'make_to_stock'}, context=context)
+
+
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))

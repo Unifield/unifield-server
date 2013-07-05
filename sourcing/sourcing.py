@@ -314,6 +314,12 @@ class sourcing_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for line in self.browse(cr, uid, ids, context=context):
+            if line.type == 'make_to_order' and line.sale_order_id \
+                    and line.sale_order_id.state != 'draft' \
+                    and not context.get('fromOrderLine') \
+                    and line.sale_order_id.order_type == 'loan':
+                raise osv.except_osv(_('Warning'), _("""You can't source a loan 'from stock'."""))
+
             if line.type == 'make_to_order' and line.po_cft not in ['cft'] and not line.product_id and \
                line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
                 raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product, the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""))
@@ -419,10 +425,6 @@ class sourcing_line(osv.osv):
                     
                 # update sourcing line
                 self.pool.get('sale.order.line').write(cr, uid, solId, vals, context=context)
-
-        # UTP-392: if the FO is loan, then the sourcing lines accept only the make to stock procurement type! 
-        if 'loan_type' in context:
-            values.update({'type': 'make_to_stock'})
         
         res = super(sourcing_line, self).write(cr, uid, ids, values, context=context)
         self._check_line_conditions(cr, uid, ids, context)
@@ -538,6 +540,12 @@ class sourcing_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
                 Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
                 """))
+                
+            if sl.type == 'make_to_order' and sl.sale_order_id \
+                    and sl.sale_order_id.state != 'draft' \
+                    and sl.sale_order_id.order_type == 'loan':
+                raise osv.except_osv(_('Warning'), _("""You can't source a loan 'from stock'."""))
+                
             # corresponding state for the lines: IR: confirmed, FO: sourced
             state_to_use = sl.sale_order_id.procurement_request and 'confirmed' or 'sourced'
             # check if it is in On Order and if the Supply info is valid, if it's empty, just exit the action
@@ -623,7 +631,7 @@ class sale_order(osv.osv):
         # UTP-392: If the FO is a Loan, then all lines must be from Stock 
         if 'order_type' in vals and vals['order_type'] == 'loan':
             context['loan_type'] = True
-                
+
         if 'type' in vals:
             values.update({'type': vals['type']})
 
@@ -631,28 +639,24 @@ class sale_order(osv.osv):
 #            values.update({'sale_order_state': vals['state']})
 #        if 'state_hidden_sale_order' in vals:
 #            values.update({'sale_order_state': vals['state_hidden_sale_order']})
+        
+        if values or vals.get('partner_id'):
+            for so in self.browse(cr, uid, ids, context):
+                sourcing_values = values.copy()
+                if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
+                    sourcing_values.update({'customer': so.partner_id.id})
+
+                sourcing_ids = []
+                # for each sale order line
+                for sol in so.order_line:
+                    # update the sourcing line
+                    for sl in sol.sourcing_line_ids:
+                        sourcing_ids.append(sl.id)
+
+                self.pool.get('sourcing.line').write(cr, uid, sourcing_ids, sourcing_values, context)
 
         # call to write the sale order first, then do extra actions to order lines and sourcing lines
-        res = super(sale_order, self).write(cr, uid, ids, vals, context)
-        
-        # for each sale order
-        for so in self.browse(cr, uid, ids, context):
-            if so.order_type == 'loan':
-                context['loan_type'] = True
-                
-            # for each sale order line
-            for sol in so.order_line:
-                # update the sourcing line
-                for sl in sol.sourcing_line_ids:
-                    self.pool.get('sourcing.line').write(cr, uid, sl.id, values, context)
-                    if vals.get('partner_id') and vals.get('partner_id') != so.partner_id.id:
-                        self.pool.get('sourcing.line').write(cr, uid, sl.id, {'customer': so.partner_id.id}, context)
-                        
-                # UTP-392: if order_type is Loan ---> lines must be updated with from stock
-                if so.order_type == 'loan':
-                    self.pool.get('sale.order.line').write(cr, uid, sol.id, {'type': 'make_to_stock'}, context)
-      
-        return res
+        return super(sale_order, self).write(cr, uid, ids, vals, context)
         
     
     def copy(self, cr, uid, id, default=None, context=None):
@@ -810,6 +814,17 @@ class sale_order_line(osv.osv):
         # if a product has been selected, get supplier default value
         sellerId = vals.get('supplier')
         deliveryDate = False
+
+        if vals.get('order_id'):
+            # If the line is created after the validation of the FO, and if the FO is a loan
+            # Force the sourcing type 'from stock'
+            order = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context)
+            if order.order_type == 'loan' and order.state == 'validated':
+                vals['type'] = 'make_to_stock'
+                vals['po_cft'] = False
+                vals['supplier'] = False
+                sellerId = False
+
         if vals.get('type') == 'make_to_order' and vals.get('product_id'):
             ctx = context.copy()
             if sellerId:
@@ -923,6 +938,8 @@ class sale_order_line(osv.osv):
          - po_cft
          - product_id
         ''' 
+        result = True
+        sourcing_obj = self.pool.get('sourcing.line')
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -932,10 +949,6 @@ class sale_order_line(osv.osv):
             bropro = self.pool.get('product.product').browse(cr,uid,vals['product_id'])
             if bropro.type in ('consu', 'service', 'service_recep'):
                 vals['type'] = 'make_to_order'
-
-        # UTP-392: if the FO is loan, then the sourcing lines accept only the make to stock procurement type! 
-        if 'loan_type' in context:
-            vals.update({'type': 'make_to_stock'})
 
         # update the corresponding sourcing line if not called from a sourcing line updated
         if 'fromSourcingLine' not in context:
@@ -958,14 +971,47 @@ class sale_order_line(osv.osv):
                 values.update({'product_id': vals['product_id']})
             if 'line_number' in vals:
                 values.update({'line_number': vals['line_number']})
-                
-            # for each sale order line
-            for sol in self.browse(cr, uid, ids, context):
-                # for each sourcing line
-                for sourcingLine in sol.sourcing_line_ids:
-                    self.pool.get('sourcing.line').write(cr, uid, sourcingLine.id, values, context)
-        
-        result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
+            
+            # If lines are modified after the validation of the FO, update
+            # lines values if the order is a loan
+
+            # Search lines to modified with loan values
+            loan_sol_ids = self.search(cr, uid, [('order_id.order_type', '=', 'loan'),
+                                                 ('order_id.state', '=', 'validated'),
+                                                 ('id', 'in', ids)], context=context)
+            loan_sl_ids = sourcing_obj.search(cr, uid, [('sale_order_line_id', 'in', loan_sol_ids)], context=context)
+
+            # Other lines to modified with standard values
+            sol_ids = self.search(cr, uid, [('id', 'in', ids), ('id', 'not in', loan_sol_ids)], context=context)
+            sl_ids = sourcing_obj.search(cr, uid, [('sale_order_line_id', 'in', sol_ids)], context=context)
+
+            if loan_sol_ids:
+                loan_vals = vals.copy()
+                loan_values = values.copy()
+                loan_data = {'type': 'make_to_stock',
+                             'po_cft': False,
+                             'suppier': False}
+                loan_vals.update(loan_data)
+                loan_values.update(loan_data)
+
+                if loan_sl_ids:
+                    # Update sourcing lines with loan
+                    self.pool.get('sourcing.line').write(cr, uid, loan_sl_ids, loan_values, context)
+
+                if loan_sol_ids:
+                    # Update lines with loan
+                    result = super(sale_order_line, self).write(cr, uid, loan_sol_ids, loan_vals, context)
+
+            if sl_ids and values:
+                # Update other sourcing lines
+                self.pool.get('sourcing.line').write(cr, uid, sl_ids, values, context)
+            if sol_ids and vals:
+                # Update other lines
+                result = super(sale_order_line, self).write(cr, uid, sol_ids, vals, context)
+        else:
+            # Just call the parent write()
+            result = super(sale_order_line, self).write(cr, uid, ids, vals, context)
+
         return result
     
     def unlink(self, cr, uid, ids, context=None):
