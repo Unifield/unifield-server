@@ -14,10 +14,40 @@
 					<field name="price_unit" position="after">
 						<field name="supplier" invisible="True" />
 						<field name="po_cft" invisible="True" />
-					</field>
+                    </field>
+
+                    <xpath expr="/form//field[@name='order_type']" position="after">
+                        <field name="sourcing_trace_ok" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form//notebook" position="inside">
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
+                        </page>
+                    </xpath>
 				</data>
 			</field>
-		</record>
+        </record>
+
+        <record id="view_internal_request_form" model="ir.ui.view">
+            <field name="name">view.internal.request.form</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority" eval="500" />
+            <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="inside">
+                        <field name="sourcing_trace_ok" invisible="1" />
+                    </xpath>
+
+                    <xpath expr="/form//notebook" position="inside">
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
 
 		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
 			<field name="name">sourcing.line.form</field>
@@ -87,7 +117,8 @@
 				<search string="Sourcing Line">
 				
 					<!-- <filter name="need_sourcing" string="Need Sourcing" icon="gtk-indent" domain="[('display_confirm_button', '=', True)]" /> -->
-					<filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
+                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
+                    <filter name="in_progress" string="In Progress" icon="gtk-refresh" domain="[('state', '!=', 'draft'), ('sale_order_state', '=', 'validated')]" />
 					<filter name="sourced" string="Sourced" icon="terp-camera_test" 
 					domain="[('sale_order_state', 'in', ['manual','progress', 'sourced', 'split_so'])]" />
 					<separator orientation="vertical"/>

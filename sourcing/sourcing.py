@@ -25,6 +25,7 @@ from osv.orm import browse_record, browse_null
 from tools.translate import _
 
 import decimal_precision as dp
+import threading
 import netsvc
 import pooler
 import time
@@ -314,6 +315,10 @@ class sourcing_line(osv.osv):
                line.sale_order_id.procurement_request and line.supplier and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
                 raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product, the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""))
 
+            if line.product_id and line.product_id.type in ('consu', 'service', 'service_recep') and line.type == 'make_to_stock':
+                product_type = line.product_id.type == 'consu' and _('non stockable') or _('service')
+                raise osv.except_osv(_('Warning'), _("""You cannot choose 'from stock' as method to source a %s product !""") % product_type)
+
             if not line.product_id:
                 if line.po_cft == 'cft':
                     raise osv.except_osv(_('Warning'), _("You can't source with 'Tender' if you don't have product."))
@@ -554,12 +559,49 @@ class sourcing_line(osv.osv):
             self.write(cr, uid, [sl.id], {'cf_estimated_delivery_date': sl.estimated_delivery_date}, context=context)
             # if all lines have been confirmed, we confirm the sale order
             if linesConfirmed:
-                if sl.sale_order_id.procurement_request:
-                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'procurement_confirm', cr)
-                else:
-                    wf_service.trg_validate(uid, 'sale.order', sl.sale_order_id.id, 'order_confirm', cr)
+                self.pool.get('sale.order').write(cr, uid, [sl.sale_order_id.id], 
+                                                    {'sourcing_trace_ok': True,
+                                                     'sourcing_trace': 'Sourcing in progress'}, context=context)
+                thread = threading.Thread(target=self.confirmOrder, args=(cr.dbname, uid, sl, context))
+                thread.start()
                 
         return result
+
+    def confirmOrder(self, dbname, uid, sourcingLine, context=None):
+        '''
+        Confirm the Order in a Thread
+        '''
+        if not context:
+            context = {}
+
+        wf_service = netsvc.LocalService("workflow")
+
+        cr = pooler.get_db(dbname).cursor()
+
+        try:
+            if sourcingLine.sale_order_id.procurement_request:
+                wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'procurement_confirm', cr)
+            else:
+                wf_service.trg_validate(uid, 'sale.order', sourcingLine.sale_order_id.id, 'order_confirm', cr)
+            self.pool.get('sale.order').write(cr, uid, [sourcingLine.sale_order_id.id],
+                                              {'sourcing_trace_ok': False,
+                                               'sourcing_trace': ''}, context=context)
+        except osv.except_osv, e:
+            cr.rollback()
+            self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
+                                              {'sourcing_trace_ok': True,
+                                               'sourcing_trace': e.value}, context=context)
+        except Exception, e:
+            cr.rollback()
+            self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
+                                              {'sourcing_trace_ok': True,
+                                               'sourcing_trace': str(e)}, context=context)
+
+        cr.commit()
+        cr.close()
+
+        return True
+
     
     def unconfirmLine(self, cr, uid, ids, context=None):
         '''
@@ -580,6 +622,8 @@ class sale_order(osv.osv):
     _inherit = 'sale.order'
     _description = 'Sales Order'
     _columns = {'sourcing_line_ids': fields.one2many('sourcing.line', 'sale_order_id', 'Sourcing Lines'),
+                'sourcing_trace_ok': fields.boolean(string='Display sourcing logs'),
+                'sourcing_trace': fields.text(string='Sourcing logs', readonly=True),
                 }
     
     def create(self, cr, uid, vals, context=None):
@@ -639,6 +683,8 @@ class sale_order(osv.osv):
             default = {}
             
         default['sourcing_line_ids']=[]
+        default['sourcing_trace'] = ''
+        default['sourcing_trace_ok'] = False
         
         return super(sale_order, self).copy(cr, uid, id, default, context)
     
