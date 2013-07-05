@@ -1013,6 +1013,7 @@ class procurement_order(osv.osv):
         - allow to modify the data for purchase order line creation
         '''
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        origin_line = False
         if 'procurement' in kwargs:
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
             if order_line_ids:
@@ -1028,7 +1029,9 @@ class procurement_order(osv.osv):
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             if not st_price:
                 product = self.pool.get('product.product').browse(cr, uid, line['product_id'])
-                st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.standard_price, to_uom_id=origin_line.product_uom.id)
+                st_price = product.standard_price
+                if origin_line:
+                    st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.standard_price, to_uom_id=origin_line.product_uom.id)
             line.update({'price_unit': st_price})
 
         return line
