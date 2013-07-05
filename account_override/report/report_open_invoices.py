@@ -36,11 +36,11 @@ class report_open_invoices2(report_sxw.rml_parse):
 
     def get_invoices(self, cr, uid, context):
         """
-        Get all not paid/cancel invoices
+        Get only open invoices
         """
         res = {}
         for option_type in ['out_invoice', 'in_invoice', 'out_refund', 'in_refund']:
-            type_ids = self.pool.get('account.invoice').search(cr, uid, [('state', 'not in', ['paid', 'cancel']), ('type', '=', option_type)], context=context)
+            type_ids = self.pool.get('account.invoice').search(cr, uid, [('state', '=', 'open'), ('type', '=', option_type)], context=context)
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
             res.update({option_type: self.pool.get('account.invoice').browse(cr, uid, type_ids, context)})
