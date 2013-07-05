@@ -497,7 +497,7 @@ class stock_picking(osv.osv):
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
                               'product_uos': partial['product_uom'],
-                              'price_unit': partial['product_price'],
+                              'price_unit': partial['cost'],
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
