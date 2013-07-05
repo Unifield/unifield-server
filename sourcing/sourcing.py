@@ -1027,7 +1027,8 @@ class procurement_order(osv.osv):
                 cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             if not st_price:
-                st_price = self.pool.get('product.product').browse(cr, uid, line['product_id']).standard_price
+                product = self.pool.get('product.product').browse(cr, uid, line['product_id'])
+                st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.standard_price, to_uom_id=origin_line.product_uom.id)
             line.update({'price_unit': st_price})
 
         return line
