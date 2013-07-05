@@ -325,7 +325,7 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
-        # First delete move lines to avoid UF-2018 problem
+        # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
             if ml_ids:
