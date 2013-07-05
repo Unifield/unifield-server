@@ -16,15 +16,17 @@
                            on_change="onchange_product_id(product_id)" />
                     <newline />
                     <field name="perishable" invisible="1" />
-                    <field name="prodlot_id" attrs="{'invisible': [('perishable', '=', False)]}" />
+                    <field name="prodlot_id" 
+                           domain="[('product_id', '=', product_id)]"
+                           attrs="{'invisible': [('perishable', '=', False)], 'required': [('perishable', '=', True)]}" />
                     <separator colspan="4" string="Period" />
                     <field name="from_date" />
                     <field name="to_date" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="3">
+                        <label> </label>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="print_pdf" icon="gtk-print" type="object" string="Print PDF" />
-                        <button name="print_excel" icon="terp-go-today" type="object" string="Print Excel" />
+                        <button name="show_card" icon="gtk-execute" type="object" string="Show card" />
                     </group>
                 </form>
             </field>
@@ -47,9 +49,9 @@
                     <field name="from_date" readonly="1" />
                     <field name="to_date" readonly="1" />
                     <separator colspan="4" string="Moves" />
-                    <field name="card_lines" readonly="1">
+                    <field name="card_lines" readonly="1" colspan="4" nolabel="1">
                         <tree string="Lines">
-                            <field name="date" />
+                            <field name="date_done" />
                             <field name="picking_id" />
                             <field name="origin" />
                             <field name="qty_in" />

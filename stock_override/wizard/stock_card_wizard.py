@@ -38,6 +38,8 @@ class stock_card_wizard(osv.osv_memory):
                                       string='Batch number'),
         'from_date': fields.date(string='From date'),
         'to_date': fields.date(string='To date'),
+        'card_lines': fields.one2many('stock.card.wizard.line', 'card_id',
+                                      string='Card lines'),
     }
 
 
@@ -83,8 +85,9 @@ class stock_card_wizard(osv.osv_memory):
         balance to show the stock qty after the processing of the move
         '''
         move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('stock.card.wizard.line')
-        product_obj = self.pool.get('product.obj')
+        product_obj = self.pool.get('product.product')
 
         if not context:
             context = {}
@@ -92,7 +95,7 @@ class stock_card_wizard(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        card_id = self.browse(cr, uid, ids[0], context=context)
+        card = self.browse(cr, uid, ids[0], context=context)
         location_id = card.location_id.id
 
         # Set the context to compute stock qty at the start date
@@ -100,21 +103,29 @@ class stock_card_wizard(osv.osv_memory):
                         'compute_child': False,
                         'to_date': card.from_date})
 
+        prodlot_id = card.prodlot_id and card.prodlot_id.id or False
         product = product_obj.browse(cr, uid, card.product_id.id, 
                                                         context=context)
         initial_stock = product.qty_available
 
+
+        domain = [('product_id', '=', product.id),
+                  ('prodlot_id', '=', prodlot_id),
+                  ('state', '=', 'done')]
+
+        if card.from_date:
+            domain.append(('date', '>=', card.from_date))
+
+        if card.to_date:
+            domain.append(('date', '<=', card.to_date))
+        
+        domain.extend(['|', 
+                       ('location_id', '=', location_id),
+                       ('location_dest_id', '=', location_id)])
+
         # Create one line per stock move
-        move_ids = move_obj.search(cr, uid, 
-                                   [('product_id', '=', product_id),
-                                    ('prodlot_id', '=', prodlot_id),
-                                    ('date', '>=', card.from_date),
-                                    ('date', '<=', card.to_date),
-                                    ('state', '=', 'done'),
-                                    '|', 
-                                    ('location_id', '=', location_id),
-                                    ('location_dest_id', '=', location_id),
-                                    ], order='date asc', context=context)
+        move_ids = move_obj.search(cr, uid, domain,order='date asc', 
+                                                        context=context)
 
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             if move.location_dest_id.id == move.location_id.id:
@@ -124,8 +135,7 @@ class stock_card_wizard(osv.osv_memory):
             move_location = False
             qty = uom_obj._compute_qty(cr, uid, move.product_uom.id,
                                                 move.product_qty,
-                                                move.product_id.uom_id.id,
-                                                context=context)
+                                                move.product_id.uom_id.id)
 
             if move.location_dest_id.id == location_id:
                 in_qty = qty
@@ -137,6 +147,7 @@ class stock_card_wizard(osv.osv_memory):
             initial_stock = initial_stock + in_qty - out_qty
 
             line_values = {
+                'card_id': ids[0],
                 'date_done': move.date,
                 'picking_id': move.picking_id and move.picking_id.id or False,
                 'origin': move.picking_id and move.picking_id.origin or '',
@@ -155,6 +166,7 @@ class stock_card_wizard(osv.osv_memory):
                 'view_mode': 'form, tree',
                 'res_id': ids[0],
                 'target': 'current',
+                'nodestroy': True,
                 'context': context}
 
 
@@ -190,6 +202,8 @@ class stock_card_wizard_line(osv.osv_memory):
     _description = 'Stock card line'
 
     _columns = {
+        'card_id': fields.many2one('stock.card.wizard', string='Card',
+                                   required=True),
         'date_done': fields.datetime(string='Date'),
         'picking_id': fields.many2one('stock.picking', string='Doc. Ref.'),
         'origin': fields.char(size=64, string='Origin'),
