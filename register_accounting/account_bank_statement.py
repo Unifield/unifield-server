@@ -1365,7 +1365,7 @@ class account_bank_statement_line(osv.osv):
                         amount_to_write = sign * amount
                     # create a new move_line corresponding to this invoice move line
                     aml_vals = {
-                        'name': invoice_move_line.invoice.number,
+                        'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
                         'move_id': move_ids[0],
                         'partner_id': invoice_move_line.partner_id.id,
                         'account_id': st_line.account_id.id,
