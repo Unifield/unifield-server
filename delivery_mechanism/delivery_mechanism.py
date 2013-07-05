@@ -490,7 +490,6 @@ class stock_picking(osv.osv):
                     # Average price computation
                     # selected product from wizard must be tested
                     product = product_obj.browse(cr, uid, partial['product_id'], context=ctx_avg)
-                    print partial
                     values = {'name': partial['name'],
                               'product_id': partial['product_id'],
                               'product_qty': partial['product_qty'],
