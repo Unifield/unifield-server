@@ -281,6 +281,7 @@ class sourcing_line(osv.osv):
         'real_stock': fields.related('product_id', 'qty_available', type='float', string='Real Stock', readonly=True),
         'virtual_stock': fields.function(_getVirtualStock, method=True, type='float', string='Virtual Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'available_stock': fields.function(_getAvailableStock, method=True, type='float', string='Available Stock', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'stock_uom_id': fields.related('product_id', 'uom_id', string='UoM', type='many2one', relation='product.uom'),
         'supplier': fields.many2one('res.partner', 'Supplier', readonly=True, states={'draft': [('readonly', False)]}, domain=[('supplier', '=', True)]),
         'cf_estimated_delivery_date': fields.date(string='Estimated DD', readonly=True),
         'estimated_delivery_date': fields.function(_get_date, type='date', method=True, store=False, string='Estimated DD', readonly=True, multi='dates'),
