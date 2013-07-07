@@ -858,6 +858,9 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
         order_obj= self.pool.get('purchase.order')
+        #The PO counterpart created should get for all line a delivery confirmed date blank
+        if context.get('is_a_counterpart') or context.get('purchase_id', False) and order_obj.browse(cr, uid, context.get('purchase_id'), context=context).is_a_counterpart:
+            return
         res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
        
         if context.get('purchase_id', False):
