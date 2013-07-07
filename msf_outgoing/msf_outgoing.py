@@ -1001,11 +1001,7 @@ class shipment(osv.osv):
                         uom_id = move.product_id.uom_id.id
                         uos_id = move.product_id.uos_id and move.product_id.uos_id.id or False
                         price = move.sale_line_id.price_unit
-                        coeff = move.product_id.uos_coeff
-                        if uom_id != uos_id and coeff != 0:
-                            price_unit = price / coeff
-                        else:
-                            price_unit = move.sale_line_id.price_unit
+                        price_unit = self.pool.get('product.uom')._compute_price(cr, uid, move.sale_line_id.product_uom.id, price, move.product_uom.id)
                             
                     # Get discount from FO line
                     discount = 0.00
