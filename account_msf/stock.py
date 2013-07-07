@@ -36,10 +36,15 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
 
         # Modify the product UoM and the quantity of line according to move attributes
-        self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], {'price_unit': move_line.price_unit,
-                                                                                 'uos_id': move_line.product_uom.id,
-                                                                                 'price_subtotal': move_line.price_unit * move_line.product_qty,
-                                                                                 'quantity': move_line.product_qty})
+        values = {'uos_id': move_line.product_uom.id,
+                  'quantity': move_line.product_qty}
+        if move_line.price_unit:
+            values.update({'price_unit': move_line.price_unit})
+        else:
+            price_unit = self.pool.get('product.uom')._compute_price(cr, uid, move_line.product_id.uom_id.id, move_line.product_id.standard_price, move_line.product_uom.id)
+            values.update({'price_unit': price_unit})
+
+        self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], values)
 
         if move_line.picking_id and move_line.picking_id.purchase_id and move_line.picking_id.purchase_id.order_type == 'in_kind':
             order_line = move_line.purchase_line_id or False
