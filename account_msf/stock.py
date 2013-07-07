@@ -40,9 +40,6 @@ class stock_picking(osv.osv):
                   'quantity': move_line.product_qty}
         if move_line.price_unit:
             values.update({'price_unit': move_line.price_unit})
-        else:
-            price_unit = self.pool.get('product.uom')._compute_price(cr, uid, move_line.product_id.uom_id.id, move_line.product_id.standard_price, move_line.product_uom.id)
-            values.update({'price_unit': price_unit})
 
         self.pool.get('account.invoice.line').write(cr, uid, [invoice_line_id], values)
 
