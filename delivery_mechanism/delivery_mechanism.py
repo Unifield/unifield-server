@@ -497,10 +497,11 @@ class stock_picking(osv.osv):
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
                               'product_uos': partial['product_uom'],
-                              'price_unit': partial['product_price'],
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
+                    if 'product_price' in partial:
+                        values.update({'price_unit': partial['product_price']})
                     values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
