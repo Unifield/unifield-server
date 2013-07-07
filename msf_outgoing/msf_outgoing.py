@@ -360,6 +360,7 @@ class shipment(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
+        # remove unneeded data in context
         return {
             'name':_("Shipment"),
             'view_mode': 'form,tree',
@@ -369,6 +370,7 @@ class shipment(osv.osv):
             'res_id': shipment_id,
             'type': 'ir.actions.act_window',
             'target': 'crush',
+            'context': "{'partial_datas_ppl1': {}, 'partial_datas': {}}",
         }
     
     def return_packs(self, cr, uid, ids, context=None):
@@ -2610,6 +2612,7 @@ class stock_picking(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_shipment_form')
         view_id = view_id and view_id[1] or False
+        context['partial_datas_ppl1'] = {}
         return {'name':_("Shipment"),
                 'view_mode': 'form,tree',
                 'view_id': [view_id],
