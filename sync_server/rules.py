@@ -134,6 +134,7 @@ class sync_rule(osv.osv):
     }
 
     _defaults = {
+        'domain': '[]',
         'active': False,
         'status': 'invalid',
     }
@@ -537,6 +538,7 @@ class message_rule(osv.osv):
         'type_id': fields.many2one('sync.server.group_type','Group Type', select=True),
         'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'domain': fields.text('Domain', required = False),
+        'filter_method' : fields.char('Filter Method', size=64, help='The method to use to find target records instead of a domain.'),
         'sequence_number': fields.integer('Sequence', required = True),
         'remote_call': fields.text('Method to call', required = True),
         'arguments': fields.text('Arguments of the method', required = True),
@@ -546,6 +548,7 @@ class message_rule(osv.osv):
     }
 
     _defaults = {
+        'domain': '[]',
         'active': False,
         'status': 'invalid',
         'applies_to_type' : True,
@@ -575,6 +578,7 @@ class message_rule(osv.osv):
         'id': 'server_id',
         'model_id': 'model',
         'domain': 'domain',
+        'filter_method': 'filter_method',
         'sequence_number': 'sequence_number',
         'remote_call': 'remote_call',
         'arguments': 'arguments',
@@ -672,11 +676,14 @@ class message_rule(osv.osv):
             else:
                 message.append("pass.\n")
                 
+            if not rec.filter_method:
+                mess, err = self.check_domain(cr, uid, rec, context)
+                error = err or error
+                message.append(mess)
+            elif not hasattr(self.pool.get(rec.model_id), rec.filter_method):
+                message.append('Filter Method %s does not exist on object %s' % (rec.filter_method, rec.model_id))
+                error = True
                 
-            mess, err = self.check_domain(cr, uid, rec, context)
-            error = err or error
-            message.append(mess)
-            
             # Remote Call Possible
             call_tree = rec.remote_call.split('.')
             call_class = '.'.join(call_tree[:-1])

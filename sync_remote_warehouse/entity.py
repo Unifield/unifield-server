@@ -204,6 +204,7 @@ class Entity(osv.osv):
             'name': 'name' ,
             'model': 'model',
             'domain': 'domain',
+            'filter_method': 'filter_method',
             'sequence_number': 'sequence_number',
             'remote_call': 'remote_call',
             'arguments': 'arguments',

@@ -56,6 +56,7 @@ class local_message_rule(osv.osv):
         'server_id' : fields.integer('Server ID'),
         'model' : fields.char('Model Name',size=128),
         'domain' : fields.text('Domain', required=False, readonly=True),
+        'filter_method' : fields.char('Filter Method', size=64, help='The method to use to find target records instead of a domain.', readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'remote_call': fields.text('Method to call', required=True),
         'arguments': fields.text('Arguments of the method', required=True),
@@ -123,10 +124,16 @@ class message_to_send(osv.osv):
         Creation from rule
     """
     def create_from_rule(self, cr, uid, rule, context=None):
-        domain = rule.domain and eval(rule.domain) or []
         context = dict(context or {})
         context['active_test'] = False
-        obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, context=context)
+
+        # either use rule filter_method or domain to find records for message
+        if rule.filter_method:
+            obj_ids = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
+        else:
+            domain = rule.domain and eval(rule.domain) or []
+            obj_ids = self.pool.get(rule.model).search_ext(cr, uid, domain, context=context)
+
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:

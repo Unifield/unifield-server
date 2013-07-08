@@ -94,8 +94,11 @@ def wkf_instance_create(cr, ident, wkf_id):
 instance.create = wkf_instance_create
 
 
-
 class wkf_instance(osv.osv):
+    """
+    replace res_id with sdref for synchronization
+    """
+    
     _inherit = 'workflow.instance'
     
     _res_model_field = 'res_type'
@@ -111,29 +114,26 @@ class wkf_instance(osv.osv):
         def get_all_sd_ref(ids_per_model_dict):
             res = {}
             for model, ids in ids_per_model_dict.items():
-                res.update(self.pool.get(model).get_sd_ref(cr, 1, ids, synchronize=False, context=context))
+                res.update(self.pool.get(model).get_sd_ref(cr, 1, ids, context=context))
             return res
                 
         if not context or not context.get('sync_update_creation'): #May replace by offline_synchronization
             return vals
-        assert (fields and self._res_id_field in fields and self._res_model_field in fields) or not fields , \
-            "When read %s in object %s to export during synchronization be sure to include field %s and %s  " % (self._res_id_field, self._name, self._res_id_field, self._res_model_field)
 
-        
         is_list = True
         if not isinstance(vals, (tuple, list)):
             vals = [vals]
             is_list = False
             
-        all_sd_ref = get_all_sd_ref(ids_per_model(vals))
-        for val in vals:
-            val[self._res_id_field] = "sd." + all_sd_ref[val[self._res_id_field]]
+        if fields and self._res_id_field in fields:
+            assert (self._res_model_field in fields), \
+                "When reading %s in object %s to during synchronization export, be sure to include field %s" % (self._res_id_field, self._name, self._res_model_field)
+            
+            all_sd_ref = get_all_sd_ref(ids_per_model(vals))
+            for val in vals:
+                val[self._res_id_field] = "sd." + all_sd_ref[val[self._res_id_field]]
         
         return is_list and vals or vals[0]
-        
-        
-        
-        
     
     def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
         vals = super(wkf_instance, self).read(cr, uid, ids, fields=fields, context=context, load=load)
@@ -141,3 +141,4 @@ class wkf_instance(osv.osv):
     
     
 wkf_instance()
+
