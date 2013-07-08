@@ -23,6 +23,7 @@ from dateutil.relativedelta import relativedelta, relativedelta
 from osv import osv, fields
 from osv.orm import browse_record, browse_null
 from tools.translate import _
+from tools import misc
 
 import decimal_precision as dp
 import threading
@@ -613,7 +614,7 @@ class sourcing_line(osv.osv):
             cr.rollback()
             self.pool.get('sale.order').write(cr, uid, sourcingLine.sale_order_id.id,
                                               {'sourcing_trace_ok': True,
-                                               'sourcing_trace': str(e)}, context=context)
+                                               'sourcing_trace': misc.ustr(e)}, context=context)
 
         cr.commit()
         cr.close()
