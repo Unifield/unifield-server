@@ -50,17 +50,21 @@ class purchase_order_sync(osv.osv):
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'split_po': fields.boolean('Created by split PO', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
+        'from_sync': fields.boolean('Updated by synchronization', readonly=False),
+        'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
     }
 
     _defaults = {
         'split_po': False,
-        'push_fo': False
+        'push_fo': False,
+        'sended_by_supplier': True,
+        'po_updated_by_sync': False,
     }
 
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({'active': True, 'split_po' : False})
+        default.update({'active': True, 'split_po' : False, 'po_updated_by_sync': False})
         return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
         
     def create_split_po(self, cr, uid, source, so_info, context=None):
@@ -130,7 +134,21 @@ class purchase_order_sync(osv.osv):
         
         # Set the original PO to "split" state -- cannot do anything with this original PO, and update the partner_ref
         partner_ref = so_po_common.get_full_original_fo_ref(source, so_info.name)
-        res_id = self.write(cr, uid, po_id, {'state' : 'split', 'active': False, 'partner_ref': partner_ref} , context=context)
+        self.write(cr, uid, po_id, {'state' : 'split', 'active': False, 'partner_ref': partner_ref} , context=context)
+        
+        # if it is a loan type, then update the source 
+        if 'order_type' in header_result:
+            if header_result['order_type'] == 'loan':
+                # UTP-392: In the push flow, the FO counterpart could be created first by the sync, then the original PO will be created
+                # so in this case, when creating the PO, the FO counterpart must be linked to the new split PO
+                name = self.browse(cr, uid, res_id, context).partner_ref # get the partner_ref from Coordo
+                so_object = self.pool.get('sale.order')
+                so_ids = so_object.search(cr, uid, [('origin', '=', name)], context=context) # search the existing FO counterpart
+                if so_ids and so_ids[0]: # if exist, then update the link to it with this new split PO
+                    name = so_object.browse(cr, uid, so_ids[0], context).name
+                    self.write(cr, uid, [res_id], {'origin': name}, context=context)
+                    so_object.write(cr, uid, so_ids, {'origin': False} , context=context) # reset this origin value of the FO counterpart back to null
+        
         return res_id
 
     def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
@@ -211,6 +229,7 @@ class purchase_order_sync(osv.osv):
         header_result = {}
         so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
         header_result['order_line'] = so_po_common.get_lines(cr, uid, so_info, po_id, False, True, False, context)
+        header_result['po_updated_by_sync'] = True
 
         default = {}
         default.update(header_result)
@@ -277,11 +296,24 @@ class purchase_order_sync(osv.osv):
         
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref
+        header_result['po_updated_by_sync'] = True
 
         default = {}
         default.update(header_result)
         
         res_id = self.write(cr, uid, po_id, default, context=context)
+        return True
+
+    def canceled_fo_cancel_po(self, cr, uid, source, so_info, context=None):
+        if not context:
+            context = {}
+        print "Cancel the original PO"
+        wf_service = netsvc.LocalService("workflow")
+        so_po_common = self.pool.get('so.po.common')
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        self.write(cr, uid, po_id, {'from_sync': True}, context)
+        # Cancel the PO
+        wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_cancel', cr)
         return True
 
 purchase_order_sync()

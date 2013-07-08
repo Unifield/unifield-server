@@ -29,6 +29,8 @@ import logging
 
 from sync_common import sync_log, add_sdref_column, translate_column, migrate_sequence_to_sequence_number, fancy_integer, split_xml_ids_list, normalize_xmlid
 
+re_fieldname = re.compile(r"^\w+")
+
 class local_rule(osv.osv):
     _name = "sync.client.rule"
 
@@ -131,21 +133,22 @@ class update_to_send(osv.osv):
 
         def create_normal_update(self, rule, context):
             domain = eval(rule.domain or '[]')
-            included_fields = eval(rule.included_fields or '[]') 
-            if not 'id' in included_fields: 
-                included_fields.append('id')
+            export_fields = eval(rule.included_fields or '[]') 
+            if 'id' not in export_fields: 
+                export_fields.append('id')
 
             ids_to_compute = self.need_to_push(cr, uid,
                 self.search_ext(cr, uid, domain, context=context),
+                [m.group(0) for m in map(re_fieldname.match, export_fields)],
                 context=context)
             if not ids_to_compute:
                 return 0
 
             owners = self.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, context)
-            datas = self.export_data(cr, uid, ids_to_compute, included_fields, context=context)['datas']
+            datas = self.export_data(cr, uid, ids_to_compute, export_fields, context=context)['datas']
             sdrefs = self.get_sd_ref(cr, uid, ids_to_compute, context=context)
             versions = self.version(cr, uid, ids_to_compute, context=context)
-            ustr_included_fields = tools.ustr(included_fields)
+            ustr_export_fields = tools.ustr(export_fields)
             for (id, row) in zip(ids_to_compute, datas):
                 for owner in (owners[id] if hasattr(owners[id], '__iter__') else [owners[id]]):
                     update_id = update.create(cr, uid, {
@@ -155,7 +158,7 @@ class update_to_send(osv.osv):
                         'version' : versions[id] + 1,
                         'rule_id' : rule.id,
                         'sdref' : sdrefs[id],
-                        'fields' : ustr_included_fields,
+                        'fields' : ustr_export_fields,
                         'owner' : owner,
                     }, context=context)
                     update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
@@ -430,12 +433,11 @@ class update_received(osv.osv):
                 if self._conflict(cr, uid, update.sdref, update.version, context=context):
                     #2 if conflict => manage conflict according rules : report conflict and how it's solve
                     logs[update.id] = sync_log(self, "Conflict detected!", 'warning', data=(update.id, update.fields, update.values)) + "\n"
-                    #TODO manage other conflict rules here (tfr note)
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
 
-            #5 import data : report error
+            # Import batch of values
             while values:
                 try:
                     res = secure_import_data(obj, import_fields, values)
@@ -447,10 +449,12 @@ class update_received(osv.osv):
                         'log' : import_error.strip(),
                     }, context=context)
                     raise Exception(message+import_error)
+                # end of the loop: all remaining values has been imported
                 if res[0] == len(values):
                     success( update_ids, \
                              dict(versions) )
                     break
+                # import_data error detection
                 elif res[0] == -1:
                     # Regular exception
                     import_message = res[2]
@@ -463,6 +467,7 @@ class update_received(osv.osv):
                             import_message = "Unknown! Please check the constraints of linked models. The use of raise Python's keyword in constraints typically give this message."
                         import_message = "Cannot import in model %s:\nData: %s\nReason: %s\n" % (obj._name, data, import_message)
                         message += import_message
+                        # remove the row that failed
                         values.pop(value_index)
                         versions.pop(value_index)
                         self.write(cr, uid, [update_ids.pop(value_index)], {
@@ -473,6 +478,7 @@ class update_received(osv.osv):
                         # Rare case where no line is given by import_data
                         message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
                         raise Exception(message)
+                    # Re-start import_data on rows that succeeds before
                     if value_index > 0:
                         # Try to import the beginning of the values and permit the import of the rest
                         try:
@@ -482,12 +488,13 @@ class update_received(osv.osv):
                             raise Exception(message+import_error.message)
                         success( update_ids[:value_index], \
                                  dict(versions[:value_index]) )
+                        # truncate the rows just after the last non-failing row
                         values = values[value_index:]
                         update_ids = update_ids[value_index:]
                         versions = versions[value_index:]
                 else:
                     # Rare exception, should never occur
-                    raise Exception(message+"Wrong number of imported rows in model %s (expected %s, but %s imported)!\nUpdate ids: %s\n" % (obj._name, len(values), res[0], update_ids))
+                    raise AssertionError(message+"Wrong number of imported rows in model %s (expected %s, but %s imported)!\nUpdate ids: %s\n" % (obj._name, len(values), res[0], update_ids))
 
             # Obvious
             assert len(values) == len(update_ids) == len(versions), \
@@ -550,7 +557,7 @@ class update_received(osv.osv):
             if not updates: continue
             # Proceed
             if do_deletion:
-                group_unlink_update_execution(obj, sdref_update_ids)
+                group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates))
                 deleted += len(updates)
             else:
                 error_message += group_import_update_execution(obj, updates)

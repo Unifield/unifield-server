@@ -46,8 +46,20 @@ class sale_order_sync(osv.osv):
     
     _columns = {
                 'received': fields.boolean('Received by Client', readonly=True),
+                'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
     }
     
+    _defaults = {
+        'fo_created_by_po_sync': False,
+    }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        if not default.get('name', False) or not '-2' in default.get('name', False).split('/')[-1]:
+            default.update({'fo_created_by_po_sync': False})
+        return super(sale_order_sync, self).copy(cr, uid, id, default, context=context)
+
     def create_so(self, cr, uid, source, po_info, context=None):
         print "Create an FO from a PO (normal flow)"
         if not context:
@@ -71,7 +83,26 @@ class sale_order_sync(osv.osv):
         default.update(header_result)
 
         so_id = self.create(cr, uid, default , context=context)
-        
+
+        if 'order_type' in header_result:
+            if header_result['order_type'] == 'loan':
+                # UTP-392: Look for the PO of this loan, and update the reference of source document of that PO to this new FO
+                # First, search the original PO via the client_order_ref stored in the FO
+                ref = po_info.origin
+                if ref:
+                    name = self.browse(cr, uid, so_id, context).name
+                    ref = source + "." + ref
+                    po_object = self.pool.get('purchase.order')
+                    po_ids = po_object.search(cr, uid, [('partner_ref', '=', ref)], context=context)
+                    
+                    # in both case below, the FO become counter part
+                    if po_ids: # IF the PO Loan has already been created, if not, just update the value reference, then when creating the PO loan, this value will be updated 
+                        # link the FO loan to this PO loan
+                        po_object.write(cr, uid, po_ids, {'origin': name}, context=context)
+                        self.write(cr, uid, [so_id], {'fo_created_by_po_sync': True} , context=context)
+                    else:
+                        self.write(cr, uid, [so_id], {'origin': ref, 'fo_created_by_po_sync': True} , context=context)
+                
         # reset confirmed_delivery_date to all lines
         so_line_obj = self.pool.get('sale.order.line')
         
