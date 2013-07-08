@@ -29,6 +29,8 @@ import time
 import pprint
 import netsvc
 import so_po_common
+from sync_common import xmlid_to_sdref
+
 pp = pprint.PrettyPrinter(indent=4)
 
 class stock_picking(osv.osv):
@@ -312,6 +314,26 @@ class stock_picking(osv.osv):
         
         raise Exception("There is a problem when cancel of the IN at project")
 
+    def create_batch_number(self, cr, uid, source, out_info, context=None):
+        if not context:
+            context = {}
+        print "Create batch number object that comes with the SHIP/OUT"
+        so_po_common = self.pool.get('so.po.common')
+        batch_obj = self.pool.get('stock.production.lot')
+        
+        pick_dict = out_info.to_dict()
+        existing_bn = batch_obj.search(cr, uid, [('name', '=', pick_dict['name'])], context=context)
+        
+        if existing_bn: # existed already, then don't need to create a new one
+            return True
+
+        if pick_dict.get('product_id'):
+            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+            if rec_id:
+                pick_dict['product_id'] = rec_id
+
+        return batch_obj.create(cr, uid, pick_dict, context=context)
+
     def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
         # Check if the given object is valid for the rule
         model_obj = self.pool.get(rule.model.model)
@@ -369,5 +391,71 @@ class stock_picking(osv.osv):
         ##############################################################################
 #        self.create_manual_message(cr, uid, ids, context)
         return  ret
+
+
+    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
+        
+        ##############################################################################
+        # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
+        # Meaning that for the same object, but for different internal partners, the object could be sent many times to these partner  
+        #
+        ##############################################################################
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule = rule_obj.get_rule_by_sequence(cr, uid, rule_sequence, context)
+        
+        if not rule or not object_id:
+            return
+
+        model_obj = self.pool.get(rule.model.model)
+        msg_to_send_obj = self.pool.get("sync.client.message_to_send")
+        
+        arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+        
+        identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model.model, [object_id], rule.server_id, context=context)
+        if not identifiers:
+            return
+        
+        xml_id = identifiers[object_id]
+        existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id), ('destination_name', '=', partner_name)], context=context)
+        if existing_message_id: # if similar message does not exist in the system, then do nothing
+            return
+        
+        # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
+        data = {
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent' : False,
+                'generate_message' : False,
+        }
+        return msg_to_send_obj.create(cr, uid, data, context=context)
+
+
+    # UF-1617: Override the hook method to create sync messages manually for some extra objects once the OUT/Partial is done
+    def _hook_create_sync_messages(self, cr, uid, ids, context = None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        res = super(stock_picking, self)._hook_create_sync_messages(cr, uid, ids, context=context)
+        for pick in self.browse(cr, uid, ids, context=context):
+            partner = pick.partner_id
+            if not partner or partner.partner_type != 'internal':
+                return True
+            
+            list_batch = []
+            # only treat for the internal partner
+            for move in pick.move_lines:
+                if move.state not in ('done'):
+                    continue
+                if move.prodlot_id:
+                    # put the new batch number into the list, and create messages for them below
+                    list_batch.append(move.prodlot_id.id)
+            
+            # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
+            for batch in list_batch:
+                self.create_message_with_object_and_partner(cr, uid, 1001, batch, partner.name, context)
+
+        return res  
     
 stock_picking()
