@@ -958,6 +958,9 @@ stock moves which are already processed : '''
         
         # update corresponding fo if exist
         so_ids = self.get_so_ids_from_po_ids(cr, uid, ids, context=context)
+        ctx = context.copy()
+        ctx['no_store_function'] = ['sale.order.line']
+        store_to_call = []
         if so_ids:
             # date values
             ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
@@ -967,6 +970,7 @@ stock moves which are already processed : '''
                 # get the corresponding so line
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
                 if sol_ids:
+                    store_to_call += sol_ids
                     # get so_id
                     data = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
                     order_id = data[0]['order_id'][0]
@@ -1017,8 +1021,10 @@ stock moves which are already processed : '''
                                   'confirmed_delivery_date': line_confirmed,
                                   }
                     # write the line
-                    sol_obj.write(cr, uid, sol_ids, fields_dic, context=context)
-            
+                    sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
+
+            if store_to_call:
+                sol_obj._call_store_function(cr, uid, store_to_call, keys=None, bypass=False, context=context)
             # compute so dates -- only if we get a confirmed value, because rts is mandatory on So side
             # update after lines update, as so write triggers So workflow, and we dont want the Out document
             # to be created with old So datas
@@ -1036,7 +1042,6 @@ stock moves which are already processed : '''
                     # write data to so
                     so_obj.write(cr, uid, [so.id], {'delivery_confirmed_date': so_confirmed,
                                                    'ready_to_ship_date': so_rts}, context=context)
-            
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):

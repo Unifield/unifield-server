@@ -352,7 +352,8 @@ class sequence_tools(osv.osv):
                     # numbering value
                     start_num = start_num+1
                     if item_data[i][seq_field] != start_num:
-                        dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
+                        cr.execute("update "+dest_obj._table+" set "+seq_field+"=%s where id=%s", (start_num, item_data[i]['id']))
+                        #dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
             
             # reset sequence to start_num + 1 all time, checking if needed would take much time
             # get the sequence id
