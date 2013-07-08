@@ -139,7 +139,7 @@ class update(osv.osv):
         'fancy_sequence' : fields.function(fancy_integer, method=True, string="Sequence", type='char', readonly=True),
         'version': fields.integer('Record Version'),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
-        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, required=True, select=True),
+        'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete='restrict', select=True),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
@@ -232,7 +232,7 @@ class update(osv.osv):
                     }):
                 delete_updates_count += 1
 
-        self._logger.info("Inserted %d new updates: %d normal(s) and %d delete(s)"
+        self._logger.debug("Inserted %d new updates: %d normal(s) and %d delete(s)"
                           % ((normal_updates_count+delete_updates_count), normal_updates_count, delete_updates_count))
         return True
 

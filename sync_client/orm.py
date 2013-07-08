@@ -129,19 +129,6 @@ class RejectingDict(dict):
 
 
 
-def modif_o2m(self, cr, uid, ids, values, context=None):
-    """record modification of m2o if the corresponding o2m is modified"""
-    if not hasattr(ids, '__iter__'): ids = [ids]
-    fields_ref = self.fields_get(cr, uid, context=context)
-    for key in values.keys():
-        if fields_ref.get(key) and fields_ref[key]['type'] == 'one2many' and values[key]:
-            sub_model = fields_ref[key]['relation']
-            for rec in self.browse(cr, uid, ids, context=context):
-                sub_ids = [obj.id for obj in getattr(rec, key)]
-                self.pool.get(sub_model).synchronize(cr, uid, sub_ids, context=context)
-
-
-
 class extended_orm(osv.osv):
     """Extend orm methods"""
     _auto = False
@@ -179,7 +166,7 @@ class extended_orm_methods:
             return res
         return recur_get_model(self, [])
 
-    def need_to_push(self, cr, uid, ids, context=None):
+    def need_to_push(self, cr, uid, ids, touched_fields=None, context=None):
         """
         Check if records need to be pushed to the next synchronization process
         or not.
@@ -187,6 +174,9 @@ class extended_orm_methods:
         One of those conditions needs to match: 
             - sync_date < last_modification
             - sync_date is not set
+
+        Plus, the result can be filtered to records that have changes in the
+        fields given in touched_fields parameter.
 
         Note: sync_date field can be changed to other field using parameter
         sync_field
@@ -199,6 +189,8 @@ class extended_orm_methods:
         :param cr: database cursor
         :param uid: current user id
         :param ids: id or list of the ids of the records to read
+        :param touched_fields: reduce result to records that have fields
+                               touched in touched_fields list.
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
         :return: list of ids that need to be pushed (or False for per record call)
@@ -208,9 +200,8 @@ class extended_orm_methods:
         if not result_iterable: ids = [ids]
         ids = filter(None, ids)
         if not ids: return ids if result_iterable else False
-        # Optimization for not deleted records:
-        # Filter data where sync_date < last_modification OR sync_date IS NULL
-        cr.execute("""\
+        if touched_fields is None:
+            cr.execute("""\
 SELECT res_id
     FROM ir_model_data
     WHERE module = 'sd' AND
@@ -218,10 +209,22 @@ SELECT res_id
           res_id IN %s AND
           (sync_date < last_modification OR sync_date IS NULL)""",
 [self._name, tuple(ids)])
-        result = [row[0] for row in cr.fetchall()]
+            result = [row[0] for row in cr.fetchall()]
+        else:
+            touched_fields = set(touched_fields)
+            cr.execute("""\
+SELECT res_id, touched
+    FROM ir_model_data
+    WHERE module = 'sd' AND
+          model = %s AND
+          res_id IN %s AND
+          (sync_date < last_modification OR sync_date IS NULL)""",
+[self._name, tuple(ids)])
+            result = [row[0] for row in cr.fetchall()
+                      if row[1] is None or touched_fields.intersection(eval(row[1]))]
         return result if result_iterable else len(result) > 0
 
-    def get_sd_ref(self, cr, uid, ids, field='name', synchronize=False, context=None):
+    def get_sd_ref(self, cr, uid, ids, field='name', context=None):
         """
         Create or get the SD reference (replacement for link_with_ir_method).
 
@@ -234,19 +237,30 @@ SELECT res_id
         :return: dictionary with SD references
 
         """
-        assert self._name != "ir.model.data", "Cannot create on xmlid on an ir.model.data object!"
+        assert self._name != "ir.model.data", \
+            "Cannot create on xmlid on an ir.model.data object!"
+
+        def get_fields(record):
+            if hasattr(field, '__iter__'):
+                return tuple(getattr(record, f, False) for f in field)
+            else:
+                return getattr(record, field, False)
+
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable: ids = [ids]
+        if not ids: return {} if result_iterable else False
+
         model_data_obj = self.pool.get('ir.model.data')
         data_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
-            result = RejectingDict((data.res_id, getattr(data, field)) for data in model_data_obj.browse(cr, uid, data_ids))
+            result = RejectingDict((data.res_id, get_fields(data))
+                for data in model_data_obj.browse(cr, uid, data_ids))
         except DuplicateKey:
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, ids=%s. Too late for debugging, sorry!" % (self._name, ids))
         now = fields.datetime.now()
         identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
         for res_id in (id for id in ids if id and not id in result):
-            new_record = {
+            new_data_id = model_data_obj.create(cr, uid, {
                 'noupdate' : False, # don't set to True otherwise import won't work
                 'module' : 'sd',
                 'last_modification' : now,
@@ -254,11 +268,8 @@ SELECT res_id
                 'res_id' : res_id,
                 'version' : 1,
                 'name' : self.get_unique_xml_name(cr, uid, identifier, self._table, res_id),
-            }
-            new_record['id'] = model_data_obj.create(cr, uid, new_record, context=context)
-            result[res_id] = new_record.get(field)
-        if synchronize and data_ids:
-            model_data_obj.write(cr, uid, data_ids, {'last_modification' : now})
+            }, context=context)
+            result[res_id] = get_fields(model_data_obj.browse(cr, uid, new_data_id, context=context))
         return result if result_iterable else result[ids[0]]
 
     def version(self, cr, uid, ids, context=None):
@@ -275,22 +286,73 @@ SELECT res_id
         """
         return self.get_sd_ref(cr, uid, ids, field='version', context=context)
 
-    def synchronize(self, cr, uid, ids, context=None):
+    def synchronize(self, cr, uid, ids, previous_values=None, context=None):
         """
-        Update the SD ref (or create one if it does'n exists) and mark it to be synchronize
+        Update the SD ref (or create one if it does'n exists) and mark it to be
+        synchronize + touch fields
+
         :param cr: database cursor
         :param uid: current user id
         :param ids: id or list of the ids of the records to read
+        :param previous_values: dict or list of dict containing the result of a
+                                read() call with ids given *before* the change
         :param context: optional context arguments, like lang, time zone
         :type context: dictionary
-        :return: dictionary with requested references
-
+        :return: filtered list of ids that will be synchronized
         """
-        return self.get_sd_ref(cr, uid, ids, synchronize=True, context=context)
+        assert not self._name == 'ir.model.data', \
+            "Can not call this method on object ir.model.data!"
+
+        result_iterable = hasattr(ids, '__iter__')
+        if not result_iterable:
+            ids = [ids]
+            if previous_values is not None:
+                previous_values = [previous_values]
+        if not ids and result_iterable: return []
+
+        data = self.pool.get('ir.model.data')
+        now = fields.datetime.now()
+        synchronized_ids = []
+        def touch(data_ids, touched_fields):
+            data.write(cr, uid, data_ids, 
+                {
+                    'touched' : str(touched_fields),
+                    'last_modification' : now,
+                }, context=context)
+            synchronized_ids.extend(data_ids)
+
+        if previous_values is None:
+            touch(
+                self.get_sd_ref(cr, uid, ids, field='id', context=context).values(),
+                self._columns.keys())
+        else:
+            previous_values = dict((d['id'], d) for d in previous_values)
+            assert set(ids) == set(previous_values.keys()), \
+                "Missing previous values: %s got, %s expected" \
+                % (previous_values.keys(), ids)
+            whole_fields = previous_values[ids[0]].keys()
+            whole_fields.remove('id')
+            current_values = dict((d['id'], d) for d in
+                self.read(cr, uid, ids, whole_fields, context=context))
+            for res_id, info in self.get_sd_ref(cr, uid, ids, \
+                    field=['id','touched'], context=context).items():
+                data_id, touched = info
+                prev_rec, next_rec = previous_values[res_id], current_values[res_id]
+                touched = set(eval(touched) if touched else [])
+                modified = set(filter(
+                    lambda field: next_rec[field] != prev_rec[field],
+                    whole_fields))
+                new_touched = touched | modified
+                if not touched == new_touched:
+                    touch([data_id], list(new_touched))
+
+        return synchronized_ids if result_iterable else len(synchronized_ids) > 0
 
     def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
-        Find the ids of records based on their SD reference. If called on a model, search SD refs for this model only. Otherwise, search any record.
+        Find the ids of records based on their SD reference. If called on a
+        model, search SD refs for this model only. Otherwise, search any
+        record.
 
         :param cr: database cursor
         :param uid: current user id
@@ -330,20 +392,18 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         id = original_create(self, cr, uid, values, context=context)
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            global modif_o2m
-            modif_o2m(self, cr, uid, id, values, context=context)
             self.synchronize(cr, uid, id, context=context)
         return id
 
     @orm_method_overload
-    def write(self,original_write,cr,uid,ids,values,context=None):
+    def write(self, original_write, cr, uid, ids, values, context=None):
+        previous_values = self.read(cr, uid, ids, values.keys(), context=context)
+        result = original_write(self, cr, uid, ids, values,context=context)
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            global modif_o2m
             if not isinstance(ids, (list, tuple)): ids = [ids]
-            modif_o2m(self, cr, uid, ids, values, context=context)
-            self.synchronize(cr, uid, ids, context=context)
-        return original_write(self, cr, uid, ids, values,context=context)
+            self.synchronize(cr, uid, ids, previous_values=previous_values, context=context)
+        return result
 
     def message_unlink(self, cr, uid, source, unlink_info, context=None):
         model_name = unlink_info.model
@@ -610,7 +670,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                             json_data[field[0]] = row.get_xml_id(cr, uid, [row.id]).get(row.id)
                         elif field[0] == '.id':
                             json_data[field[0]] = row.id
-                        else: #TODO manage more case maybe selection or reference
+                        else:
                             r = row[field[0]]
                             if isinstance(r, (browse_record_list, list)):
                                 json_data[field[0]] = export_list(field, r, json_data.get(field[0]))

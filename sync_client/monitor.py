@@ -116,7 +116,6 @@ class sync_monitor(osv.osv):
         return MonitorLogger(cr, uid, defaults=defaults, context=context)
 
     _columns = {
-        #TODO: auto increment
         'sequence_number' : fields.integer("Sequence",  readonly=True, required=True),
         'start' : fields.datetime("Start Date", readonly=True, required=True),
         'end' : fields.datetime("End Date", readonly=True),

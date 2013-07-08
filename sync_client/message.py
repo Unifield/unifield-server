@@ -248,6 +248,9 @@ class message_received(osv.osv):
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
         sync_context = dict(context or {}, sync_message_execution=True)
         for message in self.browse(cr, uid, ids, context=context):
+            if message.run: #UTP-682: double check to make sure if the message has been executed, then skip it
+                continue
+
             cr.execute("SAVEPOINT exec_message")
             model, method = self.get_model_and_method(message.remote_call)
             arg = self.get_arg(message.arguments)
