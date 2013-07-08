@@ -213,6 +213,8 @@ class product_asset(osv.osv):
                 'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
                 # event history
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
+                
+#                'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
     }
     
     _defaults = {
