@@ -7106,7 +7106,7 @@ msgstr "Serbe (Latin) / srpski"
 #: report:invoice:0
 #: report:packing.list:0
 msgid "PPL ref:"
-msgstr "Liste de Pré-Colisage - réf:"
+msgstr "PCL réf:"
 
 #. module: purchase_allocation_report
 #: model:ir.module.module,description:purchase_allocation_report.module_meta_information
@@ -9199,6 +9199,24 @@ msgstr "Produit - Filtres"
 msgid "You need to correct the following line%s: %s"
 msgstr "Vous devez corriger les lignes suivantes%s: %s"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:163
+#, python-format
+msgid "Line %s in the Excel file: %s\n"
+msgstr "Ligne %s du fichier Excel : %s\n"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:529
+#, python-format
+msgid "Bad rounding"
+msgstr "Mauvais arrondi"
+
+#. module: msf_tools
+#: code:addons/msf_tools/msf_tools.py:530
+#, python-format
+msgid "The quantity entered is not valid according to the rounding value of the UoM. The product quantity has been rounded to the highest good value."
+msgstr "La quantité indiquée n'est pas valide par rapport à l'unité de mesure. La quantité a été arrondie à la plus proche valeur correcte."
+
 #. module: account_voucher
 #: selection:account.voucher,payment_option:0
 msgid "Reconcile with Write-Off"
@@ -10321,6 +10339,7 @@ msgstr "Lettrage Partiel d'Ecritures"
 #: view:wizard.import.ir.line:0
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
+#: view:msf.doc.import.accounting:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -25038,14 +25057,14 @@ msgstr "Nombre"
 
 #. module: msf_outgoing
 #: report:cargo.manifest:0
-#: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 msgid "SO ref:"
 msgstr "CdT Réf:"
 
 #. module: msf_outgoing
 #: report:packing.list:0
+#: report:certificate.donation:0
+#: report:certificate.free.gift:0
 msgid "FO ref:"
 msgstr "CdT Réf:"
 
@@ -25588,11 +25607,15 @@ msgstr "Pas de ligne créée!"
 #. module: msf_outgoing
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 #: report:pre.packing.list:0
 msgid "Pack Value:"
 msgstr "Colis - Valeur"
+
+#. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "P. Value:"
+msgstr "C. Valeur"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -25632,7 +25655,7 @@ msgstr "Méthode de calcul du montant de taxe"
 msgid "Attachment Name"
 msgstr "Nom de la Pièce Jointe"
 
-#. modules: data_finance, msf_homere_interface, base, account_hq_entries, import_data, export_import_lang
+#. modules: data_finance, msf_homere_interface, base, account_hq_entries, import_data, export_import_lang, msf_doc_import
 #: field:hq.entries.import,file:0
 #: field:base.language.export,data:0
 #: field:base.language.import,data:0
@@ -25645,8 +25668,9 @@ msgstr "Nom de la Pièce Jointe"
 #: field:hr.payroll.employee.import,file:0
 #: field:hr.payroll.import,file:0
 #: field:msf.language.import,data:0
+#: field:msf.doc.import.accounting,file:0
 msgid "File"
-msgstr "Dossier"
+msgstr "Fichier"
 
 #. module: register_accounting
 #: model:ir.actions.report.xml,name:register_accounting.cheque_inventory
@@ -29211,7 +29235,7 @@ msgstr "prix unitaire"
 msgid "Field Orders Analysis"
 msgstr "Analyse des Commandes de Projet"
 
-#. modules: account_voucher, account_hq_entries, account_corrections, purchase_allocation_report, register_accounting, msf_accrual, partner_modification, account_msf, return_claim, account_mcdb, supplier_catalogue, import_data, stock_override, analytic, stock, msf_order_date, product, account_payment, msf_homere_interface, service_purchasing, purchase_override, kit, sale_override, base, purchase, account, msf_outgoing, msf_partner, documents_done, sale, sourcing, sd
+#. modules: account_voucher, account_hq_entries, account_corrections, purchase_allocation_report, register_accounting, msf_accrual, partner_modification, account_msf, return_claim, account_mcdb, supplier_catalogue, import_data, stock_override, analytic, stock, msf_order_date, product, account_payment, msf_homere_interface, service_purchasing, purchase_override, kit, sale_override, base, purchase, account, msf_outgoing, msf_partner, documents_done, sale, sourcing, sd, msf_doc_import
 #: field:account.bank.statement.line,partner_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,partner_id:0
@@ -29310,6 +29334,8 @@ msgstr "Analyse des Commandes de Projet"
 #: model:ir.model,name:supplier_catalogue.model_res_partner
 #: field:pricelist.partnerinfo,partner_id:0
 #: field:supplier.catalogue,partner_id:0
+#: code:addons/msf_doc_import/account.py:320
+#: field:msf.doc.import.accounting.lines,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -37402,10 +37428,14 @@ msgstr "Listes des Avances Ouvertes"
 #. module: msf_outgoing
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
-#: report:certificate.free.gift:0
 #: report:invoice:0
 msgid "Total Weight [kg]:"
 msgstr "Poids Total (kg)"
+
+#. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "∑ Weight [kg]:"
+msgstr "∑ Poids (kg)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -39112,7 +39142,7 @@ msgstr "Date de comptabilisation devrait être postérieure à celle du document
 msgid "11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM"
 msgstr "11*BF chaîne froid *BF - Problème si C et/ou D totalement bleus ou étiquette-gel = ALARME"
 
-#. modules: account_msf, account, msf_outgoing, account_mcdb, msf_custom_settings, res_currency_tables, sync_client, msf_homere_interface, account_voucher, account_hq_entries, kit, base, register_accounting, specific_rules, sale, sd, procurement_request, analytic_distribution
+#. modules: account_msf, account, msf_outgoing, account_mcdb, msf_custom_settings, res_currency_tables, sync_client, msf_homere_interface, account_voucher, account_hq_entries, kit, base, register_accounting, specific_rules, sale, sd, procurement_request, analytic_distribution, msf_doc_import
 #: view:account.invoice:0
 #: view:hq.analytic.reallocation:0
 #: view:hq.entries.import:0
@@ -39145,6 +39175,7 @@ msgstr "11*BF chaîne froid *BF - Problème si C et/ou D totalement bleus ou ét
 #: view:sync.client.child_entity:0
 #: view:stock.cost.reevaluation:0
 #: view:sync.client.child_entity:0
+#: view:msf.doc.import.accounting:0
 msgid "Validate"
 msgstr "Valider"
 
@@ -48199,6 +48230,11 @@ msgid "Chile"
 msgstr "Chili"
 
 #. module: msf_outgoing
+#: report:certificate.free.gift:0
+msgid "∑ Value:"
+msgstr "∑ Valeur:"
+
+#. module: msf_outgoing
 #: report:cargo.manifest:0
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
@@ -52822,8 +52858,8 @@ msgstr "Produit Actuel"
 #: report:certificate.donation:0
 #: report:certificate.free.gift:0
 #: report:invoice:0
-msgid "Pack Weight [kg]:"
-msgstr "Colis - Poids (kg)"
+msgid "P. Weight [kg]:"
+msgstr "C. Poids (kg)"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -56331,7 +56367,7 @@ msgstr "□ A Transborder"
 msgid "Closing balance"
 msgstr "Solde de clôture"
 
-#. modules: register_accounting, account_mcdb, msf_homere_interface, hr, account_corrections, base, msf_accrual, sd
+#. modules: register_accounting, account_mcdb, msf_homere_interface, hr, account_corrections, base, msf_accrual, sd, msf_doc_import
 #: field:wizard.journal.items.corrections.lines,employee_id:0
 #: field:account.mcdb,employee_id:0
 #: field:res.partner,employee:0
@@ -56355,6 +56391,8 @@ msgstr "Solde de clôture"
 #: model:ir.model,name:register_accounting.model_hr_employee
 #: model:process.node,name:sd.hr_process_node_employee0
 #: field:wizard.import.cheque.lines,employee_id:0
+#: code:addons/msf_doc_import/account.py:324
+#: field:msf.doc.import.accounting.lines,employee_id:0
 msgid "Employee"
 msgstr "Employé"
 
@@ -67419,4 +67457,237 @@ msgstr "Vous ne pouvez pas confirmer cet inventaire car il contient des lignes a
 msgid "You cannot confirm this kit because it contains a line with an inactive product"
 msgstr "Vous ne pouvez pas confirmer ce kit car il contient des lignes avec un produit inactif"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:52
+#, python-format
+msgid "Initialization…"
+msgstr "Initialisation…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:65
+#, python-format
+msgid "No migration journal found!"
+msgstr "Aucun journal de migration trouvé !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:77
+#, python-format
+msgid "No lines…"
+msgstr "Pas de lignes…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:87
+#, python-format
+msgid "Grouping by currencies…"
+msgstr "Regroupement par monnaies…"
+
+#. module: msf_doc_import
+#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
+#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
+#: view:msf.doc.import.accounting:0
+msgid "Import Migration Entries"
+msgstr "Import d'entrées de migration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:95
+#, python-format
+msgid "Writing a move for each currency…"
+msgstr "Enregistrement d'une écriture comptable pour chaque monnaie…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:176
+#, python-format
+msgid "Cleaning up old imports…"
+msgstr "Nettoyage des anciens imports…"
+
+#. module: msf_doc_import
+#: view:msf.doc.import.accounting:0
+msgid "This will import Migration Entries from a XML file."
+msgstr "Ceci va importer les entrées de migration depuis un fichier XML."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:184
+#: code:addons/msf_doc_import/account.py:235
+#, python-format
+msgid "Checking file…"
+msgstr "Vérification du fichier…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:183
+#, python-format
+msgid "Nothing to import."
+msgstr "Rien à importer."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:193
+#, python-format
+msgid "Copying file…"
+msgstr "Copie du fichier…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:191
+#, python-format
+msgid "No content."
+msgstr "Aucun contenu."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:204
+#, python-format
+msgid "Processing line…"
+msgstr "Traitement de la ligne…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:208
+#, python-format
+msgid "Reading headers…"
+msgstr "Lecture des entêtes…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:211
+#, python-format
+msgid "'%s' column not found in file."
+msgstr "La colonne '%s' n'a pas été trouvée dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:229
+#, python-format
+msgid "Reading lines…"
+msgstr "Lecture des lignes…"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:264
+#, python-format
+msgid "Line %s. No currency specified!"
+msgstr "Ligne %s. Aucune monnaie précisée !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:268
+#, python-format
+msgid "Line %s. Currency not found: %s"
+msgstr "Ligne %s. Monnaie non trouvée : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:272
+#, python-format
+msgid "Line %s. Currency is not active: %s"
+msgstr "Ligne %s. La monnaie n'est pas active : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:292
+#, python-format
+msgid "Line %s. No document date specified!"
+msgstr "Ligne %s. Aucune date de document précisée !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:295
+#, python-format
+msgid "Line %s. No posting date specified!"
+msgstr "Ligne %s. Aucune date de comptabilisation précisée !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:298
+#, python-format
+msgid "Line %s. Document date '%s' should be inferior or equal to Posting date '%s'."
+msgstr "Ligne %s. La date de document '%s' devrait être inférieure ou égale à la date de compatibilisation '%s'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:306
+#, python-format
+msgid "Line %s. No period found for given date: %s"
+msgstr "Ligne %s. Aucune période trouvée pour la date suivante : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:311
+#, python-format
+msgid "Line %s. No G/L account specified!"
+msgstr "Ligne %s. Aucun compte de Grand Livre précisé !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:315
+#, python-format
+msgid "Line %s. G/L account %s not found!"
+msgstr "Ligne %s. Compte de Grand Livre %s non trouvé !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:328
+#, python-format
+msgid "Line %s. %s not found: %s"
+msgstr "Ligne %s. %s non trouvé : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:335
+#, python-format
+msgid "Line %s. No destination specified!"
+msgstr "Ligne %s. Aucune destination précisée !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:339
+#, python-format
+msgid "Line %s. Destination %s not found!"
+msgstr "Ligne %s. Destination %s non trouvée !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:344
+#, python-format
+msgid "Line %s. No cost center specified!"
+msgstr "Ligne %s. Aucun centre de coût précisé !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:348
+#, python-format
+msgid "Line %s. Cost Center %s not found!"
+msgstr "Ligne %s. Centre de coût %s non trouvé !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:379
+#, python-format
+msgid "Line %s. A problem occured for line registration. Please contact an Administrator."
+msgstr "Ligne %s. Un problème est survenu lors de l'enregistrement de la ligne. Veuillez contacter un administrateur."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:372
+#, python-format
+msgid "Currency %s is not balanced: %s."
+msgstr "La monnaie %s n'est pas balancée : %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:392
+#, python-format
+msgid "Check complete. Reading potential errors or write needed changes."
+msgstr "Vérification terminée. Lecture des erreurs potentielles ou écriture des modifications nécessaires."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:399
+#, python-format
+msgid "Import FAILED."
+msgstr "L'import a ÉCHOUÉ."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:413
+#, python-format
+msgid "Import successful."
+msgstr "Import réussi."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:410
+#, python-format
+msgid "Writing changes…"
+msgstr "Écriture des modifications…"
+
+#. module: msf_doc_import
+#: field:msf.doc.import.accounting,date:0
+msgid "Migration date"
+msgstr "Date de migration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:405
+#, python-format
+msgid "An error occured. %s: %s"
+msgstr "Une erreur est survenue. %s: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:409
+#, python-format
+msgid "An error occured: %s"
+msgstr "Une erreur est survenue: %s"
 

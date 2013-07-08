@@ -23,6 +23,7 @@
     "name": "MSF Tools",
     "version": "1.0",
     "depends": ["base",
+                "product",
                 ],
     "author": "MSF, TeMPO Consulting",
     "website": "",

@@ -39,6 +39,7 @@ class stock_location(osv.osv):
     _parent_order = 'location_id, posz'
     _order = 'location_id, posz'
 
+
     def _get_input_output(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return True if the location is the input/output location of a warehouse or a children of it

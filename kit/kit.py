@@ -934,12 +934,23 @@ class composition_item(osv.osv):
                             }}
         if product_id:
             product = prod_obj.browse(cr, uid, product_id, context=context)
-            result['value']['item_uom_id'] = product.uom_po_id.id
+            result['value']['item_uom_id'] = product.uom_id.id
             result['value']['hidden_perishable_mandatory'] = product.perishable
             result['value']['hidden_batch_management_mandatory'] = product.batch_management
             result['value']['hidden_asset_mandatory'] = product.type == 'product' and product.subtype == 'asset'
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'item_qty', result=res)
+
+        return res
     
     def on_lot_change(self, cr, uid, ids, product_id, prodlot_id, context=None):
         '''
@@ -1137,9 +1148,15 @@ class composition_item(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('Only Batch Number Mandatory or Expiry Date Mandatory can specify Expiry Date.'))
                 
         return True
-    
-    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),]
-    
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.item_product_id.id, obj.item_uom_id.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_composition_item_constraint, 'Constraint error on Composition Item.', []),
+                    (_uom_constraint, 'Constraint error on Uom', [])]
     
 composition_item()
 

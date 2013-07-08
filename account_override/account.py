@@ -85,6 +85,22 @@ class account_account(osv.osv):
         'is_settled_at_hq': lambda *a: False,
     }
 
+    # UTP-493: Add a dash between code and account name
+    def name_get(self, cr, uid, ids, context=None):
+        """
+        Use "-" instead of " " between name and code for account's default name
+        """
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
+        res = []
+        for record in reads:
+            name = record['name']
+            if record['code']:
+                name = record['code'] + ' - '+name
+            res.append((record['id'], name))
+        return res
+
 account_account()
 
 class account_journal(osv.osv):
@@ -309,7 +325,14 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
-        self.unlink(cr, uid, to_delete, context)
+        # First delete move lines to avoid "check=True" problem on account_move_line item
+        if to_delete:
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            if ml_ids:
+                if isinstance(ml_ids, (int, long)):
+                    ml_ids = [ml_ids]
+                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
+        self.unlink(cr, uid, to_delete, context, check=False)
         return True
 
 account_move()

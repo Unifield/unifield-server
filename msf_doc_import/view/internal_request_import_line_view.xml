@@ -26,7 +26,7 @@
                     <field name="line_number" readonly="1"/>
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
-                    <attribute name="on_change">onchange_uom(product_id, product_uom)</attribute>
+                    <attribute name="on_change">onchange_uom(product_id, product_uom, product_uom_qty)</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">

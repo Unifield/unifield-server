@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 import time
+from collections import defaultdict
 
 class account_move_line_reconcile(osv.osv_memory):
     _inherit = 'account.move.line.reconcile'
@@ -83,37 +84,54 @@ class account_move_line_reconcile(osv.osv_memory):
         intermission_default_account_id = False
         if self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart:
             intermission_default_account_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart.id
-        # Browse all lines
+        # Browse all lines and check currencies, journals, and transfers state
+        currencies = defaultdict(list)
+        journals = defaultdict(list)
+        transfers = []
+        transfer_with_change = False
+        transfer = False
+        debits = 0
+        credits = 0
+        statements = []
         for line in account_move_line_obj.browse(cr, uid, context['active_ids']):
             if line.move_id and line.move_id.state == 'posted':
+                # Prepare some infos needed for transfers with/without change
+                currencies[(line.currency_id, line.transfer_journal_id and line.transfer_journal_id.currency or None)].append(line.id)
+                journals[(line.journal_id.id, line.transfer_journal_id and line.transfer_journal_id.id or None)].append(line.id)
+                if line.is_transfer_with_change:
+                    transfers.append(line.id)
+                debits += line.debit
+                credits += line.credit
+                statements.append(line.statement_id)
                 continue
             raise osv.except_osv(_('Warning'), _('You can only do reconciliation on Posted Entries!'))
+        # Check lines for transfers cases (this permit to do transfers with more than 2 lines!)
+        if len(journals) == 2:
+            keys = journals.keys()
+            # Cross check on: "third parties" × "journals" (if YES, this is a transfer)
+            if keys[0][1] == keys[1][0] and keys[0][0] == keys[1][1]:
+                transfer = True
+        if len(transfers) == len(context['active_ids']):
+            transfer_with_change = True
+        # Cross check on: "journal currency" × "transfer_journal currency" (should check all error cases to avoid transfer_with_change problems)
+        if transfer_with_change:
+            keys_c = currencies.keys()
+            if len(currencies) != 2 or keys_c[0][1] != keys_c[1][0] or keys_c[0][0] != keys_c[1][1]:
+                transfer_with_change = False
+                # UTP-526: Do not raise next error if line comes from the same register and have same amount
+                previous_st = None
+                same = True
+                for st in statements:
+                    if not previous_st:
+                        previous_st = st
+                        continue
+                    if st != previous_st:
+                        same = False
+                        break
+                if not (same and debits == credits):
+                    raise osv.except_osv(_('Warning'), _("Cannot reconcile entries : Cross check between transfer currencies fails."))
         prev_acc_id = None
         prev_third_party = None
-        transfer = False
-        transfer_with_change = False
-        # Transfer verification
-        operator = 'in'
-        if len(context['active_ids']) == 1:
-            operator = '='
-        search_ids = account_move_line_obj.search(cr, uid, [('account_id.type_for_register', 'in', ['transfer_same', 'transfer']), 
-            ('id', operator, context['active_ids'])], context=context)
-        if len(context['active_ids']) == len(search_ids):
-            if len(context['active_ids']) == 2:
-                elements = account_move_line_obj.browse(cr, uid, context['active_ids'], context)
-                first_line = elements[0]
-                second_line = elements[1]
-                if first_line.journal_id and first_line.transfer_journal_id and second_line.journal_id and second_line.transfer_journal_id:
-                    # Cross check on third parties
-                    if first_line.journal_id.id == second_line.transfer_journal_id.id and second_line.journal_id.id == first_line.transfer_journal_id.id:
-                        transfer = True
-                    # Cross check on currencies for transfer_with_change verification
-                    if first_line.is_transfer_with_change and second_line.is_transfer_with_change:
-                        if first_line.journal_id.currency == second_line.transfer_journal_id.currency and first_line.transfer_journal_id.currency == second_line.journal_id.currency:
-                            transfer_with_change = True
-                        # UTP-526: Do not raise this error if line comes from the same register and have same amount
-                        elif not (first_line.statement_id.id == second_line.statement_id.id and first_line.debit == second_line.credit and first_line.credit == second_line.debit):
-                            raise osv.except_osv(_('Warning'), _("Cannot reconcile entries : Cross check between transfer currencies fails."))
         if transfer_with_change:
             # For transfer with change, we need to do a total reconciliation!
             state = 'total_change'

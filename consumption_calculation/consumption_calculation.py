@@ -602,23 +602,6 @@ class real_average_consumption_line(osv.osv):
 
         return True
 
-    def check_product_uom(self, cr, uid, ids, product_id, product_uom, context=None):
-        '''
-        Check if the UoM is convertible to product standard UoM
-        '''
-        warning = {}
-        if product_uom and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {
-                    'title': _('Wrong Product UOM !'),
-                    'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")
-                }
-        return {'warning': warning}
-
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
 
@@ -686,6 +669,11 @@ class real_average_consumption_line(osv.osv):
         check = self._check_qty(cr, uid, res, context)
         if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+        if vals.get('uom_id') and vals.get('product_id'):
+            product_id = vals.get('product_id')
+            product_uom = vals.get('uom_id')
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                raise osv.except_osv(_('Warning !'), _("You have to select a product UOM in the same category than the purchase UOM of the product"))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -707,9 +695,8 @@ class real_average_consumption_line(osv.osv):
             if vals.get('uom_id') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('uom_id')
-                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
-                if res and res['warning']:
-                    message += res['warning']['message']
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                    message += _("You have to select a product UOM in the same category than the purchase UOM of the product")
             if message:
                 raise osv.except_osv(_('Warning !'), message)
             else:
@@ -762,22 +749,22 @@ class real_average_consumption_line(osv.osv):
     def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, uom, context=None):
         if context is None:
             context = {}
+
+        res = {'value': {}}
+
         stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location, uom)
         warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
-        if uom:
-            new_qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, uom)
-            if new_qty != qty:
-                warn_msg = {
-                    'title': _('Error'), 
-                    'message': _("The Qty Consumed %s and rounding uom qty %s are not equal !")%(qty, new_qty)
-                }
-                return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+        
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'consumed_qty', result=res)
 
         if prodlot_id and qty > stock_qty:
-            return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+            res.setdefault('warning', {}).update(warn_msg)
+            res.setdefault('value', {}).update({'consumed_qty': 0})
         if qty > stock_qty:
-            return {'warning': warn_msg}
-        return {}
+            res.setdefault('warning', {}).update(warn_msg)
+        
+        return res
 
     def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, remark=False, context=None):
         '''
@@ -806,7 +793,7 @@ class real_average_consumption_line(osv.osv):
 
         return res
    
-    def uom_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
+    def uom_onchange(self, cr, uid, ids, product_id, product_qty, location_id=False, uom=False, lot=False, context=None):
         if context is None:
             context = {}
         qty_available = 0
@@ -818,7 +805,12 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
-        return {'value': {'product_qty': qty_available}, 'domain': d}
+        res = {'value': {'product_qty': qty_available}, 'domain': d}
+
+        if product_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, product_qty, 'consumed_qty', result=res)
+
+        return res
 
     def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
         '''

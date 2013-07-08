@@ -680,7 +680,7 @@ class shipment(osv.osv):
                                 new_draft_move_id = move_obj.copy(cr, uid, move.id, values, context=dict(context, non_stock_noupdate=True))
                                 
                             # quantities are right - stay + return qty = original qty
-                            assert all([updated[m]['initial'] == updated[m]['partial_qty'] for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
+                            assert all([round(updated[m]['initial'], 14) == round(updated[m]['partial_qty'], 14) for m in updated.keys()]), 'initial quantity is not equal to the sum of partial quantities (%s).'%(updated)
                             # if packs are returned corresponding move is canceled
                             # cancel move or 0 qty + done ?
                             #move_obj.action_cancel(cr, uid, [move.id], context=context)
@@ -1005,11 +1005,7 @@ class shipment(osv.osv):
                         uom_id = move.product_id.uom_id.id
                         uos_id = move.product_id.uos_id and move.product_id.uos_id.id or False
                         price = move.sale_line_id.price_unit
-                        coeff = move.product_id.uos_coeff
-                        if uom_id != uos_id and coeff != 0:
-                            price_unit = price / coeff
-                        else:
-                            price_unit = move.sale_line_id.price_unit
+                        price_unit = self.pool.get('product.uom')._compute_price(cr, uid, move.sale_line_id.product_uom.id, price, move.product_uom.id)
                             
                     # Get discount from FO line
                     discount = 0.00
@@ -1583,12 +1579,27 @@ class stock_picking(osv.osv):
                     
         return result
     
+    def _get_overall_qty(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        if not ids:
+            return result
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute('''select p.id, sum(m.product_qty)
+            from stock_picking p, stock_move m
+            where m.picking_id = p.id
+            group by p.id''')
+        for i in cr.fetchall():
+            result[i[0]] = i[1] or 0
+        return result
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
         '''
         result = {}
-        for stock_picking in self.browse(cr, uid, ids, context=context):
+
+        for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
             values = {'total_amount': 0.0,
                       'currency_id': False,
                       'is_dangerous_good': False,
@@ -1598,34 +1609,34 @@ class stock_picking(osv.osv):
                       'total_volume': 0.0,
                       'total_weight': 0.0,
                       #'is_completed': False,
-                      'overall_qty': 0.0,
                       }
-            result[stock_picking.id] = values
+            result[stock_picking['id']] = values
             
-            for family in stock_picking.pack_family_memory_ids:
-                # number of packs from pack_family
-                num_of_packs = family.num_of_packs
-                values['num_of_packs'] += int(num_of_packs)
-                # total_weight
-                total_weight = family.total_weight
-                values['total_weight'] += total_weight
-                total_volume = family.total_volume
-                values['total_volume'] += total_volume
+            if stock_picking['pack_family_memory_ids']:
+                for family in self.pool.get('pack.family.memory').read(cr, uid, stock_picking['pack_family_memory_ids'], ['num_of_packs', 'total_weight', 'total_volume'], context=context):
+                    # number of packs from pack_family
+                    num_of_packs = family['num_of_packs']
+                    values['num_of_packs'] += int(num_of_packs)
+                    # total_weight
+                    total_weight = family['total_weight']
+                    values['total_weight'] += float(total_weight)
+                    total_volume = family['total_volume']
+                    values['total_volume'] += float(total_volume)
+
+            if stock_picking['move_lines']:
                 
-            for move in stock_picking.move_lines:
-                # total amount (float)
-                total_amount = move.total_amount
-                values['total_amount'] = total_amount
-                # currency
-                values['currency_id'] = move.currency_id and move.currency_id.id or False
-                # dangerous good
-                values['is_dangerous_good'] = move.is_dangerous_good
-                # keep cool - if heat_sensitive_item is True
-                values['is_keep_cool'] = move.is_keep_cool
-                # narcotic
-                values['is_narcotic'] = move.is_narcotic
-                # overall qty of products in all corresponding stock moves
-                values['overall_qty'] += move.product_qty
+                for move in self.pool.get('stock.move').read(cr, uid, stock_picking['move_lines'], ['total_amount', 'currency_id', 'is_dangerous_good', 'is_keep_cool', 'is_narcotic', 'product_qty'], context=context):
+                    # total amount (float)
+                    total_amount = move['total_amount']
+                    values['total_amount'] = total_amount
+                    # currency
+                    values['currency_id'] = move['currency_id'] or False
+                    # dangerous good
+                    values['is_dangerous_good'] = move['is_dangerous_good']
+                    # keep cool - if heat_sensitive_item is True
+                    values['is_keep_cool'] = move['is_keep_cool']
+                    # narcotic
+                    values['is_narcotic'] = move['is_narcotic']
                 
             # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
             # - picking checks that the corresponding ppl is completed
@@ -1696,7 +1707,6 @@ class stock_picking(osv.osv):
         """
         if context is None:
             context = {}
-            
         stock_pickings = self.pool.get('stock.picking').search(cr, uid, [], context=context)
         # result dic
         result = {}
@@ -1739,7 +1749,7 @@ class stock_picking(osv.osv):
                     continue
 
         return res
-       
+    
     _columns = {'flow_type': fields.selection([('full', 'Full'),('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False),],}, string='Flow Type'),
                 'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'),('ppl', 'PPL'),('packing', 'Packing')], string='Subtype'),
                 'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
@@ -1764,8 +1774,9 @@ class stock_picking(osv.osv):
                 'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
                 'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
-                'overall_qty': fields.function(_vals_get, method=True, fnct_search=_qty_search, type='float', string='Overall Qty', multi='get_vals',
-                                               store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}),
+                'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
+                                    store= {'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10),}
+                ),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.function(_vals_get_2, method=True, type='one2many', relation='pack.family.memory', string='Memory Families', multi='get_vals_2',),
                 'description_ppl': fields.char('Description', size=256 ),
@@ -2384,6 +2395,7 @@ class stock_picking(osv.osv):
         
         # stock move object
         move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         
         for pick in self.browse(cr, uid, ids, context=context):
             # create the new picking object
@@ -2405,13 +2417,17 @@ class stock_picking(osv.osv):
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
                     assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    # UTP-289 : Remove the check of the consistency of UoM
+                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
-                    count = count + partial['product_qty']
+                    count = count + total_qty
                     # copy the stock move and set the quantity
                     values = {'picking_id': new_pick_id,
                               'product_qty': partial['product_qty'],
+                              'product_uom': partial['product_uom'],
                               'product_uos_qty': partial['product_qty'],
+                              'product_uos': partial['product_uom'],
                               'prodlot_id': partial['prodlot_id'],
                               'asset_id': partial['asset_id'],
                               'composition_list_id': partial['composition_list_id'],
@@ -2497,6 +2513,7 @@ class stock_picking(osv.osv):
         
         # stock move object
         move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         # create picking object
         create_picking_obj = self.pool.get('create.picking')
         
@@ -2514,14 +2531,19 @@ class stock_picking(osv.osv):
                 for partial in partial_datas[pick.id][move.id]:
                     # integrity check
                     assert partial['product_id'] == move.product_id.id, 'product id is wrong, %s - %s'%(partial['product_id'], move.product_id.id)
-                    assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+                    # UTP-289 : Remove the check on UoM
+                    #assert partial['product_uom'] == move.product_uom.id, 'product uom is wrong, %s - %s'%(partial['product_uom'], move.product_uom.id)
+
+                    total_qty = uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], move.product_uom.id)
                     # the quantity
-                    count = count + partial['product_qty']
+                    count = count + total_qty
                     if first:
                         first = False
                         # update existing move
                         values = {'product_qty': partial['product_qty'],
                                   'product_uos_qty': partial['product_qty'],
+                                  'product_uom': partial['product_uom'],
+                                  'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2533,6 +2555,8 @@ class stock_picking(osv.osv):
                         values = {'state': 'assigned',
                                   'product_qty': partial['product_qty'],
                                   'product_uos_qty': partial['product_qty'],
+                                  'product_uom': partial['product_uom'],
+                                  'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
@@ -2547,7 +2571,10 @@ class stock_picking(osv.osv):
                 if diff_qty != 0:
                     # original move from the draft picking ticket which will be updated
                     original_move = move.backmove_id
-                    backorder_qty = move_obj.read(cr, uid, [original_move.id], ['product_qty'], context=context)[0]['product_qty']
+                    original_vals = move_obj.read(cr, uid, [original_move.id], ['product_qty', 'product_uom'], context=context)[0]
+                    backorder_qty = original_vals['product_qty']
+                    original_uom = original_vals['product_uom'][0]
+                    diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, diff_qty, original_uom)
                     backorder_qty = max(backorder_qty + diff_qty, 0)
                     move_obj.write(cr, uid, [original_move.id], {'product_qty': backorder_qty}, context=context)
 
@@ -3070,6 +3097,7 @@ class stock_move(osv.osv):
         get functional values
         '''
         result = {}
+        uom_obj = self.pool.get('product.uom')
         for move in self.browse(cr, uid, ids, context=context):
             values = {'qty_per_pack': 0.0,
                       'total_amount': 0.0,
@@ -3095,6 +3123,8 @@ class stock_move(osv.osv):
                 values['qty_per_pack'] = 0
             # total amount (float)
             total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
+            if move.sale_line_id:
+                total_amount = uom_obj._compute_price(cr, uid, move.sale_line_id.product_uom.id, total_amount, move.product_uom.id)
             values['total_amount'] = total_amount
             # amount for one pack
             if num_of_packs:
@@ -3219,7 +3249,7 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         proc_id = kwargs['proc_id']
         order = kwargs['order']
-        if order.procurement_request :
+        if order.procurement_request:
             proc = self.pool.get('procurement.order').browse(cr, uid, [proc_id], context=context)
             pick_id = proc and proc[0] and proc[0].move_id and proc[0].move_id.picking_id and proc[0].move_id.picking_id.id or False
             if pick_id:
@@ -3254,10 +3284,10 @@ class sale_order(osv.osv):
         if order.procurement_request:
             move_obj.action_confirm(cr, uid, [move_id], context=context)
             # we Validate the picking "Confirms picking directly from draft state."
-            pick_obj.draft_force_assign(cr, uid , [pick_id], context)
+            #pick_obj.draft_force_assign(cr, uid , [pick_id], context)
             # We also do a first 'check availability': cancel then check
-            pick_obj.cancel_assign(cr, uid, [pick_id], context)
-            pick_obj.action_assign(cr, uid, [pick_id], context)
+            #pick_obj.cancel_assign(cr, uid, [pick_id], context)
+            #pick_obj.action_assign(cr, uid, [pick_id], context)
             
         return super(sale_order, self)._hook_ship_create_execute_specific_code_02(cr, uid, ids, context, *args, **kwargs)
     

@@ -381,6 +381,8 @@ class stock_picking(osv.osv):
             new_qty = max(present_qty + diff_qty, 0)
             if new_qty > 0.00 and present_qty != 0.00:
                 new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                                                                   'product_uom': data_back['product_uom'],
+                                                                   'product_uos': data_back['product_uom'],
                                                                    'product_uos_qty': diff_qty,}, context=context)
                 move_obj.action_confirm(cr, uid, [new_move_id], context=context)
 #                if present_qty == 0.00:
@@ -388,6 +390,8 @@ class stock_picking(osv.osv):
 #                    move_obj.unlink(cr, uid, out_move_id, context=context)
             else:
                 move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                                                        'product_uom': data['product_uom'][0],
+                                                        'product_uos': data['product_uom'][0],
                                                         'product_uos_qty': new_qty,}, context=context)
     
             # log the modification
@@ -466,6 +470,8 @@ class stock_picking(osv.osv):
                 force_complete = False
                 # initial qty
                 initial_qty = move.product_qty
+                # initial uom
+                initial_uom = move.product_uom.id
                 # corresponding out move
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_move_id = mirror_data['move_id']
@@ -490,9 +496,12 @@ class stock_picking(osv.osv):
                               'product_uos_qty': partial['product_qty'],
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
+                              'product_uos': partial['product_uom'],
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
+                    if 'product_price' in partial:
+                        values.update({'price_unit': partial['product_price']})
                     values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):

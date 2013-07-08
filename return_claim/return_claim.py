@@ -1242,6 +1242,17 @@ class claim_product_line(osv.osv):
             result[obj.id].update({'hidden_stock_available_claim_product_line': available_qty})
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_claim_product_line', result=res)
+
+        return res
         
     _columns = {'integrity_status_claim_product_line': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'name': fields.char(string='Name', size=1024), # auto data from create/write

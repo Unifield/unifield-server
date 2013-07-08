@@ -1215,7 +1215,14 @@ class account_bank_statement_line(osv.osv):
                 if st_line.transfer_amount:
                     move_line_values.update({'transfer_amount': st_line.transfer_amount or 0.0})
             # Write move line object for other line
-            acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
+            # UTP-407: Add new message for temp posted register line if you change account and that it's not valid with analytic distribution
+            try:
+                acc_move_line_obj.write(cr, uid, [other_line.id], move_line_values, context=context)
+            except osv.except_osv, e:
+                msg = e.value
+                if 'account_id' in values and st_line.state == 'temp' and other_line.analytic_distribution_state == 'invalid':
+                    msg = _('The account modification required makes the analytic distribution previously defined invalid; please perform the account modification through the analytic distribution wizard')
+                raise osv.except_osv(e.name, msg)
             # Update analytic distribution lines
             analytic_amount = acc_move_line_obj.read(cr, uid, [other_line.id], ['amount_currency'], context=context)[0].get('amount_currency', False)
             if analytic_amount:
@@ -1358,7 +1365,7 @@ class account_bank_statement_line(osv.osv):
                         amount_to_write = sign * amount
                     # create a new move_line corresponding to this invoice move line
                     aml_vals = {
-                        'name': invoice_move_line.invoice.number,
+                        'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
                         'move_id': move_ids[0],
                         'partner_id': invoice_move_line.partner_id.id,
                         'account_id': st_line.account_id.id,
@@ -1505,7 +1512,7 @@ class account_bank_statement_line(osv.osv):
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
         if state  == 'hard':
-            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context:
+            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context or context.get('sync_update_execution', False):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
