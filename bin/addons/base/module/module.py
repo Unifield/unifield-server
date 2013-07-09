@@ -500,12 +500,8 @@ class module(osv.osv):
         msf_profile_id = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_profile')])
         if msf_profile_id and msf_profile_id[0] in ids:
             ids.remove(msf_profile_id[0])
-            if context.get('overwrite'):
-                # the last translation wins, so load msf_profile at the end
-                ids.append(msf_profile_id[0])
-            else:
-                # the first translation wins, so load first msf_profile
-                ids.insert(0, msf_profile_id[0])
+            # load msf_profile file at the end (due to es.po file, terms are always overwritten)
+            ids.append(msf_profile_id[0])
 
         for mod in self.browse(cr, uid, ids):
             if mod.state != 'installed':
