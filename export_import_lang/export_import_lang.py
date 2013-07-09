@@ -62,7 +62,7 @@ class base_language_export(osv.osv_memory):
             if this.lang:
                 filename = get_iso_codes(this.lang)
             this.name = "%s.%s" % (filename, this.format)
-            ignore_name = ['ir.filters,model_id', 'ir.actions.server,copy_object', 'ir.ui.menu,icon', 'ir.sequence,code']
+            ignore_name = ['ir.filters,model_id', 'ir.actions.server,copy_object', 'ir.ui.menu,icon', 'ir.sequence,code', 'stock.location,icon']
             if this.format == 'xls':
                 trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name)
                 if trans:
