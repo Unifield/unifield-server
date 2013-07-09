@@ -261,3 +261,12 @@ class res_lang(osv.osv):
         cr.commit()
         cr.close()
 res_lang()
+
+class base_language_install(osv.osv_memory):
+    _name = "base.language.install"
+    _inherit = "base.language.install"
+
+    _columns = {
+        'lang': fields.selection([('fr_MF', 'French'), ('es_MF', 'Spanish')],'Language', required=True),
+    }
+base_language_install()
