@@ -27,7 +27,7 @@ class setup_remote_warehouse(osv.osv_memory):
     _logger = logging.getLogger('setup_remote_warehouse')
     
     def _set_sync_menu_active(self, cr, uid, active):
-        sync_menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'sd', 'sync_client_connection_manager_menu');
+        sync_menu_xml_id_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'sync_client', 'connection_manager_menu');
         sync_menu_id = self.pool.get('ir.model.data').read(cr, uid, sync_menu_xml_id_id, ['res_id'])['res_id'];
         self.pool.get('ir.ui.menu').write(cr, uid, sync_menu_id, {'active': active})
     

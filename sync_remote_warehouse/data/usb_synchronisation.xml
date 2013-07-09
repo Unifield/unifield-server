@@ -9,7 +9,7 @@
         target="new"
         id="act_window_usb_synchronisation"/>
         
-        <menuitem id="menu_usb_synchronisation" name="USB Synchronisation" action="act_window_usb_synchronisation" parent="sd.sync_client_sync_menu" sequence="30" />
+        <menuitem id="menu_usb_synchronisation" name="USB Synchronisation" action="act_window_usb_synchronisation" parent="sync_client.sync_menu" sequence="30" />
         
     </data>
 </openerp>

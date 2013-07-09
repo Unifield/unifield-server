@@ -5,7 +5,7 @@
         <record model="ir.ui.view" id="sync_server_sync_rule_form_view_rw">
             <field name="name">sync_rule.form.rw</field>
             <field name="model">sync_server.sync_rule</field>
-            <field name="inherit_id" ref="sd.sync_server_sync_rule_form_view" />
+            <field name="inherit_id" ref="sync_server.sync_rule_form_view" />
             <field name="arch" type="xml">
                 <field name="direction" position="replace">
                 	<field name="direction" attrs="{'invisible': [('type_id.name','=','USB')]}" />
@@ -37,7 +37,7 @@
         <record model="ir.ui.view" id="sync_server_sync_rule_form_view_rw">
             <field name="name">sync_rule.form.rw</field>
             <field name="model">sync_server.sync_rule</field>
-            <field name="inherit_id" ref="sd.sync_server_sync_rule_form_view" />
+            <field name="inherit_id" ref="sync_server.sync_rule_form_view" />
             <field name="arch" type="xml">
                 <field name="direction" position="replace">
                 	<field name="direction" attrs="{'invisible': [('type_id.name','=','USB')]}" />
@@ -74,3 +74,4 @@
                 action="usb_sync_rule_action" />   
     </data>
 </openerp>
+

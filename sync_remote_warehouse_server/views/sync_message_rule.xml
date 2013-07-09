@@ -5,7 +5,7 @@
         <record model="ir.ui.view" id="sync_server_message_rule_form_view_rw">
             <field name="name">message_rule.form.rw</field>
             <field name="model">sync_server.message_rule</field>
-            <field name="inherit_id" ref="sd.sync_server_message_rule_form_view" />
+            <field name="inherit_id" ref="sync_server.message_rule_form_view" />
             <field name="arch" type="xml">
             
             	<field name="destination_name" position="replace">
@@ -18,3 +18,4 @@
         
     </data>
 </openerp>
+

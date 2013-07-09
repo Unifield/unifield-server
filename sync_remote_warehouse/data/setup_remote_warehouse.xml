@@ -9,7 +9,7 @@
         target="new"
         id="act_window_setup_remote_warehouse"/>
         
-        <menuitem id="menu_setup_remote_warehouse" name="Setup USB Synchronisation" action="act_window_setup_remote_warehouse" parent="sd.sync_client_reg_menu" />
+        <menuitem id="menu_setup_remote_warehouse" name="Setup USB Synchronisation" action="act_window_setup_remote_warehouse" parent="sync_client.reg_menu" />
         
         <record id="todo_remote_warehouse" model="ir.actions.todo">
     		<field name="action_id" ref="act_window_setup_remote_warehouse"/>
