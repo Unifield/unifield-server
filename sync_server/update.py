@@ -145,6 +145,7 @@ class update(osv.osv):
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
         'is_deleted' : fields.boolean('Is deleted?', select=True),
+        'force_recreation' : fields.boolean('Force record recreation'),
     }
 
     _order = 'sequence, create_date desc'
@@ -208,15 +209,16 @@ class update(osv.osv):
             owner = owner[0] if owner else False
 
             if safe_create({
-                        'source': entity.id,
-                        'model': packet['model'],
                         'session_id': packet['session_id'],
                         'rule_id': packet['rule_id'],
-                        'fields': packet['fields'],
+                        'source': entity.id,
+                        'model': packet['model'],
+                        'sdref' : update['sdref'],
                         'version': update['version'],
+                        'fields': packet['fields'],
                         'values': update['values'],
                         'owner': owner,
-                        'sdref' : update['sdref'],
+                        'force_recreation' : update['force_recreation'],
                     }):
                 normal_updates_count += 1
 
@@ -436,6 +438,7 @@ class update(osv.osv):
                     'version' : update.version,
                     'values' : tools.ustr([values[k] for k in complete_fields]),
                     'owner_name' : update.owner.name if update.owner else '',
+                    'force_recreation' : update.force_recreation,
                 })
 
         return data
