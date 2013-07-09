@@ -19,9 +19,12 @@
 #
 ##############################################################################
 
+import logging
+from psycopg2 import IntegrityError
+
 from osv import osv, fields
 import tools
-import logging
+
 from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
 
 class ir_model_data_sync(osv.osv):
@@ -64,26 +67,19 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
                 res.update(dict((id, not exists) for id in data_ids))
         return res
 
-    def _set_is_deleted(self, cr, uid, ids, field, value, args, context=None):
-        if not value or context.get('avoid_ir_data_deletion'): return True
-        datas = {}
-        for data in self.read(cr, uid, ids, ['model','res_id'], context=context):
-            datas.setdefault(data['model'], set()).add(data['res_id'])
-        for model, ids in datas.items():
-            self.pool.get(model).unlink(cr, uid, list(ids))
-        return True
-
     _columns={
         'sync_date':fields.datetime('Last Synchronization Date'),
         'version':fields.integer('Version'),
         'last_modification':fields.datetime('Last Modification Date'),
         'is_deleted' : fields.function(string='The record exists in database?', type='boolean',
-            fnct=_get_is_deleted, fnct_inv=_set_is_deleted, fnct_search=_get_is_deleted, method=True),
+            fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
         'touched' : fields.char("Which records has been touched", size=2048),
+        'force_recreation' : fields.boolean("Force record re-creation"),
     }
 
     _defaults={
         'version' : 1,
+        'force_recreation' : False,
     }
 
     def create_all_sdrefs(self, cr):
@@ -95,42 +91,41 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         ir_model = self.pool.get('ir.model')
         model_ids = ir_model.search(cr, 1, MODELS_TO_IGNORE_DOMAIN)
 
-        for model in ir_model.browse(cr, 1, model_ids):
-            
-            # ignore ir model data object
-            if model.model == 'ir.model.data':
-                continue
+        for model in filter(lambda m:m.model not in MODELS_TO_IGNORE,
+                            ir_model.browse(cr, 1, model_ids)):
 
             obj = self.pool.get(model.model)
-            
+
             if obj is None:
                 self._logger.warning('Could not get object %s while creating all missing sdrefs' % model.model)
-                continue
-            
-            # ignore objects who inherit another object, and use their table too, but a different name (would lead to attempted sd ref duplication)
-            if hasattr(obj, '_inherit') and obj._name != obj._inherit and \
-               (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
                 continue
 
             # ignore wizard objects
             if isinstance(obj, osv.osv_memory):
                 continue
 
+            # ignore objects who inherit another object, and use their table
+            # too, but a different name (would lead to attempted sd ref
+            # duplication)
+            if hasattr(obj, '_inherit') and obj._name != obj._inherit and \
+               (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
+                continue
+
             # get all records for the object
-            cr.execute("""
+            cr.execute("""\
                 SELECT r.id
                 FROM %s r
-                    LEFT JOIN ir_model_data data ON data.module = 'sd' AND data.model = %%s AND r.id = data.res_id
+                    LEFT JOIN ir_model_data data ON data.module = 'sd' AND
+                        data.model = %%s AND r.id = data.res_id
                 WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
             record_ids = map(lambda x: x[0], cr.fetchall())
 
-            # if we have some records
-            if not record_ids:
-                continue
-            
-            # call get_sd_ref with their ids, therefore creating sdref's that don't exist
-            sdref = obj.get_sd_ref(cr, 1, record_ids)
-            result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
+            # if we have some records that doesn't have an sdref
+            if record_ids:
+                # call get_sd_ref with their ids, therefore creating sdref's
+                # that don't exist
+                sdref = obj.get_sd_ref(cr, 1, record_ids)
+                result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
 
         return result
 
@@ -199,34 +194,59 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
 
         return res
 
-    def create(self,cr,uid,values,context=None):
+    def create(self, cr, uid, values, context=None):
+        context = dict(context or {})
+        # Silently purge old sdrefs for replacement
         if values['module'] == 'sd':
-            old_xmlids = self.search(cr, uid, [('module','=','sd'),('model','=',values['model']),('res_id','=',values['res_id'])], context=context)
-            self.unlink(cr, uid, old_xmlids, context=context)
+            cr.execute("""\
+                DELETE FROM ir_model_data
+                WHERE module = 'sd' AND model = %s AND res_id = %s""",
+                [values['model'], values['res_id']])
+            if cr._obj.rowcount:
+                self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
+
+        # idem for xmlids
+        # different res_id means re-creation
+        cr.execute("""\
+            DELETE FROM ir_model_data
+            WHERE module = %s AND name = %s""",
+            [values['module'], values['name']])
+        if cr._obj.rowcount and values['module'] == 'sd':
+            self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
+            values['force_recreation'] = not context.get('sync_update_execution', False)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
+#        import pdb
+#        pdb.set_trace()
 
-        if not values['module'] == 'sd':
-            xmlid = "%s_%s" % (values['module'], values['name'])
-            sd_ids  = self.search(cr, uid, [('module', '=', 'sd'), ('name', '=', xmlid)], context=context)
-            assert len(sd_ids) < 2, \
-                   "Oops...! I already have multiple 'sd' xml_ids for this object id=%s" % xmlid
-
-            args = {
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'model' : values['model'],
-                    'module' : 'sd',
-                    'name' : xmlid,
-                    'res_id' : values['res_id'],
-                   }
-            if sd_ids:
-                data = self.browse(cr, uid, sd_ids, context=context)[0]
-                assert data.res_id == values['res_id'], \
-                       "Oops...! There is multiple resources for a unique xml_id! Expected: %s, got: %s" \
-                       % (values['res_id'], data.res_id)
-                self.write(cr, uid, sd_ids, args, context=context)
-            else:
-                self.create(cr, uid, args, context=context)
+        # when a module load a specific xmlid, the sdref is updated according
+        # that xmlid
+        if values['model'] not in MODELS_TO_IGNORE and \
+           values['module'] not in ('sd', '__export__'):
+            sdref_name = "%(module)s_%(name)s" % values
+            # specific case when sdref already exists
+            # that means there is a re-creation from a module
+            cr.execute("""\
+                DELETE FROM ir_model_data
+                WHERE
+                    module = 'sd' AND name = %s AND
+                    model = %s AND res_id != %s""", 
+                [sdref_name, values['model'], values['res_id']])
+            values['force_recreation'] = cr._obj.rowcount > 0 \
+                and not context.get('sync_update_execution', False)
+            if values['force_recreation']:
+                self._logger.warn("The following record has to be re-created: sd.%(module)s_%(name)s" % values)
+            cr.execute("""\
+                UPDATE ir_model_data sdref
+                SET
+                    name = %s,
+                    force_recreation = %s
+                WHERE
+                    sdref.module = 'sd' AND
+                    sdref.model = %s AND sdref.res_id = %s""",
+                [sdref_name, values['force_recreation'],
+                 values['model'], values['res_id']])
+            assert cr.rowcount > 0, "Nothing to update"
 
         return id
 

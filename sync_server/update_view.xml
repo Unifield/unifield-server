@@ -62,8 +62,10 @@
             <separator string="Record" colspan="2"/>
             <field name="model"/>
             <field name="sdref"/>
-            <group colspan="2" col="4">
+            <group colspan="2" col="6">
               <field name="is_deleted"/>
+              <field name="force_recreation"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
               <field name="version"
                      attrs="{'invisible':[('is_deleted','=',True)]}"/>
             </group>

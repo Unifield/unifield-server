@@ -31,6 +31,19 @@
       <field name="priority">1</field>
       <field name="arch" type="xml">
         <form string="Update Received">
+          <group col="2" colspan="2">
+            <separator string="Record" colspan="2"/>
+            <field name="model"/>
+            <field name="sdref"/>
+            <group col="6" colspan="2">
+              <field name="is_deleted"/>
+              <field name="force_recreation"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+              <field name="version"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+            </group>
+            <field name="owner"/>
+          </group>
           <group col="4" colspan="2">
             <separator string="Synchronization" colspan="4"/>
             <field name="source" colspan="4"/>
@@ -38,17 +51,6 @@
             <field name="create_date"/>
             <field name="execution_date"/>
             <field name="run"/>
-          </group>
-          <group col="2" colspan="2">
-            <separator string="Record" colspan="2"/>
-            <field name="model"/>
-            <field name="sdref"/>
-            <group col="4" colspan="2">
-              <field name="is_deleted"/>
-              <field name="version"
-                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
-            </group>
-            <field name="owner"/>
           </group>
           <group colspan="4" col="3">
             <group colspan="1" col="1">
@@ -148,8 +150,10 @@
             <separator string="Record" colspan="2"/>
             <field name="model"/>
             <field name="sdref"/>
-            <group colspan="2" col="4">
+            <group colspan="2" col="6">
               <field name="is_deleted"/>
+              <field name="force_recreation"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
               <field name="version"
                      attrs="{'invisible':[('is_deleted','=',True)]}"/>
             </group>
