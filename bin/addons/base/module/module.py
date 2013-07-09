@@ -485,7 +485,9 @@ class module(osv.osv):
                 categs = categs[1:]
             self.write(cr, uid, [mod_browse.id], {'category_id': p_id})
 
-    def update_translations(self, cr, uid, ids, filter_lang=None, context={}):
+    def update_translations(self, cr, uid, ids, filter_lang=None, context=None):
+        if context is None:
+            context = {}
         logger = logging.getLogger('i18n')
         if not filter_lang:
             pool = pooler.get_pool(cr.dbname)
@@ -494,6 +496,16 @@ class module(osv.osv):
             filter_lang = [lang.code for lang in lang_obj.browse(cr, uid, lang_ids)]
         elif not isinstance(filter_lang, (list, tuple)):
             filter_lang = [filter_lang]
+
+        msf_profile_id = self.pool.get('ir.module.module').search(cr, uid, [('name', '=', 'msf_profile')])
+        if msf_profile_id and msf_profile_id[0] in ids:
+            ids.remove(msf_profile_id[0])
+            if context.get('overwrite'):
+                # the last translation wins, so load msf_profile at the end
+                ids.append(msf_profile_id[0])
+            else:
+                # the first translation wins, so load first msf_profile
+                ids.insert(0, msf_profile_id[0])
 
         for mod in self.browse(cr, uid, ids):
             if mod.state != 'installed':
