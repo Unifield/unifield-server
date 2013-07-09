@@ -67,8 +67,8 @@ class lang_setup(osv.osv_memory):
 
         lang_obj = self.pool.get('res.lang')
         lang = lang_obj.read(cr, uid, payload.lang_id, ['code', 'translatable'])
-        self.set_lang(cr, uid, lang['code'], context=context)
         lang_obj.write(cr, uid, [payload.lang_id], {'translatable': True})
+        self.set_lang(cr, uid, lang['code'], context=context)
 
         count_term = self.pool.get('ir.translation').search(cr, uid, [('lang', '=', lang['code'])], limit=1)
         if not lang['translatable'] or not count_term:
