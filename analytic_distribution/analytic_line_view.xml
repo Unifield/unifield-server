@@ -42,6 +42,7 @@
                     <xpath expr="/search/group[1]/field[@name='name']" position='after'>
                         <field name="ref"/>
                         <field name="move_id" widget="char"/>
+                        <field name="general_account_id"/>
                     </xpath>
                     <xpath expr="/search//field[@name='journal_id']" position="after">
                         <field name="journal_type"/>

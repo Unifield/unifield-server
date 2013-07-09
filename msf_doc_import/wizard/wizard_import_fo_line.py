@@ -78,6 +78,9 @@ class wizard_import_fo_line(osv.osv_memory):
         line_with_error = []
         vals = {'order_line': []}
         
+        context_sol_create = context.copy()
+        context_sol_create['no_store_function'] = ['sale.order.line']
+        created_line = []
         for wiz_browse in self.browse(cr, uid, ids, context):
             fo_browse = wiz_browse.fo_id
             fo_id = fo_browse.id
@@ -205,7 +208,7 @@ class wizard_import_fo_line(osv.osv_memory):
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
                     if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
-                        sale_line_obj.create(cr, uid, to_write, context=context)
+                        created_line.append(sale_line_obj.create(cr, uid, to_write, context=context_sol_create))
                         if to_write['error_list']:
                             lines_to_correct += 1
                         percent_completed = float(line_num)/float(total_line_num-1)*100.0
@@ -233,6 +236,7 @@ class wizard_import_fo_line(osv.osv_memory):
                     if not context.get('yml_test', False):
                         cr.commit()
         
+            sale_line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             error_log += '\n'.join(error_list)
             if error_log:
                 error_log = _("Reported errors for ignored lines : \n") + error_log

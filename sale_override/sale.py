@@ -519,13 +519,8 @@ class sale_order(osv.osv):
                 new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
                                                  'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line']))
                 created_line.append(new_line_id)
-            compute_store = line_obj._store_get_values(cr, uid, created_line, None, context)
-            compute_store.sort()
-            done = []
-            for order, object, ids, fields2 in compute_store:
-                if not (object, ids, fields2) in done:
-                    self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
-                    done.append((object, ids, fields2))
+
+            line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)

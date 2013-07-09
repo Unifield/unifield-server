@@ -51,14 +51,17 @@ class stock_frequence(osv.osv):
     _name = 'stock.frequence'
     _description = 'Stock scheduler'
     
-    def get_selection(self, cr, uid, o, field):
+    def get_selection(self, cr, uid, o, field, context=None):
         """
         Returns the field.selection label
         """
+        if not context:
+            context = {}
+
         sel = self.pool.get(o._name).fields_get(cr, uid, [field])
         res = dict(sel[field]['selection']).get(getattr(o,field),getattr(o,field))
         name = '%s,%s' % (o._name, field)
-        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res)])
+        tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name),('src', '=', res), ('lang', '=', context.get('lang'))])
         if tr_ids:
             return self.pool.get('ir.translation').read(cr, uid, tr_ids, ['value'])[0]['value']
         else:
@@ -374,6 +377,9 @@ class stock_frequence(osv.osv):
         '''
         Returns a description of the frequence
         '''
+        if not context:
+            context = {}
+
         res = super(stock_frequence, self).name_get(cr, uid, ids, context=context)
         
         # TODO: Modif of name_get method to return a comprehensive name for frequence
@@ -404,8 +410,8 @@ class stock_frequence(osv.osv):
                                                                  friday, saturday)
             if freq.name == 'monthly':
                 if freq.monthly_one_day:
-                    choose_freq = self.get_selection(cr, uid, freq, 'monthly_choose_freq')
-                    choose_day = self.get_selection(cr, uid, freq, 'monthly_choose_day')
+                    choose_freq = self.get_selection(cr, uid, freq, 'monthly_choose_freq', context=context)
+                    choose_day = self.get_selection(cr, uid, freq, 'monthly_choose_day', context=context)
                     title = _('%s %s - Every %s month(s)') % (choose_freq, choose_day, freq.monthly_frequency)
                 elif freq.monthly_repeating_ok:
                     title = _('On ')
@@ -428,7 +434,7 @@ class stock_frequence(osv.osv):
                     title += _(' - Every %s month(s)') % (freq.monthly_frequency,)
             if freq.name == 'yearly':
                 if freq.yearly_day_ok:
-                    month = self.get_selection(cr, uid, freq, 'yearly_choose_month')
+                    month = self.get_selection(cr, uid, freq, 'yearly_choose_month', context=context)
                     day_f = 'th'
                     if freq.yearly_day in (1, 21, 31):
                         day_f = 'st'
@@ -438,9 +444,9 @@ class stock_frequence(osv.osv):
                         day_f = 'rd'
                     title = _('All %s, the %s%s') %(month, freq.yearly_day, day_f)
                 elif freq.yearly_date_ok:
-                    frequence = self.get_selection(cr, uid, freq, 'yearly_choose_freq')
-                    day = self.get_selection(cr, uid, freq, 'yearly_choose_day')
-                    month = self.get_selection(cr, uid, freq, 'yearly_choose_month_freq')
+                    frequence = self.get_selection(cr, uid, freq, 'yearly_choose_freq', context=context)
+                    day = self.get_selection(cr, uid, freq, 'yearly_choose_day', context=context)
+                    month = self.get_selection(cr, uid, freq, 'yearly_choose_month_freq', context=context)
                     title = _('All %s %s in %s') % (frequence, day, month)
                 title += _(' - Every %s year(s)') %(freq.yearly_frequency)
                 
