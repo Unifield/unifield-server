@@ -165,8 +165,8 @@ class base_language_import(osv.osv_memory):
             lang_ids = lang_obj.search(cr, uid, [('code', '=', import_data.name)])
             if lang_ids:
                 lang_data = lang_obj.read(cr, uid, lang_ids[0], ['translatable'])
-            if not lang_data['translatable']:
-                lang_obj.write(cr, uid, [lang_ids[0]], {'translatable': True})
+                if not lang_data['translatable']:
+                    lang_obj.write(cr, uid, [lang_ids[0]], {'translatable': True})
 
 
             tools.trans_load_data(cr, fileobj, fileformat, import_data.code, lang_name=import_data.name, context={'overwrite': 1})
@@ -267,6 +267,6 @@ class base_language_install(osv.osv_memory):
     _inherit = "base.language.install"
 
     _columns = {
-        'lang': fields.selection([('fr_MF', 'French'), ('es_MF', 'Spanish')],'Language', required=True),
+        'lang': fields.selection([('fr_MF', 'MSF French'), ('es_MF', 'MSF Spanish')],'Language', required=True),
     }
 base_language_install()
