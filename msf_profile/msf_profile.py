@@ -121,3 +121,11 @@ class base_setup_company(osv.osv_memory):
         return ret
 
 base_setup_company()
+
+class res_users(osv.osv):
+    _inherit = 'res.users'
+    _name = 'res.users'
+    _defaults = {
+        'context_lang': 'en_MF',
+    }
+res_users()
