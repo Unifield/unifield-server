@@ -440,10 +440,13 @@
 <Data ss:Type="String">${_('Analytic Journal')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
-<Data ss:Type="String">${_('Reference')}</Data>
+<Data ss:Type="String">${_('Sequence number')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
 <Data ss:Type="String">${_('Description')}</Data>
+</Cell>
+<Cell ss:StyleID="s31">
+<Data ss:Type="String">${_('Reference')}</Data>
 </Cell>
 <Cell ss:StyleID="s31">
 <Data ss:Type="String">${_('Financing contract line code')}</Data>
@@ -489,10 +492,13 @@
 <Data ss:Type="String">${( line[0] and line[0].journal_id and line[0].journal_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
-<Data ss:Type="String">${( line[0] and line[0].ref or '')|x}</Data>
+<Data ss:Type="String">${( line[0] and line[0].move_id and line[0].move_id.move_id and line[0].move_id.move_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( line[0] and line[0].name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="s36">
+<Data ss:Type="String">${( line[0] and line[0].ref or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="s36">
 <Data ss:Type="String">${( line[1] or '')|x}</Data>
