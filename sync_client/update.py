@@ -113,6 +113,7 @@ class update_to_send(osv.osv):
         'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'fields':fields.text('Fields', size=128, readonly=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
+        'force_recreation' : fields.boolean('Force record recreation', readonly=True),
     }
     
     _defaults = {
@@ -144,24 +145,31 @@ class update_to_send(osv.osv):
             if not ids_to_compute:
                 return 0
 
-            owners = self.get_destination_name(cr, uid, ids_to_compute, rule.owner_field, context)
-            datas = self.export_data(cr, uid, ids_to_compute, export_fields, context=context)['datas']
-            sdrefs = self.get_sd_ref(cr, uid, ids_to_compute, context=context)
-            versions = self.version(cr, uid, ids_to_compute, context=context)
+            owners = self.get_destination_name(cr, uid,
+                ids_to_compute, rule.owner_field, context)
+            datas = self.export_data(cr, uid, ids_to_compute,
+                export_fields, context=context)['datas']
+            sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
+                field=['name','version','force_recreation','id'], context=context)
             ustr_export_fields = tools.ustr(export_fields)
             for (id, row) in zip(ids_to_compute, datas):
+                sdref, version, force_recreation, data_id = sdrefs[id]
                 for owner in (owners[id] if hasattr(owners[id], '__iter__') else [owners[id]]):
                     update_id = update.create(cr, uid, {
                         'session_id' : session_id,
-                        'values' : tools.ustr(row),
-                        'model' : self._name,
-                        'version' : versions[id] + 1,
                         'rule_id' : rule.id,
-                        'sdref' : sdrefs[id],
-                        'fields' : ustr_export_fields,
                         'owner' : owner,
+                        'model' : self._name,
+                        'sdref' : sdref,
+                        'version' : version + 1,
+                        'force_recreation' : force_recreation,
+                        'fields' : ustr_export_fields,
+                        'values' : tools.ustr(row),
                     }, context=context)
                     update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
+            self.pool.get('ir.model.data').write(cr, uid,
+                [data_id for __, __, __, data_id in sdrefs.values()],
+                {'force_recreation' : False}, context=context)
 
             return len(ids_to_compute)
 
@@ -186,7 +194,6 @@ class update_to_send(osv.osv):
                 }, context=context)
                 update._logger.debug("Created 'delete' update: model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
 
-            self.purge(cr, uid, ids_to_delete, context=context)
             return len(ids_to_delete)
 
         update_context = dict(context or {}, sync_update_creation=True)
@@ -220,6 +227,7 @@ class update_to_send(osv.osv):
                     'values' : update.values,
                     'owner' : update.owner,
                     'sdref' : update.sdref,
+                    'force_recreation' : update.force_recreation,
                 })
             ids_in_package.append(update.id)
         data['load'] = values
@@ -253,6 +261,7 @@ class update_received(osv.osv):
         'model' : fields.char('Model', size=64, readonly=True, select=True),
         'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
+        'force_recreation' : fields.boolean('Force record recreation', readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True),
         'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
         'version' : fields.integer('Version', readonly=True),
@@ -300,6 +309,7 @@ class update_received(osv.osv):
                     'values' : load_item['values'],
                     'owner' : load_item['owner_name'],
                     'sdref' : load_item['sdref'],
+                    'force_recreation' : load_item['force_recreation'],
                 })
                 self.create(cr, uid, data, context=context)
             return len(packet['load'])
@@ -531,7 +541,7 @@ class update_received(osv.osv):
         imported, deleted = 0, 0
         for rule_seq in sorted(update_groups.keys()):
             updates = update_groups[rule_seq]
-            obj, do_deletion = self.pool.get(updates[0].model), updates[0].is_deleted
+            obj, do_deletion, force_recreation = self.pool.get(updates[0].model), updates[0].is_deleted, updates[0].force_recreation
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
             # Remove updates about deleted records in the list
             sdref_update_ids = dict((update.sdref, update.id) for update in updates)
@@ -553,7 +563,9 @@ class update_received(osv.osv):
                 'run' : True,
                 'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
             }, context=context)
-            updates = filter(lambda update: update.id not in deleted_update_ids, updates)
+            updates = filter(lambda update: update.id not in deleted_update_ids or
+                                            (not do_deletion and force_recreation),
+                             updates)
             if not updates: continue
             # Proceed
             if do_deletion:
