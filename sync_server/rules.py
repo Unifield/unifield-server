@@ -168,7 +168,7 @@ class sync_rule(osv.osv):
                                 ON (((r.group_id = g.id AND NOT r.applies_to_type)
                                      OR (r.type_id = t.id AND r.applies_to_type))
                                     AND r.active)
-                      WHERE g.id = 1                  
+                      WHERE g.id IN %s                  
                       GROUP BY g.id""", (tuple(x.id for x in entity.group_ids),))
         return dict(cr.fetchall())
 
