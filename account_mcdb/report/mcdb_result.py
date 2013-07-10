@@ -92,7 +92,22 @@ class account_move_line_report_xls(SpreadsheetReport):
         a = super(account_move_line_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-account_move_line_report_xls('report.account.move.line_xls','account.move.line','addons/account_mcdb/report/report_account_move_line_xls.mako')
+class parser_account_move_line(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_account_move_line, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'reconcile_name': self.reconcile_name,
+        })
+
+    def reconcile_name(self, r_id=None, context=None):
+        if not r_id:
+            return None
+        res = self.pool.get('account.move.reconcile').name_get(self.cr, self.uid, [r_id])
+        if res and res[0] and res[0][1]:
+            return res[0][1]
+        return None
+
+account_move_line_report_xls('report.account.move.line_xls','account.move.line','addons/account_mcdb/report/report_account_move_line_xls.mako', parser=parser_account_move_line)
 
 
 class account_analytic_line_report(report_sxw.report_sxw):
@@ -154,6 +169,12 @@ class account_bank_statement_line_report_xls(SpreadsheetReport):
 
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
+        else:
+            pool = pooler.get_pool(cr.dbname)
+            company_currency = pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            context.update({'output_currency_id': company_currency})
         a = super(account_bank_statement_line_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 

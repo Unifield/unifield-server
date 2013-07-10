@@ -151,6 +151,15 @@ class wizard_import_po_line(osv.osv_memory):
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('UoM')], product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                    # Check round of qty according to UoM
+                    if qty_value['product_qty'] and uom_value['uom_id']:
+                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                        if round_qty.get('warning', {}).get('message'):
+                            to_write.update({'product_qty': round_qty['value']['product_qty']})
+                            warn_list = to_write['warning_list']
+                            warn_list.append(round_qty['warning']['message'])
+#                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     # Cell 4: Price
                     price_value = {}
@@ -181,6 +190,13 @@ class wizard_import_po_line(osv.osv_memory):
                     })
                     # we check consistency on the model of on_change functions to call for updating values
                     purchase_line_obj.check_line_consistency(cr, uid, po_browse.id, to_write=to_write, context=context)
+
+                    if to_write.get('product_qty', 0.00) <= 0.00:
+                        message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
+                        ignore_lines += 1
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        cr.rollback()
+                        continue
 
                     # write order line on PO
                     if purchase_obj._check_service(cr, uid, po_id, vals, context=context):
@@ -244,7 +260,7 @@ Importation completed in %s!
             wizard_vals.update(file_to_export)
         self.write(cr, uid, ids, wizard_vals, context=context)
         # we reset the state of the PO to draft (initial state)
-        purchase_obj.write(cr, uid, po_id, {'state': 'draft'}, context)
+        purchase_obj.write(cr, uid, po_id, {'state': 'draft', 'import_in_progress': False}, context)
         if not context.get('yml_test', False):
             cr.commit()
             cr.close()
@@ -280,7 +296,7 @@ Importation completed in %s!
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
-            purchase_obj.write(cr, uid, po_id, {'state': 'done'}, context)
+            purchase_obj.write(cr, uid, po_id, {'state': 'done', 'import_in_progress': True}, context)
         if not context.get('yml_test'):
             thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
             thread.start()

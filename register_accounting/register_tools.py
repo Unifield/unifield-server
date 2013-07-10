@@ -79,9 +79,6 @@ def _set_third_parties(self, cr, uid, id, name=None, value=None, fnct_inv_arg=No
             tra_val = fields[1] or 'Null'
         sql += "employee_id = %s, partner_id = %s, transfer_journal_id = %s " % (emp_val, par_val, tra_val)
         sql += "WHERE id = %s" % id
-        if self._table == 'wizard_journal_items_corrections_lines':
-            self.pool.get('wizard.journal.items.corrections.lines').write(cr, uid, [id], {obj: int(fields[1])}, context=context)
-            return True
         cr.execute(sql)
     # Delete values for Third Parties if no value given
     elif name == 'partner_type' and not value:

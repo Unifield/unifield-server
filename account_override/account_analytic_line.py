@@ -57,16 +57,17 @@ class account_analytic_line(osv.osv):
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True, readonly=True),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
-        'partner_txt': fields.related('move_id', 'partner_txt', string="Third Party", readonly=True, type="text"),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]"), # UF-1719: Domain added for search view
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True),
         'amount': fields.float('Func. Amount', required=True, digits_compute=dp.get_precision('Account'),
             help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', readonly=True),
+        'exported': fields.boolean("Exported"),
     }
 
     _defaults = {
         'is_reversal': lambda *a: False,
         'is_reallocated': lambda *a: False,
+        'exported': lambda *a: False,
     }
 
     def reverse(self, cr, uid, ids, context=None):
@@ -112,7 +113,7 @@ class account_analytic_line(osv.osv):
             context = {}
         # SP-50: If data is synchronized from another instance, just create it with the given document_date 
         if context.get('update_mode') in ['init', 'update']:
-            if not context.get('sync_data', False) or not vals.get('document_date', False):
+            if not context.get('sync_update_execution', False) or not vals.get('document_date', False):
                 logging.getLogger('init').info('AAL: set document_date')
                 vals['document_date'] = strftime('%Y-%m-%d')
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):

@@ -68,6 +68,18 @@ class sale_order(osv.osv):
 #                                                """ % MAX_LINES_NB),
 #    }
 
+    def copy(self, cr, uid, id, defaults=None, context=None):
+        '''
+        Remove the flag import_in_progress when duplicate a field order
+        '''
+        if not defaults:
+            defaults = {}
+
+        if not 'import_in_progress' in defaults:
+            defaults.update({'import_in_progress': False})
+
+        return super(sale_order, self).copy(cr, uid, id, defaults, context=context)
+
     def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
         res = {}
         if isinstance(ids, (int, long)):
@@ -80,8 +92,13 @@ class sale_order(osv.osv):
 
     _columns = {
         'hide_column_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
+        'import_in_progress': fields.boolean(string='Importing'),
     }
-    
+
+    _defaults = {
+        'import_in_progress': lambda *a: False,
+    }
+
     def _check_active_product(self, cr, uid, ids, context=None):
         '''
         Check if the Purchase order contains a line with an inactive products
@@ -497,15 +514,8 @@ class sale_order_line(osv.osv):
         product_id = to_write['product_id']
         uom_id = to_write['product_uom']
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
-                The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """) % (product.uom_id.category_id.name, uom.category_id.name)
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
+                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.""")
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:
@@ -519,24 +529,32 @@ class sale_order_line(osv.osv):
                                     'to_correct_ok': True,
                                     'price_unit': 0.0, })
 
-    def onchange_uom(self, cr, uid, ids, product_id, uom_id, context=None):
+    def onchange_uom(self, cr, uid, ids, product_id, uom_id, product_qty=0.00, context=None):
         '''
         Check if the UoM is convertible to product standard UoM
         '''
-        res = {}
-        if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-
+        res = {'domain':{}, 'warning':{}}
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        uom = False
+        
+        if product_id:
             product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
+            
+            domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
+            res['domain'] = domain
+            if uom_id:
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
+                    warning = {'title': _('Wrong Product UOM !'),
+                               'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
+                    res['warning'] = warning
 
-            if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {'title': _('Wrong Product UOM !'),
-                           'message': _("You have to select a product UOM in the same category than the purchase UOM of the product"), }
-                res.update({'warning': warning})
-                domain = {'product_uom': [('category_id', '=', product.uom_id.category_id.id)]}
-                res['domain'] = domain
+                res.setdefault('value', {}).update({'price_unit': self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.list_price, uom_id)})
+
+        # Round-up the quantity
+        if uom_id and product_qty:
+            res = uom_obj._change_round_up_qty(cr, uid, uom_id, product_qty, ['product_uos_qty', 'product_uom_qty'], result=res)
+
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -566,8 +584,8 @@ class sale_order_line(osv.osv):
                 if vals.get('product_uom') and vals.get('product_id'):
                     product_id = vals.get('product_id')
                     uom_id = vals.get('product_uom')
-                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context)
-                    if res and res['warning']:
+                    res = self.onchange_uom(cr, uid, ids, product_id, uom_id, context=context)
+                    if res and res.get('warning', False):
                         message += res['warning']['message']
 
                 if message and not context.get('procurement_request', False):
@@ -579,5 +597,20 @@ class sale_order_line(osv.osv):
                     vals['text_error'] = False
 
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        message = ''
+        if not context.get('import_in_progress'):
+            if vals.get('product_uom') and vals.get('product_id'):
+                product_id = vals.get('product_id')
+                product_uom = vals.get('product_uom')
+                res = self.onchange_uom(cr, uid, False, product_id, product_uom, context=context)
+                if res and res.get('warning', False):
+                    message += res['warning']['message']
+            if message:
+                raise osv.except_osv(_('Warning !'), _(message))
+        return super(sale_order_line, self).create(cr, uid, vals, context=context)
 
 sale_order_line()

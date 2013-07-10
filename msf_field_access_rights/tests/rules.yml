@@ -44,7 +44,7 @@
       'user_email':'test@test.com',
     }
     
-    context['sync_data'] = True
+    context['sync_update_execution'] = True
     
     context['applyToAdmin'] = True
     
@@ -64,7 +64,7 @@
     
     
     
-    del context['sync_data']
+    del context['sync_update_execution']
 
     field_access_rule_line_pool.write(cr, uid, rule_line.id, {'write_access':False}, context=context)
 

@@ -69,7 +69,6 @@ class account_commitment(osv.osv):
     }
 
     _defaults = {
-        'name': lambda s, cr, uid, c: s.pool.get('ir.sequence').get(cr, uid, 'account.commitment') or '',
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
@@ -81,6 +80,7 @@ class account_commitment(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Update period_id regarding date.
+        Add sequence.
         """
         # Some verifications
         if not context:
@@ -94,6 +94,23 @@ class account_commitment(osv.osv):
             active = True
             if partner and partner[0] and not partner[0].active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
+        # Add sequence
+        sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
+        instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
+        if not instance:
+            raise osv.except_osv(_('Error'), _('No instance found!'))
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'), ('instance_id', '=', instance.id)], limit=1, context=context)
+        if not journal_ids:
+            raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
+        journal_id = journal_ids[0]
+        journal = self.pool.get('account.analytic.journal').browse(cr, uid, [journal_id])
+        if not journal:
+            raise osv.except_osv(_('Error'), _('No Engagement journal found!'))
+        journal_name = journal[0].code
+        if instance and sequence_number and journal_name:
+            vals.update({'name': "%s-%s-%s" % (instance.move_prefix, journal_name, sequence_number)})
+        else:
+            raise osv.except_osv(_('Error'), _('Error creating commitment sequence!'))
         return super(account_commitment, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -306,7 +323,7 @@ class account_commitment(osv.osv):
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date, 
                         cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.date or False, 
-                        c.purchase_id and c.purchase_id.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
+                        (c.purchase_id and c.purchase_id.name) or c.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False, 
                         cl.id, context=context)
         return True
 

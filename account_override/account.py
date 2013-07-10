@@ -76,12 +76,30 @@ class account_account(osv.osv):
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register 
             when he add a new register line.
             """),
+        'is_settled_at_hq': fields.boolean("Settled at HQ"),
         'filter_active': fields.function(_get_active, fnct_search=_search_filter_active, type="boolean", method=True, store=False, string="Show only active accounts",),
     }
 
     _defaults = {
         'type_for_register': lambda *a: 'none',
+        'is_settled_at_hq': lambda *a: False,
     }
+
+    # UTP-493: Add a dash between code and account name
+    def name_get(self, cr, uid, ids, context=None):
+        """
+        Use "-" instead of " " between name and code for account's default name
+        """
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
+        res = []
+        for record in reads:
+            name = record['name']
+            if record['code']:
+                name = record['code'] + ' - '+name
+            res.append((record['id'], name))
+        return res
 
 account_account()
 
@@ -214,7 +232,7 @@ class account_move(osv.osv):
         """
         if not context:
             context = {}
-        if context.get('from_web_menu', False) or context.get('sync_data', False):
+        if context.get('from_web_menu', False) or context.get('sync_update_execution', False):
             # by default, from synchro, we just need to update period_id and journal_id
             fields = ['journal_id', 'period_id']
             # from web menu, we also update document_date and date
@@ -307,7 +325,14 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
-        self.unlink(cr, uid, to_delete, context)
+        # First delete move lines to avoid "check=True" problem on account_move_line item
+        if to_delete:
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            if ml_ids:
+                if isinstance(ml_ids, (int, long)):
+                    ml_ids = [ml_ids]
+                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
+        self.unlink(cr, uid, to_delete, context, check=False)
         return True
 
 account_move()

@@ -53,7 +53,7 @@
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')" hide_delete_button="1">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
                                         <field name="date"/>
@@ -67,7 +67,7 @@
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="analytic_account_id"
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -98,8 +98,6 @@
                                             context="context"/>
                                         <field name="state" readonly="True"/>
                                         <field name="from_import_cheque_id" invisible="1"/>
-                                        <button name="button_delete" states="draft" string="Delete" type="object" 
-                                            icon="gtk-del" confirm="Are you sure you want to delete this line?"/>
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
@@ -116,7 +114,7 @@
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]" 
-                                            context="{'curr': parent.currency, 'search_default_active': True}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="display_analytic_button" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -189,7 +187,7 @@
                         <notebook colspan="4">
                             <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
                                 <field colspan="4" name="line_ids" nolabel="1">
-                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')" hide_delete_button="1">
+                                    <tree editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="from_cash_return" invisible="1"/>
                                         <button name="button_advance" states="hard" string="Advance return" type="object" 
@@ -209,7 +207,7 @@
                                         <field name="partner_type"  
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}" 
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -239,8 +237,6 @@
                                             context="context"/>
                                         <field name="state" readonly="True"/>
                                         <field name="employee_id" invisible="1"/>
-                                        <button name="button_delete" states="draft" string="Delete" type="object" 
-                                            icon="gtk-del" confirm="Are you sure you want to delete this line?"/>
                                     </tree>
                                     <form string="Statement lines">
                                         <field name="from_cash_return" invisible="1"/>
@@ -256,7 +252,7 @@
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}" 
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -354,7 +350,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="20" />
             <field name="arch" type="xml">
-                <tree string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1" hide_delete_button="1">
+                <tree string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
                     <button name="button_advance" states="hard" string="Advance return" type="object" 
                         icon="terp-stock_effects-object-colorize" context="context"
                         attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), 
@@ -380,8 +376,6 @@
                     <field name="state"/>
                     <field name="statement_id" string="Register Name"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
                     <field name="direct_invoice" invisible="1" readonly="1"/>
-                    <button name="button_delete" states="draft" string="Delete" type="object" 
-                        icon="gtk-del" confirm="Are you sure you want to delete this line?"/>
                 </tree>
             </field>
         </record>
@@ -397,7 +391,7 @@
                     <field name="amount" invisible="1" readonly="1"/>
                     <field name="document_date" readonly="1"/>
                     <field name="date" readonly="1"/>
-                    <field name="sequence" readonly="1"/>
+                    <field name="sequence_for_reference" readonly="1"/>
                     <field name="name" string="Description" readonly="1"/>
                     <field name="ref" readonly="1"/>
                     <field name="account_id" readonly="1"/>
@@ -432,12 +426,13 @@
                         <field name="document_date" select='1'/>
                         <field name="date" select='1'/>
                         <newline/>
-                        <field name="sequence" select='1'/>
+                        <field name="sequence_for_reference" select='1'/>
                         <field name="name" select='1' string="Description"/>
                         <field name="ref" select='1'/>
                         <newline/>
                         <field name="account_id" select='1'/>
-                        <field name="amount" select='1'/>
+                        <field name="amount_in" select='1'/>
+                        <field name="amount_out" select='1'/>
                         <newline/>
                         <field name="partner_id" select='1'/>
                         <field name="transfer_journal_id" select='1'/>
@@ -666,7 +661,7 @@
                         <page string="Transaction" name="statement_line_ids">
                             <field colspan="4" name="line_ids" nolabel="1">
                                 <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
-                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')" hide_delete_button="1">
+                                <tree editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')">
                                     <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                     <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
                                     <field name="date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
@@ -680,7 +675,7 @@
                                     <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -706,8 +701,6 @@
                                     <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test" 
                                         context="context"/>
                                     <field name="state" readonly="True"/>
-                                    <button name="button_delete" states="draft" string="Delete" type="object" 
-                                        icon="gtk-del" confirm="Are you sure you want to delete this line?"/>
                                 </tree>
                                 <form string="Statement lines">
                                     <field name="document_date"/>
@@ -723,7 +716,7 @@
                                     <field name="partner_type"
                                         attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                         domain="[('filter_for_third_party', '=', account_id)]" 
-                                        context="{'curr': parent.currency, 'search_default_active': True}" 
+                                        context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" 
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -948,6 +941,22 @@
             res_model="account.move.line"
             src_model="account.move"
             view_id="view_move_line_tree_from_move"/>
+
+    <!--
+      Add partner_txt to analytic journal entries
+    -->
+        <record id="inherit_view_account_analytic_tree" model="ir.ui.view">
+            <field name="name">inherit.view.account.analytic.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='account_id']" position="after">
+                    <field name="partner_txt"/>
+                </xpath>
+            </field>
+        </record>
 
     </data>
 </openerp>

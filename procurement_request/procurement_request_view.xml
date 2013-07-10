@@ -46,7 +46,7 @@
                         <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="currency_id" />
+                        <field name="functional_currency_id" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
@@ -59,7 +59,9 @@
                                     <field name="name" invisible="1" />
                                     <field name="product_ok" invisible="1" />
                                     <field name="comment_ok" invisible="1" />
-                                    <field name="product_uom" />
+                                    <field name="product_uom" 
+                                           on_change="onchange_uom(product_id, product_uom, product_uom_qty)" 
+                                           domain="[('uom_by_product', '=', product_id)]" />
                                     <field name="nomen_manda_0" invisible="1" />
                                     <field name="nomen_manda_1" invisible="1" />
                                     <field name="nomen_manda_2" invisible="1" />
@@ -70,7 +72,7 @@
                                     type="object" 
                                     attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'validated'])]}"
                                     icon="terp-go-week" />
-                                    <field name="product_uom_qty" />
+                                    <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="cost_price" string="Cost Price (FC)" />
                                     <field name="notes" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"/>

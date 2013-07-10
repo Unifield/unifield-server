@@ -35,13 +35,13 @@ class import_data(osv.osv_memory):
     _name = 'import_data'
     _description = 'Import Datas'
 
-    def _set_code_name(self, cr, uid, data, row):
+    def _set_code_name(self, cr, uid, data, row, headers):
         if not data.get('name'):
             data['name'] = row[0]
         if not data.get('code'):
             data['code'] = row[0]
 
-    def _set_nomen_level(self, cr, uid, data, row):
+    def _set_nomen_level(self, cr, uid, data, row, headers):
         if data.get('parent_id'):
             v = self.onChangeParentId(cr, uid, id, data.get('type'), data['parent_id'])
             if v['value']['level']:
@@ -66,9 +66,26 @@ class import_data(osv.osv_memory):
     def _del_product_cache(self, cr, uid):
         self._cache = {}
 
+    def _set_default_value(self, cr, uid, data, row, headers):
+        # Create new list of headers with the name of each fields (without dots)
+        new_headers = []
+        for h in headers:
+            if '.' in h:
+                new_headers.append(h.split('.')[0])
+            else:
+                new_headers.append(h)
+
+        # Get the default value
+        defaults = self.pool.get('product.product').default_get(cr, uid, new_headers)
+        # If no value in file, set the default value
+        for n, h in enumerate(new_headers):
+            if h in defaults and (not h in data or not data[h]):
+                data[h] = defaults[h]
+
     post_hook = {
         'account.budget.post': _set_code_name,
         'product.nomenclature': _set_nomen_level,
+        'product.product': _set_default_value,
     }
 
     pre_hook = {
@@ -229,15 +246,18 @@ class import_data(osv.osv_memory):
                             delimiter = points[1]
                             new_fields_def = self.pool.get(fields_def[newo2m]['relation']).fields_get(cr, uid, context=context)
                             o2mdatas[points[1]] = process_data('.'.join(points[1:]), row[n], new_fields_def)
-                        elif row[n] and fields_def[points[0]]['type'] in 'many2one':
-                            data[points[0]] = _get_obj(h, row[n], fields_def) or False
+                        elif fields_def[points[0]]['type'] in 'many2one':
+                            if import_mode == 'update' and not row[n]:
+                                data[points[0]] = False
+                            elif row[n]:
+                                data[points[0]] = _get_obj(h, row[n], fields_def) or False
                         elif fields_def[points[0]]['type'] in 'many2many' and row[n]:
                             data.setdefault(points[0], []).append((4, _get_obj(h, row[n], fields_def)))
                 if newo2m and o2mdatas:
                     data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
                 
                 if self.post_hook.get(impobj._name):
-                    self.post_hook[impobj._name](impobj, cr, uid, data, row)
+                    self.post_hook[impobj._name](impobj, cr, uid, data, row, headers)
                 
                 if import_mode == 'update':
                     # Search if an object already exist. If not, create it.

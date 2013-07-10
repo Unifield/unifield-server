@@ -568,7 +568,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick = kwargs['pick']
         move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick.id), 
-                                             ('state', 'in', ('waiting', 'confirmed'))], order='product_qty desc')
+                                             ('state', 'in', ('waiting', 'confirmed'))], order='prodlot_id, product_qty desc')
         
         return move_ids
 
@@ -644,6 +644,19 @@ class stock_picking(osv.osv):
                     # Create invoice
                     self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
         return res
+    
+    def _get_price_unit_invoice(self, cr, uid, move_line, type):
+        '''
+        Update the Unit price according to the UoM received and the UoM ordered
+        '''
+        res = super(stock_picking, self)._get_price_unit_invoice(cr, uid, move_line, type)
+        if move_line.purchase_line_id:
+            po_uom_id = move_line.purchase_line_id.product_uom.id
+            move_uom_id = move_line.product_uom.id
+            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
+            return res/uom_ratio
+        
+        return res
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
         """
@@ -713,10 +726,11 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids, context=context):
-            for move in pick.move_lines:
-                if move.product_id.perishable: # perishable for perishable or batch management
-                    move_obj.fefo_update(cr, uid, move.id, context) # FEFO
+        if not context.get('already_checked'):
+            for pick in self.browse(cr, uid, ids, context=context):
+                # perishable for perishable or batch management
+                move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context) # FEFO
+        context['already_checked'] = True
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
 stock_picking()
@@ -817,6 +831,14 @@ class stock_move(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_uom_constraint, 'Constraint error on Uom', [])]
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -959,7 +981,8 @@ class stock_move(osv.osv):
                                         else:
                                             self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'], 
                                                                         'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
-                                            needed_qty = 0.0
+                                        needed_qty = 0.0
+                                        break
                                     elif needed_qty:
                                         # we take all available
                                         selected_qty = loc['qty']

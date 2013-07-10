@@ -140,6 +140,13 @@ class wizard_import_tender_line(osv.osv_memory):
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                    # Check rounding of qty according to UoM
+                    if qty_value['product_qty'] and uom_value['uom_id']:
+                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                        if round_qty.get('warning', {}).get('message'):
+                            to_write.update({'qty': round_qty['value']['product_qty']})
+                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     to_write.update({
                         'to_correct_ok': any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
@@ -149,6 +156,15 @@ class wizard_import_tender_line(osv.osv_memory):
                     # we check consistency of uom and product values
                     tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
                     vals['tender_line_ids'].append((0, 0, to_write))
+
+                    if to_write.get('qty', 0.00) <= 0.00:
+                        message += _("Line %s in the Excel file: Details: %s\n") % (line_num, _('Product Qty should be greater than 0.00'))
+                        ignore_lines += 1
+                        line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
+                        cr.rollback()
+                        continue
+
+
                     tender_line_obj.create(cr, uid, to_write, context)
                     if to_write['error_list']:
                         lines_to_correct += 1

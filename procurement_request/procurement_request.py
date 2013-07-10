@@ -158,6 +158,7 @@ class procurement_request(osv.osv):
         '''
         Update date_planned of lines
         '''
+        res = True
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
             if req.procurement_request and 'delivery_requested_date' in vals:
@@ -165,7 +166,7 @@ class procurement_request(osv.osv):
                 vals['ready_to_ship_date'] = rts
                 for line in req.order_line:
                     self.pool.get('sale.order.line').write(cr, uid, line.id, {'date_planned': vals['delivery_requested_date']}, context=context)
-        
+
         return super(procurement_request, self).write(cr, uid, ids, vals, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -367,12 +368,29 @@ class procurement_request_line(osv.osv):
         
         return res
     
+    def write(self, cr, uid, ids, vals, context):
+        """
+        Check if product or comment exist and set the the fields required accordingly.
+        """
+        if context is None:
+            context = {}
+        if vals.get('product_id', False):
+            vals.update({'comment_ok': True})
+        if vals.get('comment', False):
+            vals.update({'product_ok': True})
+        return super(procurement_request_line, self).write(cr, uid, ids, vals, context=context)
+    
     def create(self, cr, uid, vals, context=None):
         '''
-        Adds the date_planned value
+        Adds the date_planned value.
+        Check if product or comment exist and set the the fields required accordingly.
         '''
         if context is None:
             context = {}
+        if vals.get('product_id', False):
+            vals.update({'comment_ok': True})
+        if vals.get('comment', False):
+            vals.update({'product_ok': True})
 
         if not 'date_planned' in vals and context.get('procurement_request'):
             if 'date_planned' in context:
@@ -381,7 +399,26 @@ class procurement_request_line(osv.osv):
                 date_planned = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).delivery_requested_date
                 vals.update({'date_planned': date_planned})
 
+        # Compute the rounding of the product qty
+        if vals.get('product_uom') and vals.get('product_uom_qty'):
+            vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, vals.get('product_uom'), vals.get('product_uom_qty'), context=context)
+
         return super(procurement_request_line, self).create(cr, uid, vals, context=context)
+       
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        Compute the UoM qty according to UoM rounding value
+        '''
+        res = True
+        for req in self.browse(cr, uid, ids, context=context):
+            new_vals = vals.copy()
+            # Compute the rounding of the product qty
+            uom_id = new_vals.get('product_uom', req.product_uom.id)
+            uom_qty = new_vals.get('product_uom_qty', req.product_uom_qty)
+            new_vals['product_uom_qty'] = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, uom_id, uom_qty, context=context)
+            res = res and super(procurement_request_line, self).write(cr, uid, [req.id], new_vals, context=context)
+
+        return res
     
     def _get_fake_state(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):

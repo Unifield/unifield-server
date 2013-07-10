@@ -194,7 +194,7 @@ class account_journal(osv.osv):
         
         # if the journal can be linked to a register, the register is also created
         # UTP-182: but not create if the journal came from another instance via the synchronization 
-        if vals['type'] in ('cash','bank','cheque') and not context.get('sync_data', False):
+        if vals['type'] in ('cash','bank','cheque') and not context.get('sync_update_execution', False):
             # 'from_journal_creation' in context permits to pass register creation that have a
             #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
             context.update({'from_journal_creation': True})

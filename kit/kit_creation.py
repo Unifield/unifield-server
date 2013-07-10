@@ -873,7 +873,14 @@ class kit_creation(osv.osv):
                 
         return True
     
-    _constraints = [(_kit_creation_constraint, 'Constraint error on Kit Creation.', []),]
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id_kit_creation.id, obj.uom_id_kit_creation.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+    
+    _constraints = [(_kit_creation_constraint, 'Constraint error on Kit Creation.', []),
+                    (_uom_constraint, 'Constraint error on Uom', [])]
 
 kit_creation()
 
@@ -1196,7 +1203,7 @@ class stock_move(osv.osv):
             result[obj.id].update({'hidden_asset_check': hidden_asset_check})
             
             hidden_creation_state = False
-            hidden_creation_qty_stock_move = 0.0
+            hidden_creation_qty_stock_move = 0
             if obj.kit_creation_id_stock_move:
                 hidden_creation_state = obj.kit_creation_id_stock_move.state
                 hidden_creation_qty_stock_move = obj.kit_creation_id_stock_move.qty_kit_creation

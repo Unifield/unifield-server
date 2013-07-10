@@ -75,6 +75,21 @@ class analytic_line(osv.osv):
         """
         return self.pool.get('account.analytic.journal').get_journal_type(cr, uid, context)
 
+    def _get_entry_sequence(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Give right entry sequence. Either move_id.move_id.name or commitment_line_id.commit_id.name
+        """
+        if not context:
+            context = {}
+        res = {}
+        for l in self.browse(cr, uid, ids, context):
+            res[l.id] = ''
+            if l.move_id:
+                res[l.id] = l.move_id.move_id.name
+            elif l.commitment_line_id:
+                res[l.id] = l.commitment_line_id.commit_id.name
+        return res
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -86,6 +101,7 @@ class analytic_line(osv.osv):
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
             help="Indicates the Journal Type of the Analytic journal item"),
+        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
     }
 
     _defaults = {
@@ -180,7 +196,7 @@ class analytic_line(osv.osv):
             vals2 = vals.copy()
             for el in ['account_id', 'cost_center_id', 'destination_id']:
                 if not el in vals:
-                    vals2.update({el: getattr(l, el, False),})
+                    vals2.update({el: l[el] and l[el]['id'] or False})
             self._check_date(cr, uid, vals2, context=context)
         return super(analytic_line, self).write(cr, uid, ids, vals, context=context)
 

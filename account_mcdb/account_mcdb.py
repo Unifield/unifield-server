@@ -66,16 +66,16 @@ class account_mcdb(osv.osv):
         'model': fields.selection([('account.move.line', 'Journal Items'), ('account.analytic.line', 'Analytic Journal Items')], string="Type"),
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
-        'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
-            string="Funding Pool"),
-        'rev_analytic_account_cc_ids': fields.boolean('Exclude Cost Center selection'),
-        'analytic_account_fp_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+        'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Cost Center"),
+        'rev_analytic_account_cc_ids': fields.boolean('Exclude Cost Center selection'),
+        'analytic_account_fp_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_fp_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+            string="Funding Pool"),
         'rev_analytic_account_fp_ids': fields.boolean('Exclude Funding Pool selection'),
-        'analytic_account_f1_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+        'analytic_account_f1_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_f1_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Free 1"),
         'rev_analytic_account_f1_ids': fields.boolean('Exclude free 1 selection'),
-        'analytic_account_f2_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+        'analytic_account_f2_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_f2_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Free 2"),
         'rev_analytic_account_f2_ids': fields.boolean('Exclude free 2 selection'),
         'reallocated': fields.selection([('reallocated', 'Reallocated'), ('unreallocated', 'NOT reallocated')], string='Reallocated?'),
@@ -87,7 +87,7 @@ class account_mcdb(osv.osv):
         'rev_instance_ids': fields.boolean('Exclude instance selection'),
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
-        'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_mcdb", id1="mcdb_id", id2="analytic_account_id", 
+        'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_dest_mcdb", id1="mcdb_id", id2="analytic_account_id", 
             string="Destination"),
         'display_journal': fields.boolean('Display journals?'),
         'display_period': fields.boolean('Display periods?'),
@@ -298,8 +298,11 @@ class account_mcdb(osv.osv):
             if wiz.document_code and wiz.document_code != '':
                 document_code_field = 'move_id.name'
                 if res_model == 'account.analytic.line':
-                    document_code_field = 'move_id.move_id.name'
-                domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
+                    domain.append(('|'))
+                    domain.append(('move_id.move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+                    domain.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+                else:
+                    domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields

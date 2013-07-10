@@ -21,7 +21,7 @@
                         <newline/>
                         <field name="document_date" required="1"/>
                         <field name="date_invoice" required="1"/>
-                        <field name="register_posting_date" />
+                        <field name="register_posting_date" required="1"/>
                         <field name="state" invisible="1"/>
                         <newline/>
                         <label string="" colspan="4"/>
@@ -57,6 +57,7 @@
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field invisible="True" name="uos_id"/>
+                                    <field invisible="1" name="inactive_product"/>
                                 </tree>
                             </field>
                             <group col="4" colspan="4">

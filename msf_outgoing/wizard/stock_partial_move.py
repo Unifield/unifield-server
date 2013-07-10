@@ -71,11 +71,15 @@ class stock_partial_move_memory_out(osv.osv_memory):
         data = self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context)[0]
         product_id = data['product_id']
         uom_id = data['product_uom']
+        uom_category_id = False
+        if uom_id:
+            uom_category_id = self.pool.get('product.uom').browse(cr, uid, data['product_uom'], context=context).category_id.id
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model,
                                    type='create', context=dict(context,
                                                                memory_move_ids=ids,
                                                                class_name=self._name,
                                                                product_id=product_id,
+                                                               uom_category_id=uom_category_id,
                                                                uom_id=uom_id))
         
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -84,6 +88,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         result = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
+            root = etree.fromstring(result['arch'])
+            fields = root.xpath('/tree')
+            for field in fields:
+                root.set('hide_new_button', 'True')
+                root.set('hide_delete_button', 'True')
+            result['arch'] = etree.tostring(root)
             picking_obj = self.pool.get('stock.picking')
             picking_ids = context.get('active_ids')
             if picking_ids:
@@ -102,7 +112,6 @@ class stock_partial_move_memory_out(osv.osv_memory):
                         for field in fields:
                             field.set('invisible', 'True')
                     result['arch'] = etree.tostring(root)
-                    
         return result
     
 #    update code to allow delete lines (or not but must be consistent in all wizards)
@@ -191,6 +200,17 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     _defaults = {
         'qty_to_return': 0.0,
     }
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_to_return', result=res)
+
+        return res
 
 stock_partial_move_memory_returnproducts()
 
@@ -331,6 +351,8 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
         '''
         get functional values
         '''
+        if context is None:
+            context = {}
         result = {}
         for memory_move in self.browse(cr, uid, ids, context=context):
             values = {'num_of_packs': 0,
@@ -340,7 +362,15 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             # number of packs with from/to values
             num_of_packs = memory_move.to_pack - memory_move.from_pack + 1
             values['num_of_packs'] = num_of_packs
-            selected_weight = memory_move.weight * memory_move.selected_number
+            if not context.get('step') == 'returnpacksfromshipment':
+                selected_weight = memory_move.weight * memory_move.selected_number
+            if context.get('step') == 'returnpacksfromshipment':
+                num_returned = memory_move.return_to > 0 \
+                and memory_move.return_from > 0 \
+                and memory_move.return_to >= memory_move.return_from \
+                and memory_move.return_to - memory_move.return_from + 1 \
+                or 0.0
+                selected_weight = memory_move.weight * num_returned
             values['selected_weight'] = selected_weight
                     
         return result

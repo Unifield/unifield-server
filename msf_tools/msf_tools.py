@@ -28,6 +28,7 @@ import inspect
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
 from datetime import datetime
+from decimal import Decimal, ROUND_UP
 
 import netsvc
 
@@ -351,7 +352,8 @@ class sequence_tools(osv.osv):
                     # numbering value
                     start_num = start_num+1
                     if item_data[i][seq_field] != start_num:
-                        dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
+                        cr.execute("update "+dest_obj._table+" set "+seq_field+"=%s where id=%s", (start_num, item_data[i]['id']))
+                        #dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
             
             # reset sequence to start_num + 1 all time, checking if needed would take much time
             # get the sequence id
@@ -501,3 +503,71 @@ class ir_translation(osv.osv):
 
 
 ir_translation()
+
+
+class uom_tools(osv.osv_memory):
+    """
+    This osv_memory class helps to check certain consistency related to the UOM.
+    """
+    _name = 'uom.tools'
+
+    def check_uom(self, cr, uid, product_id, uom_id, context=None):
+        """
+        Check the consistency between the category of the UOM of a product and the category of a UOM.
+        Return a boolean value (if false, it will raise an error).
+        :param cr: database cursor
+        :param product_id: takes the id of a product
+        :param product_id: takes the id of a uom
+        Note that this method is not consistent with the onchange method that returns a dictionary.
+        """
+        if context is None:
+            context = {}
+        uom_obj = self.pool.get('product.uom')
+        product_obj = self.pool.get('product.product')
+        if product_id and uom_id:
+            if isinstance(product_id, (int, long)):
+                product_id = [product_id]
+            if isinstance(uom_id, (int, long)):
+                uom_id = [uom_id]
+            if not product_obj.browse(cr, uid, product_id, context)[0].uom_id.category_id.id == uom_obj.browse(cr, uid, uom_id, context)[0].category_id.id:
+                return False
+        return True
+
+uom_tools()
+
+
+class product_uom(osv.osv):
+    _inherit = 'product.uom'
+
+    def _compute_round_up_qty(self, cr, uid, uom_id, qty, context=None):
+        '''
+        Round up the qty according to the UoM
+        '''
+        uom = self.browse(cr, uid, uom_id, context=context)
+        rounding_value = Decimal(str(uom.rounding).rstrip('0'))
+
+        return float(Decimal(str(qty)).quantize(rounding_value, rounding=ROUND_UP))
+
+    def _change_round_up_qty(self, cr, uid, uom_id, qty, fields=[], result=None, context=None):
+        '''
+        Returns the error message and the rounded value
+        '''
+        if not result:
+            result = {'value': {}, 'warning': {}}
+
+        if isinstance(fields, str):
+            fields = [fields]
+
+        message = {'title': _('Bad rounding'),
+                   'message': _('The quantity entered is not valid according to the rounding value of the UoM. The product quantity has been rounded to the highest good value.')}
+
+        if uom_id and qty:
+            new_qty = self._compute_round_up_qty(cr, uid, uom_id, qty, context=context)
+            if qty != new_qty:
+                for f in fields:
+                    result.setdefault('value', {}).update({f: new_qty})
+                result.setdefault('warning', {}).update(message)
+
+        return result
+
+product_uom()

@@ -39,7 +39,8 @@ class stock_move(osv.osv):
         for arg in args:
             search_args.append((matching_fields.get(arg[0], arg[0]), arg[1], arg[2]))
 
-        sale_ids = sale_obj.search(cr, uid, search_args, limit=0)
+        # copy search_args, because it's modified by sale_obj.search
+        sale_ids = sale_obj.search(cr, uid, search_args[:], limit=0)
         purch_ids = purch_obj.search(cr, uid, search_args, limit=0)
 
         newrgs = []
@@ -204,17 +205,17 @@ class stock_picking(osv.osv):
                     for move in pick.move_lines:
                         if move.state == 'confirmed':
                             not_avail_id = self.pool.get("stock.picking.not.available").create(cr, uid, {'move_id': move.id, 'picking_id': pick.id, }, context=context)
-                            return {'name':_("Warning"),
-                                    'view_mode': 'form',
-                                    'view_id': False,
-                                    'view_type': 'form',
-                                    'res_model': 'stock.picking.not.available',
-                                    'res_id': not_avail_id,
-                                    'type': 'ir.actions.act_window',
-                                    'nodestroy': True,
-                                    'target': 'new',
-                                    'domain': '[]',
-                                    'context': dict(context, active_ids=ids)}
+                            #return {'name':_("Warning"),
+                            #        'view_mode': 'form',
+                            #        'view_id': False,
+                            #        'view_type': 'form',
+                            #        'res_model': 'stock.picking.not.available',
+                            #        'res_id': not_avail_id,
+                            #        'type': 'ir.actions.act_window',
+                            #        'nodestroy': True,
+                            #        'target': 'new',
+                            #        'domain': '[]',
+                            #        'context': dict(context, active_ids=ids)}
                     if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
                         certif = True
                         break

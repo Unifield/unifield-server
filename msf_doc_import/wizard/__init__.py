@@ -24,8 +24,8 @@ from tools.translate import _
 # if you update a file in PO_COLUMNS_HEADER_FOR_INTEGRATION, check also NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
 # in PO_COLUMNS_HEADER_FOR_INTEGRATION, you have all the importable columns possible
 PO_COLUMNS_HEADER_FOR_INTEGRATION=[
-('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'string'),
-('Delivery Confirmed Date*', 'string'), ('Order Reference*', 'string'), ('Delivery Confirmed Date (PO)*', 'string'),
+('Line', 'number'), ('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), ('Delivery Request Date', 'date'),
+('Delivery Confirmed Date', 'date'), ('Order Reference', 'string'), ('Delivery Confirmed Date (PO)', 'date'),
 ('Comment', 'string'), ('Supplier Reference', 'string'), ('Origin', 'string'), ('Notes', 'string'), ('Est. Transport Lead Time', 'number'), ('Transport Mode', 'string'), 
 ('Destination Partner', 'string'), ('Destination Address', 'string'), ('Invoicing Address', 'string'), ('Arrival Date in the country', 'string'),
 ('Incoterm', 'string'), ('Notes (PO)', 'string')]
@@ -35,19 +35,19 @@ PO_COLUMNS_FOR_INTEGRATION = [x for (x, y) in PO_COLUMNS_HEADER_FOR_INTEGRATION]
 # if you update a file in NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
 # in NEW_COLUMNS_HEADER, you choose which columns you want to actually import (it is filtered on what you want if you compare with PO_COLUMNS_HEADER_FOR_INTEGRATION)
 NEW_COLUMNS_HEADER = [
-('Line*', 'number'), ('Product Code*', 'string'), ('Product Description', 'string'), ('Quantity*', 'number'), ('UoM*', 'string'), ('Price*', 'number'), ('Delivery Request Date', 'string'),
-('Delivery Confirmed Date*', 'string'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
+('Line', 'number'), ('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), ('Delivery Request Date', 'date'),
+('Delivery Confirmed Date', 'date'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
 
 #Important NOTE: I didn't set the fields of type date with the attribute 'date' (2nd part of the tuple) because for Excel, when a date is empty, the field becomes '1899-30-12' as default. So I set 'string' instead for the fields date.
 
 PO_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-(_('Delivery requested date'), 'string'), (_('Currency'), 'string'), (_('Comment'), 'string')]
+(_('Delivery requested date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string')]
 PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
 FO_COLUMNS_HEADER_FOR_IMPORT=[
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-(_('Delivery requested date'), 'string'), (_('Currency'), 'string'), (_('Comment'), 'string')]
+(_('Delivery requested date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string')]
 FO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in FO_COLUMNS_HEADER_FOR_IMPORT]
 
 IR_COLUMNS_HEADER_FOR_IMPORT=[

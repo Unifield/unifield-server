@@ -100,17 +100,19 @@ class report_project_expenses2(report_sxw.rml_parse):
         contract_obj = self.pool.get('financing.contract.contract')
         contract_domain = contract_obj.get_contract_domain(self.cr, self.uid, contract, reporting_type=self.reporting_type)
         analytic_line_obj = self.pool.get('account.analytic.line')
-        analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain ,context=None)
+        analytic_lines = analytic_line_obj.search(self.cr, self.uid, contract_domain, context=None)
 
         for analytic_line in analytic_line_obj.browse(self.cr, self.uid, analytic_lines, context=None):
             ids_adl = self.pool.get('account.destination.link').search(self.cr, self.uid,[('account_id', '=', analytic_line.general_account_id.id),('destination_id','=',analytic_line.general_account_id.default_destination_id.id) ])
             temp = [analytic_line.general_account_id.default_destination_id.id]
             ids_fcfl = self.pool.get('financing.contract.format.line').search(self.cr, self.uid, [('account_destination_ids','in',ids_adl)])
             for fcfl in self.pool.get('financing.contract.format.line').browse(self.cr, self.uid, ids_fcfl):
+                ana_tuple = (analytic_line, fcfl.code, fcfl.name)
                 if lines.has_key(fcfl.code):
-                    lines[fcfl.code] += [(analytic_line, fcfl)]
+                    if not ana_tuple in lines[fcfl.code]:
+                        lines[fcfl.code] += [ana_tuple]
                 else:
-                    lines[fcfl.code] = [(analytic_line, fcfl)]
+                    lines[fcfl.code] = [ana_tuple]
         
         self.lines = lines
         for x in lines:

@@ -69,6 +69,7 @@
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
+                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='location_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
@@ -116,6 +117,7 @@
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
+                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='location_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
@@ -374,10 +376,11 @@
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                             />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                             string="Unit Of Measure"
                                             colspan="2"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
-                                            />
+                                            domain="[('uom_by_product', '=', product_id)]"/>
                                         <field name="product_uos_qty"
                                             on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)"
                                             colspan="4"
@@ -441,7 +444,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -583,9 +585,11 @@
 											colspan="2"
 											 />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                         	string="Unit Of Measure"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
-                                        	colspan="2"/>
+                                        	colspan="2"
+                                        	domain="[('uom_by_product', '=', product_id)]"/>
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
                                         <field name="product_packaging" domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
@@ -638,7 +642,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="in_action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -798,6 +801,7 @@
                     <notebook colspan="4">
                         <page string="Products">
                             <field name="from_wkf" invisible="1"/>
+                            <field name="subtype" invisible="True"/>
                             <field name="move_lines"
                                 colspan="4"
                                 nolabel="1"
@@ -856,9 +860,11 @@
                                         	colspan="2"
                                         	 />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                         	string="Unit Of Measure"
                                         	attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                         	colspan="2"
+                                        	domain="[('uom_by_product', '=', product_id)]"
                                         	 />
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
@@ -913,7 +919,6 @@
                                     <field name="state"/>
                                     <group col="4" colspan="2">
                                         <button name="action_cancel" states="assigned" string="Cancel" type="object" icon="gtk-cancel"/>
-                                        <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                         <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
                                         <button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
                                     </group>
@@ -921,7 +926,6 @@
                             </field>
                             <group col="12" colspan="4">
                                 <field name="state" invisible="True"/>
-                                <field name="subtype" invisible="True"/>
                                 <field name="delivered" invisible="True"/>
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
@@ -930,7 +934,7 @@
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
                                 <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
@@ -992,7 +996,7 @@
                                     on_change="change_expiry(expiry_date, product_id, type_check)"
                                     attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
                                 <field name="product_qty"/>
-                                <field name="product_uom"/>
+                                <field name="product_uom" domain="[('uom_by_product', '=', product_id)]"/>
                                 <field name="hidden_perishable_mandatory" invisible="True" />
                                 <field name="hidden_batch_management_mandatory" invisible="True" />
                                 <field name="type_check" invisible="True" />

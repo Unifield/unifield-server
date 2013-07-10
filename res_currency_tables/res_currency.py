@@ -138,13 +138,14 @@ class res_currency(osv.osv):
         res = super(res_currency, self).create(cr, uid, values, context=context)
         
         # Create the corresponding pricelists
-        self.create_associated_pricelist(cr, uid, res, context=context)
+        pricelist_create_context = dict(context, sync_update_execution=True)
+        self.create_associated_pricelist(cr, uid, res, context=pricelist_create_context)
         
         # Check if currencies has no associated pricelists
         cr.execute('SELECT id FROM res_currency WHERE id NOT IN (SELECT currency_id FROM product_pricelist)')
         curr_ids = cr.fetchall()
         for cur_id in curr_ids:
-            self.create_associated_pricelist(cr, uid, cur_id[0], context=context)
+            self.create_associated_pricelist(cr, uid, cur_id[0], context=pricelist_create_context)
         
         return res
     
@@ -154,7 +155,8 @@ class res_currency(osv.osv):
         '''
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
-        
+        pricelist_write_context = dict(context, sync_update_execution=True)
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         
@@ -165,10 +167,10 @@ class res_currency(osv.osv):
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
                 for cur_id in ids:
-                    pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=context)
+                    pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=pricelist_write_context)
             version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('active', 'in', ['t', 'f'])], context=context)
             # Update the pricelists and versions
-            pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=context)
+            pricelist_obj.write(cr, uid, pricelist_ids, {'active': values['active']}, context=pricelist_write_context)
             version_obj.write(cr, uid, version_ids, {'active': values['active']}, context=context)
         
         return super(res_currency, self).write(cr, uid, ids, values, context=context)

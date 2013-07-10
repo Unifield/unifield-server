@@ -80,6 +80,10 @@
     pick = self.browse(cr, uid, in_ids[0], context=context)
     # get the weird openERP picking type
     picking_type = self.pool.get('stock.partial.picking').get_picking_type(cr, uid, pick, context=context)
+    # Convert to OUT to Simple OUT
+    out_ids = self.search(cr, uid, [('sale_id', '=', ref("so_I"))], context=context)
+    for out_id in out_ids:
+      self.convert_to_standard(cr, uid, [out_id], context=context)
     # open process wizard
     dic = self.action_process(cr, uid, in_ids, context=context)
     wiz_model = dic['res_model']

@@ -19,6 +19,7 @@
 #
 ##############################################################################
 from osv import osv, fields
+from lxml import etree
 
 class confirm_import_currencies(osv.osv_memory):
     _name = 'confirm.import.currencies'

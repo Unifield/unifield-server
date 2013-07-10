@@ -40,7 +40,7 @@ class output_currency_for_export(osv.osv_memory):
     _defaults = {
         'export_format': lambda *a: 'xls',
         'domain': lambda cr, u, ids, c: c and c.get('search_domain',[]),
-        'export_selected': lambda *a: True,
+        'export_selected': lambda *a: False,
     }
 
     def onchange_fx_table(self, cr, uid, ids, fx_table_id, context=None):
@@ -74,6 +74,7 @@ class output_currency_for_export(osv.osv_memory):
         choice = wiz and wiz.export_format or False
         if not choice:
             raise osv.except_osv(_('Error'), _('Please choose an export format!'))
+        datas = {}
         # Return CSV export is choosed.
         #if choice == 'csv':
             # Return good view
@@ -83,12 +84,13 @@ class output_currency_for_export(osv.osv_memory):
             datas = {'ids': context.get('active_ids', [])}
         else:
             context['from_domain'] = True
-            datas = {'context': context}
         # Update context with wizard currency or default currency
         context.update({'output_currency_id': currency_id})
+        # Update datas for context
+        datas.update({'context': context})
         if wiz.currency_id:
             # seems that there is a bug on context, so using datas permit to transmit info
-            datas.update({'output_currency_id': currency_id})
+            datas.update({'output_currency_id': currency_id, 'context': context})
         # Update report name if come from analytic
         report_name = 'account.move.line'
         if model == 'account.analytic.line':
