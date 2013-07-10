@@ -42,17 +42,6 @@ class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
     _inherit = 'account.bank.statement.line'
 
-    def _check_inactive_suppliers(self, cr, uid, ids, context=None):
-        """
-        Check that partner_id is not inactive
-        """
-        if not context:
-            context = {}
-        for absl in self.browse(cr, uid, ids):
-            if absl.partner_id and absl.partner_id.active == False:
-                return False
-        return True
-
     def _get_partner_id_from_vals(self, cr, uid, vals, context=None):
         """
         Search for partner_id in given vals
