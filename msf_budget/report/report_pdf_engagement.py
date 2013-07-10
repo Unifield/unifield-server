@@ -25,6 +25,7 @@ import datetime
 from tools.translate import _
 from osv import osv
 import time
+import pdb
 
 class report_pdf_engagement(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -58,7 +59,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         for cc_line in browse_analytic_distribution.cost_center_lines:
 
-            if cc_line.analytic_id and cc_line.analytic_id.id not in value_list:
+            if cc_line.analytic_id and str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id) not in value_list:
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
                 value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
             # convert amount to today's rate
@@ -74,7 +75,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
             if expense_account_id not in value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)]:
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = expense_line
             else:
-                value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = [sum(pair) for pair in zip(value_list[cc_line.analytic_id.id][expense_account_id], expense_line)]
+                value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = [sum(pair) for pair in zip(value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id], expense_line)]
             value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = cc_line.destination_id.code
 
         return
@@ -216,7 +217,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         # No budget found, fill the corresponding lines with "Budget Missing"
                         for account_id in temp_data[str(cost_center_id)+'_'+str(destination_id)].keys():
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id][0] = str('Budget missing')
-                            
+
             # Now we format the data to form the result
             total_values = [0, 0, 0, 0, 0]
             cost_center_ids = sorted(temp_data.keys())
