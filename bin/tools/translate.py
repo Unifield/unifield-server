@@ -423,7 +423,7 @@ class TinyPoFile(object):
 
 # Methods to export the translation file
 
-def trans_export(lang, modules, buffer, format, cr):
+def trans_export(lang, modules, buffer, format, cr, ignore_name=None):
 
     def _process(format, modules, rows, buffer, lang, newlang):
         if format == 'csv':
@@ -475,7 +475,7 @@ def trans_export(lang, modules, buffer, format, cr):
     newlang = not bool(lang)
     if newlang:
         lang = 'en_US'
-    trans = trans_generate(lang, modules, cr)
+    trans = trans_generate(lang, modules, cr, ignore_name=ignore_name)
     if newlang and format!='csv':
         for trx in trans:
             trx[-1] = ''
@@ -551,7 +551,7 @@ def in_modules(object_name, modules):
     module = module_dict.get(module, module)
     return module in modules
 
-def trans_generate(lang, modules, cr):
+def trans_generate(lang, modules, cr, ignore_name=None):
     logger = logging.getLogger('i18n')
     dbname = cr.dbname
 
@@ -569,14 +569,26 @@ def trans_generate(lang, modules, cr):
             FROM ir_model AS m, ir_model_data AS imd
             WHERE m.id = imd.res_id AND imd.model = 'ir.model' """
 
+    has_where = False
     if 'all_installed' in modules:
+        has_where = True
         query += ' WHERE module IN ( SELECT name FROM ir_module_module WHERE state = \'installed\') '
         query_models += " AND imd.module in ( SELECT name FROM ir_module_module WHERE state = 'installed') "
-    query_param = None
+    query_param = []
     if 'all' not in modules:
+        has_where = True
         query += ' WHERE module IN %s'
         query_models += ' AND imd.module in %s'
-        query_param = (tuple(modules),)
+        query_param = [tuple(modules),]
+    if ignore_name:
+        if not has_where:
+            query += ' WHERE name not in %s '
+        else:
+            query += ' AND name not in %s '
+        query_models += ' AND imd.name not in %s '
+
+        query_param.append(tuple(ignore_name))
+
     query += ' ORDER BY module, model, name'
     query_models += ' ORDER BY module, model'
 
@@ -584,6 +596,8 @@ def trans_generate(lang, modules, cr):
 
     _to_translate = []
     def push_translation(module, type, name, id, source):
+        if ignore_name and name in ignore_name:
+            return
         tuple = (module, source, name, id, type)
         if source and tuple not in _to_translate:
             _to_translate.append(tuple)
@@ -730,7 +744,6 @@ def trans_generate(lang, modules, cr):
                 push_translation(module, 'model', name, xml_name, encode(trad))
 
         # End of data for ir.model.data query results
-
     cr.execute(query_models, query_param)
 
     def push_constraint_msg(module, term_type, model, msg):
