@@ -436,7 +436,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         result = original_write(self, cr, uid, ids, values,context=context)
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            if not isinstance(ids, (list, tuple)): ids = [ids]
             self.synchronize(cr, uid, ids, previous_values=previous_values, context=context)
         return result
 
