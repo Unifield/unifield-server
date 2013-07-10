@@ -32,7 +32,7 @@ class lang_setup(osv.osv_memory):
     
     def _list_lang(self, cr, uid, context=None):
         lang_obj = self.pool.get('res.lang')
-        lang_ids = lang_obj.search(cr, uid, [])
+        lang_ids = lang_obj.search(cr, uid, [('code', 'like', '_MF')])
         res = []
         for lg in lang_obj.read(cr, uid, lang_ids, ['name']):
             res.append((lg['id'], lg['name']))
