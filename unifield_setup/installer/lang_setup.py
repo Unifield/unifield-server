@@ -81,6 +81,8 @@ class lang_setup(osv.osv_memory):
         setup_id = setup_obj.get_config(cr, uid)
         setup_obj.write(cr, uid, [setup_id.id], {'lang_id': code}, context=context)
         self.pool.get('res.users').write(cr, uid, uid, {'context_lang': code}, context=context)
+        values_obj = self.pool.get('ir.values')
+        values_obj.set(cr, uid, 'default', False, 'lang', ['res.partner'], code)
 
 
 lang_setup()
