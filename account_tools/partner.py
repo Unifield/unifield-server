@@ -3,7 +3,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,38 @@
 #
 ##############################################################################
 
-from period import *
-from partner import *
+from osv import osv
 
+def get_partner_id_from_vals(self, cr, uid, vals, context=None):
+    """
+    Search for partner_id in given vals
+    """
+    # Prepare some values
+    res = False
+    # Do some checks
+    if not vals:
+        return res
+    if not context:
+        context = {}
+    if vals.get('partner_id', False):
+        res = vals.get('partner_id')
+    elif vals.get('partner_type', False):
+        p_type = vals.get('partner_type').split(',')
+        if p_type[0] == 'res.partner' and p_type[1]:
+            if isinstance(p_type[1], str):
+                p_type[1] = int(p_type[1])
+            res = p_type[1]
+    return res
+
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+
+    def get_partner_id_from_vals(self, cr, uid, vals, context=None):
+        """
+        Search for partner_id in given vals
+        """
+        return get_partner_id_from_vals(self, cr, uid, vals, context)
+
+res_partner()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

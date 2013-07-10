@@ -42,27 +42,6 @@ class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
     _inherit = 'account.bank.statement.line'
 
-    def _get_partner_id_from_vals(self, cr, uid, vals, context=None):
-        """
-        Search for partner_id in given vals
-        """
-        # Prepare some values
-        res = False
-        # Do some checks
-        if not vals:
-            return res
-        if not context:
-            context = {}
-        if vals.get('partner_id', False):
-            res = vals.get('partner_id')
-        elif vals.get('partner_type', False):
-            p_type = vals.get('partner_type').split(',')
-            if p_type[0] == 'res.partner' and p_type[1]:
-                if isinstance(p_type[1], str):
-                    p_type[1] = int(p_type[1])
-                res = p_type[1]
-        return res
-
     def create(self, cr, uid, vals, context=None):
         """
         UTP-317: Check if partner is inactive or not. If inactive, raise an execption to the user.
@@ -70,7 +49,7 @@ class account_bank_statement_line(osv.osv):
         # Some verification
         if not context:
             context = {}
-        partner_id = self._get_partner_id_from_vals(cr, uid, vals, context)
+        partner_id = self.pool.get('res.partner').get_partner_id_from_vals(cr, uid, vals, context)
         if partner_id:
             partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
             if partner and partner[0] and not partner[0].active:
