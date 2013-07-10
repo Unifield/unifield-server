@@ -82,7 +82,7 @@ class unifield_setup_configuration(osv.osv):
         'allocation_setup': lambda *a: 'mixed',
         'sale_price': lambda *a: 0.00,
         'field_orders_ok': lambda *a: True,
-        'lang_id': lambda *a: 'en_US',
+        'lang_id': lambda *a: False,
         'unallocated_ok': lambda *a: False,
         'fixed_asset_ok': lambda *a: False,
         'payroll_ok': lambda *a: True,
