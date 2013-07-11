@@ -410,9 +410,9 @@ class product_uom(osv.osv):
 
     _columns = {
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product', 
-                                          help='Field used to filter the UoM for a specific product'),
+                                          method=True, help='Field used to filter the UoM for a specific product'),
         'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent', 
-                                          help='Field used to filter the UoM for a specific product'),
+                                          method=True, help='Field used to filter the UoM for a specific product'),
     }
     
 product_uom()
