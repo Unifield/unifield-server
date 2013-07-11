@@ -125,7 +125,14 @@ base_setup_company()
 class res_users(osv.osv):
     _inherit = 'res.users'
     _name = 'res.users'
+
+    def _get_default_ctx_lang(self, cr, uid, context=None):
+        config_lang = self.pool.get('unifield.setup.configuration').get_config(cr, uid).lang_id
+        if config_lang:
+            return config_lang
+        return 'en_US'
+
     _defaults = {
-        'context_lang': 'en_MF',
+        'context_lang': _get_default_ctx_lang,
     }
 res_users()
