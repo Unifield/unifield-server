@@ -79,12 +79,6 @@ MODELS_TO_IGNORE_DOMAIN = [
         'workflow%',
     ]
 
-XML_ID_TO_IGNORE = [
-        'main_partner',
-        'main_address',
-        'main_company', 
-    ]
-
 def __compile_models_to_ignore():
     global MODELS_TO_IGNORE_DOMAIN
     simple_patterns = []
