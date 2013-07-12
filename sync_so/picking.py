@@ -53,6 +53,18 @@ class stock_picking(osv.osv):
         if not product_ids:
             raise Exception, "The corresponding product does not exist here. Product name: %s"%product_name
         product_id = product_ids[0]
+        
+        # asset form
+        asset_id = False
+        if data['asset_id'] and data['asset_id']['id']: 
+            asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
+        
+        product_name = data['product_id']['name']
+        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
+        if not product_ids:
+            raise Exception, "The corresponding product does not exist here. Product name: %s"%product_name
+        product_id = product_ids[0]
+        
         # uom
         uom_name = data['product_uom']['name']
         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
@@ -80,6 +92,8 @@ class stock_picking(osv.osv):
 
                   'prodlot_id': batch_ids,
                   'expired_date': expired_date,
+
+                  'asset_id': asset_id,
 
                   'name': data['name'],
                   'product_qty': data['product_qty'],
@@ -144,7 +158,7 @@ class stock_picking(osv.osv):
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id(cr, uid, po_name, context)
+        in_id = so_po_common.get_in_id(cr, uid, po_id, po_name, context)
         
         if in_id:
             # update header
@@ -321,19 +335,51 @@ class stock_picking(osv.osv):
         so_po_common = self.pool.get('so.po.common')
         batch_obj = self.pool.get('stock.production.lot')
         
-        pick_dict = out_info.to_dict()
-        existing_bn = batch_obj.search(cr, uid, [('name', '=', pick_dict['name'])], context=context)
+        batch_dict = out_info.to_dict()
+        existing_bn = batch_obj.search(cr, uid, [('name', '=', batch_dict['name'])], context=context)
         
         if existing_bn: # existed already, then don't need to create a new one
             return True
 
-        if pick_dict.get('product_id'):
+        if batch_dict.get('product_id'):
             rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
             if rec_id:
-                pick_dict['product_id'] = rec_id
+                batch_dict['product_id'] = rec_id
 
-        return batch_obj.create(cr, uid, pick_dict, context=context)
+        return batch_obj.create(cr, uid, batch_dict, context=context)
 
+    def create_asset(self, cr, uid, source, out_info, context=None):
+        if not context:
+            context = {}
+        print "Create asset object that comes with the SHIP/OUT"
+        so_po_common = self.pool.get('so.po.common')
+        asset_obj = self.pool.get('product.asset')
+        
+        asset_dict = out_info.to_dict()
+        existing_asset = asset_obj.search(cr, uid, [('name', '=', asset_dict['name'])], context=context)
+        
+        if existing_asset: # existed already, then don't need to create a new one
+            return True
+
+        if asset_dict.get('product_id'):
+            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+            if rec_id:
+                asset_dict['product_id'] = rec_id
+
+            rec_id = self.pool.get('product.asset.type').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.asset_type_id.id), context=context)
+            if rec_id:
+                asset_dict['asset_type_id'] = rec_id
+
+            rec_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.invo_currency.id), context=context)
+            if rec_id:
+                asset_dict['invo_currency'] = rec_id
+
+            if asset_dict['instance_id'] and asset_dict['instance_id']['id']: 
+                rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(asset_dict['instance_id']['id']), context=context)
+                asset_dict['instance_id'] = rec_id
+        
+        return asset_obj.create(cr, uid, asset_dict, context=context)
+    
     def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
         # Check if the given object is valid for the rule
         model_obj = self.pool.get(rule.model.model)
@@ -427,7 +473,7 @@ class stock_picking(osv.osv):
                 'arguments': arguments,
                 'destination_name': partner_name,
                 'sent' : False,
-                'generate_message' : False,
+                'generate_message' : True,
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
@@ -444,17 +490,28 @@ class stock_picking(osv.osv):
                 return True
             
             list_batch = []
+            list_asset = []
             # only treat for the internal partner
             for move in pick.move_lines:
                 if move.state not in ('done'):
                     continue
+                # Get batch number object
                 if move.prodlot_id:
                     # put the new batch number into the list, and create messages for them below
                     list_batch.append(move.prodlot_id.id)
+                    
+                # Get asset object
+                if move.asset_id:
+                    # put the new batch number into the list, and create messages for them below
+                    list_asset.append(move.asset_id.id)
             
             # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
-            for batch in list_batch:
-                self.create_message_with_object_and_partner(cr, uid, 1001, batch, partner.name, context)
+            for item in list_batch:
+                self.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
+
+            # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
+            for item in list_asset:
+                self.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
 
         return res  
     
