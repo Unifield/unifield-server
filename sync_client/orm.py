@@ -238,7 +238,7 @@ SELECT res_id, touched
 
         """
         assert self._name != "ir.model.data", \
-            "Cannot create on xmlid on an ir.model.data object!"
+            "Cannot create xmlids on an ir.model.data object!"
 
         def get_fields(record):
             if hasattr(field, '__iter__'):
@@ -258,27 +258,28 @@ SELECT res_id, touched
         except DuplicateKey:
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, ids=%s. Too late for debugging, sorry!" % (self._name, ids))
         missing_ids = filter(lambda id:id and not id in result, ids)
-        xmlids = dict(
-            (data.res_id, "%(module)s_%(name)s" % data)
-            for data in model_data_obj.browse(cr, uid,
-                model_data_obj.search(cr, uid,
-                    [('model','=',self._name),('res_id','in',missing_ids),
-                     '!',('module','in',['sd','__export__']),
-                     '!','&',('module','=','base'),('name','=like','main_%')])))
-        now = fields.datetime.now()
-        identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
-        for res_id in missing_ids:
-            name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
-            new_data_id = model_data_obj.create(cr, uid, {
-                'noupdate' : False, # don't set to True otherwise import won't work
-                'module' : 'sd',
-                'last_modification' : now,
-                'model' : self._name,
-                'res_id' : res_id,
-                'version' : 1,
-                'name' : name,
-            }, context=context)
-            result[res_id] = get_fields(model_data_obj.browse(cr, uid, new_data_id, context=context))
+        if missing_ids:
+            xmlids = dict(
+                (data.res_id, "%(module)s_%(name)s" % data)
+                for data in model_data_obj.browse(cr, uid,
+                    model_data_obj.search(cr, uid,
+                        [('model','=',self._name),('res_id','in',missing_ids),
+                         '!',('module','in',['sd','__export__']),
+                         '!','&',('module','=','base'),('name','=like','main_%')])))
+            now = fields.datetime.now()
+            identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+            for res_id in missing_ids:
+                name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
+                new_data_id = model_data_obj.create(cr, uid, {
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'module' : 'sd',
+                    'last_modification' : now,
+                    'model' : self._name,
+                    'res_id' : res_id,
+                    'version' : 1,
+                    'name' : name,
+                }, context=context)
+                result[res_id] = get_fields(model_data_obj.browse(cr, uid, new_data_id, context=context))
         return result if result_iterable else result[ids[0]]
 
     def version(self, cr, uid, ids, context=None):
@@ -386,6 +387,11 @@ SELECT res_id, touched
                         context=context)
 
         return synchronized_ids if result_iterable else len(synchronized_ids) > 0
+
+    def clear_synchronization(self, cr, uid, ids, context=None):
+        data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
+        return self.pool.get('ir.model.data').write(cr, uid, data_ids.values(),
+            {'force_recreation':False,'touched':False}, context=context)
 
     def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
