@@ -263,7 +263,8 @@ SELECT res_id, touched
             for data in model_data_obj.browse(cr, uid,
                 model_data_obj.search(cr, uid,
                     [('model','=',self._name),('res_id','in',missing_ids),
-                     '!',('module','in',['sd','__export__'])])))
+                     '!',('module','in',['sd','__export__']),
+                     '!','&',('module','=','base'),('name','=like','main_%')])))
         now = fields.datetime.now()
         identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
         for res_id in missing_ids:
