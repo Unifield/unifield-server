@@ -310,6 +310,9 @@ SELECT res_id, touched
         """
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
+        assert hasattr(self, '_all_columns'), \
+            "You are running an old version of OpenERP server. " \
+            "Please update the server to the latest version."
 
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable:
@@ -331,9 +334,9 @@ SELECT res_id, touched
             synchronized_ids.extend(data_ids)
 
         def filter_o2m(field_list):
-            return [(f, self._columns[f])
+            return [(f, self._all_columns[f].column)
                     for f in field_list
-                    if isinstance(self._columns[f], fields.one2many)]
+                    if isinstance(self._all_columns[f].column, fields.one2many)]
 
         if previous_values is None:
             whole_fields = self._columns.keys()
