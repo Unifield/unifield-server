@@ -549,7 +549,9 @@ class sale_order_line(osv.osv):
                                'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")}
                     res['warning'] = warning
 
-                res.setdefault('value', {}).update({'price_unit': self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.list_price, uom_id)})
+                unit_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.list_price, uom_id)
+                res.setdefault('value', {}).update({'price_unit': unit_price,
+                                                    'cost_price': unit_price})
 
         # Round-up the quantity
         if uom_id and product_qty:
