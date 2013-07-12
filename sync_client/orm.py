@@ -310,6 +310,9 @@ SELECT res_id, touched
         """
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
+        assert hasattr(self, '_all_columns'), \
+            "You are running an old version of OpenERP server. " \
+            "Please update the server to the latest version."
 
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable:
@@ -331,9 +334,9 @@ SELECT res_id, touched
             synchronized_ids.extend(data_ids)
 
         def filter_o2m(field_list):
-            return [(f, self._columns[f])
+            return [(f, self._all_columns[f].column)
                     for f in field_list
-                    if isinstance(self._columns[f], fields.one2many)]
+                    if isinstance(self._all_columns[f].column, fields.one2many)]
 
         if previous_values is None:
             whole_fields = self._columns.keys()
@@ -373,7 +376,7 @@ SELECT res_id, touched
                     lambda field: next_rec[field] != prev_rec[field],
                     whole_fields))
                 new_touched = touched | modified
-                if not touched == new_touched:
+                if modified:
                     touch([data_id], list(new_touched))
                 # handle one2many
                 for field, column in filter_o2m(whole_fields):
@@ -436,7 +439,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         result = original_write(self, cr, uid, ids, values,context=context)
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            if not isinstance(ids, (list, tuple)): ids = [ids]
             self.synchronize(cr, uid, ids, previous_values=previous_values, context=context)
         return result
 

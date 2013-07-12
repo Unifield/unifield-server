@@ -97,7 +97,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
             obj = self.pool.get(model.model)
 
             if obj is None:
-                self._logger.warning('Could not get object %s while creating all missing sdrefs' % model.model)
+                self._logger.warn('Could not get object %s while creating all missing sdrefs' % model.model)
                 continue
 
             # ignore wizard objects
