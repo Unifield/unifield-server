@@ -498,13 +498,13 @@ class one2many(_column):
         if self._context:
             context = context.copy()
         context.update(self._context)
-        context['no_store_function'] = True
         if not values:
             return
         _table = obj.pool.get(self._obj)._table
         obj = obj.pool.get(self._obj)
         for act in values:
             if act[0] == 0:
+                context['no_store_function'] = True
                 act[2][self._fields_id] = id
                 id_new = obj.create(cr, user, act[2], context=context)
                 result += obj._store_get_values(cr, user, [id_new], act[2].keys(), context)
