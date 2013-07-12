@@ -238,7 +238,7 @@ SELECT res_id, touched
 
         """
         assert self._name != "ir.model.data", \
-            "Cannot create on xmlid on an ir.model.data object!"
+            "Cannot create xmlids on an ir.model.data object!"
 
         def get_fields(record):
             if hasattr(field, '__iter__'):
@@ -251,25 +251,35 @@ SELECT res_id, touched
         if not ids: return {} if result_iterable else False
 
         model_data_obj = self.pool.get('ir.model.data')
-        data_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
+        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
             result = RejectingDict((data.res_id, get_fields(data))
-                for data in model_data_obj.browse(cr, uid, data_ids))
+                for data in model_data_obj.browse(cr, uid, sdref_ids))
         except DuplicateKey:
             raise Exception("Duplicate definition of 'sd' xml_ids: model=%s, ids=%s. Too late for debugging, sorry!" % (self._name, ids))
-        now = fields.datetime.now()
-        identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
-        for res_id in (id for id in ids if id and not id in result):
-            new_data_id = model_data_obj.create(cr, uid, {
-                'noupdate' : False, # don't set to True otherwise import won't work
-                'module' : 'sd',
-                'last_modification' : now,
-                'model' : self._name,
-                'res_id' : res_id,
-                'version' : 1,
-                'name' : self.get_unique_xml_name(cr, uid, identifier, self._table, res_id),
-            }, context=context)
-            result[res_id] = get_fields(model_data_obj.browse(cr, uid, new_data_id, context=context))
+        missing_ids = filter(lambda id:id and not id in result, ids)
+        if missing_ids:
+            xmlids = dict(
+                (data.res_id, "%(module)s_%(name)s" % data)
+                for data in model_data_obj.browse(cr, uid,
+                    model_data_obj.search(cr, uid,
+                        [('model','=',self._name),('res_id','in',missing_ids),
+                         '!',('module','in',['sd','__export__']),
+                         '!','&',('module','=','base'),('name','=like','main_%')])))
+            now = fields.datetime.now()
+            identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+            for res_id in missing_ids:
+                name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
+                new_data_id = model_data_obj.create(cr, uid, {
+                    'noupdate' : False, # don't set to True otherwise import won't work
+                    'module' : 'sd',
+                    'last_modification' : now,
+                    'model' : self._name,
+                    'res_id' : res_id,
+                    'version' : 1,
+                    'name' : name,
+                }, context=context)
+                result[res_id] = get_fields(model_data_obj.browse(cr, uid, new_data_id, context=context))
         return result if result_iterable else result[ids[0]]
 
     def version(self, cr, uid, ids, context=None):
@@ -302,6 +312,9 @@ SELECT res_id, touched
         """
         assert not self._name == 'ir.model.data', \
             "Can not call this method on object ir.model.data!"
+        assert hasattr(self, '_all_columns'), \
+            "You are running an old version of OpenERP server. " \
+            "Please update the server to the latest version."
 
         result_iterable = hasattr(ids, '__iter__')
         if not result_iterable:
@@ -313,18 +326,37 @@ SELECT res_id, touched
         data = self.pool.get('ir.model.data')
         now = fields.datetime.now()
         synchronized_ids = []
+
         def touch(data_ids, touched_fields):
             data.write(cr, uid, data_ids, 
                 {
-                    'touched' : str(touched_fields),
+                    'touched' : str(sorted(touched_fields)),
                     'last_modification' : now,
                 }, context=context)
             synchronized_ids.extend(data_ids)
 
+        def filter_o2m(field_list):
+            return [(f, self._all_columns[f].column)
+                    for f in field_list
+                    if isinstance(self._all_columns[f].column, fields.one2many)]
+
         if previous_values is None:
+            whole_fields = self._columns.keys()
             touch(
                 self.get_sd_ref(cr, uid, ids, field='id', context=context).values(),
-                self._columns.keys())
+                whole_fields)
+            # handle one2many
+            o2m_fields = filter_o2m(whole_fields)
+            current_values = dict(
+                (d['id'], d)
+                for d in self.read(cr, uid, ids,
+                    [field for field, column in o2m_fields],
+                    context=context))
+            for res_id, next_rec in current_values.items():
+                for field, column in o2m_fields:
+                    self.pool.get(column._obj).synchronize(cr, uid,
+                        next_rec[field],
+                        context=context)
         else:
             previous_values = dict((d['id'], d) for d in previous_values)
             assert set(ids) == set(previous_values.keys()), \
@@ -339,14 +371,27 @@ SELECT res_id, touched
                 data_id, touched = info
                 prev_rec, next_rec = previous_values[res_id], current_values[res_id]
                 touched = set(eval(touched) if touched else [])
+                # TODO should make a specific check according to field type
+                # TODO one2many should synchronize linked objects because it
+                # doesn't automatically synchronize on a simple link update
                 modified = set(filter(
                     lambda field: next_rec[field] != prev_rec[field],
                     whole_fields))
                 new_touched = touched | modified
-                if not touched == new_touched:
+                if modified:
                     touch([data_id], list(new_touched))
+                # handle one2many
+                for field, column in filter_o2m(whole_fields):
+                    self.pool.get(column._obj).synchronize(cr, uid,
+                        list(set(prev_rec[field] + next_rec[field])),
+                        context=context)
 
         return synchronized_ids if result_iterable else len(synchronized_ids) > 0
+
+    def clear_synchronization(self, cr, uid, ids, context=None):
+        data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
+        return self.pool.get('ir.model.data').write(cr, uid, data_ids.values(),
+            {'force_recreation':False,'touched':False}, context=context)
 
     def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
@@ -401,7 +446,6 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         result = original_write(self, cr, uid, ids, values,context=context)
         if self._name not in MODELS_TO_IGNORE and (context is None or \
            (not context.get('sync_update_execution') and not context.get('sync_update_creation'))):
-            if not isinstance(ids, (list, tuple)): ids = [ids]
             self.synchronize(cr, uid, ids, previous_values=previous_values, context=context)
         return result
 
@@ -450,16 +494,22 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if context.get('sync_message_execution'):
             return original_unlink(self, cr, uid, ids, context=context)
 
-        if self._name == 'ir.model.data' and (context is None or context.get('avoid_ir_data_deletion')):
-            return True
+        if self._name == 'ir.model.data' \
+           and context.get('avoid_sdref_deletion'):
+            return original_unlink(self, cr, uid,
+                [rec.id for rec
+                    in self.browse(cr, uid, (ids if hasattr(ids, '__iter__') else [ids]), context=context)
+                   if not rec.module == 'sd'],
+                context=context)
 
         # In an update creation context, references are deleted normally
-        # In an update execution context, references are kept, but no synchronization is made
+        # In an update execution context, references are kept, but no
+        # synchronization is made.
         # Otherwise, references are kept and synchronization is triggered
         # ...see?
         if self._name not in MODELS_TO_IGNORE \
            and not context.get('sync_update_creation'):
-            context = dict(context, avoid_ir_data_deletion=True)
+            context = dict(context, avoid_sdref_deletion=True)
             if not context.get('sync_update_execution'):
                 self.synchronize(cr, uid, ids, context=context)
 
