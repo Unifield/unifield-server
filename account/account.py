@@ -1405,14 +1405,23 @@ class account_move(osv.osv):
         if context and ('__last_update' in context):
             del context['__last_update']
 
+        if context is None:
+            context = {}
+
         valid_moves = [] #Maintains a list of moves which can be responsible to create analytic entries
         obj_analytic_line = self.pool.get('account.analytic.line')
         obj_move_line = self.pool.get('account.move.line')
         for move in self.browse(cr, uid, ids, context):
             # Unlink old analytic lines on move_lines
-            for obj_line in move.line_id:
-                for obj in obj_line.analytic_lines:
-                    obj_analytic_line.unlink(cr,uid,obj.id)
+            # UTP-803: condition on context added, if this context is set analytic lines won't be created,
+            # so we don't delete it neither.
+            # this use case happens in the pull sync,
+            # when the account_bank_statement_line has a modification date > to the associated account_move and
+            # if the associated account_move was previously synced.
+            if not context.get('do_not_create_analytic_line') or not context.get('sync_update_execution'):
+                for obj_line in move.line_id:
+                    for obj in obj_line.analytic_lines:
+                        obj_analytic_line.unlink(cr,uid,obj.id)
 
             journal = move.journal_id
             amount = 0
