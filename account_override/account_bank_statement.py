@@ -49,13 +49,13 @@ class account_bank_statement_line(osv.osv):
         # Some verification
         if not context:
             context = {}
-        partner_id = self.pool.get('res.partner').get_partner_id_from_vals(cr, uid, vals, context)
-        if partner_id:
-            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
-            if partner and partner[0] and not partner[0].active:
-                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
-        return super(account_bank_statement_line, self).create(cr, uid, vals, context)
-
+        res = super(account_bank_statement_line, self).create(cr, uid, vals, context)
+        # UTP-317: Check partner (if active or not)
+        if res:
+            absl = self.browse(cr, uid, [res], context)
+            if absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (absl[0].partner_id.name or '',))
+        return res
     _columns = {
         'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
     }

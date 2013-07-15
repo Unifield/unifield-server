@@ -258,12 +258,6 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
-        # UTP-317: Check partner (if active or not)
-        partner_id = self.pool.get('res.partner').get_partner_id_from_vals(cr, uid, vals, context)
-        if partner_id:
-            partner = self.pool.get('res.partner').browse(cr, uid, [partner_id])
-            if partner and partner[0] and not partner[0].active:
-                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         # Some checks
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
@@ -277,7 +271,13 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
-        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        # UTP-317: Check partner (if active or not)
+        if res:
+            aml = self.browse(cr, uid, [res], context)
+            if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+        return res
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
