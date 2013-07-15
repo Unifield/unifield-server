@@ -315,6 +315,9 @@ class purchase_order(osv.osv):
             context = {}
         if context.get('import_in_progress'):
             return True
+
+        import traceback
+        traceback.print_stack()
         
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
