@@ -1259,10 +1259,10 @@ class procurement_order(osv.osv):
             origins = set([po.origin, procurement.origin, procurement.tender_id and procurement.tender_id.name])
             # Add different origin on 'Source document' field if the origin is nat already listed
             origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
-            self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': origin}, context=context)
+            self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': origin}, context=dict(context, import_in_progress=True))
             
             if location_id:
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=context)
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=dict(context, import_in_progress=True))
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
