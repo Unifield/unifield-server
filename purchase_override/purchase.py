@@ -316,9 +316,6 @@ class purchase_order(osv.osv):
         if context.get('import_in_progress'):
             return True
 
-        import traceback
-        traceback.print_stack()
-        
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
                 if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
