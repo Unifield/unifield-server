@@ -127,18 +127,6 @@
             auto="False"
             menu="True"
             />
-            
-    <!-- STOCK CARD -->
-		<report
-            id="stock_card_report_xls"
-            string="Stock card Excel Export"
-            model="stock.card.wizard"
-            name="stock.card.report.xls"
-            file="msf_supply_doc_export/report/stock_card_report_xls.mako"
-            report_type="webkit"
-            header="False"
-            auto="False"
-            menu="True" />
 
     </data>
 </openerp>

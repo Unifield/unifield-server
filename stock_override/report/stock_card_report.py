@@ -20,6 +20,7 @@
 ##############################################################################
 
 from report import report_sxw
+from report_webkit.webkit_report import WebKitParser
 
 import pooler
 import time
@@ -32,6 +33,34 @@ class stock_card_report(report_sxw.rml_parse):
         })
 
 report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header='internal landscape')
+
+
+def getIds(self, cr, uid, ids, context):
+    if not context:
+        context = {}
+    if context.get('from_domain') and 'search_domain' in context:
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=5000)
+    return ids
+    
+    
+
+class stock_card_report_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(stock_card_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(stock_card_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+stock_card_report_xls('report.stock.card.report.xls','stock.card.wizard','addons/stock_override/report/stock_card_report_xls.mako')
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
