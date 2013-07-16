@@ -107,7 +107,10 @@ class stock_card_wizard(osv.osv_memory):
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
         product = product_obj.browse(cr, uid, card.product_id.id, 
                                                         context=context)
-        initial_stock = product.qty_available
+        if not card.from_date:
+            initial_stock = 0.00
+        else:
+            initial_stock = product.qty_available
 
         domain = [('product_id', '=', product.id),
                   ('prodlot_id', '=', prodlot_id),
