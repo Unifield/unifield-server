@@ -315,7 +315,7 @@ class purchase_order(osv.osv):
             context = {}
         if context.get('import_in_progress'):
             return True
-        
+
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
                 if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):

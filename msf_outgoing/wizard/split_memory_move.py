@@ -125,6 +125,7 @@ class split_memory_move(osv.osv_memory):
                            'quantity_ordered': leave_qty,
                            'force_complete': memory_move.force_complete,
                            'product_uom': memory_move.product_uom.id,
+                           'uom_ordered': memory_move.product_uom.id,
                            'prodlot_id': memory_move.prodlot_id.id,
                            'move_id': memory_move.move_id.id,
                            'wizard_pick_id': memory_move.wizard_pick_id and memory_move.wizard_pick_id.id,
