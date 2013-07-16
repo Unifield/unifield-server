@@ -246,6 +246,41 @@ class purchase_order_sync(osv.osv):
                 
         return True
 
+    def out_pick_fo_update_in_po(self, cr, uid, source, pick_info, context=None):
+        if not context:
+            context = {}
+        print "OUT/PICK from FO updates the IN of PO"
+        
+        so_po_common = self.pool.get('so.po.common')
+        so_dict = pick_info.to_dict()
+        
+        # Retrieve the PO that relates to the given FO of the OUT/PICK
+        so_ref = source + "." + pick_info.origin
+        po_ref_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
+        
+        # After having this PO id, search for the IN to be updated
+#        self.pool.get('stock.picking').read
+        
+        
+        header_result = {}
+        so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
+        header_result['order_line'] = so_po_common.get_lines(cr, uid, pick_info, po_id, False, True, False, context)
+
+        default = {}
+        default.update(header_result)
+        
+        res_id = self.write(cr, uid, po_id, default, context=context)
+        
+        if pick_info.original_so_id_sale_order:    
+            wf_service = netsvc.LocalService("workflow")
+            if pick_info.state == 'validated':
+                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+            else:
+                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
+                
+        return True
+
     def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}

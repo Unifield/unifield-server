@@ -424,3 +424,13 @@ class product_product(osv.osv):
         return res
 
 product_product()
+
+class product_asset(osv.osv):
+    
+    _inherit = "product.asset"
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        asset = self.browse(cr, uid, res_id)
+        return get_valid_xml_name('product_asset', (asset.instance_id.code or 'noinstance'), (asset.name or 'noname'))
+    
+product_asset()

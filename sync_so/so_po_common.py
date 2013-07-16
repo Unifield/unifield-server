@@ -100,12 +100,22 @@ class so_po_common(osv.osv_memory):
             raise Exception, "The PO is not found for the given FO Ref: " + so_ref
         return po_ids[0]
 
-    def get_in_id(self, cr, uid, po_ref, context):
+    def get_in_id_from_po_id(self, cr, uid, po_id, context):
         # Get the Id of the original PO to update these info back 
         if not po_ref:
             return False
 
-        in_ids = self.pool.get('stock.picking').search(cr, uid, [('origin', '=', po_ref)], context)
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id)], context)
+        if not in_ids:
+            raise Exception, "The IN of the PO not found! " + po_ref
+        return in_ids[0]
+
+    def get_in_id(self, cr, uid, po_id, po_ref, context):
+        # Get the Id of the original PO to update these info back 
+        if not po_id:
+            return False
+
+        in_ids = self.pool.get('stock.picking').search(cr, uid, [('purchase_id', '=', po_id)], 0, None, None, context)
         if not in_ids:
             raise Exception, "The IN of the PO not found! " + po_ref
         return in_ids[0]
