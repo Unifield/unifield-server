@@ -210,6 +210,25 @@ class real_composition_kit_xls(WebKitParser):
 
 real_composition_kit_xls('report.real.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako')
 
+class stock_card_report_xls(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        import pdb
+        pdb.set_trace()
+        return super(stock_card_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        ids = getIds(self, cr, uid, ids, context)
+        a = super(stock_card_report_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+stock_card_report_xls('report.stock.card.xls','stock.card.wizard','addons/msf_supply_doc_export/report/stock_card_report_xls.mako')
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)

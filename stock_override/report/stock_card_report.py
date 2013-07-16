@@ -19,9 +19,10 @@
 #
 ##############################################################################
 
-import time
 from report import report_sxw
+
 import pooler
+import time
 
 class stock_card_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
@@ -31,5 +32,6 @@ class stock_card_report(report_sxw.rml_parse):
         })
 
 report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header='internal landscape')
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
