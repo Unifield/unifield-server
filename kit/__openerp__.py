@@ -28,7 +28,7 @@
         """,
     'website': 'http://www.unifield.org',
     'init_xml': [],
-    "depends" : ["stock", "sale", "purchase", "product_nomenclature",
+    "depends" : ["stock", "sale", "purchase", "product_nomenclature","product_asset",
                  "purchase_double_validation", "specific_rules", "supplier_catalogue"],
     'update_xml': [
         'kit_view.xml',
