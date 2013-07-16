@@ -222,7 +222,7 @@ class product_asset(osv.osv):
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
                 # UF-1617: field only used for sync purpose
                 'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
-                'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=False),
+                'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
     }
     
     _defaults = {
