@@ -7,7 +7,7 @@
             id="stock_card_report"
             model="stock.card.wizard"
             name="stock.card.report"
-            header="True"
+            header="False"
             rml="addons/stock_override/report/stock_card_report.rml"
             string="Stock card" />
             
