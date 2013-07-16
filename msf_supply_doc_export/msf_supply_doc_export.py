@@ -218,8 +218,6 @@ class stock_card_report_xls(WebKitParser):
         report_xml.webkit_debug = 1
         report_xml.header = " "
         report_xml.webkit_header.html = "${_debug or ''|n}"
-        import pdb
-        pdb.set_trace()
         return super(stock_card_report_xls, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
 
     def create(self, cr, uid, ids, data, context=None):
@@ -227,7 +225,7 @@ class stock_card_report_xls(WebKitParser):
         a = super(stock_card_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
-stock_card_report_xls('report.stock.card.xls','stock.card.wizard','addons/msf_supply_doc_export/report/stock_card_report_xls.mako')
+stock_card_report_xls('report.stock.card.report.xls','stock.card.wizard','addons/msf_supply_doc_export/report/stock_card_report_xls.mako')
 
 class ir_values(osv.osv):
     """
