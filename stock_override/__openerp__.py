@@ -37,6 +37,7 @@
         "stock_workflow.xml",
         "procurement_view.xml",
         "destruction_report.xml",
+        "stock_report.xml",
         "report/report_destruction_location_view.xml",
         "report/report_stock_move_view.xml",
         "wizard/stock_analyze_view_view.xml",

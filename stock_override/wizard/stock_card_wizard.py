@@ -38,6 +38,7 @@ class stock_card_wizard(osv.osv_memory):
                                       string='Batch number'),
         'from_date': fields.date(string='From date'),
         'to_date': fields.date(string='To date'),
+        'available_stock': fields.float(digits=(16,2), string='Available stock'),
         'card_lines': fields.one2many('stock.card.wizard.line', 'card_id',
                                       string='Card lines'),
     }
@@ -108,7 +109,6 @@ class stock_card_wizard(osv.osv_memory):
                                                         context=context)
         initial_stock = product.qty_available
 
-
         domain = [('product_id', '=', product.id),
                   ('prodlot_id', '=', prodlot_id),
                   ('state', '=', 'done')]
@@ -159,6 +159,9 @@ class stock_card_wizard(osv.osv_memory):
             }
 
             line_id = line_obj.create(cr, uid, line_values, context=context)
+
+        self.write(cr, uid, [ids[0]], {'available_stock': initial_stock},
+                                                            context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.card.wizard',

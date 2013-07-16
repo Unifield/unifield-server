@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            auto="False"
+            id="stock_card_report"
+            model="stock.card.wizard"
+            name="stock.card.report"
+            header="True"
+            rml="addons/stock_override/report/stock_card_report.rml"
+            string="Stock card" />
+
+    </data>
+</openerp>

@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2011 TeMPO Consulting, MSF 
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,8 +19,17 @@
 #
 ##############################################################################
 
-import report_stock_move
-import destruction_location
-import stock_card_report
+import time
+from report import report_sxw
+import pooler
+
+class stock_card_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context):
+        super(stock_card_report, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+        })
+
+report_sxw.report_sxw('report.stock.card.report','stock.card.wizard','addons/stock_override/report/stock_card_report.rml',parser=stock_card_report, header='internal landscape')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
