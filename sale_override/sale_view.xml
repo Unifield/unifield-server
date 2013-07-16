@@ -23,6 +23,9 @@
                     <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos']" position="attributes">
                          <attribute name="invisible">1</attribute>
                     </xpath>
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='invoiced']" position="attributes">
+                         <attribute name="invisible">1</attribute>
+                    </xpath>
 
                     <!-- uf-1499
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">

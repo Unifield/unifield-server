@@ -92,12 +92,13 @@ class account_journal(osv.osv):
         if not context:
             context = {}
         dom = [('type', 'in', ['cash', 'bank', 'cheque'])]
-        if not args or not context.get('curr'):
+        if not args or not context.get('curr') or not context.get('journal'):
             return dom
         if args[0][2]:
             t = self.pool.get('account.account').read(cr, uid, args[0][2], ['type_for_register'])
+            # UF-1972: Do not display itself for transfer in same currency. If another currency, itself is not shown.
             if t['type_for_register'] == 'transfer_same':
-                return dom+[('currency', 'in', [context['curr']])]
+                return dom+[('currency', 'in', [context['curr']]), ('id', 'not in', [context['journal']])]
             elif t['type_for_register'] == 'transfer':
                 return dom+[('currency', 'not in', [context['curr']])]
         return dom

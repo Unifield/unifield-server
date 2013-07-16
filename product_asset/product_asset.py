@@ -117,13 +117,10 @@ class product_asset(osv.osv):
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId))
             
-        instance_id = vals['instance_id']    
-        if not instance_id:
+        if not vals['instance_id']:
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            if not company or not company.instance_id:
-                raise osv.except_osv(_('Error'), _('Cannot create product asset due to missing company or instance!'))
-            
-            vals['instance_id'] = company.instance_id.id
+            if company and company.instance_id:
+                vals['instance_id'] = company.instance_id.id
 
         # save the data to db
         return super(product_asset, self).create(cr, uid, vals, context)
@@ -225,7 +222,7 @@ class product_asset(osv.osv):
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
                 # UF-1617: field only used for sync purpose
                 'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
-                'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
+                'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=False),
     }
     
     _defaults = {
