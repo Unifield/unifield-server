@@ -345,7 +345,7 @@ class purchase_order_line(osv.osv):
                                                     nomen_manda_0=False, comment=False, context=context)
                         if not context.get('po_integration'):
                             price_unit = res.get('value', {}).get('price_unit', False)
-                            text_error += _('We use the price mechanism to compute the Price Unit.')
+                            text_error += _('\n We use the price mechanism to compute the Price Unit.')
                         uom = res.get('value', {}).get('product_uom', False)
                         warning_msg = res.get('warning', {}).get('message', '')
                         text_error += '\n %s' % warning_msg
@@ -375,15 +375,8 @@ class purchase_order_line(osv.osv):
         product_id = to_write['product_id']
         uom_id = to_write['product_uom']
         if uom_id and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, uom_id, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                # this is inspired by onchange_uom in specific_rules>specific_rules.py
-                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.
-                The category of the UoM of the product is '%s' whereas the category of the UoM you have chosen is '%s'.
-                """) % (product.uom_id.category_id.name, uom.category_id.name)
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, uom_id, context):
+                text_error += _("""\n You have to select a product UOM in the same category than the UOM of the product.""")
                 return to_write.update({'text_error': text_error,
                                         'to_correct_ok': True})
         elif not uom_id or uom_id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1] and product_id:

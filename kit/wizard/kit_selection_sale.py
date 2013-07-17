@@ -346,6 +346,11 @@ class kit_selection_sale_line(osv.osv_memory):
             result['value'].update({'price_unit_kit_selection_sale_line': data['value']['price_unit']})
         if 'product_uom' in data['value'] and not uom_id:
             result['value'].update({'uom_id_kit_selection_sale_line': data['value']['product_uom']})
+
+        if qty:
+            uom_id = result.get('value', {}).get('uom_id_kit_selection_sale_line', uom_id)
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_kit_selection_sale_line', result=result)
+
         return result
     
     _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),

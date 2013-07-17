@@ -537,7 +537,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         res = {}
         for wiz in self.browse(cr, uid, ids):
-            res[wiz.id] = False
+            res[wiz.id] = 'unknown'
             if wiz.register_line_id:
                 res[wiz.id] = wiz.register_line_id.state
         return res
@@ -580,7 +580,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         'posting_date': fields.date('Posting date', readonly=True),
         'document_date': fields.date('Document date', readonly=True),
         'partner_type': fields.char('Partner Type', readonly=1, size=128),
-        'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard')], readonly=True, store=False),
+        'register_line_state': fields.function(_get_register_line_state, method=True, string='Register line state', type='selection', selection=[('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')], readonly=True, store=False),
     }
 
     _defaults = {

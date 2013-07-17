@@ -51,6 +51,10 @@ class sale_order(osv.osv):
         if default is None:
             default = {}
 
+        # if the copy comes from the button duplicate
+        if context.get('from_button'):
+            default.update({'is_a_counterpart': False})
+        
         default.update({'loan_id': False,
                         'order_policy': 'picking',
                         'active': True})
@@ -237,6 +241,8 @@ class sale_order(osv.osv):
                                                    store= {'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
+        'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
+        'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
     }
     
     _defaults = {
@@ -416,6 +422,13 @@ class sale_order(osv.osv):
 
     def wkf_validated(self, cr, uid, ids, context=None):
         for order in self.browse(cr, uid, ids, context=context):
+            if order.order_type == 'loan':
+                line_ids = []
+                for l in order.order_line:
+                    line_ids.append(l.id)
+                self.pool.get('sale.order.line').write(cr, uid, line_ids, {'type': 'make_to_stock'}, context=context)
+
+
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('in_search', '=', order.partner_id.partner_type)], context=context)
             if order.pricelist_id.id not in pricelist_ids:
                 raise osv.except_osv(_('Error'), _('The currency used on the order is not compatible with the supplier. Please change the currency to choose a compatible currency.'))
@@ -506,13 +519,8 @@ class sale_order(osv.osv):
                 new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
                                                  'original_line_id': line.id}, context=dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line']))
                 created_line.append(new_line_id)
-            compute_store = line_obj._store_get_values(cr, uid, created_line, None, context)
-            compute_store.sort()
-            done = []
-            for order, object, ids, fields2 in compute_store:
-                if not (object, ids, fields2) in done:
-                    self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
-                    done.append((object, ids, fields2))
+
+            line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             # the sale order is treated, we process the workflow of the new so
             for to_treat in [x for x in split_fo_dic.values() if x]:
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_validated', cr)
@@ -602,6 +610,10 @@ class sale_order(osv.osv):
         partner_obj = self.pool.get('res.partner')
             
         for order in self.browse(cr, uid, ids):
+            # UTP-392: don't create a PO if it is created by sync ofr the loan
+            if order.is_a_counterpart or (order.order_type == 'loan' and order.fo_created_by_po_sync):
+                return
+
             two_months = today() + RelativeDateTime(months=+2)
             # from yml test is updated according to order value
             values = {'partner_id': order.partner_id.id,
@@ -616,7 +628,9 @@ class sale_order(osv.osv):
                       'location_id': order.shop_id.warehouse_id.lot_input_id.id,
                       'priority': order.priority,
                       'from_yml_test': order.from_yml_test,
+                      'is_a_counterpart': True,
                       }
+            context['is_a_counterpart'] = True
             order_id = purchase_obj.create(cr, uid, values, context=context)
             for line in order.order_line:
                 purchase_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
@@ -625,7 +639,7 @@ class sale_order(osv.osv):
                                                    'price_unit': line.price_unit,
                                                    'product_qty': line.product_uom_qty,
                                                    'date_planned': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                                                   'name': line.name,})
+                                                   'name': line.name,}, context)
             self.write(cr, uid, [order.id], {'loan_id': order_id})
             
             purchase = purchase_obj.browse(cr, uid, order_id)
@@ -1250,6 +1264,10 @@ class sale_order_line(osv.osv):
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
+
+        if 'domain' in res:
+            del res['domain']
+
         if product:
             type = self.pool.get('product.product').read(cr, uid, [product], 'procure_method')[0]['procure_method']
             if 'value' in res:
@@ -1354,7 +1372,13 @@ class sale_order_line(osv.osv):
         """
         if context is None:
             context = {}
-        if not vals.get('product_id') and context.get('sale_id', []):
+        
+        # UTP-392: fixed from the previous code: check if the sale order line contains the product, and not only from vals!
+        product_id = vals.get('product_id')
+        if not product_id:
+            product_id = self.browse(cr, uid, ids, context=context)[0].product_id
+        
+        if not product_id and context.get('sale_id', []):
             vals.update({'type': 'make_to_order'})
         # Internal request
         order_id = vals.get('order_id', False)

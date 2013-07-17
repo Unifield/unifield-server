@@ -44,7 +44,7 @@
 				           						<field name="item_module" />
 				           						<field name="item_product_id" />
 						                        <field name="item_qty" />
-						                        <field name="item_uom_id" />
+						                        <field name="item_uom_id" domain="[('uom_by_product', '=', item_product_id)]" />
 					                        </page>
 					                        <page string="Notes">
 					                        	<field name="item_description" nolabel="True" />
@@ -55,8 +55,8 @@
                     			<tree string="Theoretical Kit Item" editable="top" colors="red: inactive_product==True">
 				            		<field name="item_module" />
 				            		<field name="item_product_id" on_change="on_product_change(item_product_id)" />
-				            		<field name="item_qty" />
-				            		<field name="item_uom_id" />
+				            		<field name="item_qty" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+				            		<field name="item_uom_id" on_change="onchange_uom_qty(item_uom_id, item_qty)" domain="[('uom_by_product', '=', item_product_id)]" />
 				            		<field name="item_asset_id" context="{'product_id': item_product_id}" domain="[('product_id', '=', item_product_id)]"
 				            			attrs="{'readonly': [('hidden_asset_mandatory', '=', False)]}" />
 				            		<field name="item_lot"
@@ -248,8 +248,8 @@
             		<field name="item_kit_id" />
             		<field name="item_module" readonly="True" />
             		<field name="item_product_id" on_change="on_product_change(item_product_id)" readonly="True" />
-            		<field name="item_qty" readonly="True" />
-            		<field name="item_uom_id" readonly="True" />
+            		<field name="item_qty" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
+            		<field name="item_uom_id" readonly="True" on_change="onchange_uom_qty(item_uom_id, item_qty)" />
             		<field name="item_asset_id" readonly="True" />
             		<field name="item_lot" readonly="True" />
             		<field name="item_exp" readonly="True" />

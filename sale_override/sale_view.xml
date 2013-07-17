@@ -23,6 +23,9 @@
                     <xpath expr="/form//field[@name='order_line']/form//field[@name='product_uos']" position="attributes">
                          <attribute name="invisible">1</attribute>
                     </xpath>
+                    <xpath expr="/form//field[@name='order_line']/form//field[@name='invoiced']" position="attributes">
+                         <attribute name="invisible">1</attribute>
+                    </xpath>
 
                     <!-- uf-1499
                     <xpath expr="/form/group//field[@name='invoiced']" position="attributes">
@@ -43,6 +46,10 @@
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='Extra Info']" position="replace">
                     </xpath>
                     <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//page[@string='History']" position="replace">
+                    </xpath>
+
+                    <xpath expr="/form/notebook//page[@string='Sales Order']//field[@name='order_line']/form/notebook//field[@name='product_uom']" position="attributes">
+                        <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
                     </xpath>
 
                     <xpath expr="/form/group/field[@name='client_order_ref']" position="attributes">
@@ -250,7 +257,7 @@
                       <page string="Order Line">
                          <field name="product_id" colspan="4" on_change="requested_product_id_change(product_id, comment)" />
                          <field name="product_uom_qty" />
-                         <field name="product_uom" on_change="onchange_uom(product_id, product_uom)"/>
+                         <field name="product_uom" on_change="onchange_uom(product_id, product_uom, product_uom_qty)"/>
                          <field name="price_unit" invisible="1"/>
                          <field name="currency_id" />
                          <field name="date_planned" />
