@@ -10,7 +10,9 @@
             <field name="arch" type="xml">
                 <form string="Stock card parameters">
                     <separator colspan="4" string="Location" />
-                    <field name="location_id" domain="[('usage', '!=', 'view')]" />
+                    <field name="location_id" domain="[('usage', '!=', 'view')]" 
+                           attrs="{'readonly': [('all_inout', '=', True)], 'required': [('all_inout', '=', False)]}" />
+                    <field name="all_inout" />
                     <separator colspan="4" string="Product" />
                     <field name="product_id" 
                            on_change="onchange_product_id(product_id)" />
@@ -42,7 +44,10 @@
                     <field name="location_id" readonly="1" />
                     <separator colspan="4" string="Product" />
                     <field name="product_id" readonly="1" />
-                    <newline />
+                    <group colspan="2" col="3">
+                        <field name="available_stock" readonly="1" />
+                        <field name="uom_id" readonly="1" nolabel="1" />
+                    </group>
                     <field name="perishable" invisible="1" />
                     <field name="prodlot_id" attrs="{'invisible': [('perishable', '=', False)]}" readonly="1" />
                     <separator colspan="4" string="Period" />
@@ -57,7 +62,7 @@
                             <field name="qty_in" />
                             <field name="qty_out" />
                             <field name="balance" />
-                            <field name="location_id" />
+                            <field name="src_dest" />
                             <field name="notes" />
                         </tree>
                     </field>

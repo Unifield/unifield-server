@@ -240,7 +240,7 @@
                         <para style="ParaLines">[[ formatLang(l.balance) ]]</para>
                     </td>
                     <td>
-                        <para style="ParaLines">[[ l.location_id.name ]]</para>
+                        <para style="ParaLinesLeft">[[ l.src_dest ]]</para>
                     </td>
                     <td>
                         <para style="ParaLines">[[ l.notes ]]</para>

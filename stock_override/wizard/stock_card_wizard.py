@@ -29,10 +29,12 @@ class stock_card_wizard(osv.osv_memory):
     _description = 'Stock card'
 
     _columns = {
-        'location_id': fields.many2one('stock.location', string='Location', 
-                                       required=True),
+        'location_id': fields.many2one('stock.location', string='Location'),
+        'all_inout': fields.boolean(string='Show all IN/OUT'),
         'product_id': fields.many2one('product.product', string='Product', 
                                       required=True),
+        'uom_id': fields.related('product_id', 'uom_id', type='many2one',
+                                 relation='product.uom', string='UoM'),
         'perishable': fields.boolean(string='Perishable'),
         'prodlot_id': fields.many2one('stock.production.lot', 
                                       string='Batch number'),
@@ -97,12 +99,15 @@ class stock_card_wizard(osv.osv_memory):
             ids = [ids]
 
         card = self.browse(cr, uid, ids[0], context=context)
-        location_id = card.location_id.id
+        location_id = card.location_id and card.location_id.id or False
+        location_usage = ['customer', 'supplier', 'inventory']
+
+        if location_id:
+            context.update({'location': location_id,
+                            'compute_child': False,})
 
         # Set the context to compute stock qty at the start date
-        context.update({'location': location_id,
-                        'compute_child': False,
-                        'to_date': card.from_date})
+        context.update({'to_date': card.from_date})
 
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
         product = product_obj.browse(cr, uid, card.product_id.id, 
@@ -122,16 +127,27 @@ class stock_card_wizard(osv.osv_memory):
         if card.to_date:
             domain.append(('date', '<=', card.to_date))
         
-        domain.extend(['|', 
-                       ('location_id', '=', location_id),
-                       ('location_dest_id', '=', location_id)])
+        if location_id:
+            domain.extend(['|', 
+                           ('location_id', '=', location_id),
+                           ('location_dest_id', '=', location_id)])
+        else:
+            domain.extend(['|',
+                           ('location_id.usage', 'in', location_usage),
+                           ('location_dest_id.usage', 'in', location_usage)])
 
         # Create one line per stock move
         move_ids = move_obj.search(cr, uid, domain,order='date asc', 
                                                         context=context)
 
         for move in move_obj.browse(cr, uid, move_ids, context=context):
+            # If the move is from the same location as destination
             if move.location_dest_id.id == move.location_id.id:
+                continue
+
+            # If the move doesn't pass through stock
+            if move.location_dest_id.usage in location_usage and \
+                    move.location_id.usage in location_usage:
                 continue
 
             in_qty, out_qty = 0.00, 0.00
@@ -140,12 +156,22 @@ class stock_card_wizard(osv.osv_memory):
                                                 move.product_qty,
                                                 move.product_id.uom_id.id)
 
-            if move.location_dest_id.id == location_id:
-                in_qty = qty
-                move_location = move.location_id.id
-            elif move.location_id.id == location_id:
-                out_qty = qty
-                move_location = move.location_dest_id.id
+            if location_id:
+                if move.location_dest_id.id == location_id:
+                    in_qty = qty
+                    move_location = move.location_id.name
+                elif move.location_id.id == location_id:
+                    out_qty = qty
+                    move_location = move.location_dest_id.name
+            else:
+                if move.location_dest_id.usage not in location_usage:
+                    in_qty = qty
+                    move_location = move.location_id.name
+                elif move.location_id.usage not in location_usage:
+                    out_qty = qty
+                    move_location = move.location_dest_id.name
+                if move.picking_id and move.picking_id.partner_id:
+                    move_location = move.picking_id.partner_id.name
 
             initial_stock = initial_stock + in_qty - out_qty
 
@@ -157,7 +183,7 @@ class stock_card_wizard(osv.osv_memory):
                 'qty_in': in_qty,
                 'qty_out': out_qty,
                 'balance': initial_stock,
-                'location_id': move_location,
+                'src_dest': move_location,
                 'notes': move.picking_id and move.picking_id.note  or '',
             }
 
@@ -216,7 +242,8 @@ class stock_card_wizard_line(osv.osv_memory):
         'qty_in': fields.float(digits=(16,2), string='Qty IN'),
         'qty_out': fields.float(digits=(16,2), string='Qty OUT'),
         'balance': fields.float(digits=(16,2), string='Balance'),
-        'location_id': fields.many2one('stock.location', string='Source/Destination'),
+        'src_dest': fields.char(size=128, string='Source/Destination'),
+        'partner_id': fields.many2one('res.partner', string='Source/Destination'),
         'notes': fields.text(string='Notes'),
     }
 
