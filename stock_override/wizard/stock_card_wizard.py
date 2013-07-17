@@ -89,8 +89,9 @@ class stock_card_wizard(osv.osv_memory):
         '''
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
-        line_obj = self.pool.get('stock.card.wizard.line')
+        loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
+        line_obj = self.pool.get('stock.card.wizard.line')
 
         if not context:
             context = {}
@@ -100,11 +101,13 @@ class stock_card_wizard(osv.osv_memory):
 
         card = self.browse(cr, uid, ids[0], context=context)
         location_id = card.location_id and card.location_id.id or False
+        location_ids = loc_obj.search(cr, uid, 
+                                    [('location_id', 'child_of', location_id)],
+                                    context=context)
         location_usage = ['customer', 'supplier', 'inventory']
 
         if location_id:
-            context.update({'location': location_id,
-                            'compute_child': False,})
+            context.update({'location': location_id})
 
         # Set the context to compute stock qty at the start date
         context.update({'to_date': card.from_date})
@@ -129,8 +132,8 @@ class stock_card_wizard(osv.osv_memory):
         
         if location_id:
             domain.extend(['|', 
-                           ('location_id', '=', location_id),
-                           ('location_dest_id', '=', location_id)])
+                           ('location_id', 'child_of', location_id),
+                           ('location_dest_id', 'child_of', location_id)])
         else:
             domain.extend(['|',
                            ('location_id.usage', 'in', location_usage),
@@ -142,7 +145,8 @@ class stock_card_wizard(osv.osv_memory):
 
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             # If the move is from the same location as destination
-            if move.location_dest_id.id == move.location_id.id:
+            if move.location_dest_id.id in location_ids and \
+               move.location_id.id in location_ids:
                 continue
 
             # If the move doesn't pass through stock
@@ -156,11 +160,11 @@ class stock_card_wizard(osv.osv_memory):
                                                 move.product_qty,
                                                 move.product_id.uom_id.id)
 
-            if location_id:
-                if move.location_dest_id.id == location_id:
+            if location_ids:
+                if move.location_dest_id.id in location_ids:
                     in_qty = qty
                     move_location = move.location_id.name
-                elif move.location_id.id == location_id:
+                elif move.location_id.id in location_ids:
                     out_qty = qty
                     move_location = move.location_dest_id.name
             else:
