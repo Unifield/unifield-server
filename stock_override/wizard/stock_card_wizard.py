@@ -101,13 +101,14 @@ class stock_card_wizard(osv.osv_memory):
 
         card = self.browse(cr, uid, ids[0], context=context)
         location_id = card.location_id and card.location_id.id or False
-        location_ids = loc_obj.search(cr, uid, 
-                                    [('location_id', 'child_of', location_id)],
-                                    context=context)
+        location_ids = []
         location_usage = ['customer', 'supplier', 'inventory']
 
         if location_id:
             context.update({'location': location_id})
+            location_ids = loc_obj.search(cr, uid, 
+                                    [('location_id', 'child_of', location_id)],
+                                    context=context)
 
         # Set the context to compute stock qty at the start date
         context.update({'to_date': card.from_date})
