@@ -84,15 +84,14 @@
 ## ================================= we loop over the stock_card_wizard "objects" == stock_card_wizard======================================
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.location_id and o.location_id.name or 'Sheet1')|x}">
-<Table>
-	<Column ss:Width="106,4952"/>
-	<Column ss:Width="79,5096"/>
-	<Column ss:Width="162,8496"/>
-	<Column ss:Width="64,008"/>
-	<Column ss:Width="83,34"/>
-	<Column ss:Width="64,008"/>
-	<Column ss:Width="122,7096"/>
-	<Column ss:Width="64,008"/>
+<Table ss:ExpandedColumCount="8" x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="0" ss:Width="73.00" />
+<Column ss:AutoFitWidth="0" ss:Width="88.50" />
+<Column ss:AutoFitWidth="0" ss:Width="150.00" />
+<Column ss:AutoFitWidth="0" ss:Width="70.00" />
+<Column ss:AutoFitWidth="0" ss:Width="82.00" />
+<Column ss:Index="7" ss:AutoFitWidth="0" ss:Width="100.00" />
+<Column ss:AutoFitWidth="0" ss:Width="104.00" />
 
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="MainTitle" ss:MergeAcross="7" ><Data ss:Type="String">STOCK CARD</Data></Cell>
