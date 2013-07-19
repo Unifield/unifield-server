@@ -155,6 +155,9 @@ class stock_card_wizard(osv.osv_memory):
                     move.location_id.usage in location_usage:
                 continue
 
+            if move.product_qty == 0.00:
+                continue
+
             in_qty, out_qty = 0.00, 0.00
             move_location = False
             qty = uom_obj._compute_qty(cr, uid, move.product_uom.id,
