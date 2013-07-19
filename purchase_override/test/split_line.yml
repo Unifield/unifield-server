@@ -1,15 +1,10 @@
 -
   Tests of the splitting line wizard
 -
-  We create a new UoM category
--
-  !record {model: product.uom.categ, id: split_uom_categ}:
-    name: Split categ
--
   We create a new UoM
 -
   !record {model: product.uom, id: split_uom}:
-    category_id: split_uom_categ
+    category_id: product.product_uom_categ_unit
     name: Split
     factor: 1.0
     rounding: 0.01

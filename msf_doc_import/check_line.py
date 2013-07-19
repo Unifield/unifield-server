@@ -25,7 +25,7 @@ This module is dedicated to help checking lines of Excel file at importation.
 from msf_doc_import import MAX_LINES_NB
 from tools.translate import _
 import logging
-
+import pooler
 
 def get_xml(value):
     new_value = []
@@ -214,6 +214,7 @@ def compute_uom_value(cr, uid, **kwargs):
     row = kwargs['row']
     uom_obj = kwargs['uom_obj']
     product_obj = kwargs['product_obj']
+    pool_obj = pooler.get_pool(cr.dbname)
     default_code = kwargs['to_write']['default_code']
     error_list = kwargs['to_write']['error_list']
     uom_id = kwargs['to_write'].get('uom_id', False)
@@ -231,7 +232,7 @@ def compute_uom_value(cr, uid, **kwargs):
                     uom_id = uom_ids[0]
                     # check the uom category consistency
                     if default_code:
-                        if product_obj.browse(cr, uid, [default_code])[0].uom_id.category_id.id != uom_obj.browse(cr, uid, [uom_id])[0].category_id.id:
+                        if not pool_obj.get('uom.tools').check_uom(cr, uid, default_code, uom_id, context):
                             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
                             error_list.append(msg or _('The UOM imported was not in the same category than the UOM of the product so we took the UOM of the product instead.'))
             else:

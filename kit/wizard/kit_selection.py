@@ -365,7 +365,7 @@ class kit_selection_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # result
         result = {'value': {'qty_kit_selection_line': 0.0,
                             'uom_id_kit_selection_line': False,
@@ -377,6 +377,12 @@ class kit_selection_line(osv.osv_memory):
         result['value'].update({'price_unit_kit_selection_line': 'price_unit' in data['value'] and data['value']['price_unit'] or 0.0,
                                 'qty_kit_selection_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0,
                                 'uom_id_kit_selection_line': 'product_uom' in data['value'] and data['value']['product_uom'] or False})
+
+        uom_id = result.get('value', {}).get('uom_id_kit_selection_line')
+        qty = result.get('value', {}).get('qty_kit_selection_line')
+        if qty:
+            result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_kit_selection_line', result=result)
+
         # return result
         return result
     

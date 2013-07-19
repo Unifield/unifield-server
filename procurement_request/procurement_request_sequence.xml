@@ -13,6 +13,7 @@
             <field name="code">procurement.request</field>
             <field name="prefix">%(y)s/IR</field>
             <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
 
 	</data>

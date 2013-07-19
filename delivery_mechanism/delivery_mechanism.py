@@ -381,6 +381,8 @@ class stock_picking(osv.osv):
             new_qty = max(present_qty + diff_qty, 0)
             if new_qty > 0.00 and present_qty != 0.00:
                 new_move_id = move_obj.copy(cr, uid, out_move_id, {'product_qty' : diff_qty,
+                                                                   'product_uom': data_back['product_uom'],
+                                                                   'product_uos': data_back['product_uom'],
                                                                    'product_uos_qty': diff_qty,}, context=context)
                 move_obj.action_confirm(cr, uid, [new_move_id], context=context)
 #                if present_qty == 0.00:
@@ -388,6 +390,8 @@ class stock_picking(osv.osv):
 #                    move_obj.unlink(cr, uid, out_move_id, context=context)
             else:
                 move_obj.write(cr, uid, [out_move_id], {'product_qty' : new_qty,
+                                                        'product_uom': data['product_uom'][0],
+                                                        'product_uos': data['product_uom'][0],
                                                         'product_uos_qty': new_qty,}, context=context)
     
             # log the modification
@@ -466,6 +470,8 @@ class stock_picking(osv.osv):
                 force_complete = False
                 # initial qty
                 initial_qty = move.product_qty
+                # initial uom
+                initial_uom = move.product_uom.id
                 # corresponding out move
                 mirror_data = move_obj.get_mirror_move(cr, uid, [move.id], data_back, context=context)[move.id]
                 out_move_id = mirror_data['move_id']
@@ -490,9 +496,15 @@ class stock_picking(osv.osv):
                               'product_uos_qty': partial['product_qty'],
                               'prodlot_id': partial['prodlot_id'],
                               'product_uom': partial['product_uom'],
+                              'product_uos': partial['product_uom'],
                               'asset_id': partial['asset_id'],
                               'change_reason': partial['change_reason'],
                               }
+                    if 'product_price' in partial:
+                        values.update({'price_unit': partial['product_price']})
+                    elif 'product_uom' in partial and partial['product_uom'] != move.product_uom.id:
+                        new_price = self.pool.get('product.uom')._compute_price(cr, uid, move.product_uom.id, move.price_unit, partial['product_uom'])
+                        values.update({'price_unit': new_price})
                     values = self._do_incoming_shipment_first_hook(cr, uid, ids, context, values=values)
                     compute_average = pick.type == 'in' and product.cost_method == 'average' and not move.location_dest_id.cross_docking_location_ok
                     if values.get('location_dest_id'):
@@ -543,8 +555,8 @@ class stock_picking(osv.osv):
                                               'price_currency_id': product_currency}
                                         
                     # the quantity
+                    count = count + uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], initial_uom)
                     count_partial -= 1
-                    count = count + partial['product_qty']
                     if first:
                         first = False
                         # line number does not need to be updated
@@ -602,25 +614,25 @@ class stock_picking(osv.osv):
                         out_move = move_obj.browse(cr, uid, out_move.id, context=context)
                         count_out -= 1
                         
-                        
-                        if count_partial or partial_qty < out_move.product_qty:
+                        uom_partial_qty = self.pool.get('product.uom')._compute_qty(cr, uid, partial['product_uom'], partial_qty, out_move.product_uom.id)
+                        if count_partial or uom_partial_qty < out_move.product_qty:
                             # Split the out move
-                            new_move = move_obj.copy(cr, uid, out_move.id, dict(out_values, product_qty=partial_qty, in_out_updated=True), context=dict(context, keepLineNumber=True))
+                            new_move = move_obj.copy(cr, uid, out_move.id, dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'], in_out_updated=True), context=dict(context, keepLineNumber=True))
                             # Update the initial out move qty
-                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - partial_qty}, context=context)
+                            move_obj.write(cr, uid, [out_move.id], {'product_qty': out_move.product_qty - uom_partial_qty}, context=context)
                             backlinks.append((move.id, new_move))
                             partial_qty = 0.00
 #                            if not count_out:
 #                                backlinks.append((move.id, out_move.id))
-                        elif not count_out or partial_qty == out_move.product_qty:
+                        elif not count_out or uom_partial_qty == out_move.product_qty:
                             # Update the initial out move qty with the processed qty
-                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=partial_qty, in_out_updated=True), context=context)
+                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=partial_qty, product_uom=partial['product_uom'], in_out_updated=True), context=context)
                             backlinks.append((move.id, out_move.id))
                             processed_moves.append(out_move.id)
                             partial_qty = 0.00
                         else:
                             # Just update the data of the initial out move
-                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=out_move.product_qty, in_out_updated=True), context=context)
+                            move_obj.write(cr, uid, [out_move.id], dict(out_values, product_qty=out_move.product_qty, product_uom=partial['product_uom'], in_out_updated=True), context=context)
                             backlinks.append((move.id, out_move.id))
                             processed_moves.append(out_move.id)
                             partial_qty -= out_move.product_qty
