@@ -583,7 +583,7 @@ class stock_cost_reevaluation_line(osv.osv):
 stock_cost_reevaluation_line()
 
 class stock_move(osv.osv):
-    _inherit = 'osv.osv'
+    _inherit = 'stock.move'
 
     _columns = {
         'init_inv_ids': fields.many2many('initial.stock.inventory', 'initial_stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
