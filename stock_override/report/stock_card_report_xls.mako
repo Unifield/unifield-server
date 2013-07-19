@@ -159,7 +159,7 @@
     % for line in o.card_lines:
     <Row AutoFitHeight="1">
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.date_done or ''|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.picking_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.doc_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty_in or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty_out or '')|x}</Data></Cell>

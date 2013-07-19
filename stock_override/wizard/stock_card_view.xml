@@ -57,7 +57,7 @@
                     <field name="card_lines" readonly="1" colspan="4" nolabel="1" mode="tree">
                         <tree string="Lines" editable="top">
                             <field name="date_done" />
-                            <field name="picking_id" />
+                            <field name="doc_ref" />
                             <field name="origin" />
                             <field name="qty_in" />
                             <field name="qty_out" />

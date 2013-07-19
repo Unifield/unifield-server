@@ -823,6 +823,8 @@ class stock_move(osv.osv):
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
+        'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
+        'init_inv_ids': fields.many2many('initial.stock.inventory', 'initial_stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
     }
     
     _defaults = {

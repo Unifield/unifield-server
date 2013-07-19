@@ -180,11 +180,15 @@ class stock_card_wizard(osv.osv_memory):
 
             initial_stock = initial_stock + in_qty - out_qty
 
+            doc_ref = (move.picking_id and move.picking_id.name) or \
+                      (move.init_inv_ids and move.init_inv_ids[0].name) or \
+                      (move.inventory_ids and move.inventory_ids[0].name) or ''
+
             line_values = {
                 'card_id': ids[0],
                 'date_done': move.date,
-                'picking_id': move.picking_id and move.picking_id.id or False,
-                'origin': move.picking_id and move.picking_id.origin or '',
+                'doc_ref': doc_ref,
+                'origin': move.picking_id and move.picking_id.origin or False,
                 'qty_in': in_qty,
                 'qty_out': out_qty,
                 'balance': initial_stock,
@@ -242,7 +246,7 @@ class stock_card_wizard_line(osv.osv_memory):
         'card_id': fields.many2one('stock.card.wizard', string='Card',
                                    required=True),
         'date_done': fields.datetime(string='Date'),
-        'picking_id': fields.many2one('stock.picking', string='Doc. Ref.'),
+        'doc_ref': fields.char(size=64, string='Doc. Ref.'),
         'origin': fields.char(size=64, string='Origin'),
         'qty_in': fields.float(digits=(16,2), string='Qty IN'),
         'qty_out': fields.float(digits=(16,2), string='Qty OUT'),
