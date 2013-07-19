@@ -1397,7 +1397,7 @@ msgstr ""
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:65
 #, python-format
-msgid "Amount %s can't be greatest than 'Amount to pay': %s"
+msgid "Amount %s can't be greater than 'Amount to pay': %s"
 msgstr ""
 
 #. module: msf_audittrail

@@ -4501,7 +4501,7 @@ msgstr "Impactar pedido de terreno"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:66
 #, python-format
-msgid "Amount %s can't be greatest than 'Amount to pay': %s"
+msgid "Amount %s can't be greater than 'Amount to pay': %s"
 msgstr "El importe %s no puede ser mayor que \"La cantidad a pagar ': %s"
 
 #. module: financing_contract
