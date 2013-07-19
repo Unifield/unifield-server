@@ -370,9 +370,9 @@ class real_average_consumption(osv.osv):
         file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
         
         export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 
-                                                                        'file': file, 
+                                                                        'file': file,
                                                                         'filename': 'rac_%s.xls' % (rac.cons_location_id.name.replace(' ', '_')), 
-                                                                        'message': _('The RAC lines has been exported. Please click on Save As button to download the file')})
+                                                                        'message': _('The RAC lines has been exported. Please click on Save As button to download the file'),}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.export.rac',
@@ -380,6 +380,7 @@ class real_average_consumption(osv.osv):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'target': 'new',
+                'context': context,
                 }
 
     def fill_lines(self, cr, uid, ids, context=None):
