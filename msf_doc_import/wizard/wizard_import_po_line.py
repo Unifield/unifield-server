@@ -151,6 +151,15 @@ class wizard_import_po_line(osv.osv_memory):
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, obj_data=obj_data, cell_nb=header_index[_('UoM')], product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                    # Check round of qty according to UoM
+                    if qty_value['product_qty'] and uom_value['uom_id']:
+                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                        if round_qty.get('warning', {}).get('message'):
+                            to_write.update({'product_qty': round_qty['value']['product_qty']})
+                            warn_list = to_write['warning_list']
+                            warn_list.append(round_qty['warning']['message'])
+#                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     # Cell 4: Price
                     price_value = {}

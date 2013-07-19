@@ -162,6 +162,13 @@ class wizard_import_ir_line(osv.osv_memory):
                     uom_value = {}
                     uom_value = check_line.compute_uom_value(cr, uid, cell_nb=4, obj_data=obj_data, product_obj=product_obj, uom_obj=uom_obj, row=row, to_write=to_write, context=context)
                     to_write.update({'product_uom': uom_value['uom_id'], 'error_list': uom_value['error_list']})
+
+                    # Check rounding of qty according to UoM
+                    if qty_value['product_qty'] and uom_value['uom_id']:
+                        round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_value['uom_id'], qty_value['product_qty'], 'product_qty')
+                        if round_qty.get('warning', {}).get('message'):
+                            to_write.update({'product_uom_qty': round_qty['value']['product_qty']})
+                            message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
     
                     # Cell 5: Currency
                     curr_value = {}

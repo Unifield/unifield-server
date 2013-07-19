@@ -94,14 +94,34 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     raise osv.except_osv(_('Error'), _('The Procurement method should be filled !'))
                 elif wiz.po_cft != 'cft' and not wiz.supplier:
                     raise osv.except_osv(_('Error'), _('You should select a supplier !'))
-                
+
+            errors = {}
             for line in wiz.line_ids:
                 if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
-                    raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-
-                line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
-                                                    'po_cft': wiz.po_cft, 
-                                                    'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+                    err_msg = 'You cannot choose Direct Purchase Order as method to source Internal Request lines.'
+                    errors.setdefault(err_msg, [])
+                    errors[err_msg].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
+                else:
+                    try:
+                        line_obj.write(cr, uid, [line.id], {'type': wiz.type, 
+                                                            'po_cft': wiz.po_cft, 
+                                                            'supplier': wiz.supplier and wiz.supplier.id or False}, context=context)
+                    except osv.except_osv, e:
+                        errors.setdefault(e.value, [])
+                        errors[e.value].append((line.id, '%s of %s' % (line.line_number, line.sale_order_id.name)))
+                        
+            if errors:
+                error_msg = ''
+                for e in errors:
+                    if error_msg:
+                        error_msg += ' // '
+                    if len(errors[e]) > 1:
+                        error_msg += 'Lines %s ' % ', '.join(str(x[1]) for x in errors[e])
+                    else:
+                        error_msg += 'Line %s ' % ', '.join(str(x[1]) for x in errors[e])
+                    error_msg += ': %s' % e
+                raise osv.except_osv(_('Errors'), _('There are some errors on sourcing lines : %s') % error_msg)
+                
             
         return {'type': 'ir.actions.act_window_close'}
 

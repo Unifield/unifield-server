@@ -34,7 +34,7 @@
         	name="New catalogue"
         	res_model="supplier.catalogue"
         	src_model="res.partner"
-        	view_mode="form"
+        	view_mode="form,tree"
         	view_type="form"
         	key2="client_action_multi"
         	domain="[('partner_id', '=', active_id)]"

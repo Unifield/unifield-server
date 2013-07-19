@@ -33,6 +33,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Forecasts" editable="top" colors="blue:(date &lt; current_date) &amp; ((stock_situation &gt; 0) | (stock_situation == 0));red:stock_situation &lt; 0;">
+                    <field name="first" invisible="1"/>
                     <field name="date" />
                     <field name="doc" />
                     <field name="state" />
