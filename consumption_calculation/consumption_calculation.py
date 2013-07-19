@@ -35,6 +35,10 @@ from product._common import rounding
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 
+def _get_asset_mandatory(product):
+    return product.type == 'product' and product.subtype == 'asset'
+
+
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
     _description = 'Real Average Consumption'
@@ -424,7 +428,7 @@ class real_average_consumption(osv.osv):
                 if product.id not in products:
                     batch_mandatory = product.batch_management
                     date_mandatory = product.perishable
-                    asset_mandatory = product.type == 'product' and product.subtype == 'asset'
+                    asset_mandatory = _get_asset_mandatory(product)
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
                               'consumed_qty': 0.00,
@@ -521,7 +525,7 @@ class real_average_consumption_line(osv.osv):
             if out.product_id:
                 result[out.id]['batch_number_check'] = out.product_id.batch_management
                 result[out.id]['expiry_date_check'] = out.product_id.perishable
-                result[out.id]['asset_check'] = out.product_id.type == 'product' and out.product_id.subtype == 'asset'
+                result[out.id]['asset_check'] = _get_asset_mandatory(out.product_id)
             # the lines with to_correct_ok=True will be red
             if out.text_error:
                 result[out.id]['to_correct_ok'] = True
@@ -564,6 +568,7 @@ class real_average_consumption_line(osv.osv):
 
             batch_mandatory = obj.product_id.batch_management
             date_mandatory = obj.product_id.perishable
+            asset_mandatory = _get_asset_mandatory(obj.product_id)
         
             if batch_mandatory and obj.consumed_qty != 0.00:
                 if not obj.prodlot_id:
@@ -616,7 +621,7 @@ class real_average_consumption_line(osv.osv):
                     # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
                     prodlot_id = None
             #recursion: can't use write
-            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, prodlot_id, expiry_date, asset_id, obj.id))
+            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))
 
         return True
 
