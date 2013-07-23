@@ -114,7 +114,9 @@ class wkf_instance(osv.osv):
         def get_all_sd_ref(ids_per_model_dict):
             res = {}
             for model, ids in ids_per_model_dict.items():
-                res.update(self.pool.get(model).get_sd_ref(cr, 1, ids, context=context))
+                res.setdefault(model, {})
+                for i in ids:
+                    res[model][i] = self.pool.get(model).get_sd_ref(cr, 1, i, context=context)
             return res
                 
         if not context or not context.get('sync_update_creation'): #May replace by offline_synchronization
@@ -131,7 +133,7 @@ class wkf_instance(osv.osv):
             
             all_sd_ref = get_all_sd_ref(ids_per_model(vals))
             for val in vals:
-                val[self._res_id_field] = "sd." + all_sd_ref[val[self._res_id_field]]
+                val[self._res_id_field] = "sd." + all_sd_ref[val[self._res_model_field]][val[self._res_id_field]]
         
         return is_list and vals or vals[0]
     
