@@ -267,7 +267,7 @@ SELECT res_id, touched
                          '!',('module','in',['sd','__export__']),
                          '!','&',('module','=','base'),('name','=like','main_%')])))
             now = fields.datetime.now()
-            identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context).identifier
+            identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             for res_id in missing_ids:
                 name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
                 new_data_id = model_data_obj.create(cr, uid, {
