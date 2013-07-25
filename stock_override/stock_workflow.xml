@@ -60,9 +60,17 @@
             <field name="signal">button_done</field>
         </record>
 
+        <record id="act_return_cancel" model="workflow.activity">
+            <field name="wkf_id" ref="stock.wkf_picking"/>
+            <field name="name">return_cancel</field>
+            <field name="flow_stop">True</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'cancel'})</field>
+        </record>
+
         <record id="trans_shipped_return_cancel" model="workflow.transition">
             <field name="act_from" ref="act_shipped"/>
-            <field name="act_to" ref="stock.act_return_cancel"/>
+            <field name="act_to" ref="act_return_cancel"/>
             <field name="signal">return_cancel</field>
         </record>
 
