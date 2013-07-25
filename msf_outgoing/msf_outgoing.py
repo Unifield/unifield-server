@@ -1630,16 +1630,20 @@ class stock_picking(osv.osv):
         res = {}
 
         for pick in self.browse(cr, uid, ids, context=context):
-            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft' or not pick.move_lines:
+            if pick.type != 'out' or pick.subtype != 'picking' or pick.state != 'draft':
                 res[pick.id] = False
                 continue
 
             res[pick.id] = 'confirmed'
             available = False
             confirmed = False
+            processed = True
+            empty = len(pick.move_lines)
             for move in pick.move_lines:
                 if move.product_qty == 0.00:
                     continue
+
+                processed = False
 
                 if move.state != 'assigned':
                     confirmed = True
@@ -1655,6 +1659,10 @@ class stock_picking(osv.osv):
                 res[pick.id] = 'assigned'
             elif confirmed:
                 res[pick.id] = 'confirmed'
+            elif processed and empty:
+                res[pick.id] = 'processed'
+            elif empty == 0:
+                res[pick.id] = 'empty'
             else:
                 res[pick.id] = False
 
@@ -1689,8 +1697,11 @@ class stock_picking(osv.osv):
                 'line_state': fields.function(_get_lines_state, method=True, type='selection', 
                                     selection=[('confirmed', 'Not available'),
                                                ('assigned', 'Available'),
+                                               ('empty', 'Empty'),
+                                               ('processed', 'Processed'),
                                                ('mixed', 'Partially available')], string='Lines state', 
-                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10)}),
+                                    store={'stock.move': (_get_picking_ids, ['picking_id', 'state', 'product_qty'], 10),
+                                           'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['move_lines'], 10)}),
                 #'is_completed': fields.function(_vals_get, method=True, type='boolean', string='Completed Process', multi='get_vals',),
                 'pack_family_memory_ids': fields.one2many('pack.family.memory', 'draft_packing_id', string='Memory Families'),
                 'description_ppl': fields.char('Description', size=256 ),
@@ -1702,9 +1713,15 @@ class stock_picking(osv.osv):
                  'first_shipment_packing_id': False,
                  'warehouse_id': lambda obj, cr, uid, c: len(obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)) and obj.pool.get('stock.warehouse').search(cr, uid, [], context=c)[0] or False,
                  'converted_to_standard': False,
+                 'line_state': 'empty',
                  }
     #_order = 'origin desc, name asc'
     _order = 'name desc'
+
+    def create(self, cr, uid, vals, context=None):
+        if not 'move_lines' in vals:
+            vals['line_state'] = 'empty'
+        return super(stock_picking, self).create(cr, uid, vals, context=context)
 
     def onchange_move(self, cr, uid, ids, context=None):
         '''
