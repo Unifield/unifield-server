@@ -1084,6 +1084,7 @@ class shipment(osv.osv):
                 # trigger standard workflow
                 pick_obj.action_move(cr, uid, [packing.id])
                 wf_service.trg_validate(uid, 'stock.picking', packing.id, 'button_done', cr)
+                pick_obj._hook_create_sync_messages(cr, uid, packing.id, context) #UF-1617: Create the sync message for batch and asset before shipping
                 
                 # UF-1617: set the flag to this packing object to indicate that the SHIP has been done, for synchronisation purpose
                 cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' %packing.id)
