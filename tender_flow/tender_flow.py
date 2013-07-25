@@ -594,16 +594,32 @@ class tender_line(osv.osv):
     
     _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'),]
     
-    def on_product_change(self, cr, uid, id, product_id, context=None):
+    def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, context=None):
         '''
         product is changed, we update the UoM
         '''
         prod_obj = self.pool.get('product.product')
         result = {'value': {}}
         if product_id:
-            result['value']['product_uom'] = prod_obj.browse(cr, uid, product_id, context=context).uom_po_id.id
+            uom_id = prod_obj.browse(cr, uid, product_id, context=context).uom_id.id
+
+        result = self.onchange_uom_qty(cr, uid, id, uom_id, product_qty)
+        
+        if uom_id:
+            result['value']['product_uom'] = uom_id
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
+        '''
+        Check round of qty according to the UoM
+        '''
+        res = {}
+
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty', result=res)
+
+        return res
     
     def _get_total_price(self, cr, uid, ids, field_name, arg, context=None):
         '''

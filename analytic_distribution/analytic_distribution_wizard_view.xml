@@ -79,7 +79,7 @@
                     <field name="partner_type" invisible="1"/>
                     <field name="register_line_id" invisible="1"/>
                     <field name="register_line_state" invisible="1"/>
-                    <field name="account_id" attrs="{'invisible': ['|', ('register_line_id', '=', False), ('register_line_state', 'in', ['draft', 'hard'])]}" readonly="0" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]" required="[('register_line_state', '=', 'temp')]"/>
+                    <field name="account_id" attrs="{'invisible': ['|', ('register_line_id', '=', False), ('register_line_state', 'in', ['draft', 'hard'])], 'required': [('register_line_state', '=', 'temp')]}" readonly="0" domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"/>
                     <group colspan="2" col="3">
                         <field colspan="2" name="entry_mode" readonly="1"/>
                         <button name="dummy" type="object" string="Switch entry mode" icon='gtk-jump-to' colspan="1" attrs="{'invisible': [('is_writable', '=', False)]}"/>

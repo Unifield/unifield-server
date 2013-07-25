@@ -21,16 +21,25 @@
 
 from osv import osv
 from osv import fields
-
+import pooler
 from tools.translate import _
+import threading
 
 
 class lang_setup(osv.osv_memory):
     _name = 'lang.setup'
     _inherit = 'res.config'
     
+    def _list_lang(self, cr, uid, context=None):
+        lang_obj = self.pool.get('res.lang')
+        lang_ids = lang_obj.search(cr, uid, [('code', 'like', '_MF')])
+        res = []
+        for lg in lang_obj.read(cr, uid, lang_ids, ['name']):
+            res.append((lg['id'], lg['name']))
+        return res
+
     _columns = {
-        'lang_id': fields.many2one('res.lang', string='Language', required=True),
+        'lang_id': fields.selection(_list_lang, string='Language', size=-1, required=True),
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -44,7 +53,10 @@ class lang_setup(osv.osv_memory):
         if lang_ids:
             res['lang_id'] = lang_ids[0]
         else:
-            res['lang_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'lang_en')[1]
+            try:
+                res['lang_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'lang_msf_en')[1]
+            except ValueError:
+                res = False
         
         return res
         
@@ -55,17 +67,27 @@ class lang_setup(osv.osv_memory):
         '''
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
-        
+
+        lang_obj = self.pool.get('res.lang')
+        lang = lang_obj.read(cr, uid, payload.lang_id, ['code', 'translatable'])
+        lang_obj.write(cr, uid, [payload.lang_id], {'translatable': True})
+        self.set_lang(cr, uid, lang['code'], context=context)
+
+        count_term = self.pool.get('ir.translation').search(cr, uid, [('lang', '=', lang['code'])], limit=1)
+        if not lang['translatable'] or not count_term:
+            thread = threading.Thread(target=lang_obj._install_new_lang_bg, args=(cr.dbname, uid, lang['id'], lang['code'], context))
+            thread.start()
+
+
+    def set_lang(self, cr, uid, code, context=None):
         setup_obj = self.pool.get('unifield.setup.configuration')
-        user_obj = self.pool.get('res.users')
-        
         setup_id = setup_obj.get_config(cr, uid)
-            
-        if payload.lang_id:
-            user_obj.write(cr, uid, uid, {'context_lang': payload.lang_id.code}, context=context)
-    
-        setup_obj.write(cr, uid, [setup_id.id], {'lang_id': payload.lang_id.code}, context=context)
-        
+        setup_obj.write(cr, uid, [setup_id.id], {'lang_id': code}, context=context)
+        self.pool.get('res.users').write(cr, uid, uid, {'context_lang': code}, context=context)
+        values_obj = self.pool.get('ir.values')
+        values_obj.set(cr, uid, 'default', False, 'lang', ['res.partner'], code)
+
+
 lang_setup()
 
 

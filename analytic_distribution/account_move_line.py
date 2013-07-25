@@ -361,5 +361,31 @@ class account_move_line(osv.osv):
                 self.write(cr, uid, [res], {'analytic_distribution_id': new_distrib_id}, context=context)
         return res
 
+    def get_analytic_move_lines(self, cr, uid, ids, context=None):
+        """
+        Return all analytic lines attached to move lines
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if 'active_ids' in context:
+            ids = context.get('active_ids')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Search valid ids
+        domain = [('move_id', 'in', ids)]
+        context.update({'display_fp': True})
+        return {
+            'name': _('Journal Entries'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.analytic.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
+
 account_move_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

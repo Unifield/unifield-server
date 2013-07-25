@@ -27,11 +27,11 @@
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
-                                    <field name="product_id" on_change="on_product_change(product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" 
-                                    domain="[('purchase_type', '=', parent.categ)]" />
+                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" />
                                     <field name="comment" />
-                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                                        on_change="onchange_uom_qty(product_uom, qty)" />
+                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="supplier_id" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
