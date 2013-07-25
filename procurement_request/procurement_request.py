@@ -89,7 +89,7 @@ class procurement_request(osv.osv):
     
     _columns = {
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-        domain=[('usage', '=', 'internal'), ('location_category', '!=', 'transition')], help='You can only select an internal location'),
+        domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
