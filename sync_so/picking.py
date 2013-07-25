@@ -54,16 +54,10 @@ class stock_picking(osv.osv):
             raise Exception, "The corresponding product does not exist here. Product name: %s"%product_name
         product_id = product_ids[0]
         
-        # asset form
+        #UF-1617: asset form
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']: 
             asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
-        
-        product_name = data['product_id']['name']
-        product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
-        if not product_ids:
-            raise Exception, "The corresponding product does not exist here. Product name: %s"%product_name
-        product_id = product_ids[0]
         
         # uom
         uom_name = data['product_uom']['name']
@@ -72,13 +66,12 @@ class stock_picking(osv.osv):
             raise Exception, "The corresponding uom does not exist here. Uom name: %s"%uom_name
         uom_id = uom_ids[0]
         
-        batch_ids = False
-        so_po_common = self.pool.get('so.po.common')
+        #UF-1617: Handle batch and asset object
+        batch_id = False
         if data['prodlot_id']:
-            batch_ids = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=', data['prodlot_id'])], context=context)
-            if not batch_ids:
+            batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
+            if not batch_id:
                 raise Exception, "Batch Number %s not found for this sync data record" %data['prodlot_id']
-            batch_ids = batch_ids[0]
         
         expired_date = data['expired_date']
 
@@ -90,7 +83,7 @@ class stock_picking(osv.osv):
                   'date': data['date'],
                   'date_expected': data['date_expected'],
 
-                  'prodlot_id': batch_ids,
+                  'prodlot_id': batch_id,
                   'expired_date': expired_date,
 
                   'asset_id': asset_id,
@@ -224,10 +217,10 @@ class stock_picking(osv.osv):
             
         return res_id
 
-    def ship_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
+    def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
         if context is None:
             context = {}
-        print "call update In in PO from Out in FO", source
+        print "call update partial shipped from supplier to IN in PO", source
         
         pick_dict = out_info.to_dict()
         
@@ -244,66 +237,65 @@ class stock_picking(osv.osv):
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id(cr, uid, po_name, context)
+        in_id = so_po_common.get_in_id(cr, uid, po_id, po_name, context)
         
         if in_id:
-            # update header
-            header_result = {}
-            # get the original note
-            orig_note = self.read(cr, uid, in_id, ['note'], context=context)['note']
-            if orig_note and pick_dict['note']:
-                header_result['note'] = orig_note + '\n' + str(source) + ':' + pick_dict['note']
-            elif orig_note:
-                header_result['note'] = orig_note
-            elif pick_dict['note']:
-                header_result['note'] = str(source) + ':' + pick_dict['note']
-            else:
-                header_result['note'] = False
+            ori_in = self.browse(cr, uid, [in_id], context=context)[0]
+            move_lines = []
+#            for line in pack_data:
+#                line_data = pack_data[line]
+#                values = line_data['data'][0]
+#                move_lines.append((0, 0, values))
             
-            header_result['min_date'] = pick_dict['min_date']
-            res_id = self.write(cr, uid, [in_id], header_result, context=context)
+            shipment = pick_dict.get('shipment_id', False)
+            shipment_ref = False
+            if shipment:
+                shipment_ref = source + "." + shipment['name']
+                
+            sequence_obj = self.pool.get('ir.sequence')
+            new_picking = self.copy(cr, uid, in_id,
+                    {
+                        'name': sequence_obj.get(cr, uid, 'stock.picking.in'), # for now, just use the standard IN sequence!
+                        'state':'draft',
+                        'already_shipped': True,
+                        'shipment_ref': shipment_ref,
+                    })
+            if not new_picking:
+                return False
+
+            self.write(cr, uid, in_id, {'backorder_id': new_picking}, context)
             
-            # update lines
             for line in pack_data:
                 line_data = pack_data[line]
                 # get the corresponding picking line ids
-                move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', line)], context=context)
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_picking), ('line_number', '=', line)], context=context)
+                ori_move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', line)], context=context)
+                
                 if not move_ids:
                     # no stock moves with the corresponding line_number in the picking, could have already been processed
                     continue
                 # we check that all stock moves for a given line number have not been processed yet at IN side
-                moves_data = move_obj.read(cr, uid, move_ids, ['processed_stock_move'], context=context)
-                if not all([not move_data['processed_stock_move'] for move_data in moves_data]):
-                    # some lines have already been processed
-                    continue
-                # we check that all stock moves for a given line number have not been processed yet at OUT side
-                
-                ################################################################3
-                # SP-135/UF-1617: TO BE CHECKed why it stops the update of the IN lines
-                # So just remove it and perform tests to see the result
-                ################################################################3
-#                if line_data['out_processed']:
-#                    continue
-                
-                completed_ids = []
-                # we loop through the lines from OUT, updating if lines exists, or creating copies
+            
                 for data in line_data['data']:
-                    # store the move id which will be modified
-                    move_id = False
-                    if move_ids:
-                        # search orders by default by id, we therefore take the smallest id first
-                        move_id = move_ids.pop(0)
-                        # update existing line and drop from list
-                        move_obj.write(cr, uid, [move_id], data, context=context)
-                    else:
-                        # copy the first one used
-                        move_id = move_obj.copy(cr, uid, completed_ids[0], dict(data, state='confirmed'), context=context)
-                    # save the used id
-                    completed_ids.append(move_id)
+                    new_move = move_obj.browse(cr, uid, move_ids, context=context)[0]
+                    ori_move = move_obj.browse(cr, uid, ori_move_ids, context=context)[0]
+
+                    # search orders by default by id, we therefore take the smallest id first
+                    move_id = move_ids.pop(0)
+                    new_qty = data['product_qty']
+                    move_obj.write(cr, uid, move_id, data, context=context)
                     
-        return res_id
-
-
+                    ori_qty = ori_move.product_qty - new_qty
+                    if ori_qty < 0: # for the case there was an partial process at project that makes the value negative, set it to become 0
+                        ori_qty = 0
+                        
+                    # adapt the value of qty into the original IN, to reduce the value in the new Shipped IN
+                    move_obj.write(cr, uid, ori_move_ids, {'product_qty': ori_qty, 'product_uos_qty': ori_qty}, context=context)
+                    
+            
+            netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', new_picking, 'button_shipped', cr)
+            
+        return new_picking
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -318,9 +310,8 @@ class stock_picking(osv.osv):
         so_ref = source + "." + pick_dict['origin']
         po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
         if po_id:
-            po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-            in_id = so_po_common.get_in_id(cr, uid, po_name, context)
+            in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
             if in_id:
                 # Cancel the IN object
                 wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
@@ -345,6 +336,10 @@ class stock_picking(osv.osv):
             rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
             if rec_id:
                 batch_dict['product_id'] = rec_id
+
+            if batch_dict['instance_id'] and batch_dict['instance_id']['id']: 
+                rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(batch_dict['instance_id']['id']), context=context)
+                batch_dict['instance_id'] = rec_id
 
         return batch_obj.create(cr, uid, batch_dict, context=context)
 

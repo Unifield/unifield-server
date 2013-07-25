@@ -434,3 +434,13 @@ class product_asset(osv.osv):
         return get_valid_xml_name('product_asset', (asset.instance_id.code or 'noinstance'), (asset.name or 'noname'))
     
 product_asset()
+
+class batch_number(osv.osv):
+    _inherit = "stock.production.lot"
+    
+    #UF-1617: unique xml id for batch number with instance id
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        batch = self.browse(cr, uid, res_id)
+        return get_valid_xml_name('batch_numer', (batch.instance_id.code or 'noinstance'), (batch.name or 'noname'))
+    
+batch_number()

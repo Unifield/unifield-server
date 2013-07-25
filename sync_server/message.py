@@ -70,7 +70,9 @@ class message(osv.osv):
             if not destination:
                 sync_log(self, 'destination %s does not exist' % data['dest'])
                 continue
-            ids = self.search(cr, uid, [('identifier', '=', data['id'])], context=context)
+            
+            #SP-135/UF-1617: Message unique key is from identifier PLUS destination: sending the same batch number and asset to different destinations
+            ids = self.search(cr, uid, [('identifier', '=', data['id']), ('destination', '=', data['dest'])], context=context)
             if ids: 
                 sync_log(self, 'Message %s already in the server database' % data['id'])
                 #SP-135/UF-1617: Overwrite the message and set the sent to False
