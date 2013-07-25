@@ -45,6 +45,39 @@ class stock_production_lot(osv.osv):
         return calc_date
     # @@@end
 
+    # UF-1617: Handle the instance in the batch number object
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        default.update({
+            'instance_id': False,
+        })
+        return super(stock_production_lot, self).copy(cr, uid, id, default, context=context)
+    
+    # UF-1617: Handle the instance in the batch number object
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        '''
+        do not copy asset events
+        '''
+        if not default:
+            default = {}
+        default.update({
+            'instance_id': False,
+        })
+        return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
+
+    # UF-1617: Handle the instance in the batch number object
+    def create(self, cr, uid, vals, context=None):
+        '''
+        override create method to set the instance id to the current instance if it has not been provided
+        '''
+        if 'instance_id' not in vals or not vals['instance_id']:
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            if company and company.instance_id:
+                vals['instance_id'] = company.instance_id.id
+
+        return super(stock_production_lot, self).create(cr, uid, vals, context)
+
     _columns = {
         # renamed from End of Life Date
         'life_date': fields.date('Expiry Date',
@@ -54,7 +87,10 @@ class stock_production_lot(osv.osv):
         'removal_date': fields.date('Removal Date',
             help='The date on which the lot should be removed.'),
         'alert_date': fields.date('Alert Date', help="The date on which an alert should be notified about the production lot."),
-        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False), # UF-1617: added this field, only used for the sync module
+
+        # UF-1617: field only used for sync purpose
+        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
+        'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
     }
 
     _defaults = {
@@ -63,5 +99,8 @@ class stock_production_lot(osv.osv):
         'removal_date': _get_date('removal_time'),
         'alert_date': _get_date('alert_time'),
     }
+    
+    _sql_constraints = [('name_uniq', 'unique(name, instance_id)', 'Batch name must be unique per instance!'),]
+    
 stock_production_lot()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

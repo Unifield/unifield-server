@@ -116,8 +116,9 @@ class product_asset(osv.osv):
             productId = vals['product_id']
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId))
-            
-        if not vals['instance_id']:
+        
+        # UF-1617: set the current instance into the new object if it has not been sent from the sync   
+        if 'instance_id' not in vals or not vals['instance_id']:
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id:
                 vals['instance_id'] = company.instance_id.id

@@ -207,7 +207,8 @@
             		</field>
             		
             		<field name="name" position="replace">
-            			<field name="name" colspan="4" attrs="{'readonly': [('type', '=', 'internal')]}" />
+            			<field name="name" colspan="2" attrs="{'readonly': [('type', '=', 'internal')]}" />
+	          			<field name="instance_id" colspan="2" />
             		</field>
             		
             		<field name="date" position="replace">
