@@ -129,7 +129,7 @@ class wkf_instance(osv.osv):
             
         if fields and self._res_id_field in fields:
             assert (self._res_model_field in fields), \
-                "When reading %s in object %s to during synchronization export, be sure to include field %s" % (self._res_id_field, self._name, self._res_model_field)
+                "When reading %s in object %s during synchronization export, be sure to include field %s" % (self._res_id_field, self._name, self._res_model_field)
             
             all_sd_ref = get_all_sd_ref(ids_per_model(vals))
             for val in vals:
