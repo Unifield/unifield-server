@@ -89,11 +89,11 @@
                     				<field name="state" />
                     				<field name="lot_check" />
 	                   				<field name="exp_check" />
-	                   				<field name="hidden_perishable_mandatory" invisible="False" />
-	                   				<field name="hidden_exp_check" invisible="False" />
-                    				<field name="hidden_state" invisible="False" />
-                    				<field name="hidden_prodlot_id" invisible="False" />
-                    				<field name="hidden_creation_state" invisible="False" />
+	                   				<field name="hidden_perishable_mandatory" invisible="True" />
+	                   				<field name="hidden_exp_check" invisible="True" />
+                    				<field name="hidden_state" invisible="True" />
+                    				<field name="hidden_prodlot_id" invisible="True" />
+                    				<field name="hidden_creation_state" invisible="True" />
                     				<field name="hidden_creation_qty_stock_move" invisible="True" />
                     				<button name="split_stock_move" type="object" string="Split Move" icon="terp-stock_effects-object-colorize" attrs="{'invisible': [('hidden_state', 'not in', ['confirmed'])]}" />
                     				<button name="force_assign" type="object" string="Force Availability" icon="gtk-jump-to" attrs="{'invisible': [('hidden_state', '!=', 'confirmed')]}" />
