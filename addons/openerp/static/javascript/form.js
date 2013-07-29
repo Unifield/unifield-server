@@ -187,11 +187,12 @@ function error_display(msg) {
                     jQuery("<tr>").append(
                         jQuery("<td>", {'colspan': 2, align: 'right'}).append(
                             jQuery("<a>", {'class': 'button-a', 'href': 'javascript: void(0)'})
-                            .click(function(){jQuery.fancybox.close();})
+                            //.click(function(){jQuery.fancybox.close();})
+                            .click(function(){window.top.jQuery.fancybox.close();})
                             .text('OK')
                         )
                 ));
-    jQuery.fancybox(error, {scrolling: 'no'});
+    window.top.jQuery.fancybox(error, {scrolling: 'no'});
 }
 
 
@@ -645,6 +646,7 @@ function onChange(caller){
                         fld.value = value[0] || '';
                         try {
                             openobject.dom.get(prefix + k + '_text').value = value[1] || '';
+                            fld._m2o.change_icon();
                         }
                         catch (e) {
                         }
@@ -786,7 +788,7 @@ function eval_domain_context_request(options){
     }
 
     var parent_context = openobject.dom.get(prefix.concat('_terp_context').join('/'));
-    var search_domain = openobject.dom.get(prefix.concat('_terp_domain').join('/'));
+    var search_domain = openobject.dom.get(prefix.concat('_terp_search_domain').join('/'));
     if (search_domain) {
         params['_terp_search_domain'] = search_domain.value;
     }

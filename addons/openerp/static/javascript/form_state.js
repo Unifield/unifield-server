@@ -55,6 +55,40 @@ function form_hookStateChange() {
     }
 }
 
+function list_hookStateChange(list_name) {
+    var fields = {};
+    var list_fields_with_states = [ 'table[id='+list_name+'_grid] input.[states]',
+				    'table[id='+list_name+'_grid] selection.[states]' ].join(', ');
+    jQuery(list_fields_with_states).each(function() {
+        var $this = jQuery(this);
+        var attrs = $this.attr('attrs') || '{}';
+        var widget = $this.attr('widget') || '';
+        var container = this;
+        var prefix = widget.slice(0, widget.lastIndexOf('/')+1) || '';
+
+        // convert states from Python serialization to JS/JSON
+        var states = eval(
+                '(' + $this.attr('states')
+                      .replace(/u'/g, "'")
+                      .replace(/True/g, '1')
+                      .replace(/False/g, '0') + ')');
+
+        var state = form_find_field_in_context(prefix, 'state', $this);
+        if (!state || !state.length) {
+            state = form_find_field_in_context(prefix, 'x_state', $this);
+        }
+
+        if (state && state.length) {
+            var $state = state.bind('onStateChange', MochiKit.Base.partial(form_onStateChange, container, this, states));
+            $state.change(function (){
+                jQuery(this).trigger('onStateChange');
+            });
+            state.trigger('onStateChange');
+        }
+
+    });
+}
+
 function form_onStateChange(container, widget, states, evt) {
     var src;
     if(evt.src)
@@ -143,9 +177,7 @@ function form_hookAttrChange() {
                     // events disconnected during hook_onStateChange,
                     // don't redisconnect or may break onStateChange
                     var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
-                    $field.change(function () {
-                        jQuery(this).trigger('onAttrChange');
-                    });
+                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
                 }
             });
         }
@@ -154,6 +186,53 @@ function form_hookAttrChange() {
     for(var field in fields) {
         jQuery(idSelector(field)).trigger('onAttrChange');
     }
+}
+
+function list_hookAttrChange(list_name) {
+    jQuery('table[id='+list_name+'_grid] [attrs]').each(function () {
+        var $this = jQuery(this);
+        var attrs = $this.attr('attrs') || '{}';
+        var widget = $this.attr('widget') || '';
+        var container = this;
+        var prefix = widget.slice(0, widget.lastIndexOf('/')+1) || '';
+
+        // Convert Python statement into it's equivalent in JavaScript.
+        attrs = attrs.replace(/\(/g, '[');
+        attrs = attrs.replace(/\)/g, ']');
+        attrs = attrs.replace(/True/g, '1');
+        attrs = attrs.replace(/False/g, '0');
+        attrs = attrs.replace(/\buid\b/g, window.USER_ID);
+
+        try {
+            attrs = eval('(' + attrs + ')');
+        } catch(e){
+            return;
+        }
+
+        var row_is_editable = $this.parents('tr.grid-row').is('.editors')
+        for (var attr in attrs) {
+            if (!row_is_editable && attr != 'invisible') {
+                // when row is not in editable mode we only care about invisible attributes
+                // as others attrs (readonly, required) won't have any effects.
+                continue;
+            }
+            if (attrs[attr] == '') {
+                return form_onAttrChange(container, widget, attr, attrs[attr], $this);
+            }
+            forEach(attrs[attr], function(n) {
+                if (typeof(n) == "number") { // {'invisible': [1]}
+                    return form_onAttrChange(container, widget, attr, n, $this);
+                }
+                var name = prefix + n[0];
+                var field = openobject.dom.get(name);
+                if (row_is_editable) {
+                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                }
+                return form_onAttrChange(container, widget, attr, attrs[attr], $this);
+            });
+        }
+    });
 }
 
 function form_onAttrChange(container, widgetName, attr, expr, elem) {
@@ -181,30 +260,56 @@ function form_onAttrChange(container, widgetName, attr, expr, elem) {
     }
 }
 
+function form_find_field_in_context(prefix, field, ref_elem) {
+    // try to find field in the context of reference element (ref_elem)
+    var elem = null;
+    if (ref_elem.parents('table.grid').length) {
+        var parent = ref_elem.parents('tr.grid-row');
+        elem = parent.find(idSelector(prefix + field));
+
+        if (!elem || !elem.length) {
+            var parent_selector = '[name='+prefix + field +']';
+            elem = parent.find(parent_selector);
+        }
+
+        if (!elem || !elem.length) {
+            // try getting with _terp_listfields/TABLE_ID/FIELD_NAME
+            var parent_table_id = ref_elem.parents('table.grid')[0].id;
+            if (parent_table_id && parent_table_id.match('_grid$')) {
+                parent_table_id = parent_table_id.slice(0, parent_table_id.length - 5);
+            }
+            if (parent_table_id == '_terp_list') {
+                // in case list name if '_terp_list' this means we're not inside a o2m/m2m fields,
+                // and we no need need to prefix with parent_table_id name
+                parent_table_id = ''
+            } else {
+                parent_table_id = parent_table_id + '/'
+            }
+            var parent_relative_fieldname = '[name=_terp_listfields/' + parent_table_id + prefix + field + ']';
+            elem = parent.find(parent_relative_fieldname);
+        }
+    }
+    if (!elem || !elem.length) {
+        elem = jQuery(idSelector(prefix + field));
+    }
+    return elem;
+}
+
 function form_evalExpr(prefix, expr, ref_elem) {
 
     var stack = [];
     for (var i = 0; i < expr.length; i++) {
 
         var ex = expr[i];
-        var elem = null;
-        if (ref_elem.parents('table.grid').length) {
-            var parent = ref_elem.parents('tr.grid-row');
-            elem = parent.find(idSelector(prefix + ex[0]));
-        }
-        if (!elem || !elem.length) {
-            elem = jQuery(idSelector(prefix + ex[0]));
-        }
-
+        var op = ex[1];
+        var elem = form_find_field_in_context(prefix, ex[0], ref_elem);
         if (ex.length==1) {
             stack.push(ex[0]);
             continue;
         }
-        
-        if (!elem || !elem.length)
-            continue;
-
-        var op = ex[1];
+        if (!elem || !elem.length) {
+            continue
+        }
         var val = ex[2];
 
         var elem_value;
@@ -395,9 +500,6 @@ function form_setVisible(container, field, visible) {
 
 jQuery(document).ready(function(){
     form_hookContextMenu();
-    form_hookStateChange();
-    form_hookAttrChange();
-}).ajaxStop(function () {
     form_hookStateChange();
     form_hookAttrChange();
 });

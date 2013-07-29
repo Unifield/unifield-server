@@ -82,6 +82,8 @@ function loadingError(url) {
                     console.warn("Failed to load ", xhr.url, ":", xhr.status, xhr.statusText);
                 }
         }
+        form_hookStateChange();
+        form_hookAttrChange();
     };
 }
 
@@ -159,6 +161,8 @@ function doLoadingSuccess(app, url) {
         if (val == 'False' || val == '') {
             initial_onchange_triggers();
         }
+        form_hookStateChange();
+        form_hookAttrChange();
     };
 }
 

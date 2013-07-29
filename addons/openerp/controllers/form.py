@@ -606,6 +606,7 @@ class Form(SecuredController):
 
         id = params.id
         ctx = params.context
+        ctx['from_button'] = True
         model = params.model
 
         proxy = rpc.RPCProxy(model)
@@ -950,6 +951,10 @@ class Form(SecuredController):
     @validate(form=get_validation_schema)
     def switch(self, **kw):
         params, data = TinyDict.split(kw)
+        if params['_terp_search_data'] and params['_terp_search_data'].get('filter_status',False):
+            for k, v in params.context.items():
+                if k.startswith('search_default') and k[15:] in params['_terp_search_data'].get('filter_status',False):
+                    del params.context[k]
         if params.get('_terp_save_current_id'):
             ctx = dict((params.context or {}), **rpc.session.context)
             if params.id:
