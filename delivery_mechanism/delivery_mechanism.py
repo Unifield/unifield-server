@@ -640,13 +640,22 @@ class stock_picking(osv.osv):
                             partial_qty -= out_move.product_qty
                             
                     
-                    if asset_id:
+                    if asset_id and pick.reason_type_id:
+                        order_type = pick.reason_type_id.name
+                        event_type = 'other' # if the OUT is manually created --> set type to 'other'
+                        if 'Supply' in order_type:
+                            event_type = 'reception'
+                        elif 'Donation' in order_type:
+                            event_type = 'reception_dep'
+                        elif order_type == 'Loan':
+                            event_type = 'loan'
+                        
                         # UF-993: generate an asset event when validating an IN        
                         asset_event_obj = self.pool.get('product.asset.event')
                         asset_event_values = {
                             'date': move.date, # actual delivery date
                             'location': pick.company_id.name,
-                            'event_type': 'reception', # always 'reception' for an IN
+                            'event_type': event_type,
                             'asset_id': asset_id,
                             }
                         asset_event_obj.create(cr, uid, asset_event_values, context=context)

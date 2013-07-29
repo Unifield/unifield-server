@@ -458,9 +458,17 @@ class stock_picking(osv.osv):
                             })
 
 
-            # UF-993: pass the order type as parameter for creating the asset event when validating the OUT        
-            if pick.sale_id and pick.origin:
-                partial_datas['order_type'] = pick.sale_id.order_type
+            # UF-993: pass the reason type as parameter for creating the asset event when validating the OUT
+            if pick.reason_type_id:        
+                reason_asset = pick.reason_type_id.name
+                partial_datas['reason_type_for_asset'] = reason_asset
+                
+                # UF-993: it's a bit tricky, as if the type is not Internal, Loan or Donation, 
+                # AND the partner type is External or ESC, then the event type is Shipment
+                if 'Donation' or 'Loan' or 'Internal' not in reason_asset:
+                    if pick.partner_id2.partner_type in ('external', 'esc'):
+                        partial_datas['reason_type_for_asset'] = 'External'
+                
             # and also location of the receiver of this OUT     
             partial_datas['location'] = pick.partner_id2.name     
             

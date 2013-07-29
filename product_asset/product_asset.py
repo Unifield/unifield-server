@@ -238,13 +238,15 @@ class product_asset_event(osv.osv):
                       ]
     
     eventTypeSelection = [('reception', 'Reception'),
+                          ('reception_dep', 'Reception (depreciated)'),
                           ('startUse', 'Start Use'),
                           ('repairing', 'Repairing'),
                           ('endUse', 'End Use'),
                           ('obsolete', 'Obsolete'),
-                          ('loaning', 'Loaning'),
-                          ('transfer', 'Transfer (internal)'),
-                          ('donation', 'Donation (external)'),
+                          ('loan', 'Loan'),
+                          ('transfer', 'Transfer'),
+                          ('shipment', 'Shipment'),
+                          ('donation', 'Donation'),
                           ('other', 'Other'),
                           ]
     
@@ -536,14 +538,17 @@ class stock_picking(osv.osv):
             # UF-993: generate an asset event when validating an OUT        
             asset_event_obj = self.pool.get('product.asset.event')
 
-            order_type = partial_datas.get('order_type', False)
+            order_type = partial_datas.get('reason_type_for_asset', False)
             event_type = 'other' # if the OUT is manually created --> set type to 'other'
-            if order_type == 'regular':
+            
+            if 'Internal' in order_type:
                 event_type = 'transfer'
-            elif order_type == 'donation_exp':
+            elif 'External' in order_type:
+                event_type = 'shipment'
+            elif 'Donation' in order_type:
                 event_type = 'donation'
-            elif order_type == 'loan':
-                event_type = 'loaning'
+            elif order_type == 'Loan':
+                event_type = 'loan'
             
             asset_event_values = {
                 'date': move.date, # date of actual delivery
