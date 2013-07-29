@@ -24,7 +24,7 @@ import time
 
 from tools.translate import _
 from dateutil.relativedelta import relativedelta
-from datetime import datetime
+import datetime
 
 import netsvc
 
@@ -557,10 +557,13 @@ class stock_picking(osv.osv):
                     # the quantity
                     count = count + uom_obj._compute_qty(cr, uid, partial['product_uom'], partial['product_qty'], initial_uom)
                     count_partial -= 1
+                    asset_id = partial['asset_id']
+                    
                     if first:
                         first = False
                         # line number does not need to be updated
                         # average computation - empty if not average
+                        
                         values.update(average_values)
                         
 #                        # if split happened, we update the corresponding OUT move
@@ -593,7 +596,6 @@ class stock_picking(osv.osv):
                         new_move = move_obj.copy(cr, uid, move.id, dict(values, processed_stock_move=True), context=dict(context, keepLineNumber=True))
                         done_moves.append(new_move)
                         
-                    
                     out_values = values.copy()
                     out_values.update({'state': 'confirmed'})
                     if out_values.get('location_dest_id', False):
@@ -637,6 +639,18 @@ class stock_picking(osv.osv):
                             processed_moves.append(out_move.id)
                             partial_qty -= out_move.product_qty
                             
+                    
+                    if asset_id:
+                        # UF-993: generate an asset event when validating an IN        
+                        asset_event_obj = self.pool.get('product.asset.event')
+                        asset_event_values = {
+                            'date': move.date, # actual delivery date
+                            'location': pick.company_id.name,
+                            'event_type': 'reception', # always 'reception' for an IN
+                            'asset_id': asset_id,
+                            }
+                        asset_event_obj.create(cr, uid, asset_event_values, context=context)
+                    
                 # decrement the initial move, cannot be less than zero
                 diff_qty = initial_qty - count
                 # the quantity after the process does not correspond to the incoming shipment quantity
