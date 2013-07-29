@@ -468,6 +468,8 @@ class stock_picking(osv.osv):
                 if 'Donation' or 'Loan' or 'Internal' not in reason_asset:
                     if pick.partner_id2.partner_type in ('external', 'esc'):
                         partial_datas['reason_type_for_asset'] = 'External'
+                    if 'inter' in pick.partner_id2.partner_type:
+                        partial_datas['reason_type_for_asset'] = 'Internal'
                 
             # and also location of the receiver of this OUT     
             partial_datas['location'] = pick.partner_id2.name     
