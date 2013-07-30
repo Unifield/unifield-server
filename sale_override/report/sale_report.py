@@ -141,19 +141,16 @@ class sale_report(osv.osv):
                     (
                     select l.id as id,
                         l.product_id as product_id,
-                        (case when u.uom_type not in ('reference') then
-                            (select name from product_uom where uom_type='reference' and category_id=u.category_id and active LIMIT 1)
-                        else
-                            u.name
-                        end) as uom_name,
-                        sum(l.product_uom_qty * u.factor) as product_uom_qty,
+                        u.name as uom_name,
+                        sum(l.product_uom_qty * u.factor * pu.factor) as product_uom_qty,
                         sum(l.product_uom_qty * l.price_unit) as price_total,
                         pt.categ_id, l.order_id
                     from
-                     sale_order_line l ,product_uom u, product_product p, product_template pt
+                     sale_order_line l ,product_uom u, product_product p, product_template pt, product_uom pu
                      where u.id = l.product_uom
                      and pt.id = p.product_tmpl_id
                      and p.id = l.product_id
+                     and pu.id = pt.uom_id
                       group by l.id, l.order_id, l.product_id, u.name, pt.categ_id, u.uom_type, u.category_id) el
                 where s.id = el.order_id
                 group by el.id,

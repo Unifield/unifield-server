@@ -133,17 +133,13 @@ class purchase_report(osv.osv):
                     s.order_type as order_type,
                     s.priority as priority,
                     s.categ as categ,
-                    (case when u.uom_type not in ('reference') then
-                            (select id from product_uom where uom_type='reference' and category_id = u.category_id and active LIMIT 1)
-                    else
-                        u.id
-                    end) as product_uom,
+                    t.uom_id as product_uom,
                     (case when cc.percentage is not null then
-                        sum(l.product_qty/u.factor*(cc.percentage/100.00))
+                        sum(l.product_qty*u.factor*pu.factor*(cc.percentage/100.00))
                     when ccp.percentage is not null then
-                        sum(l.product_qty/u.factor*(ccp.percentage/100.00))
+                        sum(l.product_qty*u.factor*pu.factor*(ccp.percentage/100.00))
                     else
-                        sum(l.product_qty/u.factor)
+                        sum(l.product_qty*u.factor*pu.factor)
                     end) as quantity,
                     extract(epoch from age(s.date_approve,s.date_order))/(24*60*60)::decimal(16,2) as delay,
                     extract(epoch from age(l.date_planned,s.date_order))/(24*60*60)::decimal(16,2) as delay_pass,
@@ -165,6 +161,7 @@ class purchase_report(osv.osv):
                     left join purchase_order_line l on (s.id=l.order_id)
                         left join product_product p on (l.product_id=p.id)
                             left join product_template t on (p.product_tmpl_id=t.id)
+                                left join product_uom pu on (t.uom_id = pu.id)
                     left join analytic_distribution pd on s.analytic_distribution_id = pd.id
                     left join cost_center_distribution_line ccp on ccp.distribution_id = pd.id
                     left join analytic_distribution d on l.analytic_distribution_id = d.id
@@ -191,6 +188,7 @@ class purchase_report(osv.osv):
                     s.date_approve,
                     l.date_planned,
                     l.product_uom,
+                    t.uom_id,
                     date_trunc('day',s.minimum_planned_date),
                     s.partner_address_id,
                     s.pricelist_id,

@@ -134,19 +134,19 @@ class report_stock_move(osv.osv):
                         1 as currency_id
                     FROM (SELECT
                         CASE WHEN sp.type in ('out') THEN
-                            sum(sm.product_qty * pu.factor)
+                            sum(sm.product_qty * pu.factor * u.factor)
                             ELSE 0.0
                             END AS out_qty,
                         CASE WHEN sp.type in ('in') THEN
-                            sum(sm.product_qty * pu.factor)
+                            sum(sm.product_qty * pu.factor * u.factor)
                             ELSE 0.0
                             END AS in_qty,
                         CASE WHEN sp.type in ('out') THEN
-                            sum(sm.product_qty * pu.factor) * pt.standard_price
+                            sum(sm.product_qty * pu.factor * u.factor) * pt.standard_price
                             ELSE 0.0
                             END AS out_value,
                         CASE WHEN sp.type in ('in') THEN
-                            sum(sm.product_qty * pu.factor) * pt.standard_price
+                            sum(sm.product_qty * pu.factor * u.factor) * pt.standard_price
                             ELSE 0.0
                             END AS in_value,
                         min(sm.id) as sm_id,
@@ -162,7 +162,7 @@ class report_stock_move(osv.osv):
                         sm.prodlot_id as prodlot_id,
                         sm.comment as comment,
                         sm.tracking_id as tracking_id,
-                        sum(sm.product_qty) as product_qty,
+                        sum(sm.product_qty * pu.factor * u.factor) as product_qty,
                         pt.nomen_manda_2 as categ_id,
                         sp.partner_id2 as partner_id,
                         sm.product_id as product_id,
@@ -180,6 +180,7 @@ class report_stock_move(osv.osv):
                         LEFT JOIN product_product pp ON (sm.product_id=pp.id)
                         LEFT JOIN product_uom pu ON (sm.product_uom=pu.id)
                         LEFT JOIN product_template pt ON (pp.product_tmpl_id=pt.id)
+                        LEFT JOIN product_uom u ON (pt.uom_id = u.id)
                         LEFT JOIN stock_location sl ON (sm.location_id = sl.id)
 
                     GROUP BY
