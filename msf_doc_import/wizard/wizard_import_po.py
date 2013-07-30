@@ -242,21 +242,16 @@ The columns should be in this values:
         delivery_confirmed_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if delivery_confirmed_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
-                delivery_confirmed_date = delivery_confirmed_date.strftime('%d-%m-%Y')
-                if delivery_confirmed_date != '30-12-1899':
+                delivery_confirmed_date = delivery_confirmed_date.strftime('%Y-%m-%d')
+                if delivery_confirmed_date != '1899-12-30':
                     to_write_po.update({'delivery_confirmed_date': delivery_confirmed_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
                     to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
-                try:
-                    delivery_confirmed_date = DateTime.strptime(delivery_confirmed_date,'%d/%m/%Y')
-                    to_write_po.update({'delivery_confirmed_date': str(delivery_confirmed_date)})
-                except ValueError, e:
-                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Details: %s.') % (delivery_confirmed_date, e))
-                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-            
+                    to_write_po['error_list'].append(_('"Delivery Confirmed Date (PO)" %s has a wrong format. Please format the cell in Excel as date.') % (delivery_confirmed_date, ))
+
         # Supplier Reference
         cell_nb = header_index.get('Supplier Reference', False)
         partner_ref = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -321,21 +316,16 @@ The columns should be in this values:
         arrival_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if arrival_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
-                arrival_date = arrival_date.strftime('%d-%m-%Y')
-                if arrival_date != '30-12-1899':
+                arrival_date = arrival_date.strftime('%Y-%m-%d')
+                if arrival_date != '1899-12-30':
                     to_write_po.update({'arrival_date': arrival_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
                     to_write_po['error_list'].append(_('"Arrival Date in the country" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
             else:
-                try:
-                    arrival_date = DateTime.strptime(arrival_date,'%d/%m/%Y')
-                    to_write_po.update({'arrival_date': str(arrival_date)})
-                except ValueError, e:
-                    to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Details: %s.') % (arrival_date, e))
-                    to_write_po.update({'error_list': to_write_po['error_list'], 'to_correct_ok': True})
-            
+                to_write_po['error_list'].append(_('"Arrival Date in the country" %s has a wrong format. Please format the cell in Excel as date.') % (arrival_date,))
+
         # Incoterm
         cell_nb = header_index.get('Incoterm', False)
         incoterm_name = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
@@ -465,25 +455,15 @@ The columns should be in this values:
         confirmed_delivery_date = cell_nb and row.cells and row.cells[cell_nb] and row.cells[cell_nb].data
         if confirmed_delivery_date:
             if row.cells[cell_nb].type in ('date', 'datetime'):
-                confirmed_delivery_date = confirmed_delivery_date.strftime('%d-%m-%Y')
-                if confirmed_delivery_date != '30-12-1899':
+                confirmed_delivery_date = confirmed_delivery_date.strftime('%Y-%m-%d')
+                if confirmed_delivery_date != '1899-12-30':
                     to_write.update({'confirmed_delivery_date': confirmed_delivery_date})
                 else:
                     #http://stackoverflow.com/questions/3963617/why-is-1899-12-30-the-zero-date-in-access-sql-server-instead-of-12-31
                     to_write['error_list'].append(_('"The Delivery Confirmed Date" has a wrong format and was reset to "30-12-1899" which is the default Excel date.'))
                     to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
             else:
-                try:
-                    confirmed_delivery_date = DateTime.strptime(confirmed_delivery_date,'%d/%m/%Y')
-                    to_write.update({'confirmed_delivery_date': str(confirmed_delivery_date)})
-                except ValueError, e:
-                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
-                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
-                except TypeError, e:
-                    if str(e) == 'expected string or buffer':
-                        e = _('expected a date with \'dd/mm/YYYY\' format')
-                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Details: %s.') % (confirmed_delivery_date, e))
-                    to_write.update({'error_list': to_write['error_list'], 'to_correct_ok': True})
+                    to_write['error_list'].append(_('"The Delivery Confirmed Date" %s has a wrong format. Please format the cell in Excel as date.') % (confirmed_delivery_date,))
 
         #  Comment
         cell_nb = header_index.get('Comment', False)

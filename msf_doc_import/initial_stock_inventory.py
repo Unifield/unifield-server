@@ -334,6 +334,9 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 hidden_batch_management_mandatory = False
                 hidden_perishable_mandatory = False
 
+            if product_uom and product_qty:
+                product_qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, product_uom, product_qty)
+
             to_write = {
                 'product_id': product_id,
                 'average_cost': product_cost,

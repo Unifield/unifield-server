@@ -169,6 +169,12 @@ class account_bank_statement_line_report_xls(SpreadsheetReport):
 
     def create(self, cr, uid, ids, data, context=None):
         ids = getIds(self, cr, uid, ids, context)
+        if 'output_currency_id' in data:
+            context.update({'output_currency_id': data.get('output_currency_id')})
+        else:
+            pool = pooler.get_pool(cr.dbname)
+            company_currency = pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+            context.update({'output_currency_id': company_currency})
         a = super(account_bank_statement_line_report_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 

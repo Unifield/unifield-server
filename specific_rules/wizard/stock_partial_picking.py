@@ -150,7 +150,7 @@ class stock_partial_picking(osv.osv_memory):
         move_memory = super(stock_partial_picking, self).__create_partial_picking_memory(move, pick_type)
         assert move_memory is not None
         
-        move_memory.update({'expiry_date': move.expired_date, 'quantity_ordered': move.product_qty, 'quantity': 0.0 })
+        move_memory.update({'expiry_date': move.expired_date, 'quantity_ordered': move.product_qty, 'quantity': 0.0, 'uom_ordered': move.product_uom.id })
         
         return move_memory
     

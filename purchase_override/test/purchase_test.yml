@@ -267,7 +267,7 @@
     categ: other
     name: other
     loan_duration: 6
-    partner_id: supplier1
+    partner_id: supplier2
     company_id: base.main_company
     date_order: !eval time.strftime('%Y-%m-%d')
     invoice_method: manual
