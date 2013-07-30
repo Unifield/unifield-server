@@ -1946,6 +1946,13 @@ class stock_picking(osv.osv):
         
         if context is None:
             context = {}
+
+        if context.get('sync_update_execution', False):
+            # UF-2066: in case the data comes from sync, some False value has been removed, but needed in some assert. 
+            # The following lines are to re-enter explicitly the values, even if they are already set to False
+            vals['backorder_id'] = vals.get('backorder_id', False)
+            vals['shipment_id'] = vals.get('shipment_id', False)
+
         # the action adds subtype in the context depending from which screen it is created
         if context.get('picking_screen', False) and not vals.get('name', False):
             pick_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
