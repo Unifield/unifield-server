@@ -275,11 +275,18 @@ class shipment(osv.osv):
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
                 'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
                 }
-    _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
-    
+   
+    def _get_sequence(self, cr, uid, context=None):
+        ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
+        return self.pool.get('ir.model.data').browse(cr, uid, ir_id).res_id
+       
+    _defaults = {
+        'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'sequence_id': _get_sequence,
+    } 
     
     _order = 'name desc'
-    
+     
     def create_shipment(self, cr, uid, ids, context=None):
         '''
         open the wizard to create (partial) shipment
