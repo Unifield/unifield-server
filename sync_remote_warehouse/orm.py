@@ -62,7 +62,7 @@ def usb_need_to_push(self, cr, uid, ids, context=None):
             WHERE module = 'sd' AND
                   model = %%s AND
                   res_id IN %%s AND
-                  (last_modification > '%(clone_date)s' OR sync_date > '%(clone_date)s') AND
+                  (last_modification > '%(clone_date)s' OR sync_date > '%(clone_date)s' OR (last_modification is null and sync_date is null)) AND
                   (usb_sync_date < last_modification OR usb_sync_date < sync_date OR usb_sync_date IS NULL)""" % {'clone_date' : clone_date},
         [self._name, tuple(ids)])
         
