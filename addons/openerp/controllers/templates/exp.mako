@@ -243,7 +243,7 @@
                                         <option value="default">${_('Default view fields')}</option>
                                     % endif
                                     % for export in existing_exports:
-                                        <option value="${export['id']}">${export['name']}</option>
+                                        <option value="${export['id']}" ${'selected=selected' if export_id == export['id'] else ''}>${export['name']}</option>
                                     % endfor
                                 </select>
                                 <a class="button-a" href="#" onclick="delete_listname(); return false;"
