@@ -35,10 +35,12 @@ class account_move_line_reconcile(osv.osv_memory):
         'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'), 
             ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
             required=True, readonly=True),
+        'different_currencies': fields.boolean('Is this reconciliation in different currencies? (2 at most)'),
     }
 
     _defaults = {
         'state': lambda *a: 'total',
+        'different_currencies': lambda *a: False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -52,6 +54,9 @@ class account_move_line_reconcile(osv.osv_memory):
         res = super(account_move_line_reconcile, self).default_get(cr, uid, fields, context=context)
         # Retrieve some value
         data = self.trans_rec_get(cr, uid, context['active_ids'], context=context)
+        # Get different currencies state
+        if 'different_currencies' in fields and 'different_currencies' in data:
+            res.update({'different_currencies': data['different_currencies']})
         # Update res with state value
         if 'state' in fields and 'state' in data:
             res.update({'state': data['state']})
@@ -135,12 +140,25 @@ class account_move_line_reconcile(osv.osv_memory):
         if transfer_with_change:
             # For transfer with change, we need to do a total reconciliation!
             state = 'total_change'
+        currency_id = False
+        currency2_id = False
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
             # prepare some values
             account_id = line.account_id.id
             # some verifications
             if not line.account_id.reconcile:
                 raise osv.except_osv(_('Warning'), _('This account is not reconciliable: %s') % (line.account_id.code,))
+            # Check that currency id is the same unless transfer with change cases
+            if not currency_id:
+                currency_id = line.currency_id and line.currency_id.id or False
+            if line.currency_id and line.currency_id.id != currency_id and not transfer_with_change:
+                if currency2_id:
+                    currency_data = self.pool.get('res.currency').read(cr, uid, [currency_id], ['name'])
+                    currency_name = 'None'
+                    if currency_data and currency_data[0]:
+                        currency_name = currency_data[0].get('name', 'None')
+                    raise osv.except_osv(_('Error'), _('Reconciliation is only allowed 2 currencies at most.'))
+                currency2_id = line.currency_id.id
             # verification that there's only one account for each line
             if not prev_acc_id:
                 prev_acc_id = account_id
@@ -168,9 +186,8 @@ class account_move_line_reconcile(osv.osv_memory):
                 count += 1
                 credit += line.credit_currency
                 debit += line.debit_currency
-                if transfer_with_change:
-                    fcredit += line.credit
-                    fdebit += line.debit
+                fcredit += line.credit
+                fdebit += line.debit
         # Adapt state value
         if (debit - credit) == 0.0:
             state = 'total'
@@ -179,13 +196,19 @@ class account_move_line_reconcile(osv.osv_memory):
             credit = fcredit
             if (fdebit - fcredit) == 0.0:
                 state = 'total_change'
+        # Currencies state
+        different_currencies = False
+        if currency_id and currency2_id and not transfer_with_change:
+            different_currencies = True
+            debit = fdebit
+            credit = fcredit
         # For salaries, behaviour is the same as total_change: we use functional debit/credit
-        if account_id == salary_account_id:
+        if account_id == salary_account_id or (currency_id and currency2_id and not transfer_with_change):
             if (fdebit - fcredit) == 0.0:
                 state = 'total'
             else:
                 state = 'partial'
-        return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state}
+        return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state, 'different_currencies': different_currencies}
 
     def total_reconcile(self, cr, uid, ids, context=None):
         """
