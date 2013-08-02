@@ -9,7 +9,7 @@ def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
     # state checks
     if 'usb_instance_type' in entity._columns.keys() and entity.usb_instance_type == 'remote_warehouse':
         sd_ref += "/RW"
-    print 'new SD ref %s: %s' % (self._table, sd_ref)
+    print '[%s] SD REF: %s, %s' % (cr.dbname, self._table, sd_ref)
     return sd_ref
     
 orm.orm.get_unique_xml_name = get_unique_xml_name
