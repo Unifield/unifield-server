@@ -1228,8 +1228,12 @@ class procurement_order(osv.osv):
         # Set the analytic distribution on PO line if an analytic distribution is on SO line or SO    
         sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         location_id = False
+        categ = False
         if sol_ids:
             sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
+            if sol.order_id:
+                categ = sol.order_id.categ
+
             if sol.analytic_distribution_id:
                 new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(cr, uid, 
                                                     sol.analytic_distribution_id.id, context=context)
@@ -1261,8 +1265,15 @@ class procurement_order(osv.osv):
             origin = ';'.join(o for o in list(origins) if o and (not po.origin or o == po.origin or o not in po.origin))
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'origin': origin}, context=dict(context, import_in_progress=True))
             
+            po_values = {}
+            if categ and po.categ != categ:
+                po_values.update({'categ': 'other'})
+
             if location_id:
-                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], {'location_id': location_id, 'cross_docking_ok': False}, context=dict(context, import_in_progress=True))
+                po_values.update({'location_id': location_id, 'cross_docking_ok': False})
+
+            if po_values:
+                self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], po_values, context=dict(context, import_in_progress=True))
             self.pool.get('purchase.order.line').create(cr, uid, line_values, context=context)
             return purchase_ids[0]
         else:
@@ -1281,6 +1292,8 @@ class procurement_order(osv.osv):
                 if warehouse_id:
                     input_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id[0], context=context).lot_input_id.id
                     values.update({'location_id': input_id,})
+            if categ:
+                values.update({'categ': categ})
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
             return purchase_id
     
