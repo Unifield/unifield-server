@@ -207,13 +207,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Local Expenses">
+                    <field name="cost_center_id"/>
                     <field name="fiscalyear_id"/>
-                    <field name="period_id"/>
+                    <field name="start_period_id"/>
+                    <field name="end_period_id"/>
                     <field name="breakdown"/>
                     <field name="granularity"/>
                     <field name="booking_currency_id"/>
                     <field name="output_currency_id"/>
-                    <field name="cost_center_id"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>
