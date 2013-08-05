@@ -58,7 +58,7 @@ class stock_picking(osv.osv):
         asset_id = False
         if data['asset_id'] and data['asset_id']['id']: 
             asset_id = self.pool.get('product.asset').find_sd_ref(cr, uid, xmlid_to_sdref(data['asset_id']['id']), context=context)
-        
+
         # uom
         uom_name = data['product_uom']['name']
         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
@@ -87,10 +87,10 @@ class stock_picking(osv.osv):
                   'expired_date': expired_date,
 
                   'asset_id': asset_id,
-
+                  'change_reason': data['change_reason'] or None,
                   'name': data['name'],
-                  'product_qty': data['product_qty'],
-                  'product_uos_qty': data['product_qty'],
+                  'product_qty': data['product_qty'] or 0.0,
+                  'product_uos_qty': data['product_qty'] or 0.0,
                   'note': data['note'],
                   }
         return result
@@ -113,6 +113,10 @@ class stock_picking(osv.osv):
         
 
     def out_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
+        #####        
+        ##### THIS METHOD IS CURRENTLY NOT USED! AS THE METHOD partial_shipped_fo_updates_in_po is doing the task
+        #####
+        
         '''
         method called when the OUT at coordo level updates the corresponding IN at project level
         
@@ -166,9 +170,14 @@ class stock_picking(osv.osv):
                 header_result['note'] = str(source) + ':' + pick_dict['note']
             else:
                 header_result['note'] = False
-            
+
             header_result['min_date'] = pick_dict['min_date']
             res_id = self.write(cr, uid, [in_id], header_result, context=context)
+            
+            state_done = False
+            if pick_dict['state'] == 'done':
+                state_done = True
+            all_done_flag = True # set False if existed a line not done
             
             # update lines
             for line in pack_data:
@@ -178,8 +187,18 @@ class stock_picking(osv.osv):
                 if not move_ids:
                     # no stock moves with the corresponding line_number in the picking, could have already been processed
                     continue
+                
+                # if state of the OUT is done, then check if a line of the IN is 0, close the line, and keep the flag all_done
+                # if some line is still not 0, meaning there is still products waiting to receive, then set the flag all_done to False
+                # then with this flag, we don't close the whole IN
+                
                 # we check that all stock moves for a given line number have not been processed yet at IN side
-                moves_data = move_obj.read(cr, uid, move_ids, ['processed_stock_move'], context=context)
+                moves_data = move_obj.read(cr, uid, move_ids, ['processed_stock_move', 'product_qty'], context=context)
+                
+                for move_data in moves_data:
+                    if move_data['product_qty'] != 0.0:
+                        all_done_flag = False
+
                 if not all([not move_data['processed_stock_move'] for move_data in moves_data]):
                     # some lines have already been processed
                     continue
@@ -215,12 +234,23 @@ class stock_picking(osv.osv):
             # we process a check availability on the incoming shipment so the lines copied will be available
             pick_tools.check_assign(cr, uid, [in_id], context=context)
             
+            # If the state of OUT/PICK is done, then close also this IN
+            
+            if all_done_flag:
+                netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', in_id, 'button_shipped', cr)
+                
         return res_id
 
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
+        '''
+        ' This sync method is used for updating the IN of Project side when the OUT/PICK at Coordo side became done.
+        ' In partial shipment/OUT, when the last shipment/OUT is made, the original IN will become Available Shipped, no new IN will
+        ' be created, as the whole quantiy of the IN is delivered (but not yet received at Project side)
+        '''
+        
         if context is None:
             context = {}
-        print "call update partial shipped from supplier to IN in PO", source
+        print "Call update partial Shipment/OUT from supplier to IN in PO", source
         
         pick_dict = out_info.to_dict()
         
@@ -240,62 +270,78 @@ class stock_picking(osv.osv):
         in_id = so_po_common.get_in_id(cr, uid, po_id, po_name, context)
         
         if in_id:
-            ori_in = self.browse(cr, uid, [in_id], context=context)[0]
-            move_lines = []
-#            for line in pack_data:
-#                line_data = pack_data[line]
-#                values = line_data['data'][0]
-#                move_lines.append((0, 0, values))
-            
-            shipment = pick_dict.get('shipment_id', False)
-            shipment_ref = False
-            if shipment:
-                shipment_ref = source + "." + shipment['name']
-                
-            sequence_obj = self.pool.get('ir.sequence')
-            new_picking = self.copy(cr, uid, in_id,
-                    {
-                        'name': sequence_obj.get(cr, uid, 'stock.picking.in'), # for now, just use the standard IN sequence!
-                        'state':'draft',
-                        'already_shipped': True,
-                        'shipment_ref': shipment_ref,
-                    })
-            if not new_picking:
-                return False
-
-            self.write(cr, uid, in_id, {'backorder_id': new_picking}, context)
-            
+            partial_datas = {}
+            partial_datas[in_id] = {}
+            line_numbers = {}
             for line in pack_data:
                 line_data = pack_data[line]
                 # get the corresponding picking line ids
-                move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_picking), ('line_number', '=', line)], context=context)
-                ori_move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', line)], context=context)
-                
-                if not move_ids:
-                    # no stock moves with the corresponding line_number in the picking, could have already been processed
-                    continue
-                # we check that all stock moves for a given line number have not been processed yet at IN side
-            
                 for data in line_data['data']:
-                    new_move = move_obj.browse(cr, uid, move_ids, context=context)[0]
-                    ori_move = move_obj.browse(cr, uid, ori_move_ids, context=context)[0]
+                    ln = data.get('line_number', False)
+                    
+                    if ln not in line_numbers.keys():
+                        move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))], context=context)
+                        if move_ids and move_ids[0]:
+                            line_numbers[ln] = move_ids[0]
+                    move_id = line_numbers[ln]
+                       
+                    partial_datas[in_id].setdefault(move_id, []).append(data)
+                    
+            # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
+            new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)            
 
-                    # search orders by default by id, we therefore take the smallest id first
-                    move_id = move_ids.pop(0)
-                    new_qty = data['product_qty']
-                    move_obj.write(cr, uid, move_id, data, context=context)
-                    
-                    ori_qty = ori_move.product_qty - new_qty
-                    if ori_qty < 0: # for the case there was an partial process at project that makes the value negative, set it to become 0
-                        ori_qty = 0
-                        
-                    # adapt the value of qty into the original IN, to reduce the value in the new Shipped IN
-                    move_obj.write(cr, uid, ori_move_ids, {'product_qty': ori_qty, 'product_uos_qty': ori_qty}, context=context)
-                    
+            # set the Shipment ID/OUT from the Coordo side to this IN 
+            shipment = pick_dict.get('shipment_id', False)
+            if shipment:
+                shipment_ref = source + "." + shipment['name'] # shipment made
+            else:
+                shipment_ref = source + "." +  pick_dict.get('name', False) # the case of OUT
+            self.write(cr, uid, new_picking, {'already_shipped': True, 'shipment_ref': shipment_ref}, context)
             
-            netsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', new_picking, 'button_shipped', cr)
+            # Set the backorder reference to the IN !!!! THIS NEEDS TO BE CHECKED WITH SUPPLY PM!
+            if new_picking != in_id:
+                self.write(cr, uid, in_id, {'backorder_id': new_picking}, context)
             
-        return new_picking
+        return True
+
+    def do_incoming_shipment_sync(self, cr, uid, in_id, partial_datas, context=None):
+        '''
+        ' Modify the original method do_incoming_shipment in delivery_mechanism/wizard/stock_partial_picking.py to perform similarly as a
+        ' partial incoming shipment for the sync case, as partial shipment/OUT has been made. 
+        '
+        ' The main idea here is to "rebuild" the value of "partial_datas" then call the method do_incoming_shipment of stock.picking
+        '''
+        # picking ids
+        move_obj = self.pool.get('stock.move')
+        prodlot_obj = self.pool.get('stock.production.lot')
+        
+        pick = self.browse(cr, uid, in_id, context=context)
+
+        # treated moves
+        move_ids = partial_datas[in_id].keys()
+        # all moves
+        all_move_ids = [move.id for move in pick.move_lines]
+        # these moves will be set to 0 - not present in the wizard - create partial objects with qty 0
+        missing_move_ids = [x for x in all_move_ids if x not in move_ids]
+        # missing moves (deleted memory moves) are replaced by a corresponding partial with qty 0
+        for missing_move in move_obj.browse(cr, uid, missing_move_ids, context=context):
+            values = {'name': move.product_id.partner_ref,
+                      'product_id': missing_move.product_id.id,
+                      'product_qty': 0,
+                      'product_uom': missing_move.product_uom.id,
+                      'prodlot_id': False,
+                      'asset_id': False,
+                      'force_complete': False,
+                      'change_reason': None,
+                      }
+            # average computation from original openerp
+            if (missing_move.product_id.cost_method == 'average') and not missing_move.location_dest_id.cross_docking_location_ok:
+                values.update({'product_price' : missing_move.product_id.standard_price,
+                               'product_currency': missing_move.product_id.company_id and missing_move.product_id.company_id.currency_id and missing_move.product_id.company_id.currency_id.id or False,
+                               })
+            partial_datas[in_id].setdefault(missing_move.id, []).append(values)
+        return self.do_incoming_shipment(cr, uid, [in_id], context=dict(context, partial_datas=partial_datas))
+
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         if not context:
