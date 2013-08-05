@@ -332,12 +332,14 @@ class product_product(osv.osv):
                 res.update({DateFrom(month.get('date_from')).strftime('%m-%Y'): {'digits': (16,2),
                                                                                  'selectable': True,
                                                                                  'type': 'float',
+                                                                                 'sortable': False,
                                                                                  'string': '%s' % DateFrom(month.get('date_from')).strftime('%m/%Y')}})
 
             if context.get('amc', False):
                 res.update({'average': {'digits': (16,2),
                                         'selectable': True,
                                         'type': 'float',
+                                        'sortable': False,
                                         'string': 'Av. %s' %context.get('amc')}})
 
         return res
