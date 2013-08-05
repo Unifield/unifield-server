@@ -90,7 +90,7 @@ class product_history_consumption(osv.osv_memory):
                     month_id = month_obj.create(cr, uid, {'name': current_date.strftime('%m/%Y'),
                                                           'date_from': current_date.strftime('%Y-%m-%d'),
                                                           'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
-                                                          'history_id': ids[0]})
+                                                          'history_id': ids[0]}, context=context)
                     res['value']['month_ids'].append(month_id)
                 else:
                     res['value']['month_ids'].extend(search_ids)
@@ -230,6 +230,41 @@ class product_product(osv.osv):
     _name = 'product.product'
     _inherit = 'product.product'
 
+    def export_data(self, cr, uid, ids, fields_to_export, context=None):
+        if not context:
+            context = {}
+
+        history_fields = []
+        new_fields_to_export = []
+
+        if context.get('history_cons', False):
+            months = context.get('months', [])
+
+            for month in months:
+                field_name = DateFrom(month.get('date_from')).strftime('%m-%Y')
+                if field_name in fields_to_export:
+                    history_fields.append(field_name)
+
+            if context.get('amc', False) and 'average' in fields_to_export:
+                history_fields.append('average')
+
+        for f in fields_to_export:
+            if f not in history_fields:
+                new_fields_to_export.append(f)
+
+        res = super(product_product, self).export_data(cr, uid, ids, new_fields_to_export, context=context)
+
+        if context.get('history_cons', False):
+            for r in res['datas']:
+                product_id = self.search(cr, uid, [('default_code', '=', r[0])], context=context)
+                datas = {}
+                if product_id:
+                    datas = self.read(cr, uid, product_id, history_fields + ['default_code', 'id'], context=context)[0]
+                for f in history_fields:
+                    r.append(str(datas.get(f, 0.00)))
+        
+        return res
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
            context = {}
@@ -255,7 +290,7 @@ class product_product(osv.osv):
             tmp_months.sort()
 
             for month in tmp_months:
-                line_view += """<field name="%s" />""" % DateFrom(month).strftime('%m/%Y')
+                line_view += """<field name="%s" />""" % DateFrom(month).strftime('%m-%Y')
 
             line_view += "</tree>"
 
@@ -282,7 +317,7 @@ class product_product(osv.osv):
             months = context.get('months', [])
 
             for month in months:
-                res.update({DateFrom(month.get('date_from')).strftime('%m/%Y'): {'digits': (16,2),
+                res.update({DateFrom(month.get('date_from')).strftime('%m-%Y'): {'digits': (16,2),
                                                                                  'selectable': True,
                                                                                  'type': 'float',
                                                                                  'string': '%s' % DateFrom(month.get('date_from')).strftime('%m/%Y')}})
@@ -321,7 +356,7 @@ class product_product(osv.osv):
             for r in res:
                 total_consumption = 0.00
                 for month in context.get('months'):
-                    field_name = DateFrom(month.get('date_from')).strftime('%m/%Y')
+                    field_name = DateFrom(month.get('date_from')).strftime('%m-%Y')
                     cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
                     consumption = 0.00
                     if context.get('amc') == 'AMC':
