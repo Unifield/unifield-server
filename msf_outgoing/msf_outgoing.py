@@ -342,7 +342,8 @@ class shipment(osv.osv):
                                                {'name': draft_packing.name + '-' + packing_number,
                                                 'backorder_id': draft_packing.id,
                                                 'shipment_id': False,
-                                                'move_lines': []}, context=dict(context, keep_prodlot=True, allow_copy=True, non_stock_noupdate=True))
+                                                # UF-1617: keepLineNumber must be set so that all line numbers are passed correctly when updating the corresponding IN
+                                                'move_lines': []}, context=dict(context, keep_prodlot=True, keepLineNumber=True, allow_copy=True, non_stock_noupdate=True))
 
                 # confirm the new packing
                 wf_service = netsvc.LocalService("workflow")
@@ -781,7 +782,8 @@ class shipment(osv.osv):
                 # copy each packing
                 new_packing_id = pick_obj.copy(cr, uid, packing.id, {'name': packing.name,
                                                                      'first_shipment_packing_id': packing.id,
-                                                                     'shipment_id': shipment.id,}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+                                                                     # UF-1617: keepLineNumber must be set so that all line numbers are passed correctly when updating the corresponding IN
+                                                                     'shipment_id': shipment.id,}, context=dict(context, keepLineNumber=True, keep_prodlot=True, allow_copy=True,))
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
                 # update the shipment_date of the corresponding sale order if the date is not set yet - with current date
@@ -2423,6 +2425,7 @@ class stock_picking(osv.osv):
                                   'product_uom': partial['product_uom'],
                                   'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
+                                  'line_number': partial['line_number'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -2436,6 +2439,7 @@ class stock_picking(osv.osv):
                                   'product_uom': partial['product_uom'],
                                   'product_uos': partial['product_uom'],
                                   'prodlot_id': partial['prodlot_id'],
+                                  'line_number': partial['line_number'],
                                   'composition_list_id': partial['composition_list_id'],
                                   'asset_id': partial['asset_id']}
                         values = self.do_validate_picking_first_hook(cr, uid, ids, context=context, partial_datas=partial_datas, values=values, move=move)
@@ -2591,7 +2595,7 @@ class stock_picking(osv.osv):
                                 # force state to 'assigned'
                                 values.update(state='assigned')
                                 # copy stock.move with new product_qty, qty_per_pack. from_pack, to_pack, pack_type, length, width, height, weight
-                                new_move = move_obj.copy(cr, uid, move, values, context=context)
+                                new_move = move_obj.copy(cr, uid, move, values, context=dict(context, keepLineNumber=True))
                                 # Need to change the locations after the copy, because the create of a new stock move with
                                 # non-stockable product force the locations
                                 move_obj.write(cr, uid, [new_move], {'location_id': moves[move].location_id.id,
@@ -2612,7 +2616,8 @@ class stock_picking(osv.osv):
                                                           'subtype': 'packing',
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
-                                                          'shipment_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
+                                                          # UF-1617: keepLineNumber must be set so that all line numbers are passed correctly when updating the corresponding IN
+                                                          'shipment_id': False}, context=dict(context, keep_prodlot=True, keepLineNumber=True, allow_copy=True,))
 
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state.

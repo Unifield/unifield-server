@@ -393,6 +393,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         assert values is not None, 'missing values'
         if context is None:
             context = {}
+        
+        # UF-1617: If the case comes from the sync_message, then just return the values, not the wizard stuff
+        if context.get('sync_message_execution', False):
+            return values
+        
         if isinstance(ids, (int, long)):
             ids = [ids]
         # take ids of the wizard from the context.

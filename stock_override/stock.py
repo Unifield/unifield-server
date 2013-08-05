@@ -532,8 +532,7 @@ class stock_picking(osv.osv):
                 if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
                     self.action_move(cr, uid, [new_picking])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
-                    
-                    # Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done 
+                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                     self._hook_create_sync_messages(cr, uid, new_picking, context)
                     
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
@@ -544,10 +543,13 @@ class stock_picking(osv.osv):
                 if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
                     self.action_move(cr, uid, [pick.id])
                     wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
-                    # Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done 
+                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                     self._hook_create_sync_messages(cr, uid, ids, context)
                     
                 delivered_pack_id = pick.id
+            
+            # UF-1617: set the delivered_pack_id (new or original) to become already_shipped    
+            self.write(cr, uid, [delivered_pack_id], {'already_shipped': True})
 
             delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
             res[pick.id] = {'delivered_picking': delivered_pack.id or False}
