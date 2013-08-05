@@ -385,11 +385,11 @@ class product_product(osv.osv):
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
                             consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)
-                            #cons_prod_obj.create(cr, uid, {'name': field_name,
-                            #                               'product_id': r['id'],
-                            #                               'consumption_id': obj_id,
-                            #                               'cons_type': 'amc',
-                            #                               'value': consumption}, context=context)
+                            cons_prod_obj.create(cr, uid, {'name': field_name,
+                                                           'product_id': r['id'],
+                                                           'consumption_id': obj_id,
+                                                           'cons_type': 'amc',
+                                                           'value': consumption}, context=context)
                     else:
                         cons_prod_domain.append(('cons_type', '=', 'fmc'))
                         cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
