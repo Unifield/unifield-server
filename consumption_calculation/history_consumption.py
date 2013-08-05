@@ -231,36 +231,48 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
     def export_data(self, cr, uid, ids, fields_to_export, context=None):
+        '''
+        Override the export_data function to add fictive fields
+        '''
         if not context:
             context = {}
 
         history_fields = []
         new_fields_to_export = []
+        history_fields_sort = {}
+        sort_iter = 0
 
+        # Add fictive fields
         if context.get('history_cons', False):
             months = context.get('months', [])
+            
+            if context.get('amc', False) and 'average' in fields_to_export:
+                history_fields.append('average')
 
             for month in months:
                 field_name = DateFrom(month.get('date_from')).strftime('%m-%Y')
                 if field_name in fields_to_export:
                     history_fields.append(field_name)
 
-            if context.get('amc', False) and 'average' in fields_to_export:
-                history_fields.append('average')
-
+        # Prepare normal fields to export to avoid error on export data with fictive fields
         for f in fields_to_export:
             if f not in history_fields:
                 new_fields_to_export.append(f)
+            else:
+                # We save the order of the fictive fields to read them in the good order
+                history_fields_sort.update({sort_iter: f})
+                sort_iter += 1
 
-        res = super(product_product, self).export_data(cr, uid, ids, new_fields_to_export, context=context)
+        res = super(product_product, self).export_data(cr, uid, ids, new_fields_to_export, context=dict(context, history_cons=False))
 
+        # Set the fictive fields in the good order
         if context.get('history_cons', False):
             for r in res['datas']:
                 product_id = self.search(cr, uid, [('default_code', '=', r[0])], context=context)
                 datas = {}
                 if product_id:
                     datas = self.read(cr, uid, product_id, history_fields + ['default_code', 'id'], context=context)[0]
-                for f in history_fields:
+                for i, f in history_fields_sort.iteritems():
                     r.append(str(datas.get(f, 0.00)))
         
         return res
@@ -334,6 +346,8 @@ class product_product(osv.osv):
         '''
         Set value for each month
         '''
+        cons_prod_obj = self.pool.get('product.history.consumption.product')
+
         if context is None:
             context = {}
         if context.get('history_cons', False):
@@ -359,10 +373,33 @@ class product_product(osv.osv):
                     field_name = DateFrom(month.get('date_from')).strftime('%m-%Y')
                     cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
                     consumption = 0.00
+                    cons_prod_domain = [('name', '=', field_name),
+                                        ('product_id', '=', r['id']),
+                                        ('consumption_id', '=', obj_id)]
                     if context.get('amc') == 'AMC':
-                        consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)
+                        cons_prod_domain.append(('cons_type', '=', 'amc'))
+                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                        if cons_id:
+                            consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
+                        else:
+                            consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context)
+                            #cons_prod_obj.create(cr, uid, {'name': field_name,
+                            #                               'product_id': r['id'],
+                            #                               'consumption_id': obj_id,
+                            #                               'cons_type': 'amc',
+                            #                               'value': consumption}, context=context)
                     else:
-                        consumption = self.pool.get('product.product').browse(cr, uid, r['id'], context=cons_context).monthly_consumption
+                        cons_prod_domain.append(('cons_type', '=', 'fmc'))
+                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                        if cons_id:
+                            consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
+                        else:
+                            consumption = self.pool.get('product.product').browse(cr, uid, r['id'], context=cons_context).monthly_consumption
+                            cons_prod_obj.create(cr, uid, {'name': field_name,
+                                                           'product_id': r['id'],
+                                                           'consumption_id': obj_id,
+                                                           'cons_type': 'fmc',
+                                                           'value': consumption}, context=context)
                     total_consumption += consumption
                     # Update the value for the month
                     r.update({field_name: consumption})
@@ -375,5 +412,19 @@ class product_product(osv.osv):
         return res
 
 product_product()
+
+
+class product_history_consumption_product(osv.osv_memory):
+    _name = 'product.history.consumption.product'
+
+    _columns = {
+        'consumption_id': fields.many2one('product.history.consumption', string='Consumption id'),
+        'product_id': fields.many2one('product.product', string='Product'),
+        'name': fields.char(size=64, string='Name'),
+        'value': fields.char(size=64, string='Value'),
+        'cons_type': fields.selection([('amc', 'AMC'), ('fmc', 'FMC')], string='Consumption type'),
+    }
+
+product_history_consumption_product()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
