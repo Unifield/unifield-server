@@ -27394,6 +27394,7 @@ msgstr "Book. Debit"
 
 #. module: msf_audittrail
 #: field:audittrail.log.line,field_description:0
+#: field:audittrail.log.line,trans_field_description:0
 msgid "Field Description"
 msgstr "Description du Champ"
 

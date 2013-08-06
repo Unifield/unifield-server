@@ -350,6 +350,53 @@ class audittrail_log_line(osv.osv):
         
         return res
 
+    def _get_field_name(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        Return the name of the field in the user language
+        '''
+        tr_obj = self.pool.get('ir.translation')
+
+        res = {}
+        lang = self.pool.get('res.users').browse(cr, uid, uid, context=context).context_lang
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = False
+
+            # Translation of field name
+            if line.field_id:
+                field_name = '%s,%s' % (line.object_id.model, line.field_id.name)
+                tr_ids = tr_obj.search(cr, uid, [('name', '=', field_name),
+                                                 ('lang', '=', lang),
+                                                 ('type', '=', 'field'),
+                                                 ('src', '=', line.field_id.field_description)], context=context)
+                if tr_ids:
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+
+            # Translation of one2many object if any
+            if not res[line.id] and line.fct_object_id:
+                field_name = '%s,%s' % (line.fct_object_id.model, line.field_id.name)
+                tr_ids = tr_obj.search(cr, uid, [('name', '=', field_name),
+                                                 ('lang', '=', lang),
+                                                 ('type', '=', 'field'),
+                                                 ('src', '=', line.field_id.field_description)], context=context)
+                if tr_ids:
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+
+            # Translation of main object
+            if not res[line.id] and (line.object_id or line.fct_object_id):
+                tr_ids = tr_obj.search(cr, uid, [('name', '=', 'ir.model,name'),
+                                                 ('lang', '=', lang),
+                                                 ('type', '=', 'model'),
+                                                 ('src', '=', line.name)], context=context)
+                if tr_ids:
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+
+            # No translation
+            if not res[line.id]:
+                res[line.id] = line.field_description
+
+        return res
+
     _columns = {
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
@@ -366,6 +413,7 @@ class audittrail_log_line(osv.osv):
           'old_value': fields.text("Old Value"),
           'new_value': fields.text("New Value"),
           'field_description': fields.char('Field Description', size=64),
+          'trans_field_description': fields.function(_get_field_name, method=True, type='char', size=64, string='Field Description', store=False),
           'sub_obj_name': fields.char(size=64, string='Order line'),
 #          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
           # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
