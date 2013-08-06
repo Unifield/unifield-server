@@ -72,9 +72,9 @@
                 }
 		        function do_select(id) {
                     jQuery.m2m('close',
-                        id ? [parseInt(id, 10)]
+                        id ? [parseInt(id, 10)].concat(ListView('_terp_list').get_previously_selected())
                            : ListView('_terp_list').$getSelectedItems().map(function () {
-                                return parseInt(this.value, 10); }).get()
+                                return parseInt(this.value, 10); }).get().concat(ListView('_terp_list').get_previously_selected())
                     );
 		        }
 		    </script>
@@ -101,6 +101,7 @@
         <input type="hidden" id="_terp_filter_domain" name="_terp_filter_domain" value="${params.filter_domain}"/>
         <input type="hidden" id="_terp_search_data" name="_terp_search_data" value="${params.search_data}"/>
 		<input type="hidden" id="_terp_search_text" name="_terp_search_text" value="${params.search_text}"/>
+		<input type="hidden" id="_terp_previously_selected" name="_terp_previously_selected" />
         <table width="100%" border="0" cellpadding="2">
             <tr>
                 <td>
@@ -122,7 +123,7 @@
                         <tr>
                             <td width="100%">
                                 % if params.selectable != 1:
-                                    <a class="button-a select-link" href="javascript: void(0)" onclick="do_select()">${_("Select")}</a>
+                                    <a class="button-a select-link" href="javascript: void(0)" onclick="do_select()">${_("Select")} OOOOO</a>
                                 % endif
                             	<a class="button-a" href="javascript: void(0)" onclick="search_filter()" >${_("Search")}</a>
                                 % if not form.screen.widget.hide_new_button:

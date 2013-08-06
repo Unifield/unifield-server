@@ -61,6 +61,31 @@ ListView.prototype = {
         this.sort_key = null;
     },
 
+    get_previously_selected: function() {
+        var prefix = this.name == '_terp_list' ? '' : this.name + '/';
+        var previous_field = jQuery('[id*="'+prefix + '_terp_previously_selected'+'"]')
+        if (previous_field) {
+            sel = previous_field.val() || "";
+            if (!sel) {return []};
+            return sel.split(',').map(function(b) {return parseInt(b, 10)});
+        }
+        return [];
+    },
+
+    set_previously_selected: function(value) {
+        var previous = this.get_previously_selected()
+        var prefix = this.name == '_terp_list' ? '' : this.name + '/';
+        for (var v in value) {
+            if (previous.indexOf(value[v]) == -1) {
+                previous.push(value[v])
+            }
+        }
+        field_previously_selected = jQuery('[id*="'+prefix + '_terp_previously_selected'+'"]');
+        if (field_previously_selected) {
+            field_previously_selected.val(previous.join(','));
+        }
+    },
+
     checkAll: function(clear) {
         jQuery('[id="' + this.name + '"] input.grid-record-selector').attr('checked', !clear);
         this.onBooleanClicked();
