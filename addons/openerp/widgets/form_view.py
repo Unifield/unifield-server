@@ -85,9 +85,10 @@ class ViewForm(Form):
             params.search_domain = self.search.listof_domain
             params.filter_domain = self.search.custom_filter_domain
             params.group_by_ctx = self.search.groupby
-            
+        
+        get_source = params.get_source or False
         self.screen = Screen(prefix='', hastoolbar=True, hassubmenu=True, editable=editable, readonly=readonly,
-                             selectable=params.selectable or 2)
+                             selectable=params.selectable or 2, get_source=get_source)
 
         if self.screen.widget and self.screen.view_type in ['form', 'tree']:
             self.logs = Logs()

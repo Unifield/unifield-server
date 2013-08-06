@@ -290,6 +290,7 @@ class List(SecuredController):
             res = wizard.Wizard().execute(params)
             frm = res['form']
         else:
+            params.get_source = source
             frm = form.Form().create_form(params)
 
         if params.view_type == 'graph':
