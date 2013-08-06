@@ -397,6 +397,30 @@ class audittrail_log_line(osv.osv):
 
         return res
 
+    def _src_field_name(self, cr, uid, obj, name, args, context=None):
+        '''
+        Search field description with the user lang
+        '''
+        tr_obj = self.pool.get('ir.translation')
+
+        res = []
+        lang = self.pool.get('res.users').browse(cr, uid, uid, context=context).context_lang
+
+        for arg in args:
+            if arg[0] == 'trans_field_description':
+                tr_fields = tr_obj.search(cr, uid, [('lang', '=', lang), 
+                                                    ('type', 'in', ['field', 'model']),
+                                                    ('value', arg[1], arg[2])], context=context)
+
+                field_names = []
+                for f in tr_obj.browse(cr, uid, tr_fields, context=context):
+                    field_names.append(f.src)
+
+                res = [('field_description', 'in', field_names)]
+
+        return res
+
+
     _columns = {
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
@@ -413,7 +437,7 @@ class audittrail_log_line(osv.osv):
           'old_value': fields.text("Old Value"),
           'new_value': fields.text("New Value"),
           'field_description': fields.char('Field Description', size=64),
-          'trans_field_description': fields.function(_get_field_name, method=True, type='char', size=64, string='Field Description', store=False),
+          'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
           'sub_obj_name': fields.char(size=64, string='Order line'),
 #          'sub_obj_name': fields.function(fnct=_get_name_line, fnct_search=_search_name_line, method=True, type='char', string='Order line', store=False),
           # These 3 fields allows the computation of the name of the subobject (sub_obj_name)

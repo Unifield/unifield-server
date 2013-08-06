@@ -103,7 +103,7 @@
                         <field name="timestamp" />
                         <newline />
                         <field name="sub_obj_name" />
-                        <field name="field_description" />
+                        <field name="trans_field_description" />
                         <field name="old_value_text" />
                         <field name="new_value_text" />
                         <field name="user_id" />
