@@ -363,6 +363,7 @@ class account_commitment_line(osv.osv):
     _name = 'account.commitment.line'
     _description = "Account Commitment Voucher Line"
     _order = "id desc"
+    _rec_name = 'account_id'
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """
