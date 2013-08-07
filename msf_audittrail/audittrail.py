@@ -29,6 +29,7 @@ import ir
 import pooler
 import time
 import tools
+import logging
 from tools.safe_eval import safe_eval as eval
 
 class purchase_order(osv.osv):
@@ -112,6 +113,63 @@ class account_period(osv.osv):
     _trace = True
 
 account_period()
+
+
+class ir_module(osv.osv):
+    _inherit = 'ir.module.module'
+
+    def update_translations(self, cr, uid, ids, filter_lang=None, context=None):
+        '''
+        Override the lang install to apply the translation on Track changes ir.actions
+        '''
+        res = super(ir_module, self).update_translations(cr, uid, ids, filter_lang=None, context=context)
+
+        msf_profile_id = self.search(cr, uid, [('name', '=', 'msf_profile')], context=context)
+        
+        if not msf_profile_id or msf_profile_id[0] not in ids:
+            return res
+
+        tr_obj = self.pool.get('ir.translation')
+        act_obj = self.pool.get('ir.actions.act_window')
+        language_obj = self.browse(cr, uid, ids)[0]
+        src = 'Track changes'
+        if not filter_lang:
+            pool = pooler.get_pool(cr.dbname)
+            lang_obj = pool.get('res.lang')
+            lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True)])
+            filter_lang = [lang.code for lang in lang_obj.browse(cr, uid, lang_ids)]
+        elif not isinstance(filter_lang, (list, tuple)):
+            filter_lang = [filter_lang]
+
+        for lang in filter_lang:
+            trans_ids = tr_obj.search(cr, uid, [('lang', '=', lang),
+                                                ('xml_id', '=', 'action_audittrail_view_log'),
+                                                ('module', '=', 'msf_audittrail')], context=context)
+            if trans_ids:
+                logger = logging.getLogger('i18n')
+                logger.info('module msf_profile: loading translation for \'Track changes\' ir.actions.act_window for language %s', lang)
+                trans = tr_obj.browse(cr, uid, trans_ids[0], context=context).value
+                # Search all actions to rename
+                act_ids = act_obj.search(cr, uid, [('name', '=', src)], context=context)
+                for act in act_ids:
+                    exist = tr_obj.search(cr, uid, [('lang', '=', lang), 
+                                                    ('type', '=', 'model'), 
+                                                    ('src', '=', src), 
+                                                    ('name', '=', 'ir.actions.act_window,name'), 
+                                                    ('value', '=', trans), 
+                                                    ('res_id', '=', act)], context=context)
+                    if not exist:
+                        tr_obj.create(cr, uid, {'lang': lang,
+                                                'src': src,
+                                                'name': 'ir.actions.act_window,name',
+                                                'type': 'model',
+                                                'value': trans,
+                                                'res_id': act}, context=context)
+
+        return res
+
+ir_module()
+
 
 class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
@@ -218,6 +276,7 @@ class audittrail_rule(osv.osv):
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
 
             }
+
             action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
             keyword = 'client_action_relate'
