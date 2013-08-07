@@ -286,6 +286,13 @@ class Entity(osv.osv):
     def get_entity(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         return self.browse(cr, uid, ids, context=context)[0]
+
+    def _get_entity(self, cr):
+        """
+        private method to get entity with uid = 1
+        """
+        ids = self.search(cr, 1, [])
+        return self.browse(cr, 1, ids)[0]
     
     def generate_uuid(self):
         return str(uuid.uuid1())

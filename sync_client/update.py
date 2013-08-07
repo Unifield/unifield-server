@@ -168,9 +168,8 @@ class update_to_send(osv.osv):
                         'values' : tools.ustr(row),
                     }, context=context)
                     update._logger.debug("Created 'normal' update model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
-            self.pool.get('ir.model.data').write(cr, uid,
-                [data_id for __, __, __, data_id in sdrefs.values()],
-                {'force_recreation' : False}, context=context)
+
+            self.clear_synchronization(cr, uid, ids_to_compute, context=context)
 
             return len(ids_to_compute)
 
@@ -194,6 +193,8 @@ class update_to_send(osv.osv):
                     'is_deleted' : True,
                 }, context=context)
                 update._logger.debug("Created 'delete' update: model=%s id=%d (rule sequence=%d)" % (self._name, update_id, rule.id))
+
+            self.clear_synchronization(cr, uid, ids_to_delete, context=context)
 
             return len(ids_to_delete)
 

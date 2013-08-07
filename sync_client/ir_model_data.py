@@ -25,7 +25,7 @@ from psycopg2 import IntegrityError
 from osv import osv, fields
 import tools
 
-from sync_common import MODELS_TO_IGNORE, XML_ID_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
+from sync_common import MODELS_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
 
 class ir_model_data_sync(osv.osv):
     """ ir_model_data with sync date """
@@ -222,7 +222,8 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         # when a module load a specific xmlid, the sdref is updated according
         # that xmlid
         if values['model'] not in MODELS_TO_IGNORE and \
-           values['module'] not in ('sd', '__export__'):
+           values['module'] not in ('sd', '__export__') and \
+           not (values['module'] == 'base' and values['name'].startswith('main_')):
             sdref_name = "%(module)s_%(name)s" % values
             # specific case when sdref already exists
             # that means there is a re-creation from a module
