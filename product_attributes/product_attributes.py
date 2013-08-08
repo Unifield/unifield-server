@@ -182,6 +182,8 @@ class product_attributes(osv.osv):
         'sublist' : fields.char('Sublist', size=64),
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
+        # Inverse of m2m options_ids
+        'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
         'heat_sensitive_item': fields.selection([('',''),
             ('KR','Keep refrigerated but not cold chain (+2 to +8°C) for transport'),
             ('*','Keep Cool'),
