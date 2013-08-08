@@ -26,10 +26,8 @@ from tools.translate import _
 from datetime import datetime
 import tools
 import time
-import pprint
 import netsvc
 import so_po_common
-pp = pprint.PrettyPrinter(indent=4)
 
 
 class purchase_order_line_sync(osv.osv):
@@ -70,7 +68,7 @@ class purchase_order_sync(osv.osv):
     def create_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "Create the split PO at destination"
+        print "+++ Create the split PO at destination (at %s) from the split FO at supplier (at %s)"%(cr.dbname,source)
         
         so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
@@ -152,7 +150,7 @@ class purchase_order_sync(osv.osv):
         return res_id
 
     def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
-        print "Create a PO from an FO (push flow)"
+        print "+++ Create a PO (at %s) from an FO (push flow) (from %s)"%(cr.dbname, source)
         if not context:
             context = {}
         
@@ -218,7 +216,7 @@ class purchase_order_sync(osv.osv):
     def update_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "Update the split PO when the sourced FO got confirmed"
+        print "+++ Update the split POs at %s when the sourced FO at %s got confirmed"%(cr.dbname, source)
         
         so_dict = so_info.to_dict()
         po_id = self.check_update(cr, uid, source, so_dict)
@@ -246,45 +244,10 @@ class purchase_order_sync(osv.osv):
                 
         return True
 
-    def out_pick_fo_update_in_po(self, cr, uid, source, pick_info, context=None):
-        if not context:
-            context = {}
-        print "OUT/PICK from FO updates the IN of PO"
-        
-        so_po_common = self.pool.get('so.po.common')
-        so_dict = pick_info.to_dict()
-        
-        # Retrieve the PO that relates to the given FO of the OUT/PICK
-        so_ref = source + "." + pick_info.origin
-        po_ref_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
-        
-        # After having this PO id, search for the IN to be updated
-#        self.pool.get('stock.picking').read
-        
-        
-        header_result = {}
-        so_po_common.retrieve_po_header_data(cr, uid, source, header_result, so_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, pick_info, po_id, False, True, False, context)
-
-        default = {}
-        default.update(header_result)
-        
-        res_id = self.write(cr, uid, po_id, default, context=context)
-        
-        if pick_info.original_so_id_sale_order:    
-            wf_service = netsvc.LocalService("workflow")
-            if pick_info.state == 'validated':
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-            else:
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_approve', cr)
-                
-        return True
-
     def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "Update the original PO when the relevant FO got validated"
+        print "+++ Update the original PO at %s when the relevant FO at %s got validated"%(cr.dbname, source)
 
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
@@ -307,7 +270,7 @@ class purchase_order_sync(osv.osv):
     def canceled_fo_cancel_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "Cancel the original PO"
+        print "+++ Cancel the original PO at %s due to the cancel of the FO at %s"%(cr.dbname,source)
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)

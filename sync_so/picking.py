@@ -26,12 +26,9 @@ from tools.translate import _
 from datetime import datetime
 import tools
 import time
-import pprint
 import netsvc
 import so_po_common
 from sync_common import xmlid_to_sdref
-
-pp = pprint.PrettyPrinter(indent=4)
 
 class stock_picking(osv.osv):
     '''
@@ -138,7 +135,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        print "call update In in PO from Out in FO", source
+        print "+++ Call update INcoming shipment at %s from Out in FO at %s"%(cr.dbname, source)
         
         pick_dict = out_info.to_dict()
         
@@ -250,7 +247,7 @@ class stock_picking(osv.osv):
         
         if context is None:
             context = {}
-        print "Call update partial Shipment/OUT from supplier to IN in PO", source
+        print "+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname)
         
         pick_dict = out_info.to_dict()
         
@@ -346,7 +343,8 @@ class stock_picking(osv.osv):
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        print "Cancel the relevant IN due to the cancel of OUT at Coordo"
+        print "+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s"%(cr.dbname, source)
+        
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
@@ -368,7 +366,7 @@ class stock_picking(osv.osv):
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        print "Create batch number object that comes with the SHIP/OUT"
+        print "+++ Create batch number that comes with the SHIP/OUT from %s"%source
         so_po_common = self.pool.get('so.po.common')
         batch_obj = self.pool.get('stock.production.lot')
         
@@ -392,7 +390,7 @@ class stock_picking(osv.osv):
     def create_asset(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        print "Create asset object that comes with the SHIP/OUT"
+        print "+++ Create asset form that comes with the SHIP/OUT from %s"%source
         so_po_common = self.pool.get('so.po.common')
         asset_obj = self.pool.get('product.asset')
         
@@ -465,19 +463,19 @@ class stock_picking(osv.osv):
         # make a change on the message only now
         msg_to_send_obj.modify_manual_message(cr, uid, existing_message_id, xml_id, call, arg, update_destinations.values()[0], context)
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-                    
-        ret = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
-        ##############################################################################
-        # SP-135: call the method to create manually a message for the relevant object, if needed
-        #
-        ##############################################################################
-#        self.create_manual_message(cr, uid, ids, context)
-        return  ret
+#    def write(self, cr, uid, ids, vals, context=None):
+#        if isinstance(ids, (int, long)):
+#            ids = [ids]
+#        if context is None:
+#            context = {}
+#                    
+#        ret = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+#        ##############################################################################
+#        # SP-135: call the method to create manually a message for the relevant object, if needed
+#        #
+#        ##############################################################################
+##        self.create_manual_message(cr, uid, ids, context)
+#        return  ret
 
 
     def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name, context):
