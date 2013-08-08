@@ -22,6 +22,7 @@
 from osv import fields, osv
 import re
 from tools.translate import _
+import decimal_precision as dp
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -645,6 +646,18 @@ class product_attributes(osv.osv):
     ]
 
 product_attributes()
+
+
+class product_template(osv.osv):
+    _inherit = 'product.template'
+
+    _columns = {
+        'volume': fields.float('Volume', digits=(16,5), help="The volume in m3."),
+        'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
+        'weight_net': fields.float('Net weight', digits=(16,5), help="The net weight in Kg."),
+    }
+
+product_template()
 
 
 class product_deactivation_error(osv.osv_memory):
