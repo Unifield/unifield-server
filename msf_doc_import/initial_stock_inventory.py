@@ -388,7 +388,6 @@ class stock_inventory_line(osv.osv):
         else:
             vals.update({'comment': comment, 'to_correct_ok': True})
 
-        print vals
         res = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
         return res
 
