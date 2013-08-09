@@ -417,17 +417,19 @@ class purchase_order(osv.osv):
 #            d['partner_id'] = [('partner_type', 'in', ['esc', 'external'])]
         else:
             v['invoice_method'] = 'picking'
+
+        company_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         
-        if order_type == 'direct' and dest_partner_id:
+        if order_type == 'direct' and dest_partner_id and dest_partner_id != company_id:
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, dest_partner_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id})
 #            d.update({'dest_address_id': [('partner_id', '=', dest_partner_id)]})
         elif order_type == 'direct':
-            v.update({'dest_address_id': False})
+            v.update({'dest_address_id': False, 'dest_partner_id': False})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
         else:
-            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id, ['delivery'])['delivery']
-            v.update({'dest_address_id': cp_address_id})
+            cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
+            v.update({'dest_address_id': cp_address_id, 'dest_partner_id': company_id})
 #            d.update({'dest_address_id': [('partner_id', '=', self.pool.get('res.users').browse(cr, uid, uid).company_id.id)]})
 
         if partner_id and partner_id != local_market:
