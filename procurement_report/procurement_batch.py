@@ -60,6 +60,7 @@ class procurement_batch_cron(osv.osv):
                 'interval_number': vals.get('interval_number'),
                 'interval_type': vals.get('interval_type'),
                 'nextcall': vals.get('nextcall'),
+                'doall': False,
                 'numbercall': -1,
                 'batch_id': int(batch_id),
                 'model': 'procurement.order',
