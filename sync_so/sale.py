@@ -27,6 +27,7 @@ from datetime import datetime
 import tools
 import time
 import so_po_common
+import logging
 
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
@@ -40,6 +41,7 @@ sale_order_line_sync()
 
 class sale_order_sync(osv.osv):
     _inherit = "sale.order"
+    _logger = logging.getLogger('sale.order')
     
     _columns = {
                 'received': fields.boolean('Received by Client', readonly=True),
@@ -58,7 +60,7 @@ class sale_order_sync(osv.osv):
         return super(sale_order_sync, self).copy(cr, uid, id, default, context=context)
 
     def create_so(self, cr, uid, source, po_info, context=None):
-        print "+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source)
+        self._logger.info("+++ Create an FO at %s from a PO (normal flow) at %s"%(cr.dbname, source))
         if not context:
             context = {}
             
@@ -112,7 +114,7 @@ class sale_order_sync(osv.osv):
         return True
 
     def validated_po_update_validated_so(self, cr, uid, source, po_info, context=None):
-        print "+++ Update the validated FO at %s when the relevant PO got validated at %s"%(cr.dbname, source)
+        self._logger.info("+++ Update the validated FO at %s when the relevant PO got validated at %s"%(cr.dbname, source))
         if not context:
             context = {}
         context['no_check_line'] = True
@@ -133,7 +135,7 @@ class sale_order_sync(osv.osv):
         return True
 
     def update_sub_so_ref(self, cr, uid, source, po_info, context=None):
-        print "+++ Update the PO references from %s to the FO, including its sub-FOs at %s"%(source, cr.dbname)
+        self._logger.info("+++ Update the PO references from %s to the FO, including its sub-FOs at %s"%(source, cr.dbname))
         if not context:
             context = {}
             

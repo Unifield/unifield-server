@@ -29,12 +29,14 @@ import time
 import netsvc
 import so_po_common
 from sync_common import xmlid_to_sdref
+import logging
 
 class stock_picking(osv.osv):
     '''
     synchronization methods related to stock picking objects
     '''
     _inherit = "stock.picking"
+    _logger = logging.getLogger('stock.picking')
     
     def format_data(self, cr, uid, data, context=None):
         '''
@@ -135,7 +137,7 @@ class stock_picking(osv.osv):
         '''
         if context is None:
             context = {}
-        print "+++ Call update INcoming shipment at %s from Out in FO at %s"%(cr.dbname, source)
+        self._logger.info("+++ Call update INcoming shipment at %s from Out in FO at %s"%(cr.dbname, source))
         
         pick_dict = out_info.to_dict()
         
@@ -247,7 +249,7 @@ class stock_picking(osv.osv):
         
         if context is None:
             context = {}
-        print "+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname)
+        self._logger.info("+++ Call to update partial shipment/OUT from supplier %s to INcoming Shipment of PO at %s"%(source, cr.dbname))
         
         pick_dict = out_info.to_dict()
         
@@ -343,7 +345,7 @@ class stock_picking(osv.osv):
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        print "+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s"%(cr.dbname, source)
+        self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s"%(cr.dbname, source))
         
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
@@ -366,7 +368,7 @@ class stock_picking(osv.osv):
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        print "+++ Create batch number that comes with the SHIP/OUT from %s"%source
+        self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s"%source)
         so_po_common = self.pool.get('so.po.common')
         batch_obj = self.pool.get('stock.production.lot')
         
@@ -390,7 +392,7 @@ class stock_picking(osv.osv):
     def create_asset(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        print "+++ Create asset form that comes with the SHIP/OUT from %s"%source
+        self._logger.info("+++ Create asset form that comes with the SHIP/OUT from %s"%source)
         so_po_common = self.pool.get('so.po.common')
         asset_obj = self.pool.get('product.asset')
         

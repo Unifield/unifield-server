@@ -28,6 +28,7 @@ import tools
 import time
 import netsvc
 import so_po_common
+import logging
 
 
 class purchase_order_line_sync(osv.osv):
@@ -41,8 +42,9 @@ purchase_order_line_sync()
 
 
 class purchase_order_sync(osv.osv):
-    
     _inherit = "purchase.order"
+    _logger = logging.getLogger('purchase.order')
+    
     
     _columns = {
         'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
@@ -68,7 +70,7 @@ class purchase_order_sync(osv.osv):
     def create_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "+++ Create the split PO at destination (at %s) from the split FO at supplier (at %s)"%(cr.dbname,source)
+        self._logger.info("+++ Create the split PO at destination (at %s) from the split FO at supplier (at %s)"%(cr.dbname,source))
         
         so_dict = so_info.to_dict()
         so_po_common = self.pool.get('so.po.common')
@@ -150,7 +152,7 @@ class purchase_order_sync(osv.osv):
         return res_id
 
     def normal_fo_create_po(self, cr, uid, source, so_info, context=None):
-        print "+++ Create a PO (at %s) from an FO (push flow) (from %s)"%(cr.dbname, source)
+        self._logger.info("+++ Create a PO (at %s) from an FO (push flow) (from %s)"%(cr.dbname, source))
         if not context:
             context = {}
         
@@ -216,7 +218,7 @@ class purchase_order_sync(osv.osv):
     def update_split_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "+++ Update the split POs at %s when the sourced FO at %s got confirmed"%(cr.dbname, source)
+        self._logger.info("+++ Update the split POs at %s when the sourced FO at %s got confirmed"%(cr.dbname, source))
         
         so_dict = so_info.to_dict()
         po_id = self.check_update(cr, uid, source, so_dict)
@@ -247,7 +249,7 @@ class purchase_order_sync(osv.osv):
     def validated_fo_update_original_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "+++ Update the original PO at %s when the relevant FO at %s got validated"%(cr.dbname, source)
+        self._logger.info("+++ Update the original PO at %s when the relevant FO at %s got validated"%(cr.dbname, source))
 
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
@@ -270,7 +272,7 @@ class purchase_order_sync(osv.osv):
     def canceled_fo_cancel_po(self, cr, uid, source, so_info, context=None):
         if not context:
             context = {}
-        print "+++ Cancel the original PO at %s due to the cancel of the FO at %s"%(cr.dbname,source)
+        self._logger.info("+++ Cancel the original PO at %s due to the cancel of the FO at %s"%(cr.dbname,source))
         wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
