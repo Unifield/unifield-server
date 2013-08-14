@@ -339,7 +339,6 @@ class List(SecuredController):
         id = (id or False) and int(id)
         ids = (id or []) and [id]
         list_grid = params.list_grid or '_terp_list'
-
         try:
 
             if btype == 'workflow':
@@ -353,6 +352,8 @@ class List(SecuredController):
             elif btype == 'object':
                 ctx = params.context or {}
                 ctx.update(rpc.session.context.copy())
+                if list_grid != '_terp_list':
+                    ctx['from_list_grid'] = list_grid
                 res = rpc.session.execute('object', 'execute', model, name, ids, ctx)
 
                 if isinstance(res, dict):
