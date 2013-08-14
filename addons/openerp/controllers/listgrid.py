@@ -259,7 +259,7 @@ class List(SecuredController):
                 if k.startswith('search_default') and k[15:] not in params['_terp_search_data'].get('group_by_ctx',{}):
                     del params['_terp_context'][k]
 
-        if params.get('_terp_clear'):
+        if params.get('_terp_clear') or params.get('_terp_ids_to_show'):
             params.search_domain, params.filter_domain, params.ids = [], [], []
             params.search_data = {}
             for k,v in params.context.items():
@@ -270,6 +270,7 @@ class List(SecuredController):
                 del params.context['group_by']
             params.group_by_ctx = []
 
+
         if source == '_terp_list':
             if not params.view_type == 'graph':
                 params.view_type = 'tree'
@@ -279,6 +280,9 @@ class List(SecuredController):
             params.domain = params.domain or []
             if params.filter_domain:
                 params.domain += params.filter_domain
+
+        if params.get('_terp_ids_to_show'):
+            params.search_domain = [('id', 'in', params.get('_terp_ids_to_show'))]
 
         # default_get context
         current = params.chain_get(source)

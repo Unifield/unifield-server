@@ -999,7 +999,6 @@ class Form(TinyInputWidget):
         if attrs.get('get_selection') and kind == 'selection' and attrs.get('type2') == 'many2one' and self.id:
             proxy = rpc.RPCProxy(self.model)
             attrs['selection'] = getattr(proxy, attrs['get_selection'])(self.id, name)
-           
         field = get_widget(kind)(**attrs)
 
         if isinstance(field, TinyInputWidget):

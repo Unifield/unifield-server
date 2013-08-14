@@ -33,7 +33,7 @@ class ViewForm(Form):
 
     template = "/openerp/widgets/templates/viewform.mako"
 
-    params = ['limit', 'offset', 'count', 'search_domain', 'search_data', 'filter_domain', 'notebook_tab', 'context_menu']
+    params = ['limit', 'offset', 'count', 'search_domain', 'search_data', 'filter_domain', 'notebook_tab', 'context_menu', 'previously_selected', 'previously_selected_length']
     member_widgets = ['screen', 'search', 'sidebar', 'logs']
 
     def __init__(self, params, **kw):
@@ -47,6 +47,12 @@ class ViewForm(Form):
         self.context_menu = params.get('context_menu')
         editable = params.editable
         readonly = params.readonly
+
+        self.previously_selected = None
+        self.previously_selected_length = 0
+        if params.get('_terp_ids_to_show'):
+            self.previously_selected = ','.join(map(str, params.get('_terp_ids_to_show')))
+            self.previously_selected_length = len(params.get('_terp_ids_to_show'))
 
         if editable is None:
             editable = True
