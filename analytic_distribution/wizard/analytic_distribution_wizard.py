@@ -941,8 +941,12 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
+        o2m_toreload = {}
+        if context.get('from_list_grid'):
+            o2m_toreload['o2m_refresh'] = context['from_list_grid']
         for wiz in self.browse(cr, uid, ids, context=context):
             # Update cost center lines
             if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
@@ -1033,7 +1037,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         
-        return_wiz =  {'type': 'ir.actions.act_window_close'}
+        return_wiz =  dict(type='ir.actions.act_window_close', **o2m_toreload)
         if context.get("from_cash_return_analytic_dist"):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
             wizard_name = context.get('from')
@@ -1164,6 +1168,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        o2m_toreload = {}
+        if context.get('from_list_grid'):
+            o2m_toreload['o2m_refresh'] = context['from_list_grid']
         # Retrieve some values to verify if we come from a direct invoice
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
@@ -1192,7 +1200,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 }
         elif wiz.from_direct_inv:
             return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
-        return {'type' : 'ir.actions.act_window_close'}
+
+        return dict(type='ir.actions.act_window_close', **o2m_toreload)
 
     def update_analytic_lines(self, cr, uid, ids, context=None):
         """
