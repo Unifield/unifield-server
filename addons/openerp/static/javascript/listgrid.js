@@ -926,7 +926,8 @@ MochiKit.Base.update(ListView.prototype, {
 
                 var selfname = self.name
                 var has_selected = false;
-                $.each(self.getSelectedRecords(), function() {
+                var all_selected = self.getSelectedRecords()
+                $.each(all_selected, function() {
                     var el = jQuery(idSelector(selfname+'/'+this));
                     if (el.length) {
                         has_selected = true;
@@ -935,6 +936,9 @@ MochiKit.Base.update(ListView.prototype, {
                 });
                 if (has_selected) {
                     jQuery(idSelector(self.name + '_delete_record')).parent().show();
+                }
+                if (all_selected.length) {
+                    self.selectedRow_sum();
                 }
                 var $editors = self.$adjustEditors(
                         document.getElementById(self.name));
