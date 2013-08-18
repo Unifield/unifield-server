@@ -365,6 +365,45 @@ class stock_picking(osv.osv):
         
         raise Exception("There is a problem when cancel of the IN at project")
 
+    def closed_in_validates_delivery_out_ship(self, cr, uid, source, out_info, context=None):
+        if not context:
+            context = {}
+        self._logger.info("+++ Closed INcoming at %s confirms the delivery of the relevant OUT/SHIP at %s"%(source, cr.dbname))
+        
+        wf_service = netsvc.LocalService("workflow")
+        so_po_common = self.pool.get('so.po.common')
+        pick_dict = out_info.to_dict()
+        
+        shipment_ref = pick_dict.get('shipment_ref', False)
+        if not shipment_ref:
+            raise Exception("The shipment reference is empty. The action cannot be executed.")
+        
+        ship_split = shipment_ref.split('.')
+        if len(ship_split) != 2:
+            raise Exception("Invalid shipment reference format.")
+        
+        # Check if it an SHIP --_> call Shipment object to proceed the validation of delivery, otherwise, call OUT to validate the delivery!
+        message = False
+        if 'SHIP' in ship_split[1]:
+            shipment_obj = self.pool.get('shipment')
+            ship_ids = shipment_obj.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'done')], context=context)
+            if ship_ids:
+                # set the Shipment to become delivered
+                shipment_obj.set_delivered(cr, uid, ship_ids, context=context)
+                message = "The shipment " + ship_split[1] + " has been well delivered to its partner." 
+        elif 'OUT' in ship_split[1]:
+            ship_ids = self.search(cr, uid, [('name', '=', ship_split[1]), ('state', '=', 'done')], context=context)
+            if ship_ids:
+                # set the Shipment to become delivered
+                self.set_delivered(cr, uid, ship_ids, context=context)
+                message = "The OUTcoming " + ship_split[1] + " has been well delivered to its partner."
+                 
+        if message:
+            self._logger.info(message)
+            return message
+        
+        raise Exception("Something goes wrong with this message and no confirmation of delivery")
+
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
