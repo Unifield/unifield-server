@@ -210,6 +210,9 @@ class account_move_line_reconcile(osv.osv_memory):
                 state = 'total'
             else:
                 state = 'partial'
+                # UF-2050: Do not allow partial reconciliation of entries in different currencies
+                if different_currencies and not transfer_with_change:
+                    raise osv.except_osv(_('Error'), _('Partial reconciliation of entries in different currencies is not allowed.'))
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state, 'different_currencies': different_currencies}
 
     def total_reconcile(self, cr, uid, ids, context=None):
