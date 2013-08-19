@@ -335,6 +335,52 @@ class threshold_value_line(osv.osv):
                 res[l.id] = True
                 
         return res.keys()
+        
+    def _get_data(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Compute some data
+        '''
+        product_obj = self.pool.get('product.product')
+        proc_obj = self.pool.get('procurement.order')
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            # Stock values
+            location_id = line.threshold_value_id.location_id.id
+            stock_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, location=location_id))
+            # Consumption values
+            from_date = line.threshold_value_id.consumption_period_from
+            to_date = line.threshold_value_id.consumption_period_to
+            consu_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, from_date=from_date, to_date=to_date))
+            consu = 0.00
+            if line.threshold_value_id.consumption_method == 'amc':
+                consu = consu_product.product_amc
+            elif line.threshold_value_id.consumption_method == 'fmc':
+                consu = consu_product.reviewed_consumption
+            else:
+				consu = 0.00
+
+            # Expiry values
+            d_values = {'reviewed_consumption': line.threshold_value_id.consumption_method == 'fmc',
+                        'past_consumption': line.threshold_value_id.consumption_method == 'anc',
+                        'manual_consumption': 0.00,
+                        'leadtime': line.threshold_value_id.lead_time,
+                        'coverage': line.threshold_value_id.frequency,
+                        'safety_stock': 0.00,
+                        'safety_time': line.threshold_value_id.safety_month}
+            expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
+
+            qty_to_order = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.threshold_value_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date))
+
+            res[line.id] = {'consumption': consu,
+                            'real_stock': stock_product.qty_available,
+                            'available_stock': stock_product.virtual_available,
+                            'expiry_before': expiry_product_qty,
+                            'supplier_id': stock_product.seller_id.id,
+                            }
+
+        return res
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
@@ -354,7 +400,12 @@ class threshold_value_line(osv.osv):
         'fixed_product_qty': fields.float(digits=(16,2), string='Quantity to order'),
         'fixed_threshold_value': fields.float(digits=(16,2), string='Threshold value'),
         'threshold_value_id': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
-        'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True)
+        'threshold_value_id2': fields.many2one('threshold.value', string='Threshold', ondelete='cascade', required=True),
+        'consumption': fields.function(_get_data, method=True, type='float', digits=(16,3), string='AMC/FMC', multi='data', readonly=True),
+        'real_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Real stock', multi='data', readonly=True),
+        'available_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Available stock', multi='data', readonly=True),
+        'expiry_before': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Exp. before consumption', multi='data', readonly=True),
+        'supplier_id': fields.function(_get_data, method=True, type='many2one', relation='res.partner', string='Supplier', multi='data', readonly=True),
     }
     
     def _check_uniqueness(self, cr, uid, ids, context=None):

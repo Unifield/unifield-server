@@ -399,12 +399,65 @@ stock_warehouse_order_cycle()
 class stock_warehouse_order_cycle_line(osv.osv):
     _name = 'stock.warehouse.order.cycle.line'
     _description = 'Products to replenish'
+
+    def _get_data(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Compute some data
+        '''
+        product_obj = self.pool.get('product.product')
+        proc_obj = self.pool.get('procurement.order')
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            # Stock values
+            location_id = line.order_cycle_id.location_id.id
+            stock_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, location=location_id))
+            # Consumption values
+            from_date = line.order_cycle_id.consumption_period_from
+            to_date = line.order_cycle_id.consumption_period_to
+            consu_product = product_obj.browse(cr, uid, line.product_id.id, context=dict(context, from_date=from_date, to_date=to_date))
+            consu = 0.00
+            if line.order_cycle_id.past_consumption:
+                consu = consu_product.product_amc
+            elif line.order_cycle_id.reviewed_consumption:
+                consu = consu_product.reviewed_consumption
+            else:
+                consu = consu_product.manual_consumption
+
+            # Expiry values
+            d_values = {'reviewed_consumption': line.order_cycle_id.reviewed_consumption,
+                        'past_consumption': line.order_cycle_id.past_consumption,
+                        'manual_consumption': line.order_cycle_id.manual_consumption,
+                        'leadtime': line.order_cycle_id.leadtime,
+                        'coverage': line.order_cycle_id.order_coverage,
+                        'safety_stock': line.safety_stock,
+                        'safety_time': line.order_cycle_id.safety_stock_time}
+            expiry_product_qty = product_obj.get_expiry_qty(cr, uid, line.product_id.id, location_id, False, d_values, context=dict(context, location=location_id, compute_child=True))
+
+            qty_to_order = proc_obj._compute_quantity(cr, uid, False, line.product_id, line.order_cycle_id.location_id.id, d_values, context=dict(context, from_date=from_date, to_date=to_date))
+
+            res[line.id] = {'consumption': consu,
+                            'real_stock': stock_product.qty_available,
+                            'available_stock': stock_product.virtual_available,
+                            'expiry_before': expiry_product_qty,
+                            'qty_to_order': qty_to_order >= 0.00 and qty_to_order or 0.00,
+                            'supplier_id': stock_product.seller_id.id,
+                            }
+
+        return res
     
     _columns = {
         'product_id': fields.many2one('product.product', required=True, string='Product'),
         'uom_id': fields.many2one('product.uom', string='UoM', required=True),
         'order_cycle_id': fields.many2one('stock.warehouse.order.cycle', string='Order cycle', required=True, ondelete='cascade'),
         'safety_stock': fields.float(digits=(16,2), string='Safety stock (Qty)', required=True),
+        'consumption': fields.function(_get_data, method=True, type='float', digits=(16,3), string='AMC/FMC', multi='data', readonly=True),
+        'real_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Real stock', multi='data', readonly=True),
+        'available_stock': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Available stock', multi='data', readonly=True),
+        'expiry_before': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Exp. before consumption', multi='data', readonly=True),
+        'qty_to_order': fields.function(_get_data, method=True, type='float', digits=(16,3), string='Qty. to order', multi='data', readonly=True),
+        'supplier_id': fields.function(_get_data, method=True, type='many2one', relation='res.partner', string='Supplier', multi='data', readonly=True),
     }
     
     def _check_uniqueness(self, cr, uid, ids, context=None):

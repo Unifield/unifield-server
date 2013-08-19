@@ -195,7 +195,7 @@ Created documents : \n'''
         '''
         if d_values is None:
             d_values = {}
-        
+
         # Get the delivery lead time of the product if the leadtime is not defined in rule and no supplier found in product form
         delivery_leadtime = product.procure_delay and round(int(product.procure_delay)/30.0, 2) or 1
         # Get the leadtime of the rule if defined
