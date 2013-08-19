@@ -25,6 +25,17 @@
             /*
             % endif
             */
+            setTimeout(function() {
+                var $iframe = jQuery('iframe');
+                if ($iframe.length) {
+                    $iframe.load(function(){
+                        $iframe_content = $iframe.contents();
+                        $iframe_content.find("[autofocus='autofocus']").focus();
+                    });
+                }else {
+                    jQuery('[autofocus="autofocus"]').focus();
+                }
+            }, 10);
         });
     </script>
 
