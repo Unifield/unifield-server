@@ -152,7 +152,9 @@ class account_move_line_reconcile(osv.osv_memory):
             if not currency_id:
                 currency_id = line.currency_id and line.currency_id.id or False
             if line.currency_id and line.currency_id.id != currency_id and not transfer_with_change:
-                if currency2_id:
+                # If currency2_id exists, that implies that we already have 2 different currencies.
+                # If the line have the same currency as currency2, so all is OK.
+                if currency2_id and line.currency_id.id != currency2_id:
                     currency_data = self.pool.get('res.currency').read(cr, uid, [currency_id], ['name'])
                     currency_name = 'None'
                     if currency_data and currency_data[0]:
