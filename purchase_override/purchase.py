@@ -273,6 +273,8 @@ class purchase_order(osv.osv):
         'po_from_fo': fields.function(_is_po_from_fo, method=True, type='boolean', string='Is PO from FO ?',),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
+        'origin': fields.text('Source Document', 
+                        help="Reference of the document that generated this purchase order request."),
     }
     
     _defaults = {

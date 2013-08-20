@@ -123,7 +123,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. : [[ objects[0].origin ]]</para>
+                    <para style="TextInformation">Origin ref. : [[ objects[0].origin[:64] ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
