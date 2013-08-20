@@ -380,7 +380,9 @@ class stock_picking(osv.osv):
         
         ship_split = shipment_ref.split('.')
         if len(ship_split) != 2:
-            raise Exception("Invalid shipment reference format.")
+            message = "Invalid shipment reference format"
+            self._logger.info(message)
+            raise Exception(message)
         
         # Check if it an SHIP --_> call Shipment object to proceed the validation of delivery, otherwise, call OUT to validate the delivery!
         message = False
@@ -402,7 +404,9 @@ class stock_picking(osv.osv):
             self._logger.info(message)
             return message
         
-        raise Exception("Something goes wrong with this message and no confirmation of delivery")
+        message = "Something goes wrong with this message and no confirmation of delivery"
+        self._logger.info(message)
+        raise Exception(message)
 
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -412,21 +416,37 @@ class stock_picking(osv.osv):
         batch_obj = self.pool.get('stock.production.lot')
         
         batch_dict = out_info.to_dict()
-        existing_bn = batch_obj.search(cr, uid, [('name', '=', batch_dict['name'])], context=context)
+        error_message = "Create Batch Number: Something go wrong with this message, invalid instance reference"
         
-        if existing_bn: # existed already, then don't need to create a new one
-            return True
-
-        if batch_dict.get('product_id'):
-            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+        if batch_dict['instance_id'] and batch_dict['instance_id']['id']: 
+            rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(batch_dict['instance_id']['id']), context=context)
             if rec_id:
-                batch_dict['product_id'] = rec_id
-
-            if batch_dict['instance_id'] and batch_dict['instance_id']['id']: 
-                rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(batch_dict['instance_id']['id']), context=context)
                 batch_dict['instance_id'] = rec_id
 
-        return batch_obj.create(cr, uid, batch_dict, context=context)
+                existing_bn = batch_obj.search(cr, uid, [('name', '=', batch_dict['name']), ('instance_id', '=', rec_id)], context=context)
+                if existing_bn: # existed already, then don't need to create a new one
+                    message = "Create Batch Number: the given BN exists already local instance, no new BN will be created"
+                    self._logger.info(message)
+                    error_message = False
+                    return message
+
+                error_message = "Create Batch Number: Invalid reference to the product or product does not exist"
+                if batch_dict.get('product_id'):
+                    rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+                    if rec_id:
+                        batch_dict['product_id'] = rec_id
+                        error_message = False
+
+        # If error message exists --> cannot create the BN        
+        if error_message:    
+            self._logger.info(error_message)
+            raise Exception, error_message
+
+        batch_obj.create(cr, uid, batch_dict, context=context)
+        message = "The new BN " + batch_dict['name'] + ", " + source +  ") has been created"
+        self._logger.info(message)
+        return message    
+    
 
     def create_asset(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -436,29 +456,51 @@ class stock_picking(osv.osv):
         asset_obj = self.pool.get('product.asset')
         
         asset_dict = out_info.to_dict()
-        existing_asset = asset_obj.search(cr, uid, [('name', '=', asset_dict['name'])], context=context)
+        error_message = False
         
-        if existing_asset: # existed already, then don't need to create a new one
-            return True
-
-        if asset_dict.get('product_id'):
-            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+        if asset_dict['instance_id'] and asset_dict['instance_id']['id']: 
+            rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(asset_dict['instance_id']['id']), context=context)
             if rec_id:
-                asset_dict['product_id'] = rec_id
-
-            rec_id = self.pool.get('product.asset.type').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.asset_type_id.id), context=context)
-            if rec_id:
-                asset_dict['asset_type_id'] = rec_id
-
-            rec_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.invo_currency.id), context=context)
-            if rec_id:
-                asset_dict['invo_currency'] = rec_id
-
-            if asset_dict['instance_id'] and asset_dict['instance_id']['id']: 
-                rec_id = self.pool.get('msf.instance').find_sd_ref(cr, uid, xmlid_to_sdref(asset_dict['instance_id']['id']), context=context)
                 asset_dict['instance_id'] = rec_id
+            
+                existing_asset = asset_obj.search(cr, uid, [('name', '=', asset_dict['name']), ('instance_id', '=', rec_id)], context=context)
+                if existing_asset: # existed already, then don't need to create a new one
+                    message = "Create Asset: the given asset form exists already local instance, no new asset will be created"
+                    self._logger.info(message)
+                    return message
         
-        return asset_obj.create(cr, uid, asset_dict, context=context)
+                if asset_dict.get('product_id'):
+                    rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+                    if rec_id:
+                        asset_dict['product_id'] = rec_id
+                    else:
+                        error_message = "Invalid product reference for the asset. The asset cannot be created"
+        
+                    rec_id = self.pool.get('product.asset.type').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.asset_type_id.id), context=context)
+                    if rec_id:
+                        asset_dict['asset_type_id'] = rec_id
+                    else:
+                        error_message = "Invalid asset type reference for the asset. The asset cannot be created"
+        
+                    rec_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.invo_currency.id), context=context)
+                    if rec_id:
+                        asset_dict['invo_currency'] = rec_id
+                    else:
+                        error_message = "Invalid currency reference for the asset. The asset cannot be created"
+                else:
+                    error_message = "Invalid reference to product for the asset. The asset cannot be created"
+            else:
+                error_message = "Create Asset: Something go wrong with this message, invalid instance reference"
+
+        # If error message exists --> raise exception and no esset will be created        
+        if error_message:    
+            self._logger.info(error_message)
+            raise Exception, error_message
+        
+        asset_obj.create(cr, uid, asset_dict, context=context)
+        message = "The new asset (" + asset_dict['name'] + ", " + source +  ") has been created"
+        self._logger.info(message)
+        return message
     
     def check_valid_to_generate_message(self, cr, uid, ids, rule, context):
         # Check if the given object is valid for the rule
