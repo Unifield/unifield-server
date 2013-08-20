@@ -296,7 +296,8 @@ SELECT res_id, touched
         """
         return self.get_sd_ref(cr, uid, ids, field='version', context=context)
 
-    def synchronize(self, cr, uid, ids, previous_values=None, context=None):
+    def synchronize(self, cr, uid, ids, previous_values=None,
+            previous_calls=None, context=None):
         """
         Update the SD ref (or create one if it does'n exists) and mark it to be
         synchronize + touch fields
@@ -341,22 +342,28 @@ SELECT res_id, touched
                     if isinstance(self._all_columns[f].column, fields.one2many)]
 
         if previous_values is None:
-            whole_fields = self._columns.keys()
-            touch(
-                self.get_sd_ref(cr, uid, ids, field='id', context=context).values(),
-                whole_fields)
-            # handle one2many
-            o2m_fields = filter_o2m(whole_fields)
-            current_values = dict(
-                (d['id'], d)
-                for d in self.read(cr, uid, ids,
-                    [field for field, column in o2m_fields],
-                    context=context))
-            for res_id, next_rec in current_values.items():
-                for field, column in o2m_fields:
-                    self.pool.get(column._obj).synchronize(cr, uid,
-                        next_rec[field],
-                        context=context)
+            previous_calls = previous_calls or []
+            me = (self._name, ids)
+            if me not in previous_calls:
+                previous_calls.append(me)
+                whole_fields = self._columns.keys()
+                touch(
+                    self.get_sd_ref(cr, uid, ids, field='id',
+                        context=context).values(),
+                    whole_fields)
+                # handle one2many
+                o2m_fields = filter_o2m(whole_fields)
+                current_values = dict(
+                    (d['id'], d)
+                    for d in self.read(cr, uid, ids,
+                        [field for field, column in o2m_fields],
+                        context=context))
+                for res_id, next_rec in current_values.items():
+                    for field, column in o2m_fields:
+                        if column._obj == self._name: continue
+                        self.pool.get(column._obj).synchronize(cr, uid,
+                            next_rec[field], previous_calls=previous_calls,
+                            context=context)
         else:
             previous_values = dict((d['id'], d) for d in previous_values)
             assert set(ids) == set(previous_values.keys()), \
@@ -372,8 +379,7 @@ SELECT res_id, touched
                 prev_rec, next_rec = previous_values[res_id], current_values[res_id]
                 touched = set(eval(touched) if touched else [])
                 # TODO should make a specific check according to field type
-                # TODO one2many should synchronize linked objects because it
-                # doesn't automatically synchronize on a simple link update
+                # ^ not sure if it's still a current todo
                 modified = set(filter(
                     lambda field: next_rec[field] != prev_rec[field],
                     whole_fields))
