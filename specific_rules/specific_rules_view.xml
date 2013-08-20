@@ -117,6 +117,7 @@
                         <attribute name="hide_delete_button">1</attribute>
                     </xpath>
                     <field name="ref" position="replace">
+	                    <field name="instance_id"/>
                         <field name="type" />
                         <field name="life_date" />
                     </field>
