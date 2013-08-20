@@ -401,5 +401,24 @@
             </field>
         </record>
 
+   <!--
+      MSF Instance search view
+    -->
+
+        <record id="view_msf_instance_filter" model="ir.ui.view">
+            <field name="name">msf.instance.filter</field>
+            <field name="model">msf.instance</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+              <search string="Proprietary Instances List">
+                  <filter name="active" icon='terp-check' string="Active" domain="[('state', '=', 'active')]" />
+                  <filter name="inactive" icon='gtk-dialog-error' string="Inactive" domain="[('state', '=', 'inactive')]" />
+                  <separator orientation="vertical"/>
+                  <field name="code" select="1"/>
+                  <field name="level" select="1"/>
+                </search>
+            </field>
+        </record>
+
     </data>
 </openerp>
