@@ -1076,7 +1076,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wizard_obj.entry_mode == 'percentage':
                 percentage = wizard_line['percentage']
                 # Check that the value is in the correct range
-                if percentage < 0.0 or percentage > 100.0:
+                if abs(100.0 - percentage) > 10**-4:
                     raise osv.except_osv(_('Percentage not valid!'),_("Percentage not valid!"))
                 # Fill the other value
                 amount = round(wizard_obj.total_amount * percentage) / 100.0
