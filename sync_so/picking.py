@@ -282,6 +282,10 @@ class stock_picking(osv.osv):
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))], context=context)
                         if move_ids and move_ids[0]:
                             line_numbers[ln] = move_ids[0]
+                        else:
+                            message = "Line number is not found in the original IN or PO: " + str(ln)
+                            self._logger.info(message)
+                            raise Exception(message)
                     move_id = line_numbers[ln]
                        
                     partial_datas[in_id].setdefault(move_id, []).append(data)
