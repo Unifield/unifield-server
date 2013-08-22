@@ -429,7 +429,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values and values != '()':
                 values = values[1:-1].split(',')
-                if len(values) and relation_model_pool:
+                if len(values) and values[0] != '' and relation_model_pool:
                     # int() failed if value '167L'
                     relation_model_object = relation_model_pool.read(cr, uid, long(values[0]), [relation_model_pool._rec_name])
                     res = relation_model_object[relation_model_pool._rec_name]
