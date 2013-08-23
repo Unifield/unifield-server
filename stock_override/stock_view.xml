@@ -525,6 +525,7 @@
                             on_change="change_min_date()" required="1" />
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
+                            <field name="shipment_ref" />
                         </group>
                     </group>
                     <notebook colspan="4">
@@ -650,7 +651,7 @@
                             <group col="10" colspan="4">
                                 <field name="state" readonly="1"/>
                                 <button name="enter_reason"
-                                    states="assigned,confirmed,draft"
+                                    states="assigned,confirmed,draft,shipped"
                                     string="Cancel"
                                     type="object"
                                     icon="gtk-cancel"
@@ -658,7 +659,7 @@
                                     confirm="Warning, you are going to Cancel!"
                                     />
                                 <button name="enter_reason"
-                                    states="assigned,confirmed,draft"
+                                    states="assigned,confirmed,draft,shipped"
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
@@ -668,7 +669,7 @@
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="" string="Force Availability" type="object" icon="gtk-jump-to"/>
-                                <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward"/>
+                                <button name="action_process" states="assigned,shipped" string="Process" type="object" icon="gtk-go-forward"/>
                                 <group colspan="1" states="done">
                                     <button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
                                 </group>

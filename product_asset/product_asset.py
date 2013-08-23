@@ -75,6 +75,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'name': self.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
+            'instance_id': False,
         })
         # call to super
         return super(product_asset, self).copy(cr, uid, id, default, context=context)
@@ -87,6 +88,7 @@ class product_asset(osv.osv):
             default = {}
         default.update({
             'event_ids': [],
+            'instance_id': False,
         })
         return super(product_asset, self).copy_data(cr, uid, id, default, context=context)
 
@@ -114,7 +116,13 @@ class product_asset(osv.osv):
             productId = vals['product_id']
             # add readonly fields to vals
             vals.update(self._getRelatedProductFields(cr, uid, productId))
-            
+        
+        # UF-1617: set the current instance into the new object if it has not been sent from the sync   
+        if 'instance_id' not in vals or not vals['instance_id']:
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            if company and company.instance_id:
+                vals['instance_id'] = company.instance_id.id
+
         # save the data to db
         return super(product_asset, self).create(cr, uid, vals, context)
         
@@ -213,6 +221,9 @@ class product_asset(osv.osv):
                 'invo_certif_depreciation': fields.char('Certificate of Depreciation', size=128),
                 # event history
                 'event_ids': fields.one2many('product.asset.event', 'asset_id', 'Events'),
+                # UF-1617: field only used for sync purpose
+                'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
+                'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
     }
     
     _defaults = {
@@ -220,7 +231,7 @@ class product_asset(osv.osv):
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
-    _sql_constraints = [('name_uniq', 'unique(name)', 'Asset Code must be unique !'),
+    _sql_constraints = [('name_uniq', 'unique(name, instance_id)', 'Asset Code must be unique per instance!'),
                         ]
     _order = 'name desc'
     

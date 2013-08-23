@@ -1356,20 +1356,59 @@
 			<field name="act_window_id" ref="action_shipment"/>
 		</record>
 		<menuitem action="action_shipment" id="menu_action_shipment" parent="menu_warehouse_deliveries" sequence="6"/>
-		<!--
-		<record id="action_create_shipment_wizard" model="ir.actions.act_window">
-		<field name="name">Create Packing List</field>
-		<field name="res_model">shipment.wizard</field>
-		<field name="view_type">form</field>
-		<field name="view_mode">form</field>
-		<field name="target">new</field>
-		<field name="context">{'step':'create'}</field>
+
+
+		<!-- Closed Shipment lines -->
+
+        <record id="view_shipped_closed_tree" model="ir.ui.view">
+            <field name="name">Closed Shipped Lines</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1">
+                    <field name="origin"/>
+                    <field name="picking_id" string="Pack"/>
+                    <field name="line_number"/>
+                    <field name="product_id"/>
+                    <field name="product_qty" />
+                    <field name="product_uom" string="UoM"/>
+                    <field name="prodlot_id"/>
+                    <field name="expired_date"/>
+                    <field name="asset_id"/>
+                    <field name="partner_id"/>
+                    <field name="date"/>
+                </tree>
+            </field>
+        </record>
+
+		<record id="view_closed_shipment_search" model="ir.ui.view">
+			<field name="name">Closed Shipment Lists</field>
+			<field name="model">stock.move</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Shipment">
+                    <field name="name"/>
+                    <field name="picking_id" string="Pack" domain="[('already_shipped','=',True), ('shipment_id','!=',False)]"/>
+                    <field name="origin"/>
+                    <field name="prodlot_id"/>
+                    <field name="asset_id"/>
+				</search>
+			</field>
 		</record>
 
-		<menuitem action="action_create_shipment_wizard"
-		id="menu_create_shipment"
-		parent="stock.menu_stock_warehouse_mgmt" />
-		-->
+		<!-- Added 'subtype' in domain -->
+		<record id="action_closed_shipment" model="ir.actions.act_window">
+			<field name="name">Closed Shipment Lists</field>
+			<field name="res_model">stock.move</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="search_view_id" ref="view_closed_shipment_search"/>
+	        <field name="view_id" ref="view_shipped_closed_tree" />
+	        <field name="domain">[('state', '=', 'done'), ('origin', '!=', False), ('picking_id', '!=', False),('picking_id.already_shipped','=',True), ('picking_id.shipment_id','!=',False), ('product_qty','>', 0), ('location_dest_id.name','!=','Dispatch')]</field>
+			<field name="help">This is the list of all shipment lines with product information</field>
+		</record>
+
+		<menuitem action="action_closed_shipment" id="menu_action_closed_shipment" parent="menu_warehouse_deliveries" sequence="7"/>
 
 	</data>
 </openerp>
