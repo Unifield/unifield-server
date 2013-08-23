@@ -506,8 +506,6 @@ class sale_order(osv.osv):
                         # generate the name of new fo
                         selec_name = fields_tools.get_selection_name(cr, uid, self, 'split_type_sale_order', fo_type, context=context)
                         fo_name = so.name + '-' + selec_name
-                        import pdb
-                        pdb.set_trace()
                         split_id = self.copy(cr, uid, so.id, {'name': fo_name,
                                                               'order_line': [],
                                                               'loan_id': so.loan_id and so.loan_id.id or False,
