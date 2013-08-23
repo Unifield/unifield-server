@@ -250,6 +250,10 @@ One2Many.prototype = {
             width: '90%',
             height: '95%',
         });
+        $frame.load(function() {
+            $frame_content = $frame.contents();
+            $frame_content.find("[autofocus='autofocus']").focus();
+        });
         var $form = jQuery('<form>', {
             method: 'POST',
             action: '/openerp/openo2m/edit',
