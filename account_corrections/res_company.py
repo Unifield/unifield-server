@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-#-*- encoding:utf-8 -*-
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
 #    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
@@ -21,29 +21,16 @@
 #
 ##############################################################################
 
-{
-    "name" : "Accounting Corrections",
-    "version" : "1.0",
-    "description" : """
-        Permits some corrections from Journal Items.
-    """,
-    "author" : "TeMPO Consulting, MSF",
-    'website': 'http://tempo-consulting.fr',
-    "category" : "Tools",
-    "depends" : ["base", "account", 'res_currency_functional', 'analytic_distribution', 'account_override', 'account_journal', 'account_msf'],
-    "init_xml" : [],
-    "update_xml" : [
-        'account_view.xml',
-        'account_wizard_view.xml',
-        'res_company_view.xml',
-    ],
-    "demo_xml" : [],
-    "test": [
-        'test/account_data.yml',
-        'test/invoice_correction.yml'
-    ],
-    "installable": True,
-    "active": False
-}
+from osv import osv
+from osv import fields
 
+class res_company(osv.osv):
+    _name = 'res.company'
+    _inherit = 'res.company'
+
+    _columns = {
+        'not_correctible_account_ids': fields.many2many('account.account.type', 'account_account_type_not_correctible_rel', 'account_type_id', 'company_id', 'Not correctible accounts', help='Accounts that should not be correctible in journal items'),
+    }
+
+res_company()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

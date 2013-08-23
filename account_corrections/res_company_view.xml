@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!--
+            Default accounts configuration for HQ Entries
+        -->
+
+        <record model="ir.ui.view" id="view_company_inherit_6_form">
+            <field name="name">res.company.form.inherit.6</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <page string="Configuration" position="inside">
+                    <group col="2" colspan="2">
+                        <separator string="Not correctible accounts" colspan="2"/>
+                        <label string="Not that accounts that have an account type code to 'tax', 'payables' or 'receivables' are not correctible by default."/>
+                        <field name="not_correctible_account_ids" colspan="2" nolabel="1">
+                            <tree string="Account Types">
+                                <field name="name" string="Name"/>
+                            </tree>
+                        </field>
+                    </group>
+                </page>
+            </field>
+        </record>
+
+    </data>
+</openerp>
