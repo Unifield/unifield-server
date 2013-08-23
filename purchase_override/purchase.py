@@ -1238,7 +1238,6 @@ stock moves which are already processed : '''
             if (po.order_type == 'loan' and not po.loan_id and po.partner_id.partner_type in ('internal', 'intermission')) or po.is_a_counterpart:
                 res = False
 
-        print 'need counterpart %s' % res
         return res
 
     def go_to_loan_done(self, cr, uid, ids, context=None):
@@ -1247,7 +1246,6 @@ stock moves which are already processed : '''
             if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission')):
                 res = True
 
-        print 'go_to_loan_done %s' % res
         return res
     
     def action_sale_order_create(self, cr, uid, ids, context=None):
