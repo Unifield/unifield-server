@@ -466,6 +466,7 @@ class shipment(osv.osv):
                             # create a back move with the quantity to return to the good location
                             # the good location is stored in the 'initial_location' field
                             copy_id = move_obj.copy(cr, uid, move.id, {'product_qty': return_qty,
+                                                             'line_number': move.line_number,
                                                              'location_dest_id': move.initial_location.id,
                                                              'from_pack': selected_from_pack,
                                                              'to_pack': selected_to_pack,
@@ -641,6 +642,7 @@ class shipment(osv.osv):
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
                                           'product_qty': new_qty,
+                                          'line_number': move.line_number,
                                           'state': 'assigned'}
                                 
                                 # the original move is never modified, but canceled
@@ -664,6 +666,7 @@ class shipment(osv.osv):
                                 dispatch_name = move.picking_id.warehouse_id.lot_dispatch_id.name
                                 values = {'from_pack': seq[0],
                                           'to_pack': seq[1],
+                                          'line_number': move.line_number,
                                           'product_qty': new_qty,
                                           'location_id': location_distrib,
                                           'location_dest_id': location_dispatch,
@@ -2054,6 +2057,7 @@ class stock_picking(osv.osv):
                             selected_qty = move.qty_per_pack * selected_number
                             # create the new move - store the back move from draft **packing** object
                             new_move = move_obj.copy(cr, uid, move.id, {'picking_id': new_packing_id,
+                                                                        'line_number': move.line_number,
                                                                         'product_qty': selected_qty,
                                                                         'from_pack': selected_from_pack,
                                                                         'to_pack': selected_to_pack,
