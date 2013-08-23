@@ -211,6 +211,8 @@ class so_po_common(osv.osv_memory):
             header_result['details'] = header_info.get('details')
         if 'delivery_requested_date' in header_info:
             header_result['delivery_requested_date'] = header_info.get('delivery_requested_date')
+        if 'is_a_counterpart' in header_info:
+            header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
 
         analytic_id = header_info.get('analytic_distribution_id', False)
         if analytic_id:
