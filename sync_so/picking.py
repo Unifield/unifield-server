@@ -101,12 +101,14 @@ class stock_picking(osv.osv):
         result = {}
         if out_info.get('move_lines', False):
             for line in out_info['move_lines']:
-                # aggregate according to line number
-                line_dic = result.setdefault(line.get('line_number'), {})
-                # set the data
-                line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
-                # set the flag to know if the data has already been processed (partially or completely) in Out side
-                line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
+                # Don't get the returned pack lines
+                if line.get('location_dest_id', {}).get('usage', 'customer') == 'customer':
+                    # aggregate according to line number
+                    line_dic = result.setdefault(line.get('line_number'), {})
+                    # set the data
+                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
+                    # set the flag to know if the data has already been processed (partially or completely) in Out side
+                    line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
             
         return result
         
