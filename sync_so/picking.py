@@ -290,7 +290,16 @@ class stock_picking(osv.osv):
                             raise Exception(message)
                     move_id = line_numbers[ln]
                        
-                    partial_datas[in_id].setdefault(move_id, []).append(data)
+                    if not partial_datas[in_id].get(move_id):
+                        partial_datas[in_id].setdefault(move_id, []).append(data)
+                    else:
+                        for x in partial_datas[in_id][move_id]:
+                            if x.get('product_id') == data.get('product_id') and x.get('product_uom') == data.get('product_uom') and x.get('prodlot_id') == data.get('prodlot_id') and x.get('asset_id') == data.get('asset_id'):
+                                x['product_qty'] += data.get('product_qty')
+                                x['product_uos_qty'] += data.get('product_uos_qty')
+                                break
+                        else:
+                            partial_datas[in_id][move_id].append(data)
                     
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
             new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)            
