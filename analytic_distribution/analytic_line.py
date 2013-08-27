@@ -226,7 +226,7 @@ class analytic_line(osv.osv):
                 if account.category == 'DEST':
                     fieldname = 'destination_id'
                 # if period is not closed, so override line.
-                if period and period.state != 'done':
+                if period and period.state not in ['done', 'mission-closed']:
                     # Update account
                     self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
                         'source_date': aline.source_date or aline.date}, context=context)
