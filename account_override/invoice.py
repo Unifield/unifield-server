@@ -133,6 +133,12 @@ class account_invoice(osv.osv):
         # Create a sequence for this new invoice
         res_seq = self.create_sequence(cr, uid, vals, context)
         vals.update({'sequence_id': res_seq,})
+        # UTP-317 # Check that no inactive partner have been used to create this invoice
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')])
+            active = True
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         return super(account_invoice, self).create(cr, uid, vals, context)
 
     def _check_document_date(self, cr, uid, ids):
