@@ -90,6 +90,42 @@ class analytic_line(osv.osv):
                 res[l.id] = l.commitment_line_id.commit_id.name
         return res
 
+    def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Fetch period_id from:
+        - move_id
+        - commitment_line_id
+        """
+        # Checks
+        if not context:
+            context = {}
+        # Prepare some values
+        res = {}
+        for al in self.browse(cr, uid, ids, context):
+            res[al.id] = False
+            if al.commitment_line_id and al.commitment_line_id.commit_id and al.commitment_line_id.commit_id.period_id:
+                res[al.id] = al.commitment_line_id.commit_id.period_id.id
+            elif al.move_id and al.move_id.period_id:
+                res[al.id] = al.move_id.period_id.id
+        return res
+
+    def _search_period_id(self, cr, uid, obj, name, args, context=None):
+        """
+        Search period
+        """
+        # Checks
+        if not context:
+            context = {}
+        if not args:
+            return []
+        new_args = []
+        for arg in args:
+            if len(arg) == 3 and arg[1] in ['=', 'in']:
+                new_args.append('|')
+                new_args.append(('move_id.period_id', arg[1], arg[2]))
+                new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
+        return new_args
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -102,6 +138,7 @@ class analytic_line(osv.osv):
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
             help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
+        'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
     }
 
     _defaults = {
