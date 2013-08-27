@@ -951,7 +951,7 @@ class stock_move(osv.osv):
         prodlot_obj = self.pool.get('stock.production.lot')
         for move in self.browse(cr, uid, ids, context):
             # FEFO logic
-            if move.state == 'assigned': # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
+            if move.state == 'assigned' and not move.prodlot_id: # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move.product_qty
                 res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
                 if 'fefo' in res:
