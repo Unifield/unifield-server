@@ -292,6 +292,20 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
+    def button_duplicate(self, cr, uid, ids, context=None):
+        """
+        Copy a manual journal entry
+        """
+        if not context:
+            context = {}
+        context.update({'omit_analytic_distribution': False})
+        for je in self.browse(cr, uid, ids, context):
+            if je.status == 'manu' and je.state == 'draft':
+                res = self.copy(cr, uid, je.id, {'line_id': []}, context)
+                for line in je.line_id:
+                    self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res}, context)
+        return True
+
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
         """
         Change some fields when journal is changed.
