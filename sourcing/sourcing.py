@@ -742,6 +742,17 @@ class sale_order(osv.osv):
         self.pool.get('sourcing.line').unlink(cr, uid, idsToDelete, context)
         
         return super(sale_order, self).unlink(cr, uid, ids, context)
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Don't check line integrity
+        '''
+        if not context:
+            context = {}
+
+        context.update({'no_check_line': True})
+
+        return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
     
     def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
