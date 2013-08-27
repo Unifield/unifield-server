@@ -290,6 +290,11 @@ class stock_picking(osv.osv):
                             raise Exception(message)
                     move_id = line_numbers[ln]
                        
+                    # If we have a shipment with 10 packs and return from shipment
+                    # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
+                    # pack 2 and 3 not available and pack 4 to 10 available) but splitted into 
+                    # two moves (one move for all products available and one move for all
+                    # products not available in IN)
                     if not partial_datas[in_id].get(move_id):
                         partial_datas[in_id].setdefault(move_id, []).append(data)
                     else:
