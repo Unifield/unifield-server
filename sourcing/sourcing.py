@@ -1136,6 +1136,8 @@ class procurement_order(osv.osv):
         
         - allow to modify the data for purchase order line creation
         '''
+        if not context:
+            context = {}
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         origin_line = False
         if 'procurement' in kwargs:
@@ -1144,18 +1146,23 @@ class procurement_order(osv.osv):
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
                 line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
         if line.get('price_unit', False) == False:
+            cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if 'pricelist' in kwargs:
                 if 'procurement' in kwargs and 'partner_id' in context:
                     procurement = kwargs['procurement']
                     pricelist = kwargs['pricelist']
                     st_price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist.id], procurement.product_id.id, procurement.product_qty, context['partner_id'], {'uom': line.get('product_uom', procurement.product_id.uom_id.id)})[pricelist.id]
-                cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
                 st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
             if not st_price:
                 product = self.pool.get('product.product').browse(cr, uid, line['product_id'])
                 st_price = product.standard_price
+                if 'pricelist' in kwargs:
+                    st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, kwargs['pricelist'].currency_id.id, st_price, round=False, context=context)
+                elif 'partner_id' in context:
+                    partner = self.pool.get('res.partner').browse(cr, uid, context['partner_id'], context=context)
+                    st_price = self.pool.get('res.currency').compute(cr, uid, cur_id, partner.property_product_pricelist_purchase.currency_id.id, st_price, round=False, context=context)
                 if origin_line:
-                    st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, product.standard_price, to_uom_id=origin_line.product_uom.id)
+                    st_price = self.pool.get('product.uom')._compute_price(cr, uid, product.uom_id.id, st_price or product.standard_price, to_uom_id=origin_line.product_uom.id)
             line.update({'price_unit': st_price})
 
         return line
