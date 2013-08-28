@@ -204,7 +204,7 @@ class wizard_import_invoice(osv.osv_memory):
             # Create register line
             partial = False
             if line.amount and line.amount_to_pay and line.amount < line.amount_to_pay:
-                partial = ' - ' + _('partial pyt')
+                partial = ' - ' + _('partial pymt')
             register_vals = {
                 'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
                 'ref': line.ref,
