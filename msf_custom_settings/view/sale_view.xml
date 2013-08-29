@@ -48,7 +48,7 @@
                                 <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" invisible="1" />
                                 <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
-                                <button name="cancel" states="draft" string="Cancel Order" icon="gtk-cancel"/>
+                                <button name="cancel" states="draft,validated" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
                                 <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True" />
                                 <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" />

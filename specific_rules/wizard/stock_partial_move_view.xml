@@ -8,7 +8,14 @@
             <field name="type">tree</field>
             <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
             <field name="arch" type="xml">
-				<data>
+                <data>
+                    <xpath expr="/tree//field[@name='quantity']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_uom, quantity)</attribute>
+                    </xpath>
+
+                    <xpath expr="/tree//field[@name='product_uom']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_uom, quantity)</attribute>
+                    </xpath>
 				
 					<field name="prodlot_id" position="replace">
                     	<field name="prodlot_id" string="Batch Number"
@@ -44,7 +51,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree//field[@name='quantity']" position="attributes">
-                        <attribute name="on_change">change_lot(prodlot_id, quantity, location_id)</attribute>
+                        <attribute name="on_change">change_lot(prodlot_id, quantity, location_id, product_uom)</attribute>
                     </xpath>
 				
 					<field name="prodlot_id" position="replace">

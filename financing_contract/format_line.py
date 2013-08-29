@@ -69,20 +69,6 @@ class financing_contract_format_line(osv.osv):
                 res.append(line.parent_id.id)
         return res
     
-    def _get_total_costs(self, cr, uid, browse_overhead_line, field_name=None, context=None):
-        # since this is only called from the overhead line, the domain is
-        # "all children, except the overhead lines"
-        result = 0.0
-        total_line_ids = [line.id for line in browse_overhead_line.format_id.actual_line_ids if line.line_type in ['actual', 'consumption']]
-        total_costs = {}
-        if field_name and field_name in ('allocated_budget', 'project_budget'):
-            total_costs = self._get_budget_amount(cr, uid, total_line_ids, field_name, context=context)
-        else:
-            total_costs = self._get_actual_amount(cr, uid, total_line_ids, field_name, context=context)
-        for total_cost in total_costs.values():
-            result += total_cost
-        return result
-    
     def _get_account_destination_ids(self, browse_line, funding_pool_account_destination_ids):
         result = []
         if browse_line.line_type != 'view':
@@ -143,13 +129,58 @@ class financing_contract_format_line(osv.osv):
                 # Dates are not set (since we are probably in a donor).
                 # Return False
                 return False
+    
+    def _is_overhead_present(self, cr, uid, ids, context={}):
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.line_type == 'overhead':
+                return True
+            elif line.line_type == 'view':
+                if self._is_overhead_present(cr, uid, [x.id for x in line.child_ids], context=context):
+                    return True
+        return False
+    
+    def _get_actual_line_ids(self, cr, uid, ids, context={}):
+        actual_line_ids = []
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.line_type == 'view':
+                actual_line_ids += self._get_actual_line_ids(cr, uid, [x.id for x in line.child_ids], context=context)
+            elif line.line_type in ['actual', 'consumption']:
+                actual_line_ids.append(line.id)
+        return actual_line_ids
+    
+    def _get_view_amount(self, browse_line, total_costs, retrieved_lines):
+        if browse_line.line_type == 'view':
+            sum = 0.0
+            for child_line in browse_line.child_ids:
+                if child_line.id not in retrieved_lines:
+                    self._get_view_amount(child_line, total_costs, retrieved_lines)
+                sum += retrieved_lines[child_line.id]
+            retrieved_lines[browse_line.id] = sum
+        elif browse_line.line_type == 'overhead':
+            if browse_line.overhead_type == 'cost_percentage':
+                # percentage of all costs (sum of all 2nd-level lines, except overhead)
+                retrieved_lines[browse_line.id] = round(total_costs * browse_line.overhead_percentage / 100.0)
+            elif browse_line.overhead_type == 'grant_percentage':
+                # percentage of all costs (sum of all 2nd-level lines, except overhead)
+                retrieved_lines[browse_line.id] = round(total_costs * browse_line.overhead_percentage / (100.0 - browse_line.overhead_percentage))
+        
 
     def _get_budget_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
             Method to compute the allocated budget/amounts, depending on the information in the line
         """
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        # 1st step: get the real list of actual lines to compute
+        actual_line_ids = []
+        overhead = self._is_overhead_present(cr, uid, ids, context=context)
+        if overhead and len(ids) > 0:
+            line_for_format = self.browse(cr, uid, ids[0], context=context)
+            actual_line_ids = [line.id for line in line_for_format.format_id.actual_line_ids if line.line_type in ['actual', 'consumption']]
+        else:
+            actual_line_ids = self._get_actual_line_ids(cr, uid, ids, context=context)
+        
+        # 2nd step: retrieve values for all actual lines above
+        for line in self.browse(cr, uid, actual_line_ids, context=context):
             # default value
             res[line.id] = 0.0
             if line.line_type:
@@ -159,23 +190,15 @@ class financing_contract_format_line(osv.osv):
                         res[line.id] = line.allocated_budget_value
                     elif field_name == 'project_budget':
                         res[line.id] = line.project_budget_value
-                elif line.line_type == 'view':
-                    # Sum of all its children
-                    sum_budget = 0.0
-                    for child_line in line.child_ids:
-                        child_values = self._get_budget_amount(cr, uid, [child_line.id], field_name, context=context)
-                        sum_budget += child_values[child_line.id]
-                    res[line.id] = sum_budget
-                elif line.line_type == 'overhead':
-                    # 2 cases
-                    if line.overhead_type == 'cost_percentage':
-                        # percentage of all costs (sum of all 2nd-level lines, except overhead)
-                        total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = round(total_costs * line.overhead_percentage / 100.0)
-                    elif line.overhead_type == 'grant_percentage':
-                        # percentage of all costs (sum of all 2nd-level lines, except overhead)
-                        total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = round(total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage))
+                        
+        # 3rd step: compute all remaining lines from the retrieved results
+        total_budget_costs = 0.0
+        if overhead:
+            total_budget_costs = sum(res.values())
+        for line in self.browse(cr, uid, [id for id in ids if id not in actual_line_ids], context=context):
+            if line.id not in res:
+                self._get_view_amount(line, total_budget_costs, res)
+        
         return res
 
     def _get_actual_amount(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -183,7 +206,17 @@ class financing_contract_format_line(osv.osv):
             Method to compute the allocated budget/amounts, depending on the information in the line
         """
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        # 1st step: get the real list of actual lines to compute
+        actual_line_ids = []
+        overhead = self._is_overhead_present(cr, uid, ids, context=context)
+        if overhead and len(ids) > 0:
+            line_for_format = self.browse(cr, uid, ids[0], context=context)
+            actual_line_ids = [line.id for line in line_for_format.format_id.actual_line_ids if line.line_type in ['actual', 'consumption']]
+        else:
+            actual_line_ids = self._get_actual_line_ids(cr, uid, ids, context=context)
+        
+        # 2nd step: retrieve values for all actual lines above
+        for line in self.browse(cr, uid, actual_line_ids, context=context):
             # default value
             res[line.id] = 0.0
             if line.line_type:
@@ -193,23 +226,6 @@ class financing_contract_format_line(osv.osv):
                         res[line.id] = line.allocated_real_value
                     elif field_name == 'project_real':
                         res[line.id] = line.project_real_value
-                elif line.line_type == 'view':
-                    # Sum of all its children
-                    sum_real = 0.0
-                    for child_line in line.child_ids:
-                        child_values = self._get_actual_amount(cr, uid, [child_line.id], field_name, context=context)
-                        sum_real += child_values[child_line.id]
-                    res[line.id] = sum_real
-                elif line.line_type == 'overhead':
-                    # 2 cases
-                    if line.overhead_type == 'cost_percentage':
-                        # percentage of all costs (sum of all 2nd-level lines, except overhead)
-                        total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = round(total_costs * line.overhead_percentage / 100.0)
-                    elif line.overhead_type == 'grant_percentage':
-                        # percentage of all costs (sum of all 2nd-level lines, except overhead)
-                        total_costs = self._get_total_costs(cr, uid, line, field_name, context=context)
-                        res[line.id] = round(total_costs * line.overhead_percentage / (100.0 - line.overhead_percentage))
                 elif line.line_type == 'actual':
                     # sum of analytic lines, determined by the domain
                     analytic_domain = []
@@ -238,6 +254,15 @@ class financing_contract_format_line(osv.osv):
                         # Invert the result from the lines (positive for out, negative for in)
                         real_sum = -real_sum
                         res[line.id] = real_sum
+                        
+        # 3rd step: compute all remaining lines from the retrieved results
+        total_actual_costs = 0.0
+        if overhead:
+            total_actual_costs = sum(res.values())
+        for line in self.browse(cr, uid, [id for id in ids if id not in actual_line_ids], context=context):
+            if line.id not in res:
+                self._get_view_amount(line, total_actual_costs, res)
+        
         return res
 
 

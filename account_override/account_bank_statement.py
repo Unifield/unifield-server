@@ -23,6 +23,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_bank_statement(osv.osv):
     _name = 'account.bank.statement'
@@ -41,6 +42,20 @@ class account_bank_statement_line(osv.osv):
     _name = 'account.bank.statement.line'
     _inherit = 'account.bank.statement.line'
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        UTP-317: Check if partner is inactive or not. If inactive, raise an execption to the user.
+        """
+        # Some verification
+        if not context:
+            context = {}
+        res = super(account_bank_statement_line, self).create(cr, uid, vals, context)
+        # UTP-317: Check partner (if active or not)
+        if res:
+            absl = self.browse(cr, uid, [res], context)
+            if absl and absl[0] and absl[0].partner_id and not absl[0].partner_id.active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (absl[0].partner_id.name or '',))
+        return res
     _columns = {
         'ref': fields.char('Reference', size=50), # UF-1613 - add reference field from 32 to 50 chars
     }
