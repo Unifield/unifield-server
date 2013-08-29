@@ -840,7 +840,7 @@ MochiKit.Base.update(ListView.prototype, {
                 // set focus on the first field
                 var first = jQuery('input.listfields')[0] || null;
                 var autofocus = jQuery("[autofocus='autofocus']");
-                if (autofocus.length) {
+                if (autofocus.length && edit_inline) {
                     autofocus.focus();
                     autofocus.select();
                 }
