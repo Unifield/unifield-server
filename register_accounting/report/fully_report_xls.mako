@@ -57,31 +57,82 @@
     <Style ss:ID="left_bold">
       <Font ss:Bold="1"/>
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
     <Style ss:ID="left">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
     <Style ss:ID="centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
       <Font ss:Bold="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
     <Style ss:ID="date">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
       <NumberFormat ss:Format="Short Date"/>
       <Font ss:Bold="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
     <Style ss:ID="amount_bold">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
       <NumberFormat ss:Format="Fixed"/>
       <Font ss:Bold="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
     <Style ss:ID="amount">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
       <NumberFormat ss:Format="Fixed"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
     <Style ss:ID="short_date2">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
       <NumberFormat ss:Format="Short Date"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="invoice_header">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
     </Style>
   </Styles>
   <Worksheet ss:Name="Info">
@@ -273,40 +324,9 @@
         </Cell>
       </Row>
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
-      <Row ss:Height="14.5134">
-        <Cell ss:Index="2" ss:StyleID="distribution_header" ss:MergeAcross="11">
-          <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
-        </Cell>
-      </Row>
-      <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Destination')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Cost Center')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('FP')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Percentage')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Amount')}</Data>
-        </Cell>
-        <Cell ss:StyleID="distribution_header" ss:MergeAcross="5">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-      </Row>
 % for ana_line in line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-        <Cell ss:StyleID="left">
+        <Cell ss:Index="3" ss:StyleID="left">
           <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -321,40 +341,27 @@
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
-        <Cell ss:StyleID="distribution_header" ss:MergeAcross="5">
-          <Data ss:Type="String"> </Data>
-        </Cell>
       </Row>
 % endfor
-      <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header" ss:MergeAcross="11">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-      </Row>
 % endif
 % if line.direct_invoice and line.invoice_id:
-      <Row ss:Height="14.5134">
-        <Cell ss:Index="2" ss:StyleID="direct_invoice_header" ss:MergeAcross="11">
-          <Data ss:Type="String">          ${_('INVOICE LINES')}</Data>
-        </Cell>
-      </Row>
       <Row>
-        <Cell ss:Index="3">
+        <Cell ss:Index="3" ss:StyleID="invoice_header">
           <Data ss:Type="String">${_('Product')}</Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="invoice_header">
           <Data ss:Type="String">${_('Account')}</Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="invoice_header">
           <Data ss:Type="String">${_('Qty')}</Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="invoice_header">
           <Data ss:Type="String">${_('Price')}</Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="invoice_header">
           <Data ss:Type="String">${_('Subtotal')}</Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="invoice_header">
           <Data ss:Type="String">${_('Description')}</Data>
         </Cell>
       </Row>
@@ -383,41 +390,10 @@
         </Cell>
       </Row>
 % if (inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines) or (inv_line.invoice_id and inv_line.invoice_id.analytic_distribution_id and inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
-      <Row ss:Height="14.5134">
-        <Cell ss:Index="2" ss:StyleID="distribution_header" ss:MergeAcross="11">
-          <Data ss:Type="String">          ${_('ANALYTIC DISTRIBUTION')}</Data>
-        </Cell>
-      </Row>
-      <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Destination')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Cost Center')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('FP')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Percentage')}</Data>
-        </Cell>
-        <Cell ss:StyleID="analytic_header">
-          <Data ss:Type="String">${_('Amount')}</Data>
-        </Cell>
-        <Cell ss:StyleID="distribution_header" ss:MergeAcross="5">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-      </Row>
 % if inv_line.analytic_distribution_id:
 % for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-        <Cell ss:StyleID="left">
+        <Cell ss:Index="3" ss:StyleID="left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -431,19 +407,13 @@
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="distribution_header" ss:MergeAcross="5">
-          <Data ss:Type="String"> </Data>
         </Cell>
       </Row>
 % endfor
 % elif inv_line.invoice_id.analytic_distribution_id:
 % for inv_ana_line in inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-        <Cell ss:StyleID="left">
+        <Cell ss:Index="3" ss:StyleID="left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -458,17 +428,9 @@
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
-        <Cell ss:StyleID="distribution_header" ss:MergeAcross="5">
-          <Data ss:Type="String"> </Data>
-        </Cell>
       </Row>
 % endfor
 % endif
-      <Row>
-        <Cell ss:Index="2" ss:StyleID="distribution_header" ss:MergeAcross="11">
-          <Data ss:Type="String"> </Data>
-        </Cell>
-      </Row>
 % endif
 % endfor
 % endif
