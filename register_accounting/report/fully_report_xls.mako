@@ -139,6 +139,56 @@
       </Row>
       <Row ss:Height="14.5134">
       </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
+          <Data ss:Type="String">Name: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${o.name or ''|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
+          <Data ss:Type="String">Period: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${o.period_id and o.period_id.name or ''|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
+          <Data ss:Type="String">Currency: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${o.currency and o.currency.name or ''|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
+          <Data ss:Type="String">Starting balance: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
+          <Data ss:Type="String">Closing balance: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="Number">${o.balance_end_real or 0.0|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
+          <Data ss:Type="String">State: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String">${o.state and getSel(o, 'state') or ''|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+      </Row>
       <Row ss:AutoFitHeight="0" ss:Height="29.1118">
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Specific type</Data>
