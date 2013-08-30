@@ -870,7 +870,7 @@ class stock_move(osv.osv):
             context = {}
 
         for move in self.browse(cr, uid, ids, context=context):
-            if move.picking_id and move.picking_id.type == 'internal':
+            if move.picking_id and move.picking_id.type == 'internal' and move.product_id:
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, move.product_id.id, vals={'constraints': {'location_id': move.location_dest_id}}, context=context):
                     return False
 

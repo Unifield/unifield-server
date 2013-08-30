@@ -615,6 +615,9 @@ class tender_line(osv.osv):
         '''
         product is changed, we update the UoM
         '''
+        if not context:
+            context = {}
+
         prod_obj = self.pool.get('product.product')
         result = {'value': {}}
         if product_id:
@@ -710,7 +713,7 @@ class tender_line(osv.osv):
             ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.tender_id:
+            if line.tender_id and line.product_id:
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'constraints': ['external']}, context=context):
                     return False
 

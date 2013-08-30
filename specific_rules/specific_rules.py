@@ -1355,8 +1355,9 @@ class stock_inventory(osv.osv):
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
                     raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
 
-                # Check constraints on lines
-                product_obj._get_restriction_error(cr, uid, [line.product_id.id], {'location_id': line.location_id.id}, context=context)
+                if line.product_id:
+                    # Check constraints on lines
+                    product_obj._get_restriction_error(cr, uid, [line.product_id.id], {'location_id': line.location_id.id}, context=context)
 
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:

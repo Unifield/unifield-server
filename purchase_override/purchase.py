@@ -495,10 +495,11 @@ class purchase_order(osv.osv):
                     product_obj = self.pool.get('product.product')
                     for order in self.browse(cr, uid, ids):
                         for line in order.order_line:
-                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part})
-                            if test:
-                                res.setdefault('value', {}).update({'partner_address_id': False})
-                                return res
+                            if line.product_id:
+                                res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part})
+                                if test:
+                                    res.setdefault('value', {}).update({'partner_address_id': False})
+                                    return res
             if partner.partner_type in ('internal', 'esc'):
                 res['value']['invoice_method'] = 'manual'
             elif ids and partner.partner_type == 'intermission':
@@ -1956,7 +1957,7 @@ class purchase_order_line(osv.osv):
             context = {}
 
         for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.partner_id and line.order_id.state != 'done':
+            if line.order_id and line.order_id.partner_id and line.order_id.state != 'done' and line.product_id:
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id}, context=context):
                     return False
 
@@ -2224,6 +2225,9 @@ class purchase_order_line(osv.osv):
         suppinfo_obj = self.pool.get('product.supplierinfo')
         partner_price = self.pool.get('pricelist.partnerinfo')
         product_obj = self.pool.get('product.product')
+
+        if not context:
+            context = {}
 
         # If the user modify a line, remove the old quantity for the total quantity
         if ids:

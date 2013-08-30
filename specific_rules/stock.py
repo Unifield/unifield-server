@@ -74,8 +74,9 @@ class initial_stock_inventory(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please enter at least one line in stock inventory before confirm it.'))
 
             for inventory_line in inventory.inventory_line_id:
-                # Check product constrainsts
-                product_obj._get_restriction_error(cr, uid, [inventory_line.product_id.id], {'location_id': inventory_line.location_id.id}, context=context)
+                if inventory_line.product_id:
+                    # Check product constrainsts
+                    product_obj._get_restriction_error(cr, uid, [inventory_line.product_id.id], {'location_id': inventory_line.location_id.id}, context=context)
 
                 # Don't check integrity on line with no quantity
                 if inventory_line.product_qty == 0.0:

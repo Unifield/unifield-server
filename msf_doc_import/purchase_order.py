@@ -364,7 +364,7 @@ class purchase_order_line(osv.osv):
                         to_write.update({'product_uom': uom, 'text_error': text_error})
 
                 # Check product line restrictions
-                if product:
+                if product and po.partner_id:
                     self.pool.get('product.product')._get_restriction_error(cr, uid, [product], {'partner_id': po.partner_id.id}, context=dict(context, noraise=False))
                 
         return to_write
