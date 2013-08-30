@@ -362,6 +362,11 @@ class purchase_order_line(osv.osv):
                         uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
                         text_error += _('\n It wasn\'t possible to update the UoM with the product\'s one because the former wasn\'t either defined.')
                         to_write.update({'product_uom': uom, 'text_error': text_error})
+
+                # Check product line restrictions
+                if product:
+                    self.pool.get('product.product')._get_restriction_error(cr, uid, [product], {'partner_id': po.partner_id.id}, context=dict(context, noraise=False))
+                
         return to_write
 
     def check_data_for_uom(self, cr, uid, ids, *args, **kwargs):

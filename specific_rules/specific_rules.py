@@ -689,6 +689,11 @@ class stock_move(osv.osv):
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
                                                              loc_dest_id, address_id)
 
+        if prod_id and parent_type in ('in', 'out'):
+            prod_obj = self.pool.get('product.product')
+            # Test the compatibility of the product with a stock move
+            result, test = prod_obj._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'constraints': ['picking']})
+
         # product changes, prodlot is always cleared
         result.setdefault('value', {})['prodlot_id'] = False
         # reset the hidden flag
@@ -1349,6 +1354,10 @@ class stock_inventory(osv.osv):
                     raise osv.except_osv(_('Error'), _('The product %s is perishable but the line with this product has no expiry date') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
                 if line.hidden_batch_management_mandatory and not line.prod_lot_id:
                     raise osv.except_osv(_('Error'), _('The product %s is batch mandatory but the line with this product has no batch') % product_obj.name_get(cr, uid, [line.product_id.id])[0][1])
+
+                # Check constraints on lines
+                product_obj._get_restriction_error(cr, uid, [line.product_id.id], {'location_id': line.location_id.id}, context=context)
+
                 # if perishable product
                 if line.hidden_perishable_mandatory and not line.hidden_batch_management_mandatory:
                     # integrity test
@@ -1478,6 +1487,13 @@ class stock_inventory_line(osv.osv):
             # do nothing
             result.setdefault('value', {}).update({'product_qty': 0.0,})
             return result
+
+        if product and location_id:
+            product_obj = self.pool.get('product.product')
+            result, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='location_id', values=result, vals={'location_id': location_id})
+            if test:
+                return result
+
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
         return result
@@ -1500,6 +1516,10 @@ class stock_inventory_line(osv.osv):
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
         if product:
             product_obj = self.pool.get('product.product').browse(cr, uid, product)
+            if location_id:
+                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product, field_name='product_id', values=result, vals={'location_id': location_id})
+                if test:
+                    return result
             if product_obj.batch_management:
                 result.setdefault('value', {})['hidden_batch_management_mandatory'] = True
                 result.setdefault('value', {})['lot_check'] = True

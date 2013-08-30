@@ -212,6 +212,10 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'text_error': error,
                              'just_info_ok': just_info_ok,}
 
+                # Check product restrictions
+                if product_id:
+                    product_obj._get_restriction_error(cr, uid, [product_id], {'constraints': ['consumption']}, context=dict(context, noraise=False))
+
                 if product_id and batch and line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
                     error_log += _("""The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."""
                                    ) % (line_num, product_obj.read(cr, uid, product_id, ['default_code'], context)['default_code'], not batch and 'Not specified' or prodlot_obj.read(cr, uid, batch, ['name'], context)['name'])
@@ -232,6 +236,12 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             except IndexError, e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += _("Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n") % (line_num, e)
+                ignore_lines += 1
+                continue
+            except osv.except_osv as osv_error:
+                osv_value = osv_error.value
+                osv_name = osv_error.name
+                error_log += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                 ignore_lines += 1
                 continue
             except Exception, e:

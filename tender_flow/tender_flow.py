@@ -127,6 +127,21 @@ class tender(osv.osv):
     
     _order = 'name desc'
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is no restrictive products in lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('tender.line')
+
+        res = True
+        for tender in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in tender.tender_line_ids], context=context)
+
+        return res
+
     def _check_tender_from_fo(self, cr, uid, ids, context=None):
         if not context:
             context = {}
@@ -149,6 +164,7 @@ class tender(osv.osv):
         '''
         if not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'tender')})
+
         return super(tender, self).create(cr, uid, vals, context=context)
 
     def _check_service(self, cr, uid, ids, vals, context=None):
@@ -231,6 +247,7 @@ class tender(osv.osv):
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')
         obj_data = self.pool.get('ir.model.data')
+
         # no suppliers -> raise error
         for tender in self.browse(cr, uid, ids, context=context):
             # check some supplier have been selected
@@ -601,13 +618,21 @@ class tender_line(osv.osv):
         prod_obj = self.pool.get('product.product')
         result = {'value': {}}
         if product_id:
-            uom_id = prod_obj.browse(cr, uid, product_id, context=context).uom_id.id
+            # Test the compatibility of the product with a tender
+            result, test = prod_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values=result, vals={'constraints': ['external', 'esc', 'internal']}, context=context)
+            if test:
+                return result
 
+            product = prod_obj.browse(cr, uid, product_id, context=context)
+            result['value']['product_uom'] = product.uom_id.id
+            result['value']['text_error'] = False
+            result['value']['to_correct_ok'] = False
+        
         result = self.onchange_uom_qty(cr, uid, id, uom_id, product_qty)
         
         if uom_id:
             result['value']['product_uom'] = uom_id
-            
+
         return result
 
     def onchange_uom_qty(self, cr, uid, ids, uom_id, qty):
@@ -677,6 +702,20 @@ class tender_line(osv.osv):
                  'state': lambda *a: 'draft',
                  }
     
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is no restrictive products in lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.tender_id:
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'constraints': ['external']}, context=context):
+                    return False
+
+        return True
+
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
@@ -955,6 +994,8 @@ class purchase_order(osv.osv):
         '''
         res = True
         return res
+
+    
         
         
     def rfq_sent(self, cr, uid, ids, context=None):
