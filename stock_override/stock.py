@@ -858,6 +858,8 @@ class stock_move(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
                 raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+
+        return True
     
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
