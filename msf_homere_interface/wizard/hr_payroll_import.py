@@ -153,8 +153,14 @@ class hr_payroll_import(osv.osv_memory):
                 # Create description
                 name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
                 # Create reference
-                separator = str(time.strftime('%m/%Y', time.strptime(date[0], date_format)))
-                ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
+                date_format_separator = '/'
+                if '-' in date_format:
+                    date_format_separator = '-'
+                separator = str(time.strftime('%m' + date_format_separator + '%Y', time.strptime(date[0], date_format)))
+                try:
+                    ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
+                except IndexError, e:
+                    ref = ''
         # Fetch description
         if not name:
             name = description and description[0] and ustr(description[0]) or ''
