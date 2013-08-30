@@ -302,7 +302,7 @@ class account_move(osv.osv):
         context.update({'omit_analytic_distribution': False})
         je = self.browse(cr, uid, [id], context=context)[0]
         if je.status == 'sys' or (je.journal_id and je.journal_id.type == 'migration'):
-            raise osv.except_osv(_('Error'), _("You can only copy manual journal entries that doesn't come from a migration."))
+            raise osv.except_osv(_('Error'), _("You can only duplicate manual journal entries."))
         res = super(account_move, self).copy(cr, uid, id, {'line_id': [], 'state': 'draft', 'document_date': je.document_date, 'date': je.date, 'name': ''}, context=context)
         for line in je.line_id:
             self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res, 'document_date': je.document_date, 'date': je.date, 'period_id': je.period_id and je.period_id.id or False}, context)
