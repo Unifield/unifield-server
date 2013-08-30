@@ -111,7 +111,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create the second product, with one specified supplier,
   Name Camembert
@@ -150,7 +150,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create the third product, with two specified supplier, the first one with supplier info, the second one without,
   Name Pneu
@@ -193,7 +193,7 @@
     warranty: 0.0
     weight: 0.0
     weight_net: 0.0
-    international_status: itc
+    international_status: product_attributes.int_1
 -
 
   I create the first purchase order

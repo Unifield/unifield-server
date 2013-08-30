@@ -100,7 +100,7 @@
                             <group colspan="2" col="3" name="status">
                                 <separator string="Status" colspan="3"/>
                                 <field name="categ_id" readonly="1" colspan="3"/>
-                                <field name="international_status" required="1" colspan="3"/>
+                                <field name="international_status" required="1" widget="selection" colspan="3" />
                                 <field name="state" colspan="3"/>
                                 <field name="active" readonly="1"/>
                                 <group colspan="1" col="1">
@@ -121,8 +121,9 @@
                         <page string="Specific info">
                             <group colspan="2" col="2">
                                 <separator string="Quality" colspan="2"/>
-                                <field name="heat_sensitive_item" colspan="2"/>
-                                <field name="cold_chain" colspan="2" attrs="{'invisible': [('heat_sensitive_item','not in',['*','**','***'])]}"/>
+                                <field name="heat_sensitive_item" colspan="2" widget="selection" on_change="onchange_heat(heat_sensitive_item)"/>
+                                <field name="show_cold_chain" invisible="1" />
+                                <field name="cold_chain" colspan="2" attrs="{'invisible': [('show_cold_chain','=',False)]}"  widget="selection"/>
                                 <field name="sterilized" colspan="2"/>
                                 <field name="single_use" colspan="2"/>
                                 <field name="narcotic" colspan="2"/>
@@ -133,7 +134,7 @@
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
-                                <field name="justification_code_id" colspan="2"/>
+                                <field name="justification_code_id" colspan="2" widget="selection" />
                                 <!-- uf-1544
                                 <field name="med_device_class" colspan="2" />
                                 <field name="gmdn_code" colspan="2" />
@@ -173,8 +174,14 @@
                                 </field>
                             </group>
                              -->
+
                             <group colspan="2" col="2">
-                                <field name="supply_source_ids" colspan="2" nolabel="1"/>
+                                <field name="supply_source_ids" colspan="2" nolabel="1" context="{'from_product':True}">
+					<tree>
+                                    		<field name="source" />
+					</tree>
+
+                                </field>
                             </group>
 
                             <separator string="Associated Products" colspan="4"/>
@@ -396,23 +403,33 @@
             <field name="model">product.supply.source</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Supply Source">
-                    <field name="source" nolabel="1"/>
+                <tree string="Supply Source" editable="top" hide_new_button="context.get('from_product')" >
+                    <field name="source" nolabel="1" required="True"/>
                 </tree>
             </field>
         </record>
 
-        <record id="product_justification_code_tree_view" model="ir.ui.view">
-            <field name="name">product.justification.code.tree</field>
-            <field name="model">product.justification.code</field>
-            <field name="type">tree</field>
+        <record id="product_supply_source_search_view" model="ir.ui.view">
+            <field name="name">product.supply.source.search</field>
+            <field name="model">product.supply.source</field>
+            <field name="type">search</field>
             <field name="arch" type="xml">
-                <tree string="Justification Code">
-                    <field name="code"/>
-                    <field name="description"/>
-                </tree>
+                <search string="Supply sources">
+                    <field name="source" />
+                </search>
             </field>
         </record>
+
+        <record id="product_supply_source_action" model="ir.actions.act_window">
+            <field name="name">Supply sources</field>
+            <field name="res_model">product.supply.source</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem action="product_supply_source_action"
+                  id="product_supply_source_menu"
+                  parent="purchase.menu_product_in_config_purchase" />
 
         <record id="product.product_search_form_view" model="ir.ui.view">
             <field name="name">product.search.form</field>
@@ -586,6 +603,174 @@
         <menuitem id="menu_product_config" name="Configuration" parent="menu_main_product" sequence="20" />
         <menuitem id="product.prod_config_main" name="Product" parent="product_attributes.menu_product_config" sequence="9"/>
         <menuitem id="base.menu_product" name="Products" parent="menu_main_product" sequence="9" />
+
+	<!-- status -->
+	<record id="product_status_search" model="ir.ui.view">
+	    <field name="name">product.status.search</field>
+	    <field name="model">product.status</field>
+	    <field name="type">search</field>
+	    <field name="arch" type="xml">
+	        <search string="Status">
+	            <field name="name" />
+	        </search>
+	    </field>
+	</record>
+	<record id="product_status_tree" model="ir.ui.view">
+	    <field name="name">product.status.tree</field>
+	    <field name="model">product.status</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Status" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
+	<record id="product_status_action" model="ir.actions.act_window">
+            <field name="name">Status</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.status</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="product_status_search" />
+        </record>
+        <menuitem id="menu_status_product"
+                  action="product_status_action"
+                  parent="purchase.menu_product_in_config_purchase" />
+
+	<!-- international status -->
+	<record id="product_international_status_search" model="ir.ui.view">
+	    <field name="name">product.international.status.search</field>
+	    <field name="model">product.international.status</field>
+	    <field name="type">search</field>
+	    <field name="arch" type="xml">
+	        <search string="Product Creators">
+	            <field name="name" />
+	        </search>
+	    </field>
+	</record>
+	<record id="product_international_status_tree" model="ir.ui.view">
+	    <field name="name">product.international.status.tree</field>
+	    <field name="model">product.international.status</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product Creators" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
+	<record id="product_international_status_action" model="ir.actions.act_window">
+            <field name="name">Product creators</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.international.status</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="product_international_status_search" />
+        </record>
+        <menuitem id="menu_international_status_product"
+                  action="product_international_status_action"
+                  parent="purchase.menu_product_in_config_purchase" />
+
+	<!-- heat sensitive -->
+	<record id="product_heat_sensitive_search" model="ir.ui.view">
+	    <field name="name">product.heat_sensitive.search</field>
+	    <field name="model">product.heat_sensitive</field>
+	    <field name="type">search</field>
+	    <field name="arch" type="xml">
+	        <search string="Temperature sensitive">
+	            <field name="name" />
+	        </search>
+	    </field>
+	</record>
+	<record id="product_heat_sensitive_tree" model="ir.ui.view">
+	    <field name="name">product.heat_sensitive.tree</field>
+	    <field name="model">product.heat_sensitive</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Temperature sensitive" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
+	<record id="product_heat_sensitive_action" model="ir.actions.act_window">
+            <field name="name">Temperature sensitive</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.heat_sensitive</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="product_heat_sensitive_search" />
+        </record>
+        <menuitem id="menu_heat_sensitive_product"
+                  action="product_heat_sensitive_action"
+                  parent="purchase.menu_product_in_config_purchase" />
+
+	<!-- Cold chain -->
+	<record id="product_cold_chain_search" model="ir.ui.view">
+	    <field name="name">product.cold_chain.search</field>
+	    <field name="model">product.cold_chain</field>
+	    <field name="type">search</field>
+	    <field name="arch" type="xml">
+	        <search string="Cold chain">
+	            <field name="name" />
+	        </search>
+	    </field>
+	</record>
+	<record id="product_cold_chain_tree" model="ir.ui.view">
+	    <field name="name">product.cold_chain.tree</field>
+	    <field name="model">product.cold_chain</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Cold chain" editable="top" >
+	            <field name="name" />
+                </tree>
+            </field>
+        </record>
+	<record id="product_cold_chain_action" model="ir.actions.act_window">
+            <field name="name">Cold chain</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">product.cold_chain</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="product_cold_chain_search" />
+        </record>
+	<menuitem id="menu_cold_chain_product"
+                  action="product_cold_chain_action"
+                  parent="purchase.menu_product_in_config_purchase" />
+
+        <record id="product_justification_code_tree_view" model="ir.ui.view">
+            <field name="name">product.justification.code.tree</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Justification Code" editable="top">
+                    <field name="code" />
+                    <field name="description"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="product_justification_code_search_view" model="ir.ui.view">
+            <field name="name">product.justification.code.search.view</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Justification Codes">
+                    <field name="description" />
+                </search>
+            </field>
+        </record>
+
+        <record id="product_justification_code_action" model="ir.actions.act_window">
+            <field name="name">Justification codes</field>
+            <field name="res_model">product.justification.code</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="product_justification_code_search_view" />
+        </record>
+
+        <menuitem id="menu_justification_code_product"
+                  action="product_justification_code_action"
+                  parent="purchase.menu_product_in_config_purchase" />
+
         
         
         <!--  Deactivation product error wizard -->
