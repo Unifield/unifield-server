@@ -41,7 +41,10 @@ class account_account_activable(osv.osv):
         'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
     
-    def _check_date(self, vals, context={}):
+    def _check_date(self, vals, context=None):
+        if context is None:
+            context = {}
+
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
                  # validate the date (must be > today)
