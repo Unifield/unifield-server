@@ -124,9 +124,9 @@
             <font color="white"> </font>
         </para>
 
-        <section>
 
-        <blockTable colWidths="25.0,70.0,120.0,60.0,45.0,40.0,70.0,70.0,70.0,80.0,80.0,80.0" style="LineHeader" keepWithNext="1">
+        <section>
+        <blockTable colWidths="25.0,70.0,120.0,60.0,45.0,40.0,70.0,70.0,70.0,80.0,80.0,80.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -165,11 +165,8 @@
                     <para style="LHeader">Actual Move Date</para>
                 </td>
             </tr>
-        </blockTable>
-
-        <blockTable colWidths="25.0,70.0,120.0,60.0,45.0,40.0,70.0,70.0,70.0,80.0,80.0,80.0" style="LineInfo">
-            [[ repeatIn(picking.move_lines, 'line') ]]
             <tr>
+            [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
                 <td>
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>
