@@ -1821,7 +1821,7 @@ class account_bank_statement_line(osv.osv):
         Open the attached invoice
         """
         for st_line in self.browse(cr, uid, ids, context=context):
-            if not st_line.direct_invoice or not st_line.invoice_id:
+            if not st_line.invoice_id:
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
