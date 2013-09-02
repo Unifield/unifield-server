@@ -91,19 +91,22 @@ class change_dest_location(osv.osv_memory):
             ids = [ids]
 
         loc_obj = self.pool.get('stock.location')
+        move_obj = self.pool.get('stock.move')
 
         for wizard in self.browse(cr, uid, ids, context=context):
             warn_msg = ''
             show_warn_msg = False
             for move in wizard.picking_id.move_lines:
                 # Check if the new destination location is not the source location
-                if move.location_id.id == wizard.dest_location_id.id:
+                if move.location_dest_id.id == wizard.dest_location_id.id:
                     show_warn_msg = True
-                    warn_msg += _('Line %s : The new destination location is the same as the source location of the move, so the destination location has not been changed for this move.') % move.line_number
+                    warn_msg += _('Line %s : The new destination location is the same as the source location of the move, so the destination location has not been changed for this move. \n') % move.line_number
+                    continue
 
                 if move.state not in ('draft', 'confirmed', 'assigned'):
                     show_warn_msg = True
-                    warn_msg += _('Line %s : The state \'%s\' of the move doesn\'t allow a modification of the destination location.') % (move.line_number, getSelection(move, 'state'))
+                    warn_msg += _('Line %s : The state \'%s\' of the move doesn\'t allow a modification of the destination location. \n') % (move.line_number, getSelection(move, 'state'))
+                    continue
 
 
                 # Check if the new destination location is compatible with the product type
@@ -111,10 +114,12 @@ class change_dest_location(osv.osv_memory):
                                                         ('usage', '!=', 'view')], context=context)
                 if wizard.dest_location_id.id not in location_ids:
                     show_warn_msg = True
-                    warn_msg += _('Line %s : The new destination location is not compatible with the product type, so the destination location has not been changed for this move.') % move.line_number
+                    warn_msg += _('Line %s : The new destination location is not compatible with the product type, so the destination location has not been changed for this move. \n') % move.line_number
+                    continue
+
+                self.pool.get('stock.move').write(cr, uid, [move.id], {'location_dest_id': wizard.dest_location_id.id}, context=context)
 
             if not show_warn_msg:
-                self.pool.get('stock.move').write(cr, uid, [move.id], {'location_dest_id': wizard.dest_location_id.id}, context=context)
                 warn_msg = _('The destination location has been changed on all stock moves.')
 
             self.write(cr, uid, [wizard.id], {'warn_msg': warn_msg,
