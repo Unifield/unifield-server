@@ -423,7 +423,7 @@ class wizard_register_import(osv.osv_memory):
             wiz_state = 'done'
             # If errors, cancel probable modifications
             if errors:
-                #cr.rollback()
+                cr.rollback()
                 created = 0
                 message = _('Import FAILED.')
                 # Delete old errors
@@ -448,7 +448,12 @@ class wizard_register_import(osv.osv_memory):
             cr.commit()
             cr.close()
         except osv.except_osv as osv_error:
+            cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+            cr.close()
+        except Exception as e:
+            cr.rollback()
+            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e.args and e.args[0] or '',), 'state': 'done', 'progression': 100.0})
             cr.close()
         return True
 
