@@ -311,11 +311,11 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s: Account is missing.') % (current_line_num,))
                         continue
                     if r[cols['document_date']].type != 'datetime':
-                        errors.append(_('Line %s: Document date wrong format. Use a date one.') % (current_line_num,))
+                        errors.append(_('Line %s: Document date wrong excel format. Use a date one.') % (current_line_num,))
                         continue
                     r_document_date = line[cols['document_date']].strftime('%Y-%m-%d')
                     if r[cols['posting_date']].type != 'datetime':
-                        errors.append(_('Line %s: Posting date wrong format. Use a date one.') % (current_line_num))
+                        errors.append(_('Line %s: Posting date wrong excel format. Use a date one.') % (current_line_num))
                         continue
                     r_date = line[cols['posting_date']].strftime('%Y-%m-%d')
                     r_description = line[cols['description']]
