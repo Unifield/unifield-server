@@ -67,6 +67,7 @@ class report_stock_move(osv.osv):
             ('10','October'), ('11','November'), ('12','December')], 'Month',readonly=True),
         'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
+        'product_uom': fields.many2one('product.uom', 'UoM', readonly=True),
         'company_id':fields.many2one('res.company', 'Company', readonly=True),
         'picking_id':fields.many2one('stock.picking', 'Reference', readonly=True),
         'type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal'), ('other', 'Others')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
@@ -134,19 +135,19 @@ class report_stock_move(osv.osv):
                         1 as currency_id
                     FROM (SELECT
                         CASE WHEN sp.type in ('out') THEN
-                            sum(sm.product_qty * pu.factor * u.factor)
+                            sum((sm.product_qty / pu.factor) * u.factor)
                             ELSE 0.0
                             END AS out_qty,
                         CASE WHEN sp.type in ('in') THEN
-                            sum(sm.product_qty * pu.factor * u.factor)
+                            sum((sm.product_qty / pu.factor) * u.factor)
                             ELSE 0.0
                             END AS in_qty,
                         CASE WHEN sp.type in ('out') THEN
-                            sum(sm.product_qty * pu.factor * u.factor) * pt.standard_price
+                            sum((sm.product_qty / pu.factor) * u.factor) * pt.standard_price
                             ELSE 0.0
                             END AS out_value,
                         CASE WHEN sp.type in ('in') THEN
-                            sum(sm.product_qty * pu.factor * u.factor) * pt.standard_price
+                            sum((sm.product_qty / pu.factor) * u.factor) * pt.standard_price
                             ELSE 0.0
                             END AS in_value,
                         min(sm.id) as sm_id,
@@ -162,7 +163,7 @@ class report_stock_move(osv.osv):
                         sm.prodlot_id as prodlot_id,
                         sm.comment as comment,
                         sm.tracking_id as tracking_id,
-                        sum(sm.product_qty * pu.factor * u.factor) as product_qty,
+                        sum((sm.product_qty / pu.factor) * u.factor) as product_qty,
                         pt.nomen_manda_2 as categ_id,
                         sp.partner_id2 as partner_id,
                         sm.product_id as product_id,
@@ -171,7 +172,7 @@ class report_stock_move(osv.osv):
                         sm.picking_id as picking_id,
                             sm.company_id as company_id,
                             sm.state as state,
-                            sm.product_uom as product_uom,
+                            pt.uom_id as product_uom,
                             sp.type as type,
                             sp.stock_journal_id AS stock_journal
                     FROM
@@ -185,7 +186,7 @@ class report_stock_move(osv.osv):
 
                     GROUP BY
                         sm.id,sp.type, sm.date,sp.partner_id2,
-                        sm.product_id,sm.state,sm.product_uom,sm.date_expected, sm.origin,
+                        sm.product_id,sm.state,pt.uom_id,sm.date_expected, sm.origin,
                         sm.product_id,pt.standard_price, sm.picking_id, sm.product_qty, sm.prodlot_id, sm.comment, sm.tracking_id,
                         sm.company_id,sm.product_qty, sm.location_id,sm.location_dest_id,pu.factor,pt.nomen_manda_2, sp.stock_journal_id, sm.reason_type_id)
                     AS al

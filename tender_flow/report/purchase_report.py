@@ -135,11 +135,11 @@ class purchase_report(osv.osv):
                     s.categ as categ,
                     t.uom_id as product_uom,
                     (case when cc.percentage is not null then
-                        sum(l.product_qty*u.factor*pu.factor*(cc.percentage/100.00))
+                        sum(l.product_qty/u.factor*pu.factor*(cc.percentage/100.00))
                     when ccp.percentage is not null then
-                        sum(l.product_qty*u.factor*pu.factor*(ccp.percentage/100.00))
+                        sum(l.product_qty/u.factor*pu.factor*(ccp.percentage/100.00))
                     else
-                        sum(l.product_qty*u.factor*pu.factor)
+                        sum(l.product_qty/u.factor*pu.factor)
                     end) as quantity,
                     extract(epoch from age(s.date_approve,s.date_order))/(24*60*60)::decimal(16,2) as delay,
                     extract(epoch from age(l.date_planned,s.date_order))/(24*60*60)::decimal(16,2) as delay_pass,
