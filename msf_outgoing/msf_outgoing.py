@@ -1818,7 +1818,6 @@ class stock_picking(osv.osv):
             'code': code,
             'prefix': prefix,
             'padding': padding,
-            'implementation': 'psql',
         }
         return seq_pool.create(cr, uid, seq)
     
