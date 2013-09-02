@@ -142,7 +142,7 @@ class sale_report(osv.osv):
                     select l.id as id,
                         l.product_id as product_id,
                         u.name as uom_name,
-                        sum(l.product_uom_qty * u.factor * pu.factor) as product_uom_qty,
+                        sum(l.product_uom_qty / u.factor * pu.factor) as product_uom_qty,
                         sum(l.product_uom_qty * l.price_unit) as price_total,
                         pt.categ_id, l.order_id
                     from
