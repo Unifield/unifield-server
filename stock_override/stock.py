@@ -958,6 +958,7 @@ class stock_move(osv.osv):
                 if 'fefo' in res:
                     # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
                     values = {'name': move.name,
+                              'sale_line_id': move.sale_line_id and move.sale_line_id.id or False,
                               'picking_id': move.picking_id.id,
                               'product_uom': move.product_uom.id,
                               'product_id': move.product_id.id,
