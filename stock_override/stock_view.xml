@@ -69,6 +69,7 @@
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
+                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='location_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
@@ -116,6 +117,7 @@
                 </xpath>
                 <xpath expr="/form//field[@name='product_uom']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
+                    <attribute name="domain">[('uom_by_product', '=', product_id)]</attribute>
                 </xpath>
                 <xpath expr="/form//field[@name='location_id']" position="attributes">
                     <attribute name="attrs">{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}</attribute>
@@ -375,10 +377,11 @@
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                             />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                             string="Unit Of Measure"
                                             colspan="2"
                                             attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
-                                            />
+                                            domain="[('uom_by_product', '=', product_id)]"/>
                                         <field name="product_uos_qty"
                                             on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)"
                                             colspan="4"
@@ -586,9 +589,11 @@
 											colspan="2"
 											 />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                         	string="Unit Of Measure"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
-                                        	colspan="2"/>
+                                        	colspan="2"
+                                        	domain="[('uom_by_product', '=', product_id)]"/>
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
                                         <field name="product_packaging" domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
@@ -859,9 +864,11 @@
                                         	colspan="2"
                                         	 />
                                         <field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
                                         	string="Unit Of Measure"
                                         	attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
                                         	colspan="2"
+                                        	domain="[('uom_by_product', '=', product_id)]"
                                         	 />
                                         <field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" invisible="1"/>
                                         <field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" invisible="1"/>
@@ -993,7 +1000,7 @@
                                     on_change="change_expiry(expiry_date, product_id, type_check)"
                                     attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
                                 <field name="product_qty"/>
-                                <field name="product_uom"/>
+                                <field name="product_uom" domain="[('uom_by_product', '=', product_id)]"/>
                                 <field name="hidden_perishable_mandatory" invisible="True" />
                                 <field name="hidden_batch_management_mandatory" invisible="True" />
                                 <field name="type_check" invisible="True" />

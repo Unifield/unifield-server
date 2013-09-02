@@ -674,6 +674,19 @@ class stock_picking(osv.osv):
                     # Create invoice
                     self.action_invoice_create(cr, uid, [sp.id], journal_ids[0], False, inv_type, {})
         return res
+    
+    def _get_price_unit_invoice(self, cr, uid, move_line, type):
+        '''
+        Update the Unit price according to the UoM received and the UoM ordered
+        '''
+        res = super(stock_picking, self)._get_price_unit_invoice(cr, uid, move_line, type)
+        if move_line.purchase_line_id:
+            po_uom_id = move_line.purchase_line_id.product_uom.id
+            move_uom_id = move_line.product_uom.id
+            uom_ratio = self.pool.get('product.uom')._compute_price(cr, uid, move_uom_id, 1, po_uom_id)
+            return res/uom_ratio
+        
+        return res
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
         """
@@ -860,14 +873,23 @@ class stock_move(osv.osv):
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
         'to_correct_ok': fields.boolean(string='Line to correct'),
         'text_error': fields.text(string='Error', readonly=True),
+        'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
     }
-    
+
     _defaults = {
         'location_dest_id': _default_location_destination,
         'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
         'inactive_product': False,
         'inactive_error': lambda *a: '',
     }
+
+    def _uom_constraint(self, cr, uid, ids, context=None):
+        for obj in self.browse(cr, uid, ids, context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+                raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+        return True
+
+    _constraints = [(_uom_constraint, 'Constraint error on Uom', [])]
 
     def create(self, cr, uid, vals, context=None):
         '''

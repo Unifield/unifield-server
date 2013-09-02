@@ -53,11 +53,9 @@ class account_analytic_line(osv.osv):
         'currency_id': fields.many2one('res.currency', string="Book. Currency", required=True, readonly=True),
         'is_reversal': fields.boolean('Is a reversal line?'),
         'is_reallocated': fields.boolean('Have been reallocated?'),
-        'period_id': fields.related('move_id', 'period_id', string="Period", readonly=True, type="many2one", relation="account.period"),
         'journal_id': fields.many2one('account.analytic.journal', 'Journal Code', required=True, ondelete='restrict', select=True, readonly=True),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
-        'partner_txt': fields.related('move_id', 'partner_txt', string="Third Party", readonly=True, type="text"),
         'move_id': fields.many2one('account.move.line', 'Entry Sequence', ondelete='restrict', select=True, readonly=True, domain="[('account_id.user_type.code', 'in', ['expense', 'income'])]"), # UF-1719: Domain added for search view
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True),
         'amount': fields.float('Func. Amount', required=True, digits_compute=dp.get_precision('Account'),

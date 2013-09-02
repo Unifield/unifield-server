@@ -12,6 +12,7 @@
             <field name="name">Sourcing Line</field>
             <field name="code">sourcing.line</field>
             <field name="prefix">SL/</field>
+            <field name="implementation">psql</field>
             <field name="padding">5</field>
         </record>
 

@@ -79,11 +79,15 @@
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
                 <data>
-                <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="replace">
+                <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='date_planned']" position="replace" />
+                <xpath expr="/form/notebook/page[@string='Order Line']/field[@name='price_unit']" position="after">
                     <field name="date_planned" attrs="{'readonly': [('po_state_stored', 'not in', ('draft', 'confirmed'))]}" />
                     <field name="po_state_stored" invisible="True" />
                     <field name="po_partner_type_stored" invisible="True" />
-                    <field name="confirmed_delivery_date" attrs="{'readonly': ['|', ('po_partner_type_stored', 'in', ('internal', 'section', 'empty')), ('po_state_stored', 'not in', ('draft','confirmed'))]}" />
+                    <!-- 
+					<field name="confirmed_delivery_date" attrs="{'readonly': ['|', ('po_partner_type_stored', 'in', ('internal', 'section', 'empty')), ('po_state_stored', 'not in', ('draft','confirmed'))]}" />
+                    utp-392: the delivery confirmed date remains editables-->
+                    <field name="confirmed_delivery_date" attrs="{'readonly': [('po_state_stored', 'not in', ('draft','confirmed'))]}" />
                 </xpath>
                 
                 </data>

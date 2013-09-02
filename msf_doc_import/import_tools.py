@@ -93,6 +93,8 @@ class import_cell_data(osv.osv_memory):
         cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
         if cell_data and isinstance(cell_data, (str,)):
             return cell_data.strip()
+        elif cell_data and isinstance(cell_data, (int,)):
+            return cell_data
         return False
 
     def get_expired_date(self, cr, uid, ids, row, cell_nb, error_list, line_num, context=None):
