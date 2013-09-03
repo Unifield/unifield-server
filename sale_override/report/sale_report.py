@@ -116,7 +116,7 @@ class sale_report(osv.osv):
 
                 if product_id:
                     uom = self.pool.get('product.product').browse(cr, uid, product_id, context=context).uom_id
-                    data.update({'product_uom': (uom.id, uom.name)})
+                    data.update({'uom_name': uom.name})
 
                 if not product_id and 'product_uom_qty' in data:
                     data.update({'product_uom_qty': ''})
