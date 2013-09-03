@@ -30,7 +30,7 @@
                 <field name="product_qty" />
                 <field name="product_qty_in" />
                 <field name="product_qty_out" />
-                <field name="product_uom" invisible="1" />
+                <field name="product_uom" />
                 <field name="currency_id" invisible="1" />
                 <field name="day_diff1"/>
                 <field name="day_diff"/>
