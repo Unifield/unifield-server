@@ -22,7 +22,7 @@
 			<field name="nbr" sum="# of Lines"/>
 			<field name="product_uom_qty" sum="# of Qty"/>
 			<field name="shipped_qty_1" sum="Shipped Qty"/>
-			<field name="uom_name" invisible="not context.get('set_visible',False)"/>
+			<field name="uom_name" />
 			<field name="price_total" sum="Total Price"/>
 
             <field name="currency_id" />
