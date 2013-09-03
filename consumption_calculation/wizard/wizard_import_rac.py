@@ -185,6 +185,13 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                 else:
                     uom_id = False
                     error += _('Line %s of the imported file: UoM [%s] not found ! Details: %s') % (line_num, row[2], uom_value['error_list'])
+
+                # Check rounding of qty according to UoM
+                if uom_id and consumed_qty:
+                    round_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, consumed_qty, 'consumed_qty')
+                    if round_qty.get('warning', {}).get('message'):
+                        consumed_qty = round_qty['value']['consumed_qty']
+                        error_log += _('Line %s of the imported file: %s') % (line_num, round_qty.get('warning', {}).get('message'))
     
                 # Cell 6: Remark
                 if row.cells[6] and row.cells[6].data:

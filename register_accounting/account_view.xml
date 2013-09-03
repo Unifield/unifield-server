@@ -68,7 +68,7 @@
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="analytic_account_id"
                                             domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -115,7 +115,7 @@
                                         <field name="partner_type" 
                                             attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]" 
-                                            context="{'curr': parent.currency, 'search_default_active': True}" />
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
                                         <field name="display_analytic_button" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
                                         <field name="analytic_distribution_id" invisible="1"/>
@@ -209,7 +209,7 @@
                                         <field name="partner_type"  
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}" 
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -254,7 +254,7 @@
                                         <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}" 
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" 
                                             />
                                         <field name="analytic_distribution_id" invisible="1"/>
                                         <field name="analytic_distribution_state" invisible="1"/>
@@ -678,7 +678,7 @@
                                     <field name="partner_type"
                                             attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
                                             domain="[('filter_for_third_party', '=', account_id)]"
-                                            context="{'curr': parent.currency, 'search_default_active': True}"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -719,7 +719,7 @@
                                     <field name="partner_type"
                                         attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
                                         domain="[('filter_for_third_party', '=', account_id)]" 
-                                        context="{'curr': parent.currency, 'search_default_active': True}" 
+                                        context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" 
                                         />
                                     <field name="display_analytic_button" invisible="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
@@ -944,6 +944,22 @@
             res_model="account.move.line"
             src_model="account.move"
             view_id="view_move_line_tree_from_move"/>
+
+    <!--
+      Add partner_txt to analytic journal entries
+    -->
+        <record id="inherit_view_account_analytic_tree" model="ir.ui.view">
+            <field name="name">inherit.view.account.analytic.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='account_id']" position="after">
+                    <field name="partner_txt"/>
+                </xpath>
+            </field>
+        </record>
 
     </data>
 </openerp>

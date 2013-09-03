@@ -42,9 +42,18 @@ class stock_partial_move_memory_out(osv.osv_memory):
         if a production lot is specified and the expired date is empty, fill the expired date in
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
+        uom_obj = self.pool.get('product.uom')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         
         if vals.get('prodlot_id', False) and not vals.get('expiry_date', False):
             vals.update(expiry_date=prodlot_obj.browse(cr, uid, vals.get('prodlot_id'), context=context).life_date)
+
+        if vals.get('product_uom', False):
+            mem_move = self.browse(cr, uid, ids[0], context=context)
+            if mem_move.move_id.picking_id.type == 'in':
+                vals['cost'] = uom_obj._compute_price(cr, uid, mem_move.product_uom.id, mem_move.cost, to_uom_id=vals.get('product_uom', mem_move.product_uom.id))
         
         return super(stock_partial_move_memory_out, self).write(cr, uid, ids, vals, context=context)
     
@@ -85,8 +94,23 @@ class stock_partial_move_memory_out(osv.osv_memory):
                 result[obj.id]['exp_check'] = True
             
         return result
+
+    def onchange_uom_qty(self, cr, uid, ids, product_uom, quantity):
+        '''
+        Check the round of the qty according to the UoM
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        new_qty = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, quantity, 'quantity')
+
+        for mem_move in self.browse(cr, uid, ids):
+            cost = self.pool.get('product.uom')._compute_price(cr, uid, mem_move.product_uom.id, mem_move.cost, to_uom_id=product_uom)
+            new_qty.setdefault('value', {}).setdefault('cost', cost)
+
+        return new_qty
     
-    def change_lot(self, cr, uid, id, prodlot_id, qty=0.00, location_id=False, context=None):
+    def change_lot(self, cr, uid, id, prodlot_id, qty=0.00, location_id=False, product_uom=False, context=None):
         '''
         prod lot changes, update the expiry date
         '''
@@ -95,7 +119,11 @@ class stock_partial_move_memory_out(osv.osv_memory):
 
         prodlot_obj = self.pool.get('stock.production.lot')
         result = {'value':{}, 'warning': {}}
-        
+
+        result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, product_uom, qty, 'quantity')
+
+        qty = result.get('value', {}).get('quantity', 0.00)
+
         if prodlot_id:
             c = context.copy()
             if location_id:
@@ -157,6 +185,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
         'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
         'location_id': fields.related('move_id', 'location_id', type='many2one', relation='stock.location', string='Source Location', readonly=True),
         'quantity_ordered': fields.float('Quantity ordered'),
+        'uom_ordered': fields.many2one('product.uom', string='UoM ordered', readonly=True),
+        'uom_category': fields.related('uom_ordered', 'category_id', type='many2one', relation='product.uom.categ'),
     }
 
 stock_partial_move_memory_out()

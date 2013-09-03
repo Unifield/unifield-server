@@ -6,14 +6,20 @@
         Display analytic lines from a journal item.
         NB: context displays FP column and cost center + destination to the user (UTP-372).
     -->
-       <act_window
-            domain="[('move_id', 'in', active_ids)]"
-            id="act_from_account_ml_to_analytic_ml"
-            name="Analytic lines"
-            src_model="account.move.line"
-            res_model="account.analytic.line"
-            context="{'display_fp': True,}"
-            />
+        <record id="action_analytic_lines_from_account_ml_search" model="ir.actions.server">
+            <field name="name">Analytic Lines</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_analytic_move_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_analytic_lines_from_account_ml_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Analytic Lines</field>
+            <field eval="'ir.actions.server,%d'%action_analytic_lines_from_account_ml_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
 
         <record id="view_analytic_account_form" model="ir.ui.view">
             <field name="name">analytic.account.form</field>
