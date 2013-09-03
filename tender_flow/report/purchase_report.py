@@ -227,6 +227,8 @@ class purchase_report(osv.osv):
                 if 'product_id' in data and data['product_id']:
                     uom = self.pool.get('product.product').browse(cr, uid, data['product_id'][0], context=context).uom_id
                     data.update({'product_uom': (uom.id, uom.name)})
+                if 'quantity' in data and not 'product_id' in data:
+                    data.update({'quantity': ''})
                 
         return res
         

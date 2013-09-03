@@ -24,7 +24,7 @@
                     <field name="state" invisible="1"/>
                     <field name="cost_center_id" invisible="1" />
                     <field name="nbr" sum="# of Lines"/>
-                    <field name="quantity" sum="Quantity"/>
+                    <field name="quantity" />
                     <field name="product_uom" />
                     <field name="price_average" sum="Average Price" invisible="1" />
                     <field name="price_total" sum="Subtotal" string="Subtotal"/>
