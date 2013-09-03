@@ -221,6 +221,12 @@ class report_stock_move(osv.osv):
                 if 'product_id' in data and data['product_id']:
                     uom = self.pool.get('product.product').browse(cr, uid, data['product_id'][0], context=context).uom_id
                     data.update({'product_uom': (uom.id, uom.name)})
+                if not 'product_id' in data and 'product_qty' in data:
+                    data.update({'product_qty': ''})
+                if not 'product_id' in data and 'product_qty_in' in data:
+                    data.update({'product_qty_in': ''})
+                if not 'product_id' in data and 'product_qty_out' in data:
+                    data.update({'product_qty_out': ''})
                 
         return res
 
