@@ -15,7 +15,6 @@
                     <field name="partner_zone" invisible="1" />
                     <field name="product_id" invisible="1"/>
                     <field name="category_id" invisible="1"/>
-                    <field name="product_uom" invisible="1"/>
                     <field name="day" invisible="1"/>
                     <field name="name" invisible="1"/>
                     <field name="month" invisible="1"/>
@@ -26,6 +25,7 @@
                     <field name="cost_center_id" invisible="1" />
                     <field name="nbr" sum="# of Lines"/>
                     <field name="quantity" sum="Quantity"/>
+                    <field name="product_uom" />
                     <field name="price_average" sum="Average Price" invisible="1" />
                     <field name="price_total" sum="Subtotal" string="Subtotal"/>
                     <field name="currency_id" />

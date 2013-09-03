@@ -224,6 +224,9 @@ class purchase_report(osv.osv):
                 if not '__count' in data or data['__count'] != 0:
                     currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
                     data.update({'currency_id': (currency.id, currency.name)})
+                if 'product_id' in data and data['product_id']:
+                    uom = self.pool.get('product.product').browse(cr, uid, data['product_id'][0], context=context).uom_id
+                    data.update({'product_uom': (uom.id, uom.name)})
                 
         return res
         
