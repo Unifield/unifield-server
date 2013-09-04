@@ -71,6 +71,19 @@ class wizard_register_import(osv.osv_memory):
             view['arch'] = etree.tostring(form)
         return view
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Add register regarding context @creation
+        """
+        if not context:
+            return False
+        res = super(wizard_register_import, self).create(cr, uid, vals, context=context)
+        if context.get('active_ids', False):
+            ids = res
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            self.write(cr, uid, ids, {'register_id': context.get('active_ids')[0]}, context=context)
+        return res
 
     def create_entries(self, cr, uid, ids, remaining_percent=50.0, context=None):
         """
@@ -453,7 +466,7 @@ class wizard_register_import(osv.osv_memory):
             cr.close()
         except Exception as e:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e.args and e.args[0] or '',), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or '', ''), 'state': 'done', 'progression': 100.0})
             cr.close()
         return True
 

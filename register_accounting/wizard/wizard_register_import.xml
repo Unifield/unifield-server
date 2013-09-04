@@ -95,5 +95,15 @@
             </field>
         </record>
 
+        <!-- Actions -->
+        <act_window id="action_register_import"
+          name="Import register lines"
+          res_model="wizard.register.import"
+          src_model="account.bank.statement"
+          key2="client_action_multi"
+          view_mode='form'
+          view_type='form'
+          target='new' />
+
     </data>
 </openerp>

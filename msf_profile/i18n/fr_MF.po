@@ -43034,8 +43034,9 @@ msgstr "mdx"
 msgid "Period of calculation"
 msgstr "Période du calcul"
 
-#. module: msf_doc_import
+#. module: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:413
+#: code:addons/register_accounting/wizard/wizard_register_import.py:452
 #, python-format
 msgid "An error occured. %s: %s"
 msgstr "Une erreur est survenue. %s: %s"
@@ -67743,11 +67744,12 @@ msgstr "Pas utilisé dans les calculs, pour information seulement."
 msgid "Maximum Quantity"
 msgstr "Quantité Maximale"
 
-#. module: msf_doc_import
+#. module: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:417
+#: code:addons/register_accounting/wizard/wizard_register_import.py:456
 #, fuzzy, python-format
 msgid "An error occured: %s"
-msgstr "Une erreur est survenue. %s: %s"
+msgstr "Une erreur est survenue. %s"
 
 #. modules: account, register_accounting
 #: help:account.invoice,date_due:0 help:account.invoice,payment_term:0
@@ -72177,6 +72179,15 @@ msgstr "Afficher historique?"
 #: view:purchase.report:0
 msgid "Not Invoice"
 msgstr "Pas de Facture"
+
+#. module: register_accounting
+#: view:account.bank.statement:0
+#: code:addons/register_accounting/account_bank_statement.py:512
+#: model:ir.actions.act_window,name:register_accounting.action_register_import
+#: view:wizard.register.import:0
+#, python-format
+msgid "Import register lines"
+msgstr "Importer des lignes de registre"
 
 #~ msgid ""
 #~ "\n"
