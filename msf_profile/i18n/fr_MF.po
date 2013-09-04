@@ -51217,8 +51217,8 @@ msgstr "Line %s of the Excel file: The product UOM did not match with the existi
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:66
 #, python-format
-msgid "Amount %s can't be greater than 'Amount to pay': %s"
-msgstr "Montant %s ne peut être supérieur au 'Montant à payer': %s"
+msgid "Amount %s.2f can't be greater than 'Amount to pay': %s.2f"
+msgstr "Montant %s.2f ne peut être supérieur au 'Montant à payer': %s.2f"
 
 #. module: consumption_calculation
 #: view:monthly.review.consumption:0
