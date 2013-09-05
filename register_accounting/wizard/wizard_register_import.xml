@@ -20,7 +20,7 @@
             <field name='type'>form</field>
             <field name='arch' type='xml'>
                 <form string="Import register lines">
-                    <label string="This will import Register Lines from a XML file." colspan="4" align="0.0"/>
+                    <label string="Select file to import" colspan="4" align="0.0"/>
                     <newline/>
                     <group col="4" colspan="4">
                         <field name="file" filename="filename" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
@@ -34,7 +34,7 @@
                     <newline />
                     <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
                     <group col="4" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
-                        <label string="Your template should looks like this:"/>
+                        <label string="The import template is:"/>
                         <newline />
                         <html>
                           <br />
