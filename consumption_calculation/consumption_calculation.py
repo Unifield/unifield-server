@@ -859,9 +859,14 @@ class real_average_consumption_line(osv.osv):
         '''
         if context is None:
             context = {}
+        product_obj = self.pool.get('product.product')
         v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
         d = {'uom_id': []} 
         if product_id:
+            # Test the compatibility of the product with a consumption report
+            res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': v}, vals={'constraints': 'consumption'}, context=context)
+            if test:
+                return res
             if location_id:
                 context.update({'location': location_id, 'uom': uom})
 

@@ -20,7 +20,7 @@
   !record {model: product.product, id: product_product_p0}:
     default_code: P0
     name: product 0 test
-    international_status: itc
+    international_status: product_attributes.int_1
     
 - 
   Creating a sale.order record

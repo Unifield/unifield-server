@@ -74,6 +74,10 @@ class initial_stock_inventory(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please enter at least one line in stock inventory before confirm it.'))
 
             for inventory_line in inventory.inventory_line_id:
+                if inventory_line.product_id:
+                    # Check product constrainsts
+                    product_obj._get_restriction_error(cr, uid, [inventory_line.product_id.id], {'location_id': inventory_line.location_id.id}, context=context)
+
                 # Don't check integrity on line with no quantity
                 if inventory_line.product_qty == 0.0:
                     inventory_line.write({'dont_move': True})
@@ -317,7 +321,7 @@ class initial_stock_inventory_line(osv.osv):
                  ['product_id', 'average_cost'])
                 ]
     
-    def product_change(self, cr, uid, ids, product_id, location_id, change_price=False, prodlot_id=False):
+    def product_change(self, cr, uid, ids, product_id, location_id, field_change, change_price=False, prodlot_id=False):
         '''
         Set the UoM with the default UoM of the product
         '''
@@ -326,12 +330,17 @@ class initial_stock_inventory_line(osv.osv):
                  'hidden_batch_management_mandatory': False,}
         
         if product_id:
+            product_obj = self.pool.get('product.product')
             context = {}
             if location_id:
                 context = {'location': location_id, 'compute_child': False}
+                # Test the compatibility of the product with the location
+                value, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name=field_change, values=value, vals={'location_id': location_id})
+                if test:
+                    return value
             if prodlot_id:
                 context.update({'prodlot_id': prodlot_id})
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            product = product_obj.browse(cr, uid, product_id, context=context)
             value.update({'product_uom': product.uom_id.id,
                           'hidden_perishable_mandatory': product.perishable,
                           'hidden_batch_management_mandatory': product.batch_management})

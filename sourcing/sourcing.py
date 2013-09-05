@@ -339,7 +339,34 @@ class sourcing_line(osv.osv):
                 if line.supplier and line.supplier.partner_type in ('external', 'esc'):
                     raise osv.except_osv(_('Warning'), _("You can't Source to an '%s' partner if you don't have product.") % (line.supplier.partner_type == 'external' and 'External' or 'ESC'))
 
+            if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
+                # Check product constraints (no external supply, no storage...)
+                check_fnct = self.pool.get('product.product')._get_restriction_error
+                self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
+
         return True
+
+    
+    def _check_product_constraints(self, cr, uid, line_type='make_to_order', po_cft='po', product_id=False, partner_id=False, check_fnct=False, *args, **kwargs):
+        '''
+        Check product constraints (no extenal supply, no storage...)
+        '''
+        if not check_fnct:
+            check_fnct = self.pool.get('product.product')._get_restriction_error
+
+        vals = {}
+        if line_type == 'make_to_order' and product_id and (po_cft == 'cft' or partner_id):
+            if po_cft == 'cft':
+                vals = {'constraints': ['external']}
+            elif partner_id:
+                vals = {'partner_id': partner_id}
+        elif line_type == 'make_to_stock' and product_id:
+            vals = {'constraints': ['storage']}
+
+        if product_id:
+            return check_fnct(cr, uid, product_id, vals, *args, **kwargs)
+        
+        return '', False
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
@@ -437,7 +464,7 @@ class sourcing_line(osv.osv):
         self._check_line_conditions(cr, uid, ids, context)
         return res
     
-    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, context=None):
+    def onChangePoCft(self, cr, uid, id, po_cft, order_id=False, partner_id=False, context=None):
         '''
         '''
         warning = {}
@@ -452,12 +479,30 @@ class sourcing_line(osv.osv):
             if po_cft == 'cft':
                 # tender does not allow supplier selection
                 value = {'supplier': False}
-        return {'warning': warning, 'value': value}
+
+
+        if id and isinstance(id, list):
+            id = id[0]
+
+        res = {'value': value, 'warning': warning}
+        
+        line = self.browse(cr, uid, id, context=context)
+        partner_id = 'supplier' in value and value['supplier'] or partner_id
+        if id and partner_id and line.product_id:
+            check_fnct = self.pool.get('product.product')._on_change_restriction_error
+            res, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='po_cft', values=res, vals={'partner_id': partner_id}, context=context)
+            if error:
+                return res
+
+        return res
     
     def onChangeType(self, cr, uid, id, type, context=None):
         '''
         if type == make to stock, change pocft to False
         '''
+        if not context:
+            context = {}
+
         value = {}
         message = {}
         if id:
@@ -470,6 +515,18 @@ class sourcing_line(osv.osv):
 
         if type == 'make_to_stock':
             value.update({'po_cft': False})
+
+            if id and isinstance(id, list):
+                id = id[0]
+
+            res = {'value': value, 'warning': message}
+            if id:
+                line = self.browse(cr, uid, id, context=context)
+                check_fnct = self.pool.get('product.product')._on_change_restriction_error
+                if line.product_id:
+                    res, error = self._check_product_constraints(cr, uid, type, line.po_cft, line.product_id.id, False, check_fnct, field_name='type', values=res, vals={'constraints': ['storage']}, context=context)
+                    if error:
+                        return res
     
         return {'value': value, 'warning': message}
     
@@ -498,6 +555,18 @@ class sourcing_line(osv.osv):
         estDeliveryDate = estDeliveryDate + relativedelta(days=int(daysToAdd))
         
         result['value'].update({'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d')})
+
+        if id and isinstance(id, list):
+            id = id[0]
+
+        line = self.browse(cr, uid, id, context=context)
+        value = result['value']
+        partner_id = 'supplier' in value and value['supplier'] or supplier
+        if id and partner_id and line.product_id:
+            check_fnct = self.pool.get('product.product')._on_change_restriction_error
+            result, error = self._check_product_constraints(cr, uid, line.type, value.get('po_cft', line.po_cft), line.product_id.id, partner_id, check_fnct, field_name='supplier', values=result, vals={'partner_id': partner_id}, context=context)
+            if error:
+                return result
 
         return result
     

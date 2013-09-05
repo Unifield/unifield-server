@@ -18,7 +18,7 @@
     name: ProdA
     batch_management: true
     perishable: true
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product B
 -
@@ -26,7 +26,7 @@
     name: ProdB
     batch_management: false
     perishable: true
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Product C
 -
@@ -34,7 +34,7 @@
     name: ProdC
     batch_management: false
     perishable: false
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   Production Lot Ai (i stands for internal ** replaced by standard **)
 -
