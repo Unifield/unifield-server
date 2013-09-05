@@ -939,7 +939,7 @@ class create_picking(osv.osv_memory):
         if missing_weight:
             return False
         return True
-        
+
     def do_ppl2(self, cr, uid, ids, context=None):
         '''
         - update partial_datas_ppl1

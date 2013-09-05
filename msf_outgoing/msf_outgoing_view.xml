@@ -1259,6 +1259,10 @@
 								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
 							</group>
 						</page>
+						<page string="Additional Items" invisible="1">
+						    <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" >
+						    </field>
+						</page>
 						<page string="Document Information">
 							<field name="cargo_manifest_reference" />
 							<field name="date_of_departure" />
@@ -1300,6 +1304,24 @@
 				</form>
 			</field>
 		</record>
+
+        <record id="shipment_additionalitems_tree" model="ir.ui.view">
+            <field name="name">shipment.additionalitems.tree</field>
+            <field name="model">shipment.additionalitems</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                    <tree string="Additional Items" editable="bottom">
+                        <field name="name"/>
+                        <field name="quantity" />
+                        <field name="uom" />
+                        <field name="comment"/>
+                        <field name="volume"/>
+                        <field name="weight" />
+                        <field name="picking_id" />
+                    </tree>
+            </field>
+        </record>
+
 		<!-- Changed name to 'Shipment' -->
 		<record id="view_shipment_search" model="ir.ui.view">
 			<field name="name">shipment.search</field>
