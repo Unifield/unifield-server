@@ -356,18 +356,28 @@ class wizard_register_import(osv.osv_memory):
                     account = self.pool.get('account.account').browse(cr, uid, r_account, context)
                     # Check that Third party exists (if not empty)
                     tp_label = _('Partner')
+                    partner_type = 'partner'
                     if line[cols['third_party']]:
                         if account.type_for_register == 'advance':
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Employee')
+                            partner_type = 'employee'
                         elif account.type_for_register in ['transfer', 'transfer_same']:
                             tp_ids = self.pool.get('account.bank.statement').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             tp_label = _('Journal')
+                            partner_type = 'journal'
                         else:
                             tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
+                            partner_type = 'partner'
                         if not tp_ids:
-                            errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['third_party']],))
-                            continue
+                            # Search now if employee exists
+                            tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
+                            tp_label = _('Employee')
+                            partner_type = 'employee'
+                            # If really not, raise an error for this line
+                            if not tp_ids:
+                                errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, line[cols['third_party']],))
+                                continue
                         r_partner = tp_ids[0]
                     # Check analytic axis only if G/L account is an expense account
                     if account.user_type_code == 'expense':
@@ -423,7 +433,10 @@ class wizard_register_import(osv.osv_memory):
                     elif account.type_for_register in ['transfer', 'transfer_same']:
                         vals.update({'transfer_journal_id': r_partner})
                     else:
-                        vals.update({'partner_id': r_partner,})
+                        if partner_type == 'partner':
+                            vals.update({'partner_id': r_partner,})
+                        elif partner_type == 'employee':
+                            vals.update({'employee_id': r_partner,})
                     line_res = self.pool.get('wizard.register.import.lines').create(cr, uid, vals, context)
                     if not line_res:
                         errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
