@@ -250,6 +250,10 @@ One2Many.prototype = {
             width: '90%',
             height: '95%',
         });
+        $frame.load(function() {
+            $frame_content = $frame.contents();
+            $frame_content.find("[autofocus='autofocus']").focus();
+        });
         var $form = jQuery('<form>', {
             method: 'POST',
             action: '/openerp/openo2m/edit',
@@ -279,6 +283,7 @@ One2Many.prototype = {
         var jQ = jQuery;
         var $ = $frame_window[0].jQuery;
 
+        $frame = $($frame_window.attr('frameElement'));
         var $form = $('#view_form');
 
         var list_id = frame_data($frame_window, 'list');
@@ -299,6 +304,11 @@ One2Many.prototype = {
                 value: $this.val()
             })));
         });
+
+        setTimeout(function() {
+            var $frame_content = $frame.contents();
+            $frame_content.find("[autofocus='autofocus']").focus();
+        }, 100);
 
         var lc = parseInt($('#_terp_load_counter').val(), 10) || 0;
         if(lc) {
