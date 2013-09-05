@@ -266,10 +266,11 @@ class msf_budget_line(osv.osv):
                 
 
                 line_code = budget_line.account_id.code
+                line_destination = ''
                 if budget_line.destination_id:
-                    line_code += " " + budget_line.destination_id.code
+                    line_destination = budget_line.destination_id.code
                 line_name = budget_line.account_id.name
-                line_values = [(line_code,line_name)]
+                line_values = [(line_code,line_destination,line_name)]
 
                 if 'breakdown' in context and context['breakdown'] == 'month':
                     # Need to add breakdown values
