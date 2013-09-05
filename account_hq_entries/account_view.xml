@@ -41,11 +41,12 @@
                         <filter icon="gtk-apply" string="Validated" domain="[('user_validated', '=', True)]" help="Validated entries" name="validated"/>
                         <separator orientation="vertical"/>
                         <field name="date" select='1'/>
-                        <newline/>
                         <field name="account_id" select='1'/>
                         <field name="partner_txt" select='1'/>
                         <newline/>
-                        <field name="cost_center_id" select='1'/>
+                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
+                        <field name="cost_center_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="analytic_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
                     </group>
                     <newline/>
                     <group expand="0" string="Group By..." colspan="12" col="10">
