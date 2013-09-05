@@ -258,6 +258,7 @@ class account_move_line(osv.osv):
         """
         if not context:
             context = {}
+        # Some checks
         if not vals.get('document_date') and vals.get('date'):
             vals.update({'document_date': vals.get('date')})
         if vals.get('document_date', False) and vals.get('date', False) and vals.get('date') < vals.get('document_date'):
@@ -270,7 +271,13 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
-        return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        # UTP-317: Check partner (if active or not)
+        if res:
+            aml = self.browse(cr, uid, [res], context)
+            if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+        return res
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """

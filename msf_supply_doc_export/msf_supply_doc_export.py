@@ -210,6 +210,7 @@ class real_composition_kit_xls(WebKitParser):
 
 real_composition_kit_xls('report.real.composition.kit.xls', 'composition.kit', 'addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako')
 
+
 class ir_values(osv.osv):
     """
     we override ir.values because we need to filter where the button to print report is displayed (this was also done in register_accounting/account_bank_statement.py)

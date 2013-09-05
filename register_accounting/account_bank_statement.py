@@ -1580,6 +1580,12 @@ class account_bank_statement_line(osv.osv):
             'transfer_currency': False,
             'down_payment_id': False,
         })
+        # Copy analytic distribution if exists
+        line = self.browse(cr, uid, [id], context=context)[0]
+        if line.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
     def update_analytic_lines(self, cr, uid, ids, distrib=False, context=None):

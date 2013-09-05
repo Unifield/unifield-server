@@ -311,6 +311,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].total_amount) * 100.0)})
         if vals.get('percentage', False) == 0.0:
             raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        if vals.get('percentage', False) < 0.0:
+            raise osv.except_osv(_('Error'), _('Negative percentage value is not allowed!'))
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
@@ -1076,8 +1078,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wizard_obj.entry_mode == 'percentage':
                 percentage = wizard_line['percentage']
                 # Check that the value is in the correct range
-                if percentage < 0.0 or percentage > 100.0:
-                    raise osv.except_osv(_('Percentage not valid!'),_("Percentage not valid!"))
+                if abs(percentage) > 100.0+10**-4 or percentage < 0.0:
+                    raise osv.except_osv(_('Error'),_("Percentage not valid! (%s)") % (percentage,))
                 # Fill the other value
                 amount = round(wizard_obj.total_amount * percentage) / 100.0
                 wizard_line['amount'] = amount

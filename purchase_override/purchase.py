@@ -2000,6 +2000,9 @@ class purchase_order_line(osv.osv):
         if not 'move_dest_id' in default:
             default.update({'move_dest_id': False})
 
+        if not 'procurement_id' in default:
+            default.update({'procurement_id': False})
+
         default.update({'sync_order_line_db_id': False})
         return super(purchase_order_line, self).copy_data(cr, uid, id, default=default, context=context)
 

@@ -823,8 +823,9 @@ class stock_move(osv.osv):
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Error', store=False, multi='inactive'),
-    }
-    
+        'inventory_ids': fields.many2many('stock.inventory', 'stock_inventory_move_rel', 'move_id', 'inventory_id', 'Created Moves'),
+        }
+
     _defaults = {
         'location_dest_id': _default_location_destination,
         'processed_stock_move': False, # to know if the stock move has already been partially or completely processed
@@ -957,6 +958,7 @@ class stock_move(osv.osv):
                 if 'fefo' in res:
                     # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
                     values = {'name': move.name,
+                              'sale_line_id': move.sale_line_id and move.sale_line_id.id or False,
                               'picking_id': move.picking_id.id,
                               'product_uom': move.product_uom.id,
                               'product_id': move.product_id.id,
