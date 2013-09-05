@@ -170,7 +170,6 @@
             <field name="name">Customizable PC</field>
             <field name="type">product</field>
             <field name="categ_id" ref="product_category_pc"/>
-            <field name="state">end</field>
         </record>
         <record id="product_product_mb1" model="product.product">
             <field name="default_code">MB1</field>
@@ -193,7 +192,6 @@
             <field name="name">Mainboard ASUStek A7V8X-X</field>
             <field name="type">product</field>
             <field name="categ_id" ref="product_category_10"/>
-            <field name="state">draft</field>
         </record>
         <record id="product_product_cpu1" model="product.product">
             <field name="default_code">CPU1</field>
