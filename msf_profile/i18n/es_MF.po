@@ -10188,11 +10188,6 @@ msgstr "Factura basada en entregas"
 msgid "Source multiple lines"
 msgstr "Abastecer líneas múlitples"
 
-#. module: register_accounting
-#: view:account.bank.statement:0
-msgid "Open invoice"
-msgstr "Factura pendiente"
-
 #. module: account
 #: model:ir.actions.act_window,help:account.action_account_tax_chart
 msgid "Chart of Taxes is a tree view reflecting the structure of the Tax Cases (or tax codes) and shows the current tax situation. The tax chart represents the amount of each area of the tax declaration for your country. It’s presented in a hierarchical structure, which can be modified to fit your needs."
@@ -56721,7 +56716,7 @@ msgstr "Licitación - borrador"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "Open invoices"
+msgid "Invoice(s) reference(s)"
 msgstr "Facturas pendientes"
 
 #. module: account_mcdb

@@ -42642,8 +42642,8 @@ msgstr "Mon tableau"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "Open invoice"
-msgstr "Ouvrir facture"
+msgid "Invoice(s) reference(s)"
+msgstr "Facture(s) ouverte(s)"
 
 #. module: resource
 #: field:resource.calendar.attendance,dayofweek:0
@@ -62467,11 +62467,6 @@ msgstr "Total Project - Actuals"
 #: field:account.analytic.account,destination_ids:0
 msgid "Accounts"
 msgstr "Comptes"
-
-#. module: register_accounting
-#: view:account.bank.statement:0
-msgid "Open invoices"
-msgstr "Factures ouvertes"
 
 #. modules: hr, board, msf_homere_interface
 #: field:board.board.line,position:0
