@@ -272,6 +272,15 @@
           <Data ss:Type="String">Currency</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Destination</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Cost Center</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Funding Pool</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Amt. Reconciled</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
@@ -314,6 +323,15 @@
           <Data ss:Type="String">${line.currency_id and line.currency_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.reconciled and 'X' or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
@@ -327,7 +345,13 @@
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
 % for ana_line in line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="left">
+        <Cell ss:Index="9" ss:StyleID="amount">
+          <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -339,9 +363,6 @@
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${ana_line.percentage or 0.0}</Data>
         </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
       </Row>
 % endfor
 % endif
@@ -350,33 +371,36 @@
 % if line.direct_invoice and line.invoice_id:
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
-        <Cell ss:Index="2" ss:StyleID="left">
+        <Cell ss:Index="4" ss:StyleID="left">
           <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.product_id and inv_line.product_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_line.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${inv_line.quantity or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${inv_line.price_unit or 0.0}</Data>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
       </Row>
 % if (inv_line.analytic_distribution_id and inv_line.analytic_distribution_id.funding_pool_lines) or (inv_line.invoice_id and inv_line.invoice_id.analytic_distribution_id and inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
 % if inv_line.analytic_distribution_id:
 % for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="left">
+        <Cell ss:Index="9" ss:StyleID="amount">
+          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -387,16 +411,19 @@
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
       </Row>
 % endfor
 % elif inv_line.invoice_id.analytic_distribution_id:
 % for inv_ana_line in inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="left">
+        <Cell ss:Index="9" ss:StyleID="amount">
+          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -407,9 +434,6 @@
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
       </Row>
 % endfor
@@ -423,33 +447,36 @@
 % for ji in line.imported_invoice_line_ids:
 % for imp_inv_line in ji.invoice.invoice_line:
       <Row>
-        <Cell ss:Index="2" ss:StyleID="left">
+        <Cell ss:Index="4" ss:StyleID="left">
           <Data ss:Type="String">${imp_inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${imp_inv_line.product_id and imp_inv_line.product_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
+          <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${imp_inv_line.quantity or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${imp_inv_line.price_unit or 0.0}</Data>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${imp_inv_line.price_subtotal or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
         </Cell>
       </Row>
 % if (imp_inv_line.analytic_distribution_id and imp_inv_line.analytic_distribution_id.funding_pool_lines) or (imp_inv_line.invoice_id and imp_inv_line.invoice_id.analytic_distribution_id and imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
 % if imp_inv_line.analytic_distribution_id:
 % for inv_ana_line in imp_inv_line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="left">
+        <Cell ss:Index="9" ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -460,16 +487,19 @@
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
       </Row>
 % endfor
 % elif imp_inv_line.invoice_id.analytic_distribution_id:
 % for inv_ana_line in imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="3" ss:StyleID="left">
+        <Cell ss:Index="9" ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -480,9 +510,6 @@
         </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="amount">
-          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
       </Row>
 % endfor
