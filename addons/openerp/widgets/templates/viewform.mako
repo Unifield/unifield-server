@@ -62,7 +62,7 @@
         <tr>
             <td class="view_form_options">
                 <a style="cursor:pointer;" onclick="new ListView('_terp_list').show_selected_records();" title="${_('View selected records.')}"><span id="num_selected">${previously_selected_length}</span> selected record(s)</a>
-                <input type="text" id="${name}_terp_previously_selected" name="${name}_terp_previously_selected"  value="${previously_selected}"/>
+                <input type="hidden" id="${name}_terp_previously_selected" name="${name}_terp_previously_selected"  value="${previously_selected}"/>
             </td>
         </tr>
         % endif
