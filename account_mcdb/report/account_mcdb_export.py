@@ -119,7 +119,7 @@ class account_line_csv_export(osv.osv_memory):
             #reconcile_total_partial_id
             csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
             #state
-            csv_line.append(field_sel(cr, uid, ml, 'state', context).encode('utf-8'))
+            csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
             # Write line
             writer.writerow(csv_line)
             
