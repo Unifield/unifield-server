@@ -242,7 +242,7 @@
       </Row>
       <Row ss:AutoFitHeight="0" ss:Height="29.1118">
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Specific type</Data>
+          <Data ss:Type="String">Entry type</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Doc. Date</Data>
@@ -284,7 +284,7 @@
 % for line in o.line_ids:
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Normal')|x}</Data>
+          <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
         </Cell>
         <Cell ss:StyleID="date">
           <Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data>
