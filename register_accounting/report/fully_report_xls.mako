@@ -323,6 +323,7 @@
           <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
         </Cell>
       </Row>
+
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
 % for ana_line in line.analytic_distribution_id.funding_pool_lines:
       <Row>
@@ -344,6 +345,8 @@
       </Row>
 % endfor
 % endif
+
+
 % if line.direct_invoice and line.invoice_id:
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
@@ -414,6 +417,82 @@
 % endif
 % endfor
 % endif
+
+
+% if line.imported_invoice_line_ids:
+% for ji in line.imported_invoice_line_ids:
+% for imp_inv_line in ji.invoice.invoice_line:
+      <Row>
+        <Cell ss:Index="2" ss:StyleID="left">
+          <Data ss:Type="String">${imp_inv_line.line_number or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${imp_inv_line.product_id and imp_inv_line.product_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.quantity or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.price_unit or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.price_subtotal or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
+        </Cell>
+      </Row>
+% if (imp_inv_line.analytic_distribution_id and imp_inv_line.analytic_distribution_id.funding_pool_lines) or (imp_inv_line.invoice_id and imp_inv_line.invoice_id.analytic_distribution_id and imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines):
+% if imp_inv_line.analytic_distribution_id:
+% for inv_ana_line in imp_inv_line.analytic_distribution_id.funding_pool_lines:
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+      </Row>
+% endfor
+% elif imp_inv_line.invoice_id.analytic_distribution_id:
+% for inv_ana_line in imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
+      <Row>
+        <Cell ss:Index="3" ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.cost_center_id and inv_ana_line.cost_center_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="amount">
+          <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
+        </Cell>
+      </Row>
+% endfor
+% endif
+% endif
+% endfor
+% endfor
+% endif
+
+
 % endfor
     </Table>
     <WorksheetOptions/>
