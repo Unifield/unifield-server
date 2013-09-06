@@ -85,6 +85,22 @@ class account_account(osv.osv):
         'is_settled_at_hq': lambda *a: False,
     }
 
+    # UTP-493: Add a dash between code and account name
+    def name_get(self, cr, uid, ids, context=None):
+        """
+        Use "-" instead of " " between name and code for account's default name
+        """
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['name', 'code'], context=context)
+        res = []
+        for record in reads:
+            name = record['name']
+            if record['code']:
+                name = record['code'] + ' - '+name
+            res.append((record['id'], name))
+        return res
+
 account_account()
 
 class account_journal(osv.osv):
@@ -227,11 +243,15 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
+                ml_vals = {}
                 for el in fields:
                     if el in vals:
                         context[el] = vals.get(el)
-                        for ml in m.line_id:
-                            self.pool.get('account.move.line').write(cr, uid, ml.id, {el: vals.get(el)}, context, False, False)
+                        ml_vals.update({el: vals.get(el)})
+                # Update document date AND date at the same time
+                if ml_vals:
+                    for ml in m.line_id:
+                        self.pool.get('account.move.line').write(cr, uid, ml.id, ml_vals, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
@@ -276,6 +296,23 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
+    def copy(self, cr, uid, id, default={}, context=None):
+        """
+        Copy a manual journal entry
+        """
+        if not context:
+            context = {}
+        res = id
+        context.update({'omit_analytic_distribution': False})
+        je = self.browse(cr, uid, [id], context=context)[0]
+        if je.status == 'sys' or (je.journal_id and je.journal_id.type == 'migration'):
+            raise osv.except_osv(_('Error'), _("You can only duplicate manual journal entries."))
+        res = super(account_move, self).copy(cr, uid, id, {'line_id': [], 'state': 'draft', 'document_date': je.document_date, 'date': je.date, 'name': ''}, context=context)
+        for line in je.line_id:
+            self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res, 'document_date': je.document_date, 'date': je.date, 'period_id': je.period_id and je.period_id.id or False}, context)
+        self.validate(cr, uid, [res], context=context)
+        return res
+
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
         """
         Change some fields when journal is changed.
@@ -309,7 +346,14 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
-        self.unlink(cr, uid, to_delete, context)
+        # First delete move lines to avoid "check=True" problem on account_move_line item
+        if to_delete:
+            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            if ml_ids:
+                if isinstance(ml_ids, (int, long)):
+                    ml_ids = [ml_ids]
+                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
+        self.unlink(cr, uid, to_delete, context, check=False)
         return True
 
 account_move()

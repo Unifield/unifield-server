@@ -32,5 +32,6 @@ import invoice
 import purchase
 import report
 import register_accounting_report
+import account_analytic_line
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

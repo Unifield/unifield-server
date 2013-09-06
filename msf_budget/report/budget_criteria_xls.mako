@@ -523,7 +523,7 @@
 </Cell>
 
 <Cell ss:StyleID="s23">
-<Data ss:Type="String">${( o.display_type and getSel(o, 'display_type',  ) or '')|x}</Data>
+  <Data ss:Type="String">${( getGranularity() or '')|x}</Data>
 </Cell>
 
 </Row>
@@ -540,7 +540,10 @@
 
 <Row ss:AutoFitHeight="0" ss:Height="24" ss:StyleID="s26">
 % if not byMonth():
-	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
+<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
+% if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
+	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+% endif
 	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
 	% if isComm():
 		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
@@ -555,6 +558,9 @@
 % endif
 % if byMonth():
 	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
+% if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
+	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+% endif
 	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
 	% if isComm():
 		% for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
@@ -577,7 +583,10 @@
 <Row>
 % if not byMonth():
 	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
+% if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
 	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
+% endif
+	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
 	% if isComm():
 		<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[1] )|x}</Data></Cell>
 		<Cell ss:StyleID="s68"><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
@@ -598,7 +607,10 @@
 
 % if byMonth():
 	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
+% if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
 	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
+% endif
+	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
 	% if isComm():
 		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
 			<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[x] or 0 )|x}</Data></Cell>

@@ -9,6 +9,7 @@
             <field name="arch" type="xml">
                 <search string="Tracking Moves Analysis">
                     <group colspan="2">
+                    <!-- 
                         <filter string="Closed"
                                 name="done"
                                 icon="terp-dialog-close"
@@ -18,9 +19,11 @@
                                 icon="terp-gtk-go-back-rtl"
                                 domain="[('state','in',('assigned','waiting','confirmed'))]"
                                 help = "Future Stock-Moves"/>
-                            <!--<separator orientation="vertical"/>-->
+                     -->
                         <filter icon="terp-go-home" name="in" string="Incoming" domain="[('type','=','in')]"/>
+                        <!-- 
                         <filter icon="terp-go-home" name="internal" string="Internal" domain="[('type','=','internal')]"/>
+                         -->
                         <filter icon="terp-go-home" name="out" string="Outgoing" domain="[('type','=','out')]"/>
                     </group>
                     <newline />
@@ -33,7 +36,9 @@
                         <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_id'}"/>
                         <filter string="Dest. Location" name="dest_location" icon="terp-gtk-jump-to-ltr"  context="{'group_by':'location_dest_id'}"/>
                         <separator orientation="vertical" />
+                        <!-- 
                         <filter string="Move Type" name="groupby_type" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by': 'type'}" />
+                         -->
                     </group>
                 </search>
             </field>
@@ -60,7 +65,7 @@
         </record>
         
         <record id="action_stock_move_tracking" model="ir.actions.act_window">
-            <field name="name">Moves tracking</field>
+            <field name="name">Trace Items</field>
             <field name="res_model">stock.move</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

@@ -57,6 +57,7 @@
                                     <field name="price_subtotal"/>
                                     <field name="name"/>
                                     <field invisible="True" name="uos_id"/>
+                                    <field invisible="1" name="inactive_product"/>
                                 </tree>
                             </field>
                             <group col="4" colspan="4">
@@ -292,6 +293,22 @@
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                         <field name="is_direct_invoice" invisible="1"/>
                     </button>
+                    <page string="Payments" position="after">
+                        <page string="Down Payments">
+                            <field name="down_payment_ids" nolabel="1" colspan="4">
+                                <tree string="Down Payment">
+                                    <field name="statement_id" string="Register"/>
+                                    <field name="date"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="account_id"/>
+                                    <field name="amount_currency" string="Amount" sum="Total Amount"/>
+                                    <field name="down_payment_amount" string="Expended amount"/>
+                                    <field name="currency_id"/>
+                                    <field name="reconcile_txt"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </page>
                 </data>
             </field>
         </record>

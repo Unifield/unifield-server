@@ -491,6 +491,12 @@ class stock_move(osv.osv):
         if prod_id:
             prod = self.pool.get('product.product').browse(cr, uid, prod_id)
             result['value'].update({'subtype': prod.product_tmpl_id.subtype})
+
+            if parent_type and parent_type == 'internal' and loc_dest_id:
+                # Test the compatibility of the product with the location
+                result, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, prod_id, field_name='product_id', values=result, vals={'location_id': loc_dest_id})
+                if test:
+                    return result
             
         result['value'].update({'asset_id': False})
         

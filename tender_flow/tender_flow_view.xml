@@ -17,7 +17,8 @@
                         <field name="warehouse_id" widget="selection" on_change="onchange_warehouse(warehouse_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="location_id" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="company_id" invisible="True" />
-                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="categ" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                        on_change="onchange_categ(categ)"/>
                         <field name="priority" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                         <field name="details" />
                     </group>
@@ -26,10 +27,11 @@
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top">
                                 	<!-- <field name="date_planned" /> -->
-                                    <field name="product_id" on_change="on_product_change(product_id)" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
-                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
+                                        on_change="onchange_uom_qty(product_uom, qty)" />
+                                    <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="supplier_id" />
                                     <field name="price_unit" />
                                     <field name="total_price" />

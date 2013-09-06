@@ -15,7 +15,8 @@
                         <separator string="Down Payments" colspan="4"/>
                         <newline/>
                         <field name="down_payment_ids" nolabel="1" colspan="4">
-                            <tree string="Down Payment" colors="grey:abs(amount_currency) == abs(down_payment_amount);blue:abs(amount_currency) &gt; abs(down_payment_amount)">
+                          <tree string="Down Payment"><!--
+                            <tree string="Down Payment" colors="grey:abs(amount_currency) == abs(down_payment_amount);blue:abs(amount_currency) &gt; abs(down_payment_amount)">-->
                                 <field name="statement_id" string="Register"/>
                                 <field name="date"/>
                                 <field name="name" string="Description"/>

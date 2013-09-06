@@ -63,21 +63,21 @@
                     <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
                         <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
                             <field name="name"/>
-                            <field name="budget_amount" real_sum="Budget Amount"/>
-                            <field name="comm_amount" real_sum="Comm. Amount"/>
-                            <field name="actual_amount" real_sum="Actual Amount"/>
-                            <field name="balance" real_sum="Balance"/>
-                            <field name="percentage"/>
+                            <field name="budget_amount" real_sum="Budget Amount" digits="(24,0)"/>
+                            <field name="comm_amount" real_sum="Comm. Amount" digits="(24,0)"/>
+                            <field name="actual_amount" real_sum="Actual Amount" digits="(24,0)"/>
+                            <field name="balance" real_sum="Balance" digits="(24,0)"/>
+                            <field name="percentage" digits="(24,0)"/>
                             <field name="line_type"/>
                         </tree>
                         <form string="Budget Line">
                             <group colspan="4">
                                 <field name="name" colspan="2" readonly="1"/>
-	                            <field name="budget_amount" colspan="1" readonly="1"/>
-	                            <field name="comm_amount" colspan="1" readonly="1"/>
-	                            <field name="actual_amount" colspan="1" readonly="1"/>
-	                            <field name="balance" colspan="1" readonly="1"/>
-	                            <field name="percentage" colspan="1" readonly="1"/>
+	                            <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
+	                            <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
                             </group>
                         </form>
                     </field>
@@ -207,13 +207,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Local Expenses">
+                    <field name="cost_center_id"/>
                     <field name="fiscalyear_id"/>
-                    <field name="period_id"/>
+                    <field name="start_period_id"/>
+                    <field name="end_period_id"/>
                     <field name="breakdown"/>
                     <field name="granularity"/>
                     <field name="booking_currency_id"/>
                     <field name="output_currency_id"/>
-                    <field name="cost_center_id"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>
@@ -255,8 +256,8 @@
                 <tree string="Budget Status">
                     <field name="code"/>
                     <field name="name"/>
-                    <field name="budget_amount"/>
-                    <field name="actual_amount"/>
+                    <field name="budget_amount" digits="(24,0)"/>
+                    <field name="actual_amount" digits="(24,0)"/>
                     <field name="parent_id" invisible="1"/>
                 </tree>
             </field>

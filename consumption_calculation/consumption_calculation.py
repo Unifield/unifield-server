@@ -35,6 +35,10 @@ from product._common import rounding
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 
+def _get_asset_mandatory(product):
+    return product.type == 'product' and product.subtype == 'asset'
+
+
 class real_average_consumption(osv.osv):
     _name = 'real.average.consumption'
     _description = 'Real Average Consumption'
@@ -308,6 +312,7 @@ class real_average_consumption(osv.osv):
                                                         'product_qty': line.consumed_qty,
                                                         'prodlot_id': line.prodlot_id.id,
                                                         'expiry_date': line.expiry_date,
+                                                        'asset_id': line.asset_id.id,
                                                         'location_id': rac.cons_location_id.id,
                                                         'location_dest_id': rac.activity_id.id,
                                                         'state': 'done',
@@ -356,18 +361,18 @@ class real_average_consumption(osv.osv):
         if context is None:
             context = {}
         rac = self.browse(cr, uid, ids[0], context=context)
-        header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
+        header_columns = [(_('Product Code'), 'string'), (_('Product Description'),'string'),(_('Product UoM'), 'string'), (_('Batch Number'),'string'), (_('Expiry Date'), 'string'), (_('Asset'), 'string'), (_('Consumed Qty'),'string'), (_('Remark'), 'string')]
         list_of_lines = []
         for line in rac.line_ids:
             list_of_lines.append([line.product_id.default_code, line.product_id.name, line.uom_id.name, line.prodlot_id and line.prodlot_id.name, 
-                                  line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.consumed_qty, line.remark or ''])
+                                  line.expiry_date and strptime(line.expiry_date,'%Y-%m-%d').strftime('%d/%m/%Y') or '', line.asset_id and line.asset_id.name, line.consumed_qty, line.remark or ''])
         instanciate_class = SpreadsheetCreator('RAC', header_columns, list_of_lines)
         file = base64.encodestring(instanciate_class.get_xml(default_filters=['decode.utf8']))
         
         export_id = self.pool.get('wizard.export.rac').create(cr, uid, {'rac_id': ids[0], 
-                                                                        'file': file, 
+                                                                        'file': file,
                                                                         'filename': 'rac_%s.xls' % (rac.cons_location_id.name.replace(' ', '_')), 
-                                                                        'message': _('The RAC lines has been exported. Please click on Save As button to download the file')})
+                                                                        'message': _('The RAC lines has been exported. Please click on Save As button to download the file'),}, context=context)
         
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.export.rac',
@@ -375,6 +380,7 @@ class real_average_consumption(osv.osv):
                 'view_mode': 'form',
                 'view_type': 'form',
                 'target': 'new',
+                'context': context,
                 }
 
     def fill_lines(self, cr, uid, ids, context=None):
@@ -423,19 +429,23 @@ class real_average_consumption(osv.osv):
                 if product.id not in products:
                     batch_mandatory = product.batch_management
                     date_mandatory = product.perishable
+                    asset_mandatory = _get_asset_mandatory(product)
                     values = {'product_id': product.id,
                               'uom_id': product.uom_id.id,
                               'consumed_qty': 0.00,
                               'batch_mandatory': batch_mandatory,
                               'date_mandatory': date_mandatory,
+                              'asset_mandatory': asset_mandatory,
                               'rac_id': report.id,}
                     v = self.pool.get('real.average.consumption.line').product_onchange(cr, uid, [], product.id, report.cons_location_id.id,
                                                                                         product.uom_id.id, False, context=context)['value']
                     values.update(v)
                     if batch_mandatory:
-                        values.update({'remark': 'You must assign a batch number'})
+                        values.update({'remark': _('You must assign a batch number')})
                     if date_mandatory:
-                        values.update({'remark': 'You must assign an expiry date'})
+                        values.update({'remark': _('You must assign an expiry date')})
+                    if asset_mandatory:
+                        values.update({'remark': _('You must assign an asset')})
                     self.pool.get('real.average.consumption.line').create(cr, uid, values)
         
         self.write(cr, uid, ids, {'created_ok': False})    
@@ -516,6 +526,7 @@ class real_average_consumption_line(osv.osv):
             if out.product_id:
                 result[out.id]['batch_number_check'] = out.product_id.batch_management
                 result[out.id]['expiry_date_check'] = out.product_id.perishable
+                result[out.id]['asset_check'] = _get_asset_mandatory(out.product_id)
             # the lines with to_correct_ok=True will be red
             if out.text_error:
                 result[out.id]['to_correct_ok'] = True
@@ -554,9 +565,11 @@ class real_average_consumption_line(osv.osv):
             location = obj.rac_id.cons_location_id.id
             prodlot_id = None
             expiry_date = None
+            asset_id = None
 
             batch_mandatory = obj.product_id.batch_management
             date_mandatory = obj.product_id.perishable
+            asset_mandatory = _get_asset_mandatory(obj.product_id)
         
             if batch_mandatory and obj.consumed_qty != 0.00:
                 if not obj.prodlot_id:
@@ -586,6 +599,17 @@ class real_average_consumption_line(osv.osv):
                 else:
                     prodlot_id = prod_ids[0]
 
+            if asset_mandatory and obj.consumed_qty != 0.00:
+                if not obj.asset_id:
+                    if not noraise:
+                        raise osv.except_osv(_('Error'),
+                                _("Product: %s, You must assign an Asset to process it.")%(obj.product_id.name,))
+                    elif context.get('import_in_progress'):
+                        error_message.append(_("You must assign an Asset to process it."))
+                        context.update({'error_message': error_message})
+                elif obj.asset_id:
+                    asset_id = obj.asset_id.id
+
             product_qty = self._get_qty(cr, uid, obj.product_id.id, prodlot_id, location, obj.uom_id and obj.uom_id.id)
 
             if prodlot_id and obj.consumed_qty > product_qty:
@@ -598,26 +622,9 @@ class real_average_consumption_line(osv.osv):
                     # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
                     prodlot_id = None
             #recursion: can't use write
-            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, prodlot_id=%s, expiry_date=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, prodlot_id, expiry_date, obj.id))
+            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))
 
         return True
-
-    def check_product_uom(self, cr, uid, ids, product_id, product_uom, context=None):
-        '''
-        Check if the UoM is convertible to product standard UoM
-        '''
-        warning = {}
-        if product_uom and product_id:
-            product_obj = self.pool.get('product.product')
-            uom_obj = self.pool.get('product.uom')
-            product = product_obj.browse(cr, uid, product_id, context=context)
-            uom = uom_obj.browse(cr, uid, product_uom, context=context)
-            if product.uom_id.category_id.id != uom.category_id.id:
-                warning = {
-                    'title': _('Wrong Product UOM !'),
-                    'message': _("You have to select a product UOM in the same category than the purchase UOM of the product")
-                }
-        return {'warning': warning}
 
     def _get_product(self, cr, uid, ids, context=None):
         return self.pool.get('real.average.consumption.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
@@ -648,10 +655,13 @@ class real_average_consumption_line(osv.osv):
         'consumed_qty': fields.float(digits=(16,2), string='Qty consumed', required=True),
         'batch_number_check': fields.function(_get_checks_all, method=True, string='Batch Number Check', type='boolean', readonly=True, multi="m"),
         'expiry_date_check': fields.function(_get_checks_all, method=True, string='Expiry Date Check', type='boolean', readonly=True, multi="m"),
+        'asset_check': fields.function(_get_checks_all, method=True, string='Asset Check', type='boolean', readonly=True, multi="m"),
         'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
         'batch_mandatory': fields.boolean(string='BM'),
         'expiry_date': fields.date(string='Expiry date'),
         'date_mandatory': fields.boolean(string='DM'),
+        'asset_id': fields.char(size=32, string='Asset'),
+        'asset_mandatory': fields.boolean('AM'),
         'remark': fields.char(size=256, string='Remark'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
@@ -686,6 +696,11 @@ class real_average_consumption_line(osv.osv):
         check = self._check_qty(cr, uid, res, context)
         if not check:
             raise osv.except_osv(_('Error'), _('The Qty Consumed cant\'t be greater than the Indicative Stock'))
+        if vals.get('uom_id') and vals.get('product_id'):
+            product_id = vals.get('product_id')
+            product_uom = vals.get('uom_id')
+            if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                raise osv.except_osv(_('Warning !'), _("You have to select a product UOM in the same category than the purchase UOM of the product"))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -707,9 +722,8 @@ class real_average_consumption_line(osv.osv):
             if vals.get('uom_id') and vals.get('product_id'):
                 product_id = vals.get('product_id')
                 product_uom = vals.get('uom_id')
-                res = self.check_product_uom(cr, uid, ids, product_id, product_uom, context)
-                if res and res['warning']:
-                    message += res['warning']['message']
+                if not self.pool.get('uom.tools').check_uom(cr, uid, product_id, product_uom, context):
+                    message += _("You have to select a product UOM in the same category than the purchase UOM of the product")
             if message:
                 raise osv.except_osv(_('Warning !'), message)
             else:
@@ -759,25 +773,39 @@ class real_average_consumption_line(osv.osv):
         
         return result
 
+    def change_asset(self, cr, uid, id, asset, product_id, location_id, uom, remark=False, context=None):
+        '''
+        Asset change, remove the remark
+        '''
+        if context is None:
+            context = {}
+
+        result = {'value':{}}
+        if remark and remark == 'You must assign an asset':
+            result.setdefault('value', {}).update(remark='')
+
+        return result
+
+
     def change_qty(self, cr, uid, ids, qty, product_id, prodlot_id, location, uom, context=None):
         if context is None:
             context = {}
+
+        res = {'value': {}}
+
         stock_qty = self._get_qty(cr, uid, product_id, prodlot_id, location, uom)
         warn_msg = {'title': _('Error'), 'message': _("The Qty Consumed is greater than the Indicative Stock")}
-        if uom:
-            new_qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, uom)
-            if new_qty != qty:
-                warn_msg = {
-                    'title': _('Error'), 
-                    'message': _("The Qty Consumed %s and rounding uom qty %s are not equal !")%(qty, new_qty)
-                }
-                return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+        
+        if qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, qty, 'consumed_qty', result=res)
 
         if prodlot_id and qty > stock_qty:
-            return {'warning': warn_msg, 'value': {'consumed_qty': 0}}
+            res.setdefault('warning', {}).update(warn_msg)
+            res.setdefault('value', {}).update({'consumed_qty': 0})
         if qty > stock_qty:
-            return {'warning': warn_msg}
-        return {}
+            res.setdefault('warning', {}).update(warn_msg)
+        
+        return res
 
     def change_prodlot(self, cr, uid, ids, product_id, prodlot_id, expiry_date, location_id, uom, remark=False, context=None):
         '''
@@ -806,7 +834,7 @@ class real_average_consumption_line(osv.osv):
 
         return res
    
-    def uom_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
+    def uom_onchange(self, cr, uid, ids, product_id, product_qty, location_id=False, uom=False, lot=False, context=None):
         if context is None:
             context = {}
         qty_available = 0
@@ -818,7 +846,12 @@ class real_average_consumption_line(osv.osv):
             product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
 
-        return {'value': {'product_qty': qty_available}, 'domain': d}
+        res = {'value': {'product_qty': qty_available}, 'domain': d}
+
+        if product_qty:
+            res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom, product_qty, 'consumed_qty', result=res)
+
+        return res
 
     def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
         '''
@@ -826,9 +859,14 @@ class real_average_consumption_line(osv.osv):
         '''
         if context is None:
             context = {}
-        v = {'batch_mandatory': False, 'date_mandatory': False}
+        product_obj = self.pool.get('product.product')
+        v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
         d = {'uom_id': []} 
         if product_id:
+            # Test the compatibility of the product with a consumption report
+            res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': v}, vals={'constraints': 'consumption'}, context=context)
+            if test:
+                return res
             if location_id:
                 context.update({'location': location_id, 'uom': uom})
 
@@ -837,9 +875,11 @@ class real_average_consumption_line(osv.osv):
             qty_available = product.qty_available
                 
             if product.batch_management:
-                v.update({'batch_mandatory': True, 'remark': 'You must assign a batch'})
+                v.update({'batch_mandatory': True, 'remark': _('You must assign a batch')})
             if product.perishable:
-                v.update({'date_mandatory': True, 'remark': 'You must assign an expiry date'})
+                v.update({'date_mandatory': True, 'remark': _('You must assign an expiry date')})
+            if product.type == 'product' and product.subtype == 'asset':
+                v.update({'asset_mandatory': True, 'remark': _('You must assign an asset')})
 
             uom = product.uom_id.id
             v.update({'uom_id': uom})
@@ -858,7 +898,7 @@ class real_average_consumption_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'prodlot_id': False, 'expiry_date': False})
+        default.update({'prodlot_id': False, 'expiry_date': False, 'asset_id': False})
 
         if 'consumed_qty' in default and default['consumed_qty'] < 0.00:
             default['consumed_qty'] = 0.00

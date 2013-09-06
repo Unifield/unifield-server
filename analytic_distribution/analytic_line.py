@@ -75,6 +75,57 @@ class analytic_line(osv.osv):
         """
         return self.pool.get('account.analytic.journal').get_journal_type(cr, uid, context)
 
+    def _get_entry_sequence(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Give right entry sequence. Either move_id.move_id.name or commitment_line_id.commit_id.name
+        """
+        if not context:
+            context = {}
+        res = {}
+        for l in self.browse(cr, uid, ids, context):
+            res[l.id] = ''
+            if l.move_id:
+                res[l.id] = l.move_id.move_id.name
+            elif l.commitment_line_id:
+                res[l.id] = l.commitment_line_id.commit_id.name
+        return res
+
+    def _get_period_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Fetch period_id from:
+        - move_id
+        - commitment_line_id
+        """
+        # Checks
+        if not context:
+            context = {}
+        # Prepare some values
+        res = {}
+        for al in self.browse(cr, uid, ids, context):
+            res[al.id] = False
+            if al.commitment_line_id and al.commitment_line_id.commit_id and al.commitment_line_id.commit_id.period_id:
+                res[al.id] = al.commitment_line_id.commit_id.period_id.id
+            elif al.move_id and al.move_id.period_id:
+                res[al.id] = al.move_id.period_id.id
+        return res
+
+    def _search_period_id(self, cr, uid, obj, name, args, context=None):
+        """
+        Search period
+        """
+        # Checks
+        if not context:
+            context = {}
+        if not args:
+            return []
+        new_args = []
+        for arg in args:
+            if len(arg) == 3 and arg[1] in ['=', 'in']:
+                new_args.append('|')
+                new_args.append(('move_id.period_id', arg[1], arg[2]))
+                new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
+        return new_args
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -86,6 +137,8 @@ class analytic_line(osv.osv):
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
             help="Indicates the Journal Type of the Analytic journal item"),
+        'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
+        'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
     }
 
     _defaults = {
@@ -210,7 +263,7 @@ class analytic_line(osv.osv):
                 if account.category == 'DEST':
                     fieldname = 'destination_id'
                 # if period is not closed, so override line.
-                if period and period.state != 'done':
+                if period and period.state not in ['done', 'mission-closed']:
                     # Update account
                     self.write(cr, uid, [aline.id], {fieldname: account_id, 'date': date, 
                         'source_date': aline.source_date or aline.date}, context=context)

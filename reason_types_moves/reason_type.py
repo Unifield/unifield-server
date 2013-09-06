@@ -337,9 +337,9 @@ class stock_picking(osv.osv):
         except ValueError:
             rt_return_unit_id = 0
 
-        for sp in self.browse(cr, uid, ids):
-            if not sp.purchase_id and not sp.sale_id and sp.type == 'out':
-                if sp.reason_type_id.id in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+        for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
+            if not sp['purchase_id'] and not sp['sale_id'] and sp['type'] == 'out' and sp['reason_type_id']:
+                if sp['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
                     return False
         return res
 
@@ -496,10 +496,13 @@ class stock_move(osv.osv):
         except ValueError:
             rt_return_unit_id = 0
 
-        for sm in self.browse(cr, uid, ids):
-            if sm.reason_type_id.id in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
-                if sm.picking_id and not sm.picking_id.purchase_id and not sm.picking_id.sale_id and sm.picking_id.type == 'out':
-                    return False
+         
+        for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
+            if sm['reason_type_id'] and sm['picking_id']:
+                if sm['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+                    pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
+                    if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
+                        return False
         return res
 
     _columns = {
@@ -532,7 +535,7 @@ class stock_move(osv.osv):
                 
         return {'value': vals}
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, product_id=False, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
@@ -551,6 +554,11 @@ class stock_move(osv.osv):
         #if location_dest_id and location_id:
         #    if location_dest_id == location_id:
         #        vals['state'] = 'done'
+            if product_id:
+                # Test the compatibility of the product with the location
+                vals, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product_id, field_name='location_dest_id', values={'value': vals}, vals={'location_id': location_dest_id})
+                if test:
+                    return  vals
 
         return {'value': vals}
     

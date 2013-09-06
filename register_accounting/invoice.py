@@ -126,6 +126,20 @@ class account_invoice(osv.osv):
                 res[inv.id] = 'not'
         return res
 
+    def _get_down_payment_ids(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Search down payment journal items for given invoice
+        """
+        # Some checks
+        if not context:
+            context = {}
+        res = {}
+        for inv in self.browse(cr, uid, ids):
+            res[inv.id] = []
+            for p in inv.purchase_ids:
+                res[inv.id] += [x and x.id for x in p.down_payment_ids]
+        return res
+
     _columns = {
         'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, 
@@ -138,7 +152,8 @@ class account_invoice(osv.osv):
             type='many2one', relation="res.partner", readonly=True),
         'is_direct_invoice': fields.function(_is_direct_invoice, method=True, store=False, type='boolean', readonly=True, string="Is direct invoice?"),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
-        'imported_state': fields.function(_get_imported_state, fnct_search=_search_imported_state, method=True, store=False, type='selection', selection=[('none', 'None'), ('imported', 'Imported'), ('not', 'Not Imported'), ('partial', 'Partially Imported')], string='Imported Status')
+        'imported_state': fields.function(_get_imported_state, fnct_search=_search_imported_state, method=True, store=False, type='selection', selection=[('none', 'None'), ('imported', 'Imported'), ('not', 'Not Imported'), ('partial', 'Partially Imported')], string='Imported Status'),
+        'down_payment_ids': fields.function(_get_down_payment_ids, type="one2many", obj='account.move.line', method=True, string='Down payments'),
     }
 
     def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):

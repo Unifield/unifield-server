@@ -160,11 +160,13 @@
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. In')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. Out')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. CCY')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. CCY')}</Data></Cell>
+    <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount reconciled')}</Data></Cell>
+
 
 	</Row>
     % for line in o.line_ids:
-        % if line.statement_id.journal_id.type == 'cheque' and not line.amount >= 0.0 and line.first_move_line_id :
+        % if line.statement_id.journal_id.type == 'cheque' and line.first_move_line_id :
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.instance_id and line.statement_id.instance_id.code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.name or '')|x}</Data></Cell>
@@ -186,6 +188,7 @@
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.functional_in and line.functional_in or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.functional_out and line.functional_out or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.company_id and line.company_id.currency_id and line.company_id.currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${line.reconciled and 'X' or ''|x}</Data></Cell>
     </Row>
         % endif
     % endfor
