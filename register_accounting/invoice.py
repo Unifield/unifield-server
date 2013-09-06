@@ -82,24 +82,23 @@ class account_invoice(osv.osv):
                 ) AS move_lines, imported_invoice imp, account_bank_statement_line absl
                 WHERE imp.move_line_id = move_lines.AML
                 AND imp.st_line_id = absl.id
-                GROUP BY INV_ID, INV_TOTAL ORDER BY INV_ID;"""
+                GROUP BY INV_ID, INV_TOTAL"""
+            # Fetch second args (type of import)
+            s = args[0][2]
+            # Complete SQL query if needed
+            if s == 'imported':
+                sql += """ HAVING INV_TOTAL = abs(SUM(absl.amount))"""
+            elif s == 'partial':
+                sql += """ HAVING INV_TOTAL != abs(SUM(absl.amount))"""
+            # finish SQL query
+            sql += """ ORDER BY INV_ID;"""
+            # execution
             cr.execute(sql)
             sql_res = cr.fetchall()
-            # Sort imported/partial invoices
-            imported = []
-            partial = []
-            for el in sql_res:
-                if el[1] == el[2]:
-                    imported.append(el[0])
-                    continue
-                partial.append(el[0])
-            # Create domain
-            s = args[0][2]
-            if s == 'imported' and sql_res:
-                res = [('id', 'in', imported)]
-            elif s == 'partial' and sql_res:
-                res = [('id', 'in', partial)]
-            elif s == 'not' and sql_res:
+            # process regarding second args
+            if s in ['partial', 'imported']:
+                res = [('id', 'in', [x and x[0] for x in sql_res])]
+            else:
                 res = [('id', 'not in', [x and x[0] for x in sql_res])]
         return res
 
