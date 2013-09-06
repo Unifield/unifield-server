@@ -345,26 +345,6 @@
 % endfor
 % endif
 % if line.direct_invoice and line.invoice_id:
-      <Row>
-        <Cell ss:Index="3" ss:StyleID="invoice_header">
-          <Data ss:Type="String">${_('Product')}</Data>
-        </Cell>
-        <Cell ss:StyleID="invoice_header">
-          <Data ss:Type="String">${_('Account')}</Data>
-        </Cell>
-        <Cell ss:StyleID="invoice_header">
-          <Data ss:Type="String">${_('Qty')}</Data>
-        </Cell>
-        <Cell ss:StyleID="invoice_header">
-          <Data ss:Type="String">${_('Price')}</Data>
-        </Cell>
-        <Cell ss:StyleID="invoice_header">
-          <Data ss:Type="String">${_('Subtotal')}</Data>
-        </Cell>
-        <Cell ss:StyleID="invoice_header">
-          <Data ss:Type="String">${_('Description')}</Data>
-        </Cell>
-      </Row>
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
         <Cell ss:Index="2" ss:StyleID="left">
