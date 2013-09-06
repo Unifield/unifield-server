@@ -77,10 +77,12 @@ class account_invoice(osv.osv):
                     FROM account_invoice inv, account_move_line aml, account_move am
                     WHERE inv.move_id = am.id
                     AND aml.move_id = am.id
+                    AND inv.state = 'open'
                     ORDER BY inv.id
                 ) AS move_lines, imported_invoice imp, account_bank_statement_line absl
                 WHERE imp.move_line_id = move_lines.AML
-                AND imp.st_line_id = absl.id GROUP BY INV_ID, INV_TOTAL ORDER BY INV_ID;"""
+                AND imp.st_line_id = absl.id
+                GROUP BY INV_ID, INV_TOTAL ORDER BY INV_ID;"""
             cr.execute(sql)
             sql_res = cr.fetchall()
             # Sort imported/partial invoices

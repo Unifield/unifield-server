@@ -328,9 +328,9 @@
                 <data>
                     <xpath expr="/search/group[1]/filter[@name='paid']" position="after">
                         <separator orientation="vertical"/>
-                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not'), ('state', '=', 'open')]"/>
-                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial'), ('state', '=', 'open')]"/>
-                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported'), ('state', '=', 'open')]"/>
+                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
+                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
+                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
                         <separator orientation="vertical"/>
                     </xpath>
                 </data>
