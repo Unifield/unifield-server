@@ -325,20 +325,10 @@
         </tr>
         <tr>
           <td>
-            <para style="terp_default_Note">[[ format(l.note or '') or removeParentNode('tr') ]]</para>
+            <parawrap style="terp_default_Note">[[ format(l.note or '') or removeParentNode('tr') ]]</parawrap>
           </td>
           <td>
             <para style="terp_default_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
-              <font color="white"> </font>
-            </para>
-          </td>
-          <td>
-            <para style="terp_default_Right_9">
               <font color="white"> </font>
             </para>
           </td>
