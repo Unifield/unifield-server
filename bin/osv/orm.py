@@ -555,7 +555,10 @@ class orm_template(object):
             return browse_null()
 
     def __export_row(self, cr, uid, row, fields, context=None):
-        sync_context = isinstance(context, dict) and context.get('sync_update_creation')
+        if context is None:
+            context = {}
+
+        sync_context = context.get('sync_update_creation')
 
         def check_type(field_type):
             if field_type == 'float':
@@ -690,7 +693,7 @@ class orm_template(object):
                     if isinstance(r, browse_record):
                         
                         # add support for reference fields
-                        if cols and cols._type == 'reference':
+                        if cols and cols._type == 'reference' and (sync_context or context.get('import_comp')):
                             row_id = r.id
                             model = r._name
                             xml_id = r._get_xml_ids(cr, uid, [row_id]).get(row_id, '')
