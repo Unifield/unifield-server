@@ -327,7 +327,7 @@ class msf_budget_line(osv.osv):
         'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True),
     }
 
-    _order = 'account_code asc'
+    _order = 'account_code asc, line_type desc'
 
     _defaults = {
         'line_type': 'normal',
