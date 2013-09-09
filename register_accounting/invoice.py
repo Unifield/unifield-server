@@ -72,8 +72,12 @@ class account_invoice(osv.osv):
             type='many2one', relation="account.account", readonly=True),
         'virtual_partner_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Supplier",
             type='many2one', relation="res.partner", readonly=True),
-        'is_direct_invoice': fields.function(_is_direct_invoice, method=True, store=False, type='boolean', readonly=True, string="Is direct invoice?"),
+        'is_direct_invoice': fields.boolean("Is direct invoice?", readonly=True),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
+    }
+
+    _defaults = {
+        'is_direct_invoice': lambda *a: False,
     }
 
     def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):
