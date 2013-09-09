@@ -38,7 +38,10 @@ class account_period(osv.osv):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         if user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level and user.company_id.instance_id.level == 'coordo':
           # Check hq entries
-          hq_ids = self.pool.get('hq.entries').search(cr, uid, [('period_id', 'in', ids), ('user_validated', '=', False)])
+          period_ids = self.search(cr, uid, [('id', 'in', ids), ('state', '=', 'draft')])
+          if isinstance(period_ids, (int, long)):
+              period_ids = [period_ids]
+          hq_ids = self.pool.get('hq.entries').search(cr, uid, [('period_id', 'in', period_ids), ('user_validated', '=', False)])
           if hq_ids:
              raise osv.except_osv(_('Warning'), _('Some HQ entries are not validated in this period. Please validate them before field-closing this period.'))
         return super(account_period, self).action_set_state(cr, uid, ids, context)
