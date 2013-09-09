@@ -31,9 +31,9 @@
                        <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
                        <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
                        <separator orientation="vertical"/>
-                       <filter name='hq' string="HQ" icon="terp-stock_symbol-selection" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance."/>
-                       <filter name='coordo' string="Coordo" icon="gtk-convert" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance."/>
-                       <filter name='project' string="Project" icon="terp-gdu-smart-failing" domain="[('instance_type', '=', 'project')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Project instance."/>
+                       <filter name='hq' string="HQ" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance." icon="terp-go-home"/>
+                       <filter name='coordo' string="Coordo" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance." icon="terp-go-home"/>
+                       <filter name='project' string="Project" domain="[('instance_type', '=', 'project')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Project instance." icon="terp-go-home"/>
                        <separator orientation="vertical"/>
                        <newline/>
                        <field name="name" select="1"/>
