@@ -238,6 +238,13 @@ function pager_action(src){
     var $src = jQuery(src);
     var action = $src.attr('action');
     var relation = $src.attr('relation');
+    if (relation) {
+        var lv = ListView(relation);
+        var sel = lv.$getSelectedItems().map(function () {
+                return parseInt(this.value, 10);
+            }).get()
+        lv.set_previously_selected(sel);
+    }
     return relation ? new ListView(relation).go(action) : submit_form(action ? action : 'find');
 }
 

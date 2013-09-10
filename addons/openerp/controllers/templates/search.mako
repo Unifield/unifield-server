@@ -72,9 +72,9 @@
                 }
 		        function do_select(id) {
                     jQuery.m2m('close',
-                        id ? [parseInt(id, 10)]
-                           : ListView('_terp_list').$getSelectedItems().map(function () {
-                                return parseInt(this.value, 10); }).get()
+                        id ? [parseInt(id, 10)].concat(ListView('_terp_list').get_previously_selected())
+                           : ListView('_terp_list').get_previously_selected()
+
                     );
 		        }
 		    </script>
@@ -100,7 +100,8 @@
         <input type="hidden" id="_terp_search_domain" name="_terp_search_domain" value="${params.search_domain}"/>
         <input type="hidden" id="_terp_filter_domain" name="_terp_filter_domain" value="${params.filter_domain}"/>
         <input type="hidden" id="_terp_search_data" name="_terp_search_data" value="${params.search_data}"/>
-		<input type="hidden" id="_terp_search_text" name="_terp_search_text" value="${params.search_text}"/>
+        <input type="hidden" id="_terp_search_text" name="_terp_search_text" value="${params.search_text}"/>
+        <input type="hidden" id="_terp_previously_selected" name="_terp_previously_selected" />
         <table width="100%" border="0" cellpadding="2">
             <tr>
                 <td>
@@ -115,6 +116,13 @@
             </tr>
             <tr>
                 <td>${form.search.display()}</td>
+            </tr>
+            <tr>
+                <td>
+                % if params.selectable == KINDS['M2M']:
+                    <a style="cursor:pointer" title="${_('View selected records.')}" onclick="new ListView('_terp_list').show_selected_records();"><span id="num_selected">0</span> selected record(s)</a>
+                % endif
+                </td>
             </tr>
             <tr>
                 <td class="toolbar" style="padding: 4px 5px 0px;">

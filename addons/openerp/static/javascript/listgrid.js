@@ -61,8 +61,65 @@ ListView.prototype = {
         this.sort_key = null;
     },
 
+    get_previously_selected: function() {
+        var prefix = this.name == '_terp_list' ? '' : this.name + '/';
+        var previous_field = jQuery('[id*="'+prefix + '_terp_previously_selected'+'"]')
+        if (previous_field) {
+            sel = previous_field.val() || "";
+            if (!sel) {return []};
+            return sel.split(',').map(function(b) {return parseInt(b, 10)});
+        }
+        return [];
+    },
+
+    update_previously_selected: function(value_arr) {
+        var prefix = this.name == '_terp_list' ? '' : this.name + '/';
+        field_previously_selected = jQuery('[id*="'+prefix + '_terp_previously_selected'+'"]');
+        if (field_previously_selected) {
+            field_previously_selected.val(value_arr.join(','));
+            $('#num_selected').html(value_arr.length);
+        }
+    },
+
+    set_previously_selected: function(value) {
+        var previous = this.get_previously_selected()
+        for (var v in value) {
+            if (previous.indexOf(value[v]) == -1) {
+                previous.push(value[v])
+            }
+        }
+        this.update_previously_selected(previous);
+    },
+
+    add_previously_selected: function(value) {
+        if (value) {
+            this.set_previously_selected([parseInt(value, 10)]);
+        }
+    },
+
+    remove_previously_selected: function(value) {
+        if (value) {
+            value = parseInt(value, 10);
+            var previous = this.get_previously_selected()
+            var pos = previous.indexOf(value)
+            if (pos != -1) {
+                previous.splice(pos, 1);
+                this.update_previously_selected(previous);
+            }
+        }
+    },
+
     checkAll: function(clear) {
-        jQuery('[id="' + this.name + '"] input.grid-record-selector').attr('checked', !clear);
+        var self = this
+        jQuery('[id="' + this.name + '"] input.grid-record-selector').each(function(){
+            jthis = jQuery(this)
+            if (clear && jthis.attr('checked')) {
+                self.remove_previously_selected(jthis.val());
+            } else if (!clear && !jthis.attr('checked')) {
+                self.add_previously_selected(jthis.val());
+            }
+            jthis.attr('checked', !clear);
+        });
         this.onBooleanClicked();
     },
 
@@ -116,14 +173,16 @@ ListView.prototype = {
     },
 
     getSelectedRecords: function() {
-        return this.$getSelectedItems().map(function() {
+        return this.get_previously_selected();
+
+        /*return this.$getSelectedItems().map(function() {
             if(this.value) {
                 return this.value
             } else {
                 var box_id = this.id.split('/');
                 return box_id[box_id.length - 1]
             }
-        }).get();
+        }).get();*/
     },
 
     $getSelectedItems: function () {
@@ -139,6 +198,15 @@ ListView.prototype = {
     },
 
     onBooleanClicked: function() {
+        if (arguments.length == 2) {
+            var clicked = !arguments[0];
+            var id = arguments[1];
+            if (clicked) {
+                this.add_previously_selected(id);
+            } else {
+                this.remove_previously_selected(id);
+            }
+        }
         var $sidebar = jQuery('.toggle-sidebar');
         if ($sidebar.is('.closed')) {
             $sidebar.click()
@@ -392,6 +460,12 @@ MochiKit.Base.update(ListView.prototype, {
             self.reload();
         });
     },
+    
+    show_selected_records: function() {
+        group_by = new Array();
+        filter_context = [];
+        this.reload(null, null, this.default_get_ctx, false, this.getSelectedRecords())
+    },
 
     clear: function() {
         group_by = new Array();
@@ -644,6 +718,8 @@ MochiKit.Base.update(ListView.prototype, {
         var self = this;
         var args = getFormParams('_terp_concurrency_info');
 
+        var todel = [];
+
         if(ids==0) {
             var $o2m = jQuery(idSelector('_terp_default_o2m/' + this.name));
             var $tr = jQuery(arguments[1]).parents('tr.grid-row:first');
@@ -658,15 +734,30 @@ MochiKit.Base.update(ListView.prototype, {
             return;
         }
         else if (!ids) {
-            ids = this.getSelectedRecords();
+            ids = this.$getSelectedItems().map(function() {
+                if(this.value) {
+                    return this.value
+                } else {
+                    var box_id = this.id.split('/');
+                    return box_id[box_id.length - 1]
+                }
+            }).get();
+            //ids = this.getSelectedRecords();
             if (ids.length > 0) {
+                todel = ids.slice(0)
                 ids = '[' + ids.join(', ') + ']';
             }
+        } else {
+            todel = [ids]
         }
 
         if(ids.length == 0 || !confirm(_('Do you really want to delete selected record(s) ?'))) {
             return false;
         }
+
+        $.each(todel, function() {
+            self.remove_previously_selected(this);
+        });
 
         var $terp_ids;
         var $terp_count;
@@ -736,7 +827,7 @@ MochiKit.Base.update(ListView.prototype, {
         this.reload();
     },
 
-    reload: function(edit_inline, concurrency_info, default_get_ctx, clear) {
+    reload: function(edit_inline, concurrency_info, default_get_ctx, clear, ids_to_show) {
         if (openobject.http.AJAX_COUNT > 0) {
             return callLater(1, bind(this.reload, this), edit_inline, concurrency_info);
         }
@@ -773,6 +864,10 @@ MochiKit.Base.update(ListView.prototype, {
             args['_terp_clear'] = true;
         }
 
+        if (ids_to_show) {
+            args['_terp_ids_to_show'] = '['+ids_to_show.join(',')+']';
+            args['_terp_offset'] = 0;
+        }
         jQuery(idSelector(self.name) + ' .loading-list').show();
         jQuery.ajax({
             url: '/openerp/listgrid/get',
@@ -829,6 +924,22 @@ MochiKit.Base.update(ListView.prototype, {
                     $list.parent().replaceWith(obj.view);
                 }
 
+                var selfname = self.name
+                var has_selected = false;
+                var all_selected = self.getSelectedRecords()
+                $.each(all_selected, function() {
+                    var el = jQuery(idSelector(selfname+'/'+this));
+                    if (el.length) {
+                        has_selected = true;
+                        el.attr('checked', true);
+                    }
+                });
+                if (has_selected) {
+                    jQuery(idSelector(self.name + '_delete_record')).parent().show();
+                }
+                if (all_selected.length) {
+                    self.selectedRow_sum();
+                }
                 var $editors = self.$adjustEditors(
                         document.getElementById(self.name));
                 if ($editors.length > 0) {

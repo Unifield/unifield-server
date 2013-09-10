@@ -58,6 +58,8 @@ class Screen(TinyInputWidget):
         
         self.m2m = kw.get('_m2m', 0)
         self.o2m = kw.get('_o2m', 0)
+        self.get_source = kw.get('get_source', False)
+
         self.is_dashboard = False
         if self.model == 'board.board' and self.view_type == 'form':
             self.is_dashboard = True
@@ -86,7 +88,6 @@ class Screen(TinyInputWidget):
                 self.count = len(self.ids)
             else:
                 self.count = rpc.RPCProxy(self.model).search_count(self.domain, self.context)
-                
         self.prefix             = prefix
         self.views_preloaded    = views_preloaded or (params.views or {})
 

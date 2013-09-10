@@ -33,7 +33,7 @@ class ViewForm(Form):
 
     template = "/openerp/widgets/templates/viewform.mako"
 
-    params = ['limit', 'offset', 'count', 'search_domain', 'search_data', 'filter_domain', 'notebook_tab', 'context_menu']
+    params = ['limit', 'offset', 'count', 'search_domain', 'search_data', 'filter_domain', 'notebook_tab', 'context_menu', 'previously_selected', 'previously_selected_length']
     member_widgets = ['screen', 'search', 'sidebar', 'logs']
 
     def __init__(self, params, **kw):
@@ -47,6 +47,12 @@ class ViewForm(Form):
         self.context_menu = params.get('context_menu')
         editable = params.editable
         readonly = params.readonly
+
+        self.previously_selected = None
+        self.previously_selected_length = 0
+        if params.get('_terp_ids_to_show'):
+            self.previously_selected = ','.join(map(str, params.get('_terp_ids_to_show')))
+            self.previously_selected_length = len(params.get('_terp_ids_to_show'))
 
         if editable is None:
             editable = True
@@ -85,9 +91,10 @@ class ViewForm(Form):
             params.search_domain = self.search.listof_domain
             params.filter_domain = self.search.custom_filter_domain
             params.group_by_ctx = self.search.groupby
-            
+        
+        get_source = params.get_source or False
         self.screen = Screen(prefix='', hastoolbar=True, hassubmenu=True, editable=editable, readonly=readonly,
-                             selectable=params.selectable or 2)
+                             selectable=params.selectable or 2, get_source=get_source)
 
         if self.screen.widget and self.screen.view_type in ['form', 'tree']:
             self.logs = Logs()

@@ -259,7 +259,7 @@ class List(SecuredController):
                 if k.startswith('search_default') and k[15:] not in params['_terp_search_data'].get('group_by_ctx',{}):
                     del params['_terp_context'][k]
 
-        if params.get('_terp_clear'):
+        if params.get('_terp_clear') or params.get('_terp_ids_to_show'):
             params.search_domain, params.filter_domain, params.ids = [], [], []
             params.search_data = {}
             for k,v in params.context.items():
@@ -269,6 +269,7 @@ class List(SecuredController):
             if 'group_by' in params.context:
                 del params.context['group_by']
             params.group_by_ctx = []
+
 
         if source == '_terp_list':
             if not params.view_type == 'graph':
@@ -280,6 +281,9 @@ class List(SecuredController):
             if params.filter_domain:
                 params.domain += params.filter_domain
 
+        if params.get('_terp_ids_to_show'):
+            params.search_domain = [('id', 'in', params.get('_terp_ids_to_show'))]
+
         # default_get context
         current = params.chain_get(source)
         if current and params.source_default_get:
@@ -290,6 +294,7 @@ class List(SecuredController):
             res = wizard.Wizard().execute(params)
             frm = res['form']
         else:
+            params.get_source = source
             frm = form.Form().create_form(params)
 
         if params.view_type == 'graph':
@@ -334,7 +339,6 @@ class List(SecuredController):
         id = (id or False) and int(id)
         ids = (id or []) and [id]
         list_grid = params.list_grid or '_terp_list'
-
         try:
 
             if btype == 'workflow':
@@ -348,6 +352,8 @@ class List(SecuredController):
             elif btype == 'object':
                 ctx = params.context or {}
                 ctx.update(rpc.session.context.copy())
+                if list_grid != '_terp_list':
+                    ctx['from_list_grid'] = list_grid
                 res = rpc.session.execute('object', 'execute', model, name, ids, ctx)
 
                 if isinstance(res, dict):
