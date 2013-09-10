@@ -88,6 +88,12 @@ class account_commitment(osv.osv):
         if not 'period_id' in vals:
             period_ids = get_period_from_date(self, cr, uid, vals.get('date', strftime('%Y-%m-%d')), context=context)
             vals.update({'period_id': period_ids and period_ids[0]})
+        # UTP-317 # Check that no inactive partner have been used to create this commitment
+        if 'partner_id' in vals:
+            partner = self.pool.get('res.partner').browse(cr, uid, [vals.get('partner_id')])
+            active = True
+            if partner and partner[0] and not partner[0].active:
+                raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (partner[0] and partner[0].name or '',))
         # Add sequence
         sequence_number = self.pool.get('ir.sequence').get(cr, uid, self._name)
         instance = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id
@@ -363,6 +369,7 @@ class account_commitment_line(osv.osv):
     _name = 'account.commitment.line'
     _description = "Account Commitment Voucher Line"
     _order = "id desc"
+    _rec_name = 'account_id'
 
     def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
         """

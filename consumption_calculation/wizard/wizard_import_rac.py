@@ -25,6 +25,7 @@ import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from msf_doc_import import check_line
+from consumption_calculation.consumption_calculation import _get_asset_mandatory
 
 class wizard_import_rac(osv.osv_memory):
     _name = 'wizard.import.rac'
@@ -70,6 +71,7 @@ class wizard_import_rac(osv.osv_memory):
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
         line_obj = self.pool.get('real.average.consumption.line')
+        asset_obj = self.pool.get('product.asset')
         obj_data = self.pool.get('ir.model.data')
         product_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
 
@@ -92,9 +94,9 @@ class wizard_import_rac(osv.osv_memory):
             col_count = len(row)
             if not check_line.check_empty_line(row=row, col_count=col_count, line_num=line_num):
                 continue
-            if col_count != 7:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Consumed Quantity, Remark"""))
+            if col_count != 8:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 8 columns in this order:
+Product Code*, Product Description*, Product UOM, Batch Number, Asset, Expiry Date, Consumed Quantity, Remark"""))
             # default values
             to_write = {
                 'default_code': obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1],
@@ -108,18 +110,20 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             error = ''
             just_info_ok = False
             batch = False
+            asset = False
             expiry_date = None # date type
             batch_mandatory = False
             date_mandatory = False
+            asset_mandatory = False
             line_num += 1
             context.update({'import_in_progress': True, 'noraise': True})
             try:
                 # Cell 5: Quantity
-                if row.cells[5] and row.cells[5].data:
+                if row.cells[6] and row.cells[6].data:
                     try:
-                        consumed_qty = float(row.cells[5].data)
+                        consumed_qty = float(row.cells[6].data)
                     except ValueError:
-                        error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n.") % (line_num, row.cells[5].data,)
+                        error += _("Line %s of the imported file: the Consumed Quantity should be a number and not %s \n.") % (line_num, row.cells[6].data,)
     
                 # Cell 0: Product Code
                 expiry_date = False
@@ -172,6 +176,18 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                                     error += _("""Line %s of the imported file: Expiry Date has been changed to %s which is the system BN date (was wrong in the file)"""
                                                ) % (line_num, batch_read['life_date'] and time.strftime('%d/%b/%Y', time.strptime(batch_read['life_date'], '%Y-%m-%d')))
                                     just_info_ok = True
+
+                    # Cell 5 : Asset
+                    if _get_asset_mandatory(prod):
+                        asset_mandatory = True
+                        if not row[5].data:
+                            error += _("Line %s of the imported file: Asset form required.\n") % (line_num,)
+                        if row[5].data:
+                            asset = asset_obj.search(cr, uid, [('name', '=', row[5]), ('product_id', '=', prod.id)], context=context)
+                            if not asset and consumed_qty:
+                                error += _("Line %s of the imported file: Asset [%s] not found.\n") % (line_num, row[5])
+                            elif asset:
+                                asset = asset[0]
                 else:
                     product_id = False
                     error += _('Line %s of the imported file: Product Code [%s] not found ! Details: %s \n') % (line_num, row[0], p_value['error_list'])
@@ -194,8 +210,8 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                         error_log += _('Line %s of the imported file: %s') % (line_num, round_qty.get('warning', {}).get('message'))
     
                 # Cell 6: Remark
-                if row.cells[6] and row.cells[6].data:
-                    remark = row.cells[6].data
+                if row.cells[7] and row.cells[7].data:
+                    remark = row.cells[7].data
                 error += '\n'.join(to_write['error_list'])
                 if not consumed_qty and not product_id==product_tbd:
                      # If the line doesn't have quantity we do not check it.
@@ -206,11 +222,16 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
                              'uom_id': uom_id,
                              'prodlot_id': batch,
                              'expiry_date': expiry_date,
+                             'asset_id': asset,
                              'consumed_qty': consumed_qty,
                              'remark': remark,
                              'rac_id': rac_id,
                              'text_error': error,
                              'just_info_ok': just_info_ok,}
+
+                # Check product restrictions
+                if product_id:
+                    product_obj._get_restriction_error(cr, uid, [product_id], {'constraints': ['consumption']}, context=dict(context, noraise=False))
 
                 if product_id and batch and line_obj.search_count(cr, uid, [('product_id', '=', product_id), ('prodlot_id', '=', batch), ('rac_id', '=', rac_id)]):
                     error_log += _("""The line %s of the Excel file was ignored. The couple product (%s), batch number (%s) has to be unique."""
@@ -232,6 +253,12 @@ Product Code*, Product Description*, Product UOM, Batch Number, Expiry Date, Con
             except IndexError, e:
                 # the IndexError is often happening when we open Excel file into LibreOffice because the latter adds empty lines
                 error_log += _("Line %s ignored: the system reference an object that doesn't exist in the Excel file. Details: %s\n") % (line_num, e)
+                ignore_lines += 1
+                continue
+            except osv.except_osv as osv_error:
+                osv_value = osv_error.value
+                osv_name = osv_error.name
+                error_log += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                 ignore_lines += 1
                 continue
             except Exception, e:

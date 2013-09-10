@@ -132,6 +132,7 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getComm': self.getComm,
             'getF1': self.getF1,
             'getF2': self.getF2,
+            'getGranularity': self.getGranularity,
         })
         return
 
@@ -169,6 +170,19 @@ class report_budget_actual_2(report_sxw.rml_parse):
         if 'commitment' in parameters and parameters['commitment']:
             return True
         return False
+
+    def getGranularity(self,):
+        res = ''
+        parameters = self.localcontext.get('data', {}).get('form', {})
+        if 'granularity' in parameters and parameters['granularity']:
+            g = parameters['granularity']
+            if g == 'all':
+                res = _('Expenses and destinations')
+            elif g == 'expense':
+                res = _('Expenses')
+            elif g == 'parent':
+                res = _('Parent Expenses only')
+        return res
 
     def getLines(self, lines, context={}):
         budget_line_ids = [x.id for x in lines]

@@ -121,8 +121,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         error_msg += 'Line %s ' % ', '.join(str(x[1]) for x in errors[e])
                     error_msg += ': %s' % e
                 raise osv.except_osv(_('Errors'), _('There are some errors on sourcing lines : %s') % error_msg)
-                
-            
+
+        # Commit the result to avoid problem confirmLine in thread with new cursor
+        cr.commit()
+
         return {'type': 'ir.actions.act_window_close'}
 
     def source_lines(self, cr, uid, ids, context=None):
@@ -138,7 +140,6 @@ class multiple_sourcing_wizard(osv.osv_memory):
             for line in wiz.line_ids:
                 if line.sale_order_id.procurement_request and wiz.po_cft == 'dpo':
                     raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-                
                 line_obj.confirmLine(cr, uid, [line.id], context=context)
 
         return {'type': 'ir.actions.act_window_close'}
@@ -201,7 +202,7 @@ class res_partner(osv.osv):
             if arg[0] == 'line_contains_fo':
                 if type(arg[2]) == type(list()):
                     for line in self.pool.get('sourcing.line').browse(cr, uid, arg[2][0][2], context=context):
-                        if not line.procurement_request:
+                        if not line.sale_order_id.procurement_request:
                             res.append(('partner_type', 'in', ['external', 'esc']))
 
         return res

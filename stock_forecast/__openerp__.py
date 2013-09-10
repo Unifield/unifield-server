@@ -37,7 +37,6 @@
              ],
     'update_xml': [
         'security/ir.model.access.csv',
-        'stock_forecast_sequence.xml',
         'wizard/stock_forecast_view.xml',
         'wizard/stock_forecast_export_view.xml',
         'stock_forecast_report.xml',

@@ -271,7 +271,7 @@ class account_line_csv_export(osv.osv_memory):
             account_description = absl.account_id and absl.account_id.name and absl.account_id.name.encode('utf-8') or ''
             csv_line.append("%s - %s" % (account_code or '', account_description or ''))
             #partner_txt
-            csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.name and absl.transfer_journal_id.name.encode('utf-8') or '')
+            csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.code and absl.transfer_journal_id.code.encode('utf-8') or '')
             #debit_currency
             csv_line.append(absl.amount_in or 0.0)
             #credit_currency
