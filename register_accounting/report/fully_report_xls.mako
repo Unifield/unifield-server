@@ -95,14 +95,13 @@
     </Style>
     <Style ss:ID="ana_centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
-      <Font ss:Bold="1"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
-      <Font ss:Color="#0000ff"/>
+      <Font ss:Color="#0000ff" ss:Bold="1"/>
     </Style>
     <Style ss:ID="date">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
