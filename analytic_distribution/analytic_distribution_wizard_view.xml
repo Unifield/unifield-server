@@ -144,7 +144,44 @@
                     <field name="date" colspan="2" /><label string="" colspan="2"/>
                     <newline/>
                     <field name="display_fp" invisible="1"/>
+                    <separator string="Remaining lines"/>
+                    <newline/>
                     <field name="line_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <separator string="Non eligible lines"/>
+                    <newline/>
+                    <label string="A line is non-eligible regarding these criteria:" align="0.0"/>
+                    <newline/>
+                    <label string="- Line comes from a commitment" align="0.0"/>
+                    <newline/>
+                    <label string="- Line have been analytically reallocated" align="0.0"/>
+                    <newline/>
+                    <label string="- Line is a reversal" align="0.0"/>
+                    <newline/>
+                    <label string="- Line have been used in an engagement journal" align="0.0"/>
+                    <newline/>
+                    <label string="- Line comes from a write-off" align="0.0"/>
+                    <newline/>
+                    <label string="- Line comes from a unposted journal entry" align="0.0"/>
+                    <newline/>
+                    <html>
+                        <br />
+                    </html>
+                    <field name="other_ids" nolabel="1" colspan="4" context="{'display_fp': display_fp}">
+                        <tree string="Analytic journal items">
+                            <field name="instance_id"/>
+                            <field name="journal_id"/>
+                            <field name="entry_sequence"/>
+                            <field name="name"/>
+                            <field name="ref"/>
+                            <field name="commitment_line_id"/>
+                            <field name="is_reallocated"/>
+                            <field name="is_reversal"/>
+                            <field name="from_write_off"/>
+                            <field name="move_state"/>
+                        </tree>
+                    </field>
+                    <separator string=""/>
                     <group col="6" colspan="4">
                         <label string="" colspan="2"/>
                         <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>

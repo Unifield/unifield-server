@@ -120,6 +120,8 @@ class mass_reallocation_wizard(osv.osv_memory):
             string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
         'display_fp': fields.boolean('Display FP'),
+        'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id', 
+            string="Non eligible analytic journal items", required=False, readonly=True),
     }
 
     _default = {
@@ -145,6 +147,20 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['account_id'] =  context['analytic_account_from']
         if context.get('active_ids', False) and context.get('active_model', False) == 'account.analytic.line':
             res['line_ids'] = context.get('active_ids')
+            # Search which lines are eligible
+            search_args = [
+                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|',
+                ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
+                ('is_reversal', '=', True), ('journal_id.type', '=', 'engagement'),
+                ('from_write_off', '=', True),
+                ('move_state', '=', 'draft')
+            ]
+            search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args, context=context)
+            # Process lines if exist
+            if search_ns_ids:
+                # add non eligible lines to the right field.
+                res['other_ids'] = search_ns_ids
+                res['line_ids'] = [x for x in context.get('active_ids') if x not in search_ns_ids]
         res['display_fp'] = context.get('display_fp', False)
         return res
 
