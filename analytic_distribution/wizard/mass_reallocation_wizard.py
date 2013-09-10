@@ -160,7 +160,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             context = {}
         if not date or not al_ids:
             if not al_ids:
-                raise osv.except_osv(_('Warning'), _('No line to be processed (So no one is compatible.)'))
+                raise osv.except_osv(_('Warning'), _('No items are eligible to be mass reallocated.'))
             raise osv.except_osv(_('Error'), _('Some missing args in check_date method. Please contact an administrator.'))
         # Initialisation of Document Date and Posting Date
         dd = False
