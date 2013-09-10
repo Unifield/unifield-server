@@ -209,10 +209,18 @@
                     <newline/>
                     <field name="date"/>
                     <newline/>
+                    <separator string="Allocatable lines"/>
+                    <newline/>
+                    <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
+                    <separator string="Lines in error"/>
+                    <newline/>
                     <field name="error_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
                     <newline />
-                    <field name="process_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
-                    <newline />
+                    <separator string="Excluded lines"/>
+                    <newline/>
+                    <field name="other_ids" colspan="4" nolabel="1" context="{'display_fp': display_fp}"/>
+                    <newline/>
                     <group col="6" colspan="4"/>
                         <label string="" colspan="2"/>
                         <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
