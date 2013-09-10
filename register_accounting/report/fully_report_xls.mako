@@ -276,10 +276,10 @@
           <Data ss:Type="String">Entry type</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Doc. Date</Data>
+          <Data ss:Type="String">Doc Date</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Post. Date</Data>
+          <Data ss:Type="String">Post Date</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Sequence</Data>
@@ -300,9 +300,6 @@
           <Data ss:Type="String">Amount OUT</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Currency</Data>
-        </Cell>
-        <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Destination</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
@@ -312,7 +309,7 @@
           <Data ss:Type="String">Funding Pool</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Amt. Reconciled</Data>
+          <Data ss:Type="String">Rec?</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Status</Data>
@@ -351,9 +348,6 @@
           <Data ss:Type="Number">${line.amount_out or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${line.currency_id and line.currency_id.name or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="centre">
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="centre">
@@ -378,9 +372,6 @@
       <Row>
         <Cell ss:Index="9" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_centre">
-          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${ana_line.destination_id and ana_line.destination_id.code or ''|x}</Data>
@@ -429,9 +420,6 @@
           <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
@@ -450,9 +438,6 @@
       <Row>
         <Cell ss:Index="9" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
@@ -505,9 +490,6 @@
           <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
@@ -526,9 +508,6 @@
       <Row>
         <Cell ss:Index="9" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
-        </Cell>
-        <Cell ss:StyleID="ana_left">
-          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.destination_id and inv_ana_line.destination_id.code or ''|x}</Data>
