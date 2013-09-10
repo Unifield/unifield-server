@@ -313,7 +313,7 @@ class msf_budget_line(osv.osv):
         'budget_id': fields.many2one('msf.budget', 'Budget', ondelete='cascade'),
         'account_id': fields.many2one('account.account', 'Account', required=True, domain=[('type', '!=', 'view')]),
         'destination_id': fields.many2one('account.analytic.account', 'Destination', domain=[('category', '=', 'DEST')]),
-        'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True"),
+        'name': fields.function(_get_name, method=True, store=False, string="Name", type="char", readonly="True", size=512),
         'budget_values': fields.char('Budget Values (list of float to evaluate)', size=256),
         'budget_amount': fields.function(_get_total_amounts, method=True, store=False, string="Budget amount", type="float", readonly="True", multi="all"),
         'actual_amount': fields.function(_get_total_amounts, method=True, store=False, string="Actual amount", type="float", readonly="True", multi="all"),
@@ -325,8 +325,11 @@ class msf_budget_line(osv.osv):
         'line_type': fields.selection([('view','View'),
                                        ('normal','Normal'),
                                        ('destination', 'Destination')], 'Line type', required=True),
+        'account_code': fields.related('account_id', 'code', type='char', string='Account code', size=64, store=True),
     }
-    
+
+    _order = 'account_code asc, line_type desc'
+
     _defaults = {
         'line_type': 'normal',
     }
