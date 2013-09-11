@@ -607,6 +607,19 @@
 % endfor
     </Table>
     <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+      <PageSetup>
+        <Layout x:Orientation="Landscape" x:CenterHorizontal="1" x:CenterVertical="1"/>
+        <Header x:Margin="0"/>
+        <Footer x:Margin="0"/>
+        <PageMargins x:Bottom="0.40" x:Left="0.40" x:Right="0.40" x:Top="0.40"/>
+      </PageSetup>
+      <Print>
+        <ValidPrinterInfo/>
+        <PaperSizeIndex>9</PaperSizeIndex>
+        <Scale>70</Scale>
+      </Print>
+      <ShowPageBreakZoom/>
+      <PageBreakZoom>70</PageBreakZoom>
       <DoNotDisplayGridlines/>
     </WorksheetOptions>
   </Worksheet>
