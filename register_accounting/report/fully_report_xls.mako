@@ -25,15 +25,6 @@
       <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:Indent="0"/>
       <Font ss:Bold="1"/>
     </Style>
-    <Style ss:ID="pop">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-      <Borders>
-        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
-        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
-        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
-        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
-      </Borders>
-    </Style>
     <Style ss:ID="header_part">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
       <Borders>
@@ -224,7 +215,7 @@
         <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Prop. Instance</Data>
         </Cell>
-        <Cell ss:StyleID="pop">
+        <Cell ss:StyleID="header_part_center">
           <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
         </Cell>
       </Row>
