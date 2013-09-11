@@ -195,7 +195,9 @@
         </Cell>
       </Row>
     </Table>
-    <WorksheetOptions/>
+    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+      <DoNotDisplayGridlines/>
+    </WorksheetOptions>
   </Worksheet>
 % for o in objects:
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
@@ -530,7 +532,9 @@
 
 % endfor
     </Table>
-    <WorksheetOptions/>
+    <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+      <DoNotDisplayGridlines/>
+    </WorksheetOptions>
   </Worksheet>
 % endfor
 </Workbook>
