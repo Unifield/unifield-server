@@ -27,10 +27,22 @@ from tools.translate import _
 
 import time
 
+HIST_STATUS = [('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready')]
 
 class product_history_consumption(osv.osv):
     _name = 'product.history.consumption'
     _rec_name = 'location_id'
+
+    def _get_status(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the same status as status
+        '''
+        res = {}
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            res[obj.id] = obj.status
+
+        return res
 
     _columns = {
         'date_from': fields.date(string='From date'),
@@ -47,7 +59,8 @@ class product_history_consumption(osv.osv):
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root'),
         'requestor_id': fields.many2one('res.users', string='Requestor'),
         'requestor_date': fields.datetime(string='Date of the demand'),
-        'status': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Ready')], string='Status'),
+        'fake_status': fields.function(_get_status, method=True, type='selection', selection=HIST_STATUS, readonly=True, string='Status'),
+        'status': fields.selection(HIST_STATUS, string='Status'),
     }
 
     _defaults = {
@@ -89,6 +102,9 @@ class product_history_consumption(osv.osv):
         if date_from and date_to:
             res['value'].update({'month_ids': []})
             current_date = DateFrom(date_from) + RelativeDateTime(day=1)
+            if current_date > (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)):
+                return {'warning': {'title': _('Error'),
+                                    'message':  _('The \'To Date\' should be greater than \'From Date\'')}}
             # For all months in the period
             while current_date <= (DateFrom(date_to) + RelativeDateTime(months=1, day=1, days=-1)):
                 search_ids = month_obj.search(cr, uid, [('name', '=', current_date.strftime('%m/%Y')), ('history_id', 'in', ids)], context=context)
@@ -140,6 +156,9 @@ class product_history_consumption(osv.osv):
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
         nb_months = len(months)
         total_consumption = {}
+
+        if not months:
+            raise osv.except_osv(_('Error'), _('You have to choose at least one month for consumption history'))
 
         if obj.nomen_manda_0:
             for report in self.browse(cr, uid, ids, context=context):
@@ -225,13 +244,16 @@ class product_history_consumption(osv.osv):
         Create lines in background
         '''
         import pooler
-        cr = pooler.get_db(cr.dbname).cursor()
+        new_cr = pooler.get_db(cr.dbname).cursor()
 
-        self.pool.get('product.product').read(cr, uid, product_ids, ['average'], context=context)
-        self.write(cr, uid, ids, {'status': 'ready'}, context=context)
+        try:
+            self.pool.get('product.product').read(new_cr, uid, product_ids, ['average'], context=context)
+        except Exception, e:
+            cr.rollback()
+        self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
-        cr.commit()
-        cr.close()
+        new_cr.commit()
+        new_cr.close()
 
         return
 
@@ -262,11 +284,11 @@ class product_history_consumption(osv.osv):
             hist_obj.unlink(cr, uid, hist_ids, context=context)
         return super(product_history_consumption, self).unlink(cr, uid, ids, context=context)
 
-    def in_progres(self, cr, uid, ids, context=None):
+    def in_progress(self, cr, uid, ids, context=None):
         '''
         Return dummy
         '''
-        return
+        return self.go_to_list(cr, uid, ids, context=context)
 
     def go_to_list(self, cr, uid, ids, context=None):
         '''
@@ -317,7 +339,6 @@ class product_history_consumption_month(osv.osv):
     }
 
     def unlink(self, cr, uid, ids, context=None):
-        print 'unlink'
         return self.unlink(cr, uid, ids, context=context)
 
 product_history_consumption_month()

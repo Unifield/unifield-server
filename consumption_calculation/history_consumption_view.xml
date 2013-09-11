@@ -56,7 +56,8 @@
                 />
             </group>
 			<separator colspan="2" string="Actions" />
-			<button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')]}" />
+			<button name="create_lines" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'readonly': [('status', '=', 'in_progress')], 'invisible': [('status', '=', 'ready')]}" />
+			<button name="openn_report" type="object" string="View historical data" icon="terp-check" colspan="2" attrs="{'invisible': [('status', '!=', 'ready')]}" />
 		    </group>
 		</form>
 	    </field>
@@ -86,9 +87,11 @@
                     </html>
                 </group>
                 <label> </label>
+                <!--
+                Remove the button because a click on this button waits the end of the thread to display the list of reports
                 <label> </label>
                 <button name="go_to_list" string="Return to the list of history consumption reports" icon="gtk-undo" type="object" colspan="2"/>
-                <label> </label>
+                <label> </label>-->
             </form>
         </field>
     </record>
@@ -111,7 +114,7 @@
         <field name="model">product.history.consumption</field>
         <field name="type">tree</field>
         <field name="arch" type="xml">
-            <tree string="Historical consumptions" noteditable="1">
+            <tree string="Historical consumptions" noteditable="1" colors="grey:status=='in_progress';green:status=='ready'">
                 <field name="requestor_date" />
                 <field name="requestor_id" />
                 <field name="date_from" />
@@ -125,6 +128,7 @@
                 <field name="nomen_manda_3" />
                 <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
                 <button name="open_report" type="object" icon="terp-check" string="Open report" attrs="{'invisible': [('status', '!=', 'ready')]}"/>
+                <field name="fake_status" />
                 <field name="status" invisible="1" />
             </tree>
         </field>
@@ -135,6 +139,7 @@
         <field name="res_model">product.history.consumption</field>
         <field name="view_type">form</field>
         <field name="view_mode">tree,form</field>
+        <field name="target"></field>
     </record>
 
     <menuitem id="menu_product_history_consumption"
