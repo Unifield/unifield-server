@@ -120,6 +120,16 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <Style ss:ID="centre_bold">
+      <Font ss:Bold="1"/>
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
     <Style ss:ID="ana_centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
       <Borders>
@@ -248,7 +258,8 @@
       <Column ss:Width="118"/>
       <Column ss:Width="95.9527"/>
       <Column ss:Width="71.263"/>
-      <Column ss:Width="60" ss:Span="1"/>
+      <Column ss:Width="55"/>
+      <Column ss:Width="60"/>
       <Column ss:Width="66" ss:Span="1"/>
       <Column ss:Width="72"/>
       <Column ss:Width="76.5"/>
@@ -382,7 +393,7 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left_bold">
+        <Cell ss:StyleID="centre_bold">
           <Data ss:Type="String">${line.account_id.code|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
