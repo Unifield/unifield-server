@@ -187,7 +187,6 @@ class product_history_consumption(osv.osv):
                 if product.id not in products:
                     batch_mandatory = product.batch_management or product.perishable
                     date_mandatory = not product.batch_management and product.perishable
-                    self.pool.get('product.product').write(cr, uid, ids, {'name': product.id,})
 
         if obj.sublist_id:
             context.update({'search_default_list_ids': obj.sublist_id.id})
