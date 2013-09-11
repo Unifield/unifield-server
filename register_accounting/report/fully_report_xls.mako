@@ -210,7 +210,6 @@
       <Column ss:Width="72"/>
       <Column ss:Width="76.5"/>
       <Column ss:Width="43.4551"/>
-      <Column ss:Width="64.0063"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''|x} REPORT</Data>
@@ -319,9 +318,6 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Status</Data>
         </Cell>
-        <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Third Parties</Data>
-        </Cell>
       </Row>
 % for line in o.line_ids:
       <Row ss:Height="14.5134">
@@ -366,9 +362,6 @@
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.state and getSel(line, 'state') or ''|x}</Data>
-        </Cell>
-        <Cell ss:StyleID="left_bold">
-          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
         </Cell>
       </Row>
 
