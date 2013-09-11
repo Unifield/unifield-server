@@ -279,7 +279,7 @@
       <Column ss:Width="95.9527"/>
       <Column ss:Width="57" ss:Span="1"/>
       <Column ss:Width="118"/>
-      <Column ss:Width="95.9527"/>
+      <Column ss:Width="135"/>
       <Column ss:Width="71.263"/>
       <Column ss:Width="55"/>
       <Column ss:Width="60"/>
