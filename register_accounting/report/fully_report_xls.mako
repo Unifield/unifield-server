@@ -120,7 +120,8 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
-    <Style ss:ID="centre_bold">
+    <!-- Only used for register lines account's code -->
+    <Style ss:ID="number_centre_bold">
       <Font ss:Bold="1"/>
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
       <Borders>
@@ -129,6 +130,17 @@
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
+      <NumberFormat ss:Format="0"/>
+    </Style>
+    <Style ss:ID="number_centre">
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <NumberFormat ss:Format="0"/>
     </Style>
     <Style ss:ID="ana_centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
@@ -393,8 +405,8 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.ref or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="centre_bold">
-          <Data ss:Type="String">${line.account_id.code|x}</Data>
+        <Cell ss:StyleID="number_centre_bold">
+          <Data ss:Type="Number">${line.account_id.code|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>
@@ -454,8 +466,8 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.name or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data>
+        <Cell ss:StyleID="number_centre">
+          <Data ss:Type="Number">${inv_line.account_id and inv_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
@@ -524,8 +536,8 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${imp_inv_line.name or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
+        <Cell ss:StyleID="number_centre">
+          <Data ss:Type="Number">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
