@@ -27,6 +27,40 @@
     </Style>
     <Style ss:ID="pop">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="header_part">
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="header_part_center">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="header_part_number">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <NumberFormat ss:Format="Standard"/>
     </Style>
     <Style ss:ID="column_headers">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -179,7 +213,7 @@
         <Cell ss:Index="2"/>
       </Row>
       <Row ss:Height="12.1039">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Report Date:</Data>
         </Cell>
         <Cell ss:StyleID="short_date2" >
@@ -187,7 +221,7 @@
         </Cell>
       </Row>
       <Row ss:Height="12.6425">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Prop. Instance</Data>
         </Cell>
         <Cell ss:StyleID="pop">
@@ -220,58 +254,58 @@
       <Row ss:Height="14.5134">
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Name: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_center">
           <Data ss:Type="String">${o.name or ''|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Period: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_center">
           <Data ss:Type="String">${o.period_id and o.period_id.name or ''|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Currency: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_center">
           <Data ss:Type="String">${o.currency and o.currency.name or ''|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Starting balance: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_number">
           <Data ss:Type="Number">${o.balance_start or 0.0|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Closing balance: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_number">
           <Data ss:Type="Number">${o.balance_end_real or 0.0|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">Calculated balance: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_number">
           <Data ss:Type="Number">${o.balance_end or 0.0|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="14.5134">
-        <Cell>
+        <Cell ss:StyleID="header_part">
           <Data ss:Type="String">State: </Data>
         </Cell>
-        <Cell>
+        <Cell ss:StyleID="header_part_center">
           <Data ss:Type="String">${o.state and getSel(o, 'state') or ''|x}</Data>
         </Cell>
       </Row>
