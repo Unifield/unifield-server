@@ -356,8 +356,10 @@ class product_product(osv.osv):
 
         history_fields = []
         new_fields_to_export = []
-        history_fields_sort = {}
-        sort_iter = 0
+        fields_sort = {}
+        sort_iter2 = 0
+        default_code_index = False
+        remove_default_code = False
 
         # Add fictive fields
         if context.get('history_cons', False):
@@ -366,31 +368,55 @@ class product_product(osv.osv):
             if context.get('amc', False) and 'average' in fields_to_export:
                 history_fields.append('average')
 
+            if 'default_code' not in fields_to_export:
+                fields_to_export.append('default_code')
+                remove_default_code = True
+
             for month in months:
                 field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
                 if field_name in fields_to_export:
                     history_fields.append(field_name)
 
-        # Prepare normal fields to export to avoid error on export data with fictive fields
-        for f in fields_to_export:
-            if f not in history_fields:
-                new_fields_to_export.append(f)
-            else:
-                # We save the order of the fictive fields to read them in the good order
-                history_fields_sort.update({sort_iter: f})
-                sort_iter += 1
+            # Prepare normal fields to export to avoid error on export data with fictive fields
+            to_export_iter = 0
+            for f in fields_to_export:
+                if f not in history_fields:
+                    new_fields_to_export.append(f)
+                    if f == 'default_code':
+                        default_code_index = to_export_iter
+                    to_export_iter += 1
+
+                # We save the order of the fields to read them in the good order
+                fields_sort.update({sort_iter2: f})
+                sort_iter2 += 1
 
         res = super(product_product, self).export_data(cr, uid, ids, new_fields_to_export, context=dict(context, history_cons=False))
 
-        # Set the fictive fields in the good order
+        # Set the fields in the good order
         if context.get('history_cons', False):
+            new_data = []
             for r in res['datas']:
-                product_id = self.search(cr, uid, [('default_code', '=', r[0])], context=context)
+                new_r = []
+                product_id = self.search(cr, uid, [('default_code', '=', r[default_code_index])], context=context)
                 datas = {}
                 if product_id:
                     datas = self.read(cr, uid, product_id, history_fields + ['default_code', 'id'], context=context)[0]
-                for i, f in history_fields_sort.iteritems():
-                    r.append(str(datas.get(f, 0.00)))
+
+                iter_r = 0
+                for j in range(sort_iter2):
+                    f = fields_sort[j]
+
+                    if f == 'default_code' and remove_default_code:
+                        continue
+
+                    if f in history_fields:
+                        new_r.append(str(datas.get(f, 0.00)))
+                    else:
+                        new_r.append(r[iter_r])
+                        iter_r += 1
+                new_data.append(new_r)
+
+            res['datas'] = new_data
         
         return res
 
