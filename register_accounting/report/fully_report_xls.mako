@@ -21,10 +21,12 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
   <Styles>
+    <!-- Header title for EACH page/sheet @ the top -->
     <Style ss:ID="title">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:Indent="0"/>
       <Font ss:Bold="1"/>
     </Style>
+    <!-- Labels for information in header part of each page/sheet -->
     <Style ss:ID="header_part">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="0"/>
       <Borders>
