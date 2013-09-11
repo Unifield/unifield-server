@@ -22,7 +22,7 @@
  </ExcelWorkbook>
   <Styles>
     <Style ss:ID="title">
-      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:Indent="0"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:Indent="0"/>
       <Font ss:Bold="1"/>
     </Style>
     <Style ss:ID="pop">
