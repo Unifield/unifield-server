@@ -201,17 +201,14 @@
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Table>
       <Column ss:Width="95.9527"/>
-      <Column ss:Width="78.2079"/>
-      <Column ss:Width="64.2898"/>
-      <Column ss:Width="103.663"/>
+      <Column ss:Width="57" ss:Span="1"/>
+      <Column ss:Width="118"/>
       <Column ss:Width="95.9527"/>
       <Column ss:Width="71.263"/>
-      <Column ss:Width="166.9606"/>
-      <Column ss:Width="115.9937"/>
-      <Column ss:Width="66.6142"/>
-      <Column ss:Width="79.7386"/>
-      <Column ss:Width="58.9039"/>
-      <Column ss:Width="97.5118"/>
+      <Column ss:Width="60" ss:Span="1"/>
+      <Column ss:Width="66" ss:Span="1"/>
+      <Column ss:Width="72"/>
+      <Column ss:Width="76.5"/>
       <Column ss:Width="43.4551"/>
       <Column ss:Width="64.0063"/>
       <Row ss:Height="19.3039">
