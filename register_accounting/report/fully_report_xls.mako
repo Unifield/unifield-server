@@ -174,6 +174,17 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- Initially used for invoice line number -->
+    <Style ss:ID="text_right">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <NumberFormat ss:Format="@"/>
+    </Style>
     <!-- For Amount IN/OUT in register lines -->
     <Style ss:ID="amount">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
@@ -457,7 +468,7 @@
 % if line.direct_invoice and line.invoice_id:
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
-        <Cell ss:Index="4" ss:StyleID="left">
+        <Cell ss:Index="4" ss:StyleID="text_right">
           <Data ss:Type="String">${inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -527,7 +538,7 @@
 % for ji in line.imported_invoice_line_ids:
 % for imp_inv_line in ji.invoice.invoice_line:
       <Row>
-        <Cell ss:Index="4" ss:StyleID="left">
+        <Cell ss:Index="4" ss:StyleID="text_right">
           <Data ss:Type="String">${imp_inv_line.line_number or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
