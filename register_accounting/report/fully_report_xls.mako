@@ -143,7 +143,7 @@
     </Style>
     <Style ss:ID="amount_bold">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
-      <NumberFormat ss:Format="Fixed"/>
+      <NumberFormat ss:Format="Standard"/>
       <Font ss:Bold="1"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
@@ -152,9 +152,10 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- For Amount IN/OUT in register lines -->
     <Style ss:ID="amount">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
-      <NumberFormat ss:Format="Fixed"/>
+      <NumberFormat ss:Format="Standard"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
@@ -162,7 +163,20 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- Formated Number (with thousand separator) for analytic distribution amounts (in blue font color) -->
     <Style ss:ID="ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Formated Number (without thousand separator) for analytic distribution amounts (in blue font color) -->
+    <Style ss:ID="ana_percent">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
       <NumberFormat ss:Format="Fixed"/>
       <Borders>
@@ -409,7 +423,7 @@
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${ana_line.analytic_id and ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_amount">
+        <Cell ss:StyleID="ana_percent">
           <Data ss:Type="Number">${ana_line.percentage or 0.0}</Data>
         </Cell>
       </Row>
@@ -455,7 +469,7 @@
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_amount">
+        <Cell ss:StyleID="ana_percent">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
         </Cell>
       </Row>
@@ -475,7 +489,7 @@
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_amount">
+        <Cell ss:StyleID="ana_percent">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
         </Cell>
       </Row>
@@ -525,7 +539,7 @@
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_amount">
+        <Cell ss:StyleID="ana_percent">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
         </Cell>
       </Row>
@@ -545,7 +559,7 @@
         <Cell ss:StyleID="ana_left">
           <Data ss:Type="String">${inv_ana_line.analytic_id and inv_ana_line.analytic_id.code or ''|x}</Data>
         </Cell>
-        <Cell ss:StyleID="ana_amount">
+        <Cell ss:StyleID="ana_percent">
           <Data ss:Type="Number">${inv_ana_line.percentage or 0.0}</Data>
         </Cell>
       </Row>
