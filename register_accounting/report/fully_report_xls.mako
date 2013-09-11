@@ -283,10 +283,9 @@
       <Column ss:Width="71.263"/>
       <Column ss:Width="55"/>
       <Column ss:Width="60"/>
-      <Column ss:Width="66" ss:Span="1"/>
-      <Column ss:Width="72"/>
-      <Column ss:Width="76.5"/>
-      <Column ss:Width="43.4551"/>
+      <Column ss:Width="66"/>
+      <Column ss:Width="72" ss:Span="2"/>
+      <Column ss:Width="36" ss:Span="1"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''|x} REPORT</Data>
@@ -372,22 +371,22 @@
           <Data ss:Type="String">Ref</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Account</Data>
+          <Data ss:Type="String">Acct</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Amount IN</Data>
+          <Data ss:Type="String">IN</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Amount OUT</Data>
+          <Data ss:Type="String">OUT</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Destination</Data>
+          <Data ss:Type="String">Dest</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Cost Center</Data>
+          <Data ss:Type="String">CC</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
-          <Data ss:Type="String">Funding Pool</Data>
+          <Data ss:Type="String">FP</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Rec?</Data>
