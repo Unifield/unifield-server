@@ -263,6 +263,14 @@
       </Row>
       <Row ss:Height="14.5134">
         <Cell>
+          <Data ss:Type="String">Calculated balance: </Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="Number">${o.balance_end or 0.0|x}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="14.5134">
+        <Cell>
           <Data ss:Type="String">State: </Data>
         </Cell>
         <Cell>
