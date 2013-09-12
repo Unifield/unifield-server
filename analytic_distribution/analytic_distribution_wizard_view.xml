@@ -154,11 +154,11 @@
                     <newline/>
                     <label string="- Line comes from a commitment" align="0.0"/>
                     <newline/>
-                    <label string="- Line have been analytically reallocated" align="0.0"/>
+                    <label string="- Line has been analytically reallocated" align="0.0"/>
                     <newline/>
                     <label string="- Line is a reversal" align="0.0"/>
                     <newline/>
-                    <label string="- Line have been used in an engagement journal" align="0.0"/>
+                    <label string="- Line has been used in an engagement journal" align="0.0"/>
                     <newline/>
                     <label string="- Line comes from a write-off" align="0.0"/>
                     <newline/>
