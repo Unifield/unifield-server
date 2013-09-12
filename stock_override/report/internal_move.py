@@ -44,6 +44,6 @@ class internal_move(report_sxw.rml_parse):
         else:
             return res
 
-report_sxw.report_sxw('report.internal.move','stock.picking','addons/stock_override/report/internal_move.rml',parser=internal_move, header="internal landscape")
+report_sxw.report_sxw('report.internal.move','stock.picking','addons/stock_override/report/internal_move.rml',parser=internal_move, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
