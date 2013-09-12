@@ -337,9 +337,6 @@ class product_history_consumption_month(osv.osv):
         'history_id': fields.many2one('product.history.consumption', string='History', ondelete='cascade'),
     }
 
-    def unlink(self, cr, uid, ids, context=None):
-        return self.unlink(cr, uid, ids, context=context)
-
 product_history_consumption_month()
 
 
