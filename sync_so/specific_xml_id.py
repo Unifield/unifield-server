@@ -20,6 +20,23 @@ from osv import fields
 def get_valid_xml_name(*args):
     return u"_".join(map(lambda x: unicode(x), filter(None, args))).replace('.', '')
 
+class financing_contract_account_quadruplet(osv.osv):
+    
+    _inherit = 'financing.contract.account.quadruplet'
+    
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        quadruplet = self.browse(cr, uid, res_id)
+        contract_ids = self.pool.get('financing.contract.contract').search(cr, uid, [('format_id', '=', quadruplet.format_id.id)])
+        contract = self.pool.get('financing.contract.contract').browse(cr, uid, contract_ids[0])
+        return get_valid_xml_name('quadruplet',
+                                  contract.code,
+                                  quadruplet.account_destination_id.account_id.code,
+                                  quadruplet.account_destination_id.destination_id.code,
+                                  quadruplet.cost_center_id.code,
+                                  quadruplet.funding_pool_id.code)
+    
+financing_contract_account_quadruplet()
+
 class fiscal_year(osv.osv):
     
     _inherit = 'account.fiscalyear'
