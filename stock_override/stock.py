@@ -1545,7 +1545,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
         
         delivery_accepted_values = {'client_action_multi': [],
-                                    'client_print_multi': ['Labels'],
+                                    'client_print_multi': ['Labels', 'Delivery Order'],
                                     'client_action_relate': [''],
                                     'tree_but_action': [],
                                     'tree_but_open': []}
