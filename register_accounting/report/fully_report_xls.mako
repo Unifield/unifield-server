@@ -277,7 +277,7 @@
   <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
     <Table>
       <Column ss:Width="95.9527"/>
-      <Column ss:Width="57" ss:Span="1"/>
+      <Column ss:Width="70" ss:Span="1"/>
       <Column ss:Width="118"/>
       <Column ss:Width="135"/>
       <Column ss:Width="71.263"/>
