@@ -38,17 +38,58 @@ class financing_contract_format_line(osv.osv):
         domain += "])"
         return domain
     
-    def _create_account_destination_domain(self, account_destination_list):
+    def _create_account_destination_domain(self, account_destination_list, general_domain):
         if len(account_destination_list) == 0:
             return ['&',
+                    '&',
                     ('general_account_id', 'in', []),
-                    ('destination_id', 'in', [])]
+                    ('destination_id', 'in', []),
+                    '&',
+                    eval(general_domain['cost_center_domain']),
+                    eval(general_domain['funding_pool_domain'])]
         elif len(account_destination_list) == 1:
             return ['&',
+                    '&',
                     ('general_account_id', '=', account_destination_list[0].account_id.id),
-                    ('destination_id', '=', account_destination_list[0].destination_id.id)]
+                    ('destination_id', '=', account_destination_list[0].destination_id.id),
+                    '&',
+                    eval(general_domain['cost_center_domain']),
+                    eval(general_domain['funding_pool_domain'])]
         else:
-            return ['|'] + self._create_account_destination_domain([account_destination_list[0]]) + self._create_account_destination_domain(account_destination_list[1:])
+            return ['|'] \
+                 + self._create_account_destination_domain([account_destination_list[0]], general_domain) \
+                 + self._create_account_destination_domain(account_destination_list[1:], general_domain)
+    
+    def _create_account_quadruplet_domain(self, account_quadruplet_list, funding_pool_ids):
+        if len(account_quadruplet_list) == 0:
+            return ['&',
+                    '&',
+                    ('general_account_id', '=', False),
+                    ('destination_id', '=', False),
+                    '&',
+                    ('cost_center_id', '=', False),
+                    ('account_id', '=', False)]
+        elif len(account_quadruplet_list) == 1:
+            if account_quadruplet_list[0].funding_pool_id.id in funding_pool_ids:
+                return ['&',
+                        '&',
+                        ('general_account_id', '=', account_quadruplet_list[0].account_destination_id.account_id.id),
+                        ('destination_id', '=', account_quadruplet_list[0].account_destination_id.destination_id.id),
+                        '&',
+                        ('cost_center_id', '=', account_quadruplet_list[0].cost_center_id.id),
+                        ('account_id', '=', account_quadruplet_list[0].funding_pool_id.id)]
+            else:
+                return ['&',
+                        '&',
+                        ('general_account_id', '=', False),
+                        ('destination_id', '=', False),
+                        '&',
+                        ('cost_center_id', '=', False),
+                        ('account_id', '=', False)]
+        else:
+            return ['|'] \
+                 + self._create_account_quadruplet_domain([account_quadruplet_list[0]], funding_pool_ids) \
+                 + self._create_account_quadruplet_domain(account_quadruplet_list[1:], funding_pool_ids)
 
     def _get_number_of_childs(self, cr, uid, ids, field_name=None, arg=None, context=None):
         # Verifications
@@ -83,14 +124,21 @@ class financing_contract_format_line(osv.osv):
             result += total_cost
         return result
     
-    def _get_account_destination_ids(self, browse_line, funding_pool_account_destination_ids):
-        result = []
+    def _get_account_destination_quadruplets(self, browse_line):
+        account_destination_result = []
+        account_quadruplet_result = []
         if browse_line.line_type != 'view':
-            result = [account_destination for account_destination in browse_line.account_destination_ids if account_destination.id in funding_pool_account_destination_ids]
+            if browse_line.is_quadruplet:
+                account_quadruplet_result = [account_quadruplet for account_quadruplet in browse_line.account_quadruplet_ids]
+            else:
+                account_destination_result = [account_destination for account_destination in browse_line.account_destination_ids]
         else:
             for child_line in browse_line.child_ids:
-                result += self._get_account_destination_ids(child_line, funding_pool_account_destination_ids)
-        return result
+                temp = self._get_account_destination_quadruplets(child_line)
+                account_destination_result += temp['account_destination_list']
+                account_quadruplet_result += temp['account_quadruplet_list']
+        return {'account_destination_list': account_destination_result,
+                'account_quadruplet_list': account_quadruplet_result}
     
     def _get_general_domain(self, cr, uid, browse_format, domain_type, context=None):
         # Method to get the domain (allocated or project) of a line
@@ -99,15 +147,6 @@ class financing_contract_format_line(osv.osv):
         date_domain += "'), ('document_date', '<=', '"
         date_domain += browse_format.eligibility_to_date
         date_domain += "')]"
-        # list of expense accounts in the funding pools.
-        # we take them all (funded and project), as for funded,
-        # we are sure that no allocation will be done with
-        # (funded funding pool, account in other funding pool)
-        funding_pool_account_destination_ids = []
-        for funding_pool_line in browse_format.funding_pool_ids:
-            funding_pool = funding_pool_line.funding_pool_id
-            for account_destination in funding_pool.tuple_destination_account_ids:
-                funding_pool_account_destination_ids.append(account_destination.id)
         # Funding pools
         funding_pool_ids = []
         if domain_type == 'allocated': 
@@ -120,7 +159,7 @@ class financing_contract_format_line(osv.osv):
         return {'date_domain': date_domain,
                 'funding_pool_domain': funding_pool_domain,
                 'cost_center_domain': cost_center_domain,
-                'funding_pool_account_destination_ids': funding_pool_account_destination_ids}
+                'funding_pool_ids': [x.id for x in funding_pool_ids]}
     
     def _get_analytic_domain(self, cr, uid, browse_line, domain_type, context=None):
         if browse_line.line_type in ('consumption', 'overhead'):
@@ -134,11 +173,12 @@ class financing_contract_format_line(osv.osv):
             if format.eligibility_from_date and format.eligibility_to_date:
                 general_domain = self._get_general_domain(cr, uid, format, domain_type, context=context)
                 # Account + destination domain
-                account_destination_ids = self._get_account_destination_ids(browse_line, general_domain['funding_pool_account_destination_ids'])
-                account_domain = self._create_account_destination_domain(account_destination_ids)
+                account_destination_quadruplet_ids = self._get_account_destination_quadruplets(browse_line)
+                account_destination_domain = self._create_account_destination_domain(account_destination_quadruplet_ids['account_destination_list'], general_domain)
+                account_quadruplet_domain = self._create_account_quadruplet_domain(account_destination_quadruplet_ids['account_quadruplet_list'], general_domain['funding_pool_ids'])
                 # create the final domain
                 date_domain = eval(general_domain['date_domain'])
-                return [date_domain[0], date_domain[1]] + account_domain + non_corrected_domain + [eval(general_domain['funding_pool_domain']), eval(general_domain['cost_center_domain'])]
+                return [date_domain[0], date_domain[1]]  + non_corrected_domain + ['|'] + account_destination_domain + account_quadruplet_domain
             else:
                 # Dates are not set (since we are probably in a donor).
                 # Return False
@@ -245,7 +285,9 @@ class financing_contract_format_line(osv.osv):
         'name': fields.char('Name', size=64, required=True),
         'code': fields.char('Code', size=16, required=True),
         'format_id': fields.many2one('financing.contract.format', 'Format'),
+        'is_quadruplet': fields.boolean('Input CC/FP at line level?'),
         'account_destination_ids': many2many_sorted('account.destination.link', 'financing_contract_actual_account_destinations', 'actual_line_id', 'account_destination_id', string='Accounts/Destinations', domain=[('account_id.user_type_report_type', '=', 'expense')]),
+        'account_quadruplet_ids': many2many_sorted('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres'),
         'parent_id': fields.many2one('financing.contract.format.line', 'Parent line'),
         'child_ids': fields.one2many('financing.contract.format.line', 'parent_id', 'Child lines'),
         'line_type': fields.selection([('view','View'),
@@ -269,6 +311,7 @@ class financing_contract_format_line(osv.osv):
     }
     
     _defaults = {
+        'is_quadruplet': False,
         'line_type': 'actual',
         'overhead_type': 'cost_percentage',
         'parent_id': lambda *a: False
@@ -282,6 +325,14 @@ class financing_contract_format_line(osv.osv):
             vals['allocated_amount'] = 0.0
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = []
+            vals['account_quadruplet_ids'] = []
+        elif 'is_quadruplet' in vals:
+            if vals['is_quadruplet']:
+                # delete account/destinations
+                vals['account_destination_ids'] = []
+            else:
+                # delete quadruplets
+                vals['account_quadruplet_ids'] = []
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -294,6 +345,14 @@ class financing_contract_format_line(osv.osv):
             vals['allocated_amount'] = 0.0
             vals['project_amount'] = 0.0
             vals['account_destination_ids'] = [(6, 0, [])]
+            vals['account_quadruplet_ids'] = [(6, 0, [])]
+        elif 'is_quadruplet' in vals:
+            if vals['is_quadruplet']:
+                # delete previous account/destinations
+                vals['account_destination_ids'] = [(6, 0, [])]
+            else:
+                # delete previous quadruplets
+                vals['account_quadruplet_ids'] = [(6, 0, [])]
         return super(financing_contract_format_line, self).write(cr, uid, ids, vals, context=context)
     
     def copy_format_line(self, cr, uid, browse_source_line, destination_format_id, parent_id=None, context=None):

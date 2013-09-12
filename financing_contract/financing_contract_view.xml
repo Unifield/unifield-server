@@ -103,9 +103,15 @@
                                             <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                             <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
                                         </group>
-                                        <field name="account_destination_ids" colspan="4" string="Account/Destination"
+                                        <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
                                                context="context" 
-                                               attrs="{'invisible': [('line_type', '=', 'view')]}">
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
+                                        </field>
+                                        <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
+                                               context="context" 
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', False)]}"
+                                               domain="[('format_id', '=', parent.format_id)]">
                                         </field>
                                     </form>
                                 </field>
@@ -142,6 +148,34 @@
                         </tree>
                 </field>
             </record>
+    
+            <record id="view_financing_contract_account_quadruplet_tree" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.tree</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract">
+                        <field name="format_id" invisible="1"/>
+                        <field name="account_destination_id"/>
+                        <field name="funding_pool_id"/>
+                        <field name="cost_center_id"/>
+                        <field name="used_in_contract" invisible='1'/>
+                    </tree>
+                </field>
+            </record>
+	
+	        <record id="view_financing_contract_account_quadruplet_search" model="ir.ui.view">
+	            <field name="name">financing.contract.account.quadruplet.search</field>
+	            <field name="model">financing.contract.account.quadruplet</field>
+	            <field name="type">search</field>
+	            <field name="arch" type="xml">
+	                <search string="Search Account/Destination/Funding Pool/Cost Centre">
+                        <field name="account_destination_id"/>
+                        <field name="funding_pool_id"/>
+                        <field name="cost_center_id"/>
+	                </search>
+	            </field>
+	        </record>
 
             <record id="view_financing_contract_contract_tree" model="ir.ui.view">
                 <field name="name">financing.contract.contract.tree</field>

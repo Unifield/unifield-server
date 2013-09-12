@@ -39,6 +39,58 @@ class financing_contract_funding_pool_line(osv.osv):
         'total_project': True,
     }
     
+    def create(self, cr, uid, vals, context=None):
+        result = super(financing_contract_funding_pool_line, self).create(cr, uid, vals, context=context)
+        # Add the corresponding quadruplets (one for each CC in the format and all A/D)
+        if 'contract_id' in vals and 'funding_pool_id' in vals:
+            # Create quadruplets accordingly
+            quad_obj = self.pool.get('financing.contract.account.quadruplet')
+            format_obj = self.pool.get('financing.contract.format')
+            data = format_obj.get_data_for_quadruplets(cr, vals['contract_id'])
+            # for each funding pool, add all quadruplets
+            for cost_center_id in data['cost_center_ids']:
+                for account_destination_id in data['account_destination_ids']:
+                        quad_obj.create(cr, uid,
+                                        {'format_id': vals['contract_id'],
+                                         'account_destination_id': account_destination_id,
+                                         'cost_center_id': cost_center_id,
+                                         'funding_pool_id': vals['funding_pool_id']}, context=context)
+        return result
+        
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'funding_pool_id' in vals:
+            # if the funding pool changes, add/remove accordingly
+            quad_obj = self.pool.get('financing.contract.account.quadruplet')
+            format_obj = self.pool.get('financing.contract.format')
+            for id in ids:
+                funding_pool_line = self.browse(cr, uid, id, context=context)
+                format_id = funding_pool_line.contract_id.id
+                data = format_obj.get_data_for_quadruplets(cr, format_id)
+                old_funding_pool_id = funding_pool_line.funding_pool_id.id
+                new_funding_pool_id = vals['funding_pool_id']
+                
+                quads_to_delete = quad_obj.search(cr, uid, [('funding_pool_id', '=', old_funding_pool_id)], context=context)
+                quad_obj.unlink(cr, uid, quads_to_delete, context=context)
+                # add missing quadruplets
+                for cost_center_id in data['cost_center_ids']:
+                    for account_destination_id in data['account_destination_ids']:
+                        quad_obj.create(cr, uid,
+                                        {'format_id': format_id,
+                                         'account_destination_id': account_destination_id,
+                                         'cost_center_id': cost_center_id,
+                                         'funding_pool_id': new_funding_pool_id}, context=context)
+                
+        return super(financing_contract_funding_pool_line, self).write(cr, uid, ids, vals, context=context)
+    
+    def unlink(self, cr, uid, ids, context=None):
+        # for unlink, simple: remove all lines for those funding pools
+        quad_obj = self.pool.get('financing.contract.account.quadruplet')
+        for funding_pool_line in self.browse(cr, uid, ids, context=context):
+            quads_to_delete = quad_obj.search(cr, uid, [('funding_pool_id', '=', funding_pool_line.funding_pool_id.id)], context=context)
+            quad_obj.unlink(cr, uid, quads_to_delete, context=context)
+                            
+        return super(financing_contract_funding_pool_line, self).unlink(cr, uid, ids, context=context)
+    
 financing_contract_funding_pool_line()
 
 class financing_contract_contract(osv.osv):
@@ -122,29 +174,12 @@ class financing_contract_contract(osv.osv):
         account_destination_ids = []
         if reporting_type is None:
             reporting_type = browse_contract.reporting_type
-        # general domain
-        general_domain = format_line_obj._get_general_domain(cr,
-                                                             uid,
-                                                             browse_contract.format_id,
-                                                             reporting_type,
-                                                             context=context)
         
+        analytic_domain = []
         # parse parent lines (either value or sum of children's values)
         for line in browse_contract.actual_line_ids:
             if not line.parent_id:
-                account_destination_ids += format_line_obj._get_account_destination_ids(line, general_domain['funding_pool_account_destination_ids'])
-                
-        # create the domain
-        analytic_domain = []
-        account_domain = format_line_obj._create_account_destination_domain(account_destination_ids)
-        date_domain = eval(general_domain['date_domain'])
-        analytic_domain = [date_domain[0],
-                           date_domain[1],
-                           ('is_reallocated', '=', False),
-                           ('is_reversal', '=', False),
-                           eval(general_domain['funding_pool_domain']),
-                           eval(general_domain['cost_center_domain'])]
-        analytic_domain += account_domain
+                account_destination_ids += format_line_obj._get_analytic_domain(cr, uid, line, reporting_type, context=context)
             
         return analytic_domain
 
@@ -422,7 +457,7 @@ class financing_contract_contract(osv.osv):
                 'res_id': [wiz_id],
                 'context': context,
         }
-    
+                       
 financing_contract_contract()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
