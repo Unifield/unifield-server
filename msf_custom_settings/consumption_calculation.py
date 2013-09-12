@@ -45,3 +45,16 @@ class real_average_consumption(osv.osv):
 
     
 real_average_consumption()
+
+
+class real_average_consumption_line(osv.osv):
+    _inherit = 'real.average.consumption.line'
+
+    # Need to redefine the asset_id field from char to m2o because the
+    # product_asset module is not loaded before consumption_calculation
+    # module
+    _columns = {
+        'asset_id': fields.many2one('product.asset', string='Asset'),
+    }
+
+real_average_consumption_line()

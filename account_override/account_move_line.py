@@ -168,7 +168,7 @@ class account_move_line(osv.osv):
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
-        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Draft'), ('posted', 'Posted')], 
+        'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')], 
             help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
             help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
@@ -234,22 +234,38 @@ class account_move_line(osv.osv):
             res = res[0]
         return res
 
-    def _check_document_date(self, cr, uid, ids):
+    def _check_document_date(self, cr, uid, ids, vals=None):
         """
         Check that document's date is done BEFORE posting date
         """
+        if not vals:
+            vals = {}
         for aml in self.browse(cr, uid, ids):
-            if aml.document_date and aml.date and aml.date < aml.document_date:
+            dd = aml.document_date
+            date = aml.date
+            if vals.get('document_date', False):
+                dd = vals.get('document_date')
+            if vals.get('date', False):
+                date = vals.get('date')
+            if date < dd:
                 raise osv.except_osv(_('Error'), _('Posting date should be later than Document Date.'))
         return True
 
-    def _check_date_validity(self, cr, uid, ids):
+    def _check_date_validity(self, cr, uid, ids, vals=None):
         """
         Check that date is contained between period ' starting date and ending's date
         """
+        if not vals:
+            vals = {}
         for aml in self.browse(cr, uid, ids):
-            if aml.date < aml.move_id.period_id.date_start or aml.date > aml.move_id.period_id.date_stop:
-                raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (aml.date, aml.move_id and aml.move_id.period_id and aml.move_id.period_id.name or ''))
+            date = aml.date
+            if vals.get('date', False):
+                date = vals.get('date')
+            period = aml.move_id.period_id
+            if vals.get('period_id', False):
+                period = self.pool.get('account.period').browse(cr, uid, [vals.get('period_id')])[0]
+            if date < period.date_start or date > period.date_stop:
+                raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
     def create(self, cr, uid, vals, context=None, check=True):
@@ -290,7 +306,7 @@ class account_move_line(osv.osv):
                 if ml.move_id and ml.move_id.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
             # Check date validity with period
-            self._check_date_validity(cr, uid, ids)
+            self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:
                 m = self.pool.get('account.move').browse(cr, uid, vals.get('move_id'))
                 if m and m.document_date:
@@ -299,8 +315,9 @@ class account_move_line(osv.osv):
                 if m and m.date:
                     vals.update({'date': m.date})
                     context.update({'date': m.date})
+        # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
+        self._check_document_date(cr, uid, ids, vals)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
-        self._check_document_date(cr, uid, ids)
         return res
 
     def button_duplicate(self, cr, uid, ids, context=None):

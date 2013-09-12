@@ -87,21 +87,6 @@
             </field>
         </record>
 
-    <!-- Add a filter on Supplier Invoices in order to hide Direct Invoices (those which have register_line_ids) -->
-        <record id="account.action_invoice_tree2" model="ir.actions.act_window">
-            <field name="name">Supplier Invoices</field>
-            <field name="res_model">account.invoice</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form,calendar,graph</field>
-            <field eval="False" name="view_id"/>
-            <field name="domain">[('type','=','in_invoice'), ('register_line_ids', '=', False)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
-            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
-            <field name="help">With Supplier Invoices you can enter and manage invoices issued by your suppliers. 
-                OpenERP can also generate draft invoices automatically from purchase orders or receipts. This way, you can control the invoice 
-                from your supplier according to what you purchased or received.</field>
-        </record>
-
     <!--
         Supplier Direct Invoice Pop-up for Registers 
         All fields are readonly (except dates) since UF-1527 because of workflow change on it.
@@ -199,7 +184,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field name="view_id" ref="direct_supplier_invoice_form"/>
-            <field name="domain">[('type','=','in_invoice'), ('register_line_ids', '!=', False)]</field>
+            <field name="domain">[('type','=','in_invoice'), ('is_direct_invoice', '!=', False)]</field>
             <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>
             <field name="help">With Supplier Direct Invoices you can enter and manage direct invoices issued by your user into Registers.</field>
@@ -292,6 +277,22 @@
                         <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
                         <field name="is_direct_invoice" invisible="1"/>
                     </button>
+                    <page string="Payments" position="after">
+                        <page string="Down Payments">
+                            <field name="down_payment_ids" nolabel="1" colspan="4">
+                                <tree string="Down Payment">
+                                    <field name="statement_id" string="Register"/>
+                                    <field name="date"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="account_id"/>
+                                    <field name="amount_currency" string="Amount" sum="Total Amount"/>
+                                    <field name="down_payment_amount" string="Expended amount"/>
+                                    <field name="currency_id"/>
+                                    <field name="reconcile_txt"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </page>
                 </data>
             </field>
         </record>
@@ -299,6 +300,27 @@
     <!-- Delete "Pay Invoice" button by deleting view that add it previously -->
         <delete model="ir.ui.view" id="account_voucher.view_invoice_supplier"/>
         <delete model="ir.ui.view" id="account_voucher.view_invoice_customer"/>
+
+    <!-- Invoice search view -->
+        <record id="inherit_view_account_invoice_filter2" model="ir.ui.view">
+            <field name="name">inherit.view.account.invoice.filter.2</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="priority">18</field>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[1]/filter[@name='paid']" position="after">
+                        <separator orientation="vertical"/>
+                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
+                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
+                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
+                        <separator orientation="vertical"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
 
     </data>
 </openerp>

@@ -41,9 +41,12 @@ class account_account_activable(osv.osv):
         'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d')
     }
     
-    def _check_date(self, vals):
+    def _check_date(self, vals, context=None):
+        if context is None:
+            context = {}
+
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
-            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d'):
+            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
                  # validate the date (must be > today)
                  raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
             elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
@@ -51,11 +54,11 @@ class account_account_activable(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
     
     def create(self, cr, uid, vals, context=None):
-        self._check_date(vals)
+        self._check_date(vals, context=context)
         return super(account_account_activable, self).create(cr, uid, vals, context=context)
     
     def write(self, cr, uid, ids, vals, context=None):
-        self._check_date(vals)
+        self._check_date(vals, context=context)
         return super(account_account_activable, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):

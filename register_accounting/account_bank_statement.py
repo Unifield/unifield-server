@@ -1580,6 +1580,12 @@ class account_bank_statement_line(osv.osv):
             'transfer_currency': False,
             'down_payment_id': False,
         })
+        # Copy analytic distribution if exists
+        line = self.browse(cr, uid, [id], context=context)[0]
+        if line.analytic_distribution_id:
+            new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, line.analytic_distribution_id.id, {}, context=context)
+            if new_distrib_id:
+                default.update({'analytic_distribution_id': new_distrib_id})
         return super(osv.osv, self).copy(cr, uid, id, default, context=context)
 
     def update_analytic_lines(self, cr, uid, ids, distrib=False, context=None):
@@ -1820,12 +1826,21 @@ class account_bank_statement_line(osv.osv):
         """
         Open the attached invoice
         """
+        cash_return = False
         for st_line in self.browse(cr, uid, ids, context=context):
-            if not st_line.direct_invoice or not st_line.invoice_id:
+            if not st_line.invoice_id:
                 raise osv.except_osv(_('Warning'), _('No invoice founded.'))
+            if st_line.from_cash_return:
+                cash_return = True
+        invoice = self.browse(cr, uid, ids[0], context=context).invoice_id
+        view_name = 'direct_supplier_invoice_form'
+        name = _('Supplier Direct Invoice')
+        if cash_return:
+            view_name = 'invoice_supplier_form_2'
+            name = _('Supplier Invoice')
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         irmd_obj = self.pool.get('ir.model.data')
-        view_ids = irmd_obj.search(cr, uid, [('name', '=', 'direct_supplier_invoice_form'), ('model', '=', 'ir.ui.view')])
+        view_ids = irmd_obj.search(cr, uid, [('name', '=', view_name), ('model', '=', 'ir.ui.view')])
         # Préparation de l'élément permettant de trouver la vue à  afficher
         if view_ids:
             view = irmd_obj.read(cr, uid, view_ids[0])
@@ -1834,20 +1849,20 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _("View not found."))
         context.update({
             'active_id': ids[0],
-            'type': 'in_invoice',
-            'journal_type': 'purchase',
+            'type': invoice.type,
+            'journal_type': invoice.journal_id.type,
             'active_ids': ids,
             'from_register': True,
             })
         return {
-            'name': "Supplier Direct Invoice",
+            'name': name,
             'type': 'ir.actions.act_window',
             'res_model': 'account.invoice',
             'target': 'new',
             'view_mode': 'form',
             'view_type': 'form',
             'view_id': view_id,
-            'res_id': self.browse(cr, uid, ids[0], context=context).invoice_id.id,
+            'res_id': invoice.id,
             'context': context,
         }
 

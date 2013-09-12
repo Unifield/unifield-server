@@ -228,6 +228,22 @@ class stock_picking(osv.osv):
             (_check_active_product, "You cannot validate this document because it contains a line with an inactive product", ['order_line', 'state'])
     ]
     
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check restriction on products
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('stock.move')
+        res = True
+
+        for picking in self.browse(cr, uid, ids, context=context):
+            if picking.type == 'internal' and picking.state not in ('draft', 'done', 'cancel'):
+                res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in picking.move_lines], context=context)
+
+        return res
+    
     def create(self, cr, uid, vals, context=None):
         '''
         create method for filling flag from yml tests
@@ -255,8 +271,11 @@ class stock_picking(osv.osv):
                 vals['address_id'] = addr.get('default')
             else:
                 vals['address_id'] = addr.get('delivery')
-                 
-        return super(stock_picking, self).create(cr, uid, vals, context=context)
+
+        res = super(stock_picking, self).create(cr, uid, vals, context=context)
+                
+        return res
+
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -280,7 +299,9 @@ class stock_picking(osv.osv):
                     addr = self.pool.get('res.partner.address').browse(cr, uid, vals.get('address_id'), context=context)
                     vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
         
-        return super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+        res = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
+        
+        return res
     
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -837,6 +858,24 @@ class stock_move(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
                 raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
+
+        return True
+    
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is restriction on lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.picking_id and move.picking_id.type == 'internal' and move.product_id:
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, move.product_id.id, vals={'constraints': {'location_id': move.location_dest_id}}, context=context):
+                    return False
+
         return True
 
     _constraints = [(_uom_constraint, 'Constraint error on Uom', [])]
@@ -868,7 +907,9 @@ class stock_move(osv.osv):
         if vals.get('date_expected'):
             vals['date'] = vals.get('date_expected')
         
-        return super(stock_move, self).create(cr, uid, vals, context=context)
+        res = super(stock_move, self).create(cr, uid, vals, context=context)
+        
+        return res
     
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -898,7 +939,9 @@ class stock_move(osv.osv):
                 if vals.get('state', move.state) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
         
-        return super(stock_move, self).write(cr, uid, ids, vals, context=context)
+        res = super(stock_move, self).write(cr, uid, ids, vals, context=context)
+
+        return res
     
     def on_change_partner(self, cr, uid, ids, partner_id, address_id, context=None):
         '''
@@ -958,6 +1001,7 @@ class stock_move(osv.osv):
                 if 'fefo' in res:
                     # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
                     values = {'name': move.name,
+                              'sale_line_id': move.sale_line_id and move.sale_line_id.id or False,
                               'picking_id': move.picking_id.id,
                               'product_uom': move.product_uom.id,
                               'product_id': move.product_id.id,
