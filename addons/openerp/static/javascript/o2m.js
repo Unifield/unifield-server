@@ -210,7 +210,7 @@ One2Many.prototype = {
     },
 
     rm: function (id) {
-        ListView(this.name).remove(id);
+        ListView(this.name).remove(id, arguments[1]);
     }
 };
 
