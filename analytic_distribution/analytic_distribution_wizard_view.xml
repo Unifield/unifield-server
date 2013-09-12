@@ -178,7 +178,7 @@
                             <field name="is_reallocated"/>
                             <field name="is_reversal"/>
                             <field name="from_write_off"/>
-                            <field name="move_state"/>
+                            <field name="is_unposted"/>
                         </tree>
                     </field>
                     <separator string=""/>
