@@ -87,5 +87,16 @@ class financing_contract_account_quadruplet(osv.osv):
     }
     
 financing_contract_account_quadruplet()
+
+class financing_contract_format_line(osv.osv):
+    
+    _name = "financing.contract.format.line"
+    _inherit = "financing.contract.format.line"
+    
+    _columns = {
+        'account_quadruplet_ids': many2many_sorted('financing.contract.account.quadruplet', 'financing_contract_actual_account_quadruplets', 'actual_line_id', 'account_quadruplet_id', string='Accounts/Destinations/Funding Pools/Cost Centres'),
+    }
+        
+financing_contract_format_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
