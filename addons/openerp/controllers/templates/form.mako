@@ -25,6 +25,9 @@
             /*
             % endif
             */
+            setTimeout(function() {
+                jQuery('[autofocus="autofocus"]').focus();
+            }, 10);
         });
     </script>
 

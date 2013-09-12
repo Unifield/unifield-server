@@ -238,6 +238,13 @@ function pager_action(src){
     var $src = jQuery(src);
     var action = $src.attr('action');
     var relation = $src.attr('relation');
+    if (relation) {
+        var lv = ListView(relation);
+        var sel = lv.$getSelectedItems().map(function () {
+                return parseInt(this.value, 10);
+            }).get()
+        lv.set_previously_selected(sel);
+    }
     return relation ? new ListView(relation).go(action) : submit_form(action ? action : 'find');
 }
 
@@ -919,7 +926,7 @@ function makeContextMenu(id, kind, relation, val){
         var menu_width = $menu.width();
         var body_width = jQuery(document.body).width();
         if (parseInt($menu.css("left")) + menu_width > body_width) {
-            $menu.offset({ left: body_width - menu_width - 10 });
+            $menu.css({left: body_width - menu_width - 10 + 'px'});
         }
         showContextMenu();
     });
