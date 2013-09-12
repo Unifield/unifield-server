@@ -463,8 +463,8 @@
 % endfor
 % endif
 
-
-% if line.direct_invoice and line.invoice_id:
+<!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
+% if line.invoice_id:
 % for inv_line in line.invoice_id.invoice_line:
       <Row>
         <Cell ss:Index="4" ss:StyleID="text_center">
@@ -532,7 +532,7 @@
 % endfor
 % endif
 
-
+<!-- Imported invoice (pending payments) -->
 % if line.imported_invoice_line_ids:
 % for ji in line.imported_invoice_line_ids:
 % for imp_inv_line in ji.invoice.invoice_line:
