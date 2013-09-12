@@ -174,7 +174,7 @@
                             <field name="entry_sequence"/>
                             <field name="name"/>
                             <field name="ref"/>
-                            <field name="commitment_line_id"/>
+                            <field name="from_commitment_line"/>
                             <field name="is_reallocated"/>
                             <field name="is_reversal"/>
                             <field name="from_write_off"/>

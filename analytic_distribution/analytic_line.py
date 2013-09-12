@@ -126,6 +126,19 @@ class analytic_line(osv.osv):
                 new_args.append(('commitment_line_id.commit_id.period_id', arg[1], arg[2]))
         return new_args
 
+    def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Check if commitment_line_id is filled in. If yes, True. Otherwise False.
+        """
+        if not context:
+            context = {}
+        res = {}
+        for al in self.browse(cr, uid, ids, context=context):
+            res[al.id] = False
+            if al.commitment_line_id:
+                res[al.id] = True
+        return res
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
         'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
@@ -139,6 +152,7 @@ class analytic_line(osv.osv):
             help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
+        'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="From commitment line?"),
     }
 
     _defaults = {
