@@ -400,30 +400,33 @@ class supplier_catalogue(osv.osv):
                         if not code_ids:
                             default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                             to_correct_ok = True
-                            error_list_line.append(_("The product was not found."))
+                            error_list_line.append(_("The product '%s' was not found.") % product_code)
                         else:
                             default_code = code_ids[0]
                     except Exception:
                          default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
                          to_correct_ok = True
-                         error_list_line.append(_("The product was not found."))
+                         error_list_line.append(_("The product '%s' was not found.") % product_code)
 
                 #Product UoM
                 p_uom = len(row.cells)>=3 and row.cells[2].data
                 if not p_uom:
                     uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
                     to_correct_ok = True
+                    error_list_line.append(_("The UoM '%s' was not found.") % p_uom)
                 else:
                     try:
                         uom_name = p_uom.strip()
                         uom_ids = uom_obj.search(cr, uid, [('name', '=', uom_name)], context=context)
                         if not uom_ids:
                             uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
+                            error_list_line.append(_("The UoM '%s' was not found.") % uom_name)
                             to_correct_ok = True
                         else:
                             uom_id = uom_ids[0]
                     except Exception:
                          uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
+                         error_list_line.append(_("The UoM '%s' was not found.") % uom_name)
                          to_correct_ok = True
                 #[utp-129]: check consistency of uom
                 # I made the check on uom_id according to the constraint _check_uom in unifield-addons/product/product.py (l.744) so that we keep the consistency even when we create a supplierinfo directly from the product
@@ -504,7 +507,8 @@ class supplier_catalogue(osv.osv):
                 vals['line_ids'].append((0, 0, to_write))
             # in case of lines ignored, we notify the user and create a file with the lines ignored
             vals.update({'text_error': _('Lines ignored: %s \n ----------------------\n') % (ignore_lines,) +
-                         '\n'.join(error_list), 'data': False, 'import_error_ok': False})
+                         '\n'.join(error_list), 'data': False, 'import_error_ok': False,
+                         'file_to_import': False})
             if line_with_error:
                 file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
                 vals.update(file_to_export)
@@ -519,6 +523,13 @@ class supplier_catalogue(osv.osv):
                 msg_to_return = _("The import of lines had errors, please correct the red lines below")
             
         return self.log(cr, uid, obj.id, msg_to_return,)
+
+    def clear_error(self, cr, uid, ids, context=None):
+        '''
+        Remove the error list and the file with lines in error
+        '''
+        vals = {'data': False, 'text_error': '', 'import_error_ok': False}
+        return self.write(cr, uid, ids, vals, context=context)
 
     def check_lines_to_fix(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
