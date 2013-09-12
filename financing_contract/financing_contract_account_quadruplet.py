@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from analytic_distribution.destination_tools import many2many_sorted
 
 class financing_contract_account_quadruplet(osv.osv):
     _name = 'financing.contract.account.quadruplet'
