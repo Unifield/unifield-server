@@ -63,7 +63,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         if 'amount' in vals:
             for l in self.read(cr, uid, ids, ['amount_to_pay']):
                 if vals['amount'] > l['amount_to_pay']:
-                    raise osv.except_osv(_('Warning'), _("Amount %s can't be greatest than 'Amount to pay': %s")%(vals['amount'], l['amount_to_pay']))
+                    raise osv.except_osv(_('Warning'), _("Amount %.2f can't be greater than 'Amount to pay': %.2f")%(vals['amount'], l['amount_to_pay']))
 
         return super(wizard_import_invoice_lines, self).write(cr, uid, ids, vals, context)
 

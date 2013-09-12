@@ -39,7 +39,7 @@
         	<field name="arch" type="xml">
         		<data>
         			<xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='comment']" position="replace">
-                    <field name="inactive_product" invisible="0" />
+                    <field name="inactive_product" invisible="1" />
                     <field name="inactive_error" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >

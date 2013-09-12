@@ -178,6 +178,8 @@ class shipment(osv.osv):
                     # currency
                     currency_id = memory_family['currency_id'] or False
                     values['currency_id'] = currency_id
+            for item in shipment.additional_items_ids:
+                values['total_weight'] += item.weight
         return result
     
     def _get_shipment_ids(self, cr, uid, ids, context=None):
@@ -274,6 +276,7 @@ class shipment(osv.osv):
                 # added by Quentin https://bazaar.launchpad.net/~unifield-team/unifield-wm/trunk/revision/426.20.14
                 'parent_id': fields.many2one('shipment', string='Parent shipment'),
                 'invoice_id': fields.many2one('account.invoice', string='Related invoice'),
+                'additional_items_ids': fields.one2many('shipment.additionalitems', 'shipment_id', string='Additional Items'),
                 }
     _defaults = {'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),}
     
@@ -330,6 +333,8 @@ class shipment(osv.osv):
             shipment_name = draft_shipment.name + '-' + shipment_number
             # 
             values = {'name': shipment_name, 'address_id': address_id, 'partner_id': partner_id, 'partner_id2': partner_id, 'shipment_expected_date': draft_shipment.shipment_expected_date, 'shipment_actual_date': draft_shipment.shipment_actual_date, 'parent_id': draft_shipment.id}
+            if 'additional_items_ids' in context:
+                values.update({'additional_items_ids': context['additional_items_ids']})
             shipment_id = shipment_obj.create(cr, uid, values, context=context)
             context['shipment_id'] = shipment_id
             for draft_packing in pick_obj.browse(cr, uid, partial_datas_shipment[draft_shipment.id].keys(), context=context):
@@ -1107,6 +1112,23 @@ class shipment(osv.osv):
         return True
         
 shipment()
+
+
+class shipment_additionalitems(osv.osv):
+    _name = "shipment.additionalitems"
+    _description="Additional Items"
+    
+    _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
+                'shipment_id': fields.many2one('shipment', string='Shipment', readonly=True, on_delete='cascade'),
+                'picking_id': fields.many2one('stock.picking', string='Picking', readonly=True, on_delete='cascade'),
+                'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
+                'uom': fields.many2one('product.uom', string='UOM', required=True),
+                'comment': fields.char(string='Comment', size=1024),
+                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
+                'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
+                }
+    
+shipment_additionalitems()
 
 
 class shipment2(osv.osv):
@@ -2602,7 +2624,7 @@ class stock_picking(osv.osv):
                                                           'previous_step_id': pick.id,
                                                           'backorder_id': False,
                                                           'shipment_id': False}, context=dict(context, keep_prodlot=True, allow_copy=True,))
-
+            
             self.write(cr, uid, [new_packing_id], {'origin': pick.origin}, context=context)
             # update locations of stock moves and state as the picking stay at 'draft' state.
             # if return move have been done in previous ppl step, we remove the corresponding copied move (criteria: qty_per_pack == 0)
@@ -2849,9 +2871,21 @@ class wizard(osv.osv):
             assert name, 'type "create" and no name defined'
             assert model, 'type "create" and no model defined'
             assert step, 'type "create" and no step defined'
+            vals = {}
+            # if there are already additional items on the shipment we show them in the wizard
+            if (name, model, step) == ('Create Shipment', 'shipment.wizard', 'create'):
+                vals['product_moves_shipment_additionalitems'] = []
+                for s in self.pool.get('shipment').read(cr, uid, ids, ['additional_items_ids']):
+                    additionalitems_ids = s['additional_items_ids']
+                    for additionalitem in self.pool.get('shipment.additionalitems').read(cr, uid, additionalitems_ids):
+                        additionalitem['additional_item_id'] = additionalitem['id']
+                        additionalitem.pop('id')
+                        additionalitem.pop('shipment_id')
+                        vals['product_moves_shipment_additionalitems'].append((0, 0, additionalitem))
+            
             # create the memory object - passing the picking id to it through context
             wizard_id = self.pool.get(model).create(
-                cr, uid, {}, context=dict(context,
+                cr, uid, vals, context=dict(context,
                                           active_ids=ids,
                                           model=model,
                                           step=step,

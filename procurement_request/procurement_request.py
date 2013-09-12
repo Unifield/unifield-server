@@ -488,6 +488,10 @@ class procurement_request_line(osv.osv):
             domain = {'product_uom':[], 'supplier': [('partner_type','in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
+            # Test the compatibility of the product with a consumption report
+            res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': value}, vals={'constraints': 'consumption'}, context=context)
+            if test:
+                return res
             value = {'product_uom': product.uom_id.id, 'name': '[%s] %s'%(product.default_code, product.name), 
                      'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price}
             if value['type'] != 'make_to_stock':

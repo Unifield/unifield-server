@@ -30,6 +30,7 @@ import pooler
 import time
 import tools
 from tools.safe_eval import safe_eval as eval
+import logging
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -494,6 +495,7 @@ def create_log_line(self, cr, uid, model, lines=[]):
     log_line_pool = pool.get('audittrail.log.line')
     #start Loop
     for line in lines:
+        dict_of_values = {}
         if line['name'] in('__last_update','id'):
             continue
         if obj_pool._inherits:
@@ -505,12 +507,19 @@ def create_log_line(self, cr, uid, model, lines=[]):
 
         if field_id:
             field = field_pool.read(cr, uid, field_id)
+            if field['ttype'] == 'selection':
+                # if we have a fields.selection, we want to evaluate the 2nd part of the tuple which is user readable
+                try:
+                    dict_of_values = dict(self.pool.get(field['model'])._columns[line['name']].selection)
+                except TypeError as e:
+                    logging.getLogger('Track changes').warning("""Can\'t track changes for the field %s of the model %s. Error is %s"""
+                                                            % (line['name'], model.name, e))
 
         # Get the values
         old_value = line.get('old_value')
         new_value = line.get('new_value')
         method = line.get('method')
-
+        
 #        if old_value == new_value and method not in ('create', 'unlink'):
 #            continue
         # the check below is for the case where we have empty fields but with different types (i.e. transport_type that was comparing a unicode and a boolean)
@@ -519,10 +528,13 @@ def create_log_line(self, cr, uid, model, lines=[]):
         if not new_value:
             new_value = False
         
+        # for the many2one field, we compare old_value and new_value with the name (uf_1624), so the 2nd part of the tupe (old_value[1] == new_value[1])
         if method not in ('create', 'unlink') and (old_value == new_value \
-           or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])):
-            continue
-        
+           or (field['ttype'] == 'datetime' and old_value and new_value and old_value[:10] == new_value[:10])\
+           or (field['ttype'] == 'many2one' and old_value and new_value and old_value[1] == new_value[1])\
+           or (field['ttype'] == 'selection' and old_value and new_value and dict_of_values.get(old_value) == dict_of_values.get(new_value))):
+             continue
+
         res_id = line.get('res_id')
         name = line.get('name', '')
         object_id = line.get('object_id')
@@ -826,6 +838,12 @@ def log_fct(self, cr, uid, model, method, fct_src, fields_to_trace=None, rule_id
                 res_ids = list(args[2])
             if len(args)>3 and type(args[3]) == dict:
                 fields.extend(list(set(args[3]) & set(fields_to_trace)))
+            # we take below the fields.function that were ignored
+            fields_obj = self.pool.get('ir.model.fields')
+            fields_to_trace_ids = fields_obj.search(cr, uid, [('name', 'in', fields_to_trace), ('model_id', '=', model_id)])
+            for fields_value in fields_obj.read(cr, uid, fields_to_trace_ids, ['is_function', 'name']):
+                if fields_value['is_function']:
+                    fields.append(fields_value['name'])
                 
         model_id = model.id
 

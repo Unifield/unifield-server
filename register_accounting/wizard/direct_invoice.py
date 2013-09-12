@@ -156,6 +156,9 @@ class wizard_account_invoice(osv.osv):
         
         # Create invoice
         inv_id = inv_obj.create(cr, uid, vals, context=context)
+        # Set this invoice as direct invoice (since UTP-551, is_direct_invoice is a boolean and not a function)
+        self.pool.get('account.invoice').write(cr, uid, [inv_id], {'is_direct_invoice': True})
+
         
         # Create the attached register line and link the invoice to the register
         reg_line_id = absl_obj.create(cr, uid, {

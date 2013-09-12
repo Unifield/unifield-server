@@ -535,7 +535,7 @@ class stock_move(osv.osv):
                 
         return {'value': vals}
 
-    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, context=None):
+    def location_dest_change(self, cr, uid, ids, location_dest_id, location_id, product_id=False, context=None):
         '''
         Tries to define a reason type for the move according to the destination location
         '''
@@ -554,6 +554,11 @@ class stock_move(osv.osv):
         #if location_dest_id and location_id:
         #    if location_dest_id == location_id:
         #        vals['state'] = 'done'
+            if product_id:
+                # Test the compatibility of the product with the location
+                vals, test = self.pool.get('product.product')._on_change_restriction_error(cr, uid, product_id, field_name='location_dest_id', values={'value': vals}, vals={'location_id': location_dest_id})
+                if test:
+                    return  vals
 
         return {'value': vals}
     

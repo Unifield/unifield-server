@@ -72,7 +72,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
             same_document_date = True
             for line in self.pool.get('hq.entries').read(cr, uid, ids, ['date', 'free_1_id', 'free_2_id', 'name', 'amount', 'account_id_first_value', 
                 'cost_center_id_first_value', 'analytic_id', 'partner_txt', 'cost_center_id', 'account_id', 'destination_id', 'document_date', 
-                'destination_id_first_value']):
+                'destination_id_first_value', 'ref']):
                 if not document_date:
                     document_date = line.get('document_date', False)
                 if line.get('document_date', False) and line.get('document_date') != document_date:
@@ -124,6 +124,7 @@ class hq_entries_validation_wizard(osv.osv_memory):
                     'name': line.get('name', ''),
                     'currency_id': currency_id,
                     'partner_txt': line.get('partner_txt', ''),
+                    'reference': line.get('ref', '')
                 }
                 # Fetch debit/credit
                 debit = 0.0

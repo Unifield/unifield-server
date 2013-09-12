@@ -298,7 +298,9 @@ class financing_contract_format_line(osv.osv):
         'overhead_type': 'cost_percentage',
         'parent_id': lambda *a: False
     }
-    
+
+    _order = 'code asc'
+
     def create(self, cr, uid, vals, context=None):
         if not context:
             context = {}
