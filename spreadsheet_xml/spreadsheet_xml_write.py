@@ -60,6 +60,7 @@ class SpreadsheetReport(WebKitParser):
 
     def create(self, cr, uid, ids, data, context=None):
         a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
+        del self.parser_instance
         return (a[0], 'xls')
 
 
