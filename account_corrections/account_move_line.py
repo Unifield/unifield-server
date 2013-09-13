@@ -49,7 +49,6 @@ class account_move_line(osv.osv):
         # Search all accounts that are used in bank, cheque and cash registers
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', 'in', ['bank', 'cheque', 'cash'])])
         account_ids = []
-        company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         for j in self.pool.get('account.journal').read(cr, uid, journal_ids, ['default_debit_account_id', 'default_credit_account_id']):
             if j.get('default_debit_account_id', False) and j.get('default_debit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_debit_account_id')[0])
@@ -63,13 +62,9 @@ class account_move_line(osv.osv):
             # False if move is posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
-            # False if account user type code (User type) is tax, payables or receivables
-            if ml.account_id.user_type.code in ['tax', 'payables', 'receivables']:
+            # False if account type code (User type) is set as non correctible
+            if ml.account_id.user_type.not_correctible is True:
                 res[ml.id] = False
-            # False if account type code (User type) is in company's configuration as not correctible
-            if company and company.not_correctible_account_ids:
-                if ml.account_id.user_type.code in [x.code for x in company.not_correctible_account_ids]:
-                    res[ml.id] = False
             # False if line have been corrected
             if ml.corrected:
                 res[ml.id] = False

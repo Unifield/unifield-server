@@ -35,7 +35,6 @@
     "update_xml" : [
         'account_view.xml',
         'account_wizard_view.xml',
-        'res_company_view.xml',
     ],
     "demo_xml" : [],
     "test": [

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -24,13 +24,17 @@
 from osv import osv
 from osv import fields
 
-class res_company(osv.osv):
-    _name = 'res.company'
-    _inherit = 'res.company'
+class account_account_type(osv.osv):
+    _name = 'account.account.type'
+    _inherit = 'account.account.type'
 
     _columns = {
-        'not_correctible_account_ids': fields.many2many('account.account.type', 'account_account_type_not_correctible_rel', 'account_type_id', 'company_id', 'Not correctible accounts', help='Accounts that should not be correctible in journal items'),
+        'not_correctible': fields.boolean(string="Prevent entries to be correctible on this account type.")
     }
 
-res_company()
+    _defaults = {
+        'not_correctible': lambda *a: False,
+    }
+
+account_account_type()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
