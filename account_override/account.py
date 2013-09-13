@@ -243,11 +243,15 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
+                ml_vals = {}
                 for el in fields:
                     if el in vals:
                         context[el] = vals.get(el)
-                        for ml in m.line_id:
-                            self.pool.get('account.move.line').write(cr, uid, ml.id, {el: vals.get(el)}, context, False, False)
+                        ml_vals.update({el: vals.get(el)})
+                # Update document date AND date at the same time
+                if ml_vals:
+                    for ml in m.line_id:
+                        self.pool.get('account.move.line').write(cr, uid, ml.id, ml_vals, context, False, False)
         res = super(account_move, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
@@ -291,6 +295,23 @@ class account_move(osv.osv):
                     if ml.currency_id.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
+
+    def copy(self, cr, uid, id, default={}, context=None):
+        """
+        Copy a manual journal entry
+        """
+        if not context:
+            context = {}
+        res = id
+        context.update({'omit_analytic_distribution': False})
+        je = self.browse(cr, uid, [id], context=context)[0]
+        if je.status == 'sys' or (je.journal_id and je.journal_id.type == 'migration'):
+            raise osv.except_osv(_('Error'), _("You can only duplicate manual journal entries."))
+        res = super(account_move, self).copy(cr, uid, id, {'line_id': [], 'state': 'draft', 'document_date': je.document_date, 'date': je.date, 'name': ''}, context=context)
+        for line in je.line_id:
+            self.pool.get('account.move.line').copy(cr, uid, line.id, {'move_id': res, 'document_date': je.document_date, 'date': je.date, 'period_id': je.period_id and je.period_id.id or False}, context)
+        self.validate(cr, uid, [res], context=context)
+        return res
 
     def onchange_journal_id(self, cr, uid, ids, journal_id=False, context=None):
         """

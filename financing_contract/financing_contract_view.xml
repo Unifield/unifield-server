@@ -203,12 +203,14 @@
                 <field name="arch" type="xml">
                     <search string="Search Fiscalyear">
                         <group>
-                            <filter name="active" icon="terp-check" string="Active"
-                                    domain="[('eligibility_from_date', '&lt;=', datetime.date.today().strftime('%%Y-%%m-%%d')),
-                                             ('eligibility_to_date', '&gt;', datetime.date.today().strftime('%%Y-%%m-%%d'))]"/>
+                            <filter string="Draft" name="draft" icon="terp-document-new" domain="[('state', '=', 'draft')]"/>
+                            <filter string="Open" name="open" icon="terp-camera_test" domain="[('state', '=', 'open')]"/>
+                            <filter string="Soft closed" name="soft_closed" icon="terp-gtk-media-pause" domain="[('state', '=', 'soft_closed')]"/>
+                            <filter string="Hard closed" name="hard_closed" icon="terp-dialog-close" domain="[('state', '=', 'hard_closed')]"/>
                             <separator orientation="vertical"/>
                             <field name="code"/>
                             <field name="name"/>
+                            <newline/>
                             <field name="hq_grant_reference"/>
                             <field name="donor_id"/>
                             <field name="reporting_currency"/>

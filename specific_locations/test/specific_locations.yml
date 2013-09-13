@@ -51,7 +51,7 @@
     type: product
     uom_id: product.product_uom_unit
     uom_po_id: product.product_uom_unit
-    international_status: itc
+    international_status: product_attributes.int_1
     
 -
 

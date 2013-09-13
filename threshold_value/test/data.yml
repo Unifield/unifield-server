@@ -55,7 +55,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product2
 - 
@@ -80,7 +80,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product3
 - 
@@ -105,7 +105,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product4
 - 
@@ -130,7 +130,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product5
 - 
@@ -155,7 +155,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product6
 - 
@@ -180,7 +180,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product7
 - 
@@ -205,7 +205,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product8
 - 
@@ -235,7 +235,7 @@
         min_qty: 0.00
         name: supplier1
         delay: 30
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product9
 - 
@@ -260,7 +260,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product10
 - 
@@ -285,7 +285,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product11
 - 
@@ -310,7 +310,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create product12
 - 
@@ -335,7 +335,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create a stock move for product1 to have an AMC different than 0.00
 -

@@ -63,19 +63,24 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)] = {}
             # convert amount to today's rate
             date_context = {'date': datetime.datetime.today()}
-            functional_amount = int(round(pool.get('res.currency').compute(self.cr,
-                                                                           self.uid,
-                                                                           browse_po_line.currency_id.id,
-                                                                           functional_currency_id, 
-                                                                           cc_line.percentage * browse_po_line.price_subtotal / 100.0,
-                                                                           round=True,
-                                                                           context=date_context)))
+            functional_amount = pool.get('res.currency').compute(self.cr,
+                                                                 self.uid,
+                                                                 browse_po_line.currency_id.id,
+                                                                 functional_currency_id, 
+                                                                 cc_line.percentage * browse_po_line.price_subtotal / 100.0,
+                                                                 round=True,
+                                                                 context=date_context)
             expense_line = [0, 0, 0, functional_amount, -functional_amount]
             if expense_account_id not in value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)]:
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = expense_line
             else:
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = [sum(pair) for pair in zip(value_list[cc_line.analytic_id.id][expense_account_id], expense_line)]
             value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = cc_line.destination_id.code
+
+        # Round all values
+        for el1 in value_list.keys():
+            for el2 in value_list[el1].keys():
+                value_list[el1][el2] = map(int, map(round, value_list[el1][el2]))
 
         return
     
@@ -186,7 +191,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                     for account_id in actuals.keys():
                         if account_id in expense_account_ids:
                             # sum the values, we only need the total
-                            total_actual = int(round(sum(actuals[account_id])))
+                            total_actual = sum(actuals[account_id])
                             # create the line to add
                             actual_line = [0, total_actual, -total_actual, 0, -total_actual]
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id] = [sum(pair) for pair in zip(temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id], actual_line)]
@@ -208,7 +213,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         
                         for account_id in budget_amounts.keys():
                             # sum the values, we only need the total
-                            total_budget = int(round(sum(budget_amounts[account_id])))
+                            total_budget = sum(budget_amounts[account_id])
                             # create the line to add
                             budget_line = [total_budget, 0, total_budget, 0, total_budget]
                             temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id] = [sum(pair) for pair in zip(temp_data[str(cost_center_id)+'_'+str(destination_id)][account_id], budget_line)]
@@ -242,13 +247,13 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         total_values = [sum(pair) for pair in zip([0] + values[1:], total_values)]
                         formatted_line += [values[0]]
                     formatted_line += values[1:]
-                    formatted_line += [ temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account_id] ]
+                    formatted_line += [ map(int, map(round, temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account_id])) ]
                     res.append(formatted_line)
 
                 # empty line between cost centers
                 res.append([''] * 7)
             # append formatted total
-            res.append(['TOTALS', ''] + total_values)
+            res.append(['TOTALS', ''] + map(int, map(round, total_values)))
         return res
 
 report_sxw.report_sxw('report.msf.pdf.engagement', 'purchase.order', 'addons/msf_budget/report/engagement.rml', parser=report_pdf_engagement, header=False)
