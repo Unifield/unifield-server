@@ -563,13 +563,13 @@
 % endif
   <Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
   % if isComm():
-    % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
+    % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][0:getEndMonth()] + ['Total']:
       <Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
       <Cell ss:StyleID="s67"><Data ss:Type="String">${_(x + ' (Comm.)')}</Data></Cell>
       <Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
     % endfor
   % else:
-    % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
+    % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][0:getEndMonth()] + ['Total']:
       <Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
       <Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
     % endfor
@@ -612,13 +612,13 @@
 % endif
   <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
   % if isComm():
-    % for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
+    % for x in range(1, getEndMonth()*3+3, 3):
       <Cell ss:StyleID="s86"><Data ss:Type="Number">${( len(line) > x and line[x] or 0 )|x}</Data></Cell>
       <Cell ss:StyleID="s68"><Data ss:Type="Number">${( len(line) > x+1 and line[x+1] or 0 )|x}</Data></Cell>
       <Cell ss:StyleID="s87"><Data ss:Type="Number">${( len(line) > x+2 and line[x+2] or 0 )|x}</Data></Cell>
     % endfor
   % else:
-    % for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
+    % for x in range(1, getEndMonth()*3+3, 3):
       <Cell ss:StyleID="s86"><Data ss:Type="Number">${( len(line) > x and line[x] or 0 )|x}</Data></Cell>
       <Cell ss:StyleID="s87"><Data ss:Type="Number">${( len(line) > x+2 and line[x+2] or 0 )|x}</Data></Cell>
     % endfor
@@ -652,13 +652,13 @@
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
   <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
   % if isComm():
-    % for x in range(13):
+    % for x in range(getEndMonth() + 1):
     <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
     % endfor
   % else:
-    % for x in range(13):
+    % for x in range(getEndMonth() + 1):
     <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
     <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
     % endfor

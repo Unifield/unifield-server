@@ -133,11 +133,11 @@ class report_budget_actual_2(report_sxw.rml_parse):
             'getF1': self.getF1,
             'getF2': self.getF2,
             'getGranularity': self.getGranularity,
+            'getEndMonth': self.getEndMonth,
         })
         return
 
     def getF2(self,line):
-        print line
         if int(line[1]) == 0:
             return ''
         return '=(+RC[-2])/RC[-3]'
@@ -184,6 +184,19 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 res = _('Parent Expenses only')
         return res
 
+    def getEndMonth(self, context=None):
+        """
+        Get number of last month. by default 12.
+        """
+        if not context:
+            context = {}
+        parameters = self.localcontext.get('data',{}).get('form',{})
+        res = 12
+        if 'period_id' in parameters:
+            period = self.pool.get('account.period').browse(self.cr, self.uid, parameters['period_id'], context=context)
+            res = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
+        return res
+
     def getLines(self, lines, context={}):
         budget_line_ids = [x.id for x in lines]
         parameters = self.localcontext.get('data',{}).get('form',{})
@@ -191,14 +204,11 @@ class report_budget_actual_2(report_sxw.rml_parse):
             context = {}
         result = []
         # Column header
-        month_stop = 12
+        month_stop = self.getEndMonth()
         header = ['Account']
         # check if month detail is needed
         if 'breakdown' in parameters and parameters['breakdown'] == 'month':
             month_list = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-            if 'period_id' in parameters:
-                period = self.pool.get('account.period').browse(self.cr, self.uid, parameters['period_id'], context=context)
-                month_stop = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
             for month in range(month_stop):
                 header.append(month_list[month] + ' (Budget)')
                 header.append(month_list[month] + ' (Actual)')
