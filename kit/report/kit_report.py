@@ -53,6 +53,6 @@ class kit_report(report_sxw.rml_parse):
         else:
             return res
 
-report_sxw.report_sxw('report.kit.report','composition.kit','addons/kite/report/kit_report.rml',parser=kit_report, header=False)
+report_sxw.report_sxw('report.kit.report','composition.kit','addons/kit/report/kit_report.rml',parser=kit_report, header=False)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
