@@ -173,7 +173,7 @@ class message_to_send(osv.osv):
         if ids:
             self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
 
-    _order = 'create_date desc'
+    _order = 'create_date desc, id desc'
 
 message_to_send()
 
@@ -255,7 +255,7 @@ class message_received(osv.osv):
                 self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
         return len(ids)
 
-    _order = 'create_date desc'
+    _order = 'create_date desc, id desc'
 
 message_received()
 

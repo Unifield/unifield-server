@@ -250,7 +250,7 @@ class update_to_send(osv.osv):
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
-    _order = 'create_date desc'
+    _order = 'create_date desc, id desc'
 
 update_to_send()
 
@@ -655,7 +655,7 @@ class update_received(osv.osv):
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
 
-    _order = 'create_date desc'
+    _order = 'create_date desc, id desc'
 
 update_received()
 
