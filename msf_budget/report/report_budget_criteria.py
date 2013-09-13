@@ -197,10 +197,10 @@ class report_budget_actual_2(report_sxw.rml_parse):
             res = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
         return res
 
-    def getLines(self, lines, context={}):
+    def getLines(self, lines, context=None):
         budget_line_ids = [x.id for x in lines]
         parameters = self.localcontext.get('data',{}).get('form',{})
-        if context is None:
+        if not context:
             context = {}
         result = []
         # Column header
