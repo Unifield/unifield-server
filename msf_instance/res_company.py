@@ -26,6 +26,32 @@ from tools.translate import _
 class res_company(osv.osv):
     _name = 'res.company'
     _inherit = 'res.company'
+    
+    def init(self, cr):
+        """
+            Create a instance for yml test
+        """
+        if hasattr(super(res_company, self), 'init'):
+            super(msf_instance, self).init(cr)
+
+        mod_obj = self.pool.get('ir.module.module')
+        demo = False
+        mod_id = mod_obj.search(cr, 1, [('name', '=', 'msf_instance')])
+        if mod_id:
+            demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
+        if demo:
+            inst_obj = self.pool.get('msf.instance')
+            if not inst_obj.search(cr, 1, []):
+                inst_id = inst_obj.create(cr, 1, {
+                    'name': 'YML',
+                    'level': 'section',
+                    'code': 'YML',
+                    'state': 'active',
+                    'move_prefix': 'MYML',
+                    'reconcile_prefix': 'RYML',
+                })
+                self.write(cr, 1, [1], {'instance_id': inst_id})
+
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', string="Proprietary Instance", 
