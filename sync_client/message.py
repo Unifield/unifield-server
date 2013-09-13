@@ -153,8 +153,10 @@ class message_to_send(osv.osv):
     def get_message_packet(self, cr, uid, max_size, context=None):
         packet = []
 
-        for message in self.browse(cr, uid, self.search(cr, uid, [('sent', '=', False)],
-                                   limit=max_size, context=context), context=context):
+        for message in self.browse(cr, uid,
+                self.search(cr, uid, [('sent', '=', False)],
+                    limit=max_size, order='id asc', context=context),
+                context=context):
             packet.append({
                 'id' : message.identifier,
                 'call' : message.remote_call,
@@ -171,7 +173,7 @@ class message_to_send(osv.osv):
         if ids:
             self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
 
-    _order = 'id asc'
+    _order = 'create_date desc'
 
 message_to_send()
 
@@ -227,7 +229,8 @@ class message_received(osv.osv):
 
     def execute(self, cr, uid, ids=False, context=None):
         if not ids:
-            ids = self.search(cr, uid, [('run', '=', False)], context=context)
+            ids = self.search(cr, uid, [('run', '=', False)],
+                order='id asc', context=context)
         if not ids: return 0
         execution_date = fields.datetime.now()
         self.write(cr, uid, ids, {'execution_date' : execution_date}, context=context)
@@ -252,7 +255,7 @@ class message_received(osv.osv):
                 self.write(cr, uid, message.id, {'run' : True, 'log' : tools.ustr(res)}, context=context)
         return len(ids)
 
-    _order = 'id asc'
+    _order = 'create_date desc'
 
 message_received()
 

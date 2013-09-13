@@ -27,7 +27,10 @@ from tools.safe_eval import safe_eval as eval
 import re
 import logging
 
-from sync_common import sync_log, add_sdref_column, translate_column, migrate_sequence_to_sequence_number, fancy_integer, split_xml_ids_list, normalize_xmlid
+from sync_common import sync_log, \
+    add_sdref_column, translate_column, migrate_sequence_to_sequence_number, \
+    fancy_integer, \
+    split_xml_ids_list, normalize_xmlid
 
 re_fieldname = re.compile(r"^\w+")
 
@@ -203,7 +206,7 @@ class update_to_send(osv.osv):
         return (create_normal_update(obj, rule, update_context), create_delete_update(obj, rule, update_context))
 
     def create_package(self, cr, uid, session_id, packet_size, context=None):
-        ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, context=context)
+        ids = self.search(cr, uid, [('session_id', '=', session_id), ('sent', '=', False)], limit=packet_size, order='id asc', context=context)
         if not ids:
             return False
         update_master = self.browse(cr, uid, ids[0], context=context)
@@ -247,7 +250,7 @@ class update_to_send(osv.osv):
         self.write(cr, uid, update_ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
-    _order = 'id asc'
+    _order = 'create_date desc'
 
 update_to_send()
 
@@ -339,7 +342,7 @@ class update_received(osv.osv):
         context = dict(context or {}, sync_update_execution=True)
 
         if ids is None:
-            update_ids = self.search(cr, uid, [('run','=',False)], context=context)
+            update_ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
         else:
             update_ids = ids
         if not update_ids:
@@ -652,7 +655,7 @@ class update_received(osv.osv):
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
 
-    _order = 'id asc'
+    _order = 'create_date desc'
 
 update_received()
 
