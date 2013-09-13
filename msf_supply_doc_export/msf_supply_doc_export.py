@@ -293,9 +293,9 @@ class ir_values(osv.osv):
         elif key == 'action' and key2 == 'client_print_multi' and 'composition.kit' in [x[0] for x in models]:
             new_act = []
             for v in values:
-                if context.get('composition_type')=='theoretical' and v[2]['report_name'] == 'composition.kit.xls':
+                if context.get('composition_type')=='theoretical' and v[2]['report_name'] in ('composition.kit.xls', 'kit.report'):
                     new_act.append(v)
-                elif context.get('composition_type')=='real' and v[2]['report_name'] == 'real.composition.kit.xls':
+                elif context.get('composition_type')=='real' and v[2]['report_name'] in ('real.composition.kit.xls', 'kit.report'):
                     new_act.append(v)
             values = new_act
 
