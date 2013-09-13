@@ -22,6 +22,9 @@
 
 from osv import osv, fields
 from tools.translate import _
+import logging
+import tools
+from os import path
 
 class res_company(osv.osv):
     _name = 'res.company'
@@ -40,18 +43,12 @@ class res_company(osv.osv):
         if mod_id:
             demo = mod_obj.read(cr, 1, mod_id, ['demo'])[0]['demo']
         if demo:
-            inst_obj = self.pool.get('msf.instance')
-            if not inst_obj.search(cr, 1, []):
-                inst_id = inst_obj.create(cr, 1, {
-                    'name': 'YML',
-                    'level': 'section',
-                    'code': 'YML',
-                    'state': 'active',
-                    'move_prefix': 'MYML',
-                    'reconcile_prefix': 'RYML',
-                })
-                self.write(cr, 1, [1], {'instance_id': inst_id})
+            current_module = 'msf_instance'
+            file_to_load = '%s/data/instance_data.xml' % (current_module, )
 
+            logging.getLogger('init').info('HOOK: module msf_instance: loading %s' % file_to_load)
+            file = tools.file_open(file_to_load)
+            tools.convert_xml_import(cr, current_module, file, {}, mode='init', noupdate=False)
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', string="Proprietary Instance", 
