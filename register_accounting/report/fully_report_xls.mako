@@ -399,7 +399,7 @@
           <Data ss:Type="String">Status</Data>
         </Cell>
       </Row>
-% for line in o.line_ids:
+% for line in sorted(o.line_ids, key=lambda x: x.sequence_for_reference):
       <Row ss:Height="14.5134">
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.direct_invoice and _('Direct Invoice') or line.from_cash_return and _('Cash Return') or line.is_down_payment and _('Down Payment') and line.from_import_cheque_id and _('Cheque Import') or (line.transfer_journal_id and not line.is_transfer_with_change and _('Transfer')) or (line.transfer_journal_id and line.is_transfer_with_change and _('Transfer with change')) or line.imported_invoice_line_ids and _('Imported Invoice') or line.from_import_cheque_id and _('Imported Cheque') or _('Direct Payment')|x}</Data>
