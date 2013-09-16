@@ -623,7 +623,7 @@
       <Print>
         <ValidPrinterInfo/>
         <PaperSizeIndex>9</PaperSizeIndex>
-        <Scale>50</Scale>
+        <Scale>60</Scale>
       </Print>
       <ShowPageBreakZoom/>
       <PageBreakZoom>70</PageBreakZoom>
