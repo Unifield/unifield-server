@@ -489,6 +489,9 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
         </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
+        </Cell>
         <Cell ss:StyleID="amount">
           <Data ss:Type="Number">${inv_line.price_subtotal or 0.0}</Data>
         </Cell>
@@ -555,6 +558,9 @@
         </Cell>
         <Cell ss:StyleID="number_centre">
           <Data ss:Type="Number">${imp_inv_line.account_id and imp_inv_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
