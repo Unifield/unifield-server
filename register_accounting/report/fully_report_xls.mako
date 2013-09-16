@@ -278,9 +278,9 @@
     <Table>
       <Column ss:Width="95.9527"/>
       <Column ss:Width="70" ss:Span="1"/>
-      <Column ss:Width="118"/>
+      <Column ss:Width="155"/>
       <Column ss:Width="135"/>
-      <Column ss:Width="71.263"/>
+      <Column ss:Width="170"/>
       <Column ss:Width="55"/>
       <Column ss:Width="65"/>
       <Column ss:Width="60"/>
@@ -623,7 +623,7 @@
       <Print>
         <ValidPrinterInfo/>
         <PaperSizeIndex>9</PaperSizeIndex>
-        <Scale>70</Scale>
+        <Scale>50</Scale>
       </Print>
       <ShowPageBreakZoom/>
       <PageBreakZoom>70</PageBreakZoom>
