@@ -51,12 +51,13 @@ class msf_budget(osv.osv):
             context = {}
         res = {}
         for budget in self.browse(cr, uid, ids):
-            res[budget.id] = ''
+            res[budget.id] = 'project'
             if budget.cost_center_id:
                 target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', budget.cost_center_id.id), ('is_top_cost_center', '=', True)])
                 if target_ids:
-                    t = self.pool.get('account.target.costcenter').browse(cr, uid, target_ids[0])
-                    res[budget.id] = t and t.instance_id and t.instance_id.level or ''
+                    res[budget.id] = 'coordo'
+            if not budget.cost_center_id.parent_id:
+                res[budget.id] = 'section'
         return res
 
     def _search_instance_type(self, cr, uid, obj, name, args, context=None):
@@ -69,8 +70,17 @@ class msf_budget(osv.osv):
         if not args:
             return res
         if args[0] and args[0][2]:
-            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('is_top_cost_center', '=', True), ('instance_id.level', '=', args[0][2])])
-            return [('cost_center_id', 'in', [x and x.cost_center_id and x.cost_center_id.id for x in self.pool.get('account.target.costcenter').browse(cr, uid, target_ids)])]
+            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('is_top_cost_center', '=', True)])
+            coordo_ids = [x and x.cost_center_id and x.cost_center_id.id for x in self.pool.get('account.target.costcenter').browse(cr, uid, target_ids)]
+            hq_ids = self.pool.get('account.analytic.account').search(cr, uid, [('parent_id', '=', False)])
+            if isinstance(hq_ids, (int, long)):
+                hq_ids = [hq_ids]
+            if args[0][2] == 'section':
+                return [('cost_center_id', 'in', hq_ids)]
+            elif args[0][2] == 'coordo':
+                return [('cost_center_id', 'in', coordo_ids)]
+            elif args[0][2] == 'project':
+                return [('cost_center_id', 'not in', hq_ids), ('cost_center_id', 'not in', coordo_ids)]
         return res
 
     _columns = {
@@ -88,7 +98,7 @@ class msf_budget(osv.osv):
                                           ('view', 'Parent expenses only')], string="Display type"),
         'type': fields.selection([('normal', 'Normal'), ('view', 'View')], string="Budget type"),
         'total_budget_amount': fields.function(_get_total_budget_amounts, method=True, store=False, string="Total Budget Amount", type="float", readonly=True),
-        'instance_type': fields.function(_get_instance_type, fnct_search=_search_instance_type, method=True, store=False, string='Instance type', type='text', readonly=True),
+        'instance_type': fields.function(_get_instance_type, fnct_search=_search_instance_type, method=True, store=False, string='Instance type', type='selection', selection=[('section', 'HQ'), ('coordo', 'Coordo'), ('project', 'Project')], readonly=True),
     }
     
     _defaults = {
