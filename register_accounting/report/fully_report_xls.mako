@@ -451,7 +451,7 @@
 % if line.analytic_distribution_id and line.analytic_distribution_id.funding_pool_lines:
 % for ana_line in line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="9" ss:StyleID="ana_amount">
+        <Cell ss:Index="10" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${line.amount and ana_line.percentage and ((line.amount or 0.0) * (ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
@@ -497,7 +497,7 @@
 % if inv_line.analytic_distribution_id:
 % for inv_ana_line in inv_line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="9" ss:StyleID="ana_amount">
+        <Cell ss:Index="10" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
@@ -517,7 +517,7 @@
 % elif inv_line.invoice_id.analytic_distribution_id:
 % for inv_ana_line in inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="9" ss:StyleID="ana_amount">
+        <Cell ss:Index="10" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${inv_line.price_subtotal and inv_ana_line.percentage and ((inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
@@ -567,7 +567,7 @@
 % if imp_inv_line.analytic_distribution_id:
 % for inv_ana_line in imp_inv_line.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="9" ss:StyleID="ana_amount">
+        <Cell ss:Index="10" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
@@ -587,7 +587,7 @@
 % elif imp_inv_line.invoice_id.analytic_distribution_id:
 % for inv_ana_line in imp_inv_line.invoice_id.analytic_distribution_id.funding_pool_lines:
       <Row>
-        <Cell ss:Index="9" ss:StyleID="ana_amount">
+        <Cell ss:Index="10" ss:StyleID="ana_amount">
           <Data ss:Type="Number">${imp_inv_line.price_subtotal and inv_ana_line.percentage and ((imp_inv_line.price_subtotal or 0.0) * (inv_ana_line.percentage or 0.0) / 100) or 0.0}</Data>
         </Cell>
         <Cell ss:StyleID="ana_left">
