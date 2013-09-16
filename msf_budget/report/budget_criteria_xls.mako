@@ -542,129 +542,129 @@
 % if not byMonth():
 <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
 % if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
-	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+  <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
 % endif
-	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
-	% if isComm():
-		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
-		<Cell ss:StyleID="s67"><Data ss:Type="String">${_('Total (Comm.)')}</Data></Cell>
-		<Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
-	% else:
-		<Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
-		<Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
-	% endif
-	<Cell ss:StyleID="s32"><Data ss:Type="String">${_('Total Balance')}</Data></Cell>
-	<Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
+  <Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
+  % if isComm():
+    <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${_('Total (Comm.)')}</Data></Cell>
+    <Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
+  % else:
+    <Cell ss:StyleID="s84"><Data ss:Type="String">${_('Total (Budget)')}</Data></Cell>
+    <Cell ss:StyleID="s85"><Data ss:Type="String">${_('Total (Actual)')}</Data></Cell>
+  % endif
+  <Cell ss:StyleID="s32"><Data ss:Type="String">${_('Total Balance')}</Data></Cell>
+  <Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
 % endif
 % if byMonth():
-	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
+  <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Account Code')}</Data></Cell>
 % if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
-	<Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
+  <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Destination')}</Data></Cell>
 % endif
-	<Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
-	% if isComm():
-		% for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
-			<Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
-			<Cell ss:StyleID="s67"><Data ss:Type="String">${_(x + ' (Comm.)')}</Data></Cell>
-			<Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
-		% endfor
-	% else:
-		% for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Total']:
-			<Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
-			<Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
-		% endfor
-	% endif
-	<Cell ss:StyleID="s32"><Data ss:Type="String">${_('Total Balance')}</Data></Cell>
-	<Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
+  <Cell ss:StyleID="s75"><Data ss:Type="String">${_('Account Desc')}</Data></Cell>
+  % if isComm():
+    % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][0:getEndMonth()] + ['Total']:
+      <Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
+      <Cell ss:StyleID="s67"><Data ss:Type="String">${_(x + ' (Comm.)')}</Data></Cell>
+      <Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
+    % endfor
+  % else:
+    % for x in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][0:getEndMonth()] + ['Total']:
+      <Cell ss:StyleID="s84"><Data ss:Type="String">${_(x + ' (Budget)')}</Data></Cell>
+      <Cell ss:StyleID="s85"><Data ss:Type="String">${_(x + ' (Actual)')}</Data></Cell>
+    % endfor
+  % endif
+  <Cell ss:StyleID="s32"><Data ss:Type="String">${_('Total Balance')}</Data></Cell>
+  <Cell ss:StyleID="s33"><Data ss:Type="String">${_('Total Percentage')}</Data></Cell>
 % endif
 </Row>
 
 % for line in getLines(o.budget_line_ids):
 <Row>
 % if not byMonth():
-	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
 % if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
-	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
 % endif
-	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
-	% if isComm():
-		<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[1] )|x}</Data></Cell>
-		<Cell ss:StyleID="s68"><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
-		<Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
-	% else:
-		<Cell ss:StyleID="s84"><Data ss:Type="Number">${( line[1] )|x}</Data></Cell>
-		<Cell ss:StyleID="s85"><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
-	% endif
-	% if isComm():
-		<Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
-	% else:
-		<Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
-	% endif
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
+  % if isComm():
+    <Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[1] )|x}</Data></Cell>
+    <Cell ss:StyleID="s68"><Data ss:Type="Number">${( line[2] )|x}</Data></Cell>
+    <Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
+  % else:
+    <Cell ss:StyleID="s84"><Data ss:Type="Number">${( line[1] )|x}</Data></Cell>
+    <Cell ss:StyleID="s85"><Data ss:Type="Number">${( line[3] )|x}</Data></Cell>
+  % endif
+  % if isComm():
+    <Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+    <Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
+  % else:
+    <Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+    <Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
+  % endif
 
 % endif
 
 % if byMonth():
-	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
 % if context.get('data') and context.get('data').get('form') and context.get('data').get('form').get('granularity') and context.get('data').get('form').get('granularity') == 'all':
-	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][1] )|x}</Data></Cell>
 % endif
-	<Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
-	% if isComm():
-		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
-			<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[x] or 0 )|x}</Data></Cell>
-			<Cell ss:StyleID="s68"><Data ss:Type="Number">${( line[x+1] or 0 )|x}</Data></Cell>
-			<Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[x+2] or 0 )|x}</Data></Cell>
-		% endfor
-	% else:
-		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
-			<Cell ss:StyleID="s86"><Data ss:Type="Number">${( line[x] or 0 )|x}</Data></Cell>
-			<Cell ss:StyleID="s87"><Data ss:Type="Number">${( line[x+2] or 0 )|x}</Data></Cell>
-		% endfor
-	% endif
-	% if isComm():
-		<Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
-	% else:
-		<Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
-		<Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
-	% endif
+  <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][2] )|x}</Data></Cell>
+  % if isComm():
+    % for x in range(1, getEndMonth()*3+3, 3):
+      <Cell ss:StyleID="s86"><Data ss:Type="Number">${( len(line) > x and line[x] or 0 )|x}</Data></Cell>
+      <Cell ss:StyleID="s68"><Data ss:Type="Number">${( len(line) > x+1 and line[x+1] or 0 )|x}</Data></Cell>
+      <Cell ss:StyleID="s87"><Data ss:Type="Number">${( len(line) > x+2 and line[x+2] or 0 )|x}</Data></Cell>
+    % endfor
+  % else:
+    % for x in range(1, getEndMonth()*3+3, 3):
+      <Cell ss:StyleID="s86"><Data ss:Type="Number">${( len(line) > x and line[x] or 0 )|x}</Data></Cell>
+      <Cell ss:StyleID="s87"><Data ss:Type="Number">${( len(line) > x+2 and line[x+2] or 0 )|x}</Data></Cell>
+    % endfor
+  % endif
+  % if isComm():
+    <Cell ss:StyleID="s39" ss:Formula="=+RC[-3]-RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+    <Cell ss:StyleID="s41" ss:Formula="${( getF1(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
+  % else:
+    <Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
+    <Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
+  % endif
 % endif
 </Row>
 % endfor
 
 <Row>
 % if not byMonth():
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	% if isComm():
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	% endif
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  % if isComm():
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  % endif
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 
 
 % endif
 % if byMonth():
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	% if isComm():
-		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
-		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-		% endfor
-	% else:
-		% for x in [1,4,7,10,13,16,19,22,25,28,31,34,37]:
-		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-		<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-		% endfor
-	% endif
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
-	<Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  % if isComm():
+    % for x in range(getEndMonth() + 1):
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    % endfor
+  % else:
+    % for x in range(getEndMonth() + 1):
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+    % endfor
+  % endif
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
+  <Cell ss:StyleID="s70"><Data ss:Type="String"></Data></Cell>
 % endif
 </Row>
 
