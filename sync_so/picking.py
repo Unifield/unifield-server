@@ -101,12 +101,14 @@ class stock_picking(osv.osv):
         result = {}
         if out_info.get('move_lines', False):
             for line in out_info['move_lines']:
-                # aggregate according to line number
-                line_dic = result.setdefault(line.get('line_number'), {})
-                # set the data
-                line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
-                # set the flag to know if the data has already been processed (partially or completely) in Out side
-                line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
+                # Don't get the returned pack lines
+                if line.get('location_dest_id', {}).get('usage', 'customer') == 'customer':
+                    # aggregate according to line number
+                    line_dic = result.setdefault(line.get('line_number'), {})
+                    # set the data
+                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
+                    # set the flag to know if the data has already been processed (partially or completely) in Out side
+                    line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
             
         return result
         
@@ -158,7 +160,21 @@ class stock_picking(osv.osv):
                             raise Exception(message)
                     move_id = line_numbers[ln]
                        
-                    partial_datas[in_id].setdefault(move_id, []).append(data)
+                    # If we have a shipment with 10 packs and return from shipment
+                    # the pack 2 and 3, the IN shouldn't be splitted in three moves (pack 1 available,
+                    # pack 2 and 3 not available and pack 4 to 10 available) but splitted into 
+                    # two moves (one move for all products available and one move for all
+                    # products not available in IN)
+                    if not partial_datas[in_id].get(move_id):
+                        partial_datas[in_id].setdefault(move_id, []).append(data)
+                    else:
+                        for x in partial_datas[in_id][move_id]:
+                            if x.get('product_id') == data.get('product_id') and x.get('product_uom') == data.get('product_uom') and x.get('prodlot_id') == data.get('prodlot_id') and x.get('asset_id') == data.get('asset_id'):
+                                x['product_qty'] += data.get('product_qty')
+                                x['product_uos_qty'] += data.get('product_uos_qty')
+                                break
+                        else:
+                            partial_datas[in_id][move_id].append(data)
                     
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
             new_picking = self.do_incoming_shipment_sync(cr, uid, in_id, partial_datas, context)            
