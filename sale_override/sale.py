@@ -574,7 +574,11 @@ class sale_order(osv.osv):
 
         order_name = '%s/%s' % (order.name, str(name_iter))
 
-        return self.copy(cr, uid, order.id, {'order_line': [], 'state': 'draft', 'name': order_name, 'fo_to_resource': True}, context=context)
+        order_id = self.copy(cr, uid, order.id, {'order_line': [], 'state': 'draft', 'name': order_name, 'fo_to_resource': True}, context=context)
+
+        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=context)
+
+        return order_id
 
     def sale_except_correction(self, cr, uid, ids, context=None):
         '''
@@ -1253,7 +1257,13 @@ class sale_order_line(osv.osv):
         if not qty_diff:
             qty_diff = line.product_uom_qty
 
-        return self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff}, context=context)
+        line_id = self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff}, context=context)
+
+        order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
+
+        self.pool.get('sale.order').log(cr, uid, order_id, _('A line was added to the Field Order %s to re-source the canceled line.')%(order_name), context=context)
+
+        return line_id
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
