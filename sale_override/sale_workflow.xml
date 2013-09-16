@@ -69,6 +69,7 @@
             <field name="act_from" ref="sale.act_ship_except" />
             <field name="act_to" ref="sale.act_ship_corrected" />
             <!--<field name="signal">ship_corrected</field>-->
+            <field name="signal" eval="False" />
         </record>
 
         <record id="sale.trans_ship_corrected_ship_end" model="workflow.transition">
