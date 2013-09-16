@@ -282,6 +282,7 @@
       <Column ss:Width="135"/>
       <Column ss:Width="71.263"/>
       <Column ss:Width="55"/>
+      <Column ss:Width="65"/>
       <Column ss:Width="60"/>
       <Column ss:Width="66"/>
       <Column ss:Width="72" ss:Span="2"/>
@@ -374,6 +375,9 @@
           <Data ss:Type="String">Acct</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Third Parties</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">IN</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
@@ -417,6 +421,9 @@
         </Cell>
         <Cell ss:StyleID="number_centre_bold">
           <Data ss:Type="Number">${line.account_id.code|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left_bold">
+          <Data ss:Type="String">${(line.partner_id and line.partner_id.name or line.transfer_journal_id and line.transfer_journal_id.name or line.employee_id and line.employee_id.name or '')|x}</Data>
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_in or 0.0}</Data>
