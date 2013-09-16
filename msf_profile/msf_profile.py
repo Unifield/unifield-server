@@ -130,6 +130,8 @@ class res_users(osv.osv):
         config_lang = self.pool.get('unifield.setup.configuration').get_config(cr, uid).lang_id
         if config_lang:
             return config_lang
+        if self.pool.get('res.lang').search(cr, uid, [('translatable','=',True), ('code', '=', 'en_MF')]):
+            return 'en_MF'
         return 'en_US'
 
     _defaults = {
