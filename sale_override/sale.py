@@ -67,6 +67,8 @@ class sale_order(osv.osv):
             default.update({'split_type_sale_order': 'original_sale_order'})
         if 'original_so_id_sale_order' not in default:
             default.update({'original_so_id_sale_order': False})
+        if 'fo_to_resource' not in default:
+            default.update({'fo_to_resource': False})
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
     #@@@override sale.sale_order._invoiced
@@ -243,6 +245,7 @@ class sale_order(osv.osv):
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
+        'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
     }
     
     _defaults = {
@@ -555,6 +558,24 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
         return True
 
+    def create_resource_order(self, cr, uid, order, context=None):
+        '''
+        Create a new FO to re-source the needs.
+        '''
+        context = context or {}
+
+        order_ids = self.search(cr, uid, [('fo_to_resource', '=', True), ('name', 'like', order.name)], context=context)
+        name_iter = 1
+        for old_order in self.read(cr, uid, order_ids, ['name', 'state'], context=context):
+            if old_order['state'] == 'draft':
+                return old_order['id']
+            else:
+                name_iter += 1
+
+        order_name = '%s/%s' % (order.name, str(name_iter))
+
+        return self.copy(cr, uid, order.id, {'order_line': [], 'state': 'draft', 'name': order_name, 'fo_to_resource': True}, context=context)
+
     def sale_except_correction(self, cr, uid, ids, context=None):
         '''
         Remove the link between a Field order and the canceled procurement orders
@@ -562,7 +583,12 @@ class sale_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
                 if line.procurement_id and line.procurement_id.state == 'cancel':
-                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'state': 'exception',
+                    if line.procurement_id.procure_method == 'make_to_stock' and line.procurement_id.move_id:
+                        # TODO : Make a diff with UoM
+                        diff = line.product_uom_qty - (line.product_uom_qty - line.procurement_id.move_id.product_qty)
+                        resource_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
+                        self.pool.get('sale.order.line').add_resource_line(cr, uid, line, resource_id, diff, context=context)
+                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'state': 'cancel',
                                                                                 'manually_corrected': True,
                                                                                 'procurement_id': False}, context=context)
             if (order.order_policy == 'manual'):
@@ -1208,6 +1234,16 @@ class sale_order_line(osv.osv):
                     return False
 
         return True
+
+    def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
+        '''
+        Add a copy of the original line (line) into the new order (order_id)
+        created to resource needs.
+        Update the product qty with the qty_diff in case of split or backorder moves
+        before cancelation
+        '''
+        context = context or {}
+        return self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff}, context=context)
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
