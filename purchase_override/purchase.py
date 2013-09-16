@@ -2085,10 +2085,30 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def ask_unlink(self, cr, uid, ids, context=None):
+        '''
+        Call the unlink method for lines and if the PO becomes empty
+        ask the user if he wants to cancel the PO
+        '''
+        purchase_ids = []
+        for line in self.read(cr, uid, ids, ['order_id'], context=context):
+            if line['order_id'][0] not in purchase_ids:
+                purchase_ids.append(line['order_id'][0])
+
+        res = self.unlink(cr, uid, ids, context=context)
+
+        for order in self.pool.get('purchase.order').read(cr, uid, purchase_ids, ['order_line'], context=context):
+            if len(order['order_line']) == 0:
+                return self.pool.get('purchase.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
+
+        return res
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Update the merged line
         '''
+        sol_obj = self.pool.get('sale.order.line')
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -2096,8 +2116,14 @@ class purchase_order_line(osv.osv):
             
         # if the line is linked to a sale order line through procurement process,
         # the deletion is impossible
-        if self.get_sol_ids_from_pol_ids(cr, uid, ids, context=context):
-            raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
+        for line in self.browse(cr, uid, ids, context=context):
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+            if sol_ids:
+                sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
+                # TODO : Make diff with different UoM
+                diff_qty = sol.product_uom_qty - (sol.product_uom_qty - line.product_qty)
+                sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+#                raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -2495,5 +2521,47 @@ class account_invoice(osv.osv):
     }
     
 account_invoice()
+
+class purchase_order_unlink_wizard(osv.osv_memory):
+    _name = 'purchase.order.unlink.wizard'
+
+    _columns = {'order_id': fields.many2one('purchase.order', 'Order to delete'),
+                'unlink_po': fields.boolean(string='Unlink PO'),}
+
+    def ask_unlink(self, cr, uid, order_id, context=None):
+        '''
+        Return the wizard
+        '''
+        context = context or {}
+
+        wiz_id = self.create(cr, uid, {'order_id': order_id}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form', 
+                'target': 'new',
+                'context': context}
+
+    def close_window(self, cr, uid, ids, context=None):
+        '''
+        Close the pop-up and reload the PO
+        '''
+        return {'type': 'ir.actions.act_window_close'}
+        
+    def cancel_po(self, cr, uid, ids, context=None):
+        '''
+        Cancel the PO and display his form
+        '''
+        context = context or {}
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            self.pool.get('purchase.order').action_cancel(cr, uid, [wiz.order_id.id], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+purchase_order_unlink_wizard()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

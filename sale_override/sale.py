@@ -584,7 +584,7 @@ class sale_order(osv.osv):
             for line in order.order_line:
                 if line.procurement_id and line.procurement_id.state == 'cancel':
                     if line.procurement_id.procure_method == 'make_to_stock' and line.procurement_id.move_id:
-                        # TODO : Make a diff with UoM
+                        # TODO: Make a diff with UoM
                         diff = line.product_uom_qty - (line.product_uom_qty - line.procurement_id.move_id.product_qty)
                         resource_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
                         self.pool.get('sale.order.line').add_resource_line(cr, uid, line, resource_id, diff, context=context)
@@ -1243,6 +1243,16 @@ class sale_order_line(osv.osv):
         before cancelation
         '''
         context = context or {}
+
+        if isinstance(line, (int, long)):
+            line = self.browse(cr, uid, line, context=context)
+
+        if not order_id:
+            order_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
+
+        if not qty_diff:
+            qty_diff = line.product_uom_qty
+
         return self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff}, context=context)
 
     def open_split_wizard(self, cr, uid, ids, context=None):

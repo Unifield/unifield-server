@@ -97,11 +97,17 @@
                             />
                     </xpath>
 
+                    <xpath expr="/form/notebook//tree" position="attributes">
+                        <attribute name="hide_delete_button">True</attribute>
+                    </xpath>
+
                     <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
                         <field name="rfq_ok" invisible="1" />
                         <field name="fake_state" invisible="1" />
                         <field name="order_state_purchase_order_line" invisible="True" />
                         <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
+                            attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
+                        <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
                             attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
                     </xpath>
 
@@ -349,6 +355,20 @@
 
         <!-- Here was an act_window to display all PO from products views.
              This action is defined on product_attributes module -->
+
+        <record id="purchase_order_unlink_wizard" model="ir.ui.view">
+            <field name="name">purcahse.order.unlink.wizard</field>
+            <field name="model">purchase.order.unlink.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unlink Purchase Order">
+                    <label colspan="4" string="You removed all lines of this purchase order, would you cancel it ?" />
+                    <label> </label>
+                    <button colspan="1" type="object" icon="gtk-cancel" name="close_window" string="Close window" />
+                    <button colspan="2" type="object" icon="gtk-execute" name="cancel_po" string="Cancel PO" />
+                </form>
+            </field>
+        </record>
         
     </data>
 </openerp>
