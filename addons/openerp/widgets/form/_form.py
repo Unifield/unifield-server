@@ -772,8 +772,8 @@ class Form(TinyInputWidget):
         defaults = {}
         try:
             if ids:
-                if False and get_source:
-                    fields_to_read = [get_source]
+                if get_source:
+                    fields_to_read = [get_source.split('/')[0]]
                     if 'state' in fields:
                         fields_to_read.append('state')
                     newfields = {}
