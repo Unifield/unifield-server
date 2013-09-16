@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+#-*- encoding:utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2013 TeMPO Consulting, MSF. All Rights Reserved
+#    Developer: Olivier DOSSMANN
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,9 +21,20 @@
 #
 ##############################################################################
 
-import account_activable
-import account_move_line_activable
-import wizard
-import account
+from osv import osv
+from osv import fields
 
+class account_account_type(osv.osv):
+    _name = 'account.account.type'
+    _inherit = 'account.account.type'
+
+    _columns = {
+        'not_correctible': fields.boolean(string="Prevent entries to be correctible on this account type.")
+    }
+
+    _defaults = {
+        'not_correctible': lambda *a: False,
+    }
+
+account_account_type()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
