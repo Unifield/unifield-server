@@ -1251,8 +1251,10 @@ class sale_order_line(osv.osv):
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
         
-        if not order_id:
+        if not order_id and not line.order_id.procurement_request:
             order_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
+        elif not order_id and line.order_id.procurement_request:
+            order_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id, context=context)
 
         if not qty_diff:
             qty_diff = line.product_uom_qty
