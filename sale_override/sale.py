@@ -1216,7 +1216,6 @@ class sale_order_line(osv.osv):
                 'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
                 'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
-                'resourced_ok': fields.boolean(string='FO line has been re-sourced with another FO'),
                 }
 
     _sql_constraints = [
@@ -1252,10 +1251,6 @@ class sale_order_line(osv.osv):
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
         
-        # Don't resource twice a line
-        if line.resourced_ok:
-            return line.id
-
         if not order_id:
             order_id = self.pool.get('sale.order').create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
 
@@ -1263,7 +1258,6 @@ class sale_order_line(osv.osv):
             qty_diff = line.product_uom_qty
 
         line_id = self.copy(cr, uid, line.id, {'order_id': order_id, 'product_uom_qty': qty_diff, 'product_uos_qty': qty_diff}, context=context)
-        self.write(cr, uid, [line.id], {'resourced_ok': True}, context=context)
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 
