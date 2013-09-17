@@ -53,7 +53,7 @@ class msf_budget(osv.osv):
         for budget in self.browse(cr, uid, ids):
             res[budget.id] = 'project'
             if budget.cost_center_id:
-                target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', budget.cost_center_id.id), ('is_top_cost_center', '=', True)])
+                target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('cost_center_id', '=', budget.cost_center_id.id), ('is_top_cost_center', '=', True), ('instance_id.level', '=', 'coordo')])
                 if target_ids:
                     res[budget.id] = 'coordo'
             if not budget.cost_center_id.parent_id:
@@ -70,7 +70,7 @@ class msf_budget(osv.osv):
         if not args:
             return res
         if args[0] and args[0][2]:
-            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('is_top_cost_center', '=', True)])
+            target_ids = self.pool.get('account.target.costcenter').search(cr, uid, [('is_top_cost_center', '=', True), ('instance_id.level', '=', 'coordo')])
             coordo_ids = [x and x.cost_center_id and x.cost_center_id.id for x in self.pool.get('account.target.costcenter').browse(cr, uid, target_ids)]
             hq_ids = self.pool.get('account.analytic.account').search(cr, uid, [('parent_id', '=', False)])
             if isinstance(hq_ids, (int, long)):
