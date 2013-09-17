@@ -36,7 +36,7 @@
     weight: 0.0
     weight_net: 0.0
     reviewed_consumption: 45
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   We create also a new Unifield instance which is not a local instance
 -

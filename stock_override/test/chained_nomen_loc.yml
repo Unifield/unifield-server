@@ -85,7 +85,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest01
     nomen_manda_2: product_nomenclature_nomenclaturetest02
     nomen_manda_3: product_nomenclature_nomenclaturetest03
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create the product P2
 -
@@ -109,7 +109,7 @@
     nomen_manda_1: product_nomenclature_nomenclaturetest11
     nomen_manda_2: product_nomenclature_nomenclaturetest12
     nomen_manda_3: product_nomenclature_nomenclaturetest13
-    international_status: itc
+    international_status: product_attributes.int_1
 -
   I create a stock location with chained options
 -

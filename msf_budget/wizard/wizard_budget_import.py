@@ -155,12 +155,12 @@ class wizard_budget_import(osv.osv_memory):
                     if budget_value == "":
                         budget_values.append(0)
                     else:
-                        # try to parse as int
+                        # try to parse as float
                         try:
-                            int_value = int(budget_value)
+                            float_value = round(float(budget_value), 2)
                         except:
-                            raise osv.except_osv(_('Warning !'), _("The value '%s' is not an integer!") % budget_value)
-                        budget_values.append(int_value)
+                            raise osv.except_osv(_('Warning !'), _("The value '%s' is not an float!") % budget_value)
+                        budget_values.append(float_value)
                 # Sometimes, the CSV has not all the needed columns. It's padded.
                 if len(budget_values) != 12:
                     budget_values += [0]*(12-len(budget_values))

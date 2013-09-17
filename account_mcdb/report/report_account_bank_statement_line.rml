@@ -123,7 +123,7 @@
           <parawrap style="P3">[[ o.account_id and o.account_id.code or '' ]] - [[ o.account_id and o.account_id.name and o.account_id.name or '']]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.name or '' ]]</para>
+          <para style="P3">[[ o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.code or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.amount_in or 0.0 ]]</para>

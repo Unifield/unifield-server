@@ -269,6 +269,21 @@ class sale_order(osv.osv):
 
         return True
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check restriction on products
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_obj = self.pool.get('sale.order.line')
+        res = True
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in order.order_line], context=context)
+
+        return res
+    
     def onchange_partner_id(self, cr, uid, ids, part=False, order_type=False, *a, **b):
         '''
         Set the intl_customer_ok field if the partner is an ESC or an international partner
@@ -282,6 +297,17 @@ class sale_order(osv.osv):
                     res['value'].update(res2['value'])
                 else:
                     res.update({'value': res2['value']})
+        
+            # Check the restrction of product in lines
+            if ids:
+                product_obj = self.pool.get('product.product')
+                for order in self.browse(cr, uid, ids):
+                    for line in order.order_line:
+                        if line.product_id:
+                            res, test = product_obj._on_change_restriction_error(cr, uid, line.product_id.id, field_name='partner_id', values=res, vals={'partner_id': part, 'obj_type': 'sale.order'})
+                            if test:
+                                res.setdefault('value', {}).update({'partner_order_id': False, 'partner_shipping_id': False, 'partner_invoice_id': False})
+                                return res
 
         return res
 
@@ -390,7 +416,9 @@ class sale_order(osv.osv):
 
         self._check_service(cr, uid, ids, vals, context=context)
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
     
     def change_currency(self, cr, uid, ids, context=None):
@@ -1164,6 +1192,23 @@ class sale_order_line(osv.osv):
         ('product_qty_check', 'CHECK( product_uom_qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
+    def _check_restriction_line(self, cr, uid, ids, context=None):
+        '''
+        Check if there is restriction on lines
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not context:
+            context = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.order_id and line.order_id.partner_id and line.product_id:
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id, 'obj_type': 'sale.order'}, context=context):
+                    return False
+
+        return True
+
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
         Open the wizard to split the line
@@ -1261,6 +1306,8 @@ class sale_order_line(osv.osv):
         If there isn't product, the default procurement method is 'From Order' (make_to_order).
         Both remains changeable manually.
         """
+        product_obj = self.pool.get('product.product')
+
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
             lang, update_tax, date_order, packaging, fiscal_position, flag)
@@ -1269,7 +1316,13 @@ class sale_order_line(osv.osv):
             del res['domain']
 
         if product:
-            type = self.pool.get('product.product').read(cr, uid, [product], 'procure_method')[0]['procure_method']
+            if partner_id:
+                # Test the compatibility of the product with the partner of the order
+                res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id, 'obj_type': 'sale.order'})
+                if test:
+                    return res
+
+            type = product_obj.read(cr, uid, [product], 'procure_method')[0]['procure_method']
             if 'value' in res:
                 res['value'].update({'type': type})
             else:
@@ -1362,7 +1415,7 @@ class sale_order_line(osv.osv):
             if vals.get('order_id', False):
                 name = self.pool.get('sale.order').browse(cr, uid, vals.get('order_id'), context=context).name
                 super(sale_order_line, self).write(cr, uid, so_line_ids, {'sync_order_line_db_id': name + "_" + str(so_line_ids), } , context=context)
-            
+
         return so_line_ids
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1384,7 +1437,10 @@ class sale_order_line(osv.osv):
         order_id = vals.get('order_id', False)
         if order_id and self.pool.get('sale.order').read(cr, uid, order_id,['procurement_request'], context)['procurement_request']:
             vals.update({'cost_price': vals.get('cost_price', False)})
-        return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
+
+        return res
 
 sale_order_line()
 

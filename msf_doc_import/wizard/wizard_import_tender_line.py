@@ -155,6 +155,11 @@ class wizard_import_tender_line(osv.osv_memory):
                     })
                     # we check consistency of uom and product values
                     tender_line_obj.check_data_for_uom(cr, uid, ids, to_write=to_write, context=context)
+
+                    # Check product restrictions
+                    if p_value.get('default_code'):
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'constraints': ['external', 'internal', 'esc']}, context=dict(context, noraise=False))
+
                     vals['tender_line_ids'].append((0, 0, to_write))
 
                     if to_write.get('qty', 0.00) <= 0.00:
@@ -176,6 +181,15 @@ class wizard_import_tender_line(osv.osv_memory):
                     line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     ignore_lines += 1
                     line_ignored_num.append(line_num)
+                    percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                    cr.rollback()
+                    continue
+                except osv.except_osv as osv_error:
+                    osv_value = osv_error.value
+                    osv_name = osv_error.name
+                    message += _("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
+                    ignore_lines += 1
+                    line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                     percent_completed = float(line_num)/float(total_line_num-1)*100.0
                     cr.rollback()
                     continue

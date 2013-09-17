@@ -268,7 +268,7 @@
     </Row>
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
-% for (type, title) in [('ci', _('Stock Transfer Vouchers')), ('si', _('Supplier Invoices')), ('cr', _('Customer Refunds')), ('sr', _('Supplier Refunds'))]:
+% for (type, title) in [('out_invoice', _('Stock Transfer Vouchers')), ('in_invoice', _('Supplier Invoices')), ('out_refund', _('Customer Refunds')), ('in_refund', _('Supplier Refunds'))]:
    <Row >
     <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
     <Cell ss:StyleID="s24"/>
@@ -290,7 +290,13 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
+% if type in ['out_invoice', 'out_refund']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
+% elif type in ['in_invoice', 'in_refund']:
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
+% else:
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>
+% endif
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
@@ -306,40 +312,41 @@
 
 <% nb_line = 0 %>
 
-% for line in getLines(type):
+% if type in invoices:
+% for o in invoices[type]:
     <Row>
         <% nb_line += 1 %>
-        % if line[1]:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
+        % if o.document_date:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
 
-        % if line[2]:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
+        % if o.date_invoice:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[3] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
-        % if line[7]:
-            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.user_id and o.user_id.name or '')|x}</Data></Cell>
+        % if o.date_due:
+            <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[8] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(line[10] or 0.0)|x}</Data></Cell>
-        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(line[11] or 0.0)|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[9] or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(line[10], line) or 0.0 )|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(line[11], line) or 0.0 )|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
         <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[12] and getSelValue('account.invoice', 'state', line[12]) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
     </Row>
 % endfor
-
+% endif
     <Row ss:AutoFitHeight="0" ss:StyleID="s26">
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>

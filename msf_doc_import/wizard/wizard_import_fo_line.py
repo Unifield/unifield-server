@@ -205,6 +205,10 @@ class wizard_import_fo_line(osv.osv_memory):
                         cr.rollback()
                         continue
 
+                    # Check product restrictions
+                    if p_value.get('default_code') and fo_browse.partner_id:
+                        product_obj._get_restriction_error(cr, uid, [p_value['default_code']], {'partner_id': fo_browse.partner_id.id}, context=dict(context, noraise=False))
+ 
                     # write order line on FO
                     vals['order_line'].append((0, 0, to_write))
                     if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
