@@ -564,7 +564,7 @@ class sale_order(osv.osv):
         '''
         context = context or {}
 
-        order_ids = self.search(cr, uid, [('fo_to_resource', '=', True), ('name', 'like', order.name)], context=context)
+        order_ids = self.search(cr, uid, [('fo_to_resource', '=', True), ('name', 'like', order.name)], context=dict(context, procurement_request=True))
         name_iter = 1
         for old_order in self.read(cr, uid, order_ids, ['name', 'state'], context=context):
             if old_order['state'] == 'draft':
@@ -574,9 +574,12 @@ class sale_order(osv.osv):
 
         order_name = '%s/%s' % (order.name, str(name_iter))
 
-        order_id = self.copy(cr, uid, order.id, {'order_line': [], 'state': 'draft', 'name': order_name, 'fo_to_resource': True}, context=context)
+        order_id = self.copy(cr, uid, order.id, {'order_line': [], 
+                                                 'state': 'draft', 
+                                                 'name': order_name, 
+                                                 'fo_to_resource': True}, context=context)
 
-        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=context)
+        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
 

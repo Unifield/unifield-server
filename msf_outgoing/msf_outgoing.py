@@ -3133,6 +3133,7 @@ class stock_move(osv.osv):
             Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
+        sol_obj = self.pool.get('sale.order.line')
         
         # purchase order line to re-source
         pol_ids = []
@@ -3141,6 +3142,11 @@ class stock_move(osv.osv):
             if move.picking_id and move.picking_id.type == 'in' \
                and move.purchase_line_id and move.state != 'cancel':
                 pol_ids.append(move.purchase_line_id.id)
+            elif move.picking_id and move.picking_id.type == 'internal' \
+               and move.sale_line_id and move.state != 'cancel':
+                # TODO : Needs UoM calculation
+                diff_qty = move.sale_line_id.product_uom_qty - (move.sale_line_id.product_uom_qty - move.product_qty)
+                sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
 
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
         
