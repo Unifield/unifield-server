@@ -3132,9 +3132,21 @@ class stock_move(osv.osv):
         '''
             Confirm or check the procurement order associated to the stock move
         '''
+        pol_obj = self.pool.get('purchase.order.line')
+
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
         
         wf_service = netsvc.LocalService("workflow")
+
+        # purchase order line to re-source
+        pol_ids = []
+
+        for move in self.browse(cr, uid, ids, context=context):
+            if move.picking_id and move.picking_id.type == 'in' and move.purchase_line_id:
+                pol_ids.append(move.purchase_line_id.id)
+
+        # Re-source PO lines
+        pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
 
         proc_obj = self.pool.get('procurement.order')
         proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)
