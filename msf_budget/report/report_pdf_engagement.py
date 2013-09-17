@@ -78,11 +78,6 @@ class report_pdf_engagement(report_sxw.rml_parse):
                 value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = [sum(pair) for pair in zip(value_list[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id], expense_line)]
             value_list2[str(cc_line.analytic_id.id)+'_'+str(cc_line.destination_id.id)][expense_account_id] = cc_line.destination_id.code
 
-        # Round all values
-        for el1 in value_list.keys():
-            for el2 in value_list[el1].keys():
-                value_list[el1][el2] = map(int, map(round, value_list[el1][el2]))
-
         return
     
     def check_distribution(self, purchase_order):
@@ -248,7 +243,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
                         total_values = [sum(pair) for pair in zip([0] + values[1:], total_values)]
                         formatted_line += [values[0]]
                     formatted_line += values[1:]
-                    formatted_line += [ map(int, map(round, temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account_id])) ]
+                    formatted_line += [ temp_data2[str(cost_center_id)+'_'+str(destination_id)][expense_account_id] ]
                     res.append(formatted_line)
 
                 # empty line between cost centers
