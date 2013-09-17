@@ -335,8 +335,12 @@ class analytic_line(osv.osv):
         date_stop = account and account.get('date', False) or False
         # Date verification for all lines and fetch all necessary elements sorted by analytic distribution
         for aline in self.browse(cr, uid, ids):
+            # UTP-800: Change date comparison regarding FP. If FP, use document date. Otherwise use date.
+            aline_cmp_date = aline.date
+            if account_type == 'FUNDING':
+                aline_cmp_date = aline.document_date
             # Add line to expired_date if date is not in date_start - date_stop
-            if (date_start and aline.date < date_start) or (date_stop and aline.date > date_stop):
+            if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date > date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type
         if account_type == 'OC':
