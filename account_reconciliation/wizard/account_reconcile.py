@@ -152,14 +152,6 @@ class account_move_line_reconcile(osv.osv_memory):
             if not currency_id:
                 currency_id = line.currency_id and line.currency_id.id or False
             if line.currency_id and line.currency_id.id != currency_id and not transfer_with_change:
-                # If currency2_id exists, that implies that we already have 2 different currencies.
-                # If the line have the same currency as currency2, so all is OK.
-                if currency2_id and line.currency_id.id != currency2_id:
-                    currency_data = self.pool.get('res.currency').read(cr, uid, [currency_id], ['name'])
-                    currency_name = 'None'
-                    if currency_data and currency_data[0]:
-                        currency_name = currency_data[0].get('name', 'None')
-                    raise osv.except_osv(_('Error'), _('Reconciliation is only allowed 2 currencies at most.'))
                 currency2_id = line.currency_id.id
             # verification that there's only one account for each line
             if not prev_acc_id:
@@ -210,9 +202,9 @@ class account_move_line_reconcile(osv.osv_memory):
                 state = 'total'
             else:
                 state = 'partial'
-                # UF-2050: Do not allow partial reconciliation of entries in different currencies
+                # UF-2050: Do not allow partial reconciliation of entries in different currencies. We ALWAYS do total reconciliation
                 if different_currencies and not transfer_with_change:
-                    raise osv.except_osv(_('Error'), _('Partial reconciliation of entries in different currencies is not allowed.'))
+                    state = 'total'
         return {'trans_nbr': count, 'account_id': account_id, 'credit': credit, 'debit': debit, 'writeoff': debit - credit, 'state': state, 'different_currencies': different_currencies}
 
     def total_reconcile(self, cr, uid, ids, context=None):
