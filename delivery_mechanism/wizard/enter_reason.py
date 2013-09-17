@@ -44,12 +44,16 @@ class enter_reason(osv.osv_memory):
             ids = [ids]
         # objects
         picking_obj = self.pool.get('stock.picking')
+        purchase_obj = self.pool.get('purchase.order')
+        pol_obj = self.pool.get('purchase.order.line')
         # workflow
         wf_service = netsvc.LocalService("workflow")
         # depending on the button clicked the behavior is different
         cancel_type = context.get('cancel_type', False)
         # picking ids
         picking_ids = context['active_ids']
+        # purchase order line to re-source
+        pol_ids = []
         # integrity check
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.change_reason:
@@ -68,6 +72,17 @@ class enter_reason(osv.osv_memory):
             # if full cancel (no resource), we updated corresponding out and correct po state
             if cancel_type == 'update_out':
                 picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
+
+            # correct the corresponding po manually if exists - should be in shipping exception
+            if obj.purchase_id:
+                wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
+                purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received')%(obj.purchase_id.name, round(obj.purchase_id.shipped_rate,2)))
+
+            for move in obj.move_lines:
+                pol_ids.append(move.purchase_line_id.id)
+
+        if cancel_type != 'update_out':
+            pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
                 
         return {'type': 'ir.actions.act_window_close'}
     

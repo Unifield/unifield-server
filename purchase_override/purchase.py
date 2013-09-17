@@ -1526,13 +1526,17 @@ stock moves which are already processed : '''
         
         wf_service = netsvc.LocalService("workflow")
 
+        line_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             for line in order.order_line:
+                line_ids.append(line.id)
                 if line.procurement_id and line.procurement_id.move_id:
                     self.pool.get('stock.move').write(cr, uid, line.procurement_id.move_id.id, {'state': 'cancel'}, context=context)
                     if line.procurement_id.move_id.picking_id:
                         wf_service.trg_write(uid, 'stock.picking', line.procurement_id.move_id.picking_id.id, cr)
         
+        self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
+
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
@@ -2103,6 +2107,26 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def cancel_sol(self, cr, uid, ids, context=None):
+        '''
+        Re-source the FO line
+        '''
+        context = context or {}
+        sol_obj = self.pool.get('sale.order.line')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
+            if sol_ids:
+                sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
+                # TODO : Make diff with different UoM
+                diff_qty = sol.product_uom_qty - (sol.product_uom_qty - line.product_qty)
+                sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+
+        return
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Update the merged line
@@ -2116,13 +2140,7 @@ class purchase_order_line(osv.osv):
             
         # if the line is linked to a sale order line through procurement process,
         # the deletion is impossible
-        for line in self.browse(cr, uid, ids, context=context):
-            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
-            if sol_ids:
-                sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
-                # TODO : Make diff with different UoM
-                diff_qty = sol.product_uom_qty - (sol.product_uom_qty - line.product_qty)
-                sol_obj.add_resource_line(cr, uid, sol, False, diff_qty, context=context)
+        self.cancel_sol(cr, uid, ids, context=context)
 #                raise osv.except_osv(_('Error'), _('You cannot delete a line which is linked to a Fo line.'))
 
         for line_id in ids:
