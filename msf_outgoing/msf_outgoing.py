@@ -2106,22 +2106,26 @@ class stock_picking(osv.osv):
                 rts = rts.strftime(db_date_format)
                 
                 if not len(shipment_ids):
-                    # no shipment, create one - no need to specify the state, it's a function
-                    name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
-                    addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
-                    partner_id = addr.partner_id and addr.partner_id.id or False
-                    values = {'name': name,
-                              'address_id': vals['address_id'],
-                              'partner_id2': partner_id,
-                              'shipment_expected_date': rts,
-                              'shipment_actual_date': rts,
-                              'sequence_id': self.create_sequence(cr, uid, {'name':name,
-                                                                            'code':name,
-                                                                            'prefix':'',
-                                                                            'padding':2}, context=context)}
-                    
-                    shipment_id = shipment_obj.create(cr, uid, values, context=context)
-                    shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
+                    # only create new shipment if we don't already have one through sync
+                    if not vals['shipment_id'] and not context.get('offline_synchronization', False):
+                        # no shipment, create one - no need to specify the state, it's a function
+                        name = self.pool.get('ir.sequence').get(cr, uid, 'shipment')
+                        addr = self.pool.get('res.partner.address').browse(cr, uid, vals['address_id'], context=context)
+                        partner_id = addr.partner_id and addr.partner_id.id or False
+                        values = {'name': name,
+                                  'address_id': vals['address_id'],
+                                  'partner_id2': partner_id,
+                                  'shipment_expected_date': rts,
+                                  'shipment_actual_date': rts,
+                                  'sequence_id': self.create_sequence(cr, uid, {'name':name,
+                                                                                'code':name,
+                                                                                'prefix':'',
+                                                                                'padding':2}, context=context)}
+                        
+                        shipment_id = shipment_obj.create(cr, uid, values, context=context)
+                        shipment_obj.log(cr, uid, shipment_id, _('The new Draft Shipment %s has been created.')%(name,))
+                    else:
+                        shipment_id = vals['shipment_id']
                 else:
                     shipment_id = shipment_ids[0]
                     shipment = shipment_obj.browse(cr, uid, shipment_id, context=context)
