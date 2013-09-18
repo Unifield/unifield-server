@@ -53,7 +53,7 @@
     except osv.except_osv, e:
       error = e.value
     finally:
-      assert error == 'No items are eligible to be mass reallocated.', "Problem with given error: %s" % (error or '')
+      assert error == 'No items are eligible to be mass reallocated with the given analytic account.', "Problem with given error: %s" % (error or '')
 -
   I change so CC1 to CC2, in order to see if wizard refuse it.
 -
@@ -70,7 +70,7 @@
     except osv.except_osv, e:
       error = e.value
     finally:
-      assert error == 'No items are eligible to be mass reallocated.', "Problem with given error: %s" % (error or '')
+      assert error == 'No items are eligible to be mass reallocated with the given analytic account.', "Problem with given error: %s" % (error or '')
 -
   Finally, I change CC1 to CC3, in order to see if wizard ACCEPT IT.
 -
