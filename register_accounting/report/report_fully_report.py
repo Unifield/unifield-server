@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,9 +19,22 @@
 #
 ##############################################################################
 
-import account_activable
-import account_move_line_activable
-import wizard
-import account
+import datetime
 
+from report import report_sxw
+from tools.translate import _
+import pooler
+import locale
+import csv
+import StringIO
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+
+class report_fully_report(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(report_fully_report, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+        })
+        return
+
+SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

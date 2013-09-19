@@ -202,8 +202,11 @@ class wizard_import_invoice(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Please add a cheque number to red lines.'))
 
             # Create register line
+            partial = False
+            if line.amount and line.amount_to_pay and line.amount < line.amount_to_pay:
+                partial = ' - ' + _('partial pymt')
             register_vals = {
-                'name': '%s Imported Invoice(s)' % (line.number_invoices),
+                'name': '%s Imported Invoice(s)%s' % (line.number_invoices, partial or ''),
                 'ref': line.ref,
                 'date': line.date,
                 'document_date': line.document_date,

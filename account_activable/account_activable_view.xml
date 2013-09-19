@@ -80,8 +80,34 @@
             <field name="inherit_id" ref="account.action_account_form"/>
             <field name="context">{'search_default_active': 1,}</field>
         </record>
-        
+
+        <!-- Account Types -->
+        <record id="view_account_type_tree_2" model="ir.ui.view">
+            <field name="name">account.account.type.tree.2</field>
+            <field name="model">account.account.type</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_type_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='code']" position="after">
+                    <field name="not_correctible"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_account_type_form_2" model="ir.ui.view">
+            <field name="name">account.account.type.form.2</field>
+            <field name="model">account.account.type</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_type_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/group[1]/field[@name='code']" position="after">
+                    <field name="not_correctible"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Menus -->
         <menuitem action="action_account_activable_form" id="account.menu_action_account_form" parent="account.account_account_menu"/>
-               
+
     </data>
 </openerp>
