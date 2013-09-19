@@ -246,6 +246,7 @@ class sale_order(osv.osv):
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
         'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
         'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
+        'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).'),
     }
     
     _defaults = {
@@ -558,13 +559,28 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order', to_treat, 'order_confirm', cr)
         return True
 
+    def get_original_name(self, cr, uid, order, context=None):
+        '''
+        Returns the name of the first original FO
+        '''
+        if order.original_so_id_sale_order:
+            return self.get_original_name(cr, uid, order.original_so_id_sale_order, context=context)
+        elif order.parent_order_name:
+            return order.parent_order_name
+
+        return order.name
+
     def create_resource_order(self, cr, uid, order, context=None):
         '''
         Create a new FO to re-source the needs.
         '''
         context = context or {}
 
-        order_ids = self.search(cr, uid, [('fo_to_resource', '=', True), ('name', 'like', order.name)], context=dict(context, procurement_request=True))
+        # Get the name of the original FO
+        old_order_name = self.get_original_name(cr, uid, order, context=context)
+#        order_name = '/'.join(x for x in order.name.split('/')[0:-1])
+
+        order_ids = self.search(cr, uid, [('active', 'in', ('t', 'f')), ('fo_to_resource', '=', True), ('name', 'like', old_order_name)], context=dict(context, procurement_request=True))
         name_iter = 1
         for old_order in self.read(cr, uid, order_ids, ['name', 'state'], context=context):
             if old_order['state'] == 'draft':
@@ -572,10 +588,11 @@ class sale_order(osv.osv):
             else:
                 name_iter += 1
 
-        order_name = '%s/%s' % (order.name, str(name_iter))
+        order_name = '%s/%s' % (old_order_name, str(name_iter))
 
         order_id = self.copy(cr, uid, order.id, {'order_line': [], 
                                                  'state': 'draft', 
+                                                 'parent_order_name': old_order_name,
                                                  'name': order_name, 
                                                  'fo_to_resource': True}, context=context)
 
