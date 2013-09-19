@@ -36,7 +36,7 @@ class stock_picking(osv.osv):
     synchronization methods related to stock picking objects
     '''
     _inherit = "stock.picking"
-    _logger = logging.getLogger('stock.picking')
+    _logger = logging.getLogger('------sync.stock.picking')
     
     def format_data(self, cr, uid, data, context=None):
         '''
@@ -146,16 +146,23 @@ class stock_picking(osv.osv):
             line_numbers = {}
             for line in pack_data:
                 line_data = pack_data[line]
+                
                 # get the corresponding picking line ids
                 for data in line_data['data']:
                     ln = data.get('line_number', False)
+                    #UF-2148: if the line contains 0 qty, just ignore it!
+                    qty = data.get('product_qty', 0)
+                    if qty == 0:
+                        message = "Line number "  + str(ln) + " with quantity 0 is ignored!"
+                        self._logger.info(message)
+                        continue
                     
                     if ln not in line_numbers.keys():
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))], context=context)
                         if move_ids and move_ids[0]:
                             line_numbers[ln] = move_ids[0]
                         else:
-                            message = "Line number is not found in the original IN or PO: " + str(ln)
+                            message = "Line number "  + str(ln) + " is not found in the original IN or PO"
                             self._logger.info(message)
                             raise Exception(message)
                     move_id = line_numbers[ln]
