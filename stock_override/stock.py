@@ -245,8 +245,17 @@ class stock_picking(osv.osv):
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.type == 'internal' and picking.state not in ('draft', 'done', 'cancel'):
                 res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in picking.move_lines], context=context)
-
         return res
+    
+    # UF-2148: override and use only this method when checking the cancel condition: if a line has 0 qty, then whatever state, it is always allowed to be canceled
+    def allow_cancel(self, cr, uid, ids, context=None):
+        for pick in self.browse(cr, uid, ids, context=context):
+            if not pick.move_lines:
+                return True
+            for move in pick.move_lines:
+                if move.state == 'done' and move.product_qty != 0:
+                    raise osv.except_osv(_('Error'), _('You cannot cancel picking because stock move is in done state !'))
+        return True    
     
     def create(self, cr, uid, vals, context=None):
         '''

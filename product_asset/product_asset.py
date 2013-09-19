@@ -123,7 +123,15 @@ class product_asset(osv.osv):
             if company and company.instance_id:
                 vals['instance_id'] = company.instance_id.id
 
-        # save the data to db
+        # UF-2148: make the xmlid_name from the asset name for building xmlid if it is not given in the vals 
+        if 'xmlid_name' not in vals or not vals['xmlid_name']:
+            vals['xmlid_name'] = vals['name'] 
+            
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name'])], context=context)
+        if exist:
+            # but if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
+            vals['xmlid_name'] = vals['xmlid_name'] + "_1"
+        
         return super(product_asset, self).create(cr, uid, vals, context)
         
     def onChangeProductId(self, cr, uid, ids, productId):
@@ -224,6 +232,7 @@ class product_asset(osv.osv):
                 # UF-1617: field only used for sync purpose
                 'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
                 'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
+                'xmlid_name': fields.char('XML Code, hidden field', size=128, required=True),
     }
     
     _defaults = {
