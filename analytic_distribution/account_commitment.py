@@ -55,8 +55,8 @@ class account_commitment(osv.osv):
     _columns = {
         'journal_id': fields.many2one('account.analytic.journal', string="Journal", readonly=True, required=True),
         'name': fields.char(string="Number", size=64, readonly=True, required=True),
-        'currency_id': fields.many2one('res.currency', string="Currency", readonly=True, required=True),
-        'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=True),
+        'currency_id': fields.many2one('res.currency', string="Currency", required=True),
+        'partner_id': fields.many2one('res.partner', string="Supplier", required=True),
         'period_id': fields.many2one('account.period', string="Period", readonly=True, required=True),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Validated'), ('done', 'Done')], readonly=True, string="State", required=True),
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
