@@ -197,11 +197,18 @@ class report_budget_actual_2(report_sxw.rml_parse):
             res = datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').month
         return res
 
-    def getLines(self, lines, context=None):
-        budget_line_ids = [x.id for x in lines]
+    def getLines(self, obj, context=None):
+        """
+        Get all needed lines in the right format to be used by the Report
+        """
+        # Prepare some values
         parameters = self.localcontext.get('data',{}).get('form',{})
         if not context:
             context = {}
+        context.update(parameters) # update context with params to fetch right values
+        context.update({'report': True}) # in order to get all needed lines from one2many_budget_lines
+        lines = self.pool.get('msf.budget').browse(self.cr, self.uid, [obj.id], context=context)[0].budget_line_ids
+        budget_line_ids = [x.id for x in lines]
         result = []
         # Column header
         month_stop = self.getEndMonth()
@@ -214,8 +221,6 @@ class report_budget_actual_2(report_sxw.rml_parse):
                 header.append(month_list[month] + ' (Actual)')
         header += ['Total (Budget)', 'Total (Actual)']
         result.append(header)
-        # Update context
-        context.update(parameters)
         # Retrieve lines
         formatted_monthly_amounts = []
         monthly_amounts = self.pool.get('msf.budget.line')._get_monthly_amounts(self.cr,

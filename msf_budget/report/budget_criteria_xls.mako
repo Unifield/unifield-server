@@ -579,7 +579,7 @@
 % endif
 </Row>
 
-% for line in getLines(o.budget_line_ids):
+% for line in getLines(o):
 <Row>
 % if not byMonth():
   <Cell ss:StyleID="s76a"><Data ss:Type="String">${( line[0][0] )|x}</Data></Cell>
@@ -603,6 +603,7 @@
     <Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
   % endif
 
+<!-- End of "NOT byMonth()" -->
 % endif
 
 % if byMonth():
@@ -630,6 +631,7 @@
     <Cell ss:StyleID="s39" ss:Formula="=+RC[-2]-RC[-1]"><Data ss:Type="Number" ></Data></Cell>
     <Cell ss:StyleID="s41" ss:Formula="${( getF2(line) )|x}"><Data ss:Type="Number" ></Data></Cell>
   % endif
+<!-- End of "byMonth()" -->
 % endif
 </Row>
 % endfor
