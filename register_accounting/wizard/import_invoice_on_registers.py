@@ -160,7 +160,7 @@ class wizard_import_invoice(osv.osv_memory):
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
                 'document_date': wizard.date or time.strftime('%Y-%m-%d'),
                 'amount': abs(amount_cur),
-                'amount_to_pay': amount_cur,
+                'amount_to_pay': abs(amount_cur),
                 'amount_currency': total,
                 'currency_id': ordered_lines[key][0].currency_id.id,
             })
