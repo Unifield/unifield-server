@@ -107,7 +107,7 @@ class wizard_import_cheque(osv.osv_memory):
                     'account_id': line.account_id.id or None,
                     'date_maturity': line.date_maturity or None,
                     'date': _get_date_in_period(self, cr, uid, date, wizard.period_id.id, context=context),
-                    'amount_to_pay': line.amount_to_pay or None,
+                    'amount_to_pay': abs(line.amount_to_pay) or None,
                     'amount_currency': line.amount_currency or None,
                     'currency_id': line.currency_id.id or None,
                     'wizard_id': wizard.id or None,
