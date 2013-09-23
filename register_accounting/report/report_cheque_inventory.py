@@ -70,7 +70,7 @@ class report_cheque_inventory(report_sxw.report_sxw):
                 LEFT JOIN account_bank_statement tpabs ON st.register_id = tpabs.id
                 LEFT JOIN account_journal tpaj ON st.transfer_journal_id = tpaj.id
             WHERE 
-                aj.type = 'cheque' AND st.amount < 0.0 AND
+                aj.type = 'cheque' AND
                 rel.move_id is not null AND ac.id = st.account_id
             ORDER BY st.date
         """

@@ -22,6 +22,8 @@
 from osv import fields, osv
 from tools.translate import _
 import logging
+from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
+
 
 class account_period(osv.osv):
     _name = "account.period"
@@ -32,12 +34,14 @@ class account_period(osv.osv):
     #  - 'created' for Draft
     #  - 'draft' for Open
     #  - 'done' for HQ-Closed
-    def _get_state(self, cursor, user_id, context=None):
-        return (('created','Draft'), \
-                ('draft', 'Open'), \
-                ('field-closed', 'Field-Closed'), \
-                ('mission-closed', 'Mission-Closed'), \
-                ('done', 'HQ-Closed'))
+
+# uf-1624: we replace the function with the import of ACCOUNT_PERIOD_STATE_SELECTION (because of problem in the track changes)
+#    def _get_state(self, cursor, user_id, context=None):
+#        return (('created','Draft'), \
+#                ('draft', 'Open'), \
+#                ('field-closed', 'Field-Closed'), \
+#                ('mission-closed', 'Mission-Closed'), \
+#                ('done', 'HQ-Closed'))
     
     def action_set_state(self, cr, uid, ids, context):
         """
@@ -150,7 +154,7 @@ class account_period(osv.osv):
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
             help="These periods can overlap.", readonly=True),
-        'state': fields.selection(_get_state, 'State', readonly=True,
+        'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True,
             help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15. If 16: have not been defined yet."),
     }

@@ -334,4 +334,4 @@
       - sequence: 10
         min_qty: 0.00
         name: res_partner_supplier_wood_0
-    international_status: itc
+    international_status: product_attributes.int_1

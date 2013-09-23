@@ -50,9 +50,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Sheet">
 <%
-    max = 18
+    max = 19
     if data and data.get('context') and data.get('context').get('display_fp'):
-        max = 20
+        max = 21
 %>
 <Table ss:ExpandedColumnCount="${max}" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
 x:FullRows="1">
@@ -60,7 +60,7 @@ x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('G/L Account'), _('Ana. Account'), _('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency'), _('Output Amount'), _('Output Currency'), _('Reversal Origin')]:
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('G/L Account'), _('Ana. Account'), _('Third Party'), _('Book. Amount'), _('Book. Currency'), _('Func. Amount'), _('Func. Currency'), _('Output Amount'), _('Output Currency'), _('Reversal Origin'), _('Entry status')]:
     % if header == _('Ana. Account') and data.get('context') and data.get('context').get('display_fp'):
         <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Destination')}</Data></Cell>
         <Cell ss:StyleID="ssH"><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
@@ -145,6 +145,9 @@ x:FullRows="1">
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.reversal_origin and o.reversal_origin.name or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder">
+        <Data ss:Type="String">${(o.move_state and getSel(o, 'move_state') or '')|x}</Data>
 </Cell>
 </Row>
 % endfor

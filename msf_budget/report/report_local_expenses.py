@@ -56,6 +56,7 @@ class report_local_expenses(WebKitParser):
             header_data = [['Local expenses report'],
                            ['Breakdown:', breakdown_selection[data['form']['breakdown']]],
                            ['Granularity:', granularity_selection[data['form']['granularity']]]]
+            month_start = data['form']['month_start']
             month_stop = data['form']['month_stop']
             # Booking currency
             if 'booking_currency_id' in data['form']:
@@ -80,47 +81,58 @@ class report_local_expenses(WebKitParser):
             # add fiscal year to header
             header_data.append(['Fiscal year:', fiscalyear.name])
             # Period name for header
-            if 'period_id' in data['form']:
+            if 'start_period_id' in data['form']:
                 period = pool.get('account.period').browse(cr,
                                                            uid,
-                                                           data['form']['period_id'],
+                                                           data['form']['start_period_id'],
                                                            context=context)
-                header_data.append(['Year-to-date:', period.name])
+                header_data.append(['Period from:', period.name])
+            if 'end_period_id' in data['form']:
+                period = pool.get('account.period').browse(cr,
+                                                           uid,
+                                                           data['form']['end_period_id'],
+                                                           context=context)
+                header_data.append(['Period to:', period.name])
             # Get expenses
             expenses = pool.get('msf.budget.tools')._get_actual_amounts(cr,
                                                                         uid,
                                                                         data['form']['output_currency_id'],
                                                                         domain,
                                                                         context=context)
+            expenses_functional = pool.get('msf.budget.tools')._get_actual_amounts(cr,
+                                                                                   uid,
+                                                                                   data['form']['output_currency_id'],
+                                                                                   domain,
+                                                                                   context=context)
             # we only save the main accounts, not the destinations (new key: account id only)
             expenses = dict([(item[0], expenses[item]) for item in expenses.keys() if item[1] is False])
             
             
             # make the total row
             if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
-                total_line = [0] * month_stop
+                total_line = [0] * (month_stop - month_start + 1)
             else:
                 total_line = []
             total_amount = 0
             for expense_account in pool.get('account.account').browse(cr, uid, expenses.keys(), context=context):
-                rounded_values = map(int, map(round, expenses[expense_account.id][0:month_stop]))
+                expense_values = expenses[expense_account.id][month_start - 1:month_stop]
                 # add line to result (code, name)...
-                if expense_account.type == 'view' or data['form']['granularity'] == 'all' :
+                if expense_account.type == 'view' or data['form']['granularity'] == 'all':
                     if expense_account.code != '6':
                         line = [expense_account.code, xml.sax.saxutils.escape(expense_account.name)]
                         # ...monthly amounts, ...
                         if 'breakdown' in data['form'] and data['form']['breakdown'] == 'month':
-                            line += rounded_values
+                            line += map(int, map(round, expense_values))
                         # ...and the total.
-                        line += [sum(rounded_values)]
+                        line += [int(round(sum(expense_values)))]
                         # append to result
                         result_data.append(line)
-                    if expense_account.type != 'view':
-                        # add to the total
-                        total_line = [sum(pair) for pair in zip(rounded_values, total_line)]
-                        total_amount += sum(rounded_values)
+                        if expense_account.type != 'view' or data['form']['granularity'] != 'all':
+                            # add to the total
+                            total_line = [sum(pair) for pair in zip(expense_values, total_line)]
+                            total_amount += sum(expense_values)
             # Format total
-            total_line = ['Total', ''] + total_line + [total_amount]
+            total_line = ['Total', ''] + map(int, map(round, total_line)) + [int(round(total_amount))]
             
             data['form']['header'] = header_data
             data['form']['report_lines'] = result_data

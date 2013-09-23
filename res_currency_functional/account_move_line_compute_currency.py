@@ -84,6 +84,8 @@ class account_move_line_compute_currency(osv.osv):
         addendum_line_credit_account_default_destination_id = journal.default_credit_account_id.default_destination_id.id
         # Create analytic distribution if this account is an expense account
         distrib_id = False
+        different_currency = False
+        prev_curr = False
         if journal.default_debit_account_id.user_type.code == 'expense':
             ## Browse all lines to fetch some values
             partner_id = employee_id = transfer_journal_id = False
@@ -94,6 +96,12 @@ class account_move_line_compute_currency(osv.osv):
                 employee_id = (rline.employee_id and rline.employee_id.id) or False
                 transfer_journal_id = (rline.transfer_journal_id and rline.transfer_journal_id.id) or False
                 currency_id = (rline.currency_id and rline.currency_id.id) or False
+                # Check if lines are in different currencies
+                if not prev_curr:
+                    prev_curr = rline.currency_id.id
+                if rline.currency_id.id != prev_curr:
+                    different_currency = True
+                prev_curr = rline.currency_id.id
                 if not oldiest_date:
                     oldiest_date = rline.date or False
                 if rline.date > oldiest_date:
@@ -173,6 +181,10 @@ class account_move_line_compute_currency(osv.osv):
                 'currency_id': currency_id,
                 #'functional_currency_id': functional_currency_id,
             }
+            # UTP-494: use functional currency as currency for addendum line
+            if different_currency:
+                functional_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+                vals.update({'currency_id': functional_currency_id})
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
             partner_line_id = self.create(cr, uid, vals, context=context)

@@ -110,7 +110,7 @@
             <field name="inherit_id" ref="account.view_move_form"/>
             <field name="arch" type="xml">
                 <form string="Journal Entries" position="replace">
-                    <form string="Journal Entries" hide_duplicate_button="1" hide_delete_button="1">
+                    <form string="Journal Entries" hide_delete_button="1">
                         <group colspan="4" col="6">
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('state', '=', 'posted')]}"/>
                             <field name="name" readonly="1"/>

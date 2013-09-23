@@ -42642,8 +42642,8 @@ msgstr "Mon tableau"
 
 #. module: register_accounting
 #: view:account.bank.statement:0
-msgid "Open invoice"
-msgstr "Ouvrir facture"
+msgid "Invoice(s) reference(s)"
+msgstr "Facture(s) ouverte(s)"
 
 #. module: resource
 #: field:resource.calendar.attendance,dayofweek:0
@@ -51217,8 +51217,8 @@ msgstr "Line %s of the Excel file: The product UOM did not match with the existi
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:66
 #, python-format
-msgid "Amount %s can't be greatest than 'Amount to pay': %s"
-msgstr "Montant %s ne peut être supérieur au 'Montant à payer': %s"
+msgid "Amount %.2f can't be greater than 'Amount to pay': %.2f"
+msgstr "Montant %.2f ne peut être supérieur au 'Montant à payer': %.2f"
 
 #. module: consumption_calculation
 #: view:monthly.review.consumption:0
@@ -62467,11 +62467,6 @@ msgstr "Total Project - Actuals"
 #: field:account.analytic.account,destination_ids:0
 msgid "Accounts"
 msgstr "Comptes"
-
-#. module: register_accounting
-#: view:account.bank.statement:0
-msgid "Open invoices"
-msgstr "Factures ouvertes"
 
 #. modules: hr, board, msf_homere_interface
 #: field:board.board.line,position:0
