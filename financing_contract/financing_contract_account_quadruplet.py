@@ -41,14 +41,15 @@ class financing_contract_account_quadruplet(osv.osv):
 
         exclude = {}
         for line in contract.actual_line_ids:
-            for account_destination in line.account_destination_ids:
-                cr.execute('''select id
-                              from financing_contract_account_quadruplet
-                              where format_id = %s and account_destination_id = %s''' % (contract.format_id.id, account_destination.id))
-                for id in [x[0] for x in cr.fetchall()]:
-                    exclude[id] = True
-            for account_quadruplet in line.account_quadruplet_ids:
-                exclude[account_quadruplet.id] = True
+            if context.get('active_id', False) and line.id != context['active_id']:
+                for account_destination in line.account_destination_ids:
+                    cr.execute('''select id
+                                  from financing_contract_account_quadruplet
+                                  where format_id = %s and account_destination_id = %s''' % (contract.format_id.id, account_destination.id))
+                    for id in [x[0] for x in cr.fetchall()]:
+                        exclude[id] = True
+                for account_quadruplet in line.account_quadruplet_ids:
+                    exclude[account_quadruplet.id] = True
         for id in ids:
             res[id] = id in exclude
         return res
@@ -67,13 +68,14 @@ class financing_contract_account_quadruplet(osv.osv):
 
         exclude = []
         for line in contract.actual_line_ids:
-            for account_destination in line.account_destination_ids:
-                cr.execute('''select id
-                              from financing_contract_account_quadruplet
-                              where format_id = %s and account_destination_id = %s''' % (contract.format_id.id, account_destination.id))
-                exclude += [x[0] for x in cr.fetchall()]
-            for account_quadruplet in line.account_quadruplet_ids:
-                exclude.append(account_quadruplet.id)
+            if context.get('active_id', False) and line.id != context['active_id']:
+                for account_destination in line.account_destination_ids:
+                    cr.execute('''select id
+                                  from financing_contract_account_quadruplet
+                                  where format_id = %s and account_destination_id = %s''' % (contract.format_id.id, account_destination.id))
+                    exclude += [x[0] for x in cr.fetchall()]
+                for account_quadruplet in line.account_quadruplet_ids:
+                    exclude.append(account_quadruplet.id)
         for id in ids:
             res[id] = id in exclude
 
@@ -84,8 +86,12 @@ class financing_contract_account_quadruplet(osv.osv):
         'account_destination_id': fields.many2one('account.destination.link', 'Account/Destination'),
         'cost_center_id': fields.many2one('account.analytic.account', 'Cost Centre'),
         'funding_pool_id': fields.many2one('account.analytic.account', 'Funding Pool'),
+        'account_id': fields.related('account_destination_id', 'account_id', type='many2one', relation='account.account', string='Account', size=64, store=True),
+        'destination_id': fields.related('account_destination_id', 'destination_id', type='many2one', relation='account.analytic.account', string='Destination', size=64, store=True),
         'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
     }
+    
+    _order = 'account_id asc, destination_id asc, funding_pool_id asc, cost_center_id asc'
     
 financing_contract_account_quadruplet()
 

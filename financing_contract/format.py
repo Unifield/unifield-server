@@ -159,10 +159,11 @@ class account_destination_link(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            for account_destination in line.account_destination_ids:
-                exclude[account_destination.id] = True
-            for account_quadruplet in line.account_quadruplet_ids:
-                exclude[account_quadruplet.account_destination_id.id] = True
+            if context.get('active_id', False) and line.id != context['active_id']:
+                for account_destination in line.account_destination_ids:
+                    exclude[account_destination.id] = True
+                for account_quadruplet in line.account_quadruplet_ids:
+                    exclude[account_quadruplet.account_destination_id.id] = True
         for id in ids:
             res[id] = id in exclude
         return res
@@ -185,10 +186,11 @@ class account_destination_link(osv.osv):
 
         exclude = {}
         for line in ctr_obj.browse(cr, uid, id_toread).actual_line_ids:
-            for account_destination in line.account_destination_ids:
-                exclude[account_destination.id] = True
-            for account_quadruplet in line.account_quadruplet_ids:
-                exclude[account_quadruplet.account_destination_id.id] = True
+            if context.get('active_id', False) and line.id != context['active_id']:
+                for account_destination in line.account_destination_ids:
+                    exclude[account_destination.id] = True
+                for account_quadruplet in line.account_quadruplet_ids:
+                    exclude[account_quadruplet.account_destination_id.id] = True
 
         return [('id', 'not in', exclude.keys())]
 

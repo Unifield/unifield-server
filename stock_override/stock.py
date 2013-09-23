@@ -123,6 +123,7 @@ class stock_picking(osv.osv):
         state_list = kwargs['state_list']
         
         state_list['done'] = _('is closed.')
+        state_list['shipped'] = _('is shipped.') #UF-1617: New state for the IN of partial shipment
         
         return state_list
     
@@ -181,12 +182,14 @@ class stock_picking(osv.osv):
             ('auto', 'Waiting'),
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
+            ('shipped', 'Available Shipped'), #UF-1617: new state of IN for partial shipment
             ('done', 'Closed'),
             ('cancel', 'Cancelled'),
             ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
                  "* Available: products reserved, simply waiting for confirmation.\n"\
+                 "* Available Shipped: products already shipped at supplier, simply waiting for arrival confirmation.\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
                  "* Closed: has been processed, can't be modified or cancelled anymore\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
@@ -200,6 +203,7 @@ class stock_picking(osv.osv):
                                                               'res.partner': (_get_stock_picking_from_partner_ids, ['partner_type'], 10),}),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False),
         'fake_type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
+        'shipment_ref': fields.char(string='Ship Reference', size=256, readonly=True), #UF-1617: indicating the reference to the SHIP object at supplier
     }
     
     _defaults = {'from_yml_test': lambda *a: False,
@@ -549,6 +553,9 @@ class stock_picking(osv.osv):
                 if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
                     self.action_move(cr, uid, [new_picking])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking, 'button_done', cr)
+                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                    self._hook_create_sync_messages(cr, uid, new_picking, context)
+                    
                 wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
                 delivered_pack_id = new_picking
             else:
@@ -557,13 +564,23 @@ class stock_picking(osv.osv):
                 if self._picking_done_cond(cr, uid, ids, context=context, partial_datas=partial_datas):
                     self.action_move(cr, uid, [pick.id])
                     wf_service.trg_validate(uid, 'stock.picking', pick.id, 'button_done', cr)
+                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                    self._hook_create_sync_messages(cr, uid, ids, context)
+                    
                 delivered_pack_id = pick.id
+            
+            # UF-1617: set the delivered_pack_id (new or original) to become already_shipped    
+            self.write(cr, uid, [delivered_pack_id], {'already_shipped': True})
 
             delivered_pack = self.browse(cr, uid, delivered_pack_id, context=context)
             res[pick.id] = {'delivered_picking': delivered_pack.id or False}
 
         return res
     # @@@override end
+
+    # UF-1617: Empty hook here, to be implemented in sync modules
+    def _hook_create_sync_messages(self, cr, uid, ids, context = None):
+        return True
 
     # @@@override stock>stock.py>stock_picking>_get_invoice_type
     def _get_invoice_type(self, pick):
@@ -753,6 +770,25 @@ class stock_picking(osv.osv):
                 move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context) # FEFO
         context['already_checked'] = True
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
+
+    #UF-1617: Handle the new state Shipped of IN
+    def action_shipped_wkf(self, cr, uid, ids, context=None):
+        """ Changes picking state to assigned.
+        @return: True
+        """
+        self.write(cr, uid, ids, {'state': 'shipped'})
+        self.log_picking(cr, uid, ids, context=context)
+        move_obj = self.pool.get('stock.move')
+        
+        for pick in self.browse(cr, uid, ids):
+            if pick.move_lines and pick.type == 'in':
+                not_assigned_move = [x.id for x in pick.move_lines]
+                move_obj.write(cr, uid, not_assigned_move, {'state': 'confirmed'})
+                if not_assigned_move:
+                    move_obj.action_assign(cr, uid, not_assigned_move)
+        
+        return True
+
 
 stock_picking()
 
@@ -1034,7 +1070,7 @@ class stock_move(osv.osv):
                                         needed_qty -= selected_qty
                                         dict_for_create = {}
                                         dict_for_create = values.copy()
-                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']})
+                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id'], 'line_number': move.line_number})
                                         self.create(cr, uid, dict_for_create, context)
                                         self.write(cr, uid, move.id, {'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
