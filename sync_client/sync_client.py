@@ -510,7 +510,9 @@ class Entity(osv.osv):
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
-        update_ids = updates.search(cr, uid, [('run', '=', False)], context=context)
+        # Get a list of updates to execute
+        # Warning: execution order matter
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
@@ -690,7 +692,9 @@ class Entity(osv.osv):
         logger = context.get('logger')
         messages = self.pool.get(context.get('message_received_model', 'sync.client.message_received'))
 
-        message_ids = messages.search(cr, uid, [('run', '=', False)], context=context)
+        # Get the whole list of messages to execute
+        # Warning: order matters
+        message_ids = messages.search(cr, uid, [('run', '=', False)], order='id asc', context=context)
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 
