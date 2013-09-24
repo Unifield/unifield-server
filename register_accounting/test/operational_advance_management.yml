@@ -62,6 +62,8 @@
     address_contact_id: res_partner_address_tempo
     address_invoice_id: res_partner_address_tempo
     check_total: 400.0
+    document_date: !eval time.strftime('%Y-%m-02')
+    date_invoice: !eval time.strftime('%Y-%m-10')
     company_id: base.main_company
     currency_id: base.EUR
     invoice_line:
@@ -101,8 +103,8 @@
     statement_id: account_bank_statement_7
     account_id: account_account_advance0
     amount: -500.0
-    date: !eval time.strftime('%Y-%m-%d')
-    document_date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-12')
+    document_date: !eval time.strftime('%Y-%m-10')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -146,7 +148,7 @@
   !record {model: wizard.cash.return, id: wiz_advance0, context: {'active_id': ref("account_bank_statement_line0"), 'active_ids': [ref("account_bank_statement_line0")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_7")}}:
     returned_amount: 100.0
     invoice_id: account_invoice_food_for_staff0
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-14')
 -
   I check that the Justified Amount is calculated
 -
@@ -188,12 +190,15 @@
 -
   !python {model: account.bank.statement.line}: |
     advance_line = self.browse(cr, uid, ref("account_bank_statement_line0"))
-    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_7"))])
+    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_7")), ('id', '!=', ref("account_bank_statement_line0"))])
     res_line = self.browse(cr, uid, res[0])
     assert advance_line.account_id.id == res_line.account_id.id, "Found line don't have the same account."
     assert advance_line.employee_id.id == res_line.employee_id.id, "Found line don't have the same employee."
     assert advance_line.amount == -res_line.amount, "Found line don't have the opposite amount."
     assert advance_line.move_ids != res_line.move_ids, "Found line have the same move !"
+    import time
+    assert res_line.document_date == time.strftime('%Y-%m-14'), "Wrong document date: %s. Expected: %s" % (advance_line.document_date, time.strftime('%Y-%m-14'))
+    assert res_line.date == time.strftime('%Y-%m-14'), "Wrong posting date: %s. Expected: %s" % (advance_line.date, time.strftime('%Y-%m-14'))
 -
   I check that there is a journal entry with the invoice amount and that the lines are reconciled
 -
@@ -233,8 +238,8 @@
     statement_id: account_bank_statement_8
     account_id: account_account_advance0
     amount: -500.0
-    date: !eval time.strftime('%Y-%m-%d')
-    document_date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-16')
+    date: !eval time.strftime('%Y-%m-17')
     name: Food for staff
     employee_id: employee_brikabrak
     sequence: 0.0
@@ -259,7 +264,7 @@
 -
   !record {model: wizard.cash.return, id: wiz_advance1, context: {'active_id': ref("account_bank_statement_line1"), 'active_ids': [ref("account_bank_statement_line1")], 'amount': -500.0, 'statement_id': ref("account_bank_statement_8"), 'statement_line_id': ref("account_bank_statement_line1")}}:
     returned_amount: 100.0
-    date: !eval time.strftime('%Y-%m-%d')
+    date: !eval time.strftime('%Y-%m-18')
 -
   I check that the Justified Amount is calculated
 -
@@ -304,7 +309,7 @@
   I register an expense of 400 EUR and select a Supplier as a Third Party
 -
   !record {model: wizard.advance.line, id: wiz_adv_line0}:
-    date: !eval time.strftime('%Y-%m-%d')
+    document_date: !eval time.strftime('%Y-%m-05')
     description: Food for staff
     account_id: account_account_expense0
     partner_id: res_partner_supplier_0
@@ -331,13 +336,29 @@
       st_line = self.browse(cr, uid, st_line_id)
       assert st_line.state == 'hard', "Line %s is not in hard posted state" % st_line_id
 -
-  I check that the Cash Register have a line which correspond to the advance. So that entries are matched.
+  I check that the Cash Register have a line which correspond to the advance return. So that entries are matched.
 -
   !python {model: account.bank.statement.line}: |
     advance_line = self.browse(cr, uid, ref("account_bank_statement_line1"))
-    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_8"))])
+    res = self.search(cr, uid, [('amount', '=', 500.0), ('employee_id', '=', ref("employee_brikabrak")), ('account_id', '=', ref("account_account_advance0")), ('statement_id', '=', ref("account_bank_statement_8")), ('id', '!=', ref("account_bank_statement_line1"))])
     res_line = self.browse(cr, uid, res[0])
     assert advance_line.account_id.id == res_line.account_id.id, "Found line don't have the same account."
     assert advance_line.employee_id.id == res_line.employee_id.id, "Found line don't have the same employee."
     assert advance_line.amount == -res_line.amount, "Found line don't have the opposite amount."
     assert advance_line.move_ids != res_line.move_ids, "Found line have the same move !"
+    import time
+    date = time.strftime('%Y-%m-18')
+    assert res_line.document_date == date, "Wrong document date: %s. Expected: %s" % (res_line.document_date, date)
+    assert res_line.date == date, "Wrong date: %s. Expected: %s" % (res_line.date, date)
+-
+  I check that the Cash Register have a line that correspond to the wizard advance line and that this line have right document/posting date.
+-
+  !python {model: account.bank.statement.line}: |
+    res = self.search(cr, uid, [('amount', '=', -400.0), ('name', '=', 'Food for staff')])
+    assert len(res) == 1, "Expected register line found: 1. Find: %s" % len(res)
+    res_line = self.browse(cr, uid, res[0])
+    import time
+    ddate = time.strftime('%Y-%m-05')
+    date = time.strftime('%Y-%m-18')
+    assert res_line.document_date == ddate, "Wrong document date: %s. Expected: %s" % (res_line.document_date, ddate)
+    assert res_line.date == date, "Wrong date: %s. Expected: %s" % (res_line.date, date)
