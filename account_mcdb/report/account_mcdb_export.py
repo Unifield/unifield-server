@@ -119,7 +119,7 @@ class account_line_csv_export(osv.osv_memory):
             #reconcile_total_partial_id
             csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
             #state
-            csv_line.append(field_sel(cr, uid, ml, 'state', context).encode('utf-8'))
+            csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
             # Write line
             writer.writerow(csv_line)
             
@@ -156,6 +156,7 @@ class account_line_csv_export(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
+        field_sel = self.pool.get('ir.model.fields').get_browse_selection
         if currency_id:
             currency_obj = self.pool.get('res.currency')
             currency_name = currency_obj.read(cr, uid, [currency_id], ['name'], context=context)[0].get('name', False)
@@ -172,7 +173,7 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Func. Amount'), _('Func. Currency')]
         else:
             head += [_('Output Amount'), _('Output Currency')]
-        head+= [_('Reversal Origin')]
+        head+= [_('Reversal Origin'), _('Entry status')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
         ids.sort()
@@ -224,6 +225,7 @@ class account_line_csv_export(osv.osv_memory):
                 #output currency
                 csv_line.append(currency_name.encode('utf-8') or '')
             csv_line.append(al.reversal_origin and al.reversal_origin.name and al.reversal_origin.name.encode('utf-8') or '')
+            csv_line.append(al.move_state and field_sel(cr, uid, al, 'move_state', context).encode('utf-8') or '')
             # Write Line
             writer.writerow(csv_line)
         return True
@@ -240,7 +242,6 @@ class account_line_csv_export(osv.osv_memory):
         if not writer:
             raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
 
-        field_sel = self.pool.get('ir.model.fields').get_browse_selection
         # Prepare some value
         currency_name = ""
         field_sel = self.pool.get('ir.model.fields').get_browse_selection
@@ -271,7 +272,7 @@ class account_line_csv_export(osv.osv_memory):
             account_description = absl.account_id and absl.account_id.name and absl.account_id.name.encode('utf-8') or ''
             csv_line.append("%s - %s" % (account_code or '', account_description or ''))
             #partner_txt
-            csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.name and absl.transfer_journal_id.name.encode('utf-8') or '')
+            csv_line.append(absl.partner_id and absl.partner_id.name and absl.partner_id.name.encode('utf-8') or absl.employee_id and absl.employee_id.name and absl.employee_id.name.encode('utf-8') or absl.transfer_journal_id and absl.transfer_journal_id.code and absl.transfer_journal_id.code.encode('utf-8') or '')
             #debit_currency
             csv_line.append(absl.amount_in or 0.0)
             #credit_currency

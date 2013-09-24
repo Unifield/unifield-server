@@ -311,6 +311,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 vals.update({'percentage': abs((vals.get('amount') / wiz[0].total_amount) * 100.0)})
         if vals.get('percentage', False) == 0.0:
             raise osv.except_osv(_('Error'), _('0 is not allowed as percentage value!'))
+        if vals.get('percentage', False) < 0.0:
+            raise osv.except_osv(_('Error'), _('Negative percentage value is not allowed!'))
         res = super(analytic_distribution_wizard_lines, self).create(cr, uid, vals, context=context)
         # Validate wizard
         if vals.get('wizard_id', False) and not context.get('skip_validation', False):
@@ -941,8 +943,12 @@ class analytic_distribution_wizard(osv.osv_memory):
         """
         if not context:
             context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
+        o2m_toreload = {}
+        if context.get('from_list_grid'):
+            o2m_toreload['o2m_refresh'] = context['from_list_grid']
         for wiz in self.browse(cr, uid, ids, context=context):
             # Update cost center lines
             if not self.update_cost_center_lines(cr, uid, wiz.id, context=context):
@@ -1033,7 +1039,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Update analytic lines
         self.update_analytic_lines(cr, uid, ids, context=context)
         
-        return_wiz =  {'type': 'ir.actions.act_window_close'}
+        return_wiz =  dict(type='ir.actions.act_window_close', **o2m_toreload)
         if context.get("from_cash_return_analytic_dist"):
             # If the wizard was called from the cash return line, the perform some actions before returning back to the caller wizard
             wizard_name = context.get('from')
@@ -1076,8 +1082,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             if wizard_obj.entry_mode == 'percentage':
                 percentage = wizard_line['percentage']
                 # Check that the value is in the correct range
-                if percentage < 0.0 or percentage > 100.0:
-                    raise osv.except_osv(_('Percentage not valid!'),_("Percentage not valid!"))
+                if abs(percentage) > 100.0+10**-4 or percentage < 0.0:
+                    raise osv.except_osv(_('Error'),_("Percentage not valid! (%s)") % (percentage,))
                 # Fill the other value
                 amount = round(wizard_obj.total_amount * percentage) / 100.0
                 wizard_line['amount'] = amount
@@ -1164,6 +1170,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        o2m_toreload = {}
+        if context.get('from_list_grid'):
+            o2m_toreload['o2m_refresh'] = context['from_list_grid']
         # Retrieve some values to verify if we come from a direct invoice
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and (wiz.direct_invoice_id or wiz.direct_invoice_line_id):
@@ -1192,7 +1202,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 }
         elif wiz.from_direct_inv:
             return self.pool.get('account.bank.statement.line').button_open_invoice(cr, uid, [wiz.from_direct_inv.id], context)
-        return {'type' : 'ir.actions.act_window_close'}
+
+        return dict(type='ir.actions.act_window_close', **o2m_toreload)
 
     def update_analytic_lines(self, cr, uid, ids, context=None):
         """

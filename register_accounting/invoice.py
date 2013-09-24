@@ -62,6 +62,85 @@ class account_invoice(osv.osv):
                 res[inv.id] = True
         return res
 
+    def _search_imported_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Search invoice regarding their imported_state field. Check _get_imported_state for more information.
+        """
+        res = [('id', 'not in', [])]
+        if args and args[0] and len(args[0]) == 3:
+            if args[0][1] != '=':
+                raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
+            # Search all imported invoice
+            sql = """SELECT INV_ID, INV_TOTAL, abs(SUM(absl.amount))
+                FROM (
+                    SELECT inv.id AS INV_ID, inv.amount_total AS INV_TOTAL, aml.id AS AML
+                    FROM account_invoice inv, account_move_line aml, account_move am
+                    WHERE inv.move_id = am.id
+                    AND aml.move_id = am.id
+                    AND inv.state = 'open'
+                    ORDER BY inv.id
+                ) AS move_lines, imported_invoice imp, account_bank_statement_line absl
+                WHERE imp.move_line_id = move_lines.AML
+                AND imp.st_line_id = absl.id
+                GROUP BY INV_ID, INV_TOTAL"""
+            # Fetch second args (type of import)
+            s = args[0][2]
+            # Complete SQL query if needed
+            if s == 'imported':
+                sql += """ HAVING INV_TOTAL = abs(SUM(absl.amount))"""
+            elif s == 'partial':
+                sql += """ HAVING INV_TOTAL != abs(SUM(absl.amount))"""
+            # finish SQL query
+            sql += """ ORDER BY INV_ID;"""
+            # execution
+            cr.execute(sql)
+            sql_res = cr.fetchall()
+            # process regarding second args
+            if s in ['partial', 'imported']:
+                res = [('id', 'in', [x and x[0] for x in sql_res])]
+            else:
+                res = [('id', 'not in', [x and x[0] for x in sql_res])]
+        return res
+
+    def _get_imported_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Different states:
+        - imported: imported_invoice_line_ids exists for this invoice (so register lines are linked to it) and invoice state is paid
+        - partial: imported_invoice_line_ids exists for this invoice (so that register lines are linked to it) and invoice state is open (so not totally paid)
+        - not: no imported_invoice_line_ids on this invoice (so no link to a register)
+        - unknown: default state
+        """
+        if not context:
+            context = {}
+        res = {}
+        for inv in self.browse(cr, uid, ids, context):
+            res[inv.id] = 'none'
+            if inv.move_id:
+                absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
+                if absl_ids:
+                    res[inv.id] = 'imported'
+                    if isinstance(absl_ids, (int, long)):
+                        absl_ids = [absl_ids]
+                    if inv.amount_total != sum([x and abs(x.amount) or 0.0 for x in self.pool.get('account.bank.statement.line').browse(cr, uid, absl_ids)]):
+                        res[inv.id] = 'partial'
+                    continue
+                res[inv.id] = 'not'
+        return res
+
+    def _get_down_payment_ids(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Search down payment journal items for given invoice
+        """
+        # Some checks
+        if not context:
+            context = {}
+        res = {}
+        for inv in self.browse(cr, uid, ids):
+            res[inv.id] = []
+            for p in inv.purchase_ids:
+                res[inv.id] += [x and x.id for x in p.down_payment_ids]
+        return res
+
     _columns = {
         'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False, 
@@ -72,8 +151,14 @@ class account_invoice(osv.osv):
             type='many2one', relation="account.account", readonly=True),
         'virtual_partner_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Supplier",
             type='many2one', relation="res.partner", readonly=True),
-        'is_direct_invoice': fields.function(_is_direct_invoice, method=True, store=False, type='boolean', readonly=True, string="Is direct invoice?"),
+        'is_direct_invoice': fields.boolean("Is direct invoice?", readonly=True),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
+        'imported_state': fields.function(_get_imported_state, fnct_search=_search_imported_state, method=True, store=False, type='selection', selection=[('none', 'None'), ('imported', 'Imported'), ('not', 'Not Imported'), ('partial', 'Partially Imported')], string='Imported Status'),
+        'down_payment_ids': fields.function(_get_down_payment_ids, type="one2many", obj='account.move.line', method=True, string='Down payments'),
+    }
+
+    _defaults = {
+        'is_direct_invoice': lambda *a: False,
     }
 
     def action_reconcile_direct_invoice(self, cr, uid, ids, context=None):

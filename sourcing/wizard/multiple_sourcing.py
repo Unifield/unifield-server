@@ -202,7 +202,7 @@ class res_partner(osv.osv):
             if arg[0] == 'line_contains_fo':
                 if type(arg[2]) == type(list()):
                     for line in self.pool.get('sourcing.line').browse(cr, uid, arg[2][0][2], context=context):
-                        if not line.procurement_request:
+                        if not line.sale_order_id.procurement_request:
                             res.append(('partner_type', 'in', ['external', 'esc']))
 
         return res

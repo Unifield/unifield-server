@@ -92,7 +92,7 @@ x:FullRows="1">
         <Data ss:Type="String">${o.account_id and o.account_id.code or ''} - ${(o.account_id and o.account_id.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.name or '')|x}</Data>
+        <Data ss:Type="String">${(o.partner_id and o.partner_id.name or o.employee_id and o.employee_id.name or o.transfer_journal_id and o.transfer_journal_id.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber">
         <Data ss:Type="Number">${o.amount_in or '0.0'}</Data>

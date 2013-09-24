@@ -42,7 +42,6 @@
                     <group colspan="4" col="6">
                         <label string ="" colspan="1"/>
                         <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-                        <button icon="gtk-undo" string="Reverse" name="action_reverse" type="object" attrs="{'invisible': [('from_register', '=', True)]}"/>
                         <button icon="gtk-redo" string="Correct" name="action_confirm" type="object"/>
                     </group>
                     <field name="from_register" invisible="1"/>
