@@ -76,6 +76,16 @@ class stock_production_lot(osv.osv):
             if company and company.instance_id:
                 vals['instance_id'] = company.instance_id.id
 
+        
+        # UF-2148: make the xmlid_name from batch name for building xmlid if the value is not given in vals
+        if 'xmlid_name' not in vals or not vals['xmlid_name']:
+            vals['xmlid_name'] = vals['name'] 
+            
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name'])], context=context)
+        if exist:
+            # but if the value exist for xmlid_name, then add a suffix to differentiate, no constraint unique required here  
+            vals['xmlid_name'] = vals['xmlid_name'] + "_1"
+        
         return super(stock_production_lot, self).create(cr, uid, vals, context)
 
     _columns = {
@@ -91,6 +101,7 @@ class stock_production_lot(osv.osv):
         # UF-1617: field only used for sync purpose
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
         'instance_id': fields.many2one('msf.instance', 'Instance', readonly=True, required=True),
+        'xmlid_name': fields.char('XML Code, hidden field', size=128, required=True), # UF-2148, this field is used only for xml_id
     }
 
     _defaults = {
