@@ -29,11 +29,11 @@ import time
 
 class wizard_invoice_line(osv.osv_memory):
     """
-    A simulated bank statement line containing some invoices.
+    A register line simulation containing some invoices.
     """
     _name = "wizard.invoice.line"
     _columns = {
-        'date': fields.date(string='Date'),
+        'document_date': fields.date(string='Document Date'),
         'reference': fields.char(string='Reference', size=64, required=False), # invoice.internal_number
         'communication': fields.char(string='Communication', size=64, required=False), # name of invoice.line
         'partner_id': fields.many2one('res.partner', string="Partner", required=False), # partner of invoice
@@ -47,7 +47,7 @@ wizard_invoice_line()
 
 class wizard_advance_line(osv.osv_memory):
     """
-    A simulated bank statement line.
+    A register line simulation.
     """
     _name = 'wizard.advance.line'
     
@@ -217,7 +217,7 @@ class wizard_cash_return(osv.osv_memory):
             res.update({'total_amount': total_amount})
         return {'value': res}
 
-    def create_move_line(self, cr, uid, ids, date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
+    def create_move_line(self, cr, uid, ids, date=None, document_date=None, description='/', journal=False, register=False, partner_id=False, employee_id=False, account_id=None, \
         debit=0.0, credit=0.0, move_id=None, analytic_distribution_id=None, partner_mandatory=False, context=None):
         """
         Create a move line with some params:
@@ -248,6 +248,8 @@ class wizard_cash_return(osv.osv_memory):
         curr_date = time.strftime('%Y-%m-%d')
         if date:
             curr_date = date
+        if not document_date:
+            document_date = date
         currency_id = register.currency.id
         register_id = register.id
         amount_currency = 0.0
@@ -272,7 +274,7 @@ class wizard_cash_return(osv.osv_memory):
         move_line_vals = {
             'name': description,
             'date': curr_date,
-            'document_date': curr_date,
+            'document_date': document_date,
             'move_id': move_id,
             'partner_id': partner_id or False,
             'employee_id': employee_id or False,
@@ -379,7 +381,7 @@ class wizard_cash_return(osv.osv_memory):
                 line_ids = move_line_obj.search(cr, uid, [('move_id', '=', wizard.invoice_id.move_id.id), \
                     ('account_id', '=', account_id)], context=context)
                 for move_line in move_line_obj.browse(cr, uid, line_ids, context=context):
-                    date = move_line.date or False
+                    date = move_line.document_date or False
                     reference = move_line.invoice.internal_number or False
                     communication = move_line.invoice.name or False
                     partner_id = move_line.partner_id.id or False
@@ -391,7 +393,7 @@ class wizard_cash_return(osv.osv_memory):
                     if move_line.currency_id and move_line.currency_id.id == st_currency:
                         amount = abs(move_line.amount_currency) or 0.0
                     # Add this line to our wizard
-                    new_lines.append((0, 0, {'date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
+                    new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
                         'account_id': account_id, 'amount': amount, 'wizard_id': wizard.id, 'invoice_id': wizard.invoice_id.id}))
                     # Add amount to total_amount
                     total += amount
@@ -519,7 +521,7 @@ class wizard_cash_return(osv.osv_memory):
         # create a cash return move line ONLY IF this return is superior to 0
         if wizard.returned_amount > 0:
             return_acc_id = register.journal_id.default_credit_account_id.id
-            return_id = self.create_move_line(cr, uid, ids, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
+            return_id = self.create_move_line(cr, uid, ids, wizard.date, wizard.date, adv_closing_name, journal, register, False, wizard.advance_st_line_id.employee_id.id, return_acc_id, \
                 wizard.returned_amount, 0.0, move_id, False, context=context)
         if wizard.display_invoice:
             # make treatment for invoice lines
@@ -527,12 +529,12 @@ class wizard_cash_return(osv.osv_memory):
             inv_move_line_ids = []
             for invoice in wizard.invoice_line_ids:
                 inv_name = "Invoice" + " " + invoice.invoice_id.internal_number
-                inv_date = invoice.invoice_id.date_invoice
+                inv_doc_date = invoice.invoice_id.document_date
                 partner_id = invoice.partner_id.id
                 debit = invoice.amount
                 credit = 0.0
                 account_id = invoice.account_id.id
-                inv_id = self.create_move_line(cr, uid, ids, inv_date, inv_name, journal, register, partner_id, False, account_id, \
+                inv_id = self.create_move_line(cr, uid, ids, wizard.date, inv_doc_date, inv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, False, context=context)
                 inv_move_line_ids.append((inv_id, invoice.invoice_id.id))
         else:
@@ -558,7 +560,7 @@ class wizard_cash_return(osv.osv_memory):
                 account_id = advance.account_id.id
                 distrib_id = advance.analytic_distribution_id and advance.analytic_distribution_id.id or False
 
-                adv_id = self.create_move_line(cr, uid, ids, adv_date, adv_name, journal, register, partner_id, False, account_id, \
+                adv_id = self.create_move_line(cr, uid, ids, wiz.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, distrib_id, context=context)
                 adv_move_line_ids.append(adv_id)
                 
@@ -567,7 +569,7 @@ class wizard_cash_return(osv.osv_memory):
         adv_closing_date = wizard.date
         employee_id = wizard.advance_st_line_id.employee_id.id
         analytic_account_id =  wizard.advance_st_line_id.analytic_account_id
-        adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
+        adv_closing_id = self.create_move_line(cr, uid, ids, adv_closing_date, wizard.date, adv_closing_name, journal, register, False, employee_id, adv_closing_acc_id, \
             0.0, wizard.initial_amount, move_id, False, partner_mandatory=True, context=context)
         # Verify that the balance of the move is null
         st_currency = wizard.advance_st_line_id.statement_id.journal_id.currency.id
@@ -635,9 +637,9 @@ class wizard_cash_return(osv.osv_memory):
                         # Create the move
                         supp_move_id = move_obj.create(cr, uid, supp_move_vals, context=context)
                         # Create move_lines
-                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wiz.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, total, 0.0, supp_move_id, False, context=context)
-                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wiz.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, 0.0, total, supp_move_id, False, context=context)
                         # We hard post the move
                         supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)
