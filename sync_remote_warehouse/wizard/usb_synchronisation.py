@@ -1,6 +1,8 @@
-from osv import osv, fields
 import zipfile
+
+from osv import osv, fields
 from tools.translate import _
+
 
 class usb_synchronisation(osv.osv_memory):
     _name = 'usb_synchronisation'
@@ -16,9 +18,17 @@ class usb_synchronisation(osv.osv_memory):
     
     def _get_entity_last_push_file_name(self, cr, uid, ids=None, field_name=None, arg=None, context=None):
         last_push_date = self._get_entity(cr, uid, context).usb_last_push_date
-        last_push_file_name = '%s.zip' % last_push_date
+        last_push_file_name = '%s.zip' % last_push_date[:16].replace(' ','_') if last_push_date else False
         return dict.fromkeys(ids, last_push_file_name)
-    
+
+    def _get_entity_last_tarball_patches(self, cr, uid, ids, field_name, arg, context=None):
+        return dict.fromkeys(ids, self._get_entity(cr, uid, context).usb_last_tarball_patches)
+
+    def _get_entity_last_tarball_file_name(self, cr, uid, ids, field_name, arg, context=None):
+        last_push_date = self._get_entity(cr, uid, context).usb_last_push_date
+        last_push_file_name = 'patches_%s.tar' % last_push_date[:16].replace(' ','_') if last_push_date else False
+        return dict.fromkeys(ids, last_push_file_name)
+
     _columns = {
         # used to store pulled and pushed data, and to show results in the UI
         'pull_data' : fields.binary('Pull Data', filters='*.zip'),
@@ -32,12 +42,17 @@ class usb_synchronisation(osv.osv_memory):
         'push_file' : fields.function(_get_entity_last_push_file, type='binary', method=True, string='Last Push File'),
         'push_file_name' : fields.function(_get_entity_last_push_file_name, type='char', method=True, string='Last Push File Name'),
         'push_file_visible': fields.boolean('Push File Visible'),
+
+        # patch file for the OpenERP server instance
+        'patch_file' : fields.function(_get_entity_last_tarball_patches, type='binary', method=True, string='Tarball Patches'),
+        'patch_file_name' : fields.function(_get_entity_last_tarball_file_name, type='char', method=True, string='Tarball Patches File Name'),
+        'patch_file_visible': fields.boolean('Tarball Patch File Visible'),
     }
     
     _defaults = {
         'usb_sync_step': _get_usb_sync_step,
-        'push_file_name': _get_entity_last_push_file_name,
         'push_file_visible': False,
+        'patch_file_visible': False,
     }
     
     def _check_usb_instance_type(self, cr, uid, context):
@@ -100,6 +115,9 @@ class usb_synchronisation(osv.osv_memory):
         creates updates, messages, packages into zip and attaches to entity
         Then returns new values for wizard
         """
+        entity = self._get_entity(cr, uid, context=context)
+        last_push_date = entity.usb_last_push_date
+
         # validation
         self._check_usb_instance_type(cr, uid, context)
         wizard = self.browse(cr, uid, ids[0])
@@ -122,6 +140,15 @@ class usb_synchronisation(osv.osv_memory):
         vals['push_result'] = updates_result + deletions_result + messages_result
         vals['push_file_visible'] = True,
          
+        # generate new tarball patches
+        revisions = self.pool.get('sync_client.version')
+        if revisions:
+            rev_ids = revisions.search_installed_since(cr, uid, last_push_date, context=context)
+            vals['patch_file_visible'] = bool(rev_ids)
+            self.pool.get('sync.client.entity').write(cr, uid, [entity.id],
+                {'usb_last_tarball_patches' : revisions.export_patch(cr, uid, rev_ids, 'warn', context=context)},
+                context=context)
+
         return self.write(cr, uid, ids, vals, context=context)
 
 usb_synchronisation()

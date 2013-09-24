@@ -12,13 +12,31 @@ import tools
 from tools import config
 import os
 from updater import *
+import calendar
 import time
 import logging
+
+import hashlib
+from StringIO import StringIO
+import tarfile
+from base64 import b64decode, b64encode
+
+IMPORT_PATCH_SUCCESS, \
+IMPORT_PATCH_INVALID, \
+IMPORT_PATCH_UNKNOWN, \
+IMPORT_PATCH_IGNORED, \
+= range(4)
 
 class version(osv.osv):
     
     _name = "sync_client.version"
     
+    def _patch_needs_to_be_downloaded(self, cr, uid, ids, name, args, context=None):
+        cr.execute("""\
+            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % \
+            self._table, [tuple(ids)])
+        return dict(cr.fetchall())
+
     _columns = {
         'name' : fields.char(string='Tag', size=256, readonly=True),
         'patch' : fields.binary('Patch', readonly=True),
@@ -28,6 +46,8 @@ class version(osv.osv):
         'state' : fields.selection([('not-installed','Not Installed'),('need-restart','Need Restart'),('installed','Installed')], string="State", readonly=True),
         'applied' : fields.datetime("Applied", readonly=True),
         'importance' : fields.selection([('required','Required'),('optional','Optional')], "Importance Flag", readonly=True),
+        'need_download' : fields.function(_patch_needs_to_be_downloaded,
+            type='boolean', method=True, readonly=True),
     }
     
     _defaults = {
@@ -81,17 +101,18 @@ class version(osv.osv):
         return self.browse(cr, uid, rev_ids[0]) if rev_ids else False
 
     def _get_next_revisions(self, cr, uid, context=None):
-        self.current = self._get_last_revision(cr, uid, context=context)
         return self.search(cr, uid, [('state','!=','installed')], order='date asc')
 
-    def _is_outdated(self, cr, uid, context=None):
-        if not hasattr(self, 'current'):
-            self.current = self._get_last_revision(cr, uid, context=context) 
-        if not hasattr(self, 'version_check'):
-            where = [('state','!=','installed'),('importance','=','required')]
-            if self.current:
-                where.append(('date','>',self.current.date))
-            self.version_check = self.search(cr, uid, where, limit=1)
+    def _is_outdated(self, cr, uid, force_recalculate=False, exact_version=False, context=None):
+        if hasattr(self, 'version_check') and not force_recalculate:
+            return bool(self.version_check)
+        current = self._get_last_revision(cr, uid, context=context) 
+        where = [('state','!=','installed')]
+        if exact_version:
+            where.append(('importance','=','required'))
+        if current and current.date:
+            where.append(('date','>',current.date))
+        self.version_check = self.search(cr, uid, where, limit=1)
         return bool(self.version_check)
 
     def _is_update_available(self, cr, uid, ids, context=None):
@@ -99,6 +120,58 @@ class version(osv.osv):
             if not self.browse(cr, uid, id, context=context).patch:
                 return False
         return True
+
+    def search_installed_since(self, cr, uid, since_date, context=None):
+        """
+        Search installed patches since given date.
+        """
+        return self.search(cr, uid,
+            [('state','=','installed'),('applied','>',since_date)],
+            context=context)
+
+    def import_patch(self, cr, uid, patch=None, decoded=None, context=None):
+        """import patch file or tarball of patch files by providing a base64 encoded string or the decoded string"""
+        if decoded is None:
+            decoded = b64decode(patch)
+        elif patch is None:
+            patch = b64encode(decoded)
+        else:
+            raise AssertionError("You must provide at least and at most one of these arguments: patch, decoded")
+        if not decoded[:2] == 'PK': return IMPORT_PATCH_INVALID
+        patch_sum = hashlib.md5(decoded).hexdigest()
+        ids = self.search(cr, uid, [('sum','=',patch_sum)], context=context)
+        if not ids: return IMPORT_PATCH_UNKNOWN
+        info = self.browse(cr, uid, ids, context=context)[0]
+        if info.state == 'installed' or not info.need_download: return IMPORT_PATCH_IGNORED
+        self.write(cr, uid, ids, {'patch':patch}, context=context)
+        self._logger.info("Patch %(name)s (%(sum)s) successfuly imported" % info)
+        return IMPORT_PATCH_SUCCESS
+
+    def export_patch(self, cr, uid, ids, action_on_missing='warn', context=None):
+        """export patches of ids given to a single tarball string base64 encoded"""
+        if not ids: return False
+        missing = []
+        tar_fh = StringIO()
+        tar = tarfile.TarFile(fileobj=tar_fh, mode='w')
+        for rec in self.browse(cr, uid, ids, context=context):
+            if not rec.patch:
+                missing.append(rec)
+                if action_on_missing == 'warn':
+                    self._logger.warn("The patch sum %(sum)s (id=%(id)d) is missing in the database!" % rec)
+                continue
+            if missing and action_on_missing == 'raise': continue
+            patch_fh = StringIO(b64decode(rec.patch))
+            tar_info = tarfile.TarInfo(rec.sum + ".zip")
+            tar_info.mtime = calendar.timegm(time.gmtime())
+            tar_info.size = patch_fh.len
+            tar.addfile(tar_info, patch_fh)
+        tar.close()
+        tar_fh.seek(0)
+        if action_on_missing == 'raise' and missing:
+            raise osv.except_osv(_("Error!"),
+                _("Can not find patches for revisions:") + ' ' +
+                ", ".join(["%(sum)s (id=%(id)d)" % rec for rec in missing]))
+        return b64encode(tar_fh.read())
 
     _order = 'date desc'
     
@@ -116,6 +189,7 @@ class entity(osv.osv):
         return ""
 
     def upgrade(self, cr, uid, context=None):
+        self.pool.get('sync.client.sync_server_connection').connect(cr, uid, context=context)
         revisions = self.pool.get('sync_client.version')
         if revisions._need_restart(cr, uid, context=context):
             return (False, "Need restart")

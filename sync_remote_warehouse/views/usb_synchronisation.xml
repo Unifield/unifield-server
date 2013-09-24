@@ -10,11 +10,14 @@
                 	<field name="usb_sync_step" invisible="1" />
                 	<field name="push_file_name" invisible="1"/>
                 	<field name="push_file_visible" invisible="1"/>
+                	<field name="patch_file_name" invisible="1"/>
+                	<field name="patch_file_visible" invisible="1"/>
                 	
                 	<separator colspan="4" string="Push" />
                 	<button type="object" name="push" string="Download the Data to Push" attrs="{'readonly': [('usb_sync_step','!=','first_sync'), ('usb_sync_step','!=','pull_performed')]}" colspan="4" />
                 	<field name="push_result" colspan="4" />
-                	<field name="push_file" colspan="4" filename="push_file_name" attrs="{'invisible': [('push_file_visible','!=',True)]}" />
+                	<field name="push_file" colspan="2" filename="push_file_name" attrs="{'invisible': [('push_file_visible','!=',True)]}" />
+                	<field name="patch_file" colspan="2" filename="patch_file_name" attrs="{'invisible': [('patch_file_visible','!=',True)]}" />
                 	
                 	<separator colspan="4" string="Pull" />
                 	<field name="pull_data" colspan="4" attrs="{'invisible': [('usb_sync_step','!=','first_sync'), ('usb_sync_step','!=','push_performed')], 'required': [('usb_sync_step','=','push_performed')]}" />
