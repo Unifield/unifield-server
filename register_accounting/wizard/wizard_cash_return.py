@@ -66,13 +66,12 @@ class wizard_advance_line(osv.osv_memory):
         return res
 
     _columns = {
-        'date': fields.date(string='Date', required=True),
+        'document_date': fields.date(string='Document Date', required=True),
         'description': fields.char(string='Description', size=64, required=True),
         'account_id': fields.many2one('account.account', string='Account', required=True, domain=[('type', '!=', 'view')]),
         'partner_id': fields.many2one('res.partner', string='Partner', required=False),
         'amount': fields.float(string="Amount", size=(16,2), required=True),
         'wizard_id': fields.many2one('wizard.cash.return', string='wizard'),
-        
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True, 
             help="This informs system that we can display or not an analytic button", store=False),
@@ -441,7 +440,7 @@ class wizard_cash_return(osv.osv_memory):
         Verify that date is superior than advance_line date.
         """
         wizard = self.browse(cr, uid, ids[0], context=context)
-        if wizard.date < wizard.advance_st_line_id.date:
+        if wizard.date < wizard.advance_st_line_id.document_date:
             raise osv.except_osv(_('Warning'), _('The entered date must be greater than or equal to advance posting date.'))
         return True
 
@@ -547,7 +546,7 @@ class wizard_cash_return(osv.osv_memory):
                 # Case where line equals 0
                 if advance.amount == 0.0:
                     continue
-                adv_date = advance.date
+                adv_date = advance.document_date
                 adv_name = advance.description
                 partner_id = advance.partner_id.id or False
                 if partner_id:
@@ -560,7 +559,7 @@ class wizard_cash_return(osv.osv_memory):
                 account_id = advance.account_id.id
                 distrib_id = advance.analytic_distribution_id and advance.analytic_distribution_id.id or False
 
-                adv_id = self.create_move_line(cr, uid, ids, wiz.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
+                adv_id = self.create_move_line(cr, uid, ids, wizard.date, adv_date, adv_name, journal, register, partner_id, False, account_id, \
                     debit, credit, move_id, distrib_id, context=context)
                 adv_move_line_ids.append(adv_id)
                 
@@ -616,14 +615,14 @@ class wizard_cash_return(osv.osv_memory):
                     # create the move with 2 move lines for the supplier
                     if total > 0:
                         # prepare the move
-                        supp_move_info = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description', 'date'], context=context)
+                        supp_move_info = wiz_adv_line_obj.read(cr, uid, advances_with_supplier[supplier_id][0], ['description', 'document_date'], context=context)
                         supp_move_name = supp_move_info.get('description', "/")
-                        supp_move_date = supp_move_info.get('date', curr_date)
+                        supp_move_date = supp_move_info.get('document_date', curr_date)
                         supp_move_vals = {
                             'journal_id': journal.id,
                             'period_id': period_id,
-                            'date': supp_move_date,
-                            'document_date': supp_move_date,
+                            'date': wizard.date,
+                            'document_date': wizard.date,
                             #'name': supp_move_name, ## Deleted in UF-1959. Was asked since UTP-330 and UF-1542.
                             'partner_id': supplier_id,
                         }
@@ -637,9 +636,9 @@ class wizard_cash_return(osv.osv_memory):
                         # Create the move
                         supp_move_id = move_obj.create(cr, uid, supp_move_vals, context=context)
                         # Create move_lines
-                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wiz.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, total, 0.0, supp_move_id, False, context=context)
-                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wiz.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
+                        supp_move_line_credit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, 0.0, total, supp_move_id, False, context=context)
                         # We hard post the move
                         supp_res_id = move_obj.post(cr, uid, [supp_move_id], context=context)
