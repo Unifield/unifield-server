@@ -43,7 +43,7 @@ purchase_order_line_sync()
 
 class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
-    _logger = logging.getLogger('purchase.order')
+    _logger = logging.getLogger('------sync.purchase.order')
     
     
     _columns = {
