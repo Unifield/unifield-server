@@ -567,6 +567,7 @@ class tender(osv.osv):
         cancel all corresponding rfqs
         '''
         po_obj = self.pool.get('purchase.order')
+        t_line_obj = self.pool.get('tender.line')
         wf_service = netsvc.LocalService("workflow")
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
@@ -575,6 +576,9 @@ class tender(osv.osv):
             rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),], context=context)
             for rfq_id in rfq_ids:
                 wf_service.trg_validate(uid, 'purchase.order', rfq_id, 'purchase_cancel', cr)
+
+            for line in tender.tender_line_ids:
+                t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
                 
         return True
 
@@ -740,9 +744,9 @@ class tender_line(osv.osv):
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
 
-    def fake_unlink(self, cr, uid, ids, context=None):
+    def cancel_sourcing(self,cr, uid, ids, context=None):
         '''
-        Cancel the line if it is linked to a FO line
+        Cancel the line and re-source the FO line
         '''
         # Objects
         sol_obj = self.pool.get('sale.order.line')
@@ -766,6 +770,17 @@ class tender_line(osv.osv):
         if sol_ids:
             for sol in sol_ids:
                 sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
+
+        if context.get('fake_unlink'):
+            return to_remove
+
+        return True
+
+    def fake_unlink(self, cr, uid, ids, context=None):
+        '''
+        Cancel the line if it is linked to a FO line
+        '''
+        to_remove = self.cancel_sourcing(cr, uid, ids, context=dict(context, fake_unlink=True))
 
         return self.unlink(cr, uid, to_remove, context=context)
     
