@@ -762,7 +762,7 @@ class tender_line(osv.osv):
                 # Get the ID and the product qty of the FO line to re-source
                 sol_ids.update({line.sale_order_line_id.id: line.sale_order_line_id.product_uom_qty})
             else:
-                to_remove.append(line_data['id'])
+                to_remove.append(line.id)
 
         if to_cancel:
             self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
