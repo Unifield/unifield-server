@@ -25,7 +25,7 @@
                     <notebook colspan="5">
                         <page string="Tender Lines">
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
-                                <tree string="Tender Lines" editable="top">
+                                <tree string="Tender Lines" editable="top" hide_delete_button="1" noteditable="line_state in ['cancel', 'done']" colors="blue: line_state=='cancel'">
                                 	<!-- <field name="date_planned" /> -->
                                     <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
@@ -41,6 +41,8 @@
                                     <field name="purchase_order_id" />
                                     <field name="purchase_order_line_number" />
                                     <field name="state" invisible="1" />
+                                    <field name="line_state" invisible="1" />
+                                    <button name="fake_unlink" type="object" string="Delete" icon="gtk-cancel" attrs="{'invisible': [('line_state', 'in', ['done', 'cancel'])]}" />
                                 </tree>
                             </field>
                             <newline/>

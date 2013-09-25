@@ -53,6 +53,9 @@ class tender(osv.osv):
         '''
         cannot delete tender not draft
         '''
+        # Objects
+        t_line_obj = self.pool.get('tender.line')
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -61,6 +64,10 @@ class tender(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.state != 'draft':
                 raise osv.except_osv(_('Warning !'), _("Cannot delete Tenders not in 'draft' state."))
+
+            for line in obj.tender_line_ids:
+               t_line_obj.fake_unlink(cr, uid, [line.id], context=context)
+
         return super(tender, self).unlink(cr, uid, ids, context=context)
     
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
@@ -138,7 +145,7 @@ class tender(osv.osv):
 
         res = True
         for tender in self.browse(cr, uid, ids, context=context):
-            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in tender.tender_line_ids], context=context)
+            res = res and line_obj._check_restriction_line(cr, uid, [x.id for x in tender.tender_line_ids if x.line_state != 'cancel'], context=context)
 
         return res
 
@@ -181,6 +188,8 @@ class tender(osv.osv):
             return True
         for tender in self.browse(cr, uid, ids, context=context):
             for line in tender.tender_line_ids:
+                if line.line_state == 'cancel':
+                    continue
                 if vals.get('categ', tender.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
                     raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can have only \'Transport\' products on a \'Transport\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
                     return False
@@ -268,7 +277,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("You can't have inactive supplier! Please remove: %s"
                                                        ) % ' ,'.join([partner['name'] for partner in inactive_supplier_ids]))
             # check some products have been selected
-            tender_line_ids = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender.id)], context=context)
+            tender_line_ids = self.pool.get('tender.line').search(cr, uid, [('tender_id', '=', tender.id), ('line_state', '!=', 'cancel')], context=context)
             if not tender_line_ids:
                 raise osv.except_osv(_('Warning !'), _('You must select at least one product!'))
             for supplier in tender.supplier_ids:
@@ -296,6 +305,8 @@ class tender(osv.osv):
                 po_id = po_obj.create(cr, uid, values, context=dict(context, partner_id=supplier.id, rfq_ok=True))
                 
                 for line in tender.tender_line_ids:
+                    if line.line_state == 'cancel':
+                        continue
                     if line.product_id.id == obj_data.get_object_reference(cr, uid,'msf_doc_import', 'product_tbd')[1]:
                         raise osv.except_osv(_('Warning !'), _('You can\'t have "To Be Defined" for the product. Please select an existing product.'))
                     # create an order line for each tender line
@@ -345,7 +356,7 @@ class tender(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
             
             # integrity check, all lines must have purchase_order_line_id
-            if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids]):
+            if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids if line.line_state != 'cancel']):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
         
         # update product supplierinfo and pricelist
@@ -391,7 +402,7 @@ class tender(osv.osv):
             # gather the product_id -> supplier_id relationship to display it back in the compare wizard
             suppliers = {}
             for line in tender.tender_line_ids:
-                if line.product_id and line.supplier_id:
+                if line.product_id and line.supplier_id and line.line_state != 'cancel':
                     suppliers.update({line.product_id.id:line.supplier_id.id,})
             # rfq corresponding to this tender with done state (has been updated and not canceled)
             # the list of rfq which will be compared
@@ -415,6 +426,8 @@ class tender(osv.osv):
             if integrity_test:
                 self.tender_integrity(cr, uid, tender, context=context)
             for line in tender.tender_line_ids:
+                if line.line_state == 'cancel':
+                    continue
                 # if a supplier has been selected
                 if line.purchase_order_line_id:
                     # set the flag
@@ -494,10 +507,12 @@ class tender(osv.osv):
             # check if corresponding rfqs are in the good state
             self.tender_integrity(cr, uid, tender, context=context)
             # integrity check, all lines must have purchase_order_line_id
-            if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids]):
+            if not all([line.purchase_order_line_id.id for line in tender.tender_line_ids if line.line_state != 'cancel']):
                 raise osv.except_osv(_('Error !'), _('All tender lines must have been compared!'))
             data = {}
             for line in tender.tender_line_ids:
+                if line.line_state == 'cancel':
+                    continue
                 data.setdefault(line.supplier_id.id, {}) \
                     .setdefault('order_line', []).append((0,0,{'name': line.product_id.partner_ref,
                                                                'product_qty': line.qty,
@@ -699,10 +714,12 @@ class tender_line(osv.osv):
                 'purchase_order_id': fields.related('purchase_order_line_id', 'order_id', type='many2one', relation='purchase.order', string="Related RfQ", readonly=True,),
                 'purchase_order_line_number': fields.related('purchase_order_line_id', 'line_number', type="integer", string="Related Line Number", readonly=True,),
                 'state': fields.related('tender_id', 'state', type="selection", selection=_SELECTION_TENDER_STATE, string="State",),
+                'line_state': fields.selection([('draft','Draft'), ('cancel', 'Canceled'), ('done', 'Done')], string='State', readonly=True),
                 'comment': fields.char(size=128, string='Comment'),
                 }
     _defaults = {'qty': lambda *a: 1.0,
                  'state': lambda *a: 'draft',
+                 'line_state': lambda *a: 'draft',
                  }
     
     def _check_restriction_line(self, cr, uid, ids, context=None):
@@ -722,6 +739,35 @@ class tender_line(osv.osv):
     _sql_constraints = [
         ('product_qty_check', 'CHECK( qty > 0 )', 'Product Quantity must be greater than zero.'),
     ]
+
+    def fake_unlink(self, cr, uid, ids, context=None):
+        '''
+        Cancel the line if it is linked to a FO line
+        '''
+        # Objects
+        sol_obj = self.pool.get('sale.order.line')
+
+        # Variables
+        to_remove = []
+        to_cancel = []
+        sol_ids = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            if line.sale_order_line_id:
+                to_cancel.append(line.id)
+                # Get the ID and the product qty of the FO line to re-source
+                sol_ids.update({line.sale_order_line_id.id: line.sale_order_line_id.product_uom_qty})
+            else:
+                to_remove.append(line_data['id'])
+
+        if to_cancel:
+            self.write(cr, uid, to_cancel, {'line_state': 'cancel'}, context=context)
+
+        if sol_ids:
+            for sol in sol_ids:
+                sol_obj.add_resource_line(cr, uid, sol, False, sol_ids[sol], context=context)
+
+        return self.unlink(cr, uid, to_remove, context=context)
     
 tender_line()
 
@@ -760,7 +806,8 @@ class tender2(osv.osv):
         # reset the tender line
         for line in result['tender_line_ids']:
             line[2].update(sale_order_line_id=False,
-                           purchase_order_line_id=False,)
+                           purchase_order_line_id=False,
+                           line_state='draft',)
         return result
 
 tender2()
@@ -1119,6 +1166,17 @@ class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     
     _columns = {'tender_line_ids': fields.one2many('tender.line', 'sale_order_line_id', string="Tender Lines", readonly=True),}
+
+    def copy(self, cr, uid, ids, default, context=None):
+        '''
+        Remove tender lines linked
+        '''
+        default = default or {}
+
+        if not 'tender_line_ids' in default:
+            default['tender_line_ids'] = []
+
+        return super(sale_order_line, self).copy(cr, uid, ids, default, context=context)
     
 sale_order_line()
 

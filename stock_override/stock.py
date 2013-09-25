@@ -354,6 +354,25 @@ class stock_picking(osv.osv):
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
 
         return True
+
+    def call_cancel_wizard(self, cr, uid, ids, context=None):
+        '''
+        Call the wizard of cancelation (ask user if he wants to resource goods)
+        '''
+        for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id'], context=context):
+            if pick_data['sale_id'] or pick_data['purchase_id']:
+                return {'type': 'ir.actions.act_window',
+                        'res_model': 'stock.picking.cancel.wizard',
+                        'view_type': 'form',
+                        'view_mode': 'form',
+                        'target': 'new',
+                        'context': dict(context, active_id=pick_data['id'])}
+
+        wf_service = netsvc.LocalService("workflow")
+        for id in ids:
+            wf_service.trg_validate(uid, 'stock.picking', id, 'button_cancel', cr)
+
+        return True
     
     def _do_partial_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -1550,6 +1569,50 @@ class stock_location_chained_options(osv.osv):
     }
 
 stock_location_chained_options()
+
+
+class stock_picking_cancel_wizard(osv.osv_memory):
+    _name = 'stock.picking.cancel.wizard'
+
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string='Picking', required=True),
+    }
+
+    _defaults = {
+        'picking_id': lambda self, cr, uid, c: c.get('active_id'),
+    }
+
+    def just_cancel(self, cr, uid, ids, context=None):
+        '''
+        Just call the cancel of the stock.picking
+        '''
+        wf_service = netsvc.LocalService("workflow")
+        for wiz in self.browse(cr, uid, ids, context=context):
+            wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+    def cancel_and_resource(self, cr, uid, ids, context=None):
+        '''
+        Call the cancel and resource method of the picking
+        '''
+        # objects declarations
+        pick_obj = self.pool.get('stock.picking')
+        
+        # variables declarations
+        pick_ids = []
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            pick_ids.append(wiz.picking_id.id)
+        
+        # Set the boolean 'has_to_be_resourced' to True for each picking
+        vals = {'has_to_be_resourced': True}
+        pick_obj.write(cr, uid, pick_ids, vals, context=context)
+
+        return self.just_cancel(cr, uid, ids, context=context)
+
+
+stock_picking_cancel_wizard()
 
 
 class ir_values(osv.osv):

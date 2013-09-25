@@ -1685,6 +1685,7 @@ class stock_picking(osv.osv):
                 'description_ppl': fields.char('Description', size=256 ),
                 'already_shipped': fields.boolean(string='The shipment is done'), #UF-1617: only for indicating the PPL that the relevant Ship has been closed
                 'has_draft_moves': fields.function(_get_draft_moves, method=True, type='boolean', string='Has draft moves ?', store=False),
+                'has_to_be_resourced': fields.boolean(string='Picking has to be resourced'),
                 }
     _defaults = {'flow_type': 'full',
                  'ppl_customize_label': lambda obj, cr, uid, c: len(obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)) and obj.pool.get('ppl.customize.label').search(cr, uid, [('name', '=', 'Default Label'),], context=c)[0] or False,
@@ -3139,11 +3140,30 @@ class stock_move(osv.osv):
         pol_ids = []
 
         for move in self.browse(cr, uid, ids, context=context):
-            if move.picking_id and move.picking_id.type == 'in' \
-               and move.purchase_line_id and move.state != 'cancel':
+            """
+            A stock move can be re-sourced but there are some conditions
+
+            Re-sourcing checking :
+              1) The move should be attached to a picking
+              2) The move should have the flag 'has_to_be_resourced' set
+              3) The move shouldn't be already canceled
+              4) The move should be linked to a purchase order line or a field
+                 order line
+            """
+            if not move.picking_id:
+                continue
+
+            if not move.picking_id.has_to_be_resourced:
+                continue
+
+            if move.state == 'cancel':
+                continue
+
+            pick_type = move.picking_id.type
+
+            if pick_type == 'in' and move.purchase_line_id:
                 pol_ids.append(move.purchase_line_id.id)
-            elif move.picking_id and move.picking_id.type == 'internal' \
-               and move.sale_line_id and move.state != 'cancel':
+            elif pick_type == 'internal' and mnove.sale_line_id:
                 # TODO : Needs UoM calculation
                 diff_qty = move.sale_line_id.product_uom_qty - (move.sale_line_id.product_uom_qty - move.product_qty)
                 sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)

@@ -935,7 +935,8 @@
                                 <field name="state_hidden"/>
                                 <button name="set_delivered" icon="gtk-apply" type="object" string="Confirm Delivery" attrs="{'invisible': ['|', '|', '|', ('type', '!=', 'out'), ('subtype', '!=', 'standard'), ('state', '!=', 'done'), ('delivered', '=', True)]}"/>
                                 <field name="cross_docking_ok" invisible="1"/>
-                                <button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>
+                                <!--<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel"/>-->
+                                <button name="call_cancel_wizard" states="assigned,confirmed,draft" string="_Cancel" icon="gtk-cancel" type="object" />
                                 <button name="draft_force_assign" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to"/>
@@ -1081,6 +1082,19 @@
             <field name="inherit_id" ref="stock.view_product_standard_price_form" />
             <field name="arch" type="xml">
                 <xpath expr="//button[@string='Update']" position="replace" />
+            </field>
+        </record>
+
+        <record id="stock_picking_cancel_wizard" model="ir.ui.view">
+            <field name="name">stock.picking.cancel.wizard</field>
+            <field name="model">stock.picking.cancel.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cancel Picking">
+                    <separator string="Actions" />
+                    <button name="just_cancel" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                </form>
             </field>
         </record>
 
