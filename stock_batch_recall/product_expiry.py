@@ -81,7 +81,7 @@ class stock_production_lot(osv.osv):
         if 'xmlid_name' not in vals or not vals['xmlid_name']:
             vals['xmlid_name'] = vals['name'] 
             
-        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name'])], context=context)
+        exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('instance_id', '=', vals['instance_id']), ('product_id', '=', vals['product_id'])], context=context)
         if exist:
             # but if the value exist for xmlid_name, then add a suffix to differentiate, no constraint unique required here  
             vals['xmlid_name'] = vals['xmlid_name'] + "_1"
