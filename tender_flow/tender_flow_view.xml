@@ -42,7 +42,7 @@
                                     <field name="purchase_order_line_number" />
                                     <field name="state" invisible="1" />
                                     <field name="line_state" invisible="1" />
-                                    <button name="fake_unlink" type="object" string="Delete" icon="gtk-cancel" attrs="{'invisible': [('line_state', 'in', ['done', 'cancel'])]}" />
+                                    <button name="fake_unlink" type="object" string="Delete" icon="gtk-del" attrs="{'invisible': [('line_state', 'in', ['done', 'cancel'])]}" />
                                 </tree>
                             </field>
                             <newline/>
