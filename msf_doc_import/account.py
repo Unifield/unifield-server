@@ -143,6 +143,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     }
                     self.pool.get('account.move.line').create(cr, uid, move_line_vals, context, check=False)
                 # Validate the Journal Entry for lines to be valid (if possible)
+                self.write(cr, uid, [w.id], {'message': _('Validating journal entry…')})
                 self.pool.get('account.move').validate(cr, uid, [move_id], context=context)
                 # Update wizard
                 progression = 20.0 + (float(num) * step)
@@ -184,6 +185,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 period = self.pool.get('account.period').browse(cr, uid, wiz_period_ids[0], context)
                 if not period or period.state in ['created', 'done']:
                     raise osv.except_osv(_('Warning'), _('Period for migration is not open!'))
+                date = wiz.date or False
 
                 # Check that a file was given
                 if not wiz.file:
@@ -236,8 +238,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_destination = False
                     r_cc = False
                     r_document_date = False
-                    r_date = False
-                    r_period = False
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
@@ -285,21 +285,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
                         continue
-                    if not line[cols['Posting Date']]:
-                        errors.append(_('Line %s. No posting date specified!') % (current_line_num,))
+                    # UTP-766: Do not use Posting date column, but wizard's one
+                    if line[cols['Document Date']] > date:
+                        errors.append(_("Line %s. Document date '%s' should be inferior or equal to given Posting date '%s'.") % (current_line_num, line[cols['Document Date']], date,))
                         continue
-                    if line[cols['Document Date']] > line[cols['Posting Date']]:
-                        errors.append(_("Line %s. Document date '%s' should be inferior or equal to Posting date '%s'.") % (current_line_num, line[cols['Document Date']], line[cols['Posting Date']],))
-                        continue
-                    # Fetch document date and posting date
+                    # Fetch document date
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
-                    r_date = line[cols['Posting Date']].strftime('%Y-%m-%d')
-                    # Check that a period exist and is open
-                    period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, r_date, context)
-                    if not period_ids:
-                        errors.append(_('Line %s. No period found for given date: %s') % (current_line_num, r_date))
-                        continue
-                    r_period = period_ids[0]
                     # Check G/L account
                     if not line[cols['G/L Account']]:
                         errors.append(_('Line %s. No G/L account specified!') % (current_line_num,))
@@ -359,10 +350,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'cost_center_id': r_cc or False,
                         'destination_id': r_destination or False,
                         'document_date': r_document_date or False,
-                        'date': r_date or False,
+                        'date': date or False,
                         'currency_id': r_currency or False,
                         'wizard_id': wiz.id,
-                        'period_id': r_period or False,
+                        'period_id': period and period.id or False,
                     }
                     if account.type_for_register == 'advance':
                         vals.update({'employee_id': r_partner,})
