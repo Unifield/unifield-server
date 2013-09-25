@@ -162,7 +162,14 @@ class msf_doc_import_accounting(osv.osv_memory):
         if not context:
             context = {}
         # Prepare some values
-        cr = pooler.get_db(dbname).cursor()
+        from_yml = False
+        if context.get('from_yml', False):
+            from_yml = context.get('from_yml')
+        # Do changes because of YAML tests
+        if from_yml:
+            cr = dbname
+        else:
+            cr = pooler.get_db(dbname).cursor()
         created = 0
         processed = 0
         errors = []
@@ -398,15 +405,18 @@ class msf_doc_import_accounting(osv.osv_memory):
 
             # Close cursor
             cr.commit()
-            cr.close()
+            if not from_yml:
+                cr.close()
         except osv.except_osv as osv_error:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
-            cr.close()
+            if not from_yml:
+                cr.close()
         except Exception as e:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e.args and e.args[0] or '',), 'state': 'done', 'progression': 100.0})
-            cr.close()
+            if not from_yml:
+                cr.close()
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -416,11 +426,15 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Some checks
         if not context:
             context = {}
-        # Launch a thread
-        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-        thread.start()
-        
-        return self.write(cr, uid, ids, {'state': 'inprogress'}, context)
+        if context.get('from_yml', False):
+            res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
+            self._import(cr, uid, ids, context=context)
+        else:
+            # Launch a thread if we come from web
+            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+            thread.start()
+            res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
+        return res
 
     def button_update(self, cr, uid, ids, context=None):
         """
