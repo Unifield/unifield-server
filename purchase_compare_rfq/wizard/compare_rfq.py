@@ -118,13 +118,13 @@ class wizard_compare_rfq(osv.osv_memory):
                                 values = {'purchase_order_line_id': wiz_line.po_line_id.id,}
                                 tender_line.write(values, context=context)
                                 updated_lines.append(tender_line.id);
-                                
+
                         # UF-733: if all tender lines have been compared (have PO Line id), then set the tender to be ready
                         # for proceeding to other actions (create PO, Done etc)
                         if tender.internal_state == 'draft':
                             flag = True
                             for line in tender.tender_line_ids:
-                                if line.id not in updated_lines and not line.purchase_order_line_id:
+                                if line.line_state != 'cancel' and line.id not in updated_lines and not line.purchase_order_line_id:
                                     flag = False
                             if flag:
                                 tender_obj.write(cr, uid, tender.id, {'internal_state': 'updated'})
