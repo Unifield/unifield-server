@@ -138,13 +138,21 @@ class res_partner(osv.osv):
                                             ('project', 'Requirements by Project'),
                                             ('category', 'Requirements by Category'),
                                             ('category_project', 'Requirements by Category and Project'),
-                                            ('isolated', 'Category by Order')], 
+                                            ('isolated', 'Requirements by Order')], 
                                             string='Order creation mode',
-                                              help='''When option “all requirements” is set for 
+                                              help='''When option “All requirements” is set for 
                                             a given supplier, the system will create a PO that merge all requirements
-                                            for this supplier. If option “requirements by project” is set, the POs will
+                                            for this supplier. 
+                                            If option “Requirements by Project” is set, the POs will
                                             be created by original requestor (customer of the SO origin), meaning
-                                            system creates one PO by project for this supplier.'''),
+                                            system creates one PO by project for this supplier.
+                                            If option "Requirements by Category" is set, the system will create a PO
+                                            that merge all requirements by category for this supplier.
+                                            If option "Requirements by Category and Project" is set, the system
+                                            will create a PO that merge only the requirements of one customer
+                                            and one category.
+                                            If option "Requirements by Order" is set, the system will create a PO
+                                            that merge lines coming from the same FO/IR.'''),
                 }
     
     _defaults = {'zone': 'national',
